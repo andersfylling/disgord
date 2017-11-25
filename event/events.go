@@ -1,8 +1,9 @@
 package event
 
 // Event the discord api event type
-type Event int8
+type Event uint8
 
+// Event types
 const (
 
 	// Gateway events
@@ -24,20 +25,20 @@ const (
 	//         payload to the gateway (for resuming existing sessions).
 	//         Fields:
 	//         * Trace []string
-	Resumed Event = iota
+	Resumed
 
 	// Channel events
 
 	// ChannelCreate Sent when a new channel is created, relevant to the current
 	//               user. The inner payload is a DM channel or guild channel
 	//               object.
-	ChannelCreate Event = iota
+	ChannelCreate
 	// ChannelUpdate Sent when a channel is updated. The inner payload is a guild
 	//               channel object.
-	ChannelUpdate Event = iota
+	ChannelUpdate
 	// ChannelDelete Sent when a channel relevant to the current user is deleted.
 	//               The inner payload is a DM or Guild channel object.
-	ChannelDelete Event = iota
+	ChannelDelete
 	// ChannelPinsUpdate Sent when a message is pinned or unpinned in a text
 	//                   channel. This is not sent when a pinned message is
 	//                   deleted.
@@ -45,7 +46,7 @@ const (
 	//                   * ChannelID int64 or discord.Snowflake
 	//                   * LastPinTimestamp time.Now().UTC().Format(time.RFC3339)
 	// TODO fix.
-	ChannelPinsUpdate Event = iota
+	ChannelPinsUpdate
 
 	// GUILD events
 
@@ -57,104 +58,104 @@ const (
 	//             3. When the current user joins a new Guild.
 	//             The inner payload is a guild object, with all the extra fields
 	//             specified.
-	GuildCreate Event = iota
+	GuildCreate
 	// GuildUpdate Sent when a guild is updated. The inner payload is a guild
 	//             object.
-	GuildUpdate Event = iota
+	GuildUpdate
 	// GuildDelete Sent when a guild becomes unavailable during a guild outage,
 	//             or when the user leaves or is removed from a guild. The inner
 	//             payload is an unavailable guild object. If the unavailable
 	//             field is not set, the user was removed from the guild.
-	GuildDelete Event = iota
+	GuildDelete
 	// GuildBanAdd Sent when a user is banned from a guild. The inner payload is
 	//             a user object, with an extra guild_id key.
-	GuildBanAdd Event = iota
+	GuildBanAdd
 	// GuildBanRemove Sent when a user is unbanned from a guild. The inner
 	//                payload is a user object, with an extra guild_id key.
-	GuildBanRemove Event = iota
+	GuildBanRemove
 	// GuildEmojisUpdate Sent when a guild's emojis have been updated.
 	//                   Fields:
 	//                   * GuildID int64 or discord.Snowflake
-	GuildEmojisUpdate Event = iota
+	GuildEmojisUpdate
 	//GuildIntegrationsUpdate Sent when a guild integration is updated.
 	//                        Fields:
 	//                        * GuildID int64 or discord.Snowflake
 	//                        * Emojis []*discord.emoji.Emoji
-	GuildIntegrationsUpdate Event = iota
+	GuildIntegrationsUpdate
 	// GuildMemberAdd Sent when a new user joins a guild. The inner payload is a
 	//                guild member object with these extra fields:
 	//                * GuildID int64 or discord.Snowflake
-	GuildMemberAdd Event = iota
+	GuildMemberAdd
 	// GuildMemberRemove Sent when a user is removed from a guild
 	//                   (leave/kick/ban).
 	//                   Fields:
 	//                   * GuildID int64 or discord.Snowflake
 	//                   * User *discord.user.User
-	GuildMemberRemove Event = iota
+	GuildMemberRemove
 	// GuildMemberUpdate Sent when a guild member is updated.
 	//                   Fields:
 	//                   * GuildID int64 or discord.Snowflake
 	//                   * Roles []int64 or []discord.Snowflake
 	//                   * User *discord.user.User
 	//                   * Nick string
-	GuildMemberUpdate Event = iota
+	GuildMemberUpdate
 	// GuildMemberChunk Sent in response to Gateway Request Guild Members.
 	//                  Fields:
 	//                  * GuildID int64 or discord.Snowflake
 	//                  * Members []*discord.member.Member
-	GuildMemberChunk Event = iota
+	GuildMemberChunk
 	// GuildRoleCreate Sent when a guild role is created.
 	//                 Fields:
 	//                 * GuildID int64 or discord.Snowflake
 	//                 * Role *discord.role.Role
-	GuildRoleCreate Event = iota
+	GuildRoleCreate
 	// GuildRoleUpdate Sent when a guild role is created.
 	//                 Fields:
 	//                 * GuildID int64 or discord.Snowflake
 	//                 * Role    *discord.role.Role
-	GuildRoleUpdate Event = iota
+	GuildRoleUpdate
 	// GuildRoleDelete Sent when a guild role is created.
 	//                 Fields:
 	//                 * GuildID int64 or discord.Snowflake
 	//                 * RoleID  int64 or discord.Snowflake
-	GuildRoleDelete Event = iota
+	GuildRoleDelete
 	// MessageCreate Sent when a message is created. The inner payload is a
 	//               message object.
-	MessageCreate Event = iota
+	MessageCreate
 	// MessageUpdate Sent when a message is updated. The inner payload is a
 	//               message object.
 	//               NOTE! Has _at_least_ the GuildID and ChannelID fields.
-	MessageUpdate Event = iota
+	MessageUpdate
 	// MessageDelete Sent when a message is deleted.
 	//               Fields:
 	//               * ID        int64 or discord.Snowflake
 	//               * ChannelID int64 or discord.Snowflake
-	MessageDelete Event = iota
+	MessageDelete
 	// MessageDeleteBulk Sent when multiple messages are deleted at once.
 	//                   Fields:
 	//                   * IDs       []int64 or []discord.Snowflake
 	//                   * ChannelID int64 or discord.Snowflake
-	MessageDeleteBulk Event = iota
+	MessageDeleteBulk
 	// MessageReactionAdd Sent when a user adds a reaction to a message.
 	//                    Fields:
 	//                    * UserID     int64 or discord.Snowflake
 	//                    * ChannelID  int64 or discord.Snowflake
 	//                    * MessageID  int64 or discord.Snowflake
 	//                    * Emoji      *discord.emoji.Emoji
-	MessageReactionAdd Event = iota
+	MessageReactionAdd
 	// MessageReactionRemove Sent when a user removes a reaction from a message.
 	//                       Fields:
 	//                       * UserID     int64 or discord.Snowflake
 	//                       * ChannelID  int64 or discord.Snowflake
 	//                       * MessageID  int64 or discord.Snowflake
 	//                       * Emoji      *discord.emoji.Emoji
-	MessageReactionRemove Event = iota
+	MessageReactionRemove
 	// MessageReactionRemoveAll Sent when a user explicitly removes all reactions
 	//                          from a message.
 	//                          Fields:
 	//                          * ChannelID  int64 or discord.Snowflake
 	//                          * MessageID  int64 or discord.Snowflake
-	MessageReactionRemoveAll Event = iota
+	MessageReactionRemoveAll
 	// PresenceUpdate A user's presence is their current state on a guild.
 	//                This event is sent when a user's presence is updated
 	//                for a guild.
@@ -164,16 +165,16 @@ const (
 	//                Game    *discord.game.Game
 	//                GuildID int64 or discord.Snowflake
 	//                Status  *string or *discord.presence.Status
-	PresenceUpdate Event = iota
+	PresenceUpdate
 	// TypingStart Sent when a user starts typing in a channel.
 	//             Fields: TODO
-	TypingStart Event = iota
+	TypingStart
 	// UserUpdate Sent when properties about the user change. Inner payload is a
 	//            user object.
-	UserUpdate Event = iota
+	UserUpdate
 	// VoiceStateUpdate Sent when someone joins/leaves/moves voice channels.
 	//                  Inner payload is a voice state object.
-	VoiceStateUpdate Event = iota
+	VoiceStateUpdate
 	// VoiceServerUpdate Sent when a guild's voice server is updated. This is
 	//                   sent when initially connecting to voice, and when the
 	//                   current voice instance fails over to a new server.
@@ -181,11 +182,16 @@ const (
 	//                   * Token     string or discord.Token
 	//                   * ChannelID int64 or discord.Snowflake
 	//                   * Endpoint  string or discord.Endpoint
-	VoiceServerUpdate Event = iota
+	VoiceServerUpdate
 	// WebhooksUpdate Sent when a guild channel's webhook is created, updated, or
 	//                deleted.
 	//                Fields:
 	//                * GuildID   int64 or discord.Snowflake
 	//                * ChannelID int64 or discord.Snowflake
-	WebhooksUpdate Event = iota
+	WebhooksUpdate
 )
+
+// Compare compares two events and returns true on match.
+func Compare(e1, e2 Event) bool {
+	return e1 == e2
+}
