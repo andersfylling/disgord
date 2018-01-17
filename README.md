@@ -1,2 +1,2 @@
 # Disgord
-[![Build Status](https://travis-ci.org/andersfylling/disgord.svg?branch=master)](https://travis-ci.org/andersfylling/disgord)
+[![Build Status](https://travis-ci.org/andersfylling/disgord.svg?branch=master)](https://travis-ci.org/andersfylling/disgord) [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage)
