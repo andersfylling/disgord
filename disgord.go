@@ -1,26 +1,67 @@
 package disgord
 
 import (
-	"encoding/json"
-	"errors"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
-	"github.com/gorilla/websocket"
+	"github.com/andersfylling/snowflake"
+	"github.com/sirupsen/logrus"
 )
 
-func NewDisgord() *Disgord {
-	d := &Disgord{
-		HTTPClient: &http.Client{
-			Timeout: time.Second * 10,
-		},
+// NewDisgord creates a new default disgord instance
+func NewDisgord() (*Disgord, error) {
+	// http client configuration
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
 	}
 
-	return d
+	return NewDisgordWithHTTPClient(httpClient)
+}
+
+// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
+func NewRequiredDisgord() *Disgord {
+	dg, err := NewDisgord()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	return dg
+}
+
+// NewDisgordWithHTTPClient specify http configuration for the discord connection. Affects REST and pre- websocket handshake, for wss endpoint request
+func NewDisgordWithHTTPClient(httpClient *http.Client) (*Disgord, error) {
+	// Use discordws to keep the socket connection going
+	dws, err := discordws.NewClient(httpClient, endpoint.APIVersion, endpoint.APIComEncoding)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a disgord instance
+	d := &Disgord{
+		HTTPClient: httpClient,
+		ws:         dws,
+	}
+
+	return d, nil
+}
+
+// NewRequiredDisgordWithHTTPClient same as NewDisgordWithHTTPClient, but exits program if an error occours
+func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
+	dg, err := NewDisgordWithHTTPClient(httpClient)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	return dg
+}
+
+type Guilds []*Guild
+
+func (g *Guilds) Get(id snowflake.ID) (*Guild, error) {
+	return nil, nil
 }
 
 // EventHook is an application-level type for handling discord requests.
@@ -47,78 +88,35 @@ type EventObserver struct {
 type Disgord struct {
 	sync.RWMutex
 
-	// WS web socket connection
-	WS *websocket.Conn
-
-	// WSSURL web socket url
-	WSSURL string
+	ws *discordws.Client
 
 	HTTPClient *http.Client
 
 	// register listeners for events
 	//*EventObserver
+
+	// Guilds all them guild objects
+	Guilds Guilds
 }
 
-// Open establishes a websocket connection to the discord API
+// Connect establishes a websocket connection to the discord API
 func (d *Disgord) Connect() error {
 	d.Lock()
 	defer d.Unlock()
-	var err error // creates issue with ws connection later when created
-
-	// check if web socket connection is already open
-	if d.WS != nil {
-		return errors.New("websocket connection already established. Cannot open a new connection.")
-	}
-
-	// discord API sends a web socket url which should be used.
-	// It's required to be cached, and only re-requested whenever disgord is unable
-	// to reconnect to the API..
-	if d.WSSURL == "" {
-		resp, err := d.HTTPClient.Get(endpoint.Gateway)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-
-		gatewayResponse := &GetGatewayResponse{}
-		err = json.Unmarshal([]byte(body), gatewayResponse)
-		if err != nil {
-			return err
-		}
-
-		d.WSSURL = gatewayResponse.URL + "?v=" + endpoint.APIVersion + "&encoding=" + endpoint.APIComEncoding
-	}
-
-	// establish ws connection
-	d.WS, _, err = websocket.DefaultDialer.Dial(d.WSSURL, nil)
-	if err != nil {
-		log.Fatal("dial:", err)
-	}
-
-	// NOTE. I completely stole this defer func from discordgo. It was a too nice not to.
-	defer func() {
-		// because of this, all code below must set err to the error
-		// when exiting with an error :)  Maybe someone has a better
-		// way :)
-		if err != nil {
-			d.Disconnect()
-		}
-	}()
-
-	return nil
+	return d.ws.Connect()
 }
 
 // Disconnect closes the discord websocket connection
 func (d *Disgord) Disconnect() error {
-	err := d.WS.Close()
-	if err != nil {
-		return err
-	}
-	d.WS = nil
+	d.Lock()
+	defer d.Unlock()
+	return d.ws.Disconnect()
+}
 
-	return nil
+// Reconnect
+func (d *Disgord) Reconnect() error {
+	d.Lock()
+	defer d.Unlock()
+
+	return d.ws.Reconnect()
 }

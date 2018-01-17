@@ -1,4 +1,4 @@
-package disgord
+package discordws
 
 type GatewayPayload struct {
 	Op             uint        `json:"op"`
