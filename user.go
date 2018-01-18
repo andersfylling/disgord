@@ -7,15 +7,15 @@ import (
 )
 
 type User struct {
-	ID            snowflake.ID `json:"id"`
-	Email         string       `json:"email"`
-	Username      string       `json:"username"`
-	Avatar        string       `json:"avatar"`
-	Discriminator string       `json:"discriminator"`
-	Token         string       `json:"token"`
-	Verified      bool         `json:"verified"`
-	MFAEnabled    bool         `json:"mfa_enabled"`
-	Bot           bool         `json:"bot"`
+	Username      string       `json:"username,omitempty"`
+	Discriminator string       `json:"discriminator,omitempty"`
+	ID            snowflake.ID `json:"id,string,omitempty"`
+	Email         string       `json:"email,omitempty"`
+	Avatar        string       `json:"avatar,omitempty"`
+	Token         string       `json:"token,omitempty"`
+	Verified      bool         `json:"verified,omitempty"`
+	MFAEnabled    bool         `json:"mfa_enabled,omitempty"`
+	Bot           bool         `json:"bot,omitempty"`
 }
 
 func NewUser() *User {
