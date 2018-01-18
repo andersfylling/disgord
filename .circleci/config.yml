@@ -25,5 +25,5 @@ jobs:
       - run: go get -v -t -d
       #- run: go test -v  #circle ci bug :c
       - run: go vet -v
-      - go test -race -coverprofile=coverage.txt -covermode=atomic
-      - curl -s https://codecov.io/bash
+      - run: go test -race -coverprofile=coverage.txt -covermode=atomic
+      - run: curl -s https://codecov.io/bash
