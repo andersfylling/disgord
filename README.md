@@ -1,11 +1,2 @@
-# data types
-
-Permission: uint64
-
-ID: uint64
-
-Position: uint
-
-Any type member is uint8, unless the discord api requires a string.
-
-Anything that cannot be below 0 is a uint.
+# Disgord
+[![Build Status](https://travis-ci.org/andersfylling/disgord.svg?branch=master)](https://travis-ci.org/andersfylling/disgord) [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) [![Coverage Status](https://coveralls.io/repos/github/andersfylling/disgord/badge.svg)](https://coveralls.io/github/andersfylling/disgord)
