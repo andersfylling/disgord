@@ -16,25 +16,25 @@ import (
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
 type Guild struct {
-	ID                          snowflake.ID                   `json:"id,string"`
-	ApplicationID               *snowflake.ID                  `json:"application_id,,string"` //   |?
+	ID                          snowflake.ID                   `json:"id"`
+	ApplicationID               *snowflake.ID                  `json:"application_id"` //   |?
 	Name                        string                         `json:"name"`
 	Icon                        *string                        `json:"icon"`            //  |?, icon hash
 	Splash                      *string                        `json:"splash"`          //  |?, image hash
 	Owner                       bool                           `json:"owner,omitempty"` // ?|
-	OwnerID                     snowflake.ID                   `json:"owner_id,,string"`
+	OwnerID                     snowflake.ID                   `json:"owner_id"`
 	Permissions                 uint64                         `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                         `json:"region"`
-	AfkChannelID                snowflake.ID                   `json:"afk_channel_id,string"`
+	AfkChannelID                snowflake.ID                   `json:"afk_channel_id"`
 	AfkTimeout                  uint                           `json:"afk_timeout"`
 	EmbedEnabled                bool                           `json:"embed_enabled"`
-	EmbedChannelID              snowflake.ID                   `json:"embed_channel_id,string"`
+	EmbedChannelID              snowflake.ID                   `json:"embed_channel_id"`
 	VerificationLevel           lvl.Verification               `json:"verification_level"`
 	DefaultMessageNotifications lvl.DefaultMessageNotification `json:"default_message_notifications"`
 	ExplicitContentFilter       lvl.ExplicitContentFilter      `json:"explicit_content_filter"`
 	MFALevel                    lvl.MFA                        `json:"mfa_level"`
-	WidgetEnabled               bool                           `json:"widget_enabled"`           //   |
-	WidgetChannelID             snowflake.ID                   `json:"widget_channel_id,string"` //   |
+	WidgetEnabled               bool                           `json:"widget_enabled"`    //   |
+	WidgetChannelID             snowflake.ID                   `json:"widget_channel_id"` //   |
 	Roles                       []*discord.Role                `json:"roles"`
 	Emojis                      []*emoji.Emoji                 `json:"emojis"`
 	Features                    []string                       `json:"features"`

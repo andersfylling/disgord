@@ -13,10 +13,10 @@ type AuditLog struct {
 }
 
 type AuditLogEntry struct {
-	TargetID   snowflake.ID      `json:"target_id,string"`
+	TargetID   snowflake.ID      `json:"target_id"`
 	Changes    []*AuditLogChange `json:"changes,omitempty"`
-	UserID     snowflake.ID      `json:"user_id,string"`
-	ID         snowflake.ID      `json:"id,string"`
+	UserID     snowflake.ID      `json:"user_id"`
+	ID         snowflake.ID      `json:"id"`
 	ActionType uint              `json:"action_type"`
 	Options    []*AuditLogOption `json:"options,omitempty"`
 	Reason     string            `json:"reason,omitempty"`
@@ -34,7 +34,7 @@ type AuditLogOption struct {
 	MembersRemoved   string       `json:"members_removed"`
 	ChannelID        snowflake.ID `json:"channel_id"`
 	Count            string       `json:"count"`
-	ID               snowflake.ID `json:"id,string"`
+	ID               snowflake.ID `json:"id"`
 	Type             string       `json:"type"` // type of overwritten entity ("member" or "role")
 	RoleName         string       `json:"role_name"`
 }
