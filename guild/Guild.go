@@ -50,10 +50,6 @@ type Guild struct {
 	Channels    []*channel.Channel  `json:"channels,omitempty"`     // ?*|
 	Presences   []*discord.Presence `json:"presences,omitempty"`    // ?*|
 }
-type GuildUnavailable struct {
-	ID          snowflake.ID `json:"id,string"`
-	Unavailable bool         `json:"unavailable"` // ?*|
-}
 
 // Compare two guild objects
 func (guild *Guild) Compare(g *Guild) bool {
@@ -64,7 +60,13 @@ func (guild *Guild) MarshalJSON() ([]byte, error) {
 	var jsonData []byte
 	var err error
 	if guild.Unavailable {
-		guildUnavailable := GuildUnavailable{ID: guild.ID, Unavailable: true}
+		guildUnavailable := struct {
+			ID          snowflake.ID `json:"id"`
+			Unavailable bool         `json:"unavailable"` // ?*|
+		}{
+			ID:          guild.ID,
+			Unavailable: true,
+		}
 		jsonData, err = json.Marshal(&guildUnavailable)
 		if err != nil {
 			return []byte(""), nil

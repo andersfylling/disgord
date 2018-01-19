@@ -4,16 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
-
-func Check(err error, t *testing.T) {
-	if err != nil {
-		t.Error(err)
-	}
-}
 
 func ValidateJSONMarshalling(b []byte, v interface{}) error {
 	var err error
