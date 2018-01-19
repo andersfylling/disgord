@@ -13,10 +13,10 @@ type AuditLog struct {
 }
 
 type AuditLogEntry struct {
-	TargetID   snowflake.ID      `json:"target_id"`
+	TargetID   snowflake.ID      `json:"target_id,string"`
 	Changes    []*AuditLogChange `json:"changes,omitempty"`
-	UserID     snowflake.ID      `json:"user_id"`
-	ID         snowflake.ID      `json:"id"`
+	UserID     snowflake.ID      `json:"user_id,string"`
+	ID         snowflake.ID      `json:"id,string"`
 	ActionType uint              `json:"action_type"`
 	Options    []*AuditLogOption `json:"options,omitempty"`
 	Reason     string            `json:"reason,omitempty"`

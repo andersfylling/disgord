@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	ID            snowflake.ID `json:"id,omitempty"`
+	ID            snowflake.ID `json:"id,omitempty,string"`
 	Username      string       `json:"username,omitempty"`
 	Discriminator string       `json:"discriminator,omitempty"`
 	Email         string       `json:"email,omitempty"`
