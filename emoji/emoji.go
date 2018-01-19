@@ -1,7 +1,9 @@
 package emoji
 
-import "github.com/andersfylling/snowflake"
-import "github.com/andersfylling/disgord/user"
+import (
+	"github.com/andersfylling/disgord/user"
+	"github.com/andersfylling/snowflake"
+)
 
 type Emoji struct {
 	ID            snowflake.ID   `json:"id"`
