@@ -6,7 +6,7 @@ import "github.com/andersfylling/snowflake"
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type Region struct {
 	// ID unique ID for the region
-	ID snowflake.ID `json:"id,string"`
+	ID snowflake.ID `json:"id"`
 
 	// Name name of the region
 	Name string `json:"name"`

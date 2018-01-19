@@ -6,13 +6,13 @@ import "github.com/andersfylling/snowflake"
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
 type State struct {
 	// GuildID the guild id this voice state is for
-	GuildID snowflake.ID `json:"guild_id,string,omitempty"` // ? |
+	GuildID snowflake.ID `json:"guild_id,omitempty"` // ? |
 
 	// ChannelID the channel id this user is connected to
-	ChannelID snowflake.ID `json:"channel_id,string"` // |
+	ChannelID snowflake.ID `json:"channel_id"` // |
 
 	// UserID the user id this voice state is for
-	UserID snowflake.ID `json:"user_id,string"` // |
+	UserID snowflake.ID `json:"user_id"` // |
 
 	// SessionID the session id for this voice state
 	SessionID string `json:"session_id"` // |
