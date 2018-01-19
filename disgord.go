@@ -7,6 +7,7 @@ import (
 
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/guild"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
@@ -58,9 +59,9 @@ func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
 	return dg
 }
 
-type Guilds []*Guild
+type Guilds []*guild.Guild
 
-func (g *Guilds) Get(id snowflake.ID) (*Guild, error) {
+func (g *Guilds) Get(id snowflake.ID) (*guild.Guild, error) {
 	return nil, nil
 }
 
