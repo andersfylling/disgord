@@ -1,15 +1,17 @@
-package guild
+package guild_test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/andersfylling/disgord/guild"
 )
 
 func TestGuildEmbed(t *testing.T) {
 	res := []byte("{\"enabled\":true,\"channel_id\":\"41771983444115456\"}")
 
 	// convert to struct
-	guildEmbed := Embed{}
+	guildEmbed := guild.Embed{}
 	err := json.Unmarshal(res, &guildEmbed)
 	if err != nil {
 		t.Error(err)

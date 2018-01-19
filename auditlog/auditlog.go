@@ -34,7 +34,7 @@ type AuditLogOption struct {
 	MembersRemoved   string       `json:"members_removed"`
 	ChannelID        snowflake.ID `json:"channel_id"`
 	Count            string       `json:"count"`
-	ID               snowflake.ID `json:"id,string"`
+	ID               snowflake.ID `json:"id"`
 	Type             string       `json:"type"` // type of overwritten entity ("member" or "role")
 	RoleName         string       `json:"role_name"`
 }
