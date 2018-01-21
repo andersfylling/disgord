@@ -8,7 +8,7 @@ import (
 )
 
 func TestGuildMemberMarshalling(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/member1.json")
+	data, err := ioutil.ReadFile("testdata/member1.json")
 	testutil.Check(err, t)
 
 	v := Member{}

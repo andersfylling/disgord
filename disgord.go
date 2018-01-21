@@ -8,7 +8,6 @@ import (
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/guild"
-	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,13 +58,7 @@ func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
 	return dg
 }
 
-type Guilds []*guild.Guild
-
-func (g *Guilds) Get(id snowflake.ID) (*guild.Guild, error) {
-	return nil, nil
-}
-
-// EventHook is an application-level type for handling discord requests.
+// EventObserver is an application-level type for handling discord requests.
 // All callbacks are optional, and whether they are defined or not
 // is used to determine whether the EventDispatcher will send events to them.
 type EventObserver struct {
@@ -97,7 +90,7 @@ type Disgord struct {
 	//*EventObserver
 
 	// Guilds all them guild objects
-	Guilds Guilds
+	Guilds []*guild.Guild
 }
 
 // Connect establishes a websocket connection to the discord API
@@ -112,12 +105,4 @@ func (d *Disgord) Disconnect() error {
 	d.Lock()
 	defer d.Unlock()
 	return d.ws.Disconnect()
-}
-
-// Reconnect
-func (d *Disgord) Reconnect() error {
-	d.Lock()
-	defer d.Unlock()
-
-	return d.ws.Reconnect()
 }

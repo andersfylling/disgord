@@ -8,7 +8,7 @@ import (
 )
 
 func TestGuildMarshal(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/guild1.json")
+	data, err := ioutil.ReadFile("testdata/guild1.json")
 	testutil.Check(err, t)
 
 	v := Guild{}
@@ -17,7 +17,7 @@ func TestGuildMarshal(t *testing.T) {
 }
 
 func TestGuildMarshalUnavailable(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/guildUnavailable1.json")
+	data, err := ioutil.ReadFile("testdata/guildUnavailable1.json")
 	testutil.Check(err, t)
 
 	v := Guild{}

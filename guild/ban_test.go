@@ -8,7 +8,7 @@ import (
 )
 
 func TestBanObject(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/ban1.json")
+	data, err := ioutil.ReadFile("testdata/ban1.json")
 	testutil.Check(err, t)
 
 	ban := Ban{}

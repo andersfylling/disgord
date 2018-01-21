@@ -2,6 +2,8 @@ package guild
 
 import (
 	"encoding/json"
+	"errors"
+	"sync"
 
 	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discord"
@@ -49,6 +51,8 @@ type Guild struct {
 	Members     []*Member           `json:"members,omitempty"`      // ?*|
 	Channels    []*channel.Channel  `json:"channels,omitempty"`     // ?*|
 	Presences   []*discord.Presence `json:"presences,omitempty"`    // ?*|
+
+	sync.RWMutex `json:"-"`
 }
 
 // Compare two guild objects
@@ -80,4 +84,113 @@ func (guild *Guild) MarshalJSON() ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func (guild *Guild) AddChannel(channel *channel.Channel) error {
+	guild.Lock()
+	guild.Unlock()
+
+	// TODO: implement sorting for faster searching later
+	guild.Channels = append(guild.Channels, channel)
+
+	return nil
+}
+
+func (guild *Guild) AddMember(member *Member) error {
+	guild.Lock()
+	guild.Unlock()
+
+	// TODO: implement sorting for faster searching later
+	guild.Members = append(guild.Members, member)
+
+	return nil
+}
+
+func (guild *Guild) AddRole(role *discord.Role) error {
+	guild.Lock()
+	guild.Unlock()
+
+	// TODO: implement sorting for faster searching later
+	guild.Roles = append(guild.Roles, role)
+
+	return nil
+}
+
+// Member return a member by his/her userid
+func (guild *Guild) Member(id snowflake.ID) (*Member, error) {
+	guild.RLock()
+	defer guild.RUnlock()
+
+	for _, member := range guild.Members {
+		if member.User.ID == id {
+			return member, nil
+		}
+	}
+
+	return nil, errors.New("member not found in guild")
+}
+
+// MemberByName retrieve a slice of members with same username or nickname
+func (guild *Guild) MemberByName(name string) ([]*Member, error) {
+	guild.RLock()
+	defer guild.RUnlock()
+
+	var members []*Member
+	for _, member := range guild.Members {
+		if member.Nick == name || member.User.Username == name {
+			members = append(members, member)
+		}
+	}
+
+	if len(members) == 0 {
+		return nil, errors.New("no members with that nick or username was found in guild")
+	}
+
+	return members, nil
+}
+
+// Role retrieve a role based on role id
+func (guild *Guild) Role(id snowflake.ID) (*discord.Role, error) {
+	guild.RLock()
+	defer guild.RUnlock()
+
+	for _, role := range guild.Roles {
+		if role.ID == id {
+			return role, nil
+		}
+	}
+
+	return nil, errors.New("role not found in guild")
+}
+
+// RoleByTitle retrieves a slice of roles with same name
+func (guild *Guild) RoleByName(name string) ([]*discord.Role, error) {
+	guild.RLock()
+	defer guild.RUnlock()
+
+	var roles []*discord.Role
+	for _, role := range guild.Roles {
+		if role.Name == name {
+			roles = append(roles, role)
+		}
+	}
+
+	if len(roles) == 0 {
+		return nil, errors.New("no roles were found in guild")
+	}
+
+	return roles, nil
+}
+
+func (guild *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
+	guild.RLock()
+	defer guild.RUnlock()
+
+	for _, channel := range guild.Channels {
+		if channel.ID == id {
+			return channel, nil
+		}
+	}
+
+	return nil, errors.New("channel not found in guild")
 }

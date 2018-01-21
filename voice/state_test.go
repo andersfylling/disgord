@@ -8,7 +8,7 @@ import (
 )
 
 func TestStateMarshalling(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/state1.json")
+	data, err := ioutil.ReadFile("testdata/state1.json")
 	testutil.Check(err, t)
 
 	state := State{}

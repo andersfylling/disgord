@@ -8,7 +8,7 @@ import (
 )
 
 func TestConvertAuditLogParamsToStr(t *testing.T) {
-	data, err := ioutil.ReadFile("examples/auditlog1.json")
+	data, err := ioutil.ReadFile("testdata/auditlog1.json")
 	testutil.Check(err, t)
 
 	v := AuditLog{}
