@@ -74,7 +74,7 @@ func (c *Client) Connect() (err error) {
 
 	// setup read and write goroutines
 	go c.readPump()
-	go c.writePump()
+	go c.writePump(c.conn)
 
 	return
 }
@@ -169,90 +169,6 @@ func (c *Client) operationHandlers() {
 	}
 }
 
-//
-// 	// NOTE. I completely stole this defer func from discordgo. It was a too nice not to take advantage of.
-// 	//  Will this return any potential errors?
-// 	defer func() {
-// 		if err != nil {
-// 			dws.Close()
-// 			dws.Conn = nil
-// 		}
-// 	}()
-//
-// 	// Once connected, the client should immediately receive an Opcode 10 Hello payload, with information on the
-// 	// connection's heartbeat interval:
-// 	// {
-// 	//   "heartbeat_interval": 45000,
-// 	//   "_trace": ["discord-gateway-prd-1-99"]
-// 	// }
-// 	messageType, packet, err := dws.ReadMessage()
-// 	fmt.Printf("%+v\n", string(packet))
-// 	if err != nil {
-// 		return
-// 	}
-// 	if messageType != 1 {
-// 		logrus.Fatal("encrypted hello package, missing support")
-// 	}
-//
-// 	// handle the incoming hello data and store it in our ws configuration
-// 	event := &GatewayPayload{
-// 		Data: dws,
-// 	}
-// 	err = json.Unmarshal(packet, &event)
-// 	if err != nil {
-// 		return
-// 	}
-// 	if event.Op != 10 {
-// 		err = errors.New("while opening a discord ws connection, discord responded with op " + string(event.Op) + " when 10 was expected")
-// 		return
-// 	}
-//
-// 	fmt.Println(dws.HeartbeatInterval)
-//
-// 	// create a new session, otherwise respond with a resume packet
-// 	if dws.SessionID == "" && dws.sequenceNumber == 0 {
-// 		err = dws.sendIdentity()
-// 		if err != nil {
-// 			return err
-// 		}
-// 	} else {
-// 		resume := GatewayPayload{
-// 			Op: 6,
-// 			Data: struct {
-// 				Token      string `json:"token"`
-// 				SessionID  string `json:"session_id"`
-// 				SequenceNr uint   `json:"seq"`
-// 			}{dws.token, dws.SessionID, dws.sequenceNumber},
-// 		}
-//
-// 		dws.wsMutex.Lock()
-// 		err = dws.WriteJSON(resume)
-// 		dws.wsMutex.Unlock()
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-//
-// 	// Expecting a resumed, invalid session or ready event
-// 	messageType, packet, err = dws.ReadMessage()
-// 	if err != nil {
-// 		return
-// 	}
-// 	event, err = dws.onEvent(messageType, packet)
-// 	if err != nil {
-// 		return
-// 	}
-//
-// 	// first incoming data recieved. We are now connected to discord.
-// 	dws.connected = make(chan struct{})
-//
-// 	// start pulsating keep-alive packets
-// 	go dws.pulsate(dws.Conn, dws.connected)
-// 	go dws.listenForDiscordEvents(dws.Conn, dws.connected)
-//
-// 	return nil
-// }
-
 // Disconnect closes the discord websocket connection
 func (c *Client) Disconnect() (err error) {
 	c.Lock()
@@ -333,6 +249,7 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 		case <-ticker.C:
 			continue
 		case <-disconnected:
+			logrus.Info("Stopping pulse")
 			return
 		}
 	}

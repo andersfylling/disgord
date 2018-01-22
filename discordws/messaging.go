@@ -21,39 +21,36 @@ func (c *Client) readPump() {
 	logrus.Info("Listening for packets...")
 
 	for {
-		messageType, packet, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logrus.Infof(">>> %+v\n", packet)
-				logrus.Errorf("error: %v", err)
-			}
-			//close(c.disconnected)
-			//break
-		}
-
-		logrus.Infof("<-: %+v\n", string(packet))
-
-		// TODO: zlib decompression support
-		if messageType != websocket.TextMessage {
-			logrus.Fatalf("Cannot handle pacaket type: %d", messageType)
-		}
-
-		// parse to gateway payload object
-		evt := GatewayPayload{}
-		err = json.Unmarshal(packet, &evt)
-		if err != nil {
-			logrus.Error(err)
-		}
-
-		// notify operation listeners
-		c.operationChan <- evt
-
 		select {
 		case <-c.disconnected:
 			logrus.Info("closing readPump")
 			return
 		default:
-			continue
+			messageType, packet, err := c.conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					logrus.Errorf("error: %v", err)
+				}
+				close(c.disconnected)
+				continue
+			}
+
+			logrus.Infof("<-: %+v\n", string(packet))
+
+			// TODO: zlib decompression support
+			if messageType != websocket.TextMessage {
+				logrus.Fatalf("Cannot handle pacaket type: %d", messageType)
+			}
+
+			// parse to gateway payload object
+			evt := GatewayPayload{}
+			err = json.Unmarshal(packet, &evt)
+			if err != nil {
+				logrus.Error(err)
+			}
+
+			// notify operation listeners
+			c.operationChan <- evt
 		}
 	}
 }
@@ -63,7 +60,7 @@ func (c *Client) readPump() {
 // A goroutine running writePump is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) writePump() {
+func (c *Client) writePump(ws *websocket.Conn) {
 	defer func() {
 		c.conn.Close()
 	}()
@@ -80,27 +77,14 @@ func (c *Client) writePump() {
 				return
 			}
 
-			b, err := json.Marshal(&message)
-			if err != nil {
-				logrus.Error(err)
-				continue
-			}
-
-			logrus.Infof("msg length: %d", len(b))
-			if len(b) > MaxBytesSize {
-				logrus.Error("Payload was above maximum byte size")
-				continue
-			}
-
 			c.wsMutex.Lock()
-			err = c.conn.WriteJSON(&b)
+			err := ws.WriteJSON(&message)
 			c.wsMutex.Unlock()
 			if err != nil {
 				logrus.Error(err)
 			}
 
-			fmt.Printf("->: %+v\n", string(b))
-			b, err = json.MarshalIndent(&message, "", "  ")
+			b, err := json.MarshalIndent(&message, "", "  ")
 			if err != nil {
 				fmt.Printf("->: %+v\n", message)
 			} else {
