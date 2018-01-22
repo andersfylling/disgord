@@ -198,7 +198,7 @@ func (dws *Client) Reconnect() error {
 	return nil
 }
 
-func (dws *Client) pulsate(ws *websocket.Conn, connected <-chan struct{}) {
+func (dws *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 	// previous := time.Now().UTC()
 
 	ticker := time.NewTicker(time.Millisecond * dws.HeartbeatInterval)
@@ -220,7 +220,7 @@ func (dws *Client) pulsate(ws *websocket.Conn, connected <-chan struct{}) {
 		select {
 		case <-ticker.C:
 			continue
-		case <-connected:
+		case <-disconnected:
 			return
 		}
 	}
