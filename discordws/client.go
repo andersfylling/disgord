@@ -15,8 +15,8 @@ import (
 )
 
 // NewRequiredClient same as NewClient(...), but program exits on failure.
-func NewRequiredClient(config *Config) *Client {
-	c, err := NewClient(config)
+func NewRequiredClient(conf *Config) *Client {
+	c, err := NewClient(conf)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func NewClient(conf *Config) (*Client, error) {
 		}
 	}
 	if !acceptedEncoding {
-		return nil, fmt.Errorf("Discord requires data encoding to be of the following %swhile %s encoding was requested", strings.Join(Encodings, ", "), encoding)
+		return nil, fmt.Errorf("Discord requires data encoding to be of the following '%s', while '%s' encoding was requested", strings.Join(Encodings, "', '"), encoding)
 	}
 
 	// check the http client exists. Otherwise create one.
@@ -61,11 +61,15 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// return configured discord websocket client
 	return &Client{
-		token:              conf.Token,
-		URLAPIVersion:      BaseURL + "/v" + strconv.Itoa(conf.DAPIVersion),
-		HTTPClient:         conf.HTTPClient,
-		DiscordAPIVersion:  conf.DAPIVersion,
-		DiscordAPIEncoding: encoding,
+		token:         conf.Token,
+		urlAPIVersion: BaseURL + "/v" + strconv.Itoa(conf.DAPIVersion),
+		httpClient:    conf.HTTPClient,
+		dAPIVersion:   conf.DAPIVersion,
+		dAPIEncoding:  encoding,
+		disconnected:  nil,
+		operationChan: make(chan GatewayPayload),
+		eventChans:    make(map[string](chan []byte)),
+		sendChan:      make(chan []byte),
 	}, nil
 }
 
@@ -73,46 +77,52 @@ func NewClient(conf *Config) (*Client, error) {
 type Client struct {
 	sync.RWMutex
 
-	URLAPIVersion string `json:"-"`
+	urlAPIVersion string `json:"-"`
 
 	// URL Websocket URL web socket url
-	URL string `json:"-"`
+	url string `json:"-"`
 
-	HTTPClient *http.Client
+	httpClient *http.Client `json:"-"`
 
-	DiscordAPIVersion  int    `json:"v"`
-	DiscordAPIEncoding string `json:"encoding"`
+	dAPIVersion    int    `json:"-"`
+	dAPIEncoding   string `json:"-"`
+	token          string `json:"-"`
+	sequenceNumber uint   `json:"-"`
 
 	HeartbeatInterval time.Duration `json:"heartbeat_interval"`
-	sequenceNumber    uint          `json:"-"`
 	Trace             []string      `json:"_trace"`
 	SessionID         string        `json:"session_id"`
-	token             string        `json:"-"`
 	ShardCount        uint          `json:"shard_count"`
 	ShardID           snowflake.ID  `json:"shard_id"`
 
-	connected chan struct{}
+	disconnected  chan struct{}
+	operationChan chan GatewayPayload
+	eventChans    map[string](chan []byte)
+	sendChan      chan []byte
 
 	// websocket connection
-	*websocket.Conn `json:"-"`
-	wsMutex         sync.Mutex // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
+	conn    *websocket.Conn `json:"-"`
+	wsMutex sync.Mutex      // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
+
+	// heartbeat mutex keeps us from creating another pulser
+	pulseMutex sync.Mutex
 }
 
-func (dws *Client) String() string {
+func (c *Client) String() string {
 	return fmt.Sprintf("%s v%d.%d.%d", LibName, LibVersionMajor, LibVersionMinor, LibVersionPatch)
 }
 
 // Dead check if the websocket connection isn't established AKA "dead"
-func (dws *Client) Dead() bool {
-	return dws.Conn == nil
+func (c *Client) Dead() bool {
+	return c.conn == nil
 }
 
 // Routed checks if the client has recieved the root endpoint for discord API communication
-func (dws *Client) Routed() bool {
-	return dws.URL != ""
+func (c *Client) Routed() bool {
+	return c.url != ""
 }
 
 // RemoveRoute deletes cached discord wss endpoint
-func (dws *Client) RemoveRoute() {
-	dws.URL = ""
+func (c *Client) RemoveRoute() {
+	c.url = ""
 }

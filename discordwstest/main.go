@@ -13,8 +13,7 @@ import (
 func main() {
 	token := os.Getenv("DISGORD_TOKEN")
 	if token == "" {
-		token = "NDA0NzY4MzUxMjgyMzk3MTg1.DUapbA.9uF6sXXIiOs7NzWC-nYdBz6Oaos"
-		// panic("Missing disgord token in env var: DISGORD_TOKEN")
+		panic("Missing disgord token in env var: DISGORD_TOKEN")
 	}
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
