@@ -59,10 +59,6 @@ func (c *Client) Connect() (err error) {
 		}
 	}()
 
-	// setup operation listeners
-	// These handle sepecific "events" related to the socket connection
-	go c.operationHandlers()
-
 	// establish ws connection
 	c.conn, _, err = websocket.DefaultDialer.Dial(c.url, nil)
 	if err != nil {
@@ -70,6 +66,10 @@ func (c *Client) Connect() (err error) {
 	}
 	logrus.Info("established web socket connection")
 	c.disconnected = make(chan struct{})
+
+	// setup operation listeners
+	// These handle sepecific "events" related to the socket connection
+	go c.operationHandlers()
 
 	// setup read and write goroutines
 	go c.readPump()
@@ -271,7 +271,6 @@ func (c *Client) Disconnect() (err error) {
 
 		if c.disconnected != nil {
 			close(c.disconnected)
-			c.disconnected = nil
 		}
 		for {
 			_, message, err1 := c.conn.ReadMessage()
@@ -294,7 +293,6 @@ func (c *Client) Disconnect() (err error) {
 	case <-time.After(time.Second * 2):
 	}
 	err = c.conn.Close()
-	c.conn = nil
 	return
 }
 
@@ -322,9 +320,9 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 
 	for {
 
-		c.RLock()
+		c.Lock()
 		snr := c.sequenceNumber
-		c.RUnlock()
+		c.Unlock()
 
 		data := struct {
 			OP uint `json:"op"`

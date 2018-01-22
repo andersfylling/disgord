@@ -24,17 +24,18 @@ func (c *Client) readPump() {
 		messageType, packet, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				logrus.Infof(">>> %+v\n", string(packet))
 				logrus.Errorf("error: %v", err)
 			}
-			close(c.disconnected)
-			break
+			//close(c.disconnected)
+			//break
 		}
 
 		logrus.Infof("<-: %+v\n", string(packet))
 
 		// TODO: zlib decompression support
 		if messageType != websocket.TextMessage {
-			logrus.Fatal("Cannot handle binary packets yet")
+			logrus.Fatalf("Cannot handle pacaket type: %d", messageType)
 		}
 
 		// parse to gateway payload object
@@ -51,6 +52,8 @@ func (c *Client) readPump() {
 		case <-c.disconnected:
 			logrus.Info("closing readPump")
 			return
+		default:
+			continue
 		}
 	}
 }
