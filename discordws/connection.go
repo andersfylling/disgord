@@ -60,6 +60,7 @@ func (c *Client) Connect() (err error) {
 	}()
 
 	// establish ws connection
+	logrus.Info("Connecting to url: " + c.url)
 	c.conn, _, err = websocket.DefaultDialer.Dial(c.url, nil)
 	if err != nil {
 		return
@@ -133,6 +134,9 @@ func (c *Client) operationHandlers() {
 					logrus.Error(err)
 				}
 
+				// TODO, this might create several idle goroutines..
+				go c.pulsate(c.conn, c.disconnected)
+
 				// send identify or resume packet
 				if c.SessionID == "" && c.sequenceNumber == 0 {
 					err = c.sendIdentity()
@@ -151,9 +155,6 @@ func (c *Client) operationHandlers() {
 
 					c.sendChan <- resume
 				}
-
-				// TODO, this might create several idle goroutines..
-				go c.pulsate(c.conn, c.disconnected)
 			case 11:
 				// zombied or failed connection
 			default:
@@ -316,8 +317,6 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 	ticker := time.NewTicker(time.Millisecond * c.HeartbeatInterval)
 	defer ticker.Stop()
 
-	<-ticker.C
-
 	for {
 
 		c.Lock()
@@ -347,12 +346,7 @@ func (c *Client) sendIdentity() (err error) {
 		Compress       bool        `json:"compress"`
 		LargeThreshold uint        `json:"large_threshold"`
 		Shard          *[2]uint    `json:"shard,omitempty"`
-		Presence       struct {
-			Since  *uint       `json:"since"`
-			Game   interface{} `json:"game"`
-			Status string      `json:"status"`
-			AFK    bool        `json:"afk"`
-		} `json:"presence"`
+		Presence       interface{} `json:"presence,omitempty"`
 	}{
 		Token: c.token,
 		Properties: struct {
@@ -360,22 +354,22 @@ func (c *Client) sendIdentity() (err error) {
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
 		}{runtime.GOOS, c.String(), c.String()},
-		//Shard: dws
+		LargeThreshold: 250,
+		// Presence: struct {
+		// 	Since  *uint       `json:"since"`
+		// 	Game   interface{} `json:"game"`
+		// 	Status string      `json:"status"`
+		// 	AFK    bool        `json:"afk"`
+		// }{Status: "online"},
 	}
 
 	if c.ShardCount > 1 {
 		identityPayload.Shard = &[2]uint{uint(c.ShardID), c.ShardCount}
 	}
 
-	// convert to byte array
-	b, err := json.Marshal(&identityPayload)
-	if err != nil {
-		return
-	}
-
 	identity := GatewayPayload{
 		Op:   2,
-		Data: string(b),
+		Data: identityPayload,
 	}
 
 	c.sendChan <- identity

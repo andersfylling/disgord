@@ -4,6 +4,8 @@ const (
 	// MaxReconnectTries restrict the number of reconnect attempt to the discord websocket service
 	MaxReconnectTries = 5
 
+	MaxBytesSize = 4096
+
 	DefaultHTTPTimeout = 10
 
 	LowestAPIVersion  = 6

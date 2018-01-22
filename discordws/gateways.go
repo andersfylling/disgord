@@ -8,7 +8,7 @@ import (
 type GatewayPayload struct {
 	Op             uint        `json:"op"`
 	Data           interface{} `json:"d"`
-	SequenceNumber *uint       `json:"s,omitempty"`
+	SequenceNumber uint        `json:"s,omitempty"`
 	EventName      string      `json:"t,omitempty"`
 }
 

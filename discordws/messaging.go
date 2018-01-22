@@ -24,7 +24,7 @@ func (c *Client) readPump() {
 		messageType, packet, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logrus.Infof(">>> %+v\n", string(packet))
+				logrus.Infof(">>> %+v\n", packet)
 				logrus.Errorf("error: %v", err)
 			}
 			//close(c.disconnected)
@@ -86,13 +86,26 @@ func (c *Client) writePump() {
 				continue
 			}
 
+			logrus.Infof("msg length: %d", len(b))
+			if len(b) > MaxBytesSize {
+				logrus.Error("Payload was above maximum byte size")
+				continue
+			}
+
 			c.wsMutex.Lock()
-			err = c.conn.WriteJSON(b)
+			err = c.conn.WriteJSON(&b)
 			c.wsMutex.Unlock()
 			if err != nil {
 				logrus.Error(err)
 			}
-			fmt.Printf("->: %+v\n", message)
+
+			fmt.Printf("->: %+v\n", string(b))
+			b, err = json.MarshalIndent(&message, "", "  ")
+			if err != nil {
+				fmt.Printf("->: %+v\n", message)
+			} else {
+				fmt.Printf("->: %+v\n", string(b))
+			}
 		case <-c.disconnected:
 			logrus.Info("closing writePump")
 			return
