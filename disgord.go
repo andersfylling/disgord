@@ -34,7 +34,11 @@ func NewRequiredDisgord() *Disgord {
 // NewDisgordWithHTTPClient specify http configuration for the discord connection. Affects REST and pre- websocket handshake, for wss endpoint request
 func NewDisgordWithHTTPClient(httpClient *http.Client) (*Disgord, error) {
 	// Use discordws to keep the socket connection going
-	dws, err := discordws.NewClient(httpClient, endpoint.APIVersion, endpoint.APIComEncoding)
+	dws, err := discordws.NewClient(&discordws.Config{
+		HTTPClient:   httpClient,
+		DAPIVersion:  endpoint.APIVersion,
+		DAPIEncoding: endpoint.APIComEncoding,
+	})
 	if err != nil {
 		return nil, err
 	}
