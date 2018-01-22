@@ -69,7 +69,7 @@ func NewClient(conf *Config) (*Client, error) {
 		disconnected:  nil,
 		operationChan: make(chan GatewayPayload),
 		eventChans:    make(map[string](chan []byte)),
-		sendChan:      make(chan []byte),
+		sendChan:      make(chan interface{}),
 	}, nil
 }
 
@@ -98,7 +98,7 @@ type Client struct {
 	disconnected  chan struct{}
 	operationChan chan GatewayPayload
 	eventChans    map[string](chan []byte)
-	sendChan      chan []byte
+	sendChan      chan interface{}
 
 	// websocket connection
 	conn    *websocket.Conn `json:"-"`

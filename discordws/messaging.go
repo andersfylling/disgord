@@ -2,6 +2,7 @@ package discordws
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -29,10 +30,10 @@ func (c *Client) readPump() {
 			break
 		}
 
-		logrus.Infof("Recieved: %+v\n", string(packet))
+		logrus.Infof("<-: %+v\n", string(packet))
 
 		// TODO: zlib decompression support
-		if messageType == websocket.BinaryMessage {
+		if messageType != websocket.TextMessage {
 			logrus.Fatal("Cannot handle binary packets yet")
 		}
 
@@ -76,10 +77,19 @@ func (c *Client) writePump() {
 				return
 			}
 
-			err := c.conn.WriteJSON(message)
+			b, err := json.Marshal(&message)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+
+			c.wsMutex.Lock()
+			err = c.conn.WriteJSON(b)
+			c.wsMutex.Unlock()
 			if err != nil {
 				logrus.Error(err)
 			}
+			fmt.Printf("->: %+v\n", message)
 		case <-c.disconnected:
 			logrus.Info("closing writePump")
 			return

@@ -3,7 +3,6 @@ package discordws
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -89,7 +88,6 @@ func (c *Client) operationHandlers() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			logrus.Infof("Incoming: %+v\n", gp)
 
 			switch gp.Op {
 			case 0:
@@ -101,15 +99,11 @@ func (c *Client) operationHandlers() {
 				snr := c.sequenceNumber
 				c.Unlock()
 
-				c.wsMutex.Lock()
-				err := c.conn.WriteJSON(struct {
+				c.sendChan <- struct {
 					OP uint  `json:"op"`
 					d  *uint `json:"d"`
-				}{1, &snr})
-				c.wsMutex.Unlock()
-				if err != nil {
-					logrus.Error(err)
-				}
+				}{1, &snr}
+
 			// case 2:
 			// case 3:
 			// case 4:
@@ -155,12 +149,7 @@ func (c *Client) operationHandlers() {
 						}{c.token, c.SessionID, c.sequenceNumber},
 					}
 
-					c.wsMutex.Lock()
-					err = c.conn.WriteJSON(resume)
-					c.wsMutex.Unlock()
-					if err != nil {
-						logrus.Error(err)
-					}
+					c.sendChan <- resume
 				}
 
 				// TODO, this might create several idle goroutines..
@@ -322,12 +311,14 @@ func (dws *Client) Reconnect() error {
 }
 
 func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
+	//c.pulseMutex.Lock()
+	//defer c.pulseMutex.Unlock()
 	// previous := time.Now().UTC()
 
 	ticker := time.NewTicker(time.Millisecond * c.HeartbeatInterval)
 	defer ticker.Stop()
+
+	<-ticker.C
 
 	for {
 
@@ -340,12 +331,7 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 			d  uint `json:"d"`
 		}{1, snr}
 
-		c.wsMutex.Lock()
-		ws.WriteJSON(data)
-		c.wsMutex.Unlock()
-
-		fmt.Printf("Sent: %+v\n", data)
-
+		c.sendChan <- data
 		select {
 		case <-ticker.C:
 			continue
@@ -394,14 +380,6 @@ func (c *Client) sendIdentity() (err error) {
 		Data: string(b),
 	}
 
-	fmt.Printf("Sending: %+v\n", identity)
-
-	c.wsMutex.Lock()
-	err = c.conn.WriteJSON(identity)
-	c.wsMutex.Unlock()
-	if err != nil {
-		return
-	}
-
+	c.sendChan <- identity
 	return nil
 }
