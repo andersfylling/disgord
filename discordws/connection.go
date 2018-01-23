@@ -100,19 +100,9 @@ func (c *Client) operationHandlers() {
 				snr := c.sequenceNumber
 				c.Unlock()
 
-				c.sendChan <- struct {
-					OP uint  `json:"op"`
-					d  *uint `json:"d"`
-				}{1, &snr}
-
-			// case 2:
-			// case 3:
-			// case 4:
-			// case 5:
-			// case 6:
+				c.sendChan <- &GatewayPayload{Op: 1, Data: &snr}
 			case 7:
 				// reconnect
-			// case 8:
 			case 9:
 				// invalid session. Must respond with a identify packet
 				err := c.sendIdentity()
@@ -144,7 +134,7 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 				} else {
-					resume := GatewayPayload{
+					resume := &GatewayPayload{
 						Op: 6,
 						Data: struct {
 							Token      string `json:"token"`
@@ -156,7 +146,10 @@ func (c *Client) operationHandlers() {
 					c.sendChan <- resume
 				}
 			case 11:
-				// zombied or failed connection
+				// heartbeat recieved
+				c.Lock()
+				c.heartbeatAcquired = time.Now()
+				c.Unlock()
 			default:
 				// unknown
 				logrus.Warningf("Unknown operation: %+v\n", gp)
@@ -214,9 +207,9 @@ func (c *Client) Disconnect() (err error) {
 }
 
 // Reconnect to discord endpoint
-func (dws *Client) Reconnect() error {
-	dws.Lock()
-	defer dws.Unlock()
+func (c *Client) Reconnect() error {
+	c.Lock()
+	defer c.Unlock()
 
 	for try := 0; try < MaxReconnectTries; try++ {
 
@@ -236,15 +229,36 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 	for {
 
 		c.Lock()
+		last := c.heartbeatAcquired
+		interval := c.HeartbeatInterval
 		snr := c.sequenceNumber
 		c.Unlock()
 
-		data := struct {
-			OP uint `json:"op"`
-			d  uint `json:"d"`
-		}{1, snr}
+		if interval == 0 {
+			close(c.disconnected)
+		}
 
-		c.sendChan <- data
+		c.sendChan <- &GatewayPayload{Op: 1, Data: snr}
+
+		// verify the heartbeat ACK
+		timeout := make(chan bool, 1)
+		go func() {
+			time.Sleep((1 * time.Second) % interval)
+			timeout <- true
+		}()
+
+		select {
+		case <-timeout: // ugh..
+			var die bool
+			c.Lock()
+			die = c.heartbeatAcquired == last
+			c.Unlock()
+
+			if die {
+				close(c.disconnected)
+			}
+		}
+
 		select {
 		case <-ticker.C:
 			continue
@@ -284,7 +298,7 @@ func (c *Client) sendIdentity() (err error) {
 		identityPayload.Shard = &[2]uint{uint(c.ShardID), c.ShardCount}
 	}
 
-	identity := GatewayPayload{
+	identity := &GatewayPayload{
 		Op:   2,
 		Data: identityPayload,
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os/user"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,21 +62,23 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// return configured discord websocket client
 	return &Client{
-		token:         conf.Token,
-		urlAPIVersion: BaseURL + "/v" + strconv.Itoa(conf.DAPIVersion),
-		httpClient:    conf.HTTPClient,
-		dAPIVersion:   conf.DAPIVersion,
-		dAPIEncoding:  encoding,
-		disconnected:  nil,
-		operationChan: make(chan GatewayPayload),
-		eventChans:    make(map[string](chan []byte)),
-		sendChan:      make(chan interface{}),
+		token:             conf.Token,
+		urlAPIVersion:     BaseURL + "/v" + strconv.Itoa(conf.DAPIVersion),
+		httpClient:        conf.HTTPClient,
+		dAPIVersion:       conf.DAPIVersion,
+		dAPIEncoding:      encoding,
+		heartbeatAcquired: time.Now(),
+		disconnected:      nil,
+		operationChan:     make(chan *GatewayPayload),
+		eventChans:        make(map[string](chan []byte)),
+		sendChan:          make(chan *GatewayPayload),
+		Myself:            &user.User{},
 	}, nil
 }
 
-// Client holds the web socket state
+// Client holds the web socket state and can be used directly in marshal/unmarshal to work with intance data
 type Client struct {
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 
 	urlAPIVersion string `json:"-"`
 
@@ -90,22 +93,25 @@ type Client struct {
 	sequenceNumber uint   `json:"-"`
 
 	HeartbeatInterval time.Duration `json:"heartbeat_interval"`
+	heartbeatAcquired time.Time     `json:"-"`
 	Trace             []string      `json:"_trace"`
 	SessionID         string        `json:"session_id"`
 	ShardCount        uint          `json:"shard_count"`
 	ShardID           snowflake.ID  `json:"shard_id"`
 
-	disconnected  chan struct{}
-	operationChan chan GatewayPayload
-	eventChans    map[string](chan []byte)
-	sendChan      chan interface{}
+	disconnected  chan struct{}            `json:"-"`
+	operationChan chan *GatewayPayload     `json:"-"`
+	eventChans    map[string](chan []byte) `json:"-"`
+	sendChan      chan *GatewayPayload     `json:"-"`
+
+	Myself *user.User `json:"user"`
 
 	// websocket connection
 	conn    *websocket.Conn `json:"-"`
-	wsMutex sync.Mutex      // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
+	wsMutex sync.Mutex      `json:"-"` // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
 
 	// heartbeat mutex keeps us from creating another pulser
-	pulseMutex sync.Mutex
+	pulseMutex sync.Mutex `json:"-"`
 }
 
 func (c *Client) String() string {

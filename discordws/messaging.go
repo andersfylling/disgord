@@ -43,8 +43,8 @@ func (c *Client) readPump() {
 			}
 
 			// parse to gateway payload object
-			evt := GatewayPayload{}
-			err = json.Unmarshal(packet, &evt)
+			evt := &GatewayPayload{}
+			err = json.Unmarshal(packet, evt)
 			if err != nil {
 				logrus.Error(err)
 			}
