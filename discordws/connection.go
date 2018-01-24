@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/andersfylling/disgord/event"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -41,7 +42,7 @@ func (c *Client) Connect() (err error) {
 			return
 		}
 
-		gatewayResponse := &GetGatewayResponse{}
+		gatewayResponse := &getGatewayResponse{}
 		err = json.Unmarshal([]byte(body), gatewayResponse)
 		if err != nil {
 			return
@@ -60,12 +61,12 @@ func (c *Client) Connect() (err error) {
 	}()
 
 	// establish ws connection
-	logrus.Info("Connecting to url: " + c.url)
+	logrus.Debug("Connecting to url: " + c.url)
 	c.conn, _, err = websocket.DefaultDialer.Dial(c.url, nil)
 	if err != nil {
 		return
 	}
-	logrus.Info("established web socket connection")
+	logrus.Debug("established web socket connection")
 	c.disconnected = make(chan struct{})
 
 	// setup operation listeners
@@ -80,27 +81,45 @@ func (c *Client) Connect() (err error) {
 }
 
 func (c *Client) operationHandlers() {
-	logrus.Info("Ready to recieve operation codes...")
+	logrus.Debug("Ready to recieve operation codes...")
 	for {
 		select {
 		case gp, ok := <-c.operationChan:
 			if !ok {
-				logrus.Info("operationChan is dead..")
+				logrus.Debug("operationChan is dead..")
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
+			// always store the sequence number
+			c.Lock()
+			c.sequenceNumber = gp.SequenceNumber
+			c.Unlock()
+
 			switch gp.Op {
 			case 0:
-				// normal package
-				logrus.Info("Got a normal package")
+				// discord events
+				// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
+
+				// always store the session id if it exists
+				if gp.EventName == event.Ready {
+					c.Lock()
+					err := json.Unmarshal(gp.Data.ByteArr(), c)
+					c.Unlock()
+					if err != nil {
+						logrus.Error(err)
+					}
+				} else if gp.EventName == event.Resumed {
+					// eh? debugging.
+				}
+
 			case 1:
 				// ping
 				c.Lock()
 				snr := c.sequenceNumber
 				c.Unlock()
 
-				c.sendChan <- &GatewayPayload{Op: 1, Data: &snr}
+				c.sendChan <- &gatewayPayload{Op: 1, Data: &snr}
 			case 7:
 				// reconnect
 			case 9:
@@ -111,17 +130,11 @@ func (c *Client) operationHandlers() {
 				}
 			case 10:
 				// hello
-				b, err := json.Marshal(gp)
+				c.Lock()
+				err := json.Unmarshal(gp.Data.ByteArr(), c)
+				c.Unlock()
 				if err != nil {
-					logrus.Error(err)
-				}
-
-				gp2 := &GatewayPayload{
-					Data: c,
-				}
-				err = json.Unmarshal(b, gp2)
-				if err != nil {
-					logrus.Error(err)
+					logrus.Debug(err)
 				}
 
 				// TODO, this might create several idle goroutines..
@@ -134,7 +147,7 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 				} else {
-					resume := &GatewayPayload{
+					resume := &gatewayPayload{
 						Op: 6,
 						Data: struct {
 							Token      string `json:"token"`
@@ -152,11 +165,11 @@ func (c *Client) operationHandlers() {
 				c.Unlock()
 			default:
 				// unknown
-				logrus.Warningf("Unknown operation: %+v\n", gp)
+				logrus.Debugf("Unknown operation: %+v\n", gp)
 			}
 
 		case <-c.disconnected:
-			logrus.Info("exiting operation handler")
+			logrus.Debug("exiting operation handler")
 			return
 		}
 	}
@@ -218,13 +231,15 @@ func (c *Client) Reconnect() error {
 	return nil
 }
 
-func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
-	//c.pulseMutex.Lock()
-	//defer c.pulseMutex.Unlock()
+func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
+	c.pulseMutex.Lock()
+	defer c.pulseMutex.Unlock()
 	// previous := time.Now().UTC()
 
-	ticker := time.NewTicker(time.Millisecond * c.HeartbeatInterval)
+	ticker := time.NewTicker(time.Millisecond * time.Duration(c.HeartbeatInterval))
 	defer ticker.Stop()
+
+	<-ticker.C
 
 	for {
 
@@ -235,35 +250,31 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected <-chan struct{}) {
 		c.Unlock()
 
 		if interval == 0 {
+			logrus.Debug("heartbeat interval was 0")
 			close(c.disconnected)
 		}
 
-		c.sendChan <- &GatewayPayload{Op: 1, Data: snr}
+		c.sendChan <- &gatewayPayload{Op: 1, Data: snr}
 
 		// verify the heartbeat ACK
-		timeout := make(chan bool, 1)
-		go func() {
-			time.Sleep((1 * time.Second) % interval)
-			timeout <- true
-		}()
-
-		select {
-		case <-timeout: // ugh..
+		go func(client *Client, last time.Time, disconnect chan struct{}) {
+			time.Sleep((3 * time.Second) % (time.Duration(interval) * time.Millisecond))
 			var die bool
 			c.Lock()
 			die = c.heartbeatAcquired == last
 			c.Unlock()
 
 			if die {
-				close(c.disconnected)
+				logrus.Debug("heartbeat ACK was not recieved")
+				close(disconnect)
 			}
-		}
+		}(c, last, disconnected)
 
 		select {
 		case <-ticker.C:
 			continue
 		case <-disconnected:
-			logrus.Info("Stopping pulse")
+			logrus.Debug("Stopping pulse")
 			return
 		}
 	}
@@ -298,7 +309,7 @@ func (c *Client) sendIdentity() (err error) {
 		identityPayload.Shard = &[2]uint{uint(c.ShardID), c.ShardCount}
 	}
 
-	identity := &GatewayPayload{
+	identity := &gatewayPayload{
 		Op:   2,
 		Data: identityPayload,
 	}

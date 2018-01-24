@@ -2,7 +2,6 @@ package discordws
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -18,12 +17,12 @@ func (c *Client) readPump() {
 		c.conn.Close()
 	}()
 
-	logrus.Info("Listening for packets...")
+	logrus.Debug("Listening for packets...")
 
 	for {
 		select {
 		case <-c.disconnected:
-			logrus.Info("closing readPump")
+			logrus.Debug("closing readPump")
 			return
 		default:
 			messageType, packet, err := c.conn.ReadMessage()
@@ -35,7 +34,7 @@ func (c *Client) readPump() {
 				continue
 			}
 
-			logrus.Infof("<-: %+v\n", string(packet))
+			logrus.Debugf("<-: %+v\n", string(packet))
 
 			// TODO: zlib decompression support
 			if messageType != websocket.TextMessage {
@@ -43,7 +42,7 @@ func (c *Client) readPump() {
 			}
 
 			// parse to gateway payload object
-			evt := &GatewayPayload{}
+			evt := &gatewayEvent{}
 			err = json.Unmarshal(packet, evt)
 			if err != nil {
 				logrus.Error(err)
@@ -65,14 +64,13 @@ func (c *Client) writePump(ws *websocket.Conn) {
 		c.conn.Close()
 	}()
 
-	logrus.Info("Ready to send packets...")
+	logrus.Debug("Ready to send packets...")
 
 	for {
 		select {
 		case message, ok := <-c.sendChan:
 			if !ok {
 				// The hub closed the channel.
-				logrus.Error("oh no...")
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -86,12 +84,12 @@ func (c *Client) writePump(ws *websocket.Conn) {
 
 			b, err := json.MarshalIndent(&message, "", "  ")
 			if err != nil {
-				fmt.Printf("->: %+v\n", message)
+				logrus.Debugf("->: %+v\n", message)
 			} else {
-				fmt.Printf("->: %+v\n", string(b))
+				logrus.Debugf("->: %+v\n", string(b))
 			}
 		case <-c.disconnected:
-			logrus.Info("closing writePump")
+			logrus.Debug("closing writePump")
 			return
 		}
 	}

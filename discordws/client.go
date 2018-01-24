@@ -69,9 +69,9 @@ func NewClient(conf *Config) (*Client, error) {
 		dAPIEncoding:      encoding,
 		heartbeatAcquired: time.Now(),
 		disconnected:      nil,
-		operationChan:     make(chan *GatewayPayload),
+		operationChan:     make(chan *gatewayEvent),
 		eventChans:        make(map[string](chan []byte)),
-		sendChan:          make(chan *GatewayPayload),
+		sendChan:          make(chan *gatewayPayload),
 		Myself:            &user.User{},
 	}, nil
 }
@@ -90,19 +90,20 @@ type Client struct {
 	dAPIVersion    int    `json:"-"`
 	dAPIEncoding   string `json:"-"`
 	token          string `json:"-"`
-	sequenceNumber uint   `json:"-"`
+	sequenceNumber uint   `json:"s"`
 
-	HeartbeatInterval time.Duration `json:"heartbeat_interval"`
-	heartbeatAcquired time.Time     `json:"-"`
-	Trace             []string      `json:"_trace"`
-	SessionID         string        `json:"session_id"`
-	ShardCount        uint          `json:"shard_count"`
-	ShardID           snowflake.ID  `json:"shard_id"`
+	HeartbeatInterval uint         `json:"heartbeat_interval"`
+	heartbeatAcquired time.Time    `json:"-"`
+	Trace             []string     `json:"_trace"`
+	SessionID         string       `json:"session_id"`
+	ShardCount        uint         `json:"shard_count"`
+	ShardID           snowflake.ID `json:"shard_id"`
 
 	disconnected  chan struct{}            `json:"-"`
-	operationChan chan *GatewayPayload     `json:"-"`
+	operationChan chan *gatewayEvent       `json:"-"`
 	eventChans    map[string](chan []byte) `json:"-"`
-	sendChan      chan *GatewayPayload     `json:"-"`
+	sendChan      chan *gatewayPayload     `json:"-"`
+	iEventChan    chan EventInterface
 
 	Myself *user.User `json:"user"`
 
@@ -131,4 +132,8 @@ func (c *Client) Routed() bool {
 // RemoveRoute deletes cached discord wss endpoint
 func (c *Client) RemoveRoute() {
 	c.url = ""
+}
+
+func (c *Client) GetEventChannel() <-chan EventInterface {
+	return c.iEventChan
 }

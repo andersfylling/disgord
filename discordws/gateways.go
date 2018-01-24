@@ -3,16 +3,58 @@ package discordws
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 )
 
-type GatewayPayload struct {
+type EventInterface interface {
+	Name() string
+	Data() []byte
+	Unmarshal(interface{}) error
+}
+
+type Event struct {
+	content *gatewayEvent
+}
+
+func (evt *Event) Name() string {
+	return evt.content.EventName
+}
+
+func (evt *Event) Data() []byte {
+	return evt.content.Data.ByteArr()
+}
+
+func (evt *Event) Unmarshal(v interface{}) error {
+	return json.Unmarshal(evt.Data(), v)
+}
+
+type gatewayPayload struct {
 	Op             uint        `json:"op"`
 	Data           interface{} `json:"d"`
 	SequenceNumber uint        `json:"s,omitempty"`
 	EventName      string      `json:"t,omitempty"`
 }
 
-func (gp *GatewayPayload) DataToByteArr() ([]byte, error) {
+// GatewayEvent used for incoming events from the gateway..
+type gatewayEvent struct {
+	Op             uint        `json:"op"`
+	Data           payloadData `json:"d"`
+	SequenceNumber uint        `json:"s"`
+	EventName      string      `json:"t"`
+}
+
+type payloadData []byte
+
+func (pd *payloadData) UnmarshalJSON(data []byte) error {
+	*pd = payloadData(data)
+	return nil
+}
+
+func (pd *payloadData) ByteArr() []byte {
+	return []byte(*pd)
+}
+
+func (gp *gatewayPayload) DataToByteArr() ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(gp.Data)
@@ -22,7 +64,7 @@ func (gp *GatewayPayload) DataToByteArr() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type GetGatewayResponse struct {
+type getGatewayResponse struct {
 	URL    string `json:"url"`
 	Shards uint   `json:"shards,omitempty"`
 }
