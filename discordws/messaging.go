@@ -13,10 +13,6 @@ import (
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
 func (c *Client) readPump() {
-	defer func() {
-		c.conn.Close()
-	}()
-
 	logrus.Debug("Listening for packets...")
 
 	for {
@@ -28,10 +24,10 @@ func (c *Client) readPump() {
 			messageType, packet, err := c.conn.ReadMessage()
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					logrus.Errorf("error: %v", err)
+					logrus.Errorf("error(%d): %v", messageType, err)
+					close(c.disconnected)
+					continue
 				}
-				close(c.disconnected)
-				continue
 			}
 
 			logrus.Debugf("<-: %+v\n", string(packet))
@@ -60,10 +56,6 @@ func (c *Client) readPump() {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *Client) writePump(ws *websocket.Conn) {
-	defer func() {
-		c.conn.Close()
-	}()
-
 	logrus.Debug("Ready to send packets...")
 
 	for {

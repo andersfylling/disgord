@@ -105,7 +105,8 @@ type Client struct {
 	sendChan      chan *gatewayPayload     `json:"-"`
 	iEventChan    chan EventInterface
 
-	Myself *user.User `json:"user"`
+	Myself         *user.User  `json:"user"`
+	MyselfSettings interface{} `json:"user_settings"`
 
 	// websocket connection
 	conn    *websocket.Conn `json:"-"`

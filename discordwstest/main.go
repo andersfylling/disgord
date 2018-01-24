@@ -15,6 +15,7 @@ func main() {
 	if token == "" {
 		panic("Missing disgord token in env var: DISGORD_TOKEN")
 	}
+	logrus.SetLevel(logrus.DebugLevel)
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	d := discordws.NewRequiredClient(&discordws.Config{

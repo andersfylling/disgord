@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -178,32 +177,11 @@ func (c *Client) operationHandlers() {
 // Disconnect closes the discord websocket connection
 func (c *Client) Disconnect() (err error) {
 	c.Lock()
-	defer c.Unlock()
-
 	if c.conn == nil {
 		err = errors.New("No websocket connection exist")
 		return
 	}
-
-	defer c.conn.Close()
-	done := make(chan struct{})
-
-	go func() {
-		defer c.conn.Close()
-		defer close(done)
-
-		if c.disconnected != nil {
-			close(c.disconnected)
-		}
-		for {
-			_, message, err1 := c.conn.ReadMessage()
-			if err1 != nil {
-				log.Println("read:", err1)
-				return
-			}
-			log.Printf("recv: %s", message)
-		}
-	}()
+	c.Unlock()
 
 	c.wsMutex.Lock()
 	err = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
@@ -212,8 +190,10 @@ func (c *Client) Disconnect() (err error) {
 		logrus.Warningln(err)
 	}
 	select {
-	case <-done:
-	case <-time.After(time.Second * 2):
+	case <-c.disconnected:
+		// might get closed by another process
+	case <-time.After(time.Second * 3):
+		close(c.disconnected)
 	}
 	err = c.conn.Close()
 	return
@@ -239,8 +219,6 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
 	ticker := time.NewTicker(time.Millisecond * time.Duration(c.HeartbeatInterval))
 	defer ticker.Stop()
 
-	<-ticker.C
-
 	for {
 
 		c.Lock()
@@ -248,11 +226,6 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
 		interval := c.HeartbeatInterval
 		snr := c.sequenceNumber
 		c.Unlock()
-
-		if interval == 0 {
-			logrus.Debug("heartbeat interval was 0")
-			close(c.disconnected)
-		}
 
 		c.sendChan <- &gatewayPayload{Op: 1, Data: snr}
 
