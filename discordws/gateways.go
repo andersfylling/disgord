@@ -68,3 +68,13 @@ type getGatewayResponse struct {
 	URL    string `json:"url"`
 	Shards uint   `json:"shards,omitempty"`
 }
+
+type helloPacket struct {
+	HeartbeatInterval uint     `json:"heartbeat_interval"`
+	Trace             []string `json:"_trace"`
+}
+
+type readyPacket struct {
+	SessionID string   `json:"session_id"`
+	Trace     []string `json:"_trace"`
+}

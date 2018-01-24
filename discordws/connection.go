@@ -52,9 +52,11 @@ func (c *Client) Connect() (err error) {
 
 	defer func(err error) error {
 		if err != nil {
-			c.conn.Close()
-			c.conn = nil
-			close(c.disconnected)
+			if c.conn != nil {
+				c.conn.Close()
+				c.conn = nil
+				close(c.disconnected)
+			}
 			logrus.Error(err)
 			return err
 		}
@@ -92,27 +94,33 @@ func (c *Client) operationHandlers() {
 				return
 			}
 
-			// always store the sequence number
-			c.Lock()
-			c.sequenceNumber = gp.SequenceNumber
-			c.Unlock()
-
 			switch gp.Op {
 			case 0:
 				// discord events
 				// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
 
-				// always store the session id if it exists
+				// always store the sequence number
+				c.Lock()
+				c.sequenceNumber = gp.SequenceNumber
+				c.Unlock()
+
+				// always store the session id
 				if gp.EventName == event.Ready {
-					c.Lock()
-					err := json.Unmarshal(gp.Data.ByteArr(), c)
-					c.Unlock()
+					ready := &readyPacket{}
+					err := json.Unmarshal(gp.Data.ByteArr(), ready)
 					if err != nil {
 						logrus.Error(err)
 					}
+
+					c.Lock()
+					c.SessionID = ready.SessionID
+					c.Trace = ready.Trace
+					c.Unlock()
 				} else if gp.EventName == event.Resumed {
 					// eh? debugging.
 				}
+
+				// dispatch events
 
 			case 1:
 				// ping
@@ -131,16 +139,14 @@ func (c *Client) operationHandlers() {
 				}
 			case 10:
 				// hello
-				c.Lock()
-				seq := c.sequenceNumber
-				err := json.Unmarshal(gp.Data.ByteArr(), c)
-				if c.sequenceNumber == 0 && seq != 0 {
-					c.sequenceNumber = seq // hack...
-				}
-				c.Unlock()
+				helloPk := &helloPacket{}
+				err := json.Unmarshal(gp.Data.ByteArr(), helloPk)
 				if err != nil {
 					logrus.Debug(err)
 				}
+				c.Lock()
+				c.HeartbeatInterval = helloPk.HeartbeatInterval
+				c.Unlock()
 
 				// TODO, this might create several idle goroutines..
 				go c.pulsate(c.conn, c.disconnected)
