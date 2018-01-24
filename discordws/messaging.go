@@ -16,37 +16,39 @@ func (c *Client) readPump() {
 	logrus.Debug("Listening for packets...")
 
 	for {
-		select {
-		case <-c.disconnected:
-			logrus.Debug("closing readPump")
-			return
-		default:
-			messageType, packet, err := c.conn.ReadMessage()
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					logrus.Errorf("error(%d): %v", messageType, err)
-					close(c.disconnected)
-					continue
-				}
+		messageType, packet, err := c.conn.ReadMessage()
+		if err != nil {
+			var die bool
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				// logrus.Errorf("error(%d): %v", messageType, err)
+				die = true
+			} else if c.disconnected == nil {
+				// connection was closed
+				die = true
 			}
 
-			logrus.Debugf("<-: %+v\n", string(packet))
-
-			// TODO: zlib decompression support
-			if messageType != websocket.TextMessage {
-				logrus.Fatalf("Cannot handle pacaket type: %d", messageType)
+			if die {
+				logrus.Debug("closing readPump")
+				return
 			}
-
-			// parse to gateway payload object
-			evt := &gatewayEvent{}
-			err = json.Unmarshal(packet, evt)
-			if err != nil {
-				logrus.Error(err)
-			}
-
-			// notify operation listeners
-			c.operationChan <- evt
 		}
+
+		logrus.Debugf("<-: %+v\n", string(packet))
+
+		// TODO: zlib decompression support
+		if messageType == websocket.BinaryMessage {
+			logrus.Fatalf("Cannot handle packet type: %d", messageType)
+		}
+
+		// parse to gateway payload object
+		evt := &gatewayEvent{}
+		err = json.Unmarshal(packet, evt)
+		if err != nil {
+			logrus.Error(err)
+		}
+
+		// notify operation listeners
+		c.operationChan <- evt
 	}
 }
 

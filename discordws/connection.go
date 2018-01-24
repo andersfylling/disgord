@@ -50,14 +50,16 @@ func (c *Client) Connect() (err error) {
 		c.url = gatewayResponse.URL + "?v=" + strconv.Itoa(c.dAPIVersion) + "&encoding=" + c.dAPIEncoding
 	}
 
-	defer func() {
+	defer func(err error) error {
 		if err != nil {
 			c.conn.Close()
 			c.conn = nil
 			close(c.disconnected)
 			logrus.Error(err)
+			return err
 		}
-	}()
+		return nil
+	}(err)
 
 	// establish ws connection
 	logrus.Debug("Connecting to url: " + c.url)
@@ -130,7 +132,11 @@ func (c *Client) operationHandlers() {
 			case 10:
 				// hello
 				c.Lock()
+				seq := c.sequenceNumber
 				err := json.Unmarshal(gp.Data.ByteArr(), c)
+				if c.sequenceNumber == 0 && seq != 0 {
+					c.sequenceNumber = seq // hack...
+				}
 				c.Unlock()
 				if err != nil {
 					logrus.Debug(err)
@@ -146,13 +152,19 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 				} else {
+					c.Lock()
+					token := c.token
+					session := c.SessionID
+					sequence := c.sequenceNumber
+					c.Unlock()
+
 					resume := &gatewayPayload{
 						Op: 6,
 						Data: struct {
 							Token      string `json:"token"`
 							SessionID  string `json:"session_id"`
-							SequenceNr uint   `json:"seq"`
-						}{c.token, c.SessionID, c.sequenceNumber},
+							SequenceNr *uint  `json:"seq"`
+						}{token, session, &sequence},
 					}
 
 					c.sendChan <- resume
@@ -192,23 +204,42 @@ func (c *Client) Disconnect() (err error) {
 	select {
 	case <-c.disconnected:
 		// might get closed by another process
-	case <-time.After(time.Second * 3):
+	case <-time.After(time.Second * 1):
 		close(c.disconnected)
 	}
+
+	// give remainding processes some time to exit
+	<-time.After(time.Second * 1)
+	c.disconnected = nil
+
+	// close connection
 	err = c.conn.Close()
+	c.conn = nil
 	return
 }
 
 // Reconnect to discord endpoint
-func (c *Client) Reconnect() error {
-	c.Lock()
-	defer c.Unlock()
+func (c *Client) reconnect() (err error) {
+	for try := 0; try <= MaxReconnectTries; try++ {
 
-	for try := 0; try < MaxReconnectTries; try++ {
+		logrus.Debugf("Reconnect attempt #%d\n", try)
+		err = c.Connect()
+		if err == nil {
+			logrus.Info("successfully reconnected")
+			break
+			// TODO voice
+		}
+		if try == MaxReconnectTries-1 {
+			err = errors.New("Too many reconnect attempts")
+			return err
+		}
 
+		// wait 5 seconds
+		logrus.Info("reconnect failed, trying again in 5 seconds")
+		<-time.After(time.Duration(5) * time.Second)
 	}
 
-	return nil
+	return
 }
 
 func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
@@ -230,7 +261,7 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
 		c.sendChan <- &gatewayPayload{Op: 1, Data: snr}
 
 		// verify the heartbeat ACK
-		go func(client *Client, last time.Time, disconnect chan struct{}) {
+		go func(client *Client, last time.Time) {
 			time.Sleep((3 * time.Second) % (time.Duration(interval) * time.Millisecond))
 			var die bool
 			c.Lock()
@@ -239,9 +270,10 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
 
 			if die {
 				logrus.Debug("heartbeat ACK was not recieved")
-				close(disconnect)
+				c.Disconnect()
+				go c.reconnect()
 			}
-		}(c, last, disconnected)
+		}(c, last)
 
 		select {
 		case <-ticker.C:
