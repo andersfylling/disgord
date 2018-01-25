@@ -60,6 +60,10 @@ func NewClient(conf *Config) (*Client, error) {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
+	if conf.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	// return configured discord websocket client
 	return &Client{
 		token:             conf.Token,
@@ -69,6 +73,7 @@ func NewClient(conf *Config) (*Client, error) {
 		dAPIEncoding:      encoding,
 		heartbeatAcquired: time.Now(),
 		disconnected:      nil,
+		iEventChan:        make(chan EventInterface),
 		operationChan:     make(chan *gatewayEvent),
 		eventChans:        make(map[string](chan []byte)),
 		sendChan:          make(chan *gatewayPayload),

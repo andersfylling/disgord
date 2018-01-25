@@ -121,7 +121,8 @@ func (c *Client) operationHandlers() {
 				}
 
 				// dispatch events
-
+				eventPkt := &Event{gp}
+				c.iEventChan <- eventPkt
 			case 1:
 				// ping
 				c.Lock()

@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -11,31 +12,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Config struct {
+	Token      string
+	HTTPClient *http.Client
+	Debug      bool
+}
+
 // NewDisgord creates a new default disgord instance
-func NewDisgord() (*Disgord, error) {
-	// http client configuration
-	httpClient := &http.Client{
-		Timeout: time.Second * 10,
+func NewDisgord(conf *Config) (*Disgord, error) {
+
+	if conf.HTTPClient == nil {
+		// http client configuration
+		conf.HTTPClient = &http.Client{
+			Timeout: time.Second * 10,
+		}
 	}
 
-	return NewDisgordWithHTTPClient(httpClient)
-}
-
-// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
-func NewRequiredDisgord() *Disgord {
-	dg, err := NewDisgord()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	return dg
-}
-
-// NewDisgordWithHTTPClient specify http configuration for the discord connection. Affects REST and pre- websocket handshake, for wss endpoint request
-func NewDisgordWithHTTPClient(httpClient *http.Client) (*Disgord, error) {
 	// Use discordws to keep the socket connection going
 	dws, err := discordws.NewClient(&discordws.Config{
-		HTTPClient:   httpClient,
+		// user settings
+		Token:      conf.Token,
+		HTTPClient: conf.HTTPClient,
+		Debug:      conf.Debug,
+
+		// lib specific
 		DAPIVersion:  endpoint.APIVersion,
 		DAPIEncoding: endpoint.APIComEncoding,
 	})
@@ -45,16 +45,18 @@ func NewDisgordWithHTTPClient(httpClient *http.Client) (*Disgord, error) {
 
 	// create a disgord instance
 	d := &Disgord{
-		HTTPClient: httpClient,
+		HTTPClient: conf.HTTPClient,
 		ws:         dws,
+		EventChan:  dws.GetEventChannel(),
+		Token:      conf.Token,
 	}
 
 	return d, nil
 }
 
-// NewRequiredDisgordWithHTTPClient same as NewDisgordWithHTTPClient, but exits program if an error occours
-func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
-	dg, err := NewDisgordWithHTTPClient(httpClient)
+// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
+func NewRequiredDisgord(conf *Config) *Disgord {
+	dg, err := NewDisgord(conf)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -65,7 +67,7 @@ func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
 // EventObserver is an application-level type for handling discord requests.
 // All callbacks are optional, and whether they are defined or not
 // is used to determine whether the EventDispatcher will send events to them.
-type EventObserver struct {
+type EventDispatcher struct {
 	// current EventHook fields here
 
 	// OnEvent is called for all events.
@@ -86,27 +88,76 @@ type EventObserver struct {
 type Disgord struct {
 	sync.RWMutex
 
+	Token string
+
 	ws *discordws.Client
 
 	HTTPClient *http.Client
 
+	EventChan <-chan discordws.EventInterface
+
 	// register listeners for events
-	//*EventObserver
+	EventDispatcher
 
 	// Guilds all them guild objects
 	Guilds []*guild.Guild
 }
 
+func (d *Disgord) String() string {
+	return d.ws.String()
+}
+
+func (d *Disgord) logInfo(msg string) {
+	logrus.WithFields(logrus.Fields{
+		"lib": d.ws.String(),
+	}).Info(msg)
+}
+
+func (d *Disgord) logErr(msg string) {
+	logrus.WithFields(logrus.Fields{
+		"lib": d.ws.String(),
+	}).Error(msg)
+}
+
+func (d *Disgord) eventObserver() {
+	for {
+		select {
+		case evt, ok := <-d.EventChan:
+			if !ok {
+				logrus.Error("Event channel is dead!")
+				break
+			}
+			logrus.Infof("Event{%s}\n%+v\n", evt.Name(), string(evt.Data()))
+		}
+	}
+}
+
 // Connect establishes a websocket connection to the discord API
-func (d *Disgord) Connect() error {
-	d.Lock()
-	defer d.Unlock()
-	return d.ws.Connect()
+func (d *Disgord) Connect() (err error) {
+	d.logInfo("Connecting to discord Gateway")
+	err = d.ws.Connect()
+	if err != nil {
+		d.logErr(err.Error())
+		return
+	}
+	d.logInfo("Connected")
+
+	// setup event observer
+	go d.eventObserver()
+
+	return nil
 }
 
 // Disconnect closes the discord websocket connection
-func (d *Disgord) Disconnect() error {
-	d.Lock()
-	defer d.Unlock()
-	return d.ws.Disconnect()
+func (d *Disgord) Disconnect() (err error) {
+	fmt.Println()
+	d.logInfo("Closing Discord gateway connection")
+	err = d.ws.Disconnect()
+	if err != nil {
+		d.logErr(err.Error())
+		return
+	}
+	d.logInfo("Disconnected")
+
+	return nil
 }

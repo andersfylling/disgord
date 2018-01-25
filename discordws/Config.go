@@ -7,4 +7,5 @@ type Config struct {
 	HTTPClient   *http.Client
 	DAPIVersion  int
 	DAPIEncoding string
+	Debug        bool
 }
