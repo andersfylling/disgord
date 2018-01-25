@@ -47,6 +47,14 @@ INFO[2018-01-25 04:14:17] Event{READY}
 {"v":6,"user_settings":{},"user":{"verified":true,"username":"disgord" ......
 ```
 
+And the disconnect method provides graceful shutdown (buggy on reconnect periodes):
+```go
+
+^C
+INFO[2018-01-25 04:30:09] Closing Discord gateway connection            lib="Disgord v0.0.0"
+INFO[2018-01-25 04:30:11] Disconnected                                  lib="Disgord v0.0.0"
+```
+
 TODO:
 
 - [ ] Convert byte array of data to data structs
