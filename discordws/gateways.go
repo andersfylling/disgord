@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+
+	"github.com/andersfylling/disgord/event"
 )
 
 type EventInterface interface {
-	Name() string
+	Name() event.Type
 	Data() []byte
 	Unmarshal(interface{}) error
 }
@@ -16,7 +18,7 @@ type Event struct {
 	content *gatewayEvent
 }
 
-func (evt *Event) Name() string {
+func (evt *Event) Name() event.Type {
 	return evt.content.EventName
 }
 
@@ -32,7 +34,7 @@ type gatewayPayload struct {
 	Op             uint        `json:"op"`
 	Data           interface{} `json:"d"`
 	SequenceNumber uint        `json:"s,omitempty"`
-	EventName      string      `json:"t,omitempty"`
+	EventName      event.Type  `json:"t,omitempty"`
 }
 
 // GatewayEvent used for incoming events from the gateway..
@@ -40,7 +42,7 @@ type gatewayEvent struct {
 	Op             uint        `json:"op"`
 	Data           payloadData `json:"d"`
 	SequenceNumber uint        `json:"s"`
-	EventName      string      `json:"t"`
+	EventName      event.Type  `json:"t"`
 }
 
 type payloadData []byte

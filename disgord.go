@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
 	"github.com/sirupsen/logrus"
 )
@@ -45,10 +47,11 @@ func NewDisgord(conf *Config) (*Disgord, error) {
 
 	// create a disgord instance
 	d := &Disgord{
-		HTTPClient: conf.HTTPClient,
-		ws:         dws,
-		EventChan:  dws.GetEventChannel(),
-		Token:      conf.Token,
+		HTTPClient:          conf.HTTPClient,
+		ws:                  dws,
+		EventChan:           dws.GetEventChannel(),
+		Token:               conf.Token,
+		DispatcherInterface: event.NewDispatcher(),
 	}
 
 	return d, nil
@@ -64,27 +67,6 @@ func NewRequiredDisgord(conf *Config) *Disgord {
 	return dg
 }
 
-// EventObserver is an application-level type for handling discord requests.
-// All callbacks are optional, and whether they are defined or not
-// is used to determine whether the EventDispatcher will send events to them.
-type EventDispatcher struct {
-	// current EventHook fields here
-
-	// OnEvent is called for all events.
-	// Handlers must typecast the event type manually, and ensure
-	// that it can handle receiving the same event twice if a type-specific
-	// callback also exists.
-	//OnEvent func(ctx *Context, ev event.DiscordEvent) error
-
-	// OnMessageEvent is called for every message-related event.
-	//OnMessageEvent func(ctx *Context, ev event.MessageEvent) error
-
-	// OnConnectionEvent ...
-	// OnUserEvent ...
-	// OnChannelEvent ...
-	// OnGuildEvent ...
-}
-
 type Disgord struct {
 	sync.RWMutex
 
@@ -97,7 +79,7 @@ type Disgord struct {
 	EventChan <-chan discordws.EventInterface
 
 	// register listeners for events
-	EventDispatcher
+	event.DispatcherInterface
 
 	// Guilds all them guild objects
 	Guilds []*guild.Guild
@@ -117,19 +99,6 @@ func (d *Disgord) logErr(msg string) {
 	logrus.WithFields(logrus.Fields{
 		"lib": d.ws.String(),
 	}).Error(msg)
-}
-
-func (d *Disgord) eventObserver() {
-	for {
-		select {
-		case evt, ok := <-d.EventChan:
-			if !ok {
-				logrus.Error("Event channel is dead!")
-				break
-			}
-			logrus.Infof("Event{%s}\n%+v\n", evt.Name(), string(evt.Data()))
-		}
-	}
 }
 
 // Connect establishes a websocket connection to the discord API
@@ -160,4 +129,27 @@ func (d *Disgord) Disconnect() (err error) {
 	d.logInfo("Disconnected")
 
 	return nil
+}
+
+func (d *Disgord) eventObserver() {
+	for {
+		select {
+		case evt, ok := <-d.EventChan:
+			if !ok {
+				logrus.Error("Event channel is dead!")
+				break
+			}
+
+			// convert type and trigger event name related listeners
+			switch evt.Name() {
+			case event.GuildCreate:
+				guild := &guild.Guild{}
+				err := json.Unmarshal(evt.Data(), guild)
+				if err != nil {
+					panic(err)
+				}
+				d.Trigger(evt.Name(), guild)
+			}
+		}
+	}
 }
