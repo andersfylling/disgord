@@ -1,56 +1,65 @@
 package disgord
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
 	"github.com/sirupsen/logrus"
 )
 
+type Config struct {
+	Token      string
+	HTTPClient *http.Client
+	Debug      bool
+}
+
 // NewDisgord creates a new default disgord instance
-func NewDisgord() (*Disgord, error) {
-	// http client configuration
-	httpClient := &http.Client{
-		Timeout: time.Second * 10,
+func NewDisgord(conf *Config) (*Disgord, error) {
+
+	if conf.HTTPClient == nil {
+		// http client configuration
+		conf.HTTPClient = &http.Client{
+			Timeout: time.Second * 10,
+		}
 	}
 
-	return NewDisgordWithHTTPClient(httpClient)
-}
-
-// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
-func NewRequiredDisgord() *Disgord {
-	dg, err := NewDisgord()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	return dg
-}
-
-// NewDisgordWithHTTPClient specify http configuration for the discord connection. Affects REST and pre- websocket handshake, for wss endpoint request
-func NewDisgordWithHTTPClient(httpClient *http.Client) (*Disgord, error) {
 	// Use discordws to keep the socket connection going
-	dws, err := discordws.NewClient(httpClient, endpoint.APIVersion, endpoint.APIComEncoding)
+	dws, err := discordws.NewClient(&discordws.Config{
+		// user settings
+		Token:      conf.Token,
+		HTTPClient: conf.HTTPClient,
+		Debug:      conf.Debug,
+
+		// lib specific
+		DAPIVersion:  endpoint.APIVersion,
+		DAPIEncoding: endpoint.APIComEncoding,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	// create a disgord instance
 	d := &Disgord{
-		HTTPClient: httpClient,
-		ws:         dws,
+		HTTPClient:          conf.HTTPClient,
+		ws:                  dws,
+		EventChan:           dws.GetEventChannel(),
+		Token:               conf.Token,
+		DispatcherInterface: event.NewDispatcher(),
 	}
 
 	return d, nil
 }
 
-// NewRequiredDisgordWithHTTPClient same as NewDisgordWithHTTPClient, but exits program if an error occours
-func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
-	dg, err := NewDisgordWithHTTPClient(httpClient)
+// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
+func NewRequiredDisgord(conf *Config) *Disgord {
+	dg, err := NewDisgord(conf)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -58,51 +67,89 @@ func NewRequiredDisgordWithHTTPClient(httpClient *http.Client) *Disgord {
 	return dg
 }
 
-// EventObserver is an application-level type for handling discord requests.
-// All callbacks are optional, and whether they are defined or not
-// is used to determine whether the EventDispatcher will send events to them.
-type EventObserver struct {
-	// current EventHook fields here
-
-	// OnEvent is called for all events.
-	// Handlers must typecast the event type manually, and ensure
-	// that it can handle receiving the same event twice if a type-specific
-	// callback also exists.
-	//OnEvent func(ctx *Context, ev event.DiscordEvent) error
-
-	// OnMessageEvent is called for every message-related event.
-	//OnMessageEvent func(ctx *Context, ev event.MessageEvent) error
-
-	// OnConnectionEvent ...
-	// OnUserEvent ...
-	// OnChannelEvent ...
-	// OnGuildEvent ...
-}
-
 type Disgord struct {
 	sync.RWMutex
+
+	Token string
 
 	ws *discordws.Client
 
 	HTTPClient *http.Client
 
+	EventChan <-chan discordws.EventInterface
+
 	// register listeners for events
-	//*EventObserver
+	event.DispatcherInterface
 
 	// Guilds all them guild objects
 	Guilds []*guild.Guild
 }
 
+func (d *Disgord) String() string {
+	return d.ws.String()
+}
+
+func (d *Disgord) logInfo(msg string) {
+	logrus.WithFields(logrus.Fields{
+		"lib": d.ws.String(),
+	}).Info(msg)
+}
+
+func (d *Disgord) logErr(msg string) {
+	logrus.WithFields(logrus.Fields{
+		"lib": d.ws.String(),
+	}).Error(msg)
+}
+
 // Connect establishes a websocket connection to the discord API
-func (d *Disgord) Connect() error {
-	d.Lock()
-	defer d.Unlock()
-	return d.ws.Connect()
+func (d *Disgord) Connect() (err error) {
+	d.logInfo("Connecting to discord Gateway")
+	err = d.ws.Connect()
+	if err != nil {
+		d.logErr(err.Error())
+		return
+	}
+	d.logInfo("Connected")
+
+	// setup event observer
+	go d.eventObserver()
+
+	return nil
 }
 
 // Disconnect closes the discord websocket connection
-func (d *Disgord) Disconnect() error {
-	d.Lock()
-	defer d.Unlock()
-	return d.ws.Disconnect()
+func (d *Disgord) Disconnect() (err error) {
+	fmt.Println()
+	d.logInfo("Closing Discord gateway connection")
+	err = d.ws.Disconnect()
+	if err != nil {
+		d.logErr(err.Error())
+		return
+	}
+	d.logInfo("Disconnected")
+
+	return nil
+}
+
+func (d *Disgord) eventObserver() {
+	for {
+		select {
+		case evt, ok := <-d.EventChan:
+			if !ok {
+				logrus.Error("Event channel is dead!")
+				break
+			}
+
+			// convert type and trigger event name related listeners
+			switch evt.Name() {
+			case event.GuildCreate:
+				guild := &guild.Guild{}
+				err := json.Unmarshal(evt.Data(), guild)
+				if err != nil {
+					panic(err)
+				}
+				d.Trigger(evt.Name(), guild)
+			}
+		}
+	}
 }
