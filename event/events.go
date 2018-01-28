@@ -1,5 +1,7 @@
 package event
 
+type Type string
+
 // Event types
 const (
 
@@ -17,7 +19,7 @@ const (
 	//       * Guilds []*discord.guild.Unavailable
 	//       * SessionID string
 	//       * Trace []string
-	Ready = "READY"
+	Ready Type = "READY"
 	// Resumed The resumed event is dispatched when a client has sent a resume
 	//         payload to the gateway (for resuming existing sessions).
 	//         Fields:
