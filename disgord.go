@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -47,11 +48,11 @@ func NewDisgord(conf *Config) (*Disgord, error) {
 
 	// create a disgord instance
 	d := &Disgord{
-		HTTPClient:          conf.HTTPClient,
-		ws:                  dws,
-		EventChan:           dws.GetEventChannel(),
-		Token:               conf.Token,
-		DispatcherInterface: event.NewDispatcher(),
+		HTTPClient: conf.HTTPClient,
+		ws:         dws,
+		EventChan:  dws.GetEventChannel(),
+		Token:      conf.Token,
+		Dispatcher: event.NewDispatcher(),
 	}
 
 	return d, nil
@@ -79,7 +80,7 @@ type Disgord struct {
 	EventChan <-chan discordws.EventInterface
 
 	// register listeners for events
-	event.DispatcherInterface
+	*event.Dispatcher
 
 	// Guilds all them guild objects
 	Guilds []*guild.Guild
@@ -140,7 +141,6 @@ func (d *Disgord) eventObserver() {
 				break
 			}
 
-			// convert type and trigger event name related listeners
 			switch evt.Name() {
 			case event.GuildCreate:
 				guild := &guild.Guild{}
@@ -148,7 +148,10 @@ func (d *Disgord) eventObserver() {
 				if err != nil {
 					panic(err)
 				}
-				d.Trigger(evt.Name(), guild)
+				ctx, _ := context.WithTimeout(context.Background(), time.Duration(5))
+				d.GuildCreateEvent.Trigger(ctx, guild)
+			default:
+				fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name(), string(evt.Data()))
 			}
 		}
 	}

@@ -1,112 +1,195 @@
 package event
 
-import "github.com/sirupsen/logrus"
+func NewDispatcher() *Dispatcher {
 
-// EventDispatcher is an application-level type for handling discord requests.
-// All callbacks are optional, and whether they are defined or not
-// is used to determine whether the EventDispatcher will send events to them.
-type DispatcherInterface interface {
-	// current EventHook fields here
+	return &Dispatcher{
 
-	// OnEvent is called for all events.
-	// Handlers must typecast the event type manually, and ensure
-	// that it can handle receiving the same event twice if a type-specific
-	// callback also exists.
-	//OnEvent func(ctx *Context, ev event.DiscordEvent) error
+		// socket
+		ReadyEvent:   ReadyCallbackStack{},
+		ResumedEvent: ResumedCallbackStack{},
 
-	// OnMessageEvent is called for every message-related event.
-	//OnMessageEvent func(ctx *Context, ev event.MessageEvent) error
+		// channel
+		ChannelCreateEvent:     ChannelCreateCallbackStack{},
+		ChannelUpdateEvent:     ChannelUpdateCallbackStack{},
+		ChannelDeleteEvent:     ChannelDeleteCallbackStack{},
+		ChannelPinsUpdateEvent: ChannelPinsUpdateCallbackStack{},
 
-	// OnConnectionEvent ...
-	//OnUserEvent(eventName string, listener func(user *user.User))
-	//OnMemberEvent(eventName string, listener func(member *guild.Member))
-	// OnChannelEvent ...
-	// OnGuildEvent ...
+		// Guild in general
+		GuildCreateEvent:             GuildCreateCallbackStack{},
+		GuildUpdateEvent:             GuildUpdateCallbackStack{},
+		GuildDeleteEvent:             GuildDeleteCallbackStack{},
+		GuildBanAddEvent:             GuildBanAddCallbackStack{},
+		GuildBanRemoveEvent:          GuildBanRemoveCallbackStack{},
+		GuildEmojisUpdateEvent:       GuildEmojisUpdateCallbackStack{},
+		GuildIntegrationsUpdateEvent: GuildIntegrationsUpdateCallbackStack{},
 
-	OnEvent(eventName Type, listener interface{})
-	Trigger(eventName Type, params ...interface{})
+		// Guild Member
+		GuildMemberAddEvent:    GuildMemberAddCallbackStack{},
+		GuildMemberRemoveEvent: GuildMemberRemoveCallbackStack{},
+		GuildMemberUpdateEvent: GuildMemberUpdateCallbackStack{},
+		GuildMemberChunkEvent:  GuildMemberChunkCallbackStack{},
+
+		// Guild role
+		GuildRoleCreateEvent: GuildRoleCreateCallbackStack{},
+		GuildRoleUpdateEvent: GuildRoleUpdateCallbackStack{},
+		GuildRoleDeleteEvent: GuildRoleDeleteCallbackStack{},
+
+		// message
+		MessageCreateEvent:     MessageCreateCallbackStack{},
+		MessageUpdateEvent:     MessageUpdateCallbackStack{},
+		MessageDeleteEvent:     MessageDeleteCallbackStack{},
+		MessageDeleteBulkEvent: MessageDeleteBulkCallbackStack{},
+
+		// message reaction
+		MessageReactionAddEvent:       MessageReactionAddCallbackStack{},
+		MessageReactionRemoveEvent:    MessageReactionRemoveCallbackStack{},
+		MessageReactionRemoveAllEvent: MessageReactionRemoveAllCallbackStack{},
+
+		// presence
+		PresenceUpdateEvent: PresenceUpdateCallbackStack{},
+
+		// typing start
+		TypingStartEvent: TypingStartCallbackStack{},
+
+		// user update
+		UserUpdateEvent: UserUpdateCallbackStack{},
+
+		// voice
+		VoiceStateUpdateEvent:  VoiceStateUpdateCallbackStack{},
+		VoiceServerUpdateEvent: VoiceServerUpdateCallbackStack{},
+
+		// webhook
+		WebhooksUpdateEvent: WebhooksUpdateCallbackStack{},
+	}
 }
 
-func NewDispatcher() *Dispatcher {
-	d := &Dispatcher{
-		listeners: make(map[Type]CallbackStackInterface),
-	}
+type DispatcherInterface interface {
+	// // add all the callback stacks
+	// // socket
+	// ReadyHandler
+	// ResumedHandler
+	//
+	// // channel
+	// ChannelCreateHandler
+	// ChannelUpdateHandler
+	// ChannelDeleteHandler
+	// ChannelPinsUpdateHandler
+	//
+	// // Guild in general
+	// GuildCreateHandler
+	// GuildUpdateHandler
+	// GuildDeleteHandler
+	// GuildBanAddHandler
+	// GuildBanRemoveHandler
+	// GuildEmojisUpdateHandler
+	// GuildIntegrationsUpdateHandler
+	//
+	// // Guild Member
+	// GuildMemberAddHandler
+	// GuildMemberRemoveHandler
+	// GuildMemberUpdateHandler
+	// GuildMemberChunkHandler
+	//
+	// // Guild role
+	// GuildRoleCreateHandler
+	// GuildRoleUpdateHandler
+	// GuildRoleDeleteHandler
+	//
+	// // message
+	// MessageCreateHandler
+	// MessageUpdateHandler
+	// MessageDeleteHandler
+	// MessageDeleteBulkHandler
+	//
+	// // message reaction
+	// MessageReactionAddHandler
+	// MessageReactionRemoveHandler
+	// MessageReactionRemoveAllHandler
+	//
+	// // presence
+	// PresenceUpdateHandler
+	//
+	// // typing start
+	// TypingStartHandler
+	//
+	// // user update
+	// UserUpdateHandler
+	//
+	// // voice
+	// VoiceStateUpdateHandler
+	// VoiceServerUpdateHandler
+	//
+	// // webhook
+	// WebhooksUpdateHandler
 
-	// add all the callback stacks
-	// socket
-	d.listeners[Ready] = &ReadyCallbackStack{}
-	d.listeners[Resumed] = &ResumeCallbackStack{}
-
-	// channel
-	d.listeners[ChannelCreate] = &ChannelCreateCallbackStack{}
-	d.listeners[ChannelUpdate] = &ChannelUpdateCallbackStack{}
-	d.listeners[ChannelDelete] = &ChannelDeleteCallbackStack{}
-	d.listeners[ChannelPinsUpdate] = &ChannelPinsUpdateCallbackStack{}
-
-	// Guild in general
-	d.listeners[GuildCreate] = &GuildCreateCallbackStack{}
-	d.listeners[GuildUpdate] = &GuildUpdateCallbackStack{}
-	d.listeners[GuildDelete] = &GuildDeleteCallbackStack{}
-	d.listeners[GuildBanAdd] = &GuildBanAddCallbackStack{}
-	d.listeners[GuildBanRemove] = &GuildBanRemoveCallbackStack{}
-	d.listeners[GuildEmojisUpdate] = &GuildEmojisUpdateCallbackStack{}
-	d.listeners[GuildIntegrationsUpdate] = &GuildIntegrationsUpdateCallbackStack{}
-
-	// Guild Member
-	d.listeners[GuildMemberAdd] = &GuildMemberAddCallbackStack{}
-	d.listeners[GuildMemberRemove] = &GuildMemberRemoveCallbackStack{}
-	d.listeners[GuildMemberUpdate] = &GuildMemberUpdateCallbackStack{}
-	d.listeners[GuildMemberChunk] = &GuildMemberChunkCallbackStack{}
-
-	// Guild role
-	d.listeners[GuildRoleCreate] = &GuildRoleCreateCallbackStack{}
-	d.listeners[GuildRoleUpdate] = &GuildRoleUpdateCallbackStack{}
-	d.listeners[GuildRoleDelete] = &GuildRoleDeleteCallbackStack{}
-
-	// message
-	d.listeners[MessageCreate] = &MessageCreateCallbackStack{}
-	d.listeners[MessageUpdate] = &MessageUpdateCallbackStack{}
-	d.listeners[MessageDelete] = &MessageDeleteCallbackStack{}
-	d.listeners[MessageDeleteBulk] = &MessageDeleteBulkCallbackStack{}
-
-	// message reaction
-	d.listeners[MessageReactionAdd] = &MessageReactionAddCallbackStack{}
-	d.listeners[MessageReactionRemove] = &MessageReactionRemoveCallbackStack{}
-	d.listeners[MessageReactionRemoveAll] = &MessageReactionRemoveAllCallbackStack{}
-
-	// presence
-	d.listeners[PresenceUpdate] = &PresenceUpdateCallbackStack{}
-
-	// typing start
-	d.listeners[TypingStart] = &TypingStartCallbackStack{}
-
-	// user update
-	d.listeners[UserUpdate] = &UserUpdateCallbackStack{}
-
-	// voice
-	d.listeners[VoiceStateUpdate] = &VoiceStateUpdateCallbackStack{}
-	d.listeners[VoiceServerUpdate] = &VoiceServerUpdateCallbackStack{}
-
-	// webhook
-	d.listeners[WebhooksUpdate] = &WebhooksUpdateCallbackStack{}
-
-	return d
+	Event(eventName Type, listener interface{})
+	Trigger(eventName Type, params ...*interface{})
 }
 
 type Dispatcher struct {
-	listeners map[Type]CallbackStackInterface
+	// add all the callback stacks
+	// socket
+	ReadyEvent   ReadyCallbackStack
+	ResumedEvent ResumedCallbackStack
+
+	// channel
+	ChannelCreateEvent     ChannelCreateCallbackStack
+	ChannelUpdateEvent     ChannelUpdateCallbackStack
+	ChannelDeleteEvent     ChannelDeleteCallbackStack
+	ChannelPinsUpdateEvent ChannelPinsUpdateCallbackStack
+
+	// Guild in general
+	GuildCreateEvent             GuildCreateCallbackStack
+	GuildUpdateEvent             GuildUpdateCallbackStack
+	GuildDeleteEvent             GuildDeleteCallbackStack
+	GuildBanAddEvent             GuildBanAddCallbackStack
+	GuildBanRemoveEvent          GuildBanRemoveCallbackStack
+	GuildEmojisUpdateEvent       GuildEmojisUpdateCallbackStack
+	GuildIntegrationsUpdateEvent GuildIntegrationsUpdateCallbackStack
+
+	// Guild Member
+	GuildMemberAddEvent    GuildMemberAddCallbackStack
+	GuildMemberRemoveEvent GuildMemberRemoveCallbackStack
+	GuildMemberUpdateEvent GuildMemberUpdateCallbackStack
+	GuildMemberChunkEvent  GuildMemberChunkCallbackStack
+
+	// Guild role
+	GuildRoleCreateEvent GuildRoleCreateCallbackStack
+	GuildRoleUpdateEvent GuildRoleUpdateCallbackStack
+	GuildRoleDeleteEvent GuildRoleDeleteCallbackStack
+
+	// message
+	MessageCreateEvent     MessageCreateCallbackStack
+	MessageUpdateEvent     MessageUpdateCallbackStack
+	MessageDeleteEvent     MessageDeleteCallbackStack
+	MessageDeleteBulkEvent MessageDeleteBulkCallbackStack
+
+	// message reaction
+	MessageReactionAddEvent       MessageReactionAddCallbackStack
+	MessageReactionRemoveEvent    MessageReactionRemoveCallbackStack
+	MessageReactionRemoveAllEvent MessageReactionRemoveAllCallbackStack
+
+	// presence
+	PresenceUpdateEvent PresenceUpdateCallbackStack
+
+	// typing start
+	TypingStartEvent TypingStartCallbackStack
+
+	// user update
+	UserUpdateEvent UserUpdateCallbackStack
+
+	// voice
+	VoiceStateUpdateEvent  VoiceStateUpdateCallbackStack
+	VoiceServerUpdateEvent VoiceServerUpdateCallbackStack
+
+	// webhook
+	WebhooksUpdateEvent WebhooksUpdateCallbackStack
 }
 
-func (d *Dispatcher) OnEvent(eventName Type, listener interface{}) {
-	if listeners, ok := d.listeners[eventName]; ok {
-		listeners.Add(listener)
-	} else {
-		logrus.Errorf("no callback interface registered for `%s`", eventName)
-	}
+// On places listeners into their respected stacks
+func (d *Dispatcher) On(eventName Type, listener interface{}) {
 }
 
-func (d *Dispatcher) Trigger(eventName Type, params ...interface{}) {
-	if listeners, ok := d.listeners[eventName]; ok {
-		listeners.Trigger(params)
-	}
+// Trigger listeners based on the event type
+func (d *Dispatcher) Trigger(eventName Type, params ...*interface{}) {
 }
