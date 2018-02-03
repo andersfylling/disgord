@@ -132,6 +132,8 @@ func (c *Client) operationHandlers() {
 				c.sendChan <- &gatewayPayload{Op: 1, Data: &snr}
 			case 7:
 				// reconnect
+				c.Disconnect()
+				go c.reconnect()
 			case 9:
 				// invalid session. Must respond with a identify packet
 				err := c.sendIdentity()

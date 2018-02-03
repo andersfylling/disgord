@@ -1,0 +1,13 @@
+{
+  "role": {
+    "position": 1,
+    "permissions": 103810048,
+    "name": "Bot",
+    "mentionable": false,
+    "managed": false,
+    "id": "404055264887832577",
+    "hoist": false,
+    "color": 3066993
+  },
+  "guild_id": "244200618854580224"
+}

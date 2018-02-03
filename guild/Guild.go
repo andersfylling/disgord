@@ -13,6 +13,16 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
+func NewGuildFromJSON(data []byte) *Guild {
+	guild := &Guild{}
+	err := json.Unmarshal(data, guild)
+	if err != nil {
+		panic(err)
+	}
+
+	return guild
+}
+
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
 // https://discordapp.com/developers/docs/resources/guild#guild-object
