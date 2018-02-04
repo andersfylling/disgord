@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"errors"
 	"os/user"
 
 	"github.com/andersfylling/disgord/channel"
@@ -8,16 +9,25 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
-type Stater interface {
+type StateCacher interface {
 	AddGuild(g *guild.Guild)
 	UpdateGuild(g *guild.Guild)
 	DeleteGuild(g *guild.Guild)
 	DeleteGuildByID(ID snowflake.ID)
+	Guild(ID snowflake.ID) (*guild.Guild, error)
 
 	AddChannel(c *channel.Channel)
 	UpdateChannel(c *channel.Channel)
 	DeleteChannel(c *channel.Channel)
 	DeleteChannelByID(ID snowflake.ID)
+}
+
+func NewStateCache() *StateCache {
+	return &StateCache{
+		guilds:   make(map[snowflake.ID]*guild.Guild),
+		users:    make(map[snowflake.ID]*user.User),
+		channels: make(map[snowflake.ID]*channel.Channel),
+	}
 }
 
 type StateCache struct {
@@ -45,6 +55,14 @@ func (s *StateCache) DeleteGuildByID(ID snowflake.ID) {
 	if _, ok := s.guilds[ID]; ok {
 		delete(s.guilds, ID)
 	}
+}
+
+func (s *StateCache) Guild(ID snowflake.ID) (*guild.Guild, error) {
+	if g, ok := s.guilds[ID]; ok {
+		return g, nil
+	}
+
+	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")
 }
 
 // channels

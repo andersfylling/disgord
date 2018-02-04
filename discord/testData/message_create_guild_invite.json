@@ -1,0 +1,26 @@
+{
+  "attachments": [
+  ],
+  "author": {
+    "avatar": "69a7a0e9cb963adfdd69a2224b4ac180",
+    "discriminator": "7237",
+    "id": "228846961774559232",
+    "username": "Anders"
+  },
+  "channel_id": "409359688258551850",
+  "content": "https://discord.gg/kaWJsV",
+  "edited_timestamp": null,
+  "embeds": [
+  ],
+  "id": "409654019611688960",
+  "mention_everyone": false,
+  "mention_roles": [
+  ],
+  "mentions": [
+  ],
+  "nonce": "409653919891849216",
+  "pinned": false,
+  "timestamp": "2018-02-04T10:18:49.279000+00:00",
+  "tts": false,
+  "type": 0
+}

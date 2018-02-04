@@ -53,6 +53,7 @@ func NewClient(conf *Config) (*Client, error) {
 		EventChan:  dws.GetEventChannel(),
 		Token:      conf.Token,
 		Dispatcher: event.NewDispatcher(),
+		State:      NewStateCache(),
 	}
 
 	return d, nil
@@ -83,7 +84,7 @@ type Client struct {
 	*event.Dispatcher
 
 	// cache
-	State Stater
+	State StateCacher
 }
 
 func (c *Client) String() string {
@@ -145,39 +146,48 @@ func (c *Client) eventObserver() {
 
 			// TODO: parsing JSON uses panic and not logging on issues..
 
-			switch evt.Name() {
+			eventName := evt.Name()
+			switch eventName {
 			//case event.Ready:
 			//case event.Resumed:
 			//case event.ChannelCreate:
 			//case event.ChannelUpdate:
 			//case event.ChannelDelete:
 			//case event.ChannelPinsUpdate:
-			case event.GuildCreate:
+			case event.GuildCreate, event.GuildUpdate, event.GuildDelete:
 				g := &guild.Guild{}
 				err := json.Unmarshal(evt.Data(), g)
 				if err != nil {
 					panic(err)
 				}
 
-				// add to cache
-				c.State.AddGuild(g)
+				switch eventName { // internal switch statement for guild events
+				case event.GuildCreate:
+					// add to cache
+					c.State.AddGuild(g)
+					// notifify listeners
+					c.GuildCreateEvent.Trigger(ctx, g)
+				case event.GuildUpdate:
+					// update cache
+					c.State.UpdateGuild(g)
+					// notifify listeners
+					c.GuildUpdateEvent.Trigger(ctx, g)
+				case event.GuildDelete:
+					cachedGuild, err := c.State.Guild(g.ID)
+					if err != nil {
+						// guild has not been cached earlier for some reason..
+					} else {
+						// update instance with complete info.
+						// Assumption: The cached version has no outdated information.
+						g = nil
+						g = cachedGuild
+						// delete the guild object from the cache
+						c.State.DeleteGuild(g)
+					}
 
-				// notifify listeners
-				c.GuildCreateEvent.Trigger(ctx, g)
-			case event.GuildUpdate:
-				g := &guild.Guild{}
-				err := json.Unmarshal(evt.Data(), g)
-				if err != nil {
-					panic(err)
-				}
-
-				// update cache
-				c.State.UpdateGuild(g)
-
-				// notifify listeners
-				fmt.Println(string(evt.Data()))
-				c.GuildUpdateEvent.Trigger(ctx, g)
-			//case event.GuildDelete:
+					// notify listeners
+					c.GuildDeleteEvent.Trigger(ctx, g)
+				} // END internal switch statement for guild events
 			//case event.GuildBanAdd:
 			//case event.GuildBanRemove:
 			//case event.GuildEmojisUpdate:
