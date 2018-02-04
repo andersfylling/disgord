@@ -3,6 +3,7 @@ package guild
 import (
 	"encoding/json"
 	"errors"
+	"sort"
 	"sync"
 
 	"github.com/andersfylling/disgord/channel"
@@ -67,6 +68,7 @@ type Guild struct {
 
 // Compare two guild objects
 func (guild *Guild) Compare(g *Guild) bool {
+	// TODO: this is shit..
 	return (guild == nil && g == nil) || (g != nil && guild.ID == g.ID)
 }
 
@@ -96,22 +98,57 @@ func (guild *Guild) MarshalJSON() ([]byte, error) {
 	return jsonData, nil
 }
 
-func (guild *Guild) AddChannel(channel *channel.Channel) error {
-	guild.Lock()
-	guild.Unlock()
+// sortChannels Only while in lock
+func (g *Guild) sortChannels() {
+	sort.Slice(g.Channels, func(i, j int) bool {
+		return g.Channels[i].ID < g.Channels[j].ID
+	})
+}
 
-	// TODO: implement sorting for faster searching later
-	guild.Channels = append(guild.Channels, channel)
+func (g *Guild) AddChannel(c *channel.Channel) error {
+	g.Lock()
+	defer g.Unlock()
+
+	g.Channels = append(g.Channels, c)
+	g.sortChannels()
 
 	return nil
 }
 
-func (guild *Guild) AddMember(member *Member) error {
-	guild.Lock()
-	guild.Unlock()
+func (g *Guild) DeleteChannel(c *channel.Channel) error {
+	return g.DeleteChannelByID(c.ID)
+}
+func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
+	g.Lock()
+	defer g.Unlock()
+
+	index := -1
+	for i, c := range g.Channels {
+		if c.ID == ID {
+			index = i
+		}
+	}
+
+	if index == -1 {
+		return errors.New("channel with ID{" + ID.String() + "} does not exist in cache")
+	}
+
+	// delete the entry
+	g.Channels[index] = g.Channels[len(g.Channels)-1]
+	g.Channels[len(g.Channels)-1] = nil
+	g.Channels = g.Channels[:len(g.Channels)-1]
+
+	g.sortChannels()
+
+	return nil
+}
+
+func (g *Guild) AddMember(member *Member) error {
+	g.Lock()
+	g.Unlock()
 
 	// TODO: implement sorting for faster searching later
-	guild.Members = append(guild.Members, member)
+	g.Members = append(g.Members, member)
 
 	return nil
 }

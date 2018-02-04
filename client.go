@@ -166,12 +166,12 @@ func (c *Client) eventObserver() {
 					// add to cache
 					c.State.AddGuild(g)
 					// notifify listeners
-					c.GuildCreateEvent.Trigger(ctx, g)
+					go c.GuildCreateEvent.Trigger(ctx, g)
 				case event.GuildUpdate:
 					// update cache
 					c.State.UpdateGuild(g)
 					// notifify listeners
-					c.GuildUpdateEvent.Trigger(ctx, g)
+					go c.GuildUpdateEvent.Trigger(ctx, g)
 				case event.GuildDelete:
 					cachedGuild, err := c.State.Guild(g.ID)
 					if err != nil {
@@ -186,7 +186,7 @@ func (c *Client) eventObserver() {
 					}
 
 					// notify listeners
-					c.GuildDeleteEvent.Trigger(ctx, g)
+					go c.GuildDeleteEvent.Trigger(ctx, g)
 				} // END internal switch statement for guild events
 			//case event.GuildBanAdd:
 			//case event.GuildBanRemove:
