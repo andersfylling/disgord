@@ -28,7 +28,7 @@ func NewGuildFromJSON(data []byte) *Guild {
 //  and are often referred to as "servers" in the UI.
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
-type Guild struct {
+type guildJSON struct {
 	ID                          snowflake.ID                   `json:"id"`
 	ApplicationID               *snowflake.ID                  `json:"application_id"` //   |?
 	Name                        string                         `json:"name"`
@@ -62,25 +62,61 @@ type Guild struct {
 	Members     []*Member           `json:"members,omitempty"`      // ?*|
 	Channels    []*channel.Channel  `json:"channels,omitempty"`     // ?*|
 	Presences   []*discord.Presence `json:"presences,omitempty"`    // ?*|
+}
 
-	sync.RWMutex `json:"-"`
+type GuildInterface interface {
+	ID() snowflake.ID
+	Channel(ID snowflake.ID)
+	Channels() []*channel.Channel
+}
+
+type GuildIDer interface {
+	ID() snowflake.ID
+}
+
+type Guild struct {
+	d guildJSON // struct data
+
+	sync.RWMutex
+}
+
+func (g *Guild) ID() snowflake.ID {
+	g.Lock()
+	defer g.Unlock()
+
+	return g.d.ID
+}
+
+// Channels
+func (g *Guild) Channels() []*channel.Channel {
+	return g.d.Channels
 }
 
 // Compare two guild objects
-func (guild *Guild) Compare(g *Guild) bool {
+func (g *Guild) Compare(other *Guild) bool {
 	// TODO: this is shit..
-	return (guild == nil && g == nil) || (g != nil && guild.ID == g.ID)
+	g.Lock()
+	defer g.Unlock()
+
+	return (g == nil && other == nil) || (other != nil && g.d.ID == other.d.ID)
 }
 
-func (guild *Guild) MarshalJSON() ([]byte, error) {
+func (g *Guild) UnmarshalJSON(data []byte) (err error) {
+	g.Lock()
+	defer g.Unlock()
+
+	return json.Unmarshal(data, &g.d)
+}
+
+func (g *Guild) MarshalJSON() ([]byte, error) {
 	var jsonData []byte
 	var err error
-	if guild.Unavailable {
+	if g.d.Unavailable {
 		guildUnavailable := struct {
 			ID          snowflake.ID `json:"id"`
 			Unavailable bool         `json:"unavailable"` // ?*|
 		}{
-			ID:          guild.ID,
+			ID:          g.d.ID,
 			Unavailable: true,
 		}
 		jsonData, err = json.Marshal(&guildUnavailable)
@@ -88,8 +124,7 @@ func (guild *Guild) MarshalJSON() ([]byte, error) {
 			return []byte(""), nil
 		}
 	} else {
-		g := Guild(*guild) // avoid stack overflow by recursive call of Marshal
-		jsonData, err = json.Marshal(g)
+		jsonData, err = json.Marshal(g.d)
 		if err != nil {
 			return []byte(""), nil
 		}
@@ -100,8 +135,8 @@ func (guild *Guild) MarshalJSON() ([]byte, error) {
 
 // sortChannels Only while in lock
 func (g *Guild) sortChannels() {
-	sort.Slice(g.Channels, func(i, j int) bool {
-		return g.Channels[i].ID < g.Channels[j].ID
+	sort.Slice(g.d.Channels, func(i, j int) bool {
+		return g.d.Channels[i].ID < g.d.Channels[j].ID
 	})
 }
 
@@ -109,7 +144,7 @@ func (g *Guild) AddChannel(c *channel.Channel) error {
 	g.Lock()
 	defer g.Unlock()
 
-	g.Channels = append(g.Channels, c)
+	g.d.Channels = append(g.d.Channels, c)
 	g.sortChannels()
 
 	return nil
@@ -123,7 +158,7 @@ func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
 	defer g.Unlock()
 
 	index := -1
-	for i, c := range g.Channels {
+	for i, c := range g.d.Channels {
 		if c.ID == ID {
 			index = i
 		}
@@ -134,9 +169,9 @@ func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
 	}
 
 	// delete the entry
-	g.Channels[index] = g.Channels[len(g.Channels)-1]
-	g.Channels[len(g.Channels)-1] = nil
-	g.Channels = g.Channels[:len(g.Channels)-1]
+	g.d.Channels[index] = g.d.Channels[len(g.d.Channels)-1]
+	g.d.Channels[len(g.d.Channels)-1] = nil
+	g.d.Channels = g.d.Channels[:len(g.d.Channels)-1]
 
 	g.sortChannels()
 
@@ -145,31 +180,31 @@ func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
 
 func (g *Guild) AddMember(member *Member) error {
 	g.Lock()
-	g.Unlock()
+	defer g.Unlock()
 
 	// TODO: implement sorting for faster searching later
-	g.Members = append(g.Members, member)
+	g.d.Members = append(g.d.Members, member)
 
 	return nil
 }
 
-func (guild *Guild) AddRole(role *discord.Role) error {
-	guild.Lock()
-	guild.Unlock()
+func (g *Guild) AddRole(role *discord.Role) error {
+	g.Lock()
+	defer g.Unlock()
 
 	// TODO: implement sorting for faster searching later
-	guild.Roles = append(guild.Roles, role)
+	g.d.Roles = append(g.d.Roles, role)
 
 	return nil
 }
 
 // Member return a member by his/her userid
-func (guild *Guild) Member(id snowflake.ID) (*Member, error) {
-	guild.RLock()
-	defer guild.RUnlock()
+func (g *Guild) Member(id snowflake.ID) (*Member, error) {
+	g.RLock()
+	defer g.RUnlock()
 
-	for _, member := range guild.Members {
-		if member.User.ID == id {
+	for _, member := range g.d.Members {
+		if member.User.ID() == id {
 			return member, nil
 		}
 	}
@@ -178,13 +213,13 @@ func (guild *Guild) Member(id snowflake.ID) (*Member, error) {
 }
 
 // MemberByName retrieve a slice of members with same username or nickname
-func (guild *Guild) MemberByName(name string) ([]*Member, error) {
-	guild.RLock()
-	defer guild.RUnlock()
+func (g *Guild) MemberByName(name string) ([]*Member, error) {
+	g.RLock()
+	defer g.RUnlock()
 
 	var members []*Member
-	for _, member := range guild.Members {
-		if member.Nick == name || member.User.Username == name {
+	for _, member := range g.d.Members {
+		if member.Nick == name || member.User.Username() == name {
 			members = append(members, member)
 		}
 	}
@@ -197,11 +232,11 @@ func (guild *Guild) MemberByName(name string) ([]*Member, error) {
 }
 
 // Role retrieve a role based on role id
-func (guild *Guild) Role(id snowflake.ID) (*discord.Role, error) {
-	guild.RLock()
-	defer guild.RUnlock()
+func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
+	g.RLock()
+	defer g.RUnlock()
 
-	for _, role := range guild.Roles {
+	for _, role := range g.d.Roles {
 		if role.ID == id {
 			return role, nil
 		}
@@ -211,12 +246,12 @@ func (guild *Guild) Role(id snowflake.ID) (*discord.Role, error) {
 }
 
 // RoleByTitle retrieves a slice of roles with same name
-func (guild *Guild) RoleByName(name string) ([]*discord.Role, error) {
-	guild.RLock()
-	defer guild.RUnlock()
+func (g *Guild) RoleByName(name string) ([]*discord.Role, error) {
+	g.RLock()
+	defer g.RUnlock()
 
 	var roles []*discord.Role
-	for _, role := range guild.Roles {
+	for _, role := range g.d.Roles {
 		if role.Name == name {
 			roles = append(roles, role)
 		}
@@ -229,15 +264,71 @@ func (guild *Guild) RoleByName(name string) ([]*discord.Role, error) {
 	return roles, nil
 }
 
-func (guild *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
-	guild.RLock()
-	defer guild.RUnlock()
+func (g *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
+	g.RLock()
+	defer g.RUnlock()
 
-	for _, channel := range guild.Channels {
+	for _, channel := range g.d.Channels {
 		if channel.ID == id {
 			return channel, nil
 		}
 	}
 
 	return nil, errors.New("channel not found in guild")
+}
+
+// Update update the reference content
+func (g *Guild) Update(new *Guild) {
+
+}
+
+// Clear all the pointers
+func (g *Guild) Clear() {
+	g.Lock() // what if another process tries to read this, but awais while locked for clearing?
+	defer g.Unlock()
+
+	g.d.ApplicationID = nil
+	//g.Icon = nil // should this be cleared?
+	//g.Splash = nil // should this be cleared?
+
+	for _, r := range g.d.Roles {
+		r.Clear()
+		r = nil
+	}
+	g.d.Roles = nil
+
+	for _, e := range g.d.Emojis {
+		e.Clear()
+		e = nil
+	}
+	g.d.Emojis = nil
+
+	g.d.SystemChannelID = nil
+	g.d.JoinedAt = nil
+
+	for _, vst := range g.d.VoiceStates {
+		vst.Clear()
+		vst = nil
+	}
+	g.d.VoiceStates = nil
+
+	deletedUsers := []snowflake.ID{}
+	for _, m := range g.d.Members {
+		deletedUsers = append(deletedUsers, m.Clear())
+		m = nil
+	}
+	g.d.Members = nil
+
+	for _, c := range g.d.Channels {
+		c.Clear()
+		c = nil
+	}
+	g.d.Channels = nil
+
+	for _, p := range g.d.Presences {
+		p.Clear()
+		p = nil
+	}
+	g.d.Presences = nil
+
 }

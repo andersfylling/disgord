@@ -13,3 +13,7 @@ type Emoji struct {
 	RequireColons bool           `json:"require_colons"`
 	Managed       bool           `json:"managed"`
 }
+
+func (e *Emoji) Clear() {
+	// obviusly don't delete the user ...
+}

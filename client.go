@@ -12,6 +12,7 @@ import (
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
+	"github.com/andersfylling/disgord/user"
 	"github.com/sirupsen/logrus"
 )
 
@@ -173,7 +174,7 @@ func (c *Client) eventObserver() {
 					// notifify listeners
 					go c.GuildUpdateEvent.Trigger(ctx, g)
 				case event.GuildDelete:
-					cachedGuild, err := c.State.Guild(g.ID)
+					cachedGuild, err := c.State.Guild(g.ID())
 					if err != nil {
 						// guild has not been cached earlier for some reason..
 					} else {
@@ -208,7 +209,22 @@ func (c *Client) eventObserver() {
 			//case event.MessageReactionRemoveAll:
 			//case event.PresenceUpdate:
 			//case event.TypingStart:
-			//case event.UserUpdate:
+			case event.UserUpdate:
+				u := &user.User{}
+				err := json.Unmarshal(evt.Data(), u)
+				if err != nil {
+					panic(err)
+				}
+
+				// update cache
+				_, err = c.State.UpdateUser(u)
+				if err != nil {
+					// user does not exist
+					c.State.AddUser(u)
+				}
+
+				// dispatch event
+				go c.UserUpdateEvent.Trigger(ctx, u)
 			//case event.VoiceStateUpdate:
 			//case event.VoiceServerUpdate:
 			//case event.WebhooksUpdate:

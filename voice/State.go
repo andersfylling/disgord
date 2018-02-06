@@ -32,3 +32,7 @@ type State struct {
 	// Suppress whether this user is muted by the current user
 	Suppress bool `json:"suppress"` // |
 }
+
+func (vst *State) Clear() {
+
+}

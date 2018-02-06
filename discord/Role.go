@@ -16,3 +16,7 @@ type Role struct {
 func NewRole() *Role {
 	return &Role{}
 }
+
+func (r *Role) Clear() {
+
+}

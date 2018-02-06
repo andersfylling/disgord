@@ -23,3 +23,7 @@ func (p *Presence) Update(status string) {
 func (p *Presence) String() string {
 	return p.Status
 }
+
+func (p *Presence) Clear() {
+	p.Game = nil
+}

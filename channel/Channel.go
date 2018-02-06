@@ -28,7 +28,7 @@ type Channel struct {
 	LastPingTimestamp    discord.Timestamp      `json:"last_ping_timestamp,omitempty"`
 
 	// Messages used for caching only. is always empty when fresh from the discord API
-	Messages []*Message `json:"-"`
+	Messages []*Message `json:"-"` // should prolly set a cache limit of 100
 }
 
 func NewChannel() *Channel {
@@ -41,4 +41,16 @@ func (c *Channel) Mention() string {
 
 func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
+}
+
+func (c *Channel) Clear() {
+	c.LastMessageID = nil
+	// c.Icon = nil // Do I really want to clear this?
+	for _, pmo := range c.PermissionOverwrites {
+		pmo.Clear()
+		pmo = nil
+	}
+	c.PermissionOverwrites = nil
+
+	//for _,
 }
