@@ -13,7 +13,7 @@ import (
 type StateCacher interface {
 	AddGuild(g *guild.Guild) *guild.Guild
 	UpdateGuild(g *guild.Guild) (*guild.Guild, error)
-	DeleteGuild(g guild.GuildIDer)
+	DeleteGuild(g *guild.Guild)
 	DeleteGuildByID(ID snowflake.ID)
 	Guild(ID snowflake.ID) (*guild.Guild, error)
 
@@ -22,24 +22,24 @@ type StateCacher interface {
 	DeleteChannel(c *channel.Channel)
 	DeleteChannelByID(ID snowflake.ID)
 
-	AddUser(g user.UserInterface) user.UserInterface
-	UpdateUser(g user.UserInterface) (user.UserInterface, error)
-	DeleteUser(g user.UserInterface)
+	AddUser(*user.User) *user.User
+	UpdateUser(*user.User) (*user.User, error)
+	DeleteUser(*user.User)
 	DeleteUserByID(ID snowflake.ID)
-	User(ID snowflake.ID) (user.UserInterface, error)
+	User(ID snowflake.ID) (*user.User, error)
 }
 
 func NewStateCache() *StateCache {
 	return &StateCache{
 		guilds:   make(map[snowflake.ID]*guild.Guild),
-		users:    make(map[snowflake.ID]user.UserInterface),
+		users:    make(map[snowflake.ID]*user.User),
 		channels: make(map[snowflake.ID]*channel.Channel),
 	}
 }
 
 type StateCache struct {
 	guilds   map[snowflake.ID]*guild.Guild
-	users    map[snowflake.ID]user.UserInterface
+	users    map[snowflake.ID]*user.User
 	channels map[snowflake.ID]*channel.Channel
 
 	guildsUpdateMutex sync.Mutex // update + delete
@@ -80,7 +80,7 @@ func (s *StateCache) UpdateGuild(new *guild.Guild) (*guild.Guild, error) {
 	return old, nil
 }
 
-func (s *StateCache) DeleteGuild(g guild.GuildIDer) {
+func (s *StateCache) DeleteGuild(g *guild.Guild) {
 	s.DeleteGuildByID(g.ID())
 }
 
@@ -125,36 +125,36 @@ func (s *StateCache) DeleteChannelByID(ID snowflake.ID) {
 //
 
 // AddUser and return reference
-func (s *StateCache) AddUser(u user.UserInterface) (updated user.UserInterface) {
+func (s *StateCache) AddUser(u *user.User) (updated *user.User) {
 	s.usersAddMutex.Lock()
 	defer s.usersAddMutex.Unlock()
 
-	if _, exists := s.users[u.ID()]; exists {
+	if _, exists := s.users[u.ID]; exists {
 		updated, _ = s.UpdateUser(u)
 		return
 	}
-	s.users[u.ID()] = u
+	s.users[u.ID] = u
 	updated = u
 	return
 }
 
 // UpdateUser and return the reference stored in cache
-func (s *StateCache) UpdateUser(new user.UserInterface) (user.UserInterface, error) {
+func (s *StateCache) UpdateUser(new *user.User) (*user.User, error) {
 	s.usersUpdateMutex.Lock()
 	defer s.usersUpdateMutex.Unlock()
 
-	if _, exists := s.users[new.ID()]; !exists {
+	if _, exists := s.users[new.ID]; !exists {
 		return nil, errors.New("cannot update guild none-existant user in cache")
 	}
 
-	old := s.users[new.ID()]
+	old := s.users[new.ID]
 
 	old.Update(new)
 	return old, nil
 }
 
-func (s *StateCache) DeleteUser(g user.UserInterface) {
-	s.DeleteUserByID(g.ID())
+func (s *StateCache) DeleteUser(u *user.User) {
+	s.DeleteUserByID(u.ID)
 }
 
 func (s *StateCache) DeleteUserByID(ID snowflake.ID) {
@@ -166,13 +166,13 @@ func (s *StateCache) DeleteUserByID(ID snowflake.ID) {
 	}
 }
 
-func (s *StateCache) User(ID snowflake.ID) (user.UserInterface, error) {
+func (s *StateCache) User(ID snowflake.ID) (*user.User, error) {
 	s.usersUpdateMutex.Lock()
 	s.usersAddMutex.Lock()
 	defer s.usersUpdateMutex.Unlock()
 	defer s.usersAddMutex.Unlock()
-	if g, ok := s.users[ID]; ok {
-		return g, nil
+	if u, ok := s.users[ID]; ok {
+		return u, nil
 	}
 
 	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")

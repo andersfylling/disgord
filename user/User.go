@@ -13,18 +13,14 @@ type DisgordDMInterface interface {
 }
 
 type UserInterface interface {
-	ID() snowflake.ID
-	Username() string
-	Discriminator() string
-	Email() string
-	Avatar() string
-	Token() string
-	Verified() bool
-	MFAEnabled() bool
-	Bot() bool
+	Mention() string
+	MentionNickname() string
+	String() string
+	UnmarshalJSON([]byte) error
+	MarshalJSON() ([]byte, error)
 
 	// Update internal structure
-	Update(UserInterface) error
+	Update(*User) error
 	Clear()
 
 	// Send a direct message to this user
@@ -36,7 +32,7 @@ type userJSON struct {
 	Username      string       `json:"username,omitempty"`
 	Discriminator string       `json:"discriminator,omitempty"`
 	Email         string       `json:"email,omitempty"`
-	Avatar        string       `json:"avatar"`
+	Avatar        *string      `json:"avatar"`
 	Token         string       `json:"token,omitempty"`
 	Verified      bool         `json:"verified,omitempty"`
 	MFAEnabled    bool         `json:"mfa_enabled,omitempty"`
@@ -44,7 +40,7 @@ type userJSON struct {
 }
 
 type User struct {
-	d userJSON
+	userJSON // simplifies marshalling and `userJSON` doesn't appear, but exported fields can still be accessed
 	sync.RWMutex
 }
 
@@ -53,102 +49,55 @@ func NewUser() *User {
 }
 
 func (u *User) Mention() string {
-	return "<@" + u.d.ID.String() + ">"
+	return "<@" + u.ID.String() + ">"
 }
 
 func (u *User) MentionNickname() string {
-	return "<@!" + u.d.ID.String() + ">"
+	return "<@!" + u.ID.String() + ">"
 }
 
 func (u *User) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &u.d)
+	return json.Unmarshal(data, &u.userJSON)
+}
+
+func (u *User) String() string {
+	return u.Username + "#" + u.Discriminator
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
-	if u.d.ID.Empty() {
+	if u.ID.Empty() {
 		return []byte("{}"), nil
 	}
 
-	return json.Marshal(&u.d)
+	return json.Marshal(&u.userJSON)
 }
 
 func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) EqualID(ID snowflake.ID) bool {
-	u.Lock()
-	defer u.Unlock()
-	return ID == u.d.ID
-}
-
-func (u *User) ID() snowflake.ID {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.ID
-}
-func (u *User) Username() string {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Username
-}
-func (u *User) Discriminator() string {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Discriminator
-}
-func (u *User) Email() string {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Email
-}
-func (u *User) Avatar() string {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Avatar
-}
-func (u *User) Token() string {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Token
-}
-func (u *User) Verified() bool {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Verified
-}
-func (u *User) MFAEnabled() bool {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.MFAEnabled
-}
-func (u *User) Bot() bool {
-	u.Lock()
-	defer u.Unlock()
-	return u.d.Bot
-}
-
-func (u *User) Update(new UserInterface) (err error) {
-	if !u.EqualID(new.ID()) {
+func (u *User) Update(new *User) (err error) {
+	if u.ID != new.ID {
 		err = errors.New("cannot update user when the new struct has a different ID")
 		return
 	}
 	// make sure that new is not the same pointer!
-	if u == new.(*User) {
+	if u == new {
 		err = errors.New("cannot update user when the new struct points to the same memory space")
 		return
 	}
 
 	u.Lock()
-	u.d.Username = new.Username()
-	u.d.Discriminator = new.Discriminator()
-	u.d.Email = new.Email()
-	u.d.Avatar = new.Avatar()
-	u.d.Token = new.Token()
-	u.d.Verified = new.Verified()
-	u.d.Verified = new.Verified()
-	u.d.MFAEnabled = new.MFAEnabled()
-	u.d.Bot = new.Bot()
+	new.Lock()
+	u.Username = new.Username
+	u.Discriminator = new.Discriminator
+	u.Email = new.Email
+	u.Avatar = new.Avatar
+	u.Token = new.Token
+	u.Verified = new.Verified
+	u.MFAEnabled = new.MFAEnabled
+	u.Bot = new.Bot
+	new.Unlock()
 	u.Unlock()
 
 	return

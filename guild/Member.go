@@ -23,7 +23,7 @@ func (m *Member) Clear() snowflake.ID {
 	// or.. since the user object is sent on channel_create events, the user can be reintialized when needed.
 	// but should be properly removed from other arrays.
 	m.User.Clear()
-	id := m.User.ID()
+	id := m.User.ID
 	m.User = nil
 
 	// use this ID to check in other places. To avoid pointing to random memory spaces

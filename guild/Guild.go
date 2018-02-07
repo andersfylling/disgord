@@ -204,7 +204,7 @@ func (g *Guild) Member(id snowflake.ID) (*Member, error) {
 	defer g.RUnlock()
 
 	for _, member := range g.d.Members {
-		if member.User.ID() == id {
+		if member.User.ID == id {
 			return member, nil
 		}
 	}
@@ -219,7 +219,7 @@ func (g *Guild) MemberByName(name string) ([]*Member, error) {
 
 	var members []*Member
 	for _, member := range g.d.Members {
-		if member.Nick == name || member.User.Username() == name {
+		if member.Nick == name || member.User.Username == name {
 			members = append(members, member)
 		}
 	}

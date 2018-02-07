@@ -211,7 +211,7 @@ func (c *Client) eventObserver() {
 			//case event.TypingStart:
 			case event.UserUpdate:
 				u := &user.User{}
-				err := json.Unmarshal(evt.Data(), u)
+				err := u.UnmarshalJSON(evt.Data())
 				if err != nil {
 					panic(err)
 				}
