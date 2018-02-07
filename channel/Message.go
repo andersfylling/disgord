@@ -1,13 +1,15 @@
 package channel
 
 import (
+	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 )
 
-type Message struct {
+type messageJSON struct {
 	ID              snowflake.ID   `json:"id"`
 	ChannelID       snowflake.ID   `json:"channel_id"`
 	Author          *user.User     `json:"author"`
@@ -25,4 +27,21 @@ type Message struct {
 	Pinned          bool           `json:"pinned"`
 	WebhookID       snowflake.ID   `json:"webhook_id"` // ?
 	Type            uint           `json:"type"`
+}
+
+type Message struct {
+	messageJSON
+	sync.RWMutex
+}
+
+func (m *Message) MarshalJSON() ([]byte, error) {
+	if m.ID.Empty() {
+		return []byte("{}"), nil
+	}
+
+	return json.Marshal(&m.messageJSON)
+}
+
+func (m *Message) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &m.messageJSON)
 }

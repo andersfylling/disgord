@@ -23,7 +23,6 @@ type AuditLogEntry struct {
 }
 
 type AuditLogChange struct {
-	// will this even work? TODO, NOTE
 	NewValue interface{} `json:"new_value,omitempty"`
 	OldValue interface{} `json:"old_value,omitempty"`
 	Key      string      `json:"key"`

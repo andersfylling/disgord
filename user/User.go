@@ -56,10 +56,6 @@ func (u *User) MentionNickname() string {
 	return "<@!" + u.ID.String() + ">"
 }
 
-func (u *User) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &u.userJSON)
-}
-
 func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator
 }
@@ -70,6 +66,10 @@ func (u *User) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(&u.userJSON)
+}
+
+func (u *User) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &u.userJSON)
 }
 
 func (u *User) Clear() {
