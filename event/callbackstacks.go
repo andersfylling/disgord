@@ -106,9 +106,9 @@ func (stack *ChannelCreateCallbackStack) Add(cb ChannelCreateCallback) (err erro
 func (stack *ChannelCreateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, c)
+			listener(ctx, *c)
 		} else {
-			go listener(ctx, c)
+			go listener(ctx, *c)
 		}
 	}
 
@@ -137,9 +137,9 @@ func (stack *ChannelUpdateCallbackStack) Add(cb ChannelUpdateCallback) (err erro
 func (stack *ChannelUpdateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, c)
+			listener(ctx, *c)
 		} else {
-			go listener(ctx, c)
+			go listener(ctx, *c)
 		}
 	}
 
@@ -168,9 +168,9 @@ func (stack *ChannelDeleteCallbackStack) Add(cb ChannelDeleteCallback) (err erro
 func (stack *ChannelDeleteCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, c)
+			listener(ctx, *c)
 		} else {
-			go listener(ctx, c)
+			go listener(ctx, *c)
 		}
 	}
 
@@ -199,9 +199,9 @@ func (stack *ChannelPinsUpdateCallbackStack) Add(cb ChannelPinsUpdateCallback) (
 func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, c)
+			listener(ctx, *c)
 		} else {
-			go listener(ctx, c)
+			go listener(ctx, *c)
 		}
 	}
 
@@ -233,9 +233,9 @@ func (stack *GuildCreateCallbackStack) Add(cb GuildCreateCallback) (err error) {
 func (stack *GuildCreateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -264,9 +264,9 @@ func (stack *GuildUpdateCallbackStack) Add(cb GuildUpdateCallback) (err error) {
 func (stack *GuildUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -295,9 +295,9 @@ func (stack *GuildDeleteCallbackStack) Add(cb GuildDeleteCallback) (err error) {
 func (stack *GuildDeleteCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -326,9 +326,9 @@ func (stack *GuildBanAddCallbackStack) Add(cb GuildBanAddCallback) (err error) {
 func (stack *GuildBanAddCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -357,9 +357,9 @@ func (stack *GuildBanRemoveCallbackStack) Add(cb GuildBanRemoveCallback) (err er
 func (stack *GuildBanRemoveCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -388,9 +388,9 @@ func (stack *GuildEmojisUpdateCallbackStack) Add(cb GuildEmojisUpdateCallback) (
 func (stack *GuildEmojisUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -419,9 +419,9 @@ func (stack *GuildIntegrationsUpdateCallbackStack) Add(cb GuildIntegrationsUpdat
 func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, g)
+			listener(ctx, *g)
 		} else {
-			go listener(ctx, g)
+			go listener(ctx, *g)
 		}
 	}
 
@@ -453,9 +453,9 @@ func (stack *GuildMemberAddCallbackStack) Add(cb GuildMemberAddCallback) (err er
 func (stack *GuildMemberAddCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, member)
+			listener(ctx, *member)
 		} else {
-			go listener(ctx, member)
+			go listener(ctx, *member)
 		}
 	}
 
@@ -484,9 +484,9 @@ func (stack *GuildMemberRemoveCallbackStack) Add(cb GuildMemberRemoveCallback) (
 func (stack *GuildMemberRemoveCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, member)
+			listener(ctx, *member)
 		} else {
-			go listener(ctx, member)
+			go listener(ctx, *member)
 		}
 	}
 
@@ -515,9 +515,9 @@ func (stack *GuildMemberUpdateCallbackStack) Add(cb GuildMemberUpdateCallback) (
 func (stack *GuildMemberUpdateCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, member)
+			listener(ctx, *member)
 		} else {
-			go listener(ctx, member)
+			go listener(ctx, *member)
 		}
 	}
 
@@ -543,7 +543,7 @@ func (stack *GuildMemberChunkCallbackStack) Add(cb GuildMemberChunkCallback) (er
 	return nil
 }
 
-func (stack *GuildMemberChunkCallbackStack) Trigger(ctx context.Context, members []*guild.Member) (err error) {
+func (stack *GuildMemberChunkCallbackStack) Trigger(ctx context.Context, members []guild.Member) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, members)
@@ -580,9 +580,9 @@ func (stack *GuildRoleCreateCallbackStack) Add(cb GuildRoleCreateCallback) (err 
 func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, role)
+			listener(ctx, *role)
 		} else {
-			go listener(ctx, role)
+			go listener(ctx, *role)
 		}
 	}
 
@@ -611,9 +611,9 @@ func (stack *GuildRoleUpdateCallbackStack) Add(cb GuildRoleUpdateCallback) (err 
 func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, role)
+			listener(ctx, *role)
 		} else {
-			go listener(ctx, role)
+			go listener(ctx, *role)
 		}
 	}
 
@@ -642,9 +642,9 @@ func (stack *GuildRoleDeleteCallbackStack) Add(cb GuildRoleDeleteCallback) (err 
 func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, role)
+			listener(ctx, *role)
 		} else {
-			go listener(ctx, role)
+			go listener(ctx, *role)
 		}
 	}
 
@@ -676,9 +676,9 @@ func (stack *MessageCreateCallbackStack) Add(cb MessageCreateCallback) (err erro
 func (stack *MessageCreateCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msg)
+			listener(ctx, *msg)
 		} else {
-			go listener(ctx, msg)
+			go listener(ctx, *msg)
 		}
 	}
 
@@ -707,9 +707,9 @@ func (stack *MessageUpdateCallbackStack) Add(cb MessageUpdateCallback) (err erro
 func (stack *MessageUpdateCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msg)
+			listener(ctx, *msg)
 		} else {
-			go listener(ctx, msg)
+			go listener(ctx, *msg)
 		}
 	}
 
@@ -738,9 +738,9 @@ func (stack *MessageDeleteCallbackStack) Add(cb MessageDeleteCallback) (err erro
 func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msg)
+			listener(ctx, *msg)
 		} else {
-			go listener(ctx, msg)
+			go listener(ctx, *msg)
 		}
 	}
 
@@ -766,7 +766,7 @@ func (stack *MessageDeleteBulkCallbackStack) Add(cb MessageDeleteBulkCallback) (
 	return nil
 }
 
-func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, msgs []*channel.Message) (err error) {
+func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, msgs []channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, msgs)
@@ -803,9 +803,9 @@ func (stack *MessageReactionAddCallbackStack) Add(cb MessageReactionAddCallback)
 func (stack *MessageReactionAddCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msg)
+			listener(ctx, *msg)
 		} else {
-			go listener(ctx, msg)
+			go listener(ctx, *msg)
 		}
 	}
 
@@ -834,9 +834,9 @@ func (stack *MessageReactionRemoveCallbackStack) Add(cb MessageReactionRemoveCal
 func (stack *MessageReactionRemoveCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msg)
+			listener(ctx, *msg)
 		} else {
-			go listener(ctx, msg)
+			go listener(ctx, *msg)
 		}
 	}
 
@@ -862,7 +862,7 @@ func (stack *MessageReactionRemoveAllCallbackStack) Add(cb MessageReactionRemove
 	return nil
 }
 
-func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context, msgs []*channel.Message) (err error) {
+func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context, msgs []channel.Message) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, msgs)
@@ -899,9 +899,9 @@ func (stack *PresenceUpdateCallbackStack) Add(cb PresenceUpdateCallback) (err er
 func (stack *PresenceUpdateCallbackStack) Trigger(ctx context.Context, p *discord.Presence) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, p)
+			listener(ctx, *p)
 		} else {
-			go listener(ctx, p)
+			go listener(ctx, *p)
 		}
 	}
 
@@ -933,9 +933,9 @@ func (stack *TypingStartCallbackStack) Add(cb TypingStartCallback) (err error) {
 func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, u *user.User, c *channel.Channel) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, u, c)
+			listener(ctx, *u, *c)
 		} else {
-			go listener(ctx, u, c)
+			go listener(ctx, *u, *c)
 		}
 	}
 
@@ -964,9 +964,9 @@ func (stack *UserUpdateCallbackStack) Add(cb UserUpdateCallback) (err error) {
 func (stack *UserUpdateCallbackStack) Trigger(ctx context.Context, u *user.User) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, u)
+			listener(ctx, *u)
 		} else {
-			go listener(ctx, u)
+			go listener(ctx, *u)
 		}
 	}
 
@@ -998,9 +998,9 @@ func (stack *VoiceStateUpdateCallbackStack) Add(cb VoiceStateUpdateCallback) (er
 func (stack *VoiceStateUpdateCallbackStack) Trigger(ctx context.Context, vst *voice.State) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, vst)
+			listener(ctx, *vst)
 		} else {
-			go listener(ctx, vst)
+			go listener(ctx, *vst)
 		}
 	}
 
@@ -1029,9 +1029,9 @@ func (stack *VoiceServerUpdateCallbackStack) Add(cb VoiceServerUpdateCallback) (
 func (stack *VoiceServerUpdateCallbackStack) Trigger(ctx context.Context, vst *voice.State) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, vst)
+			listener(ctx, *vst)
 		} else {
-			go listener(ctx, vst)
+			go listener(ctx, *vst)
 		}
 	}
 
@@ -1060,9 +1060,9 @@ func (stack *WebhooksUpdateCallbackStack) Add(cb WebhooksUpdateCallback) (err er
 func (stack *WebhooksUpdateCallbackStack) Trigger(ctx context.Context, wb *webhook.Webhook) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, wb)
+			listener(ctx, *wb)
 		} else {
-			go listener(ctx, wb)
+			go listener(ctx, *wb)
 		}
 	}
 
