@@ -2,12 +2,12 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/event"
@@ -149,7 +149,20 @@ func (c *Client) eventObserver() {
 
 			eventName := evt.Name()
 			switch eventName {
-			//case event.Ready:
+			case event.Ready:
+				r := &discord.Ready{}
+				err := r.UnmarshalJSON(evt.Data())
+				if err != nil {
+					panic(err)
+				}
+
+				go c.ReadyEvent.Trigger(ctx, r)
+
+				// allocate cache mem for guilds
+				for _, gu := range r.Guilds {
+					g := guild.NewGuildFromUnavailable(gu)
+					c.State.AddGuild(g)
+				}
 			//case event.Resumed:
 			//case event.ChannelCreate:
 			//case event.ChannelUpdate:
@@ -157,24 +170,27 @@ func (c *Client) eventObserver() {
 			//case event.ChannelPinsUpdate:
 			case event.GuildCreate, event.GuildUpdate, event.GuildDelete:
 				g := &guild.Guild{}
-				err := json.Unmarshal(evt.Data(), g)
+				err := g.UnmarshalJSON(evt.Data())
 				if err != nil {
 					panic(err)
 				}
 
 				switch eventName { // internal switch statement for guild events
 				case event.GuildCreate:
-					// add to cache
-					c.State.AddGuild(g)
 					// notifify listeners
 					go c.GuildCreateEvent.Trigger(ctx, g)
+					// add to cache
+					c.State.AddGuild(g)
 				case event.GuildUpdate:
-					// update cache
-					c.State.UpdateGuild(g)
 					// notifify listeners
 					go c.GuildUpdateEvent.Trigger(ctx, g)
+					// update cache
+					c.State.UpdateGuild(g)
 				case event.GuildDelete:
-					cachedGuild, err := c.State.Guild(g.ID())
+					// notify listeners
+					go c.GuildDeleteEvent.Trigger(ctx, g)
+
+					cachedGuild, err := c.State.Guild(g.ID)
 					if err != nil {
 						// guild has not been cached earlier for some reason..
 					} else {
@@ -185,9 +201,6 @@ func (c *Client) eventObserver() {
 						// delete the guild object from the cache
 						c.State.DeleteGuild(g)
 					}
-
-					// notify listeners
-					go c.GuildDeleteEvent.Trigger(ctx, g)
 				} // END internal switch statement for guild events
 			//case event.GuildBanAdd:
 			//case event.GuildBanRemove:

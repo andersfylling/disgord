@@ -35,7 +35,7 @@ func TestGuildChannelSorting(t *testing.T) {
 		g.AddChannel(c)
 	}
 
-	chans := g.Channels()
+	chans := g.Channels
 	for i := 1; i <= total; i++ {
 		if chans[i-1].ID != snowflake.NewID(uint64(i)) {
 			t.Error("wrong order")

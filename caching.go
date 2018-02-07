@@ -57,11 +57,11 @@ func (s *StateCache) AddGuild(g *guild.Guild) *guild.Guild {
 	s.guildsAddMutex.Lock()
 	defer s.guildsAddMutex.Unlock()
 
-	if _, exists := s.guilds[g.ID()]; exists {
+	if _, exists := s.guilds[g.ID]; exists {
 		gg, _ := s.UpdateGuild(g)
 		return gg
 	}
-	s.guilds[g.ID()] = g
+	s.guilds[g.ID] = g
 	return g
 }
 
@@ -70,18 +70,18 @@ func (s *StateCache) UpdateGuild(new *guild.Guild) (*guild.Guild, error) {
 	s.guildsUpdateMutex.Lock()
 	defer s.guildsUpdateMutex.Unlock()
 
-	if _, exists := s.guilds[new.ID()]; !exists {
+	if _, exists := s.guilds[new.ID]; !exists {
 		return nil, errors.New("cannot update guild none-existant guild in cache")
 	}
 
-	old := s.guilds[new.ID()]
+	old := s.guilds[new.ID]
 
 	old.Update(new)
 	return old, nil
 }
 
 func (s *StateCache) DeleteGuild(g *guild.Guild) {
-	s.DeleteGuildByID(g.ID())
+	s.DeleteGuildByID(g.ID)
 }
 
 func (s *StateCache) DeleteGuildByID(ID snowflake.ID) {

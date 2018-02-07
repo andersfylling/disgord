@@ -38,12 +38,12 @@ func (stack *ReadyCallbackStack) Add(cb ReadyCallback) (err error) {
 	return nil
 }
 
-func (stack *ReadyCallbackStack) Trigger(ctx context.Context) (err error) {
+func (stack *ReadyCallbackStack) Trigger(ctx context.Context, r *discord.Ready) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx)
+			listener(ctx, *r)
 		} else {
-			go listener(ctx)
+			go listener(ctx, *r)
 		}
 	}
 

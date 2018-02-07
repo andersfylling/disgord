@@ -12,7 +12,7 @@ import (
 )
 
 // socket
-type ReadyCallback = func(ctx context.Context)
+type ReadyCallback = func(ctx context.Context, r discord.Ready)
 type ResumedCallback = func(ctx context.Context)
 
 // channel
