@@ -48,6 +48,7 @@ INFO[2018-01-25 04:14:17] Event{READY}
 ```
 
 And the disconnect method provides graceful shutdown (buggy on reconnect periodes):
+
 ```go
 
 ^C
@@ -57,6 +58,38 @@ INFO[2018-01-25 04:30:11] Disconnected                                  lib="Dis
 
 TODO:
 
-- [ ] Convert byte array of data to data structs
-- [ ] Improve socket stability
-- [ ] Struct methods for a better / more complete OOD
+Event dispatchers + caching(ish):
+
+- [x] Ready
+- [ ] Resumed
+- [ ] ChannelCreate
+- [ ] ChannelUpdate
+- [ ] ChannelDelete
+- [ ] ChannelPinsUpdate
+- [x] GuildCreate
+- [x] GuildUpdate
+- [x] GuildDelete
+- [ ] GuildBanAdd
+- [ ] GuildBanRemove
+- [ ] GuildEmojisUpdate
+- [ ] GuildIntegrationsUpdate
+- [ ] GuildMemberAdd
+- [ ] GuildMemberRemove
+- [ ] GuildMemberUpdate
+- [ ] GuildMemberChunk
+- [ ] GuildRoleCreate
+- [ ] GuildRoleUpdate
+- [ ] GuildRoleDelete
+- [x] MessageCreate
+- [x] MessageUpdate
+- [x] MessageDelete
+- [ ] MessageDeleteBulk
+- [ ] MessageReactionAdd
+- [ ] MessageReactionRemove
+- [ ] MessageReactionRemoveAll
+- [ ] PresenceUpdate
+- [ ] TypingStart
+- [x] UserUpdate
+- [ ] VoiceStateUpdate
+- [ ] VoiceServerUpdate
+- [ ] WebhooksUpdate
