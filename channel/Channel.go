@@ -1,12 +1,18 @@
 package channel
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 )
+
+// ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
+type ChannelMessager interface {
+	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` before sending.
+}
 
 type Channel struct {
 	ID                   snowflake.ID           `json:"id"`
@@ -53,4 +59,12 @@ func (c *Channel) Clear() {
 	c.PermissionOverwrites = nil
 
 	//for _,
+}
+
+func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Message, err error) {
+	return &Message{}, errors.New("not implemented")
+}
+
+func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
+	return errors.New("not implemented")
 }

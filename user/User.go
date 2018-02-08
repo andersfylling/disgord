@@ -8,8 +8,9 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
-// DisgordDMInterface Methods required to create a new DM (or use an existing one) and send a DM.
-type DisgordDMInterface interface {
+// UserMessager Methods required to create a new DM (or use an existing one) and send a DM.
+type UserMessager interface {
+	//CreateAndSendDM(recipientID snowflake.ID, msg *Message) error // hmmm...
 }
 
 type UserInterface interface {
@@ -21,7 +22,7 @@ type UserInterface interface {
 	Clear()
 
 	// Send a direct message to this user
-	SendMessage(DisgordDMInterface, string) (snowflake.ID, snowflake.ID, error)
+	SendMessage(UserMessager, string) (snowflake.ID, snowflake.ID, error)
 }
 
 type User struct {
@@ -97,6 +98,6 @@ func (u *User) Update(new *User) (err error) {
 	return
 }
 
-func (u *User) SendMessage(client DisgordDMInterface, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMessage(client UserMessager, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
