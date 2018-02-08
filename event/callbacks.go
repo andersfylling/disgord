@@ -44,7 +44,7 @@ type GuildRoleDeleteCallback = func(ctx context.Context, role discord.Role)
 // message
 type MessageCreateCallback = func(ctx context.Context, msg channel.Message)
 type MessageUpdateCallback = func(ctx context.Context, msg channel.Message)
-type MessageDeleteCallback = func(ctx context.Context, msg channel.Message)
+type MessageDeleteCallback = func(ctx context.Context, msg channel.DeletedMessage)
 type MessageDeleteBulkCallback = func(ctx context.Context, msgs []channel.Message)
 
 // message reaction

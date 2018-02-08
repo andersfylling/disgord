@@ -13,6 +13,15 @@ func NewMessage() *Message {
 	return &Message{}
 }
 
+func NewDeletedMessage() *DeletedMessage {
+	return &DeletedMessage{}
+}
+
+type DeletedMessage struct {
+	ID        snowflake.ID `json:"id"`
+	ChannelID snowflake.ID `json:"channel_id"`
+}
+
 type Message struct {
 	ID              snowflake.ID   `json:"id"`
 	ChannelID       snowflake.ID   `json:"channel_id"`

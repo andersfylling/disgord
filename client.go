@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/endpoint"
@@ -154,7 +155,7 @@ func (c *Client) eventObserver() {
 				r := &discord.Ready{}
 				err := json.Unmarshal(evt.Data(), r)
 				if err != nil {
-					panic(err)
+					panic(err) // TODO: remove panic before merging to master
 				}
 
 				go c.ReadyEvent.Trigger(ctx, r)
@@ -173,7 +174,7 @@ func (c *Client) eventObserver() {
 				g := &guild.Guild{}
 				err := json.Unmarshal(evt.Data(), g)
 				if err != nil {
-					panic(err)
+					panic(err) // TODO: remove panic before merging to master
 				}
 
 				switch eventName { // internal switch statement for guild events
@@ -214,9 +215,26 @@ func (c *Client) eventObserver() {
 			//case event.GuildRoleCreate:
 			//case event.GuildRoleUpdate:
 			//case event.GuildRoleDelete:
-			//case event.MessageCreate:
-			//case event.MessageUpdate:
-			//case event.MessageDelete:
+			case event.MessageCreate, event.MessageUpdate, event.MessageDelete:
+				msg := channel.NewMessage()
+				err := json.Unmarshal(evt.Data(), msg)
+				if err != nil {
+					panic(err) // TODO: remove panic before merging to master
+				}
+
+				// TODO: should i cache msg?..
+				switch eventName {
+				case event.MessageCreate:
+					go c.MessageCreateEvent.Trigger(ctx, msg)
+				case event.MessageUpdate:
+					go c.MessageUpdateEvent.Trigger(ctx, msg)
+				case event.MessageDelete:
+					deletedMsg := &channel.DeletedMessage{
+						ID:        msg.ID,
+						ChannelID: msg.ChannelID,
+					}
+					go c.MessageDeleteEvent.Trigger(ctx, deletedMsg)
+				}
 			//case event.MessageDeleteBulk:
 			//case event.MessageReactionAdd:
 			//case event.MessageReactionRemove:
@@ -227,7 +245,7 @@ func (c *Client) eventObserver() {
 				u := &user.User{}
 				err := json.Unmarshal(evt.Data(), u)
 				if err != nil {
-					panic(err)
+					panic(err) // TODO: remove panic before merging to master
 				}
 
 				// dispatch event

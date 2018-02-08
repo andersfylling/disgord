@@ -735,7 +735,7 @@ func (stack *MessageDeleteCallbackStack) Add(cb MessageDeleteCallback) (err erro
 	return nil
 }
 
-func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
+func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, msg *channel.DeletedMessage) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, *msg)
