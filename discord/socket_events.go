@@ -1,7 +1,6 @@
 package discord
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/andersfylling/disgord/user"
@@ -9,33 +8,28 @@ import (
 )
 
 func NewGuildUnavailable(ID snowflake.ID) *GuildUnavailable {
-	gu := &GuildUnavailable{}
-	gu.ID = ID
-	gu.Unavailable = true
+	gu := &GuildUnavailable{
+		ID:          ID,
+		Unavailable: true,
+	}
 
 	return gu
 }
 
-type UserSettings struct{}
-
-type guildUnavailableJSON struct {
-	ID          snowflake.ID `json:"id"`
-	Unavailable bool         `json:"unavailable"` // ?*|
-}
-
 type GuildUnavailable struct {
-	guildUnavailableJSON
-	sync.RWMutex
+	ID           snowflake.ID `json:"id"`
+	Unavailable  bool         `json:"unavailable"` // ?*|
+	sync.RWMutex `json:"-"`
 }
 
-func (gu *GuildUnavailable) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &gu.guildUnavailableJSON)
-}
-func (gu *GuildUnavailable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&gu.guildUnavailableJSON)
-}
+// func (gu *GuildUnavailable) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, GuildUnavailable(*gu))
+// }
+// func (gu *GuildUnavailable) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(GuildUnavailable(*gu))
+// }
 
-type readyJSON struct {
+type Ready struct {
 	APIVersion int                 `json:"v"`
 	User       *user.User          `json:"user"`
 	Guilds     []*GuildUnavailable `json:"guilds"`
@@ -55,20 +49,16 @@ type readyJSON struct {
 	//Relationships []interface{} `son:"relationships"`
 
 	// bot can't have user settings
-	// UserSettings UserSettings        `json:"user_settings"`
+	// UserSettings interface{}        `json:"user_settings"`
 
-}
-
-type Ready struct {
-	readyJSON
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 }
 
-func (r *Ready) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &r.readyJSON)
-}
-func (r *Ready) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&r.readyJSON)
-}
+// func (r *Ready) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, Ready(*r))
+// }
+// func (r *Ready) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(Ready(*r))
+// }
 
 type Resumed struct{}

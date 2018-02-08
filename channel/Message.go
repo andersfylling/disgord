@@ -9,7 +9,11 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
-type messageJSON struct {
+func NewMessage() *Message {
+	return &Message{}
+}
+
+type Message struct {
 	ID              snowflake.ID   `json:"id"`
 	ChannelID       snowflake.ID   `json:"channel_id"`
 	Author          *user.User     `json:"author"`
@@ -27,11 +31,8 @@ type messageJSON struct {
 	Pinned          bool           `json:"pinned"`
 	WebhookID       snowflake.ID   `json:"webhook_id"` // ?
 	Type            uint           `json:"type"`
-}
 
-type Message struct {
-	messageJSON
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 }
 
 func (m *Message) MarshalJSON() ([]byte, error) {
@@ -39,9 +40,9 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 		return []byte("{}"), nil
 	}
 
-	return json.Marshal(&m.messageJSON)
+	return json.Marshal(Message(*m))
 }
 
-func (m *Message) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &m.messageJSON)
-}
+// func (m *Message) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &m.messageJSON)
+// }

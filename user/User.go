@@ -15,9 +15,6 @@ type DisgordDMInterface interface {
 type UserInterface interface {
 	Mention() string
 	MentionNickname() string
-	String() string
-	UnmarshalJSON([]byte) error
-	MarshalJSON() ([]byte, error)
 
 	// Update internal structure
 	Update(*User) error
@@ -27,7 +24,7 @@ type UserInterface interface {
 	SendMessage(DisgordDMInterface, string) (snowflake.ID, snowflake.ID, error)
 }
 
-type userJSON struct {
+type User struct {
 	ID            snowflake.ID `json:"id,omitempty"`
 	Username      string       `json:"username,omitempty"`
 	Discriminator string       `json:"discriminator,omitempty"`
@@ -37,11 +34,8 @@ type userJSON struct {
 	Verified      bool         `json:"verified,omitempty"`
 	MFAEnabled    bool         `json:"mfa_enabled,omitempty"`
 	Bot           bool         `json:"bot,omitempty"`
-}
 
-type User struct {
-	userJSON // simplifies marshalling and `userJSON` doesn't appear, but exported fields can still be accessed
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 }
 
 func NewUser() *User {
@@ -65,12 +59,12 @@ func (u *User) MarshalJSON() ([]byte, error) {
 		return []byte("{}"), nil
 	}
 
-	return json.Marshal(&u.userJSON)
+	return json.Marshal(User(*u))
 }
 
-func (u *User) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &u.userJSON)
-}
+// func (u *User) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &u.userJSON)
+// }
 
 func (u *User) Clear() {
 	//u.d.Avatar = nil

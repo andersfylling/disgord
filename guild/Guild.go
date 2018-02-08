@@ -14,6 +14,10 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
+func NewGuild() *Guild {
+	return &Guild{}
+}
+
 func NewGuildFromJSON(data []byte) *Guild {
 	guild := &Guild{}
 	err := json.Unmarshal(data, guild)
@@ -25,18 +29,23 @@ func NewGuildFromJSON(data []byte) *Guild {
 }
 
 func NewGuildFromUnavailable(gu *discord.GuildUnavailable) *Guild {
-	g := &Guild{}
-	g.ID = gu.ID
-	g.Unavailable = gu.Unavailable
+	g := &Guild{
+		ID:          gu.ID,
+		Unavailable: gu.Unavailable,
+	}
 
 	return g
+}
+
+type GuildInterface interface {
+	Channel(ID snowflake.ID)
 }
 
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
-type guildJSON struct {
+type Guild struct {
 	ID                          snowflake.ID                   `json:"id"`
 	ApplicationID               *snowflake.ID                  `json:"application_id"` //   |?
 	Name                        string                         `json:"name"`
@@ -70,48 +79,31 @@ type guildJSON struct {
 	Members     []*Member           `json:"members,omitempty"`      // ?*|
 	Channels    []*channel.Channel  `json:"channels,omitempty"`     // ?*|
 	Presences   []*discord.Presence `json:"presences,omitempty"`    // ?*|
-}
 
-type GuildInterface interface {
-	Channel(ID snowflake.ID)
-}
-
-type Guild struct {
-	guildJSON // struct data
-
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 }
 
 // Compare two guild objects
 func (g *Guild) Compare(other *Guild) bool {
 	// TODO: this is shit..
-	g.RLock()
-	defer g.RUnlock()
-
 	return (g == nil && other == nil) || (other != nil && g.ID == other.ID)
 }
 
-func (g *Guild) UnmarshalJSON(data []byte) (err error) {
-	g.RLock()
-	defer g.RUnlock()
-
-	return json.Unmarshal(data, &g.guildJSON)
-}
+// func (g *Guild) UnmarshalJSON(data []byte) (err error) {
+// 	return json.Unmarshal(data, &g.guildJSON)
+// }
 
 func (g *Guild) MarshalJSON() ([]byte, error) {
-	g.Lock()
-	defer g.Unlock()
-
 	var jsonData []byte
 	var err error
 	if g.Unavailable {
 		guildUnavailable := discord.NewGuildUnavailable(g.ID)
-		jsonData, err = guildUnavailable.MarshalJSON()
+		jsonData, err = json.Marshal(guildUnavailable)
 		if err != nil {
 			return []byte(""), nil
 		}
 	} else {
-		jsonData, err = json.Marshal(&g.guildJSON)
+		jsonData, err = json.Marshal(Guild(*g))
 		if err != nil {
 			return []byte(""), nil
 		}
@@ -128,9 +120,6 @@ func (g *Guild) sortChannels() {
 }
 
 func (g *Guild) AddChannel(c *channel.Channel) error {
-	g.Lock()
-	defer g.Unlock()
-
 	g.Channels = append(g.Channels, c)
 	g.sortChannels()
 
@@ -141,9 +130,6 @@ func (g *Guild) DeleteChannel(c *channel.Channel) error {
 	return g.DeleteChannelByID(c.ID)
 }
 func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
-	g.Lock()
-	defer g.Unlock()
-
 	index := -1
 	for i, c := range g.Channels {
 		if c.ID == ID {
@@ -166,9 +152,6 @@ func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
 }
 
 func (g *Guild) AddMember(member *Member) error {
-	g.Lock()
-	defer g.Unlock()
-
 	// TODO: implement sorting for faster searching later
 	g.Members = append(g.Members, member)
 
@@ -176,9 +159,6 @@ func (g *Guild) AddMember(member *Member) error {
 }
 
 func (g *Guild) AddRole(role *discord.Role) error {
-	g.Lock()
-	defer g.Unlock()
-
 	// TODO: implement sorting for faster searching later
 	g.Roles = append(g.Roles, role)
 
@@ -187,9 +167,6 @@ func (g *Guild) AddRole(role *discord.Role) error {
 
 // Member return a member by his/her userid
 func (g *Guild) Member(id snowflake.ID) (*Member, error) {
-	g.RLock()
-	defer g.RUnlock()
-
 	for _, member := range g.Members {
 		if member.User.ID == id {
 			return member, nil
@@ -201,9 +178,6 @@ func (g *Guild) Member(id snowflake.ID) (*Member, error) {
 
 // MemberByName retrieve a slice of members with same username or nickname
 func (g *Guild) MemberByName(name string) ([]*Member, error) {
-	g.RLock()
-	defer g.RUnlock()
-
 	var members []*Member
 	for _, member := range g.Members {
 		if member.Nick == name || member.User.Username == name {
@@ -220,9 +194,6 @@ func (g *Guild) MemberByName(name string) ([]*Member, error) {
 
 // Role retrieve a role based on role id
 func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
-	g.RLock()
-	defer g.RUnlock()
-
 	for _, role := range g.Roles {
 		if role.ID == id {
 			return role, nil
@@ -234,9 +205,6 @@ func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
 
 // RoleByTitle retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*discord.Role, error) {
-	g.RLock()
-	defer g.RUnlock()
-
 	var roles []*discord.Role
 	for _, role := range g.Roles {
 		if role.Name == name {
@@ -252,9 +220,6 @@ func (g *Guild) RoleByName(name string) ([]*discord.Role, error) {
 }
 
 func (g *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
-	g.RLock()
-	defer g.RUnlock()
-
 	for _, channel := range g.Channels {
 		if channel.ID == id {
 			return channel, nil

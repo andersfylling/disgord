@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -22,7 +23,7 @@ type Config struct {
 	Debug      bool
 }
 
-// NewDisgord creates a new default disgord instance
+// NewClient creates a new default disgord instance
 func NewClient(conf *Config) (*Client, error) {
 
 	if conf.HTTPClient == nil {
@@ -151,7 +152,7 @@ func (c *Client) eventObserver() {
 			switch eventName {
 			case event.Ready:
 				r := &discord.Ready{}
-				err := r.UnmarshalJSON(evt.Data())
+				err := json.Unmarshal(evt.Data(), r)
 				if err != nil {
 					panic(err)
 				}
@@ -170,7 +171,7 @@ func (c *Client) eventObserver() {
 			//case event.ChannelPinsUpdate:
 			case event.GuildCreate, event.GuildUpdate, event.GuildDelete:
 				g := &guild.Guild{}
-				err := g.UnmarshalJSON(evt.Data())
+				err := json.Unmarshal(evt.Data(), g)
 				if err != nil {
 					panic(err)
 				}
@@ -224,10 +225,13 @@ func (c *Client) eventObserver() {
 			//case event.TypingStart:
 			case event.UserUpdate:
 				u := &user.User{}
-				err := u.UnmarshalJSON(evt.Data())
+				err := json.Unmarshal(evt.Data(), u)
 				if err != nil {
 					panic(err)
 				}
+
+				// dispatch event
+				go c.UserUpdateEvent.Trigger(ctx, u)
 
 				// update cache
 				_, err = c.State.UpdateUser(u)
@@ -235,9 +239,6 @@ func (c *Client) eventObserver() {
 					// user does not exist
 					c.State.AddUser(u)
 				}
-
-				// dispatch event
-				go c.UserUpdateEvent.Trigger(ctx, u)
 			//case event.VoiceStateUpdate:
 			//case event.VoiceServerUpdate:
 			//case event.WebhooksUpdate:
