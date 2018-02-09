@@ -61,4 +61,6 @@ type Ready struct {
 // 	return json.Marshal(Ready(*r))
 // }
 
-type Resumed struct{}
+type Resumed struct {
+	Trace []string `json:"_trace"`
+}

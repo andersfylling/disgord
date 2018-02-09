@@ -71,14 +71,15 @@ type Guild struct {
 	SystemChannelID             *snowflake.ID                  `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt    *discord.Timestamp  `json:"joined_at,omitempty"`    // ?*|
-	Large       bool                `json:"large,omitempty"`        // ?*|
-	Unavailable bool                `json:"unavailable"`            // ?*|
-	MemberCount uint                `json:"member_count,omitempty"` // ?*|
-	VoiceStates []*voice.State      `json:"voice_states,omitempty"` // ?*|
-	Members     []*Member           `json:"members,omitempty"`      // ?*|
-	Channels    []*channel.Channel  `json:"channels,omitempty"`     // ?*|
-	Presences   []*discord.Presence `json:"presences,omitempty"`    // ?*|
+	JoinedAt       *discord.Timestamp  `json:"joined_at,omitempty"`    // ?*|
+	Large          bool                `json:"large,omitempty"`        // ?*|
+	Unavailable    bool                `json:"unavailable"`            // ?*|
+	MemberCount    uint                `json:"member_count,omitempty"` // ?*|
+	VoiceStates    []*voice.State      `json:"voice_states,omitempty"` // ?*|
+	Members        []*Member           `json:"members,omitempty"`      // ?*|
+	Channels       []*channel.Channel  `json:"channels,omitempty"`     // ?*|
+	Presences      []*discord.Presence `json:"presences,omitempty"`    // ?*|
+	PresencesMutex sync.RWMutex        `json:"-"`
 
 	sync.RWMutex `json:"-"`
 }
@@ -203,6 +204,31 @@ func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
 	return nil, errors.New("role not found in guild")
 }
 
+func (g *Guild) UpdateRole(r *discord.Role) {
+	for _, role := range g.Roles {
+		if role.ID == r.ID {
+			*role = *r
+			break
+		}
+	}
+}
+func (g *Guild) DeleteRoleByID(ID snowflake.ID) {
+	index := -1
+	for i, r := range g.Roles {
+		if r.ID == ID {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		// delete the entry
+		g.Roles[index] = g.Roles[len(g.Roles)-1]
+		g.Roles[len(g.Roles)-1] = nil
+		g.Roles = g.Roles[:len(g.Roles)-1]
+	}
+}
+
 // RoleByTitle retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*discord.Role, error) {
 	var roles []*discord.Role
@@ -227,6 +253,28 @@ func (g *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
 	}
 
 	return nil, errors.New("channel not found in guild")
+}
+
+func (g *Guild) UpdatePresence(p *discord.Presence) {
+	g.PresencesMutex.RLock()
+	index := -1
+	for i, presence := range g.Presences {
+		if presence.User.ID == p.User.ID {
+			index = i
+			break
+		}
+	}
+	g.PresencesMutex.RUnlock()
+
+	if index != -1 {
+		// update
+		return
+	}
+
+	// otherwise add
+	g.PresencesMutex.Lock()
+	g.Presences = append(g.Presences, p) // TODO: update the user pointer?
+	g.PresencesMutex.Unlock()
 }
 
 // Update update the reference content

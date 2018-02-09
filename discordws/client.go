@@ -60,7 +60,7 @@ func NewClient(conf *Config) (*Client, error) {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
-	if conf.Debug {
+	if conf.Debug || true {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

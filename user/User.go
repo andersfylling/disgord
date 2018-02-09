@@ -52,7 +52,7 @@ func (u *User) MentionNickname() string {
 }
 
 func (u *User) String() string {
-	return u.Username + "#" + u.Discriminator
+	return u.Username + "#" + u.Discriminator + "{" + u.ID.String() + "}"
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
@@ -83,7 +83,7 @@ func (u *User) Update(new *User) (err error) {
 	}
 
 	u.Lock()
-	new.Lock()
+	new.RLock()
 	u.Username = new.Username
 	u.Discriminator = new.Discriminator
 	u.Email = new.Email
@@ -92,7 +92,7 @@ func (u *User) Update(new *User) (err error) {
 	u.Verified = new.Verified
 	u.MFAEnabled = new.MFAEnabled
 	u.Bot = new.Bot
-	new.Unlock()
+	new.RUnlock()
 	u.Unlock()
 
 	return

@@ -1,6 +1,9 @@
 package guild
 
 import (
+	"errors"
+	"sync"
+
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
@@ -15,6 +18,8 @@ type Member struct {
 	JoinedAt discord.Timestamp `json:"joined_at,omitempty"`
 	Deaf     bool              `json:"deaf"`
 	Mute     bool              `json:"mute"`
+
+	sync.RWMutex `json:"-"`
 }
 
 func (m *Member) Clear() snowflake.ID {
@@ -28,4 +33,28 @@ func (m *Member) Clear() snowflake.ID {
 
 	// use this ID to check in other places. To avoid pointing to random memory spaces
 	return id
+}
+
+func (m *Member) Update(new *Member) (err error) {
+	if m.User.ID != new.User.ID || m.GuildID != new.GuildID {
+		err = errors.New("cannot update user when the new struct has a different ID")
+		return
+	}
+	// make sure that new is not the same pointer!
+	if m == new {
+		err = errors.New("cannot update user when the new struct points to the same memory space")
+		return
+	}
+
+	m.Lock()
+	new.RLock()
+	m.Nick = new.Nick
+	m.Roles = new.Roles
+	m.JoinedAt = new.JoinedAt
+	m.Deaf = new.Deaf
+	m.Mute = new.Mute
+	new.RUnlock()
+	m.Unlock()
+
+	return
 }

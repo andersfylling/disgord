@@ -13,7 +13,7 @@ import (
 
 // socket
 type ReadyCallback = func(ctx context.Context, r discord.Ready)
-type ResumedCallback = func(ctx context.Context)
+type ResumedCallback = func(ctx context.Context, resumed discord.Resumed)
 
 // channel
 type ChannelCreateCallback = func(ctx context.Context, c channel.Channel)
@@ -37,9 +37,9 @@ type GuildMemberUpdateCallback = func(ctx context.Context, member guild.Member)
 type GuildMemberChunkCallback = func(ctx context.Context, members []guild.Member)
 
 // Guild role
-type GuildRoleCreateCallback = func(ctx context.Context, role discord.Role)
-type GuildRoleUpdateCallback = func(ctx context.Context, role discord.Role)
-type GuildRoleDeleteCallback = func(ctx context.Context, role discord.Role)
+type GuildRoleCreateCallback = func(ctx context.Context, role discord.RoleEvent)
+type GuildRoleUpdateCallback = func(ctx context.Context, role discord.RoleEvent)
+type GuildRoleDeleteCallback = func(ctx context.Context, role discord.RoleDeleteEvent)
 
 // message
 type MessageCreateCallback = func(ctx context.Context, msg channel.Message)
@@ -56,7 +56,7 @@ type MessageReactionRemoveAllCallback = func(ctx context.Context, msgs []channel
 type PresenceUpdateCallback = func(ctx context.Context, presence discord.Presence)
 
 // typing start
-type TypingStartCallback = func(ctx context.Context, user user.User, channel channel.Channel)
+type TypingStartCallback = func(ctx context.Context, ts channel.TypingStart)
 
 // user update
 type UserUpdateCallback = func(ctx context.Context, user user.User)

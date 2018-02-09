@@ -56,15 +56,36 @@ INFO[2018-01-25 04:30:09] Closing Discord gateway connection            lib="Dis
 INFO[2018-01-25 04:30:11] Disconnected                                  lib="Disgord v0.0.0"
 ```
 
-TODO:
+## Progress
 
-Event dispatchers + caching(ish):
+### Logic
+
+- [ ] Sharding
+- [ ] Sharding for large bots (+100,000 guilds)
+- [ ] Rate limiting
+- [x] Guild availability
+- [ ] Socketing
+
+  - [x] Connecting
+  - [x] Reconnect/resume (Needs revision)
+  - [x] Handling invalid connection
+  - [x] Sequence tracking
+  - [x] JSON support (Won't support ETF)
+  - [ ] Transport compression
+  - [x] heartbeat
+  - [x] Identify
+
+- [ ] OAuth2
+- [ ] RPC
+- [ ] Voice
+
+### Event dispatchers + caching(incomplete architecture/logic):
 
 - [x] Ready
-- [ ] Resumed
-- [ ] ChannelCreate
-- [ ] ChannelUpdate
-- [ ] ChannelDelete
+- [x] Resumed
+- [x] ChannelCreate
+- [x] ChannelUpdate
+- [x] ChannelDelete
 - [ ] ChannelPinsUpdate
 - [x] GuildCreate
 - [x] GuildUpdate
@@ -77,9 +98,9 @@ Event dispatchers + caching(ish):
 - [ ] GuildMemberRemove
 - [ ] GuildMemberUpdate
 - [ ] GuildMemberChunk
-- [ ] GuildRoleCreate
-- [ ] GuildRoleUpdate
-- [ ] GuildRoleDelete
+- [x] GuildRoleCreate
+- [x] GuildRoleUpdate
+- [x] GuildRoleDelete
 - [x] MessageCreate
 - [x] MessageUpdate
 - [x] MessageDelete
@@ -87,9 +108,45 @@ Event dispatchers + caching(ish):
 - [ ] MessageReactionAdd
 - [ ] MessageReactionRemove
 - [ ] MessageReactionRemoveAll
-- [ ] PresenceUpdate
-- [ ] TypingStart
+- [x] PresenceUpdate
+- [x] TypingStart
 - [x] UserUpdate
+- [ ] VoiceStateUpdate
+- [ ] VoiceServerUpdate
+- [ ] WebhooksUpdate
+
+### Caching:
+
+- [x] Ready
+- [x] Resumed
+- [ ] ChannelCreate
+- [ ] ChannelUpdate
+- [ ] ChannelDelete
+- [ ] ChannelPinsUpdate
+- [ ] GuildCreate
+- [ ] GuildUpdate
+- [ ] GuildDelete
+- [ ] GuildBanAdd
+- [ ] GuildBanRemove
+- [ ] GuildEmojisUpdate
+- [ ] GuildIntegrationsUpdate
+- [ ] GuildMemberAdd
+- [ ] GuildMemberRemove
+- [ ] GuildMemberUpdate
+- [ ] GuildMemberChunk
+- [ ] GuildRoleCreate
+- [ ] GuildRoleUpdate
+- [ ] GuildRoleDelete
+- [ ] MessageCreate
+- [ ] MessageUpdate
+- [ ] MessageDelete
+- [ ] MessageDeleteBulk
+- [ ] MessageReactionAdd
+- [ ] MessageReactionRemove
+- [ ] MessageReactionRemoveAll
+- [ ] PresenceUpdate
+- [x] TypingStart
+- [ ] UserUpdate
 - [ ] VoiceStateUpdate
 - [ ] VoiceServerUpdate
 - [ ] WebhooksUpdate

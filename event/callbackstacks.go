@@ -22,7 +22,7 @@ type Handler interface {
 // ReadyCallbackStack ***************
 type ReadyHandler interface {
 	Add(cb ReadyCallback)
-	Trigger()
+	Trigger(context.Context, *discord.Ready)
 }
 type ReadyCallbackStack struct {
 	sequential bool
@@ -53,7 +53,7 @@ func (stack *ReadyCallbackStack) Trigger(ctx context.Context, r *discord.Ready) 
 // ResumedCallbackStack **********
 type ResumedHandler interface {
 	Add(cb ReadyCallback)
-	Trigger()
+	Trigger(context.Context, *discord.Resumed)
 }
 type ResumedCallbackStack struct {
 	sequential bool
@@ -69,12 +69,12 @@ func (stack *ResumedCallbackStack) Add(cb ResumedCallback) (err error) {
 	return nil
 }
 
-func (stack *ResumedCallbackStack) Trigger(ctx context.Context) (err error) {
+func (stack *ResumedCallbackStack) Trigger(ctx context.Context, resumed *discord.Resumed) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx)
+			listener(ctx, *resumed)
 		} else {
-			go listener(ctx)
+			go listener(ctx, *resumed)
 		}
 	}
 
@@ -577,7 +577,7 @@ func (stack *GuildRoleCreateCallbackStack) Add(cb GuildRoleCreateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
+func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, role *discord.RoleEvent) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, *role)
@@ -608,7 +608,7 @@ func (stack *GuildRoleUpdateCallbackStack) Add(cb GuildRoleUpdateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
+func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, role *discord.RoleEvent) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, *role)
@@ -639,7 +639,7 @@ func (stack *GuildRoleDeleteCallbackStack) Add(cb GuildRoleDeleteCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, role *discord.Role) (err error) {
+func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, role *discord.RoleDeleteEvent) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
 			listener(ctx, *role)
@@ -930,12 +930,12 @@ func (stack *TypingStartCallbackStack) Add(cb TypingStartCallback) (err error) {
 	return nil
 }
 
-func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, u *user.User, c *channel.Channel) (err error) {
+func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, ts *channel.TypingStart) (err error) {
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *u, *c)
+			listener(ctx, *ts)
 		} else {
-			go listener(ctx, *u, *c)
+			go listener(ctx, *ts)
 		}
 	}
 

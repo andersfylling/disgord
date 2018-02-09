@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -99,9 +100,9 @@ func (c *Client) operationHandlers() {
 				// discord events
 				// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
 
-				// always store the sequence number
+				// increment the sequence number for each event to make sure everything is synced with discord
 				c.Lock()
-				c.sequenceNumber = gp.SequenceNumber
+				c.sequenceNumber++ // = gp.SequenceNumber
 				c.Unlock()
 
 				// always store the session id
@@ -112,10 +113,10 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 
-					c.Lock()
+					c.RLock()
 					c.SessionID = ready.SessionID
 					c.Trace = ready.Trace
-					c.Unlock()
+					c.RUnlock()
 				} else if gp.EventName == event.Resumed {
 					// eh? debugging.
 				}
@@ -125,9 +126,9 @@ func (c *Client) operationHandlers() {
 				c.iEventChan <- eventPkt
 			case 1:
 				// ping
-				c.Lock()
+				c.RLock()
 				snr := c.sequenceNumber
-				c.Unlock()
+				c.RUnlock()
 
 				c.sendChan <- &gatewayPayload{Op: 1, Data: &snr}
 			case 7:
@@ -135,6 +136,7 @@ func (c *Client) operationHandlers() {
 				c.Disconnect()
 				go c.reconnect()
 			case 9:
+				time.Sleep(time.Second * time.Duration(rand.Intn(4)+1)) // [1,5]
 				// invalid session. Must respond with a identify packet
 				err := c.sendIdentity()
 				if err != nil {
@@ -161,11 +163,11 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 				} else {
-					c.Lock()
+					c.RLock()
 					token := c.token
 					session := c.SessionID
 					sequence := c.sequenceNumber
-					c.Unlock()
+					c.RUnlock()
 
 					resume := &gatewayPayload{
 						Op: 6,
@@ -197,12 +199,12 @@ func (c *Client) operationHandlers() {
 
 // Disconnect closes the discord websocket connection
 func (c *Client) Disconnect() (err error) {
-	c.Lock()
+	c.RLock()
 	if c.conn == nil {
 		err = errors.New("No websocket connection exist")
 		return
 	}
-	c.Unlock()
+	c.RUnlock()
 
 	c.wsMutex.Lock()
 	err = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
@@ -235,6 +237,9 @@ func (c *Client) reconnect() (err error) {
 		err = c.Connect()
 		if err == nil {
 			logrus.Info("successfully reconnected")
+
+			// send resume package
+
 			break
 			// TODO voice
 		}

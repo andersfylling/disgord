@@ -27,6 +27,9 @@ type StateCacher interface {
 	DeleteUser(*user.User)
 	DeleteUserByID(ID snowflake.ID)
 	User(ID snowflake.ID) (*user.User, error)
+
+	UpdateMySelf(*user.User)
+	GetMySelf() *user.User
 }
 
 func NewStateCache() *StateCache {
@@ -34,6 +37,7 @@ func NewStateCache() *StateCache {
 		guilds:   make(map[snowflake.ID]*guild.Guild),
 		users:    make(map[snowflake.ID]*user.User),
 		channels: make(map[snowflake.ID]*channel.Channel),
+		mySelf:   &user.User{},
 	}
 }
 
@@ -41,6 +45,7 @@ type StateCache struct {
 	guilds   map[snowflake.ID]*guild.Guild
 	users    map[snowflake.ID]*user.User
 	channels map[snowflake.ID]*channel.Channel
+	mySelf   *user.User
 
 	guildsUpdateMutex sync.Mutex // update + delete
 	guildsAddMutex    sync.Mutex // creation
@@ -176,4 +181,11 @@ func (s *StateCache) User(ID snowflake.ID) (*user.User, error) {
 	}
 
 	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")
+}
+
+func (s *StateCache) UpdateMySelf(new *user.User) {
+	s.mySelf.Update(new)
+}
+func (s *StateCache) GetMySelf() *user.User {
+	return s.mySelf
 }

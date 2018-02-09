@@ -20,3 +20,13 @@ func NewRole() *Role {
 func (r *Role) Clear() {
 
 }
+
+type RoleEvent struct {
+	Role    *Role        `json:"role"`
+	GuildID snowflake.ID `json:"guild_id"`
+}
+
+type RoleDeleteEvent struct {
+	RoleID  snowflake.ID `json:"role_id"`
+	GuildID snowflake.ID `json:"guild_id"`
+}

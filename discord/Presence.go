@@ -8,6 +8,7 @@ type Presence struct {
 	Roles   []snowflake.ID `json:"roles"`
 	Game    *Activity      `json:"activty"`
 	GuildID snowflake.ID   `json:"guild_id"`
+	Nick    *string        `json:"nick"`
 	Status  string         `json:"status"`
 }
 

@@ -163,12 +163,38 @@ func (c *Client) eventObserver() {
 				// allocate cache mem for guilds
 				for _, gu := range r.Guilds {
 					g := guild.NewGuildFromUnavailable(gu)
-					c.State.AddGuild(g)
+					c.State.AddGuild(g) // checks if the ID already exists
 				}
-			//case event.Resumed:
-			//case event.ChannelCreate:
-			//case event.ChannelUpdate:
-			//case event.ChannelDelete:
+
+				// updated myself
+				c.State.UpdateMySelf(r.User)
+
+			case event.Resumed:
+				resumed := &discord.Resumed{}
+				err := json.Unmarshal(evt.Data(), resumed)
+				if err != nil {
+					panic(err)
+				}
+
+				// no need to handle this as its done at the socket level ...
+
+				go c.ResumedEvent.Trigger(ctx, resumed)
+
+			case event.ChannelCreate, event.ChannelUpdate, event.ChannelDelete:
+				channelEvt := &channel.Channel{}
+				err := json.Unmarshal(evt.Data(), channelEvt)
+				if err != nil {
+					panic(err)
+				}
+
+				switch eventName {
+				case event.ChannelCreate:
+					go c.ChannelCreateEvent.Trigger(ctx, channelEvt)
+				case event.ChannelUpdate:
+					go c.ChannelUpdateEvent.Trigger(ctx, channelEvt)
+				case event.ChannelDelete:
+					go c.ChannelDeleteEvent.Trigger(ctx, channelEvt)
+				}
 			//case event.ChannelPinsUpdate:
 			case event.GuildCreate, event.GuildUpdate, event.GuildDelete:
 				g := &guild.Guild{}
@@ -212,9 +238,49 @@ func (c *Client) eventObserver() {
 			//case event.GuildMemberRemove:
 			//case event.GuildMemberUpdate:
 			//case event.GuildMemberChunk:
-			//case event.GuildRoleCreate:
-			//case event.GuildRoleUpdate:
-			//case event.GuildRoleDelete:
+			case event.GuildRoleCreate, event.GuildRoleUpdate:
+				r := &discord.RoleEvent{}
+				err := json.Unmarshal(evt.Data(), r)
+				if err != nil {
+					panic(err)
+				}
+
+				g, err := c.State.Guild(r.GuildID)
+				if err != nil {
+					panic("you haven't correctly cached all guilds you fool!")
+				}
+
+				switch eventName {
+				case event.GuildRoleCreate:
+					go c.GuildRoleCreateEvent.Trigger(ctx, r)
+
+					// add to cache
+					g.Lock()
+					g.AddRole(r.Role)
+					g.Unlock()
+				case event.GuildRoleUpdate:
+					go c.GuildRoleUpdateEvent.Trigger(ctx, r)
+
+					// add to cache
+					g.Lock()
+					g.UpdateRole(r.Role)
+					g.Unlock()
+				}
+			case event.GuildRoleDelete:
+				r := &discord.RoleDeleteEvent{}
+				err := json.Unmarshal(evt.Data(), r)
+				if err != nil {
+					panic(err)
+				}
+
+				g, err := c.State.Guild(r.GuildID)
+				if err != nil {
+					panic("you haven't correctly cached all guilds you fool!")
+				}
+				g.Lock()
+				g.DeleteRoleByID(r.RoleID)
+				g.Unlock()
+				// TODO: remove role from guild members...
 			case event.MessageCreate, event.MessageUpdate, event.MessageDelete:
 				msg := channel.NewMessage()
 				err := json.Unmarshal(evt.Data(), msg)
@@ -239,8 +305,28 @@ func (c *Client) eventObserver() {
 			//case event.MessageReactionAdd:
 			//case event.MessageReactionRemove:
 			//case event.MessageReactionRemoveAll:
-			//case event.PresenceUpdate:
-			//case event.TypingStart:
+			case event.PresenceUpdate:
+				pu := &discord.Presence{}
+				err := json.Unmarshal(evt.Data(), pu)
+				if err != nil {
+					panic(err)
+				}
+
+				go c.PresenceUpdateEvent.Trigger(ctx, pu)
+
+				g, err := c.State.Guild(pu.GuildID)
+				if err != nil {
+					panic("you haven't correctly cached all guilds you fool!")
+				}
+				g.UpdatePresence(pu)
+			case event.TypingStart:
+				ts := &channel.TypingStart{}
+				err := json.Unmarshal(evt.Data(), ts)
+				if err != nil {
+					panic(err)
+				}
+
+				go c.TypingStartEvent.Trigger(ctx, ts)
 			case event.UserUpdate:
 				u := &user.User{}
 				err := json.Unmarshal(evt.Data(), u)
@@ -252,11 +338,7 @@ func (c *Client) eventObserver() {
 				go c.UserUpdateEvent.Trigger(ctx, u)
 
 				// update cache
-				_, err = c.State.UpdateUser(u)
-				if err != nil {
-					// user does not exist
-					c.State.AddUser(u)
-				}
+				c.State.UpdateMySelf(u)
 			//case event.VoiceStateUpdate:
 			//case event.VoiceServerUpdate:
 			//case event.WebhooksUpdate:

@@ -11,7 +11,7 @@ import (
 
 // ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
 type ChannelMessager interface {
-	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` before sending.
+	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` permissions before sending.
 }
 
 type Channel struct {
