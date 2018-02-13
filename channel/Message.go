@@ -55,9 +55,3 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 // func (m *Message) UnmarshalJSON(data []byte) error {
 // 	return json.Unmarshal(data, &m.messageJSON)
 // }
-
-type TypingStart struct {
-	UserID    snowflake.ID `json:"user_id"`
-	Timestamp int          `json:"timestamp"` // unix timestamp
-	ChannelID snowflake.ID `json:"channel_id"`
-}

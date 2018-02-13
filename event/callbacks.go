@@ -5,60 +5,60 @@ import (
 )
 
 // socket
-type HelloCallback = func(context.Context, *HelloBox)
-type ReadyCallback = func(context.Context, *ReadyBox)
-type ResumedCallback = func(context.Context, *ResumedBox)
-type InvalidSessionCallback = func(context.Context, *InvalidSessionBox)
+type HelloCallback = func(ctx context.Context, h *HelloBox)
+type ReadyCallback = func(ctx context.Context, r *ReadyBox)
+type ResumedCallback = func(ctx context.Context, r *ResumedBox)
+type InvalidSessionCallback = func(ctx context.Context, is *InvalidSessionBox)
 
 // channel
-type ChannelCreateCallback = func(context.Context, *ChannelCreateBox)
-type ChannelUpdateCallback = func(context.Context, *ChannelUpdateBox)
-type ChannelDeleteCallback = func(context.Context, *ChannelDeleteBox)
-type ChannelPinsUpdateCallback = func(context.Context, *ChannelPinsUpdateBox)
+type ChannelCreateCallback = func(ctx context.Context, cc *ChannelCreateBox)
+type ChannelUpdateCallback = func(ctx context.Context, cu *ChannelUpdateBox)
+type ChannelDeleteCallback = func(ctx context.Context, cd *ChannelDeleteBox)
+type ChannelPinsUpdateCallback = func(ctx context.Context, cpu *ChannelPinsUpdateBox)
 
 // Guild in general
-type GuildCreateCallback = func(context.Context, *GuildCreateBox)
-type GuildUpdateCallback = func(context.Context, *GuildUpdateBox)
-type GuildDeleteCallback = func(context.Context, *GuildDeleteBox)
-type GuildBanAddCallback = func(context.Context, *GuildBanAddBox)
-type GuildBanRemoveCallback = func(context.Context, *GuildBanRemoveBox)
-type GuildEmojisUpdateCallback = func(context.Context, *GuildEmojisUpdateBox)
-type GuildIntegrationsUpdateCallback = func(context.Context, *GuildIntegrationsUpdateBox)
+type GuildCreateCallback = func(ctx context.Context, gc *GuildCreateBox)
+type GuildUpdateCallback = func(ctx context.Context, gu *GuildUpdateBox)
+type GuildDeleteCallback = func(ctx context.Context, gd *GuildDeleteBox)
+type GuildBanAddCallback = func(ctx context.Context, gba *GuildBanAddBox)
+type GuildBanRemoveCallback = func(ctx context.Context, gbr *GuildBanRemoveBox)
+type GuildEmojisUpdateCallback = func(ctx context.Context, geu *GuildEmojisUpdateBox)
+type GuildIntegrationsUpdateCallback = func(ctx context.Context, giu *GuildIntegrationsUpdateBox)
 
 // Guild Member
-type GuildMemberAddCallback = func(context.Context, *GuildMemberAddBox)
-type GuildMemberRemoveCallback = func(context.Context, *GuildMemberRemoveBox)
-type GuildMemberUpdateCallback = func(context.Context, *GuildMemberUpdateBox)
-type GuildMembersChunkCallback = func(context.Context, *GuildMembersChunkBox)
+type GuildMemberAddCallback = func(ctx context.Context, gma *GuildMemberAddBox)
+type GuildMemberRemoveCallback = func(ctx context.Context, gmr *GuildMemberRemoveBox)
+type GuildMemberUpdateCallback = func(ctx context.Context, gmu *GuildMemberUpdateBox)
+type GuildMembersChunkCallback = func(ctx context.Context, gmc *GuildMembersChunkBox)
 
 // Guild role
-type GuildRoleCreateCallback = func(context.Context, *GuildRoleCreateBox)
-type GuildRoleUpdateCallback = func(context.Context, *GuildRoleUpdateBox)
-type GuildRoleDeleteCallback = func(context.Context, *GuildRoleDeleteBox)
+type GuildRoleCreateCallback = func(ctx context.Context, grc *GuildRoleCreateBox)
+type GuildRoleUpdateCallback = func(ctx context.Context, gru *GuildRoleUpdateBox)
+type GuildRoleDeleteCallback = func(ctx context.Context, grd *GuildRoleDeleteBox)
 
 // message
-type MessageCreateCallback = func(context.Context, *MessageCreateBox)
-type MessageUpdateCallback = func(context.Context, *MessageUpdateBox)
-type MessageDeleteCallback = func(context.Context, *MessageDeleteBox)
-type MessageDeleteBulkCallback = func(context.Context, *MessageDeleteBulkBox)
+type MessageCreateCallback = func(ctx context.Context, mc *MessageCreateBox)
+type MessageUpdateCallback = func(ctx context.Context, mu *MessageUpdateBox)
+type MessageDeleteCallback = func(ctx context.Context, md *MessageDeleteBox)
+type MessageDeleteBulkCallback = func(ctx context.Context, mdb *MessageDeleteBulkBox)
 
 // message reaction
-type MessageReactionAddCallback = func(context.Context, *MessageReactionAddBox)
-type MessageReactionRemoveCallback = func(context.Context, *MessageReactionRemoveBox)
-type MessageReactionRemoveAllCallback = func(context.Context, *MessageReactionRemoveAllBox)
+type MessageReactionAddCallback = func(ctx context.Context, mra *MessageReactionAddBox)
+type MessageReactionRemoveCallback = func(ctx context.Context, mrr *MessageReactionRemoveBox)
+type MessageReactionRemoveAllCallback = func(ctx context.Context, mrra *MessageReactionRemoveAllBox)
 
 // presence
-type PresenceUpdateCallback = func(context.Context, *PresenceUpdateBox)
+type PresenceUpdateCallback = func(ctx context.Context, pu *PresenceUpdateBox)
 
 // typing start
-type TypingStartCallback = func(context.Context, *TypingStartBox)
+type TypingStartCallback = func(ctx context.Context, ts *TypingStartBox)
 
 // user update
-type UserUpdateCallback = func(context.Context, *UserUpdateBox)
+type UserUpdateCallback = func(ctx context.Context, uu *UserUpdateBox)
 
 // voice
-type VoiceStateUpdateCallback = func(context.Context, *VoiceStateUpdateBox)
-type VoiceServerUpdateCallback = func(context.Context, *VoiceServerUpdateBox)
+type VoiceStateUpdateCallback = func(ctx context.Context, vsu *VoiceStateUpdateBox)
+type VoiceServerUpdateCallback = func(ctx context.Context, vsu *VoiceServerUpdateBox)
 
 // webhook
-type WebhooksUpdateCallback = func(context.Context, *WebhooksUpdateBox)
+type WebhooksUpdateCallback = func(ctx context.Context, wu *WebhooksUpdateBox)
