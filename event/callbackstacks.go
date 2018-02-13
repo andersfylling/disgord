@@ -2,31 +2,77 @@ package event
 
 import (
 	"context"
-
-	"github.com/andersfylling/disgord/channel"
-	"github.com/andersfylling/disgord/discord"
-	"github.com/andersfylling/disgord/guild"
-	"github.com/andersfylling/disgord/user"
-	"github.com/andersfylling/disgord/voice"
-	"github.com/andersfylling/disgord/webhook"
 )
-
-type Handler interface {
-	Add(interface{}) error
-	Trigger(...*interface{}) error // TODO: the param should be a specific event holder type
-}
 
 // socket
 //
 
+// HelloCallbackStack ***************
+type HelloHandler interface {
+	Add(cb HelloCallback) error
+	Trigger(context.Context, *HelloBox) error
+	ReceiveChan() <-chan *HelloBox
+}
+
+func NewHelloCallbackStack() *HelloCallbackStack {
+	return &HelloCallbackStack{
+		listener: make(chan *HelloBox),
+	}
+}
+
+type HelloCallbackStack struct {
+	sequential     bool
+	listeners      []HelloCallback
+	listenerExists bool
+	listener       chan *HelloBox
+}
+
+func (stack *HelloCallbackStack) Add(cb HelloCallback) (err error) {
+	if stack.listeners == nil {
+		stack.listeners = []HelloCallback{}
+	}
+
+	stack.listeners = append(stack.listeners, cb)
+	return nil
+}
+
+func (stack *HelloCallbackStack) Trigger(ctx context.Context, box *HelloBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
+	for _, listener := range stack.listeners {
+		if stack.sequential {
+			listener(ctx, box)
+		} else {
+			go listener(ctx, box)
+		}
+	}
+
+	return nil
+}
+
+func (stack *HelloCallbackStack) ReceiveChan() <-chan *HelloBox {
+	return stack.listener
+}
+
 // ReadyCallbackStack ***************
 type ReadyHandler interface {
-	Add(cb ReadyCallback)
-	Trigger(context.Context, *discord.Ready)
+	Add(cb ReadyCallback) error
+	Trigger(context.Context, *ReadyBox) error
+	ReceiveChan() <-chan *ReadyBox
 }
+
+func NewReadyCallbackStack() *ReadyCallbackStack {
+	return &ReadyCallbackStack{
+		listener: make(chan *ReadyBox),
+	}
+}
+
 type ReadyCallbackStack struct {
-	sequential bool
-	listeners  []ReadyCallback
+	sequential     bool
+	listeners      []ReadyCallback
+	listenerExists bool
+	listener       chan *ReadyBox
 }
 
 func (stack *ReadyCallbackStack) Add(cb ReadyCallback) (err error) {
@@ -38,26 +84,45 @@ func (stack *ReadyCallbackStack) Add(cb ReadyCallback) (err error) {
 	return nil
 }
 
-func (stack *ReadyCallbackStack) Trigger(ctx context.Context, r *discord.Ready) (err error) {
+func (stack *ReadyCallbackStack) Trigger(ctx context.Context, box *ReadyBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
+
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *r)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *r)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *ReadyCallbackStack) ReceiveChan() <-chan *ReadyBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // ResumedCallbackStack **********
 type ResumedHandler interface {
-	Add(cb ReadyCallback)
-	Trigger(context.Context, *discord.Resumed)
+	Add(cb ResumedCallback) error
+	Trigger(context.Context, *ResumedBox) error
+	ReceiveChan() <-chan *ResumedBox
 }
+
+func NewResumedCallbackStack() *ResumedCallbackStack {
+	return &ResumedCallbackStack{
+		listener: make(chan *ResumedBox),
+	}
+}
+
 type ResumedCallbackStack struct {
-	sequential bool
-	listeners  []ResumedCallback
+	sequential     bool
+	listeners      []ResumedCallback
+	listenerExists bool
+	listener       chan *ResumedBox
 }
 
 func (stack *ResumedCallbackStack) Add(cb ResumedCallback) (err error) {
@@ -69,16 +134,73 @@ func (stack *ResumedCallbackStack) Add(cb ResumedCallback) (err error) {
 	return nil
 }
 
-func (stack *ResumedCallbackStack) Trigger(ctx context.Context, resumed *discord.Resumed) (err error) {
+func (stack *ResumedCallbackStack) Trigger(ctx context.Context, box *ResumedBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *resumed)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *resumed)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *ResumedCallbackStack) ReceiveChan() <-chan *ResumedBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
+// InvalidSessionCallbackStack ***************
+type InvalidSessionHandler interface {
+	Add(cb InvalidSessionCallback) error
+	Trigger(context.Context, *InvalidSessionBox) error
+	ReceiveChan() <-chan *InvalidSessionBox
+}
+
+func NewInvalidSessionCallbackStack() *InvalidSessionCallbackStack {
+	return &InvalidSessionCallbackStack{
+		listener: make(chan *InvalidSessionBox),
+	}
+}
+
+type InvalidSessionCallbackStack struct {
+	sequential     bool
+	listeners      []InvalidSessionCallback
+	listenerExists bool
+	listener       chan *InvalidSessionBox
+}
+
+func (stack *InvalidSessionCallbackStack) Add(cb InvalidSessionCallback) (err error) {
+	if stack.listeners == nil {
+		stack.listeners = []InvalidSessionCallback{}
+	}
+
+	stack.listeners = append(stack.listeners, cb)
+	return nil
+}
+
+func (stack *InvalidSessionCallbackStack) Trigger(ctx context.Context, box *InvalidSessionBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
+	for _, listener := range stack.listeners {
+		if stack.sequential {
+			listener(ctx, box)
+		} else {
+			go listener(ctx, box)
+		}
+	}
+
+	return nil
+}
+
+func (stack *InvalidSessionCallbackStack) ReceiveChan() <-chan *InvalidSessionBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // channel
@@ -86,12 +208,22 @@ func (stack *ResumedCallbackStack) Trigger(ctx context.Context, resumed *discord
 
 // ChannelCreateCallbackStack **************
 type ChannelCreateHandler interface {
-	Add(ChannelCreateCallback)
-	Trigger(context.Context, *channel.Channel)
+	Add(ChannelCreateCallback) error
+	Trigger(context.Context, *ChannelCreateBox) error
+	ReceiveChan() <-chan *ChannelCreateBox
 }
+
+func NewChannelCreateCallbackStack() *ChannelCreateCallbackStack {
+	return &ChannelCreateCallbackStack{
+		listener: make(chan *ChannelCreateBox),
+	}
+}
+
 type ChannelCreateCallbackStack struct {
-	sequential bool
-	listeners  []ChannelCreateCallback
+	sequential     bool
+	listeners      []ChannelCreateCallback
+	listenerExists bool
+	listener       chan *ChannelCreateBox
 }
 
 func (stack *ChannelCreateCallbackStack) Add(cb ChannelCreateCallback) (err error) {
@@ -103,26 +235,44 @@ func (stack *ChannelCreateCallbackStack) Add(cb ChannelCreateCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelCreateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
+func (stack *ChannelCreateCallbackStack) Trigger(ctx context.Context, box *ChannelCreateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *c)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *c)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *ChannelCreateCallbackStack) ReceiveChan() <-chan *ChannelCreateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // ChannelUpdateCallbackStack ************
 type ChannelUpdateHandler interface {
-	Add(ChannelUpdateCallback)
-	Trigger(context.Context, *channel.Channel)
+	Add(ChannelUpdateCallback) error
+	Trigger(context.Context, *ChannelUpdateBox) error
+	ReceiveChan() <-chan *ChannelUpdateBox
 }
+
+func NewChannelUpdateCallbackStack() *ChannelUpdateCallbackStack {
+	return &ChannelUpdateCallbackStack{
+		listener: make(chan *ChannelUpdateBox),
+	}
+}
+
 type ChannelUpdateCallbackStack struct {
-	sequential bool
-	listeners  []ChannelUpdateCallback
+	sequential     bool
+	listeners      []ChannelUpdateCallback
+	listenerExists bool
+	listener       chan *ChannelUpdateBox
 }
 
 func (stack *ChannelUpdateCallbackStack) Add(cb ChannelUpdateCallback) (err error) {
@@ -134,26 +284,44 @@ func (stack *ChannelUpdateCallbackStack) Add(cb ChannelUpdateCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelUpdateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
+func (stack *ChannelUpdateCallbackStack) Trigger(ctx context.Context, box *ChannelUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *c)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *c)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *ChannelUpdateCallbackStack) ReceiveChan() <-chan *ChannelUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // ChannelDeleteCallbackStack ***********
 type ChannelDeleteHandler interface {
-	Add(ChannelDeleteCallback)
-	Trigger(context.Context, *channel.Channel)
+	Add(ChannelDeleteCallback) error
+	Trigger(context.Context, *ChannelDeleteBox) error
+	ReceiveChan() <-chan *ChannelDeleteBox
 }
+
+func NewChannelDeleteCallbackStack() *ChannelDeleteCallbackStack {
+	return &ChannelDeleteCallbackStack{
+		listener: make(chan *ChannelDeleteBox),
+	}
+}
+
 type ChannelDeleteCallbackStack struct {
-	sequential bool
-	listeners  []ChannelDeleteCallback
+	sequential     bool
+	listeners      []ChannelDeleteCallback
+	listenerExists bool
+	listener       chan *ChannelDeleteBox
 }
 
 func (stack *ChannelDeleteCallbackStack) Add(cb ChannelDeleteCallback) (err error) {
@@ -165,26 +333,44 @@ func (stack *ChannelDeleteCallbackStack) Add(cb ChannelDeleteCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelDeleteCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
+func (stack *ChannelDeleteCallbackStack) Trigger(ctx context.Context, box *ChannelDeleteBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *c)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *c)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *ChannelDeleteCallbackStack) ReceiveChan() <-chan *ChannelDeleteBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // ChannelPinsUpdateCallbackStack **********
 type ChannelPinsUpdateHandler interface {
-	Add(ChannelPinsUpdateCallback)
-	Trigger(context.Context, *channel.Channel)
+	Add(ChannelPinsUpdateCallback) error
+	Trigger(context.Context, *ChannelPinsUpdateBox) error
+	ReceiveChan() <-chan *ChannelPinsUpdateBox
 }
+
+func NewChannelPinsUpdateCallbackStack() *ChannelPinsUpdateCallbackStack {
+	return &ChannelPinsUpdateCallbackStack{
+		listener: make(chan *ChannelPinsUpdateBox),
+	}
+}
+
 type ChannelPinsUpdateCallbackStack struct {
-	sequential bool
-	listeners  []ChannelPinsUpdateCallback
+	sequential     bool
+	listeners      []ChannelPinsUpdateCallback
+	listenerExists bool
+	listener       chan *ChannelPinsUpdateBox
 }
 
 func (stack *ChannelPinsUpdateCallbackStack) Add(cb ChannelPinsUpdateCallback) (err error) {
@@ -196,16 +382,24 @@ func (stack *ChannelPinsUpdateCallbackStack) Add(cb ChannelPinsUpdateCallback) (
 	return nil
 }
 
-func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx context.Context, c *channel.Channel) (err error) {
+func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx context.Context, box *ChannelPinsUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *c)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *c)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *ChannelPinsUpdateCallbackStack) ReceiveChan() <-chan *ChannelPinsUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // Guild in general
@@ -213,12 +407,22 @@ func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx context.Context, c *cha
 
 // GuildCreateCallbackStack **********
 type GuildCreateHandler interface {
-	Add(GuildCreateCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildCreateCallback) error
+	Trigger(context.Context, *GuildCreateBox) error
+	ReceiveChan() <-chan *GuildCreateBox
 }
+
+func NewGuildCreateCallbackStack() *GuildCreateCallbackStack {
+	return &GuildCreateCallbackStack{
+		listener: make(chan *GuildCreateBox),
+	}
+}
+
 type GuildCreateCallbackStack struct {
-	sequential bool
-	listeners  []GuildCreateCallback
+	sequential     bool
+	listeners      []GuildCreateCallback
+	listenerExists bool
+	listener       chan *GuildCreateBox
 }
 
 func (stack *GuildCreateCallbackStack) Add(cb GuildCreateCallback) (err error) {
@@ -230,26 +434,44 @@ func (stack *GuildCreateCallbackStack) Add(cb GuildCreateCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildCreateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildCreateCallbackStack) Trigger(ctx context.Context, box *GuildCreateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildCreateCallbackStack) ReceiveChan() <-chan *GuildCreateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildUpdateCallbackStack .....
 type GuildUpdateHandler interface {
-	Add(GuildUpdateCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildUpdateCallback) error
+	Trigger(context.Context, *GuildUpdateBox) error
+	ReceiveChan() <-chan *GuildUpdateBox
 }
+
+func NewGuildUpdateCallbackStack() *GuildUpdateCallbackStack {
+	return &GuildUpdateCallbackStack{
+		listener: make(chan *GuildUpdateBox),
+	}
+}
+
 type GuildUpdateCallbackStack struct {
-	sequential bool
-	listeners  []GuildUpdateCallback
+	sequential     bool
+	listeners      []GuildUpdateCallback
+	listenerExists bool
+	listener       chan *GuildUpdateBox
 }
 
 func (stack *GuildUpdateCallbackStack) Add(cb GuildUpdateCallback) (err error) {
@@ -261,26 +483,44 @@ func (stack *GuildUpdateCallbackStack) Add(cb GuildUpdateCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildUpdateCallbackStack) Trigger(ctx context.Context, box *GuildUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildUpdateCallbackStack) ReceiveChan() <-chan *GuildUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildDeleteCallbackStack *********
 type GuildDeleteHandler interface {
-	Add(GuildDeleteCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildDeleteCallback) error
+	Trigger(context.Context, *GuildDeleteBox) error
+	ReceiveChan() <-chan *GuildDeleteBox
 }
+
+func NewGuildDeleteCallbackStack() *GuildDeleteCallbackStack {
+	return &GuildDeleteCallbackStack{
+		listener: make(chan *GuildDeleteBox),
+	}
+}
+
 type GuildDeleteCallbackStack struct {
-	sequential bool
-	listeners  []GuildDeleteCallback
+	sequential     bool
+	listeners      []GuildDeleteCallback
+	listenerExists bool
+	listener       chan *GuildDeleteBox
 }
 
 func (stack *GuildDeleteCallbackStack) Add(cb GuildDeleteCallback) (err error) {
@@ -292,26 +532,44 @@ func (stack *GuildDeleteCallbackStack) Add(cb GuildDeleteCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildDeleteCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildDeleteCallbackStack) Trigger(ctx context.Context, box *GuildDeleteBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildDeleteCallbackStack) ReceiveChan() <-chan *GuildDeleteBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildBanAddCallbackStack **************
 type GuildBanAddHandler interface {
-	Add(GuildBanAddCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildBanAddCallback) error
+	Trigger(context.Context, *GuildBanAddBox) error
+	ReceiveChan() <-chan *GuildBanAddBox
 }
+
+func NewGuildBanAddCallbackStack() *GuildBanAddCallbackStack {
+	return &GuildBanAddCallbackStack{
+		listener: make(chan *GuildBanAddBox),
+	}
+}
+
 type GuildBanAddCallbackStack struct {
-	sequential bool
-	listeners  []GuildBanAddCallback
+	sequential     bool
+	listeners      []GuildBanAddCallback
+	listenerExists bool
+	listener       chan *GuildBanAddBox
 }
 
 func (stack *GuildBanAddCallbackStack) Add(cb GuildBanAddCallback) (err error) {
@@ -323,26 +581,44 @@ func (stack *GuildBanAddCallbackStack) Add(cb GuildBanAddCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildBanAddCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildBanAddCallbackStack) Trigger(ctx context.Context, box *GuildBanAddBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildBanAddCallbackStack) ReceiveChan() <-chan *GuildBanAddBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildBanRemoveCallbackStack *********
 type GuildBanRemoveHandler interface {
-	Add(GuildBanRemoveCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildBanRemoveCallback) error
+	Trigger(context.Context, *GuildBanRemoveBox) error
+	ReceiveChan() <-chan *GuildBanRemoveBox
 }
+
+func NewGuildBanRemoveCallbackStack() *GuildBanRemoveCallbackStack {
+	return &GuildBanRemoveCallbackStack{
+		listener: make(chan *GuildBanRemoveBox),
+	}
+}
+
 type GuildBanRemoveCallbackStack struct {
-	sequential bool
-	listeners  []GuildBanRemoveCallback
+	sequential     bool
+	listeners      []GuildBanRemoveCallback
+	listenerExists bool
+	listener       chan *GuildBanRemoveBox
 }
 
 func (stack *GuildBanRemoveCallbackStack) Add(cb GuildBanRemoveCallback) (err error) {
@@ -354,26 +630,44 @@ func (stack *GuildBanRemoveCallbackStack) Add(cb GuildBanRemoveCallback) (err er
 	return nil
 }
 
-func (stack *GuildBanRemoveCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildBanRemoveCallbackStack) Trigger(ctx context.Context, box *GuildBanRemoveBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildBanRemoveCallbackStack) ReceiveChan() <-chan *GuildBanRemoveBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildEmojisUpdateCallbackStack ***********
 type GuildEmojisUpdateHandler interface {
-	Add(GuildEmojisUpdateCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildEmojisUpdateCallback) error
+	Trigger(context.Context, *GuildEmojisUpdateBox) error
+	ReceiveChan() <-chan *GuildEmojisUpdateBox
 }
+
+func NewGuildEmojisUpdateCallbackStack() *GuildEmojisUpdateCallbackStack {
+	return &GuildEmojisUpdateCallbackStack{
+		listener: make(chan *GuildEmojisUpdateBox),
+	}
+}
+
 type GuildEmojisUpdateCallbackStack struct {
-	sequential bool
-	listeners  []GuildEmojisUpdateCallback
+	sequential     bool
+	listeners      []GuildEmojisUpdateCallback
+	listenerExists bool
+	listener       chan *GuildEmojisUpdateBox
 }
 
 func (stack *GuildEmojisUpdateCallbackStack) Add(cb GuildEmojisUpdateCallback) (err error) {
@@ -385,26 +679,44 @@ func (stack *GuildEmojisUpdateCallbackStack) Add(cb GuildEmojisUpdateCallback) (
 	return nil
 }
 
-func (stack *GuildEmojisUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildEmojisUpdateCallbackStack) Trigger(ctx context.Context, box *GuildEmojisUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildEmojisUpdateCallbackStack) ReceiveChan() <-chan *GuildEmojisUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildIntegrationsUpdateCallbackStack *******************
 type GuildIntegrationsUpdateHandler interface {
-	Add(GuildIntegrationsUpdateCallback)
-	Trigger(context.Context, *guild.Guild)
+	Add(GuildIntegrationsUpdateCallback) error
+	Trigger(context.Context, *GuildIntegrationsUpdateBox) error
+	ReceiveChan() <-chan *GuildIntegrationsUpdateBox
 }
+
+func NewGuildIntegrationsUpdateCallbackStack() *GuildIntegrationsUpdateCallbackStack {
+	return &GuildIntegrationsUpdateCallbackStack{
+		listener: make(chan *GuildIntegrationsUpdateBox),
+	}
+}
+
 type GuildIntegrationsUpdateCallbackStack struct {
-	sequential bool
-	listeners  []GuildIntegrationsUpdateCallback
+	sequential     bool
+	listeners      []GuildIntegrationsUpdateCallback
+	listenerExists bool
+	listener       chan *GuildIntegrationsUpdateBox
 }
 
 func (stack *GuildIntegrationsUpdateCallbackStack) Add(cb GuildIntegrationsUpdateCallback) (err error) {
@@ -416,16 +728,24 @@ func (stack *GuildIntegrationsUpdateCallbackStack) Add(cb GuildIntegrationsUpdat
 	return nil
 }
 
-func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx context.Context, g *guild.Guild) (err error) {
+func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx context.Context, box *GuildIntegrationsUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *g)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *g)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *GuildIntegrationsUpdateCallbackStack) ReceiveChan() <-chan *GuildIntegrationsUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // Guild Member
@@ -433,12 +753,22 @@ func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx context.Context, 
 
 // GuildMemberAddCallbackStack ***********************
 type GuildMemberAddHandler interface {
-	Add(GuildMemberAddCallback)
-	Trigger(context.Context, *guild.Member)
+	Add(GuildMemberAddCallback) error
+	Trigger(context.Context, *GuildMemberAddBox) error
+	ReceiveChan() <-chan *GuildMemberAddBox
 }
+
+func NewGuildMemberAddCallbackStack() *GuildMemberAddCallbackStack {
+	return &GuildMemberAddCallbackStack{
+		listener: make(chan *GuildMemberAddBox),
+	}
+}
+
 type GuildMemberAddCallbackStack struct {
-	sequential bool
-	listeners  []GuildMemberAddCallback
+	sequential     bool
+	listeners      []GuildMemberAddCallback
+	listenerExists bool
+	listener       chan *GuildMemberAddBox
 }
 
 func (stack *GuildMemberAddCallbackStack) Add(cb GuildMemberAddCallback) (err error) {
@@ -450,26 +780,44 @@ func (stack *GuildMemberAddCallbackStack) Add(cb GuildMemberAddCallback) (err er
 	return nil
 }
 
-func (stack *GuildMemberAddCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
+func (stack *GuildMemberAddCallbackStack) Trigger(ctx context.Context, box *GuildMemberAddBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *member)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *member)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildMemberAddCallbackStack) ReceiveChan() <-chan *GuildMemberAddBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildMemberRemoveCallbackStack *******************
 type GuildMemberRemoveHandler interface {
-	Add(GuildMemberRemoveCallback)
-	Trigger(context.Context, *guild.Member)
+	Add(GuildMemberRemoveCallback) error
+	Trigger(context.Context, *GuildMemberRemoveBox) error
+	ReceiveChan() <-chan *GuildMemberRemoveBox
 }
+
+func NewGuildMemberRemoveCallbackStack() *GuildMemberRemoveCallbackStack {
+	return &GuildMemberRemoveCallbackStack{
+		listener: make(chan *GuildMemberRemoveBox),
+	}
+}
+
 type GuildMemberRemoveCallbackStack struct {
-	sequential bool
-	listeners  []GuildMemberRemoveCallback
+	sequential     bool
+	listeners      []GuildMemberRemoveCallback
+	listenerExists bool
+	listener       chan *GuildMemberRemoveBox
 }
 
 func (stack *GuildMemberRemoveCallbackStack) Add(cb GuildMemberRemoveCallback) (err error) {
@@ -481,26 +829,44 @@ func (stack *GuildMemberRemoveCallbackStack) Add(cb GuildMemberRemoveCallback) (
 	return nil
 }
 
-func (stack *GuildMemberRemoveCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
+func (stack *GuildMemberRemoveCallbackStack) Trigger(ctx context.Context, box *GuildMemberRemoveBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *member)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *member)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildMemberRemoveCallbackStack) ReceiveChan() <-chan *GuildMemberRemoveBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildMemberUpdateCallbackStack **************
 type GuildMemberUpdateHandler interface {
-	Add(GuildMemberUpdateCallback)
-	Trigger(context.Context, *guild.Member)
+	Add(GuildMemberUpdateCallback) error
+	Trigger(context.Context, *GuildMemberUpdateBox) error
+	ReceiveChan() <-chan *GuildMemberUpdateBox
 }
+
+func NewGuildMemberUpdateCallbackStack() *GuildMemberUpdateCallbackStack {
+	return &GuildMemberUpdateCallbackStack{
+		listener: make(chan *GuildMemberUpdateBox),
+	}
+}
+
 type GuildMemberUpdateCallbackStack struct {
-	sequential bool
-	listeners  []GuildMemberUpdateCallback
+	sequential     bool
+	listeners      []GuildMemberUpdateCallback
+	listenerExists bool
+	listener       chan *GuildMemberUpdateBox
 }
 
 func (stack *GuildMemberUpdateCallbackStack) Add(cb GuildMemberUpdateCallback) (err error) {
@@ -512,47 +878,73 @@ func (stack *GuildMemberUpdateCallbackStack) Add(cb GuildMemberUpdateCallback) (
 	return nil
 }
 
-func (stack *GuildMemberUpdateCallbackStack) Trigger(ctx context.Context, member *guild.Member) (err error) {
+func (stack *GuildMemberUpdateCallbackStack) Trigger(ctx context.Context, box *GuildMemberUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *member)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *member)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
-// GuildMemberChunkCallbackStack **************
-type GuildMemberChunkHandler interface {
-	Add(GuildMemberChunkCallback)
-	Trigger(context.Context, []*guild.Member)
-}
-type GuildMemberChunkCallbackStack struct {
-	sequential bool
-	listeners  []GuildMemberChunkCallback
+func (stack *GuildMemberUpdateCallbackStack) ReceiveChan() <-chan *GuildMemberUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
-func (stack *GuildMemberChunkCallbackStack) Add(cb GuildMemberChunkCallback) (err error) {
+// GuildMemberChunkCallbackStack **************
+type GuildMembersChunkHandler interface {
+	Add(GuildMembersChunkCallback) error
+	Trigger(context.Context, *GuildMembersChunkBox) error
+	ReceiveChan() <-chan *GuildMembersChunkBox
+}
+
+func NewGuildMembersChunkCallbackStack() *GuildMembersChunkCallbackStack {
+	return &GuildMembersChunkCallbackStack{
+		listener: make(chan *GuildMembersChunkBox),
+	}
+}
+
+type GuildMembersChunkCallbackStack struct {
+	sequential     bool
+	listeners      []GuildMembersChunkCallback
+	listenerExists bool
+	listener       chan *GuildMembersChunkBox
+}
+
+func (stack *GuildMembersChunkCallbackStack) Add(cb GuildMembersChunkCallback) (err error) {
 	if stack.listeners == nil {
-		stack.listeners = []GuildMemberChunkCallback{}
+		stack.listeners = []GuildMembersChunkCallback{}
 	}
 
 	stack.listeners = append(stack.listeners, cb)
 	return nil
 }
 
-func (stack *GuildMemberChunkCallbackStack) Trigger(ctx context.Context, members []guild.Member) (err error) {
+func (stack *GuildMembersChunkCallbackStack) Trigger(ctx context.Context, box *GuildMembersChunkBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, members)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, members)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *GuildMembersChunkCallbackStack) ReceiveChan() <-chan *GuildMembersChunkBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // Guild role
@@ -560,12 +952,22 @@ func (stack *GuildMemberChunkCallbackStack) Trigger(ctx context.Context, members
 
 // GuildRoleCreateCallbackStack *************
 type GuildRoleCreateHandler interface {
-	Add(GuildRoleCreateCallback)
-	Trigger(role *discord.Role)
+	Add(GuildRoleCreateCallback) error
+	Trigger(context.Context, *GuildRoleCreateBox) error
+	ReceiveChan() <-chan *GuildRoleCreateBox
 }
+
+func NewGuildRoleCreateCallbackStack() *GuildRoleCreateCallbackStack {
+	return &GuildRoleCreateCallbackStack{
+		listener: make(chan *GuildRoleCreateBox),
+	}
+}
+
 type GuildRoleCreateCallbackStack struct {
-	sequential bool
-	listeners  []GuildRoleCreateCallback
+	sequential     bool
+	listeners      []GuildRoleCreateCallback
+	listenerExists bool
+	listener       chan *GuildRoleCreateBox
 }
 
 func (stack *GuildRoleCreateCallbackStack) Add(cb GuildRoleCreateCallback) (err error) {
@@ -577,26 +979,44 @@ func (stack *GuildRoleCreateCallbackStack) Add(cb GuildRoleCreateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, role *discord.RoleEvent) (err error) {
+func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, box *GuildRoleCreateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *role)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *role)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildRoleCreateCallbackStack) ReceiveChan() <-chan *GuildRoleCreateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildRoleUpdateCallbackStack ***************
 type GuildRoleUpdateHandler interface {
-	Add(GuildRoleUpdateCallback)
-	Trigger(role *discord.Role)
+	Add(GuildRoleUpdateCallback) error
+	Trigger(context.Context, *GuildRoleUpdateBox) error
+	ReceiveChan() <-chan *GuildRoleUpdateBox
 }
+
+func NewGuildRoleUpdateCallbackStack() *GuildRoleUpdateCallbackStack {
+	return &GuildRoleUpdateCallbackStack{
+		listener: make(chan *GuildRoleUpdateBox),
+	}
+}
+
 type GuildRoleUpdateCallbackStack struct {
-	sequential bool
-	listeners  []GuildRoleUpdateCallback
+	sequential     bool
+	listeners      []GuildRoleUpdateCallback
+	listenerExists bool
+	listener       chan *GuildRoleUpdateBox
 }
 
 func (stack *GuildRoleUpdateCallbackStack) Add(cb GuildRoleUpdateCallback) (err error) {
@@ -608,26 +1028,44 @@ func (stack *GuildRoleUpdateCallbackStack) Add(cb GuildRoleUpdateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, role *discord.RoleEvent) (err error) {
+func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, box *GuildRoleUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *role)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *role)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *GuildRoleUpdateCallbackStack) ReceiveChan() <-chan *GuildRoleUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // GuildRoleDeleteCallbackStack **************
 type GuildRoleDeleteHandler interface {
-	Add(GuildRoleDeleteCallback)
-	Trigger(role *discord.Role)
+	Add(GuildRoleDeleteCallback) error
+	Trigger(context.Context, *GuildRoleDeleteBox) error
+	ReceiveChan() <-chan *GuildRoleDeleteBox
 }
+
+func NewGuildRoleDeleteCallbackStack() *GuildRoleDeleteCallbackStack {
+	return &GuildRoleDeleteCallbackStack{
+		listener: make(chan *GuildRoleDeleteBox),
+	}
+}
+
 type GuildRoleDeleteCallbackStack struct {
-	sequential bool
-	listeners  []GuildRoleDeleteCallback
+	sequential     bool
+	listeners      []GuildRoleDeleteCallback
+	listenerExists bool
+	listener       chan *GuildRoleDeleteBox
 }
 
 func (stack *GuildRoleDeleteCallbackStack) Add(cb GuildRoleDeleteCallback) (err error) {
@@ -639,16 +1077,24 @@ func (stack *GuildRoleDeleteCallbackStack) Add(cb GuildRoleDeleteCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, role *discord.RoleDeleteEvent) (err error) {
+func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, box *GuildRoleDeleteBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *role)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *role)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *GuildRoleDeleteCallbackStack) ReceiveChan() <-chan *GuildRoleDeleteBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // message
@@ -656,12 +1102,22 @@ func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, role *di
 
 // MessageCreateCallbackStack ********************
 type MessageCreateHandler interface {
-	Add(MessageCreateCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageCreateCallback) error
+	Trigger(context.Context, *MessageCreateBox) error
+	ReceiveChan() <-chan *MessageCreateBox
 }
+
+func NewMessageCreateCallbackStack() *MessageCreateCallbackStack {
+	return &MessageCreateCallbackStack{
+		listener: make(chan *MessageCreateBox),
+	}
+}
+
 type MessageCreateCallbackStack struct {
-	sequential bool
-	listeners  []MessageCreateCallback
+	sequential     bool
+	listeners      []MessageCreateCallback
+	listenerExists bool
+	listener       chan *MessageCreateBox
 }
 
 func (stack *MessageCreateCallbackStack) Add(cb MessageCreateCallback) (err error) {
@@ -673,26 +1129,44 @@ func (stack *MessageCreateCallbackStack) Add(cb MessageCreateCallback) (err erro
 	return nil
 }
 
-func (stack *MessageCreateCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
+func (stack *MessageCreateCallbackStack) Trigger(ctx context.Context, box *MessageCreateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *msg)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *msg)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *MessageCreateCallbackStack) ReceiveChan() <-chan *MessageCreateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // MessageUpdateCallbackStack ****************
 type MessageUpdateHandler interface {
-	Add(MessageUpdateCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageUpdateCallback) error
+	Trigger(context.Context, *MessageUpdateBox) error
+	ReceiveChan() <-chan *MessageUpdateBox
 }
+
+func NewMessageUpdateCallbackStack() *MessageUpdateCallbackStack {
+	return &MessageUpdateCallbackStack{
+		listener: make(chan *MessageUpdateBox),
+	}
+}
+
 type MessageUpdateCallbackStack struct {
-	sequential bool
-	listeners  []MessageUpdateCallback
+	sequential     bool
+	listeners      []MessageUpdateCallback
+	listenerExists bool
+	listener       chan *MessageUpdateBox
 }
 
 func (stack *MessageUpdateCallbackStack) Add(cb MessageUpdateCallback) (err error) {
@@ -704,26 +1178,44 @@ func (stack *MessageUpdateCallbackStack) Add(cb MessageUpdateCallback) (err erro
 	return nil
 }
 
-func (stack *MessageUpdateCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
+func (stack *MessageUpdateCallbackStack) Trigger(ctx context.Context, box *MessageUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *msg)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *msg)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *MessageUpdateCallbackStack) ReceiveChan() <-chan *MessageUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // MessageDeleteCallbackStack ***************
 type MessageDeleteHandler interface {
-	Add(MessageDeleteCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageDeleteCallback) error
+	Trigger(context.Context, *MessageDeleteBox) error
+	ReceiveChan() <-chan *MessageDeleteBox
 }
+
+func NewMessageDeleteCallbackStack() *MessageDeleteCallbackStack {
+	return &MessageDeleteCallbackStack{
+		listener: make(chan *MessageDeleteBox),
+	}
+}
+
 type MessageDeleteCallbackStack struct {
-	sequential bool
-	listeners  []MessageDeleteCallback
+	sequential     bool
+	listeners      []MessageDeleteCallback
+	listenerExists bool
+	listener       chan *MessageDeleteBox
 }
 
 func (stack *MessageDeleteCallbackStack) Add(cb MessageDeleteCallback) (err error) {
@@ -735,26 +1227,44 @@ func (stack *MessageDeleteCallbackStack) Add(cb MessageDeleteCallback) (err erro
 	return nil
 }
 
-func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, msg *channel.DeletedMessage) (err error) {
+func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, box *MessageDeleteBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *msg)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *msg)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *MessageDeleteCallbackStack) ReceiveChan() <-chan *MessageDeleteBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // MessageDeleteBulkCallbackStack ****************
 type MessageDeleteBulkHandler interface {
-	Add(MessageDeleteBulkCallback)
-	Trigger(context.Context, []*channel.Message)
+	Add(MessageDeleteBulkCallback) error
+	Trigger(context.Context, *MessageDeleteBulkBox) error
+	ReceiveChan() <-chan *MessageDeleteBulkBox
 }
+
+func NewMessageDeleteBulkCallbackStack() *MessageDeleteBulkCallbackStack {
+	return &MessageDeleteBulkCallbackStack{
+		listener: make(chan *MessageDeleteBulkBox),
+	}
+}
+
 type MessageDeleteBulkCallbackStack struct {
-	sequential bool
-	listeners  []MessageDeleteBulkCallback
+	sequential     bool
+	listeners      []MessageDeleteBulkCallback
+	listenerExists bool
+	listener       chan *MessageDeleteBulkBox
 }
 
 func (stack *MessageDeleteBulkCallbackStack) Add(cb MessageDeleteBulkCallback) (err error) {
@@ -766,16 +1276,24 @@ func (stack *MessageDeleteBulkCallbackStack) Add(cb MessageDeleteBulkCallback) (
 	return nil
 }
 
-func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, msgs []channel.Message) (err error) {
+func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, box *MessageDeleteBulkBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msgs)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, msgs)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *MessageDeleteBulkCallbackStack) ReceiveChan() <-chan *MessageDeleteBulkBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // message reaction
@@ -783,12 +1301,22 @@ func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, msgs [
 
 // MessageReactionAddCallbackStack ************
 type MessageReactionAddHandler interface {
-	Add(MessageReactionAddCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageReactionAddCallback) error
+	Trigger(context.Context, *MessageReactionAddBox) error
+	ReceiveChan() <-chan *MessageReactionAddBox
 }
+
+func NewMessageReactionAddCallbackStack() *MessageReactionAddCallbackStack {
+	return &MessageReactionAddCallbackStack{
+		listener: make(chan *MessageReactionAddBox),
+	}
+}
+
 type MessageReactionAddCallbackStack struct {
-	sequential bool
-	listeners  []MessageReactionAddCallback
+	sequential     bool
+	listeners      []MessageReactionAddCallback
+	listenerExists bool
+	listener       chan *MessageReactionAddBox
 }
 
 func (stack *MessageReactionAddCallbackStack) Add(cb MessageReactionAddCallback) (err error) {
@@ -800,26 +1328,44 @@ func (stack *MessageReactionAddCallbackStack) Add(cb MessageReactionAddCallback)
 	return nil
 }
 
-func (stack *MessageReactionAddCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
+func (stack *MessageReactionAddCallbackStack) Trigger(ctx context.Context, box *MessageReactionAddBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *msg)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *msg)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *MessageReactionAddCallbackStack) ReceiveChan() <-chan *MessageReactionAddBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // MessageReactionRemoveCallbackStack *********
 type MessageReactionRemoveHandler interface {
-	Add(MessageReactionRemoveCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageReactionRemoveCallback) error
+	Trigger(context.Context, *MessageReactionRemoveBox) error
+	ReceiveChan() <-chan *MessageReactionRemoveBox
 }
+
+func NewMessageReactionRemoveCallbackStack() *MessageReactionRemoveCallbackStack {
+	return &MessageReactionRemoveCallbackStack{
+		listener: make(chan *MessageReactionRemoveBox),
+	}
+}
+
 type MessageReactionRemoveCallbackStack struct {
-	sequential bool
-	listeners  []MessageReactionRemoveCallback
+	sequential     bool
+	listeners      []MessageReactionRemoveCallback
+	listenerExists bool
+	listener       chan *MessageReactionRemoveBox
 }
 
 func (stack *MessageReactionRemoveCallbackStack) Add(cb MessageReactionRemoveCallback) (err error) {
@@ -831,26 +1377,44 @@ func (stack *MessageReactionRemoveCallbackStack) Add(cb MessageReactionRemoveCal
 	return nil
 }
 
-func (stack *MessageReactionRemoveCallbackStack) Trigger(ctx context.Context, msg *channel.Message) (err error) {
+func (stack *MessageReactionRemoveCallbackStack) Trigger(ctx context.Context, box *MessageReactionRemoveBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *msg)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *msg)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *MessageReactionRemoveCallbackStack) ReceiveChan() <-chan *MessageReactionRemoveBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // MessageReactionRemoveAllCallbackStack *********
 type MessageReactionRemoveAllHandler interface {
-	Add(MessageReactionRemoveAllCallback)
-	Trigger(context.Context, *channel.Message)
+	Add(MessageReactionRemoveAllCallback) error
+	Trigger(context.Context, *MessageReactionRemoveAllBox) error
+	ReceiveChan() <-chan *MessageReactionRemoveAllBox
 }
+
+func NewMessageReactionRemoveAllCallbackStack() *MessageReactionRemoveAllCallbackStack {
+	return &MessageReactionRemoveAllCallbackStack{
+		listener: make(chan *MessageReactionRemoveAllBox),
+	}
+}
+
 type MessageReactionRemoveAllCallbackStack struct {
-	sequential bool
-	listeners  []MessageReactionRemoveAllCallback
+	sequential     bool
+	listeners      []MessageReactionRemoveAllCallback
+	listenerExists bool
+	listener       chan *MessageReactionRemoveAllBox
 }
 
 func (stack *MessageReactionRemoveAllCallbackStack) Add(cb MessageReactionRemoveAllCallback) (err error) {
@@ -862,16 +1426,24 @@ func (stack *MessageReactionRemoveAllCallbackStack) Add(cb MessageReactionRemove
 	return nil
 }
 
-func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context, msgs []channel.Message) (err error) {
+func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context, box *MessageReactionRemoveAllBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, msgs)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, msgs)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *MessageReactionRemoveAllCallbackStack) ReceiveChan() <-chan *MessageReactionRemoveAllBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // presence
@@ -879,12 +1451,22 @@ func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context,
 
 // PresenceUpdateCallbackStack *************
 type PresenceUpdateHandler interface {
-	Add(PresenceUpdateCallback)
-	Trigger(context.Context, *discord.Presence)
+	Add(PresenceUpdateCallback) error
+	Trigger(context.Context, *PresenceUpdateBox) error
+	ReceiveChan() <-chan *PresenceUpdateBox
 }
+
+func NewPresenceUpdateCallbackStack() *PresenceUpdateCallbackStack {
+	return &PresenceUpdateCallbackStack{
+		listener: make(chan *PresenceUpdateBox),
+	}
+}
+
 type PresenceUpdateCallbackStack struct {
-	sequential bool
-	listeners  []PresenceUpdateCallback
+	sequential     bool
+	listeners      []PresenceUpdateCallback
+	listenerExists bool
+	listener       chan *PresenceUpdateBox
 }
 
 func (stack *PresenceUpdateCallbackStack) Add(cb PresenceUpdateCallback) (err error) {
@@ -896,16 +1478,24 @@ func (stack *PresenceUpdateCallbackStack) Add(cb PresenceUpdateCallback) (err er
 	return nil
 }
 
-func (stack *PresenceUpdateCallbackStack) Trigger(ctx context.Context, p *discord.Presence) (err error) {
+func (stack *PresenceUpdateCallbackStack) Trigger(ctx context.Context, box *PresenceUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *p)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *p)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *PresenceUpdateCallbackStack) ReceiveChan() <-chan *PresenceUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // typing start
@@ -913,12 +1503,22 @@ func (stack *PresenceUpdateCallbackStack) Trigger(ctx context.Context, p *discor
 
 // TypingStartCallbackStack ******************
 type TypingStartHandler interface {
-	Add(TypingStartCallback)
-	Trigger(context.Context, *user.User, *channel.Channel)
+	Add(TypingStartCallback) error
+	Trigger(context.Context, *TypingStartBox) error
+	ReceiveChan() <-chan *TypingStartBox
 }
+
+func NewTypingStartCallbackStack() *TypingStartCallbackStack {
+	return &TypingStartCallbackStack{
+		listener: make(chan *TypingStartBox),
+	}
+}
+
 type TypingStartCallbackStack struct {
-	sequential bool
-	listeners  []TypingStartCallback
+	sequential     bool
+	listeners      []TypingStartCallback
+	listenerExists bool
+	listener       chan *TypingStartBox
 }
 
 func (stack *TypingStartCallbackStack) Add(cb TypingStartCallback) (err error) {
@@ -930,26 +1530,44 @@ func (stack *TypingStartCallbackStack) Add(cb TypingStartCallback) (err error) {
 	return nil
 }
 
-func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, ts *channel.TypingStart) (err error) {
+func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, box *TypingStartBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *ts)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *ts)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *TypingStartCallbackStack) ReceiveChan() <-chan *TypingStartBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // user update
 type UserUpdateHandler interface {
-	Add(UserUpdateCallback)
-	Trigger(context.Context, *user.User)
+	Add(UserUpdateCallback) error
+	Trigger(context.Context, *UserUpdateBox) error
+	ReceiveChan() <-chan *UserUpdateBox
 }
+
+func NewUserUpdateCallbackStack() *UserUpdateCallbackStack {
+	return &UserUpdateCallbackStack{
+		listener: make(chan *UserUpdateBox),
+	}
+}
+
 type UserUpdateCallbackStack struct {
-	sequential bool
-	listeners  []UserUpdateCallback
+	sequential     bool
+	listeners      []UserUpdateCallback
+	listenerExists bool
+	listener       chan *UserUpdateBox
 }
 
 func (stack *UserUpdateCallbackStack) Add(cb UserUpdateCallback) (err error) {
@@ -961,16 +1579,24 @@ func (stack *UserUpdateCallbackStack) Add(cb UserUpdateCallback) (err error) {
 	return nil
 }
 
-func (stack *UserUpdateCallbackStack) Trigger(ctx context.Context, u *user.User) (err error) {
+func (stack *UserUpdateCallbackStack) Trigger(ctx context.Context, box *UserUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *u)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *u)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *UserUpdateCallbackStack) ReceiveChan() <-chan *UserUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }
 
 // voice
@@ -978,12 +1604,22 @@ func (stack *UserUpdateCallbackStack) Trigger(ctx context.Context, u *user.User)
 
 // VoiceStateUpdateCallbackStack *************************
 type VoiceStateUpdateHandler interface {
-	Add(VoiceStateUpdateCallback)
-	Trigger(context.Context, *voice.State)
+	Add(VoiceStateUpdateCallback) error
+	Trigger(context.Context, *VoiceStateUpdateBox) error
+	ReceiveChan() <-chan *VoiceStateUpdateBox
 }
+
+func NewVoiceStateUpdateCallbackStack() *VoiceStateUpdateCallbackStack {
+	return &VoiceStateUpdateCallbackStack{
+		listener: make(chan *VoiceStateUpdateBox),
+	}
+}
+
 type VoiceStateUpdateCallbackStack struct {
-	sequential bool
-	listeners  []VoiceStateUpdateCallback
+	sequential     bool
+	listeners      []VoiceStateUpdateCallback
+	listenerExists bool
+	listener       chan *VoiceStateUpdateBox
 }
 
 func (stack *VoiceStateUpdateCallbackStack) Add(cb VoiceStateUpdateCallback) (err error) {
@@ -995,26 +1631,44 @@ func (stack *VoiceStateUpdateCallbackStack) Add(cb VoiceStateUpdateCallback) (er
 	return nil
 }
 
-func (stack *VoiceStateUpdateCallbackStack) Trigger(ctx context.Context, vst *voice.State) (err error) {
+func (stack *VoiceStateUpdateCallbackStack) Trigger(ctx context.Context, box *VoiceStateUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *vst)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *vst)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *VoiceStateUpdateCallbackStack) ReceiveChan() <-chan *VoiceStateUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // VoiceServerUpdateCallbackStack ***********************
 type VoiceServerUpdateHandler interface {
-	Add(VoiceServerUpdateCallback)
-	Trigger(context.Context, *voice.State)
+	Add(VoiceServerUpdateCallback) error
+	Trigger(context.Context, *VoiceServerUpdateBox) error
+	ReceiveChan() <-chan *VoiceServerUpdateBox
 }
+
+func NewVoiceServerUpdateCallbackStack() *VoiceServerUpdateCallbackStack {
+	return &VoiceServerUpdateCallbackStack{
+		listener: make(chan *VoiceServerUpdateBox),
+	}
+}
+
 type VoiceServerUpdateCallbackStack struct {
-	sequential bool
-	listeners  []VoiceServerUpdateCallback
+	sequential     bool
+	listeners      []VoiceServerUpdateCallback
+	listenerExists bool
+	listener       chan *VoiceServerUpdateBox
 }
 
 func (stack *VoiceServerUpdateCallbackStack) Add(cb VoiceServerUpdateCallback) (err error) {
@@ -1026,26 +1680,44 @@ func (stack *VoiceServerUpdateCallbackStack) Add(cb VoiceServerUpdateCallback) (
 	return nil
 }
 
-func (stack *VoiceServerUpdateCallbackStack) Trigger(ctx context.Context, vst *voice.State) (err error) {
+func (stack *VoiceServerUpdateCallbackStack) Trigger(ctx context.Context, box *VoiceServerUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *vst)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *vst)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
 }
 
+func (stack *VoiceServerUpdateCallbackStack) ReceiveChan() <-chan *VoiceServerUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
+}
+
 // WebhooksUpdateCallbackStack *******************
 type WebhooksUpdateHandler interface {
-	Add(cb WebhooksUpdateCallback)
-	Trigger(context.Context, *webhook.Webhook)
+	Add(cb WebhooksUpdateCallback) error
+	Trigger(context.Context, *WebhooksUpdateBox) error
+	ReceiveChan() <-chan *WebhooksUpdateBox
 }
+
+func NewWebhooksUpdateCallbackStack() *WebhooksUpdateCallbackStack {
+	return &WebhooksUpdateCallbackStack{
+		listener: make(chan *WebhooksUpdateBox),
+	}
+}
+
 type WebhooksUpdateCallbackStack struct {
-	sequential bool
-	listeners  []WebhooksUpdateCallback
+	sequential     bool
+	listeners      []WebhooksUpdateCallback
+	listenerExists bool
+	listener       chan *WebhooksUpdateBox
 }
 
 func (stack *WebhooksUpdateCallbackStack) Add(cb WebhooksUpdateCallback) (err error) {
@@ -1057,14 +1729,22 @@ func (stack *WebhooksUpdateCallbackStack) Add(cb WebhooksUpdateCallback) (err er
 	return nil
 }
 
-func (stack *WebhooksUpdateCallbackStack) Trigger(ctx context.Context, wb *webhook.Webhook) (err error) {
+func (stack *WebhooksUpdateCallbackStack) Trigger(ctx context.Context, box *WebhooksUpdateBox) (err error) {
+	if stack.listenerExists {
+		stack.listener <- box
+	}
 	for _, listener := range stack.listeners {
 		if stack.sequential {
-			listener(ctx, *wb)
+			listener(ctx, box)
 		} else {
-			go listener(ctx, *wb)
+			go listener(ctx, box)
 		}
 	}
 
 	return nil
+}
+
+func (stack *WebhooksUpdateCallbackStack) ReceiveChan() <-chan *WebhooksUpdateBox {
+	stack.listenerExists = true
+	return stack.listener
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
-	"github.com/andersfylling/disgord/user"
 	"github.com/sirupsen/logrus"
 )
 
@@ -151,8 +150,9 @@ func (c *Client) eventObserver() {
 
 			eventName := evt.Name()
 			switch eventName {
+			case event.Hello:
 			case event.Ready:
-				r := &discord.Ready{}
+				r := &event.ReadyBox{}
 				err := json.Unmarshal(evt.Data(), r)
 				if err != nil {
 					panic(err) // TODO: remove panic before merging to master
@@ -170,30 +170,29 @@ func (c *Client) eventObserver() {
 				c.State.UpdateMySelf(r.User)
 
 			case event.Resumed:
-				resumed := &discord.Resumed{}
+				resumed := &event.ResumedBox{}
 				err := json.Unmarshal(evt.Data(), resumed)
 				if err != nil {
 					panic(err)
 				}
 
 				// no need to handle this as its done at the socket level ...
-
 				go c.ResumedEvent.Trigger(ctx, resumed)
-
+			case event.InvalidSession:
 			case event.ChannelCreate, event.ChannelUpdate, event.ChannelDelete:
-				channelEvt := &channel.Channel{}
-				err := json.Unmarshal(evt.Data(), channelEvt)
+				chanContent := &channel.Channel{}
+				err := json.Unmarshal(evt.Data(), chanContent)
 				if err != nil {
 					panic(err)
 				}
 
 				switch eventName {
 				case event.ChannelCreate:
-					go c.ChannelCreateEvent.Trigger(ctx, channelEvt)
+					go c.ChannelCreateEvent.Trigger(ctx, &event.ChannelCreateBox{chanContent})
 				case event.ChannelUpdate:
-					go c.ChannelUpdateEvent.Trigger(ctx, channelEvt)
+					go c.ChannelUpdateEvent.Trigger(ctx, &event.ChannelUpdateBox{chanContent})
 				case event.ChannelDelete:
-					go c.ChannelDeleteEvent.Trigger(ctx, channelEvt)
+					go c.ChannelDeleteEvent.Trigger(ctx, &event.ChannelDeleteBox{chanContent})
 				}
 			//case event.ChannelPinsUpdate:
 			case event.GuildCreate, event.GuildUpdate, event.GuildDelete:
@@ -206,17 +205,18 @@ func (c *Client) eventObserver() {
 				switch eventName { // internal switch statement for guild events
 				case event.GuildCreate:
 					// notifify listeners
-					go c.GuildCreateEvent.Trigger(ctx, g)
+					go c.GuildCreateEvent.Trigger(ctx, &event.GuildCreateBox{g})
 					// add to cache
 					c.State.AddGuild(g)
 				case event.GuildUpdate:
 					// notifify listeners
-					go c.GuildUpdateEvent.Trigger(ctx, g)
+					go c.GuildUpdateEvent.Trigger(ctx, &event.GuildUpdateBox{g})
 					// update cache
 					c.State.UpdateGuild(g)
 				case event.GuildDelete:
 					// notify listeners
-					go c.GuildDeleteEvent.Trigger(ctx, g)
+					unavailGuild := discord.NewGuildUnavailable(g.ID)
+					go c.GuildDeleteEvent.Trigger(ctx, &event.GuildDeleteBox{unavailGuild})
 
 					cachedGuild, err := c.State.Guild(g.ID)
 					if err != nil {
@@ -238,8 +238,8 @@ func (c *Client) eventObserver() {
 			//case event.GuildMemberRemove:
 			//case event.GuildMemberUpdate:
 			//case event.GuildMemberChunk:
-			case event.GuildRoleCreate, event.GuildRoleUpdate:
-				r := &discord.RoleEvent{}
+			case event.GuildRoleCreate:
+				r := &event.GuildRoleCreateBox{}
 				err := json.Unmarshal(evt.Data(), r)
 				if err != nil {
 					panic(err)
@@ -250,24 +250,32 @@ func (c *Client) eventObserver() {
 					panic("you haven't correctly cached all guilds you fool!")
 				}
 
-				switch eventName {
-				case event.GuildRoleCreate:
-					go c.GuildRoleCreateEvent.Trigger(ctx, r)
+				go c.GuildRoleCreateEvent.Trigger(ctx, r)
 
-					// add to cache
-					g.Lock()
-					g.AddRole(r.Role)
-					g.Unlock()
-				case event.GuildRoleUpdate:
-					go c.GuildRoleUpdateEvent.Trigger(ctx, r)
-
-					// add to cache
-					g.Lock()
-					g.UpdateRole(r.Role)
-					g.Unlock()
+				// add to cache
+				g.Lock()
+				g.AddRole(r.Role)
+				g.Unlock()
+			case event.GuildRoleUpdate:
+				r := &event.GuildRoleUpdateBox{}
+				err := json.Unmarshal(evt.Data(), r)
+				if err != nil {
+					panic(err)
 				}
+
+				g, err := c.State.Guild(r.GuildID)
+				if err != nil {
+					panic("you haven't correctly cached all guilds you fool!")
+				}
+
+				go c.GuildRoleUpdateEvent.Trigger(ctx, r)
+
+				// add to cache
+				g.Lock()
+				g.UpdateRole(r.Role)
+				g.Unlock()
 			case event.GuildRoleDelete:
-				r := &discord.RoleDeleteEvent{}
+				r := &event.GuildRoleDeleteBox{}
 				err := json.Unmarshal(evt.Data(), r)
 				if err != nil {
 					panic(err)
@@ -291,12 +299,12 @@ func (c *Client) eventObserver() {
 				// TODO: should i cache msg?..
 				switch eventName {
 				case event.MessageCreate:
-					go c.MessageCreateEvent.Trigger(ctx, msg)
+					go c.MessageCreateEvent.Trigger(ctx, &event.MessageCreateBox{msg})
 				case event.MessageUpdate:
-					go c.MessageUpdateEvent.Trigger(ctx, msg)
+					go c.MessageUpdateEvent.Trigger(ctx, &event.MessageUpdateBox{msg})
 				case event.MessageDelete:
-					deletedMsg := &channel.DeletedMessage{
-						ID:        msg.ID,
+					deletedMsg := &event.MessageDeleteBox{
+						MessageID: msg.ID,
 						ChannelID: msg.ChannelID,
 					}
 					go c.MessageDeleteEvent.Trigger(ctx, deletedMsg)
@@ -306,7 +314,7 @@ func (c *Client) eventObserver() {
 			//case event.MessageReactionRemove:
 			//case event.MessageReactionRemoveAll:
 			case event.PresenceUpdate:
-				pu := &discord.Presence{}
+				pu := &event.PresenceUpdateBox{}
 				err := json.Unmarshal(evt.Data(), pu)
 				if err != nil {
 					panic(err)
@@ -318,9 +326,15 @@ func (c *Client) eventObserver() {
 				if err != nil {
 					panic("you haven't correctly cached all guilds you fool!")
 				}
-				g.UpdatePresence(pu)
+				presence := &discord.Presence{
+					User:   pu.User,
+					Roles:  pu.RoleIDs,
+					Game:   pu.Game,
+					Status: pu.Status,
+				}
+				g.UpdatePresence(presence)
 			case event.TypingStart:
-				ts := &channel.TypingStart{}
+				ts := &event.TypingStartBox{}
 				err := json.Unmarshal(evt.Data(), ts)
 				if err != nil {
 					panic(err)
@@ -328,8 +342,8 @@ func (c *Client) eventObserver() {
 
 				go c.TypingStartEvent.Trigger(ctx, ts)
 			case event.UserUpdate:
-				u := &user.User{}
-				err := json.Unmarshal(evt.Data(), u)
+				u := &event.UserUpdateBox{}
+				err := json.Unmarshal(evt.Data(), u.User)
 				if err != nil {
 					panic(err) // TODO: remove panic before merging to master
 				}
@@ -338,7 +352,7 @@ func (c *Client) eventObserver() {
 				go c.UserUpdateEvent.Trigger(ctx, u)
 
 				// update cache
-				c.State.UpdateMySelf(u)
+				c.State.UpdateMySelf(u.User)
 			//case event.VoiceStateUpdate:
 			//case event.VoiceServerUpdate:
 			//case event.WebhooksUpdate:

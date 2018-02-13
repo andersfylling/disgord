@@ -7,6 +7,8 @@ const (
 
 	// Gateway events
 
+	// Hello defines the heartbeat interval
+	Hello Type = "HELLO"
 	// Ready The ready event is dispatched when a client has completed the
 	//       initial handshake with the gateway (for new sessions). The ready
 	//       event can be the largest and most complex event the gateway will
@@ -19,12 +21,14 @@ const (
 	//       * Guilds []*discord.guild.Unavailable
 	//       * SessionID string
 	//       * Trace []string
-	Ready Type = "READY"
+	Ready = "READY"
 	// Resumed The resumed event is dispatched when a client has sent a resume
 	//         payload to the gateway (for resuming existing sessions).
 	//         Fields:
 	//         * Trace []string
 	Resumed = "RESUMED"
+	// InvalidSession failure response to Identify or Resume or invalid active session
+	InvalidSession = "INVALID_SESSION"
 
 	// Channel events
 
