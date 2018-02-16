@@ -10,10 +10,17 @@ import (
 	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/disgordctx"
-	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	// APIComEncoding data encoding when communicating with the discord API
+	APIComEncoding string = "json"
+
+	// APIVersion desired API version to use
+	APIVersion int = 6
 )
 
 type Config struct {
@@ -40,8 +47,8 @@ func NewClient(conf *Config) (*Client, error) {
 		Debug:      conf.Debug,
 
 		// lib specific
-		DAPIVersion:  endpoint.APIVersion,
-		DAPIEncoding: endpoint.APIComEncoding,
+		DAPIVersion:  APIVersion,
+		DAPIEncoding: APIComEncoding,
 	})
 	if err != nil {
 		return nil, err
