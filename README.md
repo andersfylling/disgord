@@ -33,27 +33,39 @@ func main() {
         panic(err)
         return
     }
+    // should now be connected
+
+
+    // add a event listener using the abstract method
+      dg.OnEvent(event.ReadyKey, func(ctx context.Context, box *event.ReadyBox) {
+      fmt.Printf("\n----\n:%s:\n%+v\n-------\n", event.ReadyKey, box)
+      })
+
+
     <-termSignal
     dg.Disconnect()
 }
 ```
 
-Gives a output similar to (note that it only gives out data to the terminal atm):
+Output:
 
-```go
-INFO[2018-01-25 04:14:15] Connecting to discord Gateway                 lib="Disgord v0.0.0"
-INFO[2018-01-25 04:14:17] Connected                                     lib="Disgord v0.0.0"
-INFO[2018-01-25 04:14:17] Event{READY}
-{"v":6,"user_settings":{},"user":{"verified":true,"username":"disgord" ......
+```
+╰─ go build && ./disgordtest
+INFO[2018-02-16 19:05:47] Connecting to discord Gateway                 lib="Disgord v0.0.0"
+INFO[2018-02-16 19:05:48] Connected                                     lib="Disgord v0.0.0"
+
+----
+:READY:
+&{APIVersion:6 User:disgord#2355{40472951282397185} Guilds:[0xc4203922d0] SessionID:4dc1bab8ff8fgfg234f7e0997d7d28a Trace:[gateway-prd-main-1t4gc discord-sessions-prd-2-6] RWMutex:{w:{state:0 sema:0} writerSem:0 readerSem:0 readerCount:0 readerWait:0}}
+-------
 ```
 
-And the disconnect method provides graceful shutdown (buggy on reconnect periodes):
+Then on a system interrupt, here pressing `Ctrl+C`, you will see the following:
 
-```go
-
+```
 ^C
-INFO[2018-01-25 04:30:09] Closing Discord gateway connection            lib="Disgord v0.0.0"
-INFO[2018-01-25 04:30:11] Disconnected                                  lib="Disgord v0.0.0"
+INFO[2018-02-16 19:07:28] Closing Discord gateway connection            lib="Disgord v0.0.0"
+INFO[2018-02-16 19:07:30] Disconnected                                  lib="Disgord v0.0.0"
 ```
 
 ## Progress
