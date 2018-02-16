@@ -1,4 +1,4 @@
-package discord
+package guild
 
 import "github.com/andersfylling/snowflake"
 
@@ -15,6 +15,10 @@ type Role struct {
 
 func NewRole() *Role {
 	return &Role{}
+}
+
+func (r *Role) Mention() string {
+	return "<@&" + r.ID.String() + ">"
 }
 
 func (r *Role) Clear() {

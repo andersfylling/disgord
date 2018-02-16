@@ -24,9 +24,9 @@ type HelloBox struct {
 
 // ReadyBox	contains the initial state information
 type ReadyBox struct {
-	APIVersion int                         `json:"v"`
-	User       *user.User                  `json:"user"`
-	Guilds     []*discord.GuildUnavailable `json:"guilds"`
+	APIVersion int                  `json:"v"`
+	User       *user.User           `json:"user"`
+	Guilds     []*guild.Unavailable `json:"guilds"`
 
 	// not really needed, as it is handled on the socket layer.
 	SessionID string   `json:"session_id"`
@@ -106,8 +106,8 @@ type GuildUpdateBox struct {
 
 // GuildDeleteBox	guild became unavailable, or user left/was removed from a guild
 type GuildDeleteBox struct {
-	UnavailableGuild *discord.GuildUnavailable `json:"guild_unavailable"`
-	Ctx              context.Context           `json:"-"`
+	UnavailableGuild *guild.Unavailable `json:"guild_unavailable"`
+	Ctx              context.Context    `json:"-"`
 }
 
 // GuildBanAddBox	user was banned from a guild
@@ -151,7 +151,7 @@ type GuildMemberRemoveBox struct {
 // GuildMemberUpdateBox	guild member was updated
 type GuildMemberUpdateBox struct {
 	GuildID snowflake.ID    `json:"guild_id"`
-	Roles   []*discord.Role `json:"roles"`
+	Roles   []*guild.Role   `json:"roles"`
 	User    *user.User      `json:"user"`
 	Nick    string          `json:"nick"`
 	Ctx     context.Context `json:"-"`
@@ -167,14 +167,14 @@ type GuildMembersChunkBox struct {
 // GuildRoleCreateBox	guild role was created
 type GuildRoleCreateBox struct {
 	GuildID snowflake.ID    `json:"guild_id"`
-	Role    *discord.Role   `json:"role"`
+	Role    *guild.Role     `json:"role"`
 	Ctx     context.Context `json:"-"`
 }
 
 // GuildRoleUpdateBox	guild role was updated
 type GuildRoleUpdateBox struct {
 	GuildID snowflake.ID    `json:"guild_id"`
-	Role    *discord.Role   `json:"role"`
+	Role    *guild.Role     `json:"role"`
 	Ctx     context.Context `json:"-"`
 }
 
@@ -240,10 +240,10 @@ type MessageReactionRemoveAllBox struct {
 
 // PresenceUpdateBox	user's presence was updated in a guild
 type PresenceUpdateBox struct {
-	User    *user.User        `json:"user"`
-	RoleIDs []snowflake.ID    `json:"roles"`
-	Game    *discord.Activity `json:"game"`
-	GuildID snowflake.ID      `json:"guild_id"`
+	User    *user.User     `json:"user"`
+	RoleIDs []snowflake.ID `json:"roles"`
+	Game    *user.Activity `json:"game"`
+	GuildID snowflake.ID   `json:"guild_id"`
 
 	// Status either "idle", "dnd", "online", or "offline"
 	// TODO: constants somewhere..

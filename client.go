@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/channel"
-	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/disgordctx"
 	"github.com/andersfylling/disgord/endpoint"
@@ -61,7 +60,7 @@ func NewClient(conf *Config) (*Client, error) {
 	return d, nil
 }
 
-// NewRequiredDisgord same as NewDisgord, but exits program if an error occours
+// NewRequiredClient same as NewDisgord, but exits program if an error occours
 func NewRequiredClient(conf *Config) *Client {
 	dg, err := NewClient(conf)
 	if err != nil {
@@ -225,7 +224,7 @@ func (c *Client) eventObserver() {
 					//c.State.UpdateGuild(g)
 				case event.GuildDeleteKey:
 					// notify listeners
-					unavailGuild := discord.NewGuildUnavailable(g.ID)
+					unavailGuild := guild.NewGuildUnavailable(g.ID)
 					go c.GuildDeleteEvent.Trigger(session, &event.GuildDeleteBox{
 						UnavailableGuild: unavailGuild,
 						Ctx:              ctx,

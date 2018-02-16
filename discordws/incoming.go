@@ -3,6 +3,7 @@ package discordws
 import (
 	"encoding/json"
 
+	"github.com/andersfylling/disgord/event"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -52,39 +53,57 @@ func (c *Client) readPump() {
 	}
 }
 
-// writePump pumps messages from the hub to the websocket connection.
-//
-// A goroutine running writePump is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
-func (c *Client) writePump(ws *websocket.Conn) {
-	logrus.Debug("Ready to send packets...")
+type payloadData []byte
 
-	for {
-		select {
-		case message, ok := <-c.sendChan:
-			if !ok {
-				// The hub closed the channel.
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
+func (pd *payloadData) UnmarshalJSON(data []byte) error {
+	*pd = payloadData(data)
+	return nil
+}
 
-			c.wsMutex.Lock()
-			err := ws.WriteJSON(&message)
-			c.wsMutex.Unlock()
-			if err != nil {
-				logrus.Error(err)
-			}
+func (pd *payloadData) ByteArr() []byte {
+	return []byte(*pd)
+}
 
-			b, err := json.MarshalIndent(&message, "", "  ")
-			if err != nil {
-				logrus.Debugf("->: %+v\n", message)
-			} else {
-				logrus.Debugf("->: %+v\n", string(b))
-			}
-		case <-c.disconnected:
-			logrus.Debug("closing writePump")
-			return
-		}
-	}
+type gatewayEvent struct {
+	Op             uint          `json:"op"`
+	Data           payloadData   `json:"d"`
+	SequenceNumber uint          `json:"s"`
+	EventName      event.KeyType `json:"t"`
+}
+
+type getGatewayResponse struct {
+	URL    string `json:"url"`
+	Shards uint   `json:"shards,omitempty"`
+}
+
+type helloPacket struct {
+	HeartbeatInterval uint     `json:"heartbeat_interval"`
+	Trace             []string `json:"_trace"`
+}
+
+type readyPacket struct {
+	SessionID string   `json:"session_id"`
+	Trace     []string `json:"_trace"`
+}
+
+type EventInterface interface {
+	Name() event.KeyType
+	Data() []byte
+	Unmarshal(interface{}) error
+}
+
+type Event struct {
+	content *gatewayEvent
+}
+
+func (evt *Event) Name() event.KeyType {
+	return evt.content.EventName
+}
+
+func (evt *Event) Data() []byte {
+	return evt.content.Data.ByteArr()
+}
+
+func (evt *Event) Unmarshal(v interface{}) error {
+	return json.Unmarshal(evt.Data(), v)
 }

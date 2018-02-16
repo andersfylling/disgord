@@ -4,16 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os/user"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
+
+type Config struct {
+	Token        string
+	HTTPClient   *http.Client
+	DAPIVersion  int
+	DAPIEncoding string
+	Debug        bool
+}
 
 // NewRequiredClient same as NewClient(...), but program exits on failure.
 func NewRequiredClient(conf *Config) *Client {

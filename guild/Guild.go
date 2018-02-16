@@ -10,6 +10,7 @@ import (
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/emoji"
 	"github.com/andersfylling/disgord/lvl"
+	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/disgord/voice"
 	"github.com/andersfylling/snowflake"
 )
@@ -28,13 +29,28 @@ func NewGuildFromJSON(data []byte) *Guild {
 	return guild
 }
 
-func NewGuildFromUnavailable(gu *discord.GuildUnavailable) *Guild {
+func NewGuildFromUnavailable(gu *Unavailable) *Guild {
 	g := &Guild{
 		ID:          gu.ID,
 		Unavailable: gu.Unavailable,
 	}
 
 	return g
+}
+
+func NewGuildUnavailable(ID snowflake.ID) *Unavailable {
+	gu := &Unavailable{
+		ID:          ID,
+		Unavailable: true,
+	}
+
+	return gu
+}
+
+type Unavailable struct {
+	ID           snowflake.ID `json:"id"`
+	Unavailable  bool         `json:"unavailable"` // ?*|
+	sync.RWMutex `json:"-"`
 }
 
 type GuildInterface interface {
@@ -65,21 +81,21 @@ type Guild struct {
 	MFALevel                    lvl.MFA                        `json:"mfa_level"`
 	WidgetEnabled               bool                           `json:"widget_enabled"`    //   |
 	WidgetChannelID             snowflake.ID                   `json:"widget_channel_id"` //   |
-	Roles                       []*discord.Role                `json:"roles"`
+	Roles                       []*Role                        `json:"roles"`
 	Emojis                      []*emoji.Emoji                 `json:"emojis"`
 	Features                    []string                       `json:"features"`
 	SystemChannelID             *snowflake.ID                  `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       *discord.Timestamp  `json:"joined_at,omitempty"`    // ?*|
-	Large          bool                `json:"large,omitempty"`        // ?*|
-	Unavailable    bool                `json:"unavailable"`            // ?*|
-	MemberCount    uint                `json:"member_count,omitempty"` // ?*|
-	VoiceStates    []*voice.State      `json:"voice_states,omitempty"` // ?*|
-	Members        []*Member           `json:"members,omitempty"`      // ?*|
-	Channels       []*channel.Channel  `json:"channels,omitempty"`     // ?*|
-	Presences      []*discord.Presence `json:"presences,omitempty"`    // ?*|
-	PresencesMutex sync.RWMutex        `json:"-"`
+	JoinedAt       *discord.Timestamp `json:"joined_at,omitempty"`    // ?*|
+	Large          bool               `json:"large,omitempty"`        // ?*|
+	Unavailable    bool               `json:"unavailable"`            // ?*|
+	MemberCount    uint               `json:"member_count,omitempty"` // ?*|
+	VoiceStates    []*voice.State     `json:"voice_states,omitempty"` // ?*|
+	Members        []*Member          `json:"members,omitempty"`      // ?*|
+	Channels       []*channel.Channel `json:"channels,omitempty"`     // ?*|
+	Presences      []*user.Presence   `json:"presences,omitempty"`    // ?*|
+	PresencesMutex sync.RWMutex       `json:"-"`
 
 	sync.RWMutex `json:"-"`
 }
@@ -98,7 +114,7 @@ func (g *Guild) MarshalJSON() ([]byte, error) {
 	var jsonData []byte
 	var err error
 	if g.Unavailable {
-		guildUnavailable := discord.NewGuildUnavailable(g.ID)
+		guildUnavailable := NewGuildUnavailable(g.ID)
 		jsonData, err = json.Marshal(guildUnavailable)
 		if err != nil {
 			return []byte(""), nil
@@ -159,7 +175,7 @@ func (g *Guild) AddMember(member *Member) error {
 	return nil
 }
 
-func (g *Guild) AddRole(role *discord.Role) error {
+func (g *Guild) AddRole(role *Role) error {
 	// TODO: implement sorting for faster searching later
 	g.Roles = append(g.Roles, role)
 
@@ -194,7 +210,7 @@ func (g *Guild) MemberByName(name string) ([]*Member, error) {
 }
 
 // Role retrieve a role based on role id
-func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
+func (g *Guild) Role(id snowflake.ID) (*Role, error) {
 	for _, role := range g.Roles {
 		if role.ID == id {
 			return role, nil
@@ -204,7 +220,7 @@ func (g *Guild) Role(id snowflake.ID) (*discord.Role, error) {
 	return nil, errors.New("role not found in guild")
 }
 
-func (g *Guild) UpdateRole(r *discord.Role) {
+func (g *Guild) UpdateRole(r *Role) {
 	for _, role := range g.Roles {
 		if role.ID == r.ID {
 			*role = *r
@@ -230,8 +246,8 @@ func (g *Guild) DeleteRoleByID(ID snowflake.ID) {
 }
 
 // RoleByTitle retrieves a slice of roles with same name
-func (g *Guild) RoleByName(name string) ([]*discord.Role, error) {
-	var roles []*discord.Role
+func (g *Guild) RoleByName(name string) ([]*Role, error) {
+	var roles []*Role
 	for _, role := range g.Roles {
 		if role.Name == name {
 			roles = append(roles, role)
@@ -255,7 +271,7 @@ func (g *Guild) Channel(id snowflake.ID) (*channel.Channel, error) {
 	return nil, errors.New("channel not found in guild")
 }
 
-func (g *Guild) UpdatePresence(p *discord.Presence) {
+func (g *Guild) UpdatePresence(p *user.Presence) {
 	g.PresencesMutex.RLock()
 	index := -1
 	for i, presence := range g.Presences {

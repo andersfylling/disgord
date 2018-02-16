@@ -15,6 +15,15 @@ type Emoji struct {
 	Animated      bool           `json:"animated,omitempty"`
 }
 
+func (e *Emoji) Mention() string {
+	animated := ""
+	if e.Animated {
+		animated = "a:"
+	}
+
+	return "<" + animated + e.Name + ":" + e.ID.String() + ">"
+}
+
 func (e *Emoji) Clear() {
 	// obviusly don't delete the user ...
 }

@@ -2,7 +2,6 @@ package channel
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/user"
@@ -42,7 +41,7 @@ func NewChannel() *Channel {
 }
 
 func (c *Channel) Mention() string {
-	return fmt.Sprintf("<#%d>", c.ID)
+	return "<#" + c.ID.String() + ">"
 }
 
 func (c *Channel) Compare(other *Channel) bool {

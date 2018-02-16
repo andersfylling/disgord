@@ -17,6 +17,16 @@ func NewDeletedMessage() *DeletedMessage {
 	return &DeletedMessage{}
 }
 
+type Attachment struct {
+	ID       snowflake.ID `json:"id"`
+	Filename string       `json:"filename"`
+	Size     uint         `json:"size"`
+	URL      string       `json:"url"`
+	ProxyURL string       `json:"proxy_url"`
+	Height   uint         `json:"height"`
+	Width    uint         `json:"width"`
+}
+
 type DeletedMessage struct {
 	ID        snowflake.ID `json:"id"`
 	ChannelID snowflake.ID `json:"channel_id"`
