@@ -106,7 +106,7 @@ func (c *Client) operationHandlers() {
 				c.Unlock()
 
 				// always store the session id
-				if gp.EventName == event.Ready {
+				if gp.EventName == event.ReadyKey {
 					ready := &readyPacket{}
 					err := json.Unmarshal(gp.Data.ByteArr(), ready)
 					if err != nil {
@@ -117,7 +117,7 @@ func (c *Client) operationHandlers() {
 					c.SessionID = ready.SessionID
 					c.Trace = ready.Trace
 					c.RUnlock()
-				} else if gp.EventName == event.Resumed {
+				} else if gp.EventName == event.ResumedKey {
 					// eh? debugging.
 				}
 

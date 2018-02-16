@@ -9,7 +9,7 @@ import (
 )
 
 type EventInterface interface {
-	Name() event.Type
+	Name() event.KeyType
 	Data() []byte
 	Unmarshal(interface{}) error
 }
@@ -18,7 +18,7 @@ type Event struct {
 	content *gatewayEvent
 }
 
-func (evt *Event) Name() event.Type {
+func (evt *Event) Name() event.KeyType {
 	return evt.content.EventName
 }
 
@@ -31,18 +31,18 @@ func (evt *Event) Unmarshal(v interface{}) error {
 }
 
 type gatewayPayload struct {
-	Op             uint        `json:"op"`
-	Data           interface{} `json:"d"`
-	SequenceNumber uint        `json:"s,omitempty"`
-	EventName      event.Type  `json:"t,omitempty"`
+	Op             uint          `json:"op"`
+	Data           interface{}   `json:"d"`
+	SequenceNumber uint          `json:"s,omitempty"`
+	EventName      event.KeyType `json:"t,omitempty"`
 }
 
 // GatewayEvent used for incoming events from the gateway..
 type gatewayEvent struct {
-	Op             uint        `json:"op"`
-	Data           payloadData `json:"d"`
-	SequenceNumber uint        `json:"s"`
-	EventName      event.Type  `json:"t"`
+	Op             uint          `json:"op"`
+	Data           payloadData   `json:"d"`
+	SequenceNumber uint          `json:"s"`
+	EventName      event.KeyType `json:"t"`
 }
 
 type payloadData []byte

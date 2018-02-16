@@ -8,10 +8,11 @@ import (
 type Emoji struct {
 	ID            snowflake.ID   `json:"id"`
 	Name          string         `json:"name"`
-	User          *user.User     `json:"user"` // the user who created the emoji
-	Roles         []snowflake.ID `json:"roles"`
-	RequireColons bool           `json:"require_colons"`
-	Managed       bool           `json:"managed"`
+	Roles         []snowflake.ID `json:"roles,omitempty"`
+	User          *user.User     `json:"user,omitempty"` // the user who created the emoji
+	RequireColons bool           `json:"require_colons,omitempty"`
+	Managed       bool           `json:"managed,omitempty"`
+	Animated      bool           `json:"animated,omitempty"`
 }
 
 func (e *Emoji) Clear() {
