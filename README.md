@@ -35,11 +35,16 @@ func main() {
     }
     // should now be connected
 
+    // add a event listener
+    dg.ReadyEvent.Add(func(session disgordctx.Context, box *event.ReadyBox) {
+      // fmt.Printf("\n----\n:%s:\n%+v\n-------\n", event.ReadyKey, box)
+    })
 
     // add a event listener using the abstract method
-      dg.OnEvent(event.ReadyKey, func(ctx context.Context, box *event.ReadyBox) {
+    dg.OnEvent(event.ReadyKey, func(session disgordctx.Context, box *event.ReadyBox) {
       fmt.Printf("\n----\n:%s:\n%+v\n-------\n", event.ReadyKey, box)
-      })
+      // Tip: for blocking/long running tasks check box.Ctx.Done()
+    })
 
 
     <-termSignal
