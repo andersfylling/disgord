@@ -1,7 +1,7 @@
 package event
 
 import (
-	"context"
+	"github.com/andersfylling/disgord/disgordctx"
 )
 
 // socket
@@ -10,7 +10,7 @@ import (
 // HelloCallbackStack ***************
 type HelloHandler interface {
 	Add(cb HelloCallback) error
-	Trigger(context.Context, *HelloBox) error
+	Trigger(disgordctx.Context, *HelloBox) error
 	ReceiveChan() <-chan *HelloBox
 }
 
@@ -36,7 +36,7 @@ func (stack *HelloCallbackStack) Add(cb HelloCallback) (err error) {
 	return nil
 }
 
-func (stack *HelloCallbackStack) Trigger(ctx context.Context, box *HelloBox) (err error) {
+func (stack *HelloCallbackStack) Trigger(ctx disgordctx.Context, box *HelloBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -58,7 +58,7 @@ func (stack *HelloCallbackStack) ReceiveChan() <-chan *HelloBox {
 // ReadyCallbackStack ***************
 type ReadyHandler interface {
 	Add(cb ReadyCallback) error
-	Trigger(context.Context, *ReadyBox) error
+	Trigger(disgordctx.Context, *ReadyBox) error
 	ReceiveChan() <-chan *ReadyBox
 }
 
@@ -84,7 +84,7 @@ func (stack *ReadyCallbackStack) Add(cb ReadyCallback) (err error) {
 	return nil
 }
 
-func (stack *ReadyCallbackStack) Trigger(ctx context.Context, box *ReadyBox) (err error) {
+func (stack *ReadyCallbackStack) Trigger(ctx disgordctx.Context, box *ReadyBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -108,7 +108,7 @@ func (stack *ReadyCallbackStack) ReceiveChan() <-chan *ReadyBox {
 // ResumedCallbackStack **********
 type ResumedHandler interface {
 	Add(cb ResumedCallback) error
-	Trigger(context.Context, *ResumedBox) error
+	Trigger(disgordctx.Context, *ResumedBox) error
 	ReceiveChan() <-chan *ResumedBox
 }
 
@@ -134,7 +134,7 @@ func (stack *ResumedCallbackStack) Add(cb ResumedCallback) (err error) {
 	return nil
 }
 
-func (stack *ResumedCallbackStack) Trigger(ctx context.Context, box *ResumedBox) (err error) {
+func (stack *ResumedCallbackStack) Trigger(ctx disgordctx.Context, box *ResumedBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -157,7 +157,7 @@ func (stack *ResumedCallbackStack) ReceiveChan() <-chan *ResumedBox {
 // InvalidSessionCallbackStack ***************
 type InvalidSessionHandler interface {
 	Add(cb InvalidSessionCallback) error
-	Trigger(context.Context, *InvalidSessionBox) error
+	Trigger(disgordctx.Context, *InvalidSessionBox) error
 	ReceiveChan() <-chan *InvalidSessionBox
 }
 
@@ -183,7 +183,7 @@ func (stack *InvalidSessionCallbackStack) Add(cb InvalidSessionCallback) (err er
 	return nil
 }
 
-func (stack *InvalidSessionCallbackStack) Trigger(ctx context.Context, box *InvalidSessionBox) (err error) {
+func (stack *InvalidSessionCallbackStack) Trigger(ctx disgordctx.Context, box *InvalidSessionBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -209,7 +209,7 @@ func (stack *InvalidSessionCallbackStack) ReceiveChan() <-chan *InvalidSessionBo
 // ChannelCreateCallbackStack **************
 type ChannelCreateHandler interface {
 	Add(ChannelCreateCallback) error
-	Trigger(context.Context, *ChannelCreateBox) error
+	Trigger(disgordctx.Context, *ChannelCreateBox) error
 	ReceiveChan() <-chan *ChannelCreateBox
 }
 
@@ -235,7 +235,7 @@ func (stack *ChannelCreateCallbackStack) Add(cb ChannelCreateCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelCreateCallbackStack) Trigger(ctx context.Context, box *ChannelCreateBox) (err error) {
+func (stack *ChannelCreateCallbackStack) Trigger(ctx disgordctx.Context, box *ChannelCreateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -258,7 +258,7 @@ func (stack *ChannelCreateCallbackStack) ReceiveChan() <-chan *ChannelCreateBox 
 // ChannelUpdateCallbackStack ************
 type ChannelUpdateHandler interface {
 	Add(ChannelUpdateCallback) error
-	Trigger(context.Context, *ChannelUpdateBox) error
+	Trigger(disgordctx.Context, *ChannelUpdateBox) error
 	ReceiveChan() <-chan *ChannelUpdateBox
 }
 
@@ -284,7 +284,7 @@ func (stack *ChannelUpdateCallbackStack) Add(cb ChannelUpdateCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelUpdateCallbackStack) Trigger(ctx context.Context, box *ChannelUpdateBox) (err error) {
+func (stack *ChannelUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *ChannelUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -307,7 +307,7 @@ func (stack *ChannelUpdateCallbackStack) ReceiveChan() <-chan *ChannelUpdateBox 
 // ChannelDeleteCallbackStack ***********
 type ChannelDeleteHandler interface {
 	Add(ChannelDeleteCallback) error
-	Trigger(context.Context, *ChannelDeleteBox) error
+	Trigger(disgordctx.Context, *ChannelDeleteBox) error
 	ReceiveChan() <-chan *ChannelDeleteBox
 }
 
@@ -333,7 +333,7 @@ func (stack *ChannelDeleteCallbackStack) Add(cb ChannelDeleteCallback) (err erro
 	return nil
 }
 
-func (stack *ChannelDeleteCallbackStack) Trigger(ctx context.Context, box *ChannelDeleteBox) (err error) {
+func (stack *ChannelDeleteCallbackStack) Trigger(ctx disgordctx.Context, box *ChannelDeleteBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -356,7 +356,7 @@ func (stack *ChannelDeleteCallbackStack) ReceiveChan() <-chan *ChannelDeleteBox 
 // ChannelPinsUpdateCallbackStack **********
 type ChannelPinsUpdateHandler interface {
 	Add(ChannelPinsUpdateCallback) error
-	Trigger(context.Context, *ChannelPinsUpdateBox) error
+	Trigger(disgordctx.Context, *ChannelPinsUpdateBox) error
 	ReceiveChan() <-chan *ChannelPinsUpdateBox
 }
 
@@ -382,7 +382,7 @@ func (stack *ChannelPinsUpdateCallbackStack) Add(cb ChannelPinsUpdateCallback) (
 	return nil
 }
 
-func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx context.Context, box *ChannelPinsUpdateBox) (err error) {
+func (stack *ChannelPinsUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *ChannelPinsUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -408,7 +408,7 @@ func (stack *ChannelPinsUpdateCallbackStack) ReceiveChan() <-chan *ChannelPinsUp
 // GuildCreateCallbackStack **********
 type GuildCreateHandler interface {
 	Add(GuildCreateCallback) error
-	Trigger(context.Context, *GuildCreateBox) error
+	Trigger(disgordctx.Context, *GuildCreateBox) error
 	ReceiveChan() <-chan *GuildCreateBox
 }
 
@@ -434,7 +434,7 @@ func (stack *GuildCreateCallbackStack) Add(cb GuildCreateCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildCreateCallbackStack) Trigger(ctx context.Context, box *GuildCreateBox) (err error) {
+func (stack *GuildCreateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildCreateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -457,7 +457,7 @@ func (stack *GuildCreateCallbackStack) ReceiveChan() <-chan *GuildCreateBox {
 // GuildUpdateCallbackStack .....
 type GuildUpdateHandler interface {
 	Add(GuildUpdateCallback) error
-	Trigger(context.Context, *GuildUpdateBox) error
+	Trigger(disgordctx.Context, *GuildUpdateBox) error
 	ReceiveChan() <-chan *GuildUpdateBox
 }
 
@@ -483,7 +483,7 @@ func (stack *GuildUpdateCallbackStack) Add(cb GuildUpdateCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildUpdateCallbackStack) Trigger(ctx context.Context, box *GuildUpdateBox) (err error) {
+func (stack *GuildUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -506,7 +506,7 @@ func (stack *GuildUpdateCallbackStack) ReceiveChan() <-chan *GuildUpdateBox {
 // GuildDeleteCallbackStack *********
 type GuildDeleteHandler interface {
 	Add(GuildDeleteCallback) error
-	Trigger(context.Context, *GuildDeleteBox) error
+	Trigger(disgordctx.Context, *GuildDeleteBox) error
 	ReceiveChan() <-chan *GuildDeleteBox
 }
 
@@ -532,7 +532,7 @@ func (stack *GuildDeleteCallbackStack) Add(cb GuildDeleteCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildDeleteCallbackStack) Trigger(ctx context.Context, box *GuildDeleteBox) (err error) {
+func (stack *GuildDeleteCallbackStack) Trigger(ctx disgordctx.Context, box *GuildDeleteBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -555,7 +555,7 @@ func (stack *GuildDeleteCallbackStack) ReceiveChan() <-chan *GuildDeleteBox {
 // GuildBanAddCallbackStack **************
 type GuildBanAddHandler interface {
 	Add(GuildBanAddCallback) error
-	Trigger(context.Context, *GuildBanAddBox) error
+	Trigger(disgordctx.Context, *GuildBanAddBox) error
 	ReceiveChan() <-chan *GuildBanAddBox
 }
 
@@ -581,7 +581,7 @@ func (stack *GuildBanAddCallbackStack) Add(cb GuildBanAddCallback) (err error) {
 	return nil
 }
 
-func (stack *GuildBanAddCallbackStack) Trigger(ctx context.Context, box *GuildBanAddBox) (err error) {
+func (stack *GuildBanAddCallbackStack) Trigger(ctx disgordctx.Context, box *GuildBanAddBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -604,7 +604,7 @@ func (stack *GuildBanAddCallbackStack) ReceiveChan() <-chan *GuildBanAddBox {
 // GuildBanRemoveCallbackStack *********
 type GuildBanRemoveHandler interface {
 	Add(GuildBanRemoveCallback) error
-	Trigger(context.Context, *GuildBanRemoveBox) error
+	Trigger(disgordctx.Context, *GuildBanRemoveBox) error
 	ReceiveChan() <-chan *GuildBanRemoveBox
 }
 
@@ -630,7 +630,7 @@ func (stack *GuildBanRemoveCallbackStack) Add(cb GuildBanRemoveCallback) (err er
 	return nil
 }
 
-func (stack *GuildBanRemoveCallbackStack) Trigger(ctx context.Context, box *GuildBanRemoveBox) (err error) {
+func (stack *GuildBanRemoveCallbackStack) Trigger(ctx disgordctx.Context, box *GuildBanRemoveBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -653,7 +653,7 @@ func (stack *GuildBanRemoveCallbackStack) ReceiveChan() <-chan *GuildBanRemoveBo
 // GuildEmojisUpdateCallbackStack ***********
 type GuildEmojisUpdateHandler interface {
 	Add(GuildEmojisUpdateCallback) error
-	Trigger(context.Context, *GuildEmojisUpdateBox) error
+	Trigger(disgordctx.Context, *GuildEmojisUpdateBox) error
 	ReceiveChan() <-chan *GuildEmojisUpdateBox
 }
 
@@ -679,7 +679,7 @@ func (stack *GuildEmojisUpdateCallbackStack) Add(cb GuildEmojisUpdateCallback) (
 	return nil
 }
 
-func (stack *GuildEmojisUpdateCallbackStack) Trigger(ctx context.Context, box *GuildEmojisUpdateBox) (err error) {
+func (stack *GuildEmojisUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildEmojisUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -702,7 +702,7 @@ func (stack *GuildEmojisUpdateCallbackStack) ReceiveChan() <-chan *GuildEmojisUp
 // GuildIntegrationsUpdateCallbackStack *******************
 type GuildIntegrationsUpdateHandler interface {
 	Add(GuildIntegrationsUpdateCallback) error
-	Trigger(context.Context, *GuildIntegrationsUpdateBox) error
+	Trigger(disgordctx.Context, *GuildIntegrationsUpdateBox) error
 	ReceiveChan() <-chan *GuildIntegrationsUpdateBox
 }
 
@@ -728,7 +728,7 @@ func (stack *GuildIntegrationsUpdateCallbackStack) Add(cb GuildIntegrationsUpdat
 	return nil
 }
 
-func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx context.Context, box *GuildIntegrationsUpdateBox) (err error) {
+func (stack *GuildIntegrationsUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildIntegrationsUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -754,7 +754,7 @@ func (stack *GuildIntegrationsUpdateCallbackStack) ReceiveChan() <-chan *GuildIn
 // GuildMemberAddCallbackStack ***********************
 type GuildMemberAddHandler interface {
 	Add(GuildMemberAddCallback) error
-	Trigger(context.Context, *GuildMemberAddBox) error
+	Trigger(disgordctx.Context, *GuildMemberAddBox) error
 	ReceiveChan() <-chan *GuildMemberAddBox
 }
 
@@ -780,7 +780,7 @@ func (stack *GuildMemberAddCallbackStack) Add(cb GuildMemberAddCallback) (err er
 	return nil
 }
 
-func (stack *GuildMemberAddCallbackStack) Trigger(ctx context.Context, box *GuildMemberAddBox) (err error) {
+func (stack *GuildMemberAddCallbackStack) Trigger(ctx disgordctx.Context, box *GuildMemberAddBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -803,7 +803,7 @@ func (stack *GuildMemberAddCallbackStack) ReceiveChan() <-chan *GuildMemberAddBo
 // GuildMemberRemoveCallbackStack *******************
 type GuildMemberRemoveHandler interface {
 	Add(GuildMemberRemoveCallback) error
-	Trigger(context.Context, *GuildMemberRemoveBox) error
+	Trigger(disgordctx.Context, *GuildMemberRemoveBox) error
 	ReceiveChan() <-chan *GuildMemberRemoveBox
 }
 
@@ -829,7 +829,7 @@ func (stack *GuildMemberRemoveCallbackStack) Add(cb GuildMemberRemoveCallback) (
 	return nil
 }
 
-func (stack *GuildMemberRemoveCallbackStack) Trigger(ctx context.Context, box *GuildMemberRemoveBox) (err error) {
+func (stack *GuildMemberRemoveCallbackStack) Trigger(ctx disgordctx.Context, box *GuildMemberRemoveBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -852,7 +852,7 @@ func (stack *GuildMemberRemoveCallbackStack) ReceiveChan() <-chan *GuildMemberRe
 // GuildMemberUpdateCallbackStack **************
 type GuildMemberUpdateHandler interface {
 	Add(GuildMemberUpdateCallback) error
-	Trigger(context.Context, *GuildMemberUpdateBox) error
+	Trigger(disgordctx.Context, *GuildMemberUpdateBox) error
 	ReceiveChan() <-chan *GuildMemberUpdateBox
 }
 
@@ -878,7 +878,7 @@ func (stack *GuildMemberUpdateCallbackStack) Add(cb GuildMemberUpdateCallback) (
 	return nil
 }
 
-func (stack *GuildMemberUpdateCallbackStack) Trigger(ctx context.Context, box *GuildMemberUpdateBox) (err error) {
+func (stack *GuildMemberUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildMemberUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -901,7 +901,7 @@ func (stack *GuildMemberUpdateCallbackStack) ReceiveChan() <-chan *GuildMemberUp
 // GuildMemberChunkCallbackStack **************
 type GuildMembersChunkHandler interface {
 	Add(GuildMembersChunkCallback) error
-	Trigger(context.Context, *GuildMembersChunkBox) error
+	Trigger(disgordctx.Context, *GuildMembersChunkBox) error
 	ReceiveChan() <-chan *GuildMembersChunkBox
 }
 
@@ -927,7 +927,7 @@ func (stack *GuildMembersChunkCallbackStack) Add(cb GuildMembersChunkCallback) (
 	return nil
 }
 
-func (stack *GuildMembersChunkCallbackStack) Trigger(ctx context.Context, box *GuildMembersChunkBox) (err error) {
+func (stack *GuildMembersChunkCallbackStack) Trigger(ctx disgordctx.Context, box *GuildMembersChunkBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -953,7 +953,7 @@ func (stack *GuildMembersChunkCallbackStack) ReceiveChan() <-chan *GuildMembersC
 // GuildRoleCreateCallbackStack *************
 type GuildRoleCreateHandler interface {
 	Add(GuildRoleCreateCallback) error
-	Trigger(context.Context, *GuildRoleCreateBox) error
+	Trigger(disgordctx.Context, *GuildRoleCreateBox) error
 	ReceiveChan() <-chan *GuildRoleCreateBox
 }
 
@@ -979,7 +979,7 @@ func (stack *GuildRoleCreateCallbackStack) Add(cb GuildRoleCreateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleCreateCallbackStack) Trigger(ctx context.Context, box *GuildRoleCreateBox) (err error) {
+func (stack *GuildRoleCreateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildRoleCreateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1002,7 +1002,7 @@ func (stack *GuildRoleCreateCallbackStack) ReceiveChan() <-chan *GuildRoleCreate
 // GuildRoleUpdateCallbackStack ***************
 type GuildRoleUpdateHandler interface {
 	Add(GuildRoleUpdateCallback) error
-	Trigger(context.Context, *GuildRoleUpdateBox) error
+	Trigger(disgordctx.Context, *GuildRoleUpdateBox) error
 	ReceiveChan() <-chan *GuildRoleUpdateBox
 }
 
@@ -1028,7 +1028,7 @@ func (stack *GuildRoleUpdateCallbackStack) Add(cb GuildRoleUpdateCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx context.Context, box *GuildRoleUpdateBox) (err error) {
+func (stack *GuildRoleUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *GuildRoleUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1051,7 +1051,7 @@ func (stack *GuildRoleUpdateCallbackStack) ReceiveChan() <-chan *GuildRoleUpdate
 // GuildRoleDeleteCallbackStack **************
 type GuildRoleDeleteHandler interface {
 	Add(GuildRoleDeleteCallback) error
-	Trigger(context.Context, *GuildRoleDeleteBox) error
+	Trigger(disgordctx.Context, *GuildRoleDeleteBox) error
 	ReceiveChan() <-chan *GuildRoleDeleteBox
 }
 
@@ -1077,7 +1077,7 @@ func (stack *GuildRoleDeleteCallbackStack) Add(cb GuildRoleDeleteCallback) (err 
 	return nil
 }
 
-func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx context.Context, box *GuildRoleDeleteBox) (err error) {
+func (stack *GuildRoleDeleteCallbackStack) Trigger(ctx disgordctx.Context, box *GuildRoleDeleteBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1103,7 +1103,7 @@ func (stack *GuildRoleDeleteCallbackStack) ReceiveChan() <-chan *GuildRoleDelete
 // MessageCreateCallbackStack ********************
 type MessageCreateHandler interface {
 	Add(MessageCreateCallback) error
-	Trigger(context.Context, *MessageCreateBox) error
+	Trigger(disgordctx.Context, *MessageCreateBox) error
 	ReceiveChan() <-chan *MessageCreateBox
 }
 
@@ -1129,7 +1129,7 @@ func (stack *MessageCreateCallbackStack) Add(cb MessageCreateCallback) (err erro
 	return nil
 }
 
-func (stack *MessageCreateCallbackStack) Trigger(ctx context.Context, box *MessageCreateBox) (err error) {
+func (stack *MessageCreateCallbackStack) Trigger(ctx disgordctx.Context, box *MessageCreateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1152,7 +1152,7 @@ func (stack *MessageCreateCallbackStack) ReceiveChan() <-chan *MessageCreateBox 
 // MessageUpdateCallbackStack ****************
 type MessageUpdateHandler interface {
 	Add(MessageUpdateCallback) error
-	Trigger(context.Context, *MessageUpdateBox) error
+	Trigger(disgordctx.Context, *MessageUpdateBox) error
 	ReceiveChan() <-chan *MessageUpdateBox
 }
 
@@ -1178,7 +1178,7 @@ func (stack *MessageUpdateCallbackStack) Add(cb MessageUpdateCallback) (err erro
 	return nil
 }
 
-func (stack *MessageUpdateCallbackStack) Trigger(ctx context.Context, box *MessageUpdateBox) (err error) {
+func (stack *MessageUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *MessageUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1201,7 +1201,7 @@ func (stack *MessageUpdateCallbackStack) ReceiveChan() <-chan *MessageUpdateBox 
 // MessageDeleteCallbackStack ***************
 type MessageDeleteHandler interface {
 	Add(MessageDeleteCallback) error
-	Trigger(context.Context, *MessageDeleteBox) error
+	Trigger(disgordctx.Context, *MessageDeleteBox) error
 	ReceiveChan() <-chan *MessageDeleteBox
 }
 
@@ -1227,7 +1227,7 @@ func (stack *MessageDeleteCallbackStack) Add(cb MessageDeleteCallback) (err erro
 	return nil
 }
 
-func (stack *MessageDeleteCallbackStack) Trigger(ctx context.Context, box *MessageDeleteBox) (err error) {
+func (stack *MessageDeleteCallbackStack) Trigger(ctx disgordctx.Context, box *MessageDeleteBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1250,7 +1250,7 @@ func (stack *MessageDeleteCallbackStack) ReceiveChan() <-chan *MessageDeleteBox 
 // MessageDeleteBulkCallbackStack ****************
 type MessageDeleteBulkHandler interface {
 	Add(MessageDeleteBulkCallback) error
-	Trigger(context.Context, *MessageDeleteBulkBox) error
+	Trigger(disgordctx.Context, *MessageDeleteBulkBox) error
 	ReceiveChan() <-chan *MessageDeleteBulkBox
 }
 
@@ -1276,7 +1276,7 @@ func (stack *MessageDeleteBulkCallbackStack) Add(cb MessageDeleteBulkCallback) (
 	return nil
 }
 
-func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx context.Context, box *MessageDeleteBulkBox) (err error) {
+func (stack *MessageDeleteBulkCallbackStack) Trigger(ctx disgordctx.Context, box *MessageDeleteBulkBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1302,7 +1302,7 @@ func (stack *MessageDeleteBulkCallbackStack) ReceiveChan() <-chan *MessageDelete
 // MessageReactionAddCallbackStack ************
 type MessageReactionAddHandler interface {
 	Add(MessageReactionAddCallback) error
-	Trigger(context.Context, *MessageReactionAddBox) error
+	Trigger(disgordctx.Context, *MessageReactionAddBox) error
 	ReceiveChan() <-chan *MessageReactionAddBox
 }
 
@@ -1328,7 +1328,7 @@ func (stack *MessageReactionAddCallbackStack) Add(cb MessageReactionAddCallback)
 	return nil
 }
 
-func (stack *MessageReactionAddCallbackStack) Trigger(ctx context.Context, box *MessageReactionAddBox) (err error) {
+func (stack *MessageReactionAddCallbackStack) Trigger(ctx disgordctx.Context, box *MessageReactionAddBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1351,7 +1351,7 @@ func (stack *MessageReactionAddCallbackStack) ReceiveChan() <-chan *MessageReact
 // MessageReactionRemoveCallbackStack *********
 type MessageReactionRemoveHandler interface {
 	Add(MessageReactionRemoveCallback) error
-	Trigger(context.Context, *MessageReactionRemoveBox) error
+	Trigger(disgordctx.Context, *MessageReactionRemoveBox) error
 	ReceiveChan() <-chan *MessageReactionRemoveBox
 }
 
@@ -1377,7 +1377,7 @@ func (stack *MessageReactionRemoveCallbackStack) Add(cb MessageReactionRemoveCal
 	return nil
 }
 
-func (stack *MessageReactionRemoveCallbackStack) Trigger(ctx context.Context, box *MessageReactionRemoveBox) (err error) {
+func (stack *MessageReactionRemoveCallbackStack) Trigger(ctx disgordctx.Context, box *MessageReactionRemoveBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1400,7 +1400,7 @@ func (stack *MessageReactionRemoveCallbackStack) ReceiveChan() <-chan *MessageRe
 // MessageReactionRemoveAllCallbackStack *********
 type MessageReactionRemoveAllHandler interface {
 	Add(MessageReactionRemoveAllCallback) error
-	Trigger(context.Context, *MessageReactionRemoveAllBox) error
+	Trigger(disgordctx.Context, *MessageReactionRemoveAllBox) error
 	ReceiveChan() <-chan *MessageReactionRemoveAllBox
 }
 
@@ -1426,7 +1426,7 @@ func (stack *MessageReactionRemoveAllCallbackStack) Add(cb MessageReactionRemove
 	return nil
 }
 
-func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx context.Context, box *MessageReactionRemoveAllBox) (err error) {
+func (stack *MessageReactionRemoveAllCallbackStack) Trigger(ctx disgordctx.Context, box *MessageReactionRemoveAllBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1452,7 +1452,7 @@ func (stack *MessageReactionRemoveAllCallbackStack) ReceiveChan() <-chan *Messag
 // PresenceUpdateCallbackStack *************
 type PresenceUpdateHandler interface {
 	Add(PresenceUpdateCallback) error
-	Trigger(context.Context, *PresenceUpdateBox) error
+	Trigger(disgordctx.Context, *PresenceUpdateBox) error
 	ReceiveChan() <-chan *PresenceUpdateBox
 }
 
@@ -1478,7 +1478,7 @@ func (stack *PresenceUpdateCallbackStack) Add(cb PresenceUpdateCallback) (err er
 	return nil
 }
 
-func (stack *PresenceUpdateCallbackStack) Trigger(ctx context.Context, box *PresenceUpdateBox) (err error) {
+func (stack *PresenceUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *PresenceUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1504,7 +1504,7 @@ func (stack *PresenceUpdateCallbackStack) ReceiveChan() <-chan *PresenceUpdateBo
 // TypingStartCallbackStack ******************
 type TypingStartHandler interface {
 	Add(TypingStartCallback) error
-	Trigger(context.Context, *TypingStartBox) error
+	Trigger(disgordctx.Context, *TypingStartBox) error
 	ReceiveChan() <-chan *TypingStartBox
 }
 
@@ -1530,7 +1530,7 @@ func (stack *TypingStartCallbackStack) Add(cb TypingStartCallback) (err error) {
 	return nil
 }
 
-func (stack *TypingStartCallbackStack) Trigger(ctx context.Context, box *TypingStartBox) (err error) {
+func (stack *TypingStartCallbackStack) Trigger(ctx disgordctx.Context, box *TypingStartBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1553,7 +1553,7 @@ func (stack *TypingStartCallbackStack) ReceiveChan() <-chan *TypingStartBox {
 // user update
 type UserUpdateHandler interface {
 	Add(UserUpdateCallback) error
-	Trigger(context.Context, *UserUpdateBox) error
+	Trigger(disgordctx.Context, *UserUpdateBox) error
 	ReceiveChan() <-chan *UserUpdateBox
 }
 
@@ -1579,7 +1579,7 @@ func (stack *UserUpdateCallbackStack) Add(cb UserUpdateCallback) (err error) {
 	return nil
 }
 
-func (stack *UserUpdateCallbackStack) Trigger(ctx context.Context, box *UserUpdateBox) (err error) {
+func (stack *UserUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *UserUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1605,7 +1605,7 @@ func (stack *UserUpdateCallbackStack) ReceiveChan() <-chan *UserUpdateBox {
 // VoiceStateUpdateCallbackStack *************************
 type VoiceStateUpdateHandler interface {
 	Add(VoiceStateUpdateCallback) error
-	Trigger(context.Context, *VoiceStateUpdateBox) error
+	Trigger(disgordctx.Context, *VoiceStateUpdateBox) error
 	ReceiveChan() <-chan *VoiceStateUpdateBox
 }
 
@@ -1631,7 +1631,7 @@ func (stack *VoiceStateUpdateCallbackStack) Add(cb VoiceStateUpdateCallback) (er
 	return nil
 }
 
-func (stack *VoiceStateUpdateCallbackStack) Trigger(ctx context.Context, box *VoiceStateUpdateBox) (err error) {
+func (stack *VoiceStateUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *VoiceStateUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1654,7 +1654,7 @@ func (stack *VoiceStateUpdateCallbackStack) ReceiveChan() <-chan *VoiceStateUpda
 // VoiceServerUpdateCallbackStack ***********************
 type VoiceServerUpdateHandler interface {
 	Add(VoiceServerUpdateCallback) error
-	Trigger(context.Context, *VoiceServerUpdateBox) error
+	Trigger(disgordctx.Context, *VoiceServerUpdateBox) error
 	ReceiveChan() <-chan *VoiceServerUpdateBox
 }
 
@@ -1680,7 +1680,7 @@ func (stack *VoiceServerUpdateCallbackStack) Add(cb VoiceServerUpdateCallback) (
 	return nil
 }
 
-func (stack *VoiceServerUpdateCallbackStack) Trigger(ctx context.Context, box *VoiceServerUpdateBox) (err error) {
+func (stack *VoiceServerUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *VoiceServerUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}
@@ -1703,7 +1703,7 @@ func (stack *VoiceServerUpdateCallbackStack) ReceiveChan() <-chan *VoiceServerUp
 // WebhooksUpdateCallbackStack *******************
 type WebhooksUpdateHandler interface {
 	Add(cb WebhooksUpdateCallback) error
-	Trigger(context.Context, *WebhooksUpdateBox) error
+	Trigger(disgordctx.Context, *WebhooksUpdateBox) error
 	ReceiveChan() <-chan *WebhooksUpdateBox
 }
 
@@ -1729,7 +1729,7 @@ func (stack *WebhooksUpdateCallbackStack) Add(cb WebhooksUpdateCallback) (err er
 	return nil
 }
 
-func (stack *WebhooksUpdateCallbackStack) Trigger(ctx context.Context, box *WebhooksUpdateBox) (err error) {
+func (stack *WebhooksUpdateCallbackStack) Trigger(ctx disgordctx.Context, box *WebhooksUpdateBox) (err error) {
 	if stack.listenerExists {
 		stack.listener <- box
 	}

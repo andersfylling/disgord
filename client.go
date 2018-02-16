@@ -10,6 +10,7 @@ import (
 	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/discordws"
+	"github.com/andersfylling/disgord/disgordctx"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/guild"
@@ -143,6 +144,7 @@ func (c *Client) eventObserver() {
 				break
 			}
 
+			session := &disgordctx.Session{} //disgord context
 			ctx := context.Background()
 
 			// TODO: parsing JSON uses panic and not logging on issues..
@@ -153,41 +155,53 @@ func (c *Client) eventObserver() {
 			switch eventName {
 			case event.ReadyKey:
 				r := &event.ReadyBox{}
+				r.Ctx = ctx
 				event.Unmarshal(data, r)
 
-				go c.ReadyEvent.Trigger(ctx, r)
+				go c.ReadyEvent.Trigger(session, r)
 
 				// allocate cache mem for guilds
-				for _, gu := range r.Guilds {
-					g := guild.NewGuildFromUnavailable(gu)
-					c.State.AddGuild(g) // checks if the ID already exists
-				}
+				// for _, gu := range r.Guilds {
+				// 	g := guild.NewGuildFromUnavailable(gu)
+				// 	c.State.AddGuild(g) // checks if the ID already exists
+				// }
 
 				// updated myself
 				//c.State.UpdateMySelf(r.User)
 
 			case event.ResumedKey:
 				resumed := &event.ResumedBox{}
+				resumed.Ctx = ctx
 				event.Unmarshal(data, resumed)
 
 				// no need to handle this as its done at the socket level ...
-				go c.ResumedEvent.Trigger(ctx, resumed)
+				go c.ResumedEvent.Trigger(session, resumed)
 			case event.ChannelCreateKey, event.ChannelUpdateKey, event.ChannelDeleteKey:
 				chanContent := &channel.Channel{}
 				event.Unmarshal(data, chanContent)
 
 				switch eventName {
 				case event.ChannelCreateKey:
-					go c.ChannelCreateEvent.Trigger(ctx, &event.ChannelCreateBox{chanContent})
+					go c.ChannelCreateEvent.Trigger(session, &event.ChannelCreateBox{
+						Channel: chanContent,
+						Ctx:     ctx,
+					})
 				case event.ChannelUpdateKey:
-					go c.ChannelUpdateEvent.Trigger(ctx, &event.ChannelUpdateBox{chanContent})
+					go c.ChannelUpdateEvent.Trigger(session, &event.ChannelUpdateBox{
+						Channel: chanContent,
+						Ctx:     ctx,
+					})
 				case event.ChannelDeleteKey:
-					go c.ChannelDeleteEvent.Trigger(ctx, &event.ChannelDeleteBox{chanContent})
+					go c.ChannelDeleteEvent.Trigger(session, &event.ChannelDeleteBox{
+						Channel: chanContent,
+						Ctx:     ctx,
+					})
 				}
 			case event.ChannelPinsUpdateKey:
 				cpu := &event.ChannelPinsUpdateBox{}
+				cpu.Ctx = ctx
 				event.Unmarshal(data, cpu)
-				go c.ChannelPinsUpdateEvent.Trigger(ctx, cpu)
+				go c.ChannelPinsUpdateEvent.Trigger(session, cpu)
 			case event.GuildCreateKey, event.GuildUpdateKey, event.GuildDeleteKey:
 				g := &guild.Guild{}
 				event.Unmarshal(data, g)
@@ -195,18 +209,27 @@ func (c *Client) eventObserver() {
 				switch eventName { // internal switch statement for guild events
 				case event.GuildCreateKey:
 					// notifify listeners
-					go c.GuildCreateEvent.Trigger(ctx, &event.GuildCreateBox{g})
+					go c.GuildCreateEvent.Trigger(session, &event.GuildCreateBox{
+						Guild: g,
+						Ctx:   ctx,
+					})
 					// add to cache
 					//c.State.AddGuild(g)
 				case event.GuildUpdateKey:
 					// notifify listeners
-					go c.GuildUpdateEvent.Trigger(ctx, &event.GuildUpdateBox{g})
+					go c.GuildUpdateEvent.Trigger(session, &event.GuildUpdateBox{
+						Guild: g,
+						Ctx:   ctx,
+					})
 					// update cache
 					//c.State.UpdateGuild(g)
 				case event.GuildDeleteKey:
 					// notify listeners
 					unavailGuild := discord.NewGuildUnavailable(g.ID)
-					go c.GuildDeleteEvent.Trigger(ctx, &event.GuildDeleteBox{unavailGuild})
+					go c.GuildDeleteEvent.Trigger(session, &event.GuildDeleteBox{
+						UnavailableGuild: unavailGuild,
+						Ctx:              ctx,
+					})
 					//
 					// cachedGuild, err := c.State.Guild(g.ID)
 					// if err != nil {
@@ -222,49 +245,58 @@ func (c *Client) eventObserver() {
 				} // END internal switch statement for guild events
 			case event.GuildBanAddKey:
 				gba := &event.GuildBanAddBox{}
+				gba.Ctx = ctx
 				event.Unmarshal(data, gba)
 
-				go c.GuildBanAddEvent.Trigger(ctx, gba)
+				go c.GuildBanAddEvent.Trigger(session, gba)
 			case event.GuildBanRemoveKey:
 				gbr := &event.GuildBanRemoveBox{}
+				gbr.Ctx = ctx
 				event.Unmarshal(data, gbr)
 
-				go c.GuildBanRemoveEvent.Trigger(ctx, gbr)
+				go c.GuildBanRemoveEvent.Trigger(session, gbr)
 			case event.GuildEmojisUpdateKey:
 				geu := &event.GuildEmojisUpdateBox{}
+				geu.Ctx = ctx
 				event.Unmarshal(data, geu)
 
-				go c.GuildEmojisUpdateEvent.Trigger(ctx, geu)
+				go c.GuildEmojisUpdateEvent.Trigger(session, geu)
 			case event.GuildIntegrationsUpdateKey:
 				giu := &event.GuildIntegrationsUpdateBox{}
+				giu.Ctx = ctx
 				event.Unmarshal(data, giu)
 
-				go c.GuildIntegrationsUpdateEvent.Trigger(ctx, giu)
+				go c.GuildIntegrationsUpdateEvent.Trigger(session, giu)
 			case event.GuildMemberAddKey:
 				gma := &event.GuildMemberAddBox{}
+				gma.Ctx = ctx
 				event.Unmarshal(data, gma)
 
-				go c.GuildMemberAddEvent.Trigger(ctx, gma)
+				go c.GuildMemberAddEvent.Trigger(session, gma)
 			case event.GuildMemberRemoveKey:
 				gmr := &event.GuildMemberRemoveBox{}
+				gmr.Ctx = ctx
 				event.Unmarshal(data, gmr)
 
-				go c.GuildMemberRemoveEvent.Trigger(ctx, gmr)
+				go c.GuildMemberRemoveEvent.Trigger(session, gmr)
 			case event.GuildMemberUpdateKey:
 				gmu := &event.GuildMemberUpdateBox{}
+				gmu.Ctx = ctx
 				event.Unmarshal(data, gmu)
 
-				go c.GuildMemberUpdateEvent.Trigger(ctx, gmu)
+				go c.GuildMemberUpdateEvent.Trigger(session, gmu)
 			case event.GuildMembersChunkKey:
 				gmc := &event.GuildMembersChunkBox{}
+				gmc.Ctx = ctx
 				event.Unmarshal(data, gmc)
 
-				go c.GuildMembersChunkEvent.Trigger(ctx, gmc)
+				go c.GuildMembersChunkEvent.Trigger(session, gmc)
 			case event.GuildRoleCreateKey:
 				r := &event.GuildRoleCreateBox{}
+				r.Ctx = ctx
 				event.Unmarshal(data, r)
 
-				go c.GuildRoleCreateEvent.Trigger(ctx, r)
+				go c.GuildRoleCreateEvent.Trigger(session, r)
 
 				// add to cache
 				// g, err := c.State.Guild(r.GuildID)
@@ -276,9 +308,10 @@ func (c *Client) eventObserver() {
 				//g.Unlock()
 			case event.GuildRoleUpdateKey:
 				r := &event.GuildRoleUpdateBox{}
+				r.Ctx = ctx
 				event.Unmarshal(data, r)
 
-				go c.GuildRoleUpdateEvent.Trigger(ctx, r)
+				go c.GuildRoleUpdateEvent.Trigger(session, r)
 				// CACHING
 				// g, err := c.State.Guild(r.GuildID)
 				// if err != nil {
@@ -291,9 +324,10 @@ func (c *Client) eventObserver() {
 				// g.Unlock()
 			case event.GuildRoleDeleteKey:
 				r := &event.GuildRoleDeleteBox{}
+				r.Ctx = ctx
 				event.Unmarshal(data, r)
 
-				go c.GuildRoleDeleteEvent.Trigger(ctx, r)
+				go c.GuildRoleDeleteEvent.Trigger(session, r)
 				//
 				// g, err := c.State.Guild(r.GuildID)
 				// if err != nil {
@@ -310,40 +344,51 @@ func (c *Client) eventObserver() {
 				// TODO: should i cache msg?..
 				switch eventName {
 				case event.MessageCreateKey:
-					go c.MessageCreateEvent.Trigger(ctx, &event.MessageCreateBox{msg})
+					go c.MessageCreateEvent.Trigger(session, &event.MessageCreateBox{
+						Message: msg,
+						Ctx:     ctx,
+					})
 				case event.MessageUpdateKey:
-					go c.MessageUpdateEvent.Trigger(ctx, &event.MessageUpdateBox{msg})
+					go c.MessageUpdateEvent.Trigger(session, &event.MessageUpdateBox{
+						Message: msg,
+						Ctx:     ctx,
+					})
 				case event.MessageDeleteKey:
-					go c.MessageDeleteEvent.Trigger(ctx, &event.MessageDeleteBox{
+					go c.MessageDeleteEvent.Trigger(session, &event.MessageDeleteBox{
 						MessageID: msg.ID,
 						ChannelID: msg.ChannelID,
 					})
 				}
 			case event.MessageDeleteBulkKey:
 				mdb := &event.MessageDeleteBulkBox{}
+				mdb.Ctx = ctx
 				event.Unmarshal(data, mdb)
 
-				go c.MessageDeleteBulkEvent.Trigger(ctx, mdb)
+				go c.MessageDeleteBulkEvent.Trigger(session, mdb)
 			case event.MessageReactionAddKey:
-				mdb := &event.MessageReactionAddBox{}
-				event.Unmarshal(data, mdb)
+				mra := &event.MessageReactionAddBox{}
+				mra.Ctx = ctx
+				event.Unmarshal(data, mra)
 
-				go c.MessageReactionAddEvent.Trigger(ctx, mdb)
+				go c.MessageReactionAddEvent.Trigger(session, mra)
 			case event.MessageReactionRemoveKey:
-				mdb := &event.MessageReactionRemoveBox{}
-				event.Unmarshal(data, mdb)
+				mrr := &event.MessageReactionRemoveBox{}
+				mrr.Ctx = ctx
+				event.Unmarshal(data, mrr)
 
-				go c.MessageReactionRemoveEvent.Trigger(ctx, mdb)
+				go c.MessageReactionRemoveEvent.Trigger(session, mrr)
 			case event.MessageReactionRemoveAllKey:
 				mrra := &event.MessageReactionRemoveAllBox{}
+				mrra.Ctx = ctx
 				event.Unmarshal(data, mrra)
 
-				go c.MessageReactionRemoveAllEvent.Trigger(ctx, mrra)
+				go c.MessageReactionRemoveAllEvent.Trigger(session, mrra)
 			case event.PresenceUpdateKey:
 				pu := &event.PresenceUpdateBox{}
+				pu.Ctx = ctx
 				event.Unmarshal(data, pu)
 
-				go c.PresenceUpdateEvent.Trigger(ctx, pu)
+				go c.PresenceUpdateEvent.Trigger(session, pu)
 				//
 				// g, err := c.State.Guild(pu.GuildID)
 				// if err != nil {
@@ -358,33 +403,38 @@ func (c *Client) eventObserver() {
 				// g.UpdatePresence(presence)
 			case event.TypingStartKey:
 				ts := &event.TypingStartBox{}
+				ts.Ctx = ctx
 				event.Unmarshal(data, ts)
 
-				go c.TypingStartEvent.Trigger(ctx, ts)
+				go c.TypingStartEvent.Trigger(session, ts)
 			case event.UserUpdateKey:
 				u := &event.UserUpdateBox{}
+				u.Ctx = ctx
 				event.Unmarshal(data, u)
 
 				// dispatch event
-				go c.UserUpdateEvent.Trigger(ctx, u)
+				go c.UserUpdateEvent.Trigger(session, u)
 
 				// update cache
 				//c.State.UpdateMySelf(u.User)
 			case event.VoiceStateUpdateKey:
 				vsu := &event.VoiceStateUpdateBox{}
+				vsu.Ctx = ctx
 				event.Unmarshal(data, vsu)
 
-				go c.VoiceStateUpdateEvent.Trigger(ctx, vsu)
+				go c.VoiceStateUpdateEvent.Trigger(session, vsu)
 			case event.VoiceServerUpdateKey:
 				vsu := &event.VoiceServerUpdateBox{}
+				vsu.Ctx = ctx
 				event.Unmarshal(data, vsu)
 
-				go c.VoiceServerUpdateEvent.Trigger(ctx, vsu)
+				go c.VoiceServerUpdateEvent.Trigger(session, vsu)
 			case event.WebhooksUpdateKey:
 				wsu := &event.WebhooksUpdateBox{}
+				wsu.Ctx = ctx
 				event.Unmarshal(data, wsu)
 
-				go c.WebhooksUpdateEvent.Trigger(ctx, wsu)
+				go c.WebhooksUpdateEvent.Trigger(session, wsu)
 
 			default:
 				fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name(), string(evt.Data()))

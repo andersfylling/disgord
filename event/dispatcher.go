@@ -1,8 +1,9 @@
 package event
 
 import (
-	"context"
 	"encoding/json"
+
+	"github.com/andersfylling/disgord/disgordctx"
 )
 
 func NewDispatcher() *Dispatcher {
@@ -202,11 +203,11 @@ func (d *Dispatcher) OnEvent(eventKey KeyType, listener interface{}) {
 }
 
 // Trigger listeners based on the event type
-func (d *Dispatcher) Trigger(eventKey KeyType, box interface{}, ctx context.Context) {
+func (d *Dispatcher) Trigger(eventKey KeyType, box interface{}, ctx disgordctx.Context) {
 	d.handleStateUpdate(eventKey, box, ctx)
 }
 
-func (d *Dispatcher) handleStateUpdate(eventKey KeyType, content interface{}, ctx context.Context) {
+func (d *Dispatcher) handleStateUpdate(eventKey KeyType, content interface{}, ctx disgordctx.Context) {
 	switch eventKey {
 	case ReadyKey:
 		if ctx == nil {
