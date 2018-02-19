@@ -1,12 +1,17 @@
 package channel
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 )
+
+// ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
+type ChannelMessager interface {
+	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` permissions before sending.
+}
 
 type Channel struct {
 	ID                   snowflake.ID           `json:"id"`
@@ -28,7 +33,7 @@ type Channel struct {
 	LastPingTimestamp    discord.Timestamp      `json:"last_ping_timestamp,omitempty"`
 
 	// Messages used for caching only. is always empty when fresh from the discord API
-	Messages []*Message `json:"-"`
+	Messages []*Message `json:"-"` // should prolly set a cache limit of 100
 }
 
 func NewChannel() *Channel {
@@ -36,9 +41,29 @@ func NewChannel() *Channel {
 }
 
 func (c *Channel) Mention() string {
-	return fmt.Sprintf("<#%d>", c.ID)
+	return "<#" + c.ID.String() + ">"
 }
 
 func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
+}
+
+func (c *Channel) Clear() {
+	c.LastMessageID = nil
+	// c.Icon = nil // Do I really want to clear this?
+	for _, pmo := range c.PermissionOverwrites {
+		pmo.Clear()
+		pmo = nil
+	}
+	c.PermissionOverwrites = nil
+
+	//for _,
+}
+
+func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Message, err error) {
+	return &Message{}, errors.New("not implemented")
+}
+
+func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
+	return errors.New("not implemented")
 }

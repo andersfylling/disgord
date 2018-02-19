@@ -2,10 +2,28 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
+	"sync"
 
 	"github.com/andersfylling/snowflake"
 )
+
+// UserMessager Methods required to create a new DM (or use an existing one) and send a DM.
+type UserMessager interface {
+	//CreateAndSendDM(recipientID snowflake.ID, msg *Message) error // hmmm...
+}
+
+type UserInterface interface {
+	Mention() string
+	MentionNickname() string
+
+	// Update internal structure
+	Update(*User) error
+	Clear()
+
+	// Send a direct message to this user
+	SendMessage(UserMessager, string) (snowflake.ID, snowflake.ID, error)
+}
 
 type User struct {
 	ID            snowflake.ID `json:"id,omitempty"`
@@ -17,6 +35,8 @@ type User struct {
 	Verified      bool         `json:"verified,omitempty"`
 	MFAEnabled    bool         `json:"mfa_enabled,omitempty"`
 	Bot           bool         `json:"bot,omitempty"`
+
+	sync.RWMutex `json:"-"`
 }
 
 func NewUser() *User {
@@ -24,11 +44,15 @@ func NewUser() *User {
 }
 
 func (u *User) Mention() string {
-	return fmt.Sprintf("<@%d>", u.ID)
+	return "<@" + u.ID.String() + ">"
 }
 
 func (u *User) MentionNickname() string {
-	return fmt.Sprintf("<@!%d>", u.ID)
+	return "<@!" + u.ID.String() + ">"
+}
+
+func (u *User) String() string {
+	return u.Username + "#" + u.Discriminator + "{" + u.ID.String() + "}"
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
@@ -36,11 +60,44 @@ func (u *User) MarshalJSON() ([]byte, error) {
 		return []byte("{}"), nil
 	}
 
-	// use an alias to avoid stack overflow by recursion
-	type Alias User
-	return json.Marshal(&struct {
-		*Alias
-	}{
-		Alias: (*Alias)(u),
-	})
+	return json.Marshal(User(*u))
+}
+
+// func (u *User) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &u.userJSON)
+// }
+
+func (u *User) Clear() {
+	//u.d.Avatar = nil
+}
+
+func (u *User) Update(new *User) (err error) {
+	if u.ID != new.ID {
+		err = errors.New("cannot update user when the new struct has a different ID")
+		return
+	}
+	// make sure that new is not the same pointer!
+	if u == new {
+		err = errors.New("cannot update user when the new struct points to the same memory space")
+		return
+	}
+
+	u.Lock()
+	new.RLock()
+	u.Username = new.Username
+	u.Discriminator = new.Discriminator
+	u.Email = new.Email
+	u.Avatar = new.Avatar
+	u.Token = new.Token
+	u.Verified = new.Verified
+	u.MFAEnabled = new.MFAEnabled
+	u.Bot = new.Bot
+	new.RUnlock()
+	u.Unlock()
+
+	return
+}
+
+func (u *User) SendMessage(client UserMessager, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }

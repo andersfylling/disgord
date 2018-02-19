@@ -8,3 +8,5 @@ type PermissionOverwrite struct {
 	Deny  int          `json:"deny"`  // permission bit set
 	Allow int          `json:"allow"` // permission bit set
 }
+
+func (pmo *PermissionOverwrite) Clear() {}

@@ -1,11 +1,36 @@
 package channel
 
 import (
+	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 )
+
+func NewMessage() *Message {
+	return &Message{}
+}
+
+func NewDeletedMessage() *DeletedMessage {
+	return &DeletedMessage{}
+}
+
+type Attachment struct {
+	ID       snowflake.ID `json:"id"`
+	Filename string       `json:"filename"`
+	Size     uint         `json:"size"`
+	URL      string       `json:"url"`
+	ProxyURL string       `json:"proxy_url"`
+	Height   uint         `json:"height"`
+	Width    uint         `json:"width"`
+}
+
+type DeletedMessage struct {
+	ID        snowflake.ID `json:"id"`
+	ChannelID snowflake.ID `json:"channel_id"`
+}
 
 type Message struct {
 	ID              snowflake.ID   `json:"id"`
@@ -25,4 +50,18 @@ type Message struct {
 	Pinned          bool           `json:"pinned"`
 	WebhookID       snowflake.ID   `json:"webhook_id"` // ?
 	Type            uint           `json:"type"`
+
+	sync.RWMutex `json:"-"`
 }
+
+func (m *Message) MarshalJSON() ([]byte, error) {
+	if m.ID.Empty() {
+		return []byte("{}"), nil
+	}
+
+	return json.Marshal(Message(*m))
+}
+
+// func (m *Message) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &m.messageJSON)
+// }

@@ -8,6 +8,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
+// ValidateJSONMarshalling never comment on this. Never.
 func ValidateJSONMarshalling(b []byte, v interface{}) error {
 	var err error
 
@@ -19,6 +20,31 @@ func ValidateJSONMarshalling(b []byte, v interface{}) error {
 
 	// back to json
 	prettyJSON, err := json.MarshalIndent(&v, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	// sort the data by keys
+	// omg im getting lost in my own train of thought
+	omg := make(map[string]interface{})
+	err = json.Unmarshal(prettyJSON, &omg)
+	if err != nil {
+		return err
+	}
+
+	omgAgain := make(map[string]interface{})
+	err = json.Unmarshal(b, &omgAgain)
+	if err != nil {
+		return err
+	}
+
+	// back to json
+	prettyJSON, err = json.MarshalIndent(&omg, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	b, err = json.MarshalIndent(&omgAgain, "", "    ")
 	if err != nil {
 		return err
 	}
