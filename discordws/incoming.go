@@ -1,6 +1,8 @@
 package discordws
 
 import (
+	"bytes"
+	"compress/zlib"
 	"encoding/json"
 
 	"github.com/andersfylling/disgord/event"
@@ -36,9 +38,20 @@ func (c *Client) readPump() {
 
 		logrus.Debugf("<-: %+v\n", string(packet))
 
-		// TODO: zlib decompression support
+		// TODO: Improve zlib performance
 		if messageType == websocket.BinaryMessage {
-			logrus.Fatalf("Cannot handle packet type: %d", messageType)
+			b := bytes.NewReader(packet)
+
+			r, err := zlib.NewReader(b)
+			if err != nil {
+				panic(err)
+			}
+
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(r)
+			packet = buf.Bytes()
+
+			r.Close()
 		}
 
 		// parse to gateway payload object
