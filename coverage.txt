@@ -1,15 +1,1 @@
 mode: set
-github.com/andersfylling/disgord/disgord.go:16.37,23.2 2 0
-github.com/andersfylling/disgord/disgord.go:26.36,28.16 2 0
-github.com/andersfylling/disgord/disgord.go:32.2,32.11 1 0
-github.com/andersfylling/disgord/disgord.go:28.16,30.3 1 0
-github.com/andersfylling/disgord/disgord.go:36.74,39.16 2 0
-github.com/andersfylling/disgord/disgord.go:44.2,49.15 2 0
-github.com/andersfylling/disgord/disgord.go:39.16,41.3 1 0
-github.com/andersfylling/disgord/disgord.go:53.73,55.16 2 0
-github.com/andersfylling/disgord/disgord.go:59.2,59.11 1 0
-github.com/andersfylling/disgord/disgord.go:55.16,57.3 1 0
-github.com/andersfylling/disgord/disgord.go:64.61,66.2 1 0
-github.com/andersfylling/disgord/disgord.go:104.35,108.2 3 0
-github.com/andersfylling/disgord/disgord.go:111.38,115.2 3 0
-github.com/andersfylling/disgord/disgord.go:118.37,123.2 3 0

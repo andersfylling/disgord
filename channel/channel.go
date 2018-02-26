@@ -67,3 +67,47 @@ func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Messag
 func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 	return errors.New("not implemented")
 }
+
+// DISCORD HTTP API
+// /channels/*
+//
+type DiscordAPIRequester interface {
+	Request(method string, uri string, content interface{}) error
+}
+
+// GetChannel Get a channel by ID
+func GetChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
+	if id.Empty() {
+		return nil, errors.New("Not a valid snowflake")
+	}
+
+	uri := "/channels/" + id.String()
+	content := &Channel{}
+	err := client.Request("GET", uri, content)
+	return content, err
+}
+
+func UpdateChannel(client DiscordAPIRequester, changes *Channel) (*Channel, error) {
+	if changes.ID.Empty() {
+		return nil, errors.New("Not a valid snowflake")
+	}
+
+	//uri := "/channels/" + changes.ID.String()
+	//data, err := json.Marshal(changes)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PUT" logic
+	return nil, nil
+}
+
+func DeleteChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
+	if id.Empty() {
+		return nil, errors.New("Not a valid snowflake")
+	}
+
+	uri := "/channels/" + id.String()
+	content := &Channel{}
+	err := client.Request("DELETE", uri, content)
+	return content, err
+}
