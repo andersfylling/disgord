@@ -73,6 +73,10 @@ INFO[2018-02-16 19:07:28] Closing Discord gateway connection            lib="Dis
 INFO[2018-02-16 19:07:30] Disconnected                                  lib="Disgord v0.0.0"
 ```
 
+## Code flow
+
+![Alt text](images/how_event_are_dispatched_over_channels_using_fan_out.png)
+
 ## Progress
 
 [Progression for different Discord implementations](PROGRESS.md)

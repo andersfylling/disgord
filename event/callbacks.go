@@ -2,6 +2,8 @@ package event
 
 import "github.com/andersfylling/disgord/disgordctx"
 
+type EventCallback = func(ctx disgordctx.Context, box interface{})
+
 // socket
 type HelloCallback = func(ctx disgordctx.Context, h *HelloBox)
 type ReadyCallback = func(ctx disgordctx.Context, r *ReadyBox)

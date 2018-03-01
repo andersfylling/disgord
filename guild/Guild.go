@@ -56,10 +56,21 @@ type GuildInterface interface {
 	Channel(ID snowflake.ID)
 }
 
+// if loading is deactivated, then check state, then do a request.
+// if loading is activated, check state only.
+// type Members interface {
+// 	Member(userID snowflake.ID) *Member
+// 	MembersWithName( /*username*/ name string) map[snowflake.ID]*Member
+// 	MemberByUsername( /*username#discriminator*/ username string) *Member
+// 	MemberByAlias(alias string) *Member
+// 	EverythingInMemory() bool
+// }
+
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
+// TODO: lazyload everything
 type Guild struct {
 	ID                          snowflake.ID                          `json:"id"`
 	ApplicationID               *snowflake.ID                         `json:"application_id"` //   |?
@@ -98,6 +109,10 @@ type Guild struct {
 
 	sync.RWMutex `json:"-"`
 }
+
+//func (g *Guild) EverythingInMemory() bool {
+//	return false
+//}
 
 // Compare two guild objects
 func (g *Guild) Compare(other *Guild) bool {
