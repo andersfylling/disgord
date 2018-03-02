@@ -27,7 +27,7 @@ type Channel struct {
 	UserLimit            uint                   `json:"user_limit,omitempty"`
 	Recipients           []*user.User           `json:"recipient,omitempty"`
 	Icon                 *string                `json:"icon,omitempty"`
-	OwnerID              snowflake.ID           `json:owner_id,omitempty`
+	OwnerID              snowflake.ID           `json:"owner_id,omitempty"`
 	ApplicationID        snowflake.ID           `json:"applicaiton_id,omitempty"`
 	ParentID             snowflake.ID           `json:"parent_id,omitempty"`
 	LastPingTimestamp    discord.Timestamp      `json:"last_ping_timestamp,omitempty"`
@@ -45,6 +45,7 @@ func (c *Channel) Mention() string {
 }
 
 func (c *Channel) Compare(other *Channel) bool {
+	// eh
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
@@ -58,6 +59,18 @@ func (c *Channel) Clear() {
 	c.PermissionOverwrites = nil
 
 	//for _,
+}
+
+func (c *Channel) Update() {
+
+}
+
+func (c *Channel) Delete() {
+
+}
+
+func (c *Channel) Create() {
+	// check if channel already exists.
 }
 
 func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Message, err error) {

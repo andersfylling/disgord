@@ -85,6 +85,15 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Message(*m))
 }
 
+func (m *Message) Delete() {}
+func (m *Message) Update() {}
+func (m *Message) Send()   {}
+
+func (m *Message) AddReaction(reaction *Reaction) {}
+func (m *Message) RemoveReaction(id snowflake.ID) {}
+
+// GET, based on ID? 0.o
+
 // func (m *Message) UnmarshalJSON(data []byte) error {
 // 	return json.Unmarshal(data, &m.messageJSON)
 // }

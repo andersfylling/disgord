@@ -32,7 +32,7 @@ type Session interface {
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested.
-	Req() *request.Client
+	Req() request.Requester
 
 	// Event let's developers listen for specific events, event groups, or every event as one listener.
 	// Supports both channels and callbacks
@@ -231,7 +231,7 @@ func (c *Client) Disconnect() (err error) {
 	return nil
 }
 
-func (c *Client) Req() *request.Client {
+func (c *Client) Req() request.Requester {
 	return c.req
 }
 
