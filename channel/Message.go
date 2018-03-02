@@ -9,6 +9,14 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
+const (
+	_ int = iota
+	MessageActivityTypeJoin
+	MessageActivityTypeSpectate
+	MessageActivityTypeListen
+	MessageActivityTypeJoinRequest
+)
+
 func NewMessage() *Message {
 	return &Message{}
 }
@@ -32,24 +40,39 @@ type DeletedMessage struct {
 	ChannelID snowflake.ID `json:"channel_id"`
 }
 
+type MessageActivity struct {
+	Type    int    `json:"type"`
+	PartyID string `json:"party_id"`
+}
+
+type MessageApplication struct {
+	ID          snowflake.ID `json:"id"`
+	CoverImage  string       `json:"cover_image"`
+	Description string       `json:"description"`
+	Icon        string       `json:"icon"`
+	Name        string       `json:"name"`
+}
+
 type Message struct {
-	ID              snowflake.ID   `json:"id"`
-	ChannelID       snowflake.ID   `json:"channel_id"`
-	Author          *user.User     `json:"author"`
-	Content         string         `json:"content"`
-	Timestamp       time.Time      `json:"timestamp"`
-	EditedTimestamp time.Time      `json:"edited_timestamp"` // ?
-	Tts             bool           `json:"tts"`
-	MentionEveryone bool           `json:"mention_everyone"`
-	Mentions        []*user.User   `json:"mentions"`
-	MentionRoles    []snowflake.ID `json:"mention_roles"`
-	Attachments     []*Attachment  `json:"attachments"`
-	Embeds          []*Embed       `json:"embeds"`
-	Reactions       []*Reaction    `json:"reactions"` // ?
-	Nonce           snowflake.ID   `json:"nonce"`     // ?, used for validating a message was sent
-	Pinned          bool           `json:"pinned"`
-	WebhookID       snowflake.ID   `json:"webhook_id"` // ?
-	Type            uint           `json:"type"`
+	ID              snowflake.ID       `json:"id"`
+	ChannelID       snowflake.ID       `json:"channel_id"`
+	Author          *user.User         `json:"author"`
+	Content         string             `json:"content"`
+	Timestamp       time.Time          `json:"timestamp"`
+	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
+	Tts             bool               `json:"tts"`
+	MentionEveryone bool               `json:"mention_everyone"`
+	Mentions        []*user.User       `json:"mentions"`
+	MentionRoles    []snowflake.ID     `json:"mention_roles"`
+	Attachments     []*Attachment      `json:"attachments"`
+	Embeds          []*Embed           `json:"embeds"`
+	Reactions       []*Reaction        `json:"reactions"` // ?
+	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
+	Pinned          bool               `json:"pinned"`
+	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
+	Type            uint               `json:"type"`
+	Activity        MessageActivity    `json:"activity"`
+	Application     MessageApplication `json:"application"`
 
 	sync.RWMutex `json:"-"`
 }

@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	// APIComEncoding data encoding when communicating with the discord API
+	// APIComEncoding data format used when communicating with the discord API
 	APIComEncoding string = "json"
 
 	// APIVersion desired API version to use
-	APIVersion int = 6
+	APIVersion int = 6 // February 5, 2018
 )
 
 
