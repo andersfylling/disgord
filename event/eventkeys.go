@@ -1,10 +1,11 @@
 package event
 
-type KeyType string
+// KeyType Deprecated
+//type KeyType string
 
 // The different discord Event Keys
 const (
-	AllEventsKey KeyType = "GOD_DAMN_EVERYTHING"
+	AllEventsKey string = "GOD_DAMN_EVERYTHING"
 
 	// Gateway events
 

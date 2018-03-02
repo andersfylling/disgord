@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/andersfylling/disgord/event"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -48,10 +47,10 @@ func (c *Client) writePump(ws *websocket.Conn) {
 }
 
 type gatewayPayload struct {
-	Op             uint          `json:"op"`
-	Data           interface{}   `json:"d"`
-	SequenceNumber uint          `json:"s,omitempty"`
-	EventName      event.KeyType `json:"t,omitempty"`
+	Op             uint        `json:"op"`
+	Data           interface{} `json:"d"`
+	SequenceNumber uint        `json:"s,omitempty"`
+	EventName      string      `json:"t,omitempty"`
 }
 
 func (gp *gatewayPayload) DataToByteArr() ([]byte, error) {

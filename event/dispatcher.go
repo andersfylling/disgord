@@ -47,7 +47,7 @@ func NewDispatch() *Dispatch {
 		voiceServerUpdateChan:        make(chan *VoiceServerUpdateBox),
 		webhooksUpdateChan:           make(chan *WebhooksUpdateBox),
 
-		listeners: make(map[KeyType][]interface{}),
+		listeners: make(map[string][]interface{}),
 	}
 
 	// make sure every channel has a reciever to avoid deadlock
@@ -94,8 +94,8 @@ type Dispatcher interface {
 	VoiceServerUpdateChan() <-chan *VoiceServerUpdateBox
 	WebhooksUpdateChan() <-chan *WebhooksUpdateBox
 
-	Trigger(evtName KeyType, session disgordctx.Context, ctx context.Context, data []byte)
-	AddHandler(evtName KeyType, listener interface{})
+	Trigger(evtName string, session disgordctx.Context, ctx context.Context, data []byte)
+	AddHandler(evtName string, listener interface{})
 }
 
 type Dispatch struct {
@@ -134,11 +134,11 @@ type Dispatch struct {
 	voiceServerUpdateChan        chan *VoiceServerUpdateBox
 	webhooksUpdateChan           chan *WebhooksUpdateBox
 
-	listeners map[KeyType][]interface{}
+	listeners map[string][]interface{}
 }
 
 // On places listeners into their respected stacks
-// func (d *Dispatcher) OnEvent(evtName KeyType, listener EventCallback) {
+// func (d *Dispatcher) OnEvent(evtName string, listener EventCallback) {
 // 	d.listeners[evtName] = append(d.listeners[evtName], listener)
 // }
 
@@ -186,11 +186,11 @@ func (d *Dispatch) alwaysListenToChans() {
 	}()
 }
 
-func (d *Dispatch) AddHandler(evtName KeyType, listener interface{}) {
+func (d *Dispatch) AddHandler(evtName string, listener interface{}) {
 	d.listeners[evtName] = append(d.listeners[evtName], listener)
 }
 
-func (d *Dispatch) TriggerChan(evtName KeyType, session disgordctx.Context, ctx context.Context, box interface{}) {
+func (d *Dispatch) TriggerChan(evtName string, session disgordctx.Context, ctx context.Context, box interface{}) {
 	switch evtName {
 	case ReadyKey:
 		d.readyChan <- box.(*ReadyBox)
@@ -263,7 +263,7 @@ func (d *Dispatch) TriggerChan(evtName KeyType, session disgordctx.Context, ctx 
 	}
 }
 
-func (d *Dispatch) TriggerCallbacks(evtName KeyType, session disgordctx.Context, ctx context.Context, box interface{}) {
+func (d *Dispatch) TriggerCallbacks(evtName string, session disgordctx.Context, ctx context.Context, box interface{}) {
 	switch evtName {
 	case ReadyKey:
 		for _, listener := range d.listeners[ReadyKey] {
@@ -403,7 +403,7 @@ func (d *Dispatch) TriggerCallbacks(evtName KeyType, session disgordctx.Context,
 }
 
 // Trigger listeners based on the event type
-func (d *Dispatch) Trigger(evtName KeyType, session disgordctx.Context, ctx context.Context, data []byte) {
+func (d *Dispatch) Trigger(evtName string, session disgordctx.Context, ctx context.Context, data []byte) {
 	// TODO: send data to allChan
 	switch evtName {
 	case ReadyKey:

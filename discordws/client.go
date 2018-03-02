@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/user"
+	//"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -85,7 +85,7 @@ func NewClient(conf *Config) (*Client, error) {
 		operationChan:     make(chan *gatewayEvent),
 		eventChans:        make(map[string](chan []byte)),
 		sendChan:          make(chan *gatewayPayload),
-		Myself:            &user.User{},
+		//Myself:            &user.User{},
 	}, nil
 }
 
@@ -118,8 +118,8 @@ type Client struct {
 	sendChan      chan *gatewayPayload     `json:"-"`
 	iEventChan    chan EventInterface
 
-	Myself         *user.User  `json:"user"`
-	MyselfSettings interface{} `json:"user_settings"`
+	//Myself         *user.User  `json:"user"`
+	//MyselfSettings interface{} `json:"user_settings"`
 
 	// websocket connection
 	conn    *websocket.Conn `json:"-"`

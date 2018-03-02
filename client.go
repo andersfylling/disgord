@@ -57,10 +57,10 @@ type Session interface {
 	ReqMembers(guildID snowflake.ID) map[snowflake.ID]*guild.Member
 
 	// event channels
-	EvtChan(evt event.KeyType) <-chan interface{}
+	EvtChan(evt string) <-chan interface{}
 
 	// event callbacks
-	//EvtAddListener(evt event.KeyType, callback interface{}) // use reflection based on keytype and cb params
+	//EvtAddListener(evt string, callback interface{}) // use reflection based on keytype and cb params
 
 	// state/caching module
 	Guild(guildID snowflake.ID) *guild.Guild

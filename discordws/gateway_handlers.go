@@ -10,9 +10,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/andersfylling/disgord/event"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	ReadyKey   string = "READY"
+	ResumedKey string = "RESUMED"
 )
 
 // Connect establishes a websocket connection to the discord API
@@ -106,7 +110,7 @@ func (c *Client) operationHandlers() {
 				c.Unlock()
 
 				// always store the session id
-				if gp.EventName == event.ReadyKey {
+				if gp.EventName == ReadyKey {
 					ready := &readyPacket{}
 					err := json.Unmarshal(gp.Data.ByteArr(), ready)
 					if err != nil {
@@ -117,7 +121,7 @@ func (c *Client) operationHandlers() {
 					c.SessionID = ready.SessionID
 					c.Trace = ready.Trace
 					c.RUnlock()
-				} else if gp.EventName == event.ResumedKey {
+				} else if gp.EventName == ResumedKey {
 					// eh? debugging.
 				}
 
