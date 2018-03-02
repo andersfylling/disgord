@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os/user"
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discordws"
-	"github.com/andersfylling/disgord/disgordctx"
-	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/guild"
-	"github.com/andersfylling/disgord/request"
-	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
+	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/guild"
+	"github.com/andersfylling/disgord/channel"
+	"github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/user"
 )
 
 const (
@@ -26,6 +24,7 @@ const (
 	APIVersion int = 6
 )
 
+
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
 type Session interface {
 	// main modules
@@ -34,11 +33,11 @@ type Session interface {
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested.
-	Request() request.Client
+	Req() *request.Client
 
 	// Event let's developers listen for specific events, event groups, or every event as one listener.
 	// Supports both channels and callbacks
-	Event() event.Dispatcher
+	Evt() EvtDispatcher
 
 	// State reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
@@ -56,11 +55,8 @@ type Session interface {
 	ReqMember(guildID, userID snowflake.ID) *guild.Member
 	ReqMembers(guildID snowflake.ID) map[snowflake.ID]*guild.Member
 
-	// event channels
-	EvtChan(evt string) <-chan interface{}
-
 	// event callbacks
-	//EvtAddListener(evt string, callback interface{}) // use reflection based on keytype and cb params
+	EvtAddHandler(evtName string, callback interface{}) // use reflection based on keytype and cb params
 
 	// state/caching module
 	Guild(guildID snowflake.ID) *guild.Guild
@@ -71,6 +67,7 @@ type Session interface {
 	Member(guildID, userID snowflake.ID) *guild.Member
 	Members(guildID snowflake.ID) map[snowflake.ID]*guild.Member
 }
+
 
 type Config struct {
 	Token            string
@@ -83,7 +80,7 @@ type Config struct {
 }
 
 // NewClient creates a new default disgord instance
-func NewClient(conf *Config) (*Client, error) {
+func NewClient(conf *Config) *Client {
 
 	if conf.HTTPClient == nil {
 		// http client configuration
@@ -104,48 +101,45 @@ func NewClient(conf *Config) (*Client, error) {
 		DAPIEncoding: APIComEncoding,
 	})
 	if err != nil {
-		return nil, err
-	}
-
-	// create a disgord instance
-	d := &Client{
-		HTTPClient:    conf.HTTPClient,
-		ws:            dws,
-		socketEvtChan: dws.GetEventChannel(),
-		Token:         conf.Token,
-		Event:         event.NewDispatch(),
-		State:         NewStateCache(),
-	}
-
-	return d, nil
-}
-
-// NewRequiredClient same as NewDisgord, but exits program if an error occours
-func NewRequiredClient(conf *Config) *Client {
-	dg, err := NewClient(conf)
-	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	return dg
+	// create a disgord instance
+	c := &Client{
+		httpClient:    conf.HTTPClient,
+		ws:            dws,
+		socketEvtChan: dws.GetEventChannel(),
+		token:         conf.Token,
+		evtDispatch:   NewDispatch(),
+		state:         NewStateCache(),
+	}
+
+	return c
+}
+
+
+func NewSession(conf *Config) Session {
+	return NewClient(conf)
 }
 
 type Client struct {
 	sync.RWMutex
 
-	Token string
+	token string
 
 	ws *discordws.Client
-
-	HTTPClient *http.Client
-
 	socketEvtChan <-chan discordws.EventInterface
 
 	// register listeners for events
-	Event event.Dispatcher
+	evtDispatch *Dispatch
+
+	// discord http api
+	req *request.Client
+
+	httpClient *http.Client
 
 	// cache
-	State StateCacher
+	state StateCacher
 }
 
 func (c *Client) eventObserver() {
@@ -157,7 +151,6 @@ func (c *Client) eventObserver() {
 				break
 			}
 
-			session := &disgordctx.Session{} //disgord context
 			ctx := context.Background()
 
 			// TODO: parsing JSON uses panic and not logging on issues..
@@ -166,7 +159,7 @@ func (c *Client) eventObserver() {
 			data := evt.Data()
 
 			// fan out to specific channel types
-			go c.Event.Trigger(eventName, session, ctx, data)
+			go c.evtDispatch.trigger(eventName, c, ctx, data)
 		}
 	}
 }
@@ -215,4 +208,74 @@ func (c *Client) Disconnect() (err error) {
 	c.logInfo("Disconnected")
 
 	return nil
+}
+
+
+func (c *Client) Req() *request.Client {
+	return c.req
+}
+
+func (c *Client) Evt() EvtDispatcher {
+	return c.evtDispatch
+}
+
+func (c *Client) State() StateCacher {
+	return c.state
+}
+
+
+func (c *Client) ReqGuild(guildID snowflake.ID) *guild.Guild {
+	return nil
+}
+func (c *Client) ReqChannel(channelID snowflake.ID) *channel.Channel {
+	return nil
+}
+func (c *Client) ReqChannels(guildID snowflake.ID) map[snowflake.ID]*channel.Channel {
+	result := make(map[snowflake.ID]*channel.Channel)
+	return result
+}
+func (c *Client) ReqMsg(msgID snowflake.ID) *channel.Message {
+	return nil
+}
+func (c *Client) ReqUser(userID snowflake.ID) *user.User {
+	return nil
+}
+func (c *Client) ReqMember(guildID, userID snowflake.ID) *guild.Member {
+	return nil
+}
+func (c *Client) ReqMembers(guildID snowflake.ID) map[snowflake.ID]*guild.Member {
+	result := make(map[snowflake.ID]*guild.Member)
+	return result
+}
+
+func (c *Client) EvtAddHandler(evtName string, listener interface{}) {
+	c.evtDispatch.AddHandler(evtName, listener)
+}
+
+func (c *Client) Channel(channelID snowflake.ID) *channel.Channel {
+	return nil
+}
+
+func (c *Client) Channels(GuildID snowflake.ID) map[snowflake.ID]*channel.Channel {
+	result := make(map[snowflake.ID]*channel.Channel)
+	return result
+}
+
+
+// state/caching module
+func (c *Client) Guild(guildID snowflake.ID) *guild.Guild {
+	return nil
+}
+func (c *Client) Msg(msgID snowflake.ID) *channel.Message {
+	return nil
+}
+func (c *Client) User(userID snowflake.ID) *user.User {
+	return nil
+}
+func (c *Client) Member(guildID, userID snowflake.ID) *guild.Member {
+	return nil
+}
+func (c *Client) Members(guildID snowflake.ID) map[snowflake.ID]*guild.Member {
+	result := make(map[snowflake.ID]*guild.Member)
+	return result
 }

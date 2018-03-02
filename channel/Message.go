@@ -65,3 +65,5 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 // func (m *Message) UnmarshalJSON(data []byte) error {
 // 	return json.Unmarshal(data, &m.messageJSON)
 // }
+
+func GetMessages() {}
