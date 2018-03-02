@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"sync"
+
 	"github.com/andersfylling/disgord/channel"
-	"github.com/andersfylling/disgord/guild"
 	. "github.com/andersfylling/disgord/event"
+	"github.com/andersfylling/disgord/guild"
 )
 
 func NewDispatch() *Dispatch {
@@ -47,7 +49,8 @@ func NewDispatch() *Dispatch {
 		voiceServerUpdateChan:        make(chan *VoiceServerUpdateBox),
 		webhooksUpdateChan:           make(chan *WebhooksUpdateBox),
 
-		listeners: make(map[string][]interface{}),
+		listeners:      make(map[string][]interface{}),
+		listenOnceOnly: make(map[string][]int),
 	}
 
 	// make sure every channel has a reciever to avoid deadlock
@@ -95,6 +98,7 @@ type EvtDispatcher interface {
 	WebhooksUpdateChan() <-chan *WebhooksUpdateBox
 
 	AddHandler(evtName string, listener interface{})
+	AddHandlerOnce(evtName string, listener interface{})
 }
 
 type Dispatch struct {
@@ -133,7 +137,10 @@ type Dispatch struct {
 	voiceServerUpdateChan        chan *VoiceServerUpdateBox
 	webhooksUpdateChan           chan *WebhooksUpdateBox
 
-	listeners map[string][]interface{}
+	listeners      map[string][]interface{}
+	listenOnceOnly map[string][]int
+
+	listenersLock sync.RWMutex
 }
 
 // On places listeners into their respected stacks
@@ -394,6 +401,23 @@ func (d *Dispatch) triggerCallbacks(evtName string, session Session, ctx context
 		}
 	default:
 		fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
+	}
+
+	// remove the run only once listeners
+	d.listenersLock.Lock()
+	defer d.listenersLock.Unlock()
+
+	for _, index := range d.listenOnceOnly[evtName] {
+		// https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order
+		d.listeners[evtName][index] = d.listeners[evtName][len(d.listeners[evtName])-1]
+		d.listeners[evtName][len(d.listeners[evtName])-1] = nil
+		d.listeners[evtName] = d.listeners[evtName][:len(d.listeners[evtName])-1]
+	}
+
+	// remove the once only register
+	_, exists := d.listenOnceOnly[evtName]
+	if exists {
+		delete(d.listenOnceOnly, evtName)
 	}
 }
 
@@ -738,7 +762,19 @@ func (d *Dispatch) WebhooksUpdateChan() <-chan *WebhooksUpdateBox {
 }
 
 func (d *Dispatch) AddHandler(evtName string, listener interface{}) {
+	d.listenersLock.Lock()
+	defer d.listenersLock.Unlock()
+
 	d.listeners[evtName] = append(d.listeners[evtName], listener)
+}
+
+func (d *Dispatch) AddHandlerOnce(evtName string, listener interface{}) {
+	d.listenersLock.Lock()
+	defer d.listenersLock.Unlock()
+
+	index := len(d.listeners[evtName])
+	d.listeners[evtName] = append(d.listeners[evtName], listener)
+	d.listenOnceOnly[evtName] = append(d.listenOnceOnly[evtName], index)
 }
 
 // wtf is this
