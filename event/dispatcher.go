@@ -10,8 +10,8 @@ import (
 	"github.com/andersfylling/disgord/guild"
 )
 
-func NewDispatcher() *Dispatcher {
-	dispatcher := &Dispatcher{
+func NewDispatch() *Dispatch {
+	dispatcher := &Dispatch{
 		allChan:                      make(chan interface{}),
 		readyChan:                    make(chan *ReadyBox),
 		resumedChan:                  make(chan *ResumedBox),
@@ -47,16 +47,18 @@ func NewDispatcher() *Dispatcher {
 		voiceServerUpdateChan:        make(chan *VoiceServerUpdateBox),
 		webhooksUpdateChan:           make(chan *WebhooksUpdateBox),
 
-		//listeners:     make(map[KeyType][]EventCallback),
+		listeners: make(map[KeyType][]interface{}),
 	}
 
+	// make sure every channel has a reciever to avoid deadlock
+	// hack...
 	dispatcher.alwaysListenToChans()
 
 	return dispatcher
 }
 
 //
-type DispatcherInterface interface {
+type Dispatcher interface {
 	AllChan() <-chan interface{} // any event
 	ReadyChan() <-chan *ReadyBox
 	ResumedChan() <-chan *ResumedBox
@@ -92,11 +94,11 @@ type DispatcherInterface interface {
 	VoiceServerUpdateChan() <-chan *VoiceServerUpdateBox
 	WebhooksUpdateChan() <-chan *WebhooksUpdateBox
 
-	Trigger(evtName KeyType, ctx disgordctx.Context, data []byte)
-	//OnEvent(evtName KeyType, listener EventCallback)
+	Trigger(evtName KeyType, session disgordctx.Context, ctx context.Context, data []byte)
+	AddHandler(evtName KeyType, listener interface{})
 }
 
-type Dispatcher struct {
+type Dispatch struct {
 	allChan                      chan interface{} // any event
 	readyChan                    chan *ReadyBox
 	resumedChan                  chan *ResumedBox
@@ -132,7 +134,7 @@ type Dispatcher struct {
 	voiceServerUpdateChan        chan *VoiceServerUpdateBox
 	webhooksUpdateChan           chan *WebhooksUpdateBox
 
-	//listeners     map[KeyType][]EventCallback
+	listeners map[KeyType][]interface{}
 }
 
 // On places listeners into their respected stacks
@@ -141,7 +143,7 @@ type Dispatcher struct {
 // }
 
 // alwaysListenToChans makes sure no deadlocks occure
-func (d *Dispatcher) alwaysListenToChans() {
+func (d *Dispatch) alwaysListenToChans() {
 	go func() {
 		for {
 			select {
@@ -184,191 +186,449 @@ func (d *Dispatcher) alwaysListenToChans() {
 	}()
 }
 
+func (d *Dispatch) AddHandler(evtName KeyType, listener interface{}) {
+	d.listeners[evtName] = append(d.listeners[evtName], listener)
+}
+
+func (d *Dispatch) TriggerChan(evtName KeyType, session disgordctx.Context, ctx context.Context, box interface{}) {
+	switch evtName {
+	case ReadyKey:
+		d.readyChan <- box.(*ReadyBox)
+	case ResumedKey:
+		d.resumedChan <- box.(*ResumedBox)
+	case ChannelCreateKey:
+		d.channelCreateChan <- box.(*ChannelCreateBox)
+	case ChannelUpdateKey:
+		d.channelUpdateChan <- box.(*ChannelUpdateBox)
+	case ChannelDeleteKey:
+		d.channelDeleteChan <- box.(*ChannelDeleteBox)
+	case ChannelPinsUpdateKey:
+		d.channelPinsUpdateChan <- box.(*ChannelPinsUpdateBox)
+	case GuildCreateKey:
+		d.guildCreateChan <- box.(*GuildCreateBox)
+	case GuildUpdateKey:
+		d.guildUpdateChan <- box.(*GuildUpdateBox)
+	case GuildDeleteKey:
+		d.guildDeleteChan <- box.(*GuildDeleteBox)
+	case GuildBanAddKey:
+		d.guildBanAddChan <- box.(*GuildBanAddBox)
+	case GuildBanRemoveKey:
+		d.guildBanRemoveChan <- box.(*GuildBanRemoveBox)
+	case GuildEmojisUpdateKey:
+		d.guildEmojisUpdateChan <- box.(*GuildEmojisUpdateBox)
+	case GuildIntegrationsUpdateKey:
+		d.guildIntegrationsUpdateChan <- box.(*GuildIntegrationsUpdateBox)
+	case GuildMemberAddKey:
+		d.guildMemberAddChan <- box.(*GuildMemberAddBox)
+	case GuildMemberRemoveKey:
+		d.guildMemberRemoveChan <- box.(*GuildMemberRemoveBox)
+	case GuildMemberUpdateKey:
+		d.guildMemberUpdateChan <- box.(*GuildMemberUpdateBox)
+	case GuildMembersChunkKey:
+		d.guildMembersChunkChan <- box.(*GuildMembersChunkBox)
+	case GuildRoleCreateKey:
+		d.guildRoleCreateChan <- box.(*GuildRoleCreateBox)
+	case GuildRoleUpdateKey:
+		d.guildRoleUpdateChan <- box.(*GuildRoleUpdateBox)
+	case GuildRoleDeleteKey:
+		d.guildRoleDeleteChan <- box.(*GuildRoleDeleteBox)
+	case MessageCreateKey:
+		d.messageCreateChan <- box.(*MessageCreateBox)
+	case MessageUpdateKey:
+		d.messageUpdateChan <- box.(*MessageUpdateBox)
+	case MessageDeleteKey:
+		d.messageDeleteChan <- box.(*MessageDeleteBox)
+	case MessageDeleteBulkKey:
+		d.messageDeleteBulkChan <- box.(*MessageDeleteBulkBox)
+	case MessageReactionAddKey:
+		d.messageReactionAddChan <- box.(*MessageReactionAddBox)
+	case MessageReactionRemoveKey:
+		d.messageReactionRemoveChan <- box.(*MessageReactionRemoveBox)
+	case MessageReactionRemoveAllKey:
+		d.messageReactionRemoveAllChan <- box.(*MessageReactionRemoveAllBox)
+	case PresenceUpdateKey:
+		d.presenceUpdateChan <- box.(*PresenceUpdateBox)
+	case TypingStartKey:
+		d.typingStartChan <- box.(*TypingStartBox)
+	case UserUpdateKey:
+		d.userUpdateChan <- box.(*UserUpdateBox)
+	case VoiceStateUpdateKey:
+		d.voiceStateUpdateChan <- box.(*VoiceStateUpdateBox)
+	case VoiceServerUpdateKey:
+		d.voiceServerUpdateChan <- box.(*VoiceServerUpdateBox)
+	case WebhooksUpdateKey:
+		d.webhooksUpdateChan <- box.(*WebhooksUpdateBox)
+	default:
+		fmt.Printf("------\nTODO\nImplement channel for `%s`\n------\n\n", evtName)
+	}
+}
+
+func (d *Dispatch) TriggerCallbacks(evtName KeyType, session disgordctx.Context, ctx context.Context, box interface{}) {
+	switch evtName {
+	case ReadyKey:
+		for _, listener := range d.listeners[ReadyKey] {
+			go (listener.(ReadyCallback))(session, box.(*ReadyBox))
+		}
+	case ResumedKey:
+		for _, listener := range d.listeners[ResumedKey] {
+			go (listener.(ResumedCallback))(session, box.(*ResumedBox))
+		}
+	case ChannelCreateKey:
+		for _, listener := range d.listeners[ChannelCreateKey] {
+			go (listener.(ChannelCreateCallback))(session, box.(*ChannelCreateBox))
+		}
+	case ChannelUpdateKey:
+		for _, listener := range d.listeners[ChannelUpdateKey] {
+			go (listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdateBox))
+		}
+	case ChannelDeleteKey:
+		for _, listener := range d.listeners[ChannelDeleteKey] {
+			go (listener.(ChannelDeleteCallback))(session, box.(*ChannelDeleteBox))
+		}
+	case ChannelPinsUpdateKey:
+		for _, listener := range d.listeners[ChannelPinsUpdateKey] {
+			go (listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdateBox))
+		}
+	case GuildCreateKey:
+		for _, listener := range d.listeners[GuildCreateKey] {
+			go (listener.(GuildCreateCallback))(session, box.(*GuildCreateBox))
+		}
+	case GuildUpdateKey:
+		for _, listener := range d.listeners[GuildUpdateKey] {
+			go (listener.(GuildUpdateCallback))(session, box.(*GuildUpdateBox))
+		}
+	case GuildDeleteKey:
+		for _, listener := range d.listeners[GuildDeleteKey] {
+			go (listener.(GuildDeleteCallback))(session, box.(*GuildDeleteBox))
+		}
+	case GuildBanAddKey:
+		for _, listener := range d.listeners[GuildBanAddKey] {
+			go (listener.(GuildBanAddCallback))(session, box.(*GuildBanAddBox))
+		}
+	case GuildBanRemoveKey:
+		for _, listener := range d.listeners[GuildBanRemoveKey] {
+			go (listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemoveBox))
+		}
+	case GuildEmojisUpdateKey:
+		for _, listener := range d.listeners[GuildEmojisUpdateKey] {
+			go (listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdateBox))
+		}
+	case GuildIntegrationsUpdateKey:
+		for _, listener := range d.listeners[GuildIntegrationsUpdateKey] {
+			go (listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdateBox))
+		}
+	case GuildMemberAddKey:
+		for _, listener := range d.listeners[GuildMemberAddKey] {
+			go (listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAddBox))
+		}
+	case GuildMemberRemoveKey:
+		for _, listener := range d.listeners[GuildMemberRemoveKey] {
+			go (listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemoveBox))
+		}
+	case GuildMemberUpdateKey:
+		for _, listener := range d.listeners[GuildMemberUpdateKey] {
+			go (listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdateBox))
+		}
+	case GuildMembersChunkKey:
+		for _, listener := range d.listeners[GuildMembersChunkKey] {
+			go (listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunkBox))
+		}
+	case GuildRoleCreateKey:
+		for _, listener := range d.listeners[GuildRoleCreateKey] {
+			go (listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreateBox))
+		}
+	case GuildRoleUpdateKey:
+		for _, listener := range d.listeners[GuildRoleUpdateKey] {
+			go (listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdateBox))
+		}
+	case GuildRoleDeleteKey:
+		for _, listener := range d.listeners[GuildRoleDeleteKey] {
+			go (listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDeleteBox))
+		}
+	case MessageCreateKey:
+		for _, listener := range d.listeners[MessageCreateKey] {
+			go (listener.(MessageCreateCallback))(session, box.(*MessageCreateBox))
+		}
+	case MessageUpdateKey:
+		for _, listener := range d.listeners[MessageUpdateKey] {
+			go (listener.(MessageUpdateCallback))(session, box.(*MessageUpdateBox))
+		}
+	case MessageDeleteKey:
+		for _, listener := range d.listeners[MessageDeleteKey] {
+			go (listener.(MessageDeleteCallback))(session, box.(*MessageDeleteBox))
+		}
+	case MessageDeleteBulkKey:
+		for _, listener := range d.listeners[MessageDeleteBulkKey] {
+			go (listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulkBox))
+		}
+	case MessageReactionAddKey:
+		for _, listener := range d.listeners[MessageReactionAddKey] {
+			go (listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAddBox))
+		}
+	case MessageReactionRemoveKey:
+		for _, listener := range d.listeners[MessageReactionRemoveKey] {
+			go (listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemoveBox))
+		}
+	case MessageReactionRemoveAllKey:
+		for _, listener := range d.listeners[MessageReactionRemoveAllKey] {
+			go (listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAllBox))
+		}
+	case PresenceUpdateKey:
+		for _, listener := range d.listeners[PresenceUpdateKey] {
+			go (listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdateBox))
+		}
+	case TypingStartKey:
+		for _, listener := range d.listeners[TypingStartKey] {
+			go (listener.(TypingStartCallback))(session, box.(*TypingStartBox))
+		}
+	case UserUpdateKey:
+		for _, listener := range d.listeners[UserUpdateKey] {
+			go (listener.(UserUpdateCallback))(session, box.(*UserUpdateBox))
+		}
+	case VoiceStateUpdateKey:
+		for _, listener := range d.listeners[VoiceStateUpdateKey] {
+			go (listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdateBox))
+		}
+	case VoiceServerUpdateKey:
+		for _, listener := range d.listeners[VoiceServerUpdateKey] {
+			go (listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdateBox))
+		}
+	case WebhooksUpdateKey:
+		for _, listener := range d.listeners[WebhooksUpdateKey] {
+			go (listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdateBox))
+		}
+	default:
+		fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
+	}
+}
+
 // Trigger listeners based on the event type
-func (d *Dispatcher) Trigger(evtName KeyType, session disgordctx.Context, ctx context.Context, data []byte) {
+func (d *Dispatch) Trigger(evtName KeyType, session disgordctx.Context, ctx context.Context, data []byte) {
 	// TODO: send data to allChan
 	switch evtName {
 	case ReadyKey:
-		r := &ReadyBox{}
-		r.Ctx = ctx
-		Unmarshal(data, r)
+		box := &ReadyBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.readyChan <- r
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case ResumedKey:
-		resumed := &ResumedBox{}
-		resumed.Ctx = ctx
-		Unmarshal(data, resumed)
+		box := &ResumedBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.resumedChan <- resumed
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case ChannelCreateKey, ChannelUpdateKey, ChannelDeleteKey:
 		chanContent := &channel.Channel{}
 		Unmarshal(data, chanContent)
 
 		switch evtName { // internal switch statement for ChannelEvt
 		case ChannelCreateKey:
-			d.channelCreateChan <- &ChannelCreateBox{Channel: chanContent, Ctx: ctx}
+			box := &ChannelCreateBox{Channel: chanContent, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case ChannelUpdateKey:
-			d.channelUpdateChan <- &ChannelUpdateBox{Channel: chanContent, Ctx: ctx}
+			box := &ChannelUpdateBox{Channel: chanContent, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case ChannelDeleteKey:
-			d.channelDeleteChan <- &ChannelDeleteBox{Channel: chanContent, Ctx: ctx}
+			box := &ChannelDeleteBox{Channel: chanContent, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		} // END internal switch statement for ChannelEvt
 	case ChannelPinsUpdateKey:
-		cpu := &ChannelPinsUpdateBox{}
-		cpu.Ctx = ctx
-		Unmarshal(data, cpu)
-		d.channelPinsUpdateChan <- cpu
+		box := &ChannelPinsUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
+
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildCreateKey, GuildUpdateKey, GuildDeleteKey:
 		g := &guild.Guild{}
 		Unmarshal(data, g)
 
 		switch evtName { // internal switch statement for guild events
 		case GuildCreateKey:
-			d.guildCreateChan <- &GuildCreateBox{Guild: g, Ctx: ctx}
+			box := &GuildCreateBox{Guild: g, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case GuildUpdateKey:
-			d.guildUpdateChan <- &GuildUpdateBox{Guild: g, Ctx: ctx}
+			box := &GuildUpdateBox{Guild: g, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case GuildDeleteKey:
 			unavailGuild := guild.NewGuildUnavailable(g.ID)
-			d.guildDeleteChan <- &GuildDeleteBox{UnavailableGuild: unavailGuild, Ctx: ctx}
+			box := &GuildDeleteBox{UnavailableGuild: unavailGuild, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		} // END internal switch statement for guild events
 	case GuildBanAddKey:
-		gba := &GuildBanAddBox{}
-		gba.Ctx = ctx
-		Unmarshal(data, gba)
+		box := &GuildBanAddBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildBanAddChan <- gba
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildBanRemoveKey:
-		gbr := &GuildBanRemoveBox{}
-		gbr.Ctx = ctx
-		Unmarshal(data, gbr)
+		box := &GuildBanRemoveBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildBanRemoveChan <- gbr
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildEmojisUpdateKey:
-		geu := &GuildEmojisUpdateBox{}
-		geu.Ctx = ctx
-		Unmarshal(data, geu)
+		box := &GuildEmojisUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildEmojisUpdateChan <- geu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildIntegrationsUpdateKey:
-		giu := &GuildIntegrationsUpdateBox{}
-		giu.Ctx = ctx
-		Unmarshal(data, giu)
+		box := &GuildIntegrationsUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildIntegrationsUpdateChan <- giu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildMemberAddKey:
-		gma := &GuildMemberAddBox{}
-		gma.Ctx = ctx
-		Unmarshal(data, gma)
+		box := &GuildMemberAddBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildMemberAddChan <- gma
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildMemberRemoveKey:
-		gmr := &GuildMemberRemoveBox{}
-		gmr.Ctx = ctx
-		Unmarshal(data, gmr)
+		box := &GuildMemberRemoveBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildMemberRemoveChan <- gmr
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildMemberUpdateKey:
-		gmu := &GuildMemberUpdateBox{}
-		gmu.Ctx = ctx
-		Unmarshal(data, gmu)
+		box := &GuildMemberUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildMemberUpdateChan <- gmu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildMembersChunkKey:
-		gmc := &GuildMembersChunkBox{}
-		gmc.Ctx = ctx
-		Unmarshal(data, gmc)
+		box := &GuildMembersChunkBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildMembersChunkChan <- gmc
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildRoleCreateKey:
-		r := &GuildRoleCreateBox{}
-		r.Ctx = ctx
-		Unmarshal(data, r)
+		box := &GuildRoleCreateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildRoleCreateChan <- r
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildRoleUpdateKey:
-		r := &GuildRoleUpdateBox{}
-		r.Ctx = ctx
-		Unmarshal(data, r)
+		box := &GuildRoleUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildRoleUpdateChan <- r
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case GuildRoleDeleteKey:
-		r := &GuildRoleDeleteBox{}
-		r.Ctx = ctx
-		Unmarshal(data, r)
+		box := &GuildRoleDeleteBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.guildRoleDeleteChan <- r
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case MessageCreateKey, MessageUpdateKey, MessageDeleteKey:
 		msg := channel.NewMessage()
 		Unmarshal(data, msg)
 
 		switch evtName { // internal switch statement for MessageEvt
 		case MessageCreateKey:
-			d.messageCreateChan <- &MessageCreateBox{Message: msg, Ctx: ctx}
+			box := &MessageCreateBox{Message: msg, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case MessageUpdateKey:
-			d.messageUpdateChan <- &MessageUpdateBox{Message: msg, Ctx: ctx}
+			box := &MessageUpdateBox{Message: msg, Ctx: ctx}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		case MessageDeleteKey:
-			d.messageDeleteChan <- &MessageDeleteBox{MessageID: msg.ID, ChannelID: msg.ChannelID}
+			box := &MessageDeleteBox{MessageID: msg.ID, ChannelID: msg.ChannelID}
+			d.TriggerChan(evtName, session, ctx, box)
+			d.TriggerCallbacks(evtName, session, ctx, box)
 		} // END internal switch statement for MessageEvt
 	case MessageDeleteBulkKey:
-		mdb := &MessageDeleteBulkBox{}
-		mdb.Ctx = ctx
-		Unmarshal(data, mdb)
+		box := &MessageDeleteBulkBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.messageDeleteBulkChan <- mdb
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case MessageReactionAddKey:
-		mra := &MessageReactionAddBox{}
-		mra.Ctx = ctx
-		Unmarshal(data, mra)
+		box := &MessageReactionAddBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.messageReactionAddChan <- mra
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case MessageReactionRemoveKey:
-		mrr := &MessageReactionRemoveBox{}
-		mrr.Ctx = ctx
-		Unmarshal(data, mrr)
+		box := &MessageReactionRemoveBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.messageReactionRemoveChan <- mrr
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case MessageReactionRemoveAllKey:
-		mrra := &MessageReactionRemoveAllBox{}
-		mrra.Ctx = ctx
-		Unmarshal(data, mrra)
+		box := &MessageReactionRemoveAllBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.messageReactionRemoveAllChan <- mrra
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case PresenceUpdateKey:
-		pu := &PresenceUpdateBox{}
-		pu.Ctx = ctx
-		Unmarshal(data, pu)
+		box := &PresenceUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.presenceUpdateChan <- pu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case TypingStartKey:
-		ts := &TypingStartBox{}
-		ts.Ctx = ctx
-		Unmarshal(data, ts)
+		box := &TypingStartBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.typingStartChan <- ts
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case UserUpdateKey:
-		u := &UserUpdateBox{}
-		u.Ctx = ctx
-		Unmarshal(data, u)
+		box := &UserUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		// dispatch event
-		d.userUpdateChan <- u
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case VoiceStateUpdateKey:
-		vsu := &VoiceStateUpdateBox{}
-		vsu.Ctx = ctx
-		Unmarshal(data, vsu)
+		box := &VoiceStateUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.voiceStateUpdateChan <- vsu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case VoiceServerUpdateKey:
-		vsu := &VoiceServerUpdateBox{}
-		vsu.Ctx = ctx
-		Unmarshal(data, vsu)
+		box := &VoiceServerUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.voiceServerUpdateChan <- vsu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	case WebhooksUpdateKey:
-		wsu := &WebhooksUpdateBox{}
-		wsu.Ctx = ctx
-		Unmarshal(data, wsu)
+		box := &WebhooksUpdateBox{}
+		box.Ctx = ctx
+		Unmarshal(data, box)
 
-		d.webhooksUpdateChan <- wsu
+		d.TriggerChan(evtName, session, ctx, box)
+		d.TriggerCallbacks(evtName, session, ctx, box)
 	default:
 		fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evtName, string(data))
 	}
@@ -379,104 +639,104 @@ func (d *Dispatcher) Trigger(evtName KeyType, session disgordctx.Context, ctx co
 	// }
 }
 
-func (d *Dispatcher) AllChan() <-chan interface{} {
+func (d *Dispatch) AllChan() <-chan interface{} {
 	return d.allChan
 }
-func (d *Dispatcher) ReadyChan() <-chan *ReadyBox {
+func (d *Dispatch) ReadyChan() <-chan *ReadyBox {
 	return d.readyChan
 }
-func (d *Dispatcher) ResumedChan() <-chan *ResumedBox {
+func (d *Dispatch) ResumedChan() <-chan *ResumedBox {
 	return d.resumedChan
 }
-func (d *Dispatcher) ChannelCreateChan() <-chan *ChannelCreateBox {
+func (d *Dispatch) ChannelCreateChan() <-chan *ChannelCreateBox {
 	return d.channelCreateChan
 }
-func (d *Dispatcher) ChannelUpdateChan() <-chan *ChannelUpdateBox {
+func (d *Dispatch) ChannelUpdateChan() <-chan *ChannelUpdateBox {
 	return d.channelUpdateChan
 }
-func (d *Dispatcher) ChannelDeleteChan() <-chan *ChannelDeleteBox {
+func (d *Dispatch) ChannelDeleteChan() <-chan *ChannelDeleteBox {
 	return d.channelDeleteChan
 }
-func (d *Dispatcher) ChannelPinsUpdateChan() <-chan *ChannelPinsUpdateBox {
+func (d *Dispatch) ChannelPinsUpdateChan() <-chan *ChannelPinsUpdateBox {
 	return d.channelPinsUpdateChan
 }
-func (d *Dispatcher) GuildCreateChan() <-chan *GuildCreateBox {
+func (d *Dispatch) GuildCreateChan() <-chan *GuildCreateBox {
 	return d.guildCreateChan
 }
-func (d *Dispatcher) GuildUpdateChan() <-chan *GuildUpdateBox {
+func (d *Dispatch) GuildUpdateChan() <-chan *GuildUpdateBox {
 	return d.guildUpdateChan
 }
-func (d *Dispatcher) GuildDeleteChan() <-chan *GuildDeleteBox {
+func (d *Dispatch) GuildDeleteChan() <-chan *GuildDeleteBox {
 	return d.guildDeleteChan
 }
-func (d *Dispatcher) GuildBanAddChan() <-chan *GuildBanAddBox {
+func (d *Dispatch) GuildBanAddChan() <-chan *GuildBanAddBox {
 	return d.guildBanAddChan
 }
-func (d *Dispatcher) GuildBanRemoveChan() <-chan *GuildBanRemoveBox {
+func (d *Dispatch) GuildBanRemoveChan() <-chan *GuildBanRemoveBox {
 	return d.guildBanRemoveChan
 }
-func (d *Dispatcher) GuildEmojisUpdateChan() <-chan *GuildEmojisUpdateBox {
+func (d *Dispatch) GuildEmojisUpdateChan() <-chan *GuildEmojisUpdateBox {
 	return d.guildEmojisUpdateChan
 }
-func (d *Dispatcher) GuildIntegrationsUpdateChan() <-chan *GuildIntegrationsUpdateBox {
+func (d *Dispatch) GuildIntegrationsUpdateChan() <-chan *GuildIntegrationsUpdateBox {
 	return d.guildIntegrationsUpdateChan
 }
-func (d *Dispatcher) GuildMemberAddChan() <-chan *GuildMemberAddBox { return d.guildMemberAddChan }
-func (d *Dispatcher) GuildMemberRemoveChan() <-chan *GuildMemberRemoveBox {
+func (d *Dispatch) GuildMemberAddChan() <-chan *GuildMemberAddBox { return d.guildMemberAddChan }
+func (d *Dispatch) GuildMemberRemoveChan() <-chan *GuildMemberRemoveBox {
 	return d.guildMemberRemoveChan
 }
-func (d *Dispatcher) GuildMemberUpdateChan() <-chan *GuildMemberUpdateBox {
+func (d *Dispatch) GuildMemberUpdateChan() <-chan *GuildMemberUpdateBox {
 	return d.guildMemberUpdateChan
 }
-func (d *Dispatcher) GuildMembersChunkChan() <-chan *GuildMembersChunkBox {
+func (d *Dispatch) GuildMembersChunkChan() <-chan *GuildMembersChunkBox {
 	return d.guildMembersChunkChan
 }
-func (d *Dispatcher) GuildRoleUpdateChan() <-chan *GuildRoleUpdateBox {
+func (d *Dispatch) GuildRoleUpdateChan() <-chan *GuildRoleUpdateBox {
 	return d.guildRoleUpdateChan
 }
-func (d *Dispatcher) GuildRoleCreateChan() <-chan *GuildRoleCreateBox {
+func (d *Dispatch) GuildRoleCreateChan() <-chan *GuildRoleCreateBox {
 	return d.guildRoleCreateChan
 }
-func (d *Dispatcher) GuildRoleDeleteChan() <-chan *GuildRoleDeleteBox {
+func (d *Dispatch) GuildRoleDeleteChan() <-chan *GuildRoleDeleteBox {
 	return d.guildRoleDeleteChan
 }
-func (d *Dispatcher) MessageCreateChan() <-chan *MessageCreateBox {
+func (d *Dispatch) MessageCreateChan() <-chan *MessageCreateBox {
 	return d.messageCreateChan
 }
-func (d *Dispatcher) MessageUpdateChan() <-chan *MessageUpdateBox {
+func (d *Dispatch) MessageUpdateChan() <-chan *MessageUpdateBox {
 	return d.messageUpdateChan
 }
-func (d *Dispatcher) MessageDeleteChan() <-chan *MessageDeleteBox {
+func (d *Dispatch) MessageDeleteChan() <-chan *MessageDeleteBox {
 	return d.messageDeleteChan
 }
-func (d *Dispatcher) MessageDeleteBulkChan() <-chan *MessageDeleteBulkBox {
+func (d *Dispatch) MessageDeleteBulkChan() <-chan *MessageDeleteBulkBox {
 	return d.messageDeleteBulkChan
 }
-func (d *Dispatcher) MessageReactionAddChan() <-chan *MessageReactionAddBox {
+func (d *Dispatch) MessageReactionAddChan() <-chan *MessageReactionAddBox {
 	return d.messageReactionAddChan
 }
-func (d *Dispatcher) MessageReactionRemoveChan() <-chan *MessageReactionRemoveBox {
+func (d *Dispatch) MessageReactionRemoveChan() <-chan *MessageReactionRemoveBox {
 	return d.messageReactionRemoveChan
 }
-func (d *Dispatcher) MessageReactionRemoveAllChan() <-chan *MessageReactionRemoveAllBox {
+func (d *Dispatch) MessageReactionRemoveAllChan() <-chan *MessageReactionRemoveAllBox {
 	return d.messageReactionRemoveAllChan
 }
-func (d *Dispatcher) PresenceUpdateChan() <-chan *PresenceUpdateBox {
+func (d *Dispatch) PresenceUpdateChan() <-chan *PresenceUpdateBox {
 	return d.presenceUpdateChan
 }
-func (d *Dispatcher) TypingStartChan() <-chan *TypingStartBox {
+func (d *Dispatch) TypingStartChan() <-chan *TypingStartBox {
 	return d.typingStartChan
 }
-func (d *Dispatcher) UserUpdateChan() <-chan *UserUpdateBox {
+func (d *Dispatch) UserUpdateChan() <-chan *UserUpdateBox {
 	return d.userUpdateChan
 }
-func (d *Dispatcher) VoiceStateUpdateChan() <-chan *VoiceStateUpdateBox {
+func (d *Dispatch) VoiceStateUpdateChan() <-chan *VoiceStateUpdateBox {
 	return d.voiceStateUpdateChan
 }
-func (d *Dispatcher) VoiceServerUpdateChan() <-chan *VoiceServerUpdateBox {
+func (d *Dispatch) VoiceServerUpdateChan() <-chan *VoiceServerUpdateBox {
 	return d.voiceServerUpdateChan
 }
-func (d *Dispatcher) WebhooksUpdateChan() <-chan *WebhooksUpdateBox {
+func (d *Dispatch) WebhooksUpdateChan() <-chan *WebhooksUpdateBox {
 	return d.webhooksUpdateChan
 }
 

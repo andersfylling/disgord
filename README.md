@@ -75,9 +75,9 @@ INFO[2018-02-16 19:07:30] Disconnected                                  lib="Dis
 
 ## Code flow
 
-The main design takes in a discord event and dispatches the event to a channel suited for the event type. The channel can be retrieved by the Session interface: `Session.Event.ChannelDeleteChan()` ![the incoming event is fan out to respective channel types](images/how_event_are_dispatched_over_channels_using_fan_out.png)
+The main design takes in a discord event and dispatches the event to a channel/callback suited for the event type. The channel can be retrieved and the callbacks set by the Session interface: `Session.Event.ChannelDeleteChan()`, `Session.Event.AddHandler(event.GuildCreateKey, func(...){})` ![the incoming event is fan out to respective channel/callbacks types](images/how_event_are_dispatched_over_channels_using_fan_out.png)
 
-Note that good old callbacks can be used as well. However these have more overhead as they are triggered by their respective channels. They are therefore triggered after the channel dispatcher. ![Callbacks are fired after a channel receives the event](images/how_events_are_dispatches_to_callbacks_using_channels.png)
+Note that callbacks and channels are fired from the same place, to avoid overhead. However, channels are fired before the callbacks.
 
 ## Progress
 

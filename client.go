@@ -113,7 +113,7 @@ func NewClient(conf *Config) (*Client, error) {
 		ws:            dws,
 		socketEvtChan: dws.GetEventChannel(),
 		Token:         conf.Token,
-		Event:         event.NewDispatcher(),
+		Event:         event.NewDispatch(),
 		State:         NewStateCache(),
 	}
 
@@ -142,7 +142,7 @@ type Client struct {
 	socketEvtChan <-chan discordws.EventInterface
 
 	// register listeners for events
-	Event *event.Dispatcher
+	Event event.Dispatcher
 
 	// cache
 	State StateCacher
