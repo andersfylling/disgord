@@ -22,6 +22,10 @@ const (
 
 	// APIVersion desired API version to use
 	APIVersion int = 6 // February 5, 2018
+
+	GitHubURL string = "https://github.com/andersfylling/disgord"
+
+	Version string = "v0.2.0" // todo: eh?..
 )
 
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
@@ -50,27 +54,19 @@ type Session interface {
 	// module wrappers
 	//
 
-	// requests
-	ReqGuild(guildID snowflake.ID) *guild.Guild
-	ReqChannel(channelID snowflake.ID) *channel.Channel
-	ReqChannels(guildID snowflake.ID) map[snowflake.ID]*channel.Channel
-	ReqMsg(msgID snowflake.ID) *channel.Message
-	ReqUser(userID snowflake.ID) *user.User
-	ReqMember(guildID, userID snowflake.ID) *guild.Member
-	ReqMembers(guildID snowflake.ID) map[snowflake.ID]*guild.Member
-
 	// event callbacks
 	AddListener(evtName string, callback interface{})
 	AddListenerOnce(evtName string, callback interface{})
 
 	// state/caching module
-	Guild(guildID snowflake.ID) *guild.Guild
-	Channel(channelID snowflake.ID) *channel.Channel
-	Channels(guildID snowflake.ID) map[snowflake.ID]*channel.Channel
-	Msg(msgID snowflake.ID) *channel.Message
-	User(userID snowflake.ID) *user.User
-	Member(guildID, userID snowflake.ID) *guild.Member
-	Members(guildID snowflake.ID) map[snowflake.ID]*guild.Member
+	// checks the cache first, otherwise do a http request
+	Guild(guildID snowflake.ID) <-chan *guild.Guild
+	Channel(channelID snowflake.ID) <-chan *channel.Channel
+	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*channel.Channel
+	Msg(msgID snowflake.ID) <-chan *channel.Message
+	User(userID snowflake.ID) <-chan *user.User
+	Member(guildID, userID snowflake.ID) <-chan *guild.Member
+	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*guild.Member
 }
 
 type Config struct {
@@ -108,14 +104,28 @@ func NewClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 
-	// create a disgord instance
+	// request client
+	reqConf := &request.Config{
+		APIVersion:         APIVersion,
+		BotToken:           conf.Token,
+		UserAgentSourceURL: GitHubURL,
+		UserAgentVersion:   Version,
+		HTTPClient:         conf.HTTPClient,
+	}
+	reqClient := request.NewClient(reqConf)
+
+	// event dispatcher
+	evtDispatcher := NewDispatch()
+
+	// create a disgord client/instance/session
 	c := &Client{
 		httpClient:    conf.HTTPClient,
 		ws:            dws,
 		socketEvtChan: dws.GetEventChannel(),
 		token:         conf.Token,
-		evtDispatch:   NewDispatch(),
-		state:         NewStateCache(),
+		evtDispatch:   evtDispatcher,
+		state:         NewStateCache(evtDispatcher),
+		req:           reqClient,
 	}
 
 	return c, nil
@@ -160,7 +170,7 @@ type Client struct {
 	httpClient *http.Client
 
 	// cache
-	state StateCacher
+	state *StateCache
 }
 
 func (c *Client) eventObserver() {
@@ -243,30 +253,6 @@ func (c *Client) State() StateCacher {
 	return c.state
 }
 
-func (c *Client) ReqGuild(guildID snowflake.ID) *guild.Guild {
-	return nil
-}
-func (c *Client) ReqChannel(channelID snowflake.ID) *channel.Channel {
-	return nil
-}
-func (c *Client) ReqChannels(guildID snowflake.ID) map[snowflake.ID]*channel.Channel {
-	result := make(map[snowflake.ID]*channel.Channel)
-	return result
-}
-func (c *Client) ReqMsg(msgID snowflake.ID) *channel.Message {
-	return nil
-}
-func (c *Client) ReqUser(userID snowflake.ID) *user.User {
-	return nil
-}
-func (c *Client) ReqMember(guildID, userID snowflake.ID) *guild.Member {
-	return nil
-}
-func (c *Client) ReqMembers(guildID snowflake.ID) map[snowflake.ID]*guild.Member {
-	result := make(map[snowflake.ID]*guild.Member)
-	return result
-}
-
 func (c *Client) AddListener(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandler(evtName, listener)
 }
@@ -276,29 +262,202 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandlerOnce(evtName, listener)
 }
 
-func (c *Client) Channel(channelID snowflake.ID) *channel.Channel {
-	return nil
+func (c *Client) Channel(channelID snowflake.ID) <-chan *channel.Channel {
+	ch := make(chan *channel.Channel)
+
+	go func(receiver chan<- *channel.Channel, storage StateCacher) {
+		result := &channel.Channel{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
 
-func (c *Client) Channels(GuildID snowflake.ID) map[snowflake.ID]*channel.Channel {
-	result := make(map[snowflake.ID]*channel.Channel)
-	return result
+func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*channel.Channel {
+	ch := make(chan map[snowflake.ID]*channel.Channel)
+
+	go func(receiver chan<- map[snowflake.ID]*channel.Channel, storage StateCacher) {
+		result := make(map[snowflake.ID]*channel.Channel)
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
 
 // state/caching module
-func (c *Client) Guild(guildID snowflake.ID) *guild.Guild {
-	return nil
+func (c *Client) Guild(guildID snowflake.ID) <-chan *guild.Guild {
+	ch := make(chan *guild.Guild)
+
+	go func(receiver chan<- *guild.Guild, storage StateCacher) {
+		result := &guild.Guild{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
-func (c *Client) Msg(msgID snowflake.ID) *channel.Message {
-	return nil
+func (c *Client) Msg(msgID snowflake.ID) <-chan *channel.Message {
+	ch := make(chan *channel.Message)
+
+	go func(receiver chan<- *channel.Message, storage StateCacher) {
+		result := &channel.Message{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
-func (c *Client) User(userID snowflake.ID) *user.User {
-	return nil
+func (c *Client) User(userID snowflake.ID) <-chan *user.User {
+	ch := make(chan *user.User)
+
+	go func(receiver chan<- *user.User, storage StateCacher) {
+		result := &user.User{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
-func (c *Client) Member(guildID, userID snowflake.ID) *guild.Member {
-	return nil
+func (c *Client) Member(guildID, userID snowflake.ID) <-chan *guild.Member {
+	ch := make(chan *guild.Member)
+
+	go func(receiver chan<- *guild.Member, storage StateCacher) {
+		result := &guild.Member{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
-func (c *Client) Members(guildID snowflake.ID) map[snowflake.ID]*guild.Member {
-	result := make(map[snowflake.ID]*guild.Member)
-	return result
+func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*guild.Member {
+	ch := make(chan map[snowflake.ID]*guild.Member)
+
+	go func(receiver chan<- map[snowflake.ID]*guild.Member, storage StateCacher) {
+		result := make(map[snowflake.ID]*guild.Member)
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }

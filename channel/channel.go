@@ -3,6 +3,8 @@ package channel
 import (
 	"errors"
 
+	"net/http"
+
 	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/user"
 	"github.com/andersfylling/snowflake"
@@ -96,7 +98,7 @@ func GetChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
 
 	uri := "/channels/" + id.String()
 	content := &Channel{}
-	err := client.Request("GET", uri, content)
+	err := client.Request(http.MethodGet, uri, content)
 	return content, err
 }
 

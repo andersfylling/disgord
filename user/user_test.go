@@ -26,6 +26,7 @@ func verifyUserMashaller(t *testing.T, file string) {
 func TestUserMarshalling(t *testing.T) {
 	files := []string{
 		"testdata/user1.json",
+		"testdata/user2.json",
 	}
 
 	for _, file := range files {

@@ -71,33 +71,33 @@ func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) Update(new *User) (err error) {
-	if u.ID != new.ID {
-		err = errors.New("cannot update user when the new struct has a different ID")
-		return
-	}
-	// make sure that new is not the same pointer!
-	if u == new {
-		err = errors.New("cannot update user when the new struct points to the same memory space")
-		return
-	}
-
-	u.Lock()
-	new.RLock()
-	u.Username = new.Username
-	u.Discriminator = new.Discriminator
-	u.Email = new.Email
-	u.Avatar = new.Avatar
-	u.Token = new.Token
-	u.Verified = new.Verified
-	u.MFAEnabled = new.MFAEnabled
-	u.Bot = new.Bot
-	new.RUnlock()
-	u.Unlock()
-
-	return
-}
-
 func (u *User) SendMessage(client UserMessager, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
+}
+
+func (u *User) Replicate(user *User) error {
+	if user == nil {
+		return errors.New("cannot copy nil object")
+	}
+
+	user.RLock()
+	u.Lock()
+
+	// deep copy, without changing the avatar pointer address
+	var avatarAddress *string
+	if u.Avatar != nil {
+		avatarAddress = u.Avatar
+	} else {
+		avatar := ""
+		avatarAddress = &avatar
+	}
+
+	*u = *user                   // copy all the fields
+	u.Avatar = avatarAddress     // point to a different location than user.Avatar
+	*(u.Avatar) = *(user.Avatar) // copy the Base64 image
+
+	u.Unlock()
+	user.RUnlock()
+
+	return nil
 }
