@@ -18,12 +18,32 @@ const (
 	UserAgentFormat     string = "DiscordBot (%s, %s) %s"
 )
 
-type Requester interface {
+type DiscordRequester interface {
 	Request(method, uri string, target interface{}, jsonParams io.Reader) error
 	Get(uri string, target interface{}) error
 	Post(uri string, target interface{}, jsonParams interface{}) error
 	Put(uri string, target interface{}, jsonParams interface{}) error
 	Patch(uri string, target interface{}, jsonParams interface{}) error
+	Delete(uri string) error
+}
+
+type DiscordGetter interface {
+	Get(uri string, target interface{}) error
+}
+
+type DiscordPoster interface {
+	Post(uri string, target interface{}, jsonParams interface{}) error
+}
+
+type DiscordPutter interface {
+	Put(uri string, target interface{}, jsonParams interface{}) error
+}
+
+type DiscordPatcher interface {
+	Patch(uri string, target interface{}, jsonParams interface{}) error
+}
+
+type DiscordDeleter interface {
 	Delete(uri string) error
 }
 
@@ -117,7 +137,10 @@ func (c *Client) Request(method, uri string, target interface{}, jsonParams io.R
 	}
 	defer res.Body.Close()
 
-	// successful deletes return 204
+	// update ratelimits
+	c.rateLimit.HandleResponse(res)
+
+	// successful deletes return 204. TODO: confirm
 	if method == http.MethodDelete {
 		if res.Status == http.MethodDelete {
 			return nil
