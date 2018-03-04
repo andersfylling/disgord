@@ -362,10 +362,7 @@ func (st *StateCache) User(ID snowflake.ID) (*schema.User, error) {
 	defer st.usersMutex.Unlock()
 
 	if u, ok := st.users[ID]; ok {
-		usr := schema.NewUser()
-		usr.Replicate(u) // copy over the data, so changes won't affect the cache.
-
-		return usr, nil
+		return u, nil
 	}
 
 	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")

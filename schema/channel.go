@@ -31,7 +31,7 @@ type Channel struct {
 	LastMessageID        *snowflake.ID                 `json:"last_message_id,omitempty"`
 	Bitrate              uint                          `json:"bitrate,omitempty"`
 	UserLimit            uint                          `json:"user_limit,omitempty"`
-	Recipients           []*User                       `json:"recipient,omitempty"`
+	Recipients           []*User                       `json:"recipient,omitempty"` // empty if not DM
 	Icon                 *string                       `json:"icon,omitempty"`
 	OwnerID              snowflake.ID                  `json:"owner_id,omitempty"`
 	ApplicationID        snowflake.ID                  `json:"applicaiton_id,omitempty"`
