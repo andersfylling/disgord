@@ -7,11 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discordws"
-	"github.com/andersfylling/disgord/guild"
 	"github.com/andersfylling/disgord/request"
-	"github.com/andersfylling/disgord/user"
+	"github.com/andersfylling/disgord/schema"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
@@ -60,13 +58,13 @@ type Session interface {
 
 	// state/caching module
 	// checks the cache first, otherwise do a http request
-	Guild(guildID snowflake.ID) <-chan *guild.Guild
-	Channel(channelID snowflake.ID) <-chan *channel.Channel
-	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*channel.Channel
-	Msg(msgID snowflake.ID) <-chan *channel.Message
-	User(userID snowflake.ID) <-chan *user.User
-	Member(guildID, userID snowflake.ID) <-chan *guild.Member
-	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*guild.Member
+	Guild(guildID snowflake.ID) <-chan *schema.Guild
+	Channel(channelID snowflake.ID) <-chan *schema.Channel
+	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Channel
+	Msg(msgID snowflake.ID) <-chan *schema.Message
+	User(userID snowflake.ID) <-chan *schema.User
+	Member(guildID, userID snowflake.ID) <-chan *schema.Member
+	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Member
 }
 
 type Config struct {
@@ -131,13 +129,8 @@ func NewClient(conf *Config) (*Client, error) {
 	return c, nil
 }
 
-func NewClientMustConnect(conf *Config) *Client {
+func NewClientMustCompile(conf *Config) *Client {
 	client, err := NewClient(conf)
-	if err != nil {
-		panic(err)
-	}
-
-	err = client.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -149,8 +142,8 @@ func NewSession(conf *Config) (Session, error) {
 	return NewClient(conf)
 }
 
-func NewSessionMustConnect(conf *Config) Session {
-	return NewClientMustConnect(conf)
+func NewSessionMustCompile(conf *Config) Session {
+	return NewClientMustCompile(conf)
 }
 
 type Client struct {
@@ -262,11 +255,11 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandlerOnce(evtName, listener)
 }
 
-func (c *Client) Channel(channelID snowflake.ID) <-chan *channel.Channel {
-	ch := make(chan *channel.Channel)
+func (c *Client) Channel(channelID snowflake.ID) <-chan *schema.Channel {
+	ch := make(chan *schema.Channel)
 
-	go func(receiver chan<- *channel.Channel, storage StateCacher) {
-		result := &channel.Channel{}
+	go func(receiver chan<- *schema.Channel, storage StateCacher) {
+		result := &schema.Channel{}
 		cached := true
 
 		// check cache
@@ -291,11 +284,11 @@ func (c *Client) Channel(channelID snowflake.ID) <-chan *channel.Channel {
 	return ch
 }
 
-func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*channel.Channel {
-	ch := make(chan map[snowflake.ID]*channel.Channel)
+func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*schema.Channel {
+	ch := make(chan map[snowflake.ID]*schema.Channel)
 
-	go func(receiver chan<- map[snowflake.ID]*channel.Channel, storage StateCacher) {
-		result := make(map[snowflake.ID]*channel.Channel)
+	go func(receiver chan<- map[snowflake.ID]*schema.Channel, storage StateCacher) {
+		result := make(map[snowflake.ID]*schema.Channel)
 		cached := true
 
 		// check cache
@@ -321,11 +314,11 @@ func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*channel
 }
 
 // state/caching module
-func (c *Client) Guild(guildID snowflake.ID) <-chan *guild.Guild {
-	ch := make(chan *guild.Guild)
+func (c *Client) Guild(guildID snowflake.ID) <-chan *schema.Guild {
+	ch := make(chan *schema.Guild)
 
-	go func(receiver chan<- *guild.Guild, storage StateCacher) {
-		result := &guild.Guild{}
+	go func(receiver chan<- *schema.Guild, storage StateCacher) {
+		result := &schema.Guild{}
 		cached := true
 
 		// check cache
@@ -349,11 +342,11 @@ func (c *Client) Guild(guildID snowflake.ID) <-chan *guild.Guild {
 
 	return ch
 }
-func (c *Client) Msg(msgID snowflake.ID) <-chan *channel.Message {
-	ch := make(chan *channel.Message)
+func (c *Client) Msg(msgID snowflake.ID) <-chan *schema.Message {
+	ch := make(chan *schema.Message)
 
-	go func(receiver chan<- *channel.Message, storage StateCacher) {
-		result := &channel.Message{}
+	go func(receiver chan<- *schema.Message, storage StateCacher) {
+		result := &schema.Message{}
 		cached := true
 
 		// check cache
@@ -377,11 +370,11 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *channel.Message {
 
 	return ch
 }
-func (c *Client) User(userID snowflake.ID) <-chan *user.User {
-	ch := make(chan *user.User)
+func (c *Client) User(userID snowflake.ID) <-chan *schema.User {
+	ch := make(chan *schema.User)
 
-	go func(userID snowflake.ID, receiver chan<- *user.User, storage StateCacher) {
-		var result *user.User
+	go func(userID snowflake.ID, receiver chan<- *schema.User, storage StateCacher) {
+		var result *schema.User
 		cached := true
 
 		// check cache
@@ -397,7 +390,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *user.User {
 		// do http request if none found
 		if result == nil {
 			cached = false
-			result = user.NewUser()
+			result = schema.NewUser()
 			err = c.req.Get("/users/"+userID.String(), result)
 			if err != nil {
 				fmt.Println("User does not exist in discord..")
@@ -421,11 +414,11 @@ func (c *Client) User(userID snowflake.ID) <-chan *user.User {
 
 	return ch
 }
-func (c *Client) Member(guildID, userID snowflake.ID) <-chan *guild.Member {
-	ch := make(chan *guild.Member)
+func (c *Client) Member(guildID, userID snowflake.ID) <-chan *schema.Member {
+	ch := make(chan *schema.Member)
 
-	go func(receiver chan<- *guild.Member, storage StateCacher) {
-		result := &guild.Member{}
+	go func(receiver chan<- *schema.Member, storage StateCacher) {
+		result := &schema.Member{}
 		cached := true
 
 		// check cache
@@ -449,11 +442,11 @@ func (c *Client) Member(guildID, userID snowflake.ID) <-chan *guild.Member {
 
 	return ch
 }
-func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*guild.Member {
-	ch := make(chan map[snowflake.ID]*guild.Member)
+func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Member {
+	ch := make(chan map[snowflake.ID]*schema.Member)
 
-	go func(receiver chan<- map[snowflake.ID]*guild.Member, storage StateCacher) {
-		result := make(map[snowflake.ID]*guild.Member)
+	go func(receiver chan<- map[snowflake.ID]*schema.Member, storage StateCacher) {
+		result := make(map[snowflake.ID]*schema.Member)
 		cached := true
 
 		// check cache

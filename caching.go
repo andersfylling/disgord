@@ -5,10 +5,8 @@ import (
 
 	"errors"
 
-	dchan "github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/event"
-	dguild "github.com/andersfylling/disgord/guild"
-	duser "github.com/andersfylling/disgord/user"
+	"github.com/andersfylling/disgord/schema"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -28,15 +26,15 @@ type StateCacher interface {
 	//UpdateUser(*user.User) (*user.User, error)
 	//DeleteUser(*user.User)
 	//DeleteUserByID(ID snowflake.ID)
-	User(ID snowflake.ID) (*duser.User, error)
+	User(ID snowflake.ID) (*schema.User, error)
 	//
 	//UpdateMySelf(*user.User)
-	GetMySelf() *duser.User
+	GetMySelf() *schema.User
 
 	// channels to receive changes
-	UserChan() chan<- *duser.User
-	MemberChan() chan<- *dguild.Member
-	MessageChan() chan<- *dchan.Message
+	UserChan() chan<- *schema.User
+	MemberChan() chan<- *schema.Member
+	MessageChan() chan<- *schema.Message
 
 	// Closer interface
 	Close() error
@@ -44,15 +42,15 @@ type StateCacher interface {
 
 func NewStateCache(evtDispatcher EvtDispatcher) *StateCache {
 	st := &StateCache{
-		guilds:   make(map[snowflake.ID]*dguild.Guild),
-		users:    make(map[snowflake.ID]*duser.User),
-		channels: make(map[snowflake.ID]*dchan.Channel),
-		mySelf:   &duser.User{},
+		guilds:   make(map[snowflake.ID]*schema.Guild),
+		users:    make(map[snowflake.ID]*schema.User),
+		channels: make(map[snowflake.ID]*schema.Channel),
+		mySelf:   &schema.User{},
 
-		userChan:   make(chan *duser.User),
-		memberChan: make(chan *dguild.Member),
-		msgChan:    make(chan *dchan.Message),
-		guildChan:  make(chan *dguild.Guild),
+		userChan:   make(chan *schema.User),
+		memberChan: make(chan *schema.Member),
+		msgChan:    make(chan *schema.Message),
+		guildChan:  make(chan *schema.Guild),
 	}
 
 	// listen for changes, and update the cache
@@ -63,10 +61,10 @@ func NewStateCache(evtDispatcher EvtDispatcher) *StateCache {
 }
 
 type StateCache struct {
-	guilds   map[snowflake.ID]*dguild.Guild
-	channels map[snowflake.ID]*dchan.Channel // DM, one-one, or groups
-	users    map[snowflake.ID]*duser.User
-	mySelf   *duser.User
+	guilds   map[snowflake.ID]*schema.Guild
+	channels map[snowflake.ID]*schema.Channel // DM, one-one, or groups
+	users    map[snowflake.ID]*schema.User
+	mySelf   *schema.User
 
 	guildsUpdateMutex sync.Mutex // update + delete
 	guildsAddMutex    sync.Mutex // creation
@@ -74,10 +72,10 @@ type StateCache struct {
 	usersMutex sync.Mutex
 
 	// channels
-	userChan   chan *duser.User
-	memberChan chan *dguild.Member
-	msgChan    chan *dchan.Message
-	guildChan  chan *dguild.Guild
+	userChan   chan *schema.User
+	memberChan chan *schema.Member
+	msgChan    chan *schema.Message
+	guildChan  chan *schema.Guild
 }
 
 // Channel listeners for object updates
@@ -85,7 +83,7 @@ type StateCache struct {
 
 func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 	for {
-		var guild *dguild.Guild
+		var guild *schema.Guild
 		var action string
 
 		// listen for guild changes
@@ -106,7 +104,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 			if !alive {
 				continue
 			}
-			guild = dguild.NewGuildFromUnavailable(box.UnavailableGuild)
+			guild = schema.NewGuildFromUnavailable(box.UnavailableGuild)
 			action = event.GuildDeleteKey
 		case g, alive := <-st.guildChan:
 			if !alive {
@@ -124,7 +122,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 		switch action {
 		case event.GuildCreateKey:
 			// Make sure changes to the cache, doesn't ruin the reactor pattern.
-			st.guilds[guild.ID] = &dguild.Guild{}
+			st.guilds[guild.ID] = &schema.Guild{}
 			*(st.guilds[guild.ID]) = *guild // don't alter the pointer, but merely data at the mem location.
 		case event.GuildUpdateKey:
 			//TODO: store cached arrays, delete, set new guild, and update respective arrays
@@ -139,7 +137,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 
 func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 	for {
-		var user *duser.User
+		var user *schema.User
 		var triggeredByChange bool
 
 		// listen for guild changes
@@ -202,7 +200,7 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 		var newUser bool
 		if _, exists := st.users[user.ID]; !exists {
 			// new user object
-			st.users[user.ID] = &duser.User{}
+			st.users[user.ID] = &schema.User{}
 			newUser = true
 		}
 
@@ -215,16 +213,16 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 	}
 }
 
-func (st *StateCache) UserChan() chan<- *duser.User {
+func (st *StateCache) UserChan() chan<- *schema.User {
 	return st.userChan
 }
-func (st *StateCache) MemberChan() chan<- *dguild.Member {
+func (st *StateCache) MemberChan() chan<- *schema.Member {
 	return st.memberChan
 }
-func (st *StateCache) MessageChan() chan<- *dchan.Message {
+func (st *StateCache) MessageChan() chan<- *schema.Message {
 	return st.msgChan
 }
-func (st *StateCache) GuildChan() chan<- *dguild.Guild {
+func (st *StateCache) GuildChan() chan<- *schema.Guild {
 	return st.guildChan
 }
 
@@ -359,12 +357,12 @@ func (st *StateCache) Close() error {
 
 // User get a copy from the cache, which can be safely distributed without ruining the up to date discord cache.
 // See st.updaterUser(...) for more information why it's a copy only.
-func (st *StateCache) User(ID snowflake.ID) (*duser.User, error) {
+func (st *StateCache) User(ID snowflake.ID) (*schema.User, error) {
 	st.usersMutex.Lock()
 	defer st.usersMutex.Unlock()
 
 	if u, ok := st.users[ID]; ok {
-		usr := duser.NewUser()
+		usr := schema.NewUser()
 		usr.Replicate(u) // copy over the data, so changes won't affect the cache.
 
 		return usr, nil
@@ -376,6 +374,6 @@ func (st *StateCache) User(ID snowflake.ID) (*duser.User, error) {
 //func (s *StateCache) UpdateMySelf(new *user.User) {
 //	s.mySelf.Update(new)
 //}
-func (s *StateCache) GetMySelf() *duser.User {
+func (s *StateCache) GetMySelf() *schema.User {
 	return s.mySelf
 }

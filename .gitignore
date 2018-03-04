@@ -1,3 +1,2 @@
-coverage.out
-debug.test
 .idea
+*.test

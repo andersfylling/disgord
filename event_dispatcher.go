@@ -7,9 +7,8 @@ import (
 
 	"sync"
 
-	"github.com/andersfylling/disgord/channel"
 	. "github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/guild"
+	"github.com/andersfylling/disgord/schema"
 )
 
 func NewDispatch() *Dispatch {
@@ -440,7 +439,7 @@ func (d *Dispatch) trigger(evtName string, session Session, ctx context.Context,
 		d.triggerChan(evtName, session, ctx, box)
 		d.triggerCallbacks(evtName, session, ctx, box)
 	case ChannelCreateKey, ChannelUpdateKey, ChannelDeleteKey:
-		chanContent := &channel.Channel{}
+		chanContent := &schema.Channel{}
 		Unmarshal(data, chanContent)
 
 		switch evtName { // internal switch statement for ChannelEvt
@@ -465,7 +464,7 @@ func (d *Dispatch) trigger(evtName string, session Session, ctx context.Context,
 		d.triggerChan(evtName, session, ctx, box)
 		d.triggerCallbacks(evtName, session, ctx, box)
 	case GuildCreateKey, GuildUpdateKey, GuildDeleteKey:
-		g := &guild.Guild{}
+		g := &schema.Guild{}
 		Unmarshal(data, g)
 
 		switch evtName { // internal switch statement for guild events
@@ -478,7 +477,7 @@ func (d *Dispatch) trigger(evtName string, session Session, ctx context.Context,
 			d.triggerChan(evtName, session, ctx, box)
 			d.triggerCallbacks(evtName, session, ctx, box)
 		case GuildDeleteKey:
-			unavailGuild := guild.NewGuildUnavailable(g.ID)
+			unavailGuild := schema.NewGuildUnavailable(g.ID)
 			box := &GuildDeleteBox{UnavailableGuild: unavailGuild, Ctx: ctx}
 			d.triggerChan(evtName, session, ctx, box)
 			d.triggerCallbacks(evtName, session, ctx, box)
@@ -561,7 +560,7 @@ func (d *Dispatch) trigger(evtName string, session Session, ctx context.Context,
 		d.triggerChan(evtName, session, ctx, box)
 		d.triggerCallbacks(evtName, session, ctx, box)
 	case MessageCreateKey, MessageUpdateKey, MessageDeleteKey:
-		msg := channel.NewMessage()
+		msg := schema.NewMessage()
 		Unmarshal(data, msg)
 
 		switch evtName { // internal switch statement for MessageEvt
