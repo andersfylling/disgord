@@ -380,15 +380,31 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *channel.Message {
 func (c *Client) User(userID snowflake.ID) <-chan *user.User {
 	ch := make(chan *user.User)
 
-	go func(receiver chan<- *user.User, storage StateCacher) {
-		result := &user.User{}
+	go func(userID snowflake.ID, receiver chan<- *user.User, storage StateCacher) {
+		var result *user.User
 		cached := true
 
 		// check cache
+		result, err := storage.User(userID)
+		if err != nil {
+			// log
+			fmt.Printf("User not in cache: id: %s\n", userID.String())
+		}
+
+		// TODO: cache dead objects, to avoid http requesting the same none existance object?
+		// will this ever be a problem
 
 		// do http request if none found
 		if result == nil {
 			cached = false
+			result = user.NewUser()
+			err = c.req.Get("/users/"+userID.String(), result)
+			if err != nil {
+				fmt.Println("User does not exist in discord..")
+				receiver <- nil
+				close(receiver)
+				return
+			}
 		}
 
 		// return result
@@ -396,12 +412,12 @@ func (c *Client) User(userID snowflake.ID) <-chan *user.User {
 
 		// update cache with new result, if not found
 		if !cached {
-			//storage.MemberChan <- result
+			storage.UserChan() <- result
 		}
 
 		// kill the channel
-		close(ch)
-	}(ch, c.state)
+		close(receiver)
+	}(userID, ch, c.state)
 
 	return ch
 }

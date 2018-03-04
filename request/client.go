@@ -115,6 +115,7 @@ func (c *Client) Request(method, uri string, target interface{}, jsonParams io.R
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 
 	// successful deletes return 204
 	if method == http.MethodDelete {
@@ -127,7 +128,6 @@ func (c *Client) Request(method, uri string, target interface{}, jsonParams io.R
 
 	// if a target has been provided for un-marshalling
 	if target != nil {
-		defer res.Body.Close()
 
 		return json.NewDecoder(res.Body).Decode(target)
 	}

@@ -34,6 +34,7 @@ type StateCacher interface {
 	GetMySelf() *duser.User
 
 	// channels to receive changes
+	UserChan() chan<- *duser.User
 	MemberChan() chan<- *dguild.Member
 	MessageChan() chan<- *dchan.Message
 
@@ -47,10 +48,16 @@ func NewStateCache(evtDispatcher EvtDispatcher) *StateCache {
 		users:    make(map[snowflake.ID]*duser.User),
 		channels: make(map[snowflake.ID]*dchan.Channel),
 		mySelf:   &duser.User{},
+
+		userChan:   make(chan *duser.User),
+		memberChan: make(chan *dguild.Member),
+		msgChan:    make(chan *dchan.Message),
+		guildChan:  make(chan *dguild.Guild),
 	}
 
 	// listen for changes, and update the cache
-	go st.updaterGuild(evtDispatcher)
+	//go st.updaterGuild(evtDispatcher)
+	go st.updaterUser(evtDispatcher)
 
 	return st
 }
@@ -67,6 +74,7 @@ type StateCache struct {
 	usersMutex sync.Mutex
 
 	// channels
+	userChan   chan *duser.User
 	memberChan chan *dguild.Member
 	msgChan    chan *dchan.Message
 	guildChan  chan *dguild.Guild
@@ -131,7 +139,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 
 func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 	for {
-		var usr *duser.User
+		var user *duser.User
 		var triggeredByChange bool
 
 		// listen for guild changes
@@ -140,13 +148,23 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 			if !alive {
 				continue
 			}
-			usr = box.User
+			user = box.User
 			triggeredByChange = true
 		case box, alive := <-evtDispatcher.MessageCreateChan():
 			if !alive {
 				continue
 			}
-			usr = box.Message.Author
+			user = box.Message.Author
+		case member, alive := <-st.memberChan:
+			if !alive {
+				continue
+			}
+			user = member.User
+		case u, alive := <-st.userChan:
+			if !alive {
+				continue
+			}
+			user = u
 		}
 
 		// the users doesn't hold any pointers, and can be safely swapped out without the need to update
@@ -182,21 +200,24 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 		//				It's slow, but will reflect the latest change without writing changes to the cache.
 		st.usersMutex.Lock()
 		var newUser bool
-		if _, exists := st.users[usr.ID]; !exists {
+		if _, exists := st.users[user.ID]; !exists {
 			// new user object
-			st.users[usr.ID] = &duser.User{}
+			st.users[user.ID] = &duser.User{}
 			newUser = true
 		}
 
 		// false: the user exists, but the incoming user object hasn't changed. It's just cached cause of activity
 		if triggeredByChange || newUser {
-			st.users[usr.ID].Replicate(usr)
+			st.users[user.ID].Replicate(user)
 		}
 
 		st.usersMutex.Unlock()
 	}
 }
 
+func (st *StateCache) UserChan() chan<- *duser.User {
+	return st.userChan
+}
 func (st *StateCache) MemberChan() chan<- *dguild.Member {
 	return st.memberChan
 }
@@ -344,7 +365,7 @@ func (st *StateCache) User(ID snowflake.ID) (*duser.User, error) {
 
 	if u, ok := st.users[ID]; ok {
 		usr := duser.NewUser()
-		*usr = *u // copy over the data, so changes won't affect the cache.
+		usr.Replicate(u) // copy over the data, so changes won't affect the cache.
 
 		return usr, nil
 	}

@@ -80,6 +80,10 @@ func (u *User) Replicate(user *User) error {
 		return errors.New("cannot copy nil object")
 	}
 
+	if u == user {
+		return errors.New("cannot copy itself, makes no sense")
+	}
+
 	user.RLock()
 	u.Lock()
 
@@ -92,7 +96,9 @@ func (u *User) Replicate(user *User) error {
 		avatarAddress = &avatar
 	}
 
+	uMutex := u.RWMutex
 	*u = *user                   // copy all the fields
+	u.RWMutex = uMutex           // make sure the mutex isn't deleted
 	u.Avatar = avatarAddress     // point to a different location than user.Avatar
 	*(u.Avatar) = *(user.Avatar) // copy the Base64 image
 
