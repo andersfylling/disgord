@@ -9,7 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/request"
-	"github.com/andersfylling/disgord/schema"
+	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
@@ -58,13 +58,13 @@ type Session interface {
 
 	// state/caching module
 	// checks the cache first, otherwise do a http request
-	Guild(guildID snowflake.ID) <-chan *schema.Guild
-	Channel(channelID snowflake.ID) <-chan *schema.Channel
-	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Channel
-	Msg(msgID snowflake.ID) <-chan *schema.Message
-	User(userID snowflake.ID) <-chan *schema.User
-	Member(guildID, userID snowflake.ID) <-chan *schema.Member
-	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Member
+	Guild(guildID snowflake.ID) <-chan *resource.Guild
+	Channel(channelID snowflake.ID) <-chan *resource.Channel
+	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel
+	Msg(msgID snowflake.ID) <-chan *resource.Message
+	User(userID snowflake.ID) <-chan *resource.User
+	Member(guildID, userID snowflake.ID) <-chan *resource.Member
+	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member
 }
 
 type Config struct {
@@ -255,11 +255,11 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandlerOnce(evtName, listener)
 }
 
-func (c *Client) Channel(channelID snowflake.ID) <-chan *schema.Channel {
-	ch := make(chan *schema.Channel)
+func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
+	ch := make(chan *resource.Channel)
 
-	go func(receiver chan<- *schema.Channel, storage StateCacher) {
-		result := &schema.Channel{}
+	go func(receiver chan<- *resource.Channel, storage StateCacher) {
+		result := &resource.Channel{}
 		cached := true
 
 		// check cache
@@ -284,11 +284,11 @@ func (c *Client) Channel(channelID snowflake.ID) <-chan *schema.Channel {
 	return ch
 }
 
-func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*schema.Channel {
-	ch := make(chan map[snowflake.ID]*schema.Channel)
+func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel {
+	ch := make(chan map[snowflake.ID]*resource.Channel)
 
-	go func(receiver chan<- map[snowflake.ID]*schema.Channel, storage StateCacher) {
-		result := make(map[snowflake.ID]*schema.Channel)
+	go func(receiver chan<- map[snowflake.ID]*resource.Channel, storage StateCacher) {
+		result := make(map[snowflake.ID]*resource.Channel)
 		cached := true
 
 		// check cache
@@ -314,11 +314,11 @@ func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*schema.
 }
 
 // state/caching module
-func (c *Client) Guild(guildID snowflake.ID) <-chan *schema.Guild {
-	ch := make(chan *schema.Guild)
+func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
+	ch := make(chan *resource.Guild)
 
-	go func(receiver chan<- *schema.Guild, storage StateCacher) {
-		result := &schema.Guild{}
+	go func(receiver chan<- *resource.Guild, storage StateCacher) {
+		result := &resource.Guild{}
 		cached := true
 
 		// check cache
@@ -342,11 +342,11 @@ func (c *Client) Guild(guildID snowflake.ID) <-chan *schema.Guild {
 
 	return ch
 }
-func (c *Client) Msg(msgID snowflake.ID) <-chan *schema.Message {
-	ch := make(chan *schema.Message)
+func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
+	ch := make(chan *resource.Message)
 
-	go func(receiver chan<- *schema.Message, storage StateCacher) {
-		result := &schema.Message{}
+	go func(receiver chan<- *resource.Message, storage StateCacher) {
+		result := &resource.Message{}
 		cached := true
 
 		// check cache
@@ -370,11 +370,11 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *schema.Message {
 
 	return ch
 }
-func (c *Client) User(userID snowflake.ID) <-chan *schema.User {
-	ch := make(chan *schema.User)
+func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
+	ch := make(chan *resource.User)
 
-	go func(userID snowflake.ID, receiver chan<- *schema.User, storage StateCacher) {
-		var result *schema.User
+	go func(userID snowflake.ID, receiver chan<- *resource.User, storage StateCacher) {
+		var result *resource.User
 		cached := true
 
 		// check cache
@@ -390,7 +390,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *schema.User {
 		// do http request if none found
 		if result == nil {
 			cached = false
-			result = schema.NewUser()
+			result = resource.NewUser()
 			err = c.req.Get("/users/"+userID.String(), result)
 			if err != nil {
 				fmt.Println("User does not exist in discord..")
@@ -414,11 +414,11 @@ func (c *Client) User(userID snowflake.ID) <-chan *schema.User {
 
 	return ch
 }
-func (c *Client) Member(guildID, userID snowflake.ID) <-chan *schema.Member {
-	ch := make(chan *schema.Member)
+func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
+	ch := make(chan *resource.Member)
 
-	go func(receiver chan<- *schema.Member, storage StateCacher) {
-		result := &schema.Member{}
+	go func(receiver chan<- *resource.Member, storage StateCacher) {
+		result := &resource.Member{}
 		cached := true
 
 		// check cache
@@ -442,11 +442,11 @@ func (c *Client) Member(guildID, userID snowflake.ID) <-chan *schema.Member {
 
 	return ch
 }
-func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*schema.Member {
-	ch := make(chan map[snowflake.ID]*schema.Member)
+func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member {
+	ch := make(chan map[snowflake.ID]*resource.Member)
 
-	go func(receiver chan<- map[snowflake.ID]*schema.Member, storage StateCacher) {
-		result := make(map[snowflake.ID]*schema.Member)
+	go func(receiver chan<- map[snowflake.ID]*resource.Member, storage StateCacher) {
+		result := make(map[snowflake.ID]*resource.Member)
 		cached := true
 
 		// check cache

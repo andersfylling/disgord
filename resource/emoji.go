@@ -1,4 +1,4 @@
-package schema
+package resource
 
 import (
 	"github.com/andersfylling/snowflake"

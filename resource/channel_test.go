@@ -1,4 +1,4 @@
-package schema
+package resource
 
 //
 // func TestTypingStartMarshaler(t *testing.T) {
