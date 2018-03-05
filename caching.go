@@ -27,6 +27,7 @@ type StateCacher interface {
 	//DeleteUser(*user.User)
 	//DeleteUserByID(ID snowflake.ID)
 	User(ID snowflake.ID) (*schema.User, error)
+	Channel(ID snowflake.ID) (*schema.Channel, error)
 	//
 	//UpdateMySelf(*user.User)
 	GetMySelf() *schema.User
@@ -66,10 +67,9 @@ type StateCache struct {
 	users    map[snowflake.ID]*schema.User
 	mySelf   *schema.User
 
-	guildsUpdateMutex sync.Mutex // update + delete
-	guildsAddMutex    sync.Mutex // creation
-
-	usersMutex sync.Mutex
+	usersMutex    sync.RWMutex
+	channelsMutex sync.RWMutex
+	guildsMutex   sync.RWMutex
 
 	// channels
 	userChan   chan *schema.User
@@ -132,6 +132,85 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 			}
 			// TODO: delete content in arrays as well, but not public data such as users
 		}
+	}
+}
+
+func (st *StateCache) cacheChannel(channel *schema.Channel) {
+	if _, exists := st.channels[channel.ID]; !exists {
+		st.channels[channel.ID] = &schema.Channel{}
+	}
+
+	var recipients []*schema.User
+	// DM will holds user objects
+	if channel.Type == schema.ChannelTypeDM || channel.Type == schema.ChannelTypeGroupDM {
+		recipients = make([]*schema.User, len(channel.Recipients))
+		// TODO: predefined length vs append speed. since the user objects will most likely exist.
+		for index, recipient := range channel.Recipients {
+			var user *schema.User
+			user, _ = st.User(recipient.ID)
+
+			// if the user is not in cache, he should be cached.
+			// with this users can suddenly not exist, and causes unnecessary requests
+			// TODO
+			if user == nil {
+				user = schema.NewUser()
+				user.Replicate(recipient)
+			}
+
+			recipients[index] = user
+		}
+	}
+
+	st.channels[channel.ID].Replicate(channel, recipients)
+}
+
+func (st *StateCache) updaterChannel(evtDispatcher EvtDispatcher) {
+	for {
+		var channel *schema.Channel
+		var guild *schema.Guild
+		var action string
+
+		// listen for channel changes
+		select {
+		case box, alive := <-evtDispatcher.ChannelCreateChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelCreateKey
+		case box, alive := <-evtDispatcher.ChannelUpdateChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelUpdateKey
+		case box, alive := <-evtDispatcher.ChannelDeleteChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelDeleteKey
+		case box, alive := <-evtDispatcher.GuildCreateChan():
+			if !alive {
+				continue
+			}
+			guild = box.Guild
+			action = event.GuildCreateKey
+		}
+
+		st.channelsMutex.Lock()
+		if action == event.ChannelDeleteKey {
+			if _, exists := st.channels[channel.ID]; exists {
+				delete(st.channels, channel.ID)
+			}
+		} else if action == event.GuildCreateKey {
+			for _, ch := range guild.Channels {
+				st.cacheChannel(ch)
+			}
+		} else {
+			st.cacheChannel(channel)
+		}
+		st.channelsMutex.Unlock()
 	}
 }
 
@@ -203,6 +282,8 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 			st.users[user.ID] = &schema.User{}
 			newUser = true
 		}
+
+		// TODO: method for saving/updating user object
 
 		// false: the user exists, but the incoming user object hasn't changed. It's just cached cause of activity
 		if triggeredByChange || newUser {
@@ -310,50 +391,42 @@ func (st *StateCache) Close() error {
 //	}
 //}
 //
-//// users
-////
-//
-//// AddUser and return reference
-//func (s *StateCache) AddUser(u *user.User) (updated *user.User) {
-//	s.usersAddMutex.Lock()
-//	defer s.usersAddMutex.Unlock()
-//
-//	if _, exists := s.users[u.ID]; exists {
-//		updated, _ = s.UpdateUser(u)
-//		return
-//	}
-//	s.users[u.ID] = u
-//	updated = u
-//	return
-//}
-//
-//// UpdateUser and return the reference stored in cache
-//func (s *StateCache) UpdateUser(new *user.User) (*user.User, error) {
-//	s.usersUpdateMutex.Lock()
-//	defer s.usersUpdateMutex.Unlock()
-//
-//	if _, exists := s.users[new.ID]; !exists {
-//		return nil, errors.New("cannot update guild none-existant user in cache")
-//	}
-//
-//	old := s.users[new.ID]
-//
-//	old.Update(new)
-//	return old, nil
-//}
-//
-//func (s *StateCache) DeleteUser(u *user.User) {
-//	s.DeleteUserByID(u.ID)
-//}
-//
-//func (s *StateCache) DeleteUserByID(ID snowflake.ID) {
-//	s.usersUpdateMutex.Lock()
-//	defer s.usersUpdateMutex.Unlock()
-//	if u, ok := s.users[ID]; ok {
-//		u.Clear()
-//		delete(s.users, ID) // TODO: how good is the golang garbage collector?
-//	}
-//}
+
+func (st *StateCache) Channel(ID snowflake.ID) (*schema.Channel, error) {
+	st.channelsMutex.Lock()
+	defer st.channelsMutex.Unlock()
+
+	if cachedChannel, ok := st.channels[ID]; ok {
+		channel := schema.NewChannel()
+
+		var recipients []*schema.User
+		// TODO: this duplicates code from st.cacheChannel
+		// DM will holds user objects
+		if cachedChannel.Type == schema.ChannelTypeDM || cachedChannel.Type == schema.ChannelTypeGroupDM {
+			recipients = make([]*schema.User, len(cachedChannel.Recipients))
+			// TODO: predefined length vs append speed. since the user objects will most likely exist.
+			for index, recipient := range cachedChannel.Recipients {
+				var user *schema.User
+				user, _ = st.User(recipient.ID)
+
+				// if the user is not in cache, he should be cached.
+				// with this users can suddenly not exist, and causes unnecessary requests
+				// TODO
+				if user == nil {
+					user = schema.NewUser()
+					user.Replicate(recipient)
+				}
+
+				recipients[index] = user
+			}
+		}
+		channel.Replicate(cachedChannel, recipients)
+
+		return channel, nil
+	}
+
+	return nil, errors.New("channel with ID{" + ID.String() + "} does not exist in cache")
+}
 
 // User get a copy from the cache, which can be safely distributed without ruining the up to date discord cache.
 // See st.updaterUser(...) for more information why it's a copy only.
@@ -361,16 +434,16 @@ func (st *StateCache) User(ID snowflake.ID) (*schema.User, error) {
 	st.usersMutex.Lock()
 	defer st.usersMutex.Unlock()
 
-	if u, ok := st.users[ID]; ok {
-		return u, nil
+	if cachedUser, ok := st.users[ID]; ok {
+		user := schema.NewUser()
+		user.Replicate(cachedUser)
+
+		return user, nil
 	}
 
-	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")
+	return nil, errors.New("user with ID{" + ID.String() + "} does not exist in cache")
 }
 
-//func (s *StateCache) UpdateMySelf(new *user.User) {
-//	s.mySelf.Update(new)
-//}
 func (s *StateCache) GetMySelf() *schema.User {
 	return s.mySelf
 }
