@@ -371,6 +371,7 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
 func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 	ch := make(chan *resource.User)
 
+
 	go func(userID snowflake.ID, receiver chan<- *resource.User, storage StateCacher) {
 		var result *resource.User
 		var err error
