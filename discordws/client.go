@@ -36,11 +36,11 @@ func NewRequiredClient(conf *Config) *Client {
 // NewClient Creates a new discord websocket client
 func NewClient(conf *Config) (*Client, error) {
 	if conf == nil {
-		return nil, errors.New("Missing Config.Token for discord authentication")
+		return nil, errors.New("missing Config.Token for discord authentication")
 	}
 
 	if conf.DAPIVersion < LowestAPIVersion || conf.DAPIVersion > HighestAPIVersion {
-		return nil, fmt.Errorf("Discord API version %d is not supported. Lowest supported version is %d, and highest is %d", conf.DAPIVersion, LowestAPIVersion, HighestAPIVersion)
+		return nil, fmt.Errorf("discord API version %d is not supported. Lowest supported version is %d, and highest is %d", conf.DAPIVersion, LowestAPIVersion, HighestAPIVersion)
 	}
 
 	encoding := strings.ToLower(conf.DAPIEncoding)
@@ -52,7 +52,7 @@ func NewClient(conf *Config) (*Client, error) {
 		}
 	}
 	if !acceptedEncoding {
-		return nil, fmt.Errorf("Discord requires data encoding to be of the following '%s', while '%s' encoding was requested", strings.Join(Encodings, "', '"), encoding)
+		return nil, fmt.Errorf("discord requires data encoding to be of the following '%s', while '%s' encoding was requested", strings.Join(Encodings, "', '"), encoding)
 	}
 
 	// check the http client exists. Otherwise create one.
@@ -83,7 +83,7 @@ func NewClient(conf *Config) (*Client, error) {
 		disconnected:      nil,
 		iEventChan:        make(chan EventInterface),
 		operationChan:     make(chan *gatewayEvent),
-		eventChans:        make(map[string](chan []byte)),
+		eventChans:        make(map[string]chan []byte),
 		sendChan:          make(chan *gatewayPayload),
 		//Myself:            &user.User{},
 	}, nil

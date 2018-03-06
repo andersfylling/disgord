@@ -51,9 +51,6 @@ func main() {
     sess.AddListener(event.GuildCreateKey, func(session Session, box *event.GuildCreateBox) {
         guild := box.Guild
         // do something with guild
-
-        // for now just print the object
-        fmt.Printf("----\n:%s:\n%+v\n------\n", event.GuildCreateKey, guild)
     })
 
     // or use a channel to listen for events
@@ -95,10 +92,6 @@ Output:
 INFO[2018-02-16 19:05:47] Connecting to discord Gateway                 lib="Disgord v0.0.0"
 INFO[2018-02-16 19:05:48] Connected                                     lib="Disgord v0.0.0"
 
-----
-:READY:
-&{APIVersion:6 User:disgord#2355{40472951282397185} Guilds:[0xc4203922d0] SessionID:4dc1bab8ff8fgfg234f7e0997d7d28a Trace:[gateway-prd-main-1t4gc discord-sessions-prd-2-6] RWMutex:{w:{state:0 sema:0} writerSem:0 readerSem:0 readerCount:0 readerWait:0}}
--------
 ```
 
 Then on a system interrupt, here pressing `Ctrl+C`, you will see the following:

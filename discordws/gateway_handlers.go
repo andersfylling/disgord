@@ -205,7 +205,7 @@ func (c *Client) operationHandlers() {
 func (c *Client) Disconnect() (err error) {
 	c.RLock()
 	if c.conn == nil {
-		err = errors.New("No websocket connection exist")
+		err = errors.New("no websocket connection exist")
 		return
 	}
 	c.RUnlock()
