@@ -14,18 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	// APIComEncoding data format used when communicating with the discord API
-	APIComEncoding string = "json"
-
-	// APIVersion desired API version to use
-	APIVersion int = 6 // February 5, 2018
-
-	GitHubURL string = "https://github.com/andersfylling/disgord"
-
-	Version string = "v0.2.0" // todo: eh?..
-)
-
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
 type Session interface {
 	// main modules
@@ -68,13 +56,17 @@ type Session interface {
 }
 
 type Config struct {
-	Token            string
-	HTTPClient       *http.Client
+	Token      string
+	HTTPClient *http.Client
+
+	CancelRequestWhenRateLimited bool
+
 	LoadAllMembers   bool
 	LoadAllChannels  bool
 	LoadAllRoles     bool
 	LoadAllPresences bool
-	Debug            bool
+
+	Debug bool
 }
 
 // NewClient creates a new default disgord instance
@@ -104,11 +96,12 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// request client
 	reqConf := &request.Config{
-		APIVersion:         APIVersion,
-		BotToken:           conf.Token,
-		UserAgentSourceURL: GitHubURL,
-		UserAgentVersion:   Version,
-		HTTPClient:         conf.HTTPClient,
+		APIVersion:                   APIVersion,
+		BotToken:                     conf.Token,
+		UserAgentSourceURL:           GitHubURL,
+		UserAgentVersion:             Version,
+		HTTPClient:                   conf.HTTPClient,
+		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
 	}
 	reqClient := request.NewClient(reqConf)
 
@@ -156,6 +149,11 @@ type Client struct {
 
 	// register listeners for events
 	evtDispatch *Dispatch
+
+	// cancelRequestWhenRateLimited by default the client waits until either the HTTPClient.timeout or
+	// the rate limit ends before closing a request channel. If activated, in stead, requests will
+	// instantly be denied, and the channel closed.
+	cancelRequestWhenRateLimited bool
 
 	// discord http api
 	req *request.Client
@@ -375,25 +373,26 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 
 	go func(userID snowflake.ID, receiver chan<- *resource.User, storage StateCacher) {
 		var result *resource.User
+		var err error
 		cached := true
 
 		// check cache
-		result, err := storage.User(userID)
+		result, err = storage.User(userID)
 		if err != nil {
 			// log
 			fmt.Printf("User not in cache: id: %s\n", userID.String())
 		}
 
-		// TODO: cache dead objects, to avoid http requesting the same none existance object?
+		// TODO: cache dead objects, to avoid http requesting the same none existent object?
 		// will this ever be a problem
 
 		// do http request if none found
 		if result == nil {
 			cached = false
-			result = resource.NewUser()
-			err = c.req.Get("/users/"+userID.String(), result)
+			result, err = resource.ReqUser(c.req, userID)
 			if err != nil {
-				fmt.Println("User does not exist in discord..")
+				// TODO: handle error
+				// issue: devs might either be rate limited or user not found, how would they know tho?
 				receiver <- nil
 				close(receiver)
 				return

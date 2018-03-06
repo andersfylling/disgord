@@ -5,27 +5,27 @@ import (
 	"errors"
 	"sync"
 
+	"fmt"
+
+	"github.com/andersfylling/disgord/request"
 	"github.com/andersfylling/snowflake"
-	"github.com/sirupsen/logrus"
 )
 
-// UserMessager Methods required to create a new DM (or use an existing one) and send a DM.
-type UserMessager interface { // TODO: wtf?
-	//CreateAndSendDM(recipientID snowflake.ID, msg *Message) error // hmmm...
-}
+const (
+	EndpointUser              = "/users/"
+	EndpointUserMyself        = EndpointUser + "@me"
+	EndpointUserMyGuilds      = EndpointUserMyself + "/guilds"
+	EndpointUserMyChannels    = EndpointUserMyself + "/channels"
+	EndpointUserMyConnections = EndpointUserMyself + "/connections"
+)
 
 type UserInterface interface {
 	Mention() string
 	MentionNickname() string
 	String() string
-	//
-	//// Update internal structure
-	//Update(*User) error
-	//Clear()
-	//
-	//// Send a direct message to this user
-	//SendMessage(UserMessager, string) (snowflake.ID, snowflake.ID, error)
 }
+
+// ---------
 
 type User struct {
 	ID            snowflake.ID `json:"id,omitempty"`
@@ -73,7 +73,11 @@ func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) SendMessage(client UserMessager, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMessage(requester request.DiscordRequester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
+}
+
+func (u *User) SendMessageStr(requester request.DiscordRequester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 
@@ -110,12 +114,14 @@ func (u *User) Replicate(user *User) error {
 	return nil
 }
 
+// -------
+
 type UserPresence struct {
 	User    *User          `json:"user"`
 	Roles   []snowflake.ID `json:"roles"`
-	Game    *UserActivity  `json:"activty"`
+	Game    *UserActivity  `json:"activity"`
 	GuildID snowflake.ID   `json:"guild_id"`
-	Nick    *string        `json:"nick"`
+	Nick    string         `json:"nick"`
 	Status  string         `json:"status"`
 }
 
@@ -136,125 +142,121 @@ func (p *UserPresence) Clear() {
 	p.Game = nil
 }
 
-type UserEndpointInterface interface {
-	GetCurrentUser() string
-	GetUser(id snowflake.ID) string
-	ModifyCurrentUser() string
-	GetCurrentUserGuilds(params interface{}) string
-	LeaveGuild(id snowflake.ID) string
-	GetUserDMs() string
-	CreateDM() string
-	CreateGroupDM() string
-	GetUserConnections() string
+// ----------
+
+// https://discordapp.com/developers/docs/resources/user#connection-object
+// TODO
+type UserConnection struct {
 }
 
-type UserEndpoint struct{}
-
-// GetCurrentUser [GET] Returns the user object of the requester's account. For OAuth2, this requires
-//                      the identify scope, which will return the object without an email, and optionally
-//                      the email scope, which returns the object with an email.
-func (e *UserEndpoint) GetCurrentUser() string {
-	return "/user/@me"
-}
+// ----------
 
 // GetUser [GET] Returns a user object for a given user ID.
-func (e *UserEndpoint) GetUser(id snowflake.ID) string {
-	return "/users/" + id.String()
+func ReqUser(requester request.DiscordGetter, id snowflake.ID) (*User, error) {
+	endpoint := EndpointUser
+	path := EndpointUser + id.String()
+
+	result := NewUser()
+	_, err := requester.Get(endpoint, path, result)
+
+	return result, err
 }
 
-// ModifyCurrentUser [PATCH, JSON] Modify the requester's user account settings. Returns a user object on success.
-func (e *UserEndpoint) ModifyCurrentUser() string {
-	return e.GetCurrentUser()
+func ReqMyself(requester request.DiscordGetter) (*User, error) {
+	endpoint := EndpointUser
+	path := EndpointUserMyself
+
+	result := NewUser()
+	_, err := requester.Get(endpoint, path, result)
+
+	return result, err
 }
 
-// GetCurrentUserGuilds [GET] Returns a list of partial guild objects the current user is a member of.
-//                            Requires the guilds OAuth2 scope.
-func (e *UserEndpoint) GetCurrentUserGuilds(params interface{}) string {
-	logrus.WithFields(
-		logrus.Fields{
-			"package": "disgord.schema",
-			"Func":    "GetCurrentUserGuilds(params interface{}) string",
-		}).Warnln("Params not parsed!")
+// RequestMyGuilds [GET] Returns a list of partial guild objects the current user is a member of.
+//                       Requires the guilds OAuth2 scope.
+func ReqMyGuilds(requester request.DiscordGetter) ([]*Guild, error) {
+	endpoint := EndpointUser
+	path := EndpointUserMyGuilds
 
-	return "/users/@me/guilds"
+	var result []*Guild
+	_, err := requester.Get(endpoint, path, result)
+
+	return result, err
 }
 
-// LeaveGuild [DELETE] Leave a guild. Returns a 204 empty response on success.
-func (e *UserEndpoint) LeaveGuild(id snowflake.ID) string {
-	return "/users/@me/guilds/" + id.String()
+// ReqMyDMs [GET] Returns a list of DM channel objects.
+func ReqMyDMs(requester request.DiscordGetter) ([]*Channel, error) {
+	endpoint := EndpointUser
+	path := EndpointUserMyChannels
+
+	var result []*Channel
+	_, err := requester.Get(endpoint, path, result)
+
+	return result, err
 }
 
-// GetUserDMs [GET] Returns a list of DM channel objects.
-func (e *UserEndpoint) GetUserDMs() string {
-	return "/users/@me/channels"
+// ReqLeaveGuild [DELETE] Leave a guild.
+// 						  Returns a 204 empty response on success.
+func ReqLeaveGuild(requester request.DiscordDeleter, id snowflake.ID) error {
+	endpoint := EndpointUser
+	path := EndpointUserMyGuilds + "/" + id.String()
+
+	_, err := requester.Delete(endpoint, path)
+
+	return err
 }
 
-// CreateDM [POST, JSON] Create a new DM channel with a user. Returns a DM channel object.
-func (e *UserEndpoint) CreateDM() string {
-	return e.GetUserDMs()
+type ReqStructCreateDM struct {
+	RecipientID snowflake.ID `json:"recipient_id"`
 }
 
-// CreateGroupDM [POST, JSON] Create a new group DM channel with multiple users. Returns a DM channel object.
-func (e *UserEndpoint) CreateGroupDM() string {
-	return e.CreateDM()
-}
-
-// GetUserConnections [GET] Returns a list of connection objects. Requires the connections OAuth2 scope.
-func (e *UserEndpoint) GetUserConnections() string {
-	return "/users/@me/connections"
-}
-
-// Connection The connection object that the user has attached.
-// https://discordapp.com/developers/docs/resources/user#avatar-data
-// WARNING! Due to dependency issues, the Integrations (array) refers to Integration IDs only!
-//          It breaks the lib pattern, but there's nothing I can do. To retrieve the Integration
-//          Object, use *disgord.Client.Integration(id) (*Integration, error)
-type UserConnection struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Type    string `json:"type"`
-	Revoked bool   `json:"revoked"`
-
-	// Since this does not hold real guild.Integration objects we need to empty
-	// the integration slice, it's misguiding. But at least the output is "correct".
-	// the UnmarshalJSON method is a hack for input
-	Integrations []snowflake.ID `json:"-"`
-}
-
-func (conn *UserConnection) UnmarshalJSON(b []byte) error {
-	mock := struct {
-		ID           string `json:"id"`
-		Name         string `json:"name"`
-		Type         string `json:"type"`
-		Revoked      bool   `json:"revoked"`
-		Integrations []struct {
-			ID snowflake.ID `json:"id"`
-		} `json:"integrations"`
-	}{}
-
-	err := json.Unmarshal(b, &mock)
-	if err != nil {
-		return err
+// ReqCreateDM [POST, JSON] Create a new DM channel with a user. Returns a DM channel object.
+func ReqCreateDM(requester request.DiscordPoster, user *User) (*Channel, error) {
+	endpoint := EndpointUser
+	path := EndpointUserMyChannels
+	params := ReqStructCreateDM{
+		RecipientID: user.ID,
 	}
 
-	conn.ID = mock.ID
-	conn.Name = mock.Name
-	conn.Type = mock.Type
-	conn.Revoked = mock.Revoked
+	var result *Channel
+	_, err := requester.Post(endpoint, path, result, &params)
 
-	// empty integration slice
-	//conn.Integrations = conn.Integrations[:0]
-
-	// set new slice size
-	conn.Integrations = make([]snowflake.ID, len(mock.Integrations))
-
-	// add new data
-	for index, id := range mock.Integrations {
-		conn.Integrations[index] = id.ID
-	}
-
-	return nil
+	return result, err
 }
+
+// ReqStructCreateGroupDM
+// https://discordapp.com/developers/docs/resources/user#create-group-dm
+type ReqStructCreateGroupDM struct {
+	AccessTokens []string                `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
+	Nicks        map[snowflake.ID]string `json:"nicks"`         // userID => nickname
+}
+
+// ReqCreateGroupDM [POST, JSON] Create a new group DM channel with multiple users. Returns a DM channel object.
+func ReqCreateGroupDM(requester request.DiscordPoster, user *User) (*Channel, error) {
+	fmt.Println("ReqCreateGroupDM HAS NOT YET BEEN IMPLEMENTED!")
+	return nil, errors.New("not implemented")
+	endpoint := EndpointUser
+	path := EndpointUserMyChannels
+	params := ReqStructCreateGroupDM{}
+
+	var result *Channel
+	_, err := requester.Post(endpoint, path, result, &params)
+
+	return result, err
+}
+
+// ReqMyConnections [GET] Returns a list of connection objects. Requires the connections OAuth2 scope.
+func ReqMyConnections(requester request.DiscordGetter) ([]*UserConnection, error) {
+	endpoint := EndpointUser
+	path := EndpointUserMyConnections
+
+	var result []*UserConnection
+	_, err := requester.Get(endpoint, path, result)
+
+	return result, err
+}
+
+// --------
 
 // TODO: https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
 type UserActivity struct{}
