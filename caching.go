@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/schema"
+	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -26,15 +26,16 @@ type StateCacher interface {
 	//UpdateUser(*user.User) (*user.User, error)
 	//DeleteUser(*user.User)
 	//DeleteUserByID(ID snowflake.ID)
-	User(ID snowflake.ID) (*schema.User, error)
+	User(ID snowflake.ID) (*resource.User, error)
+	Channel(ID snowflake.ID) (*resource.Channel, error)
 	//
 	//UpdateMySelf(*user.User)
-	GetMySelf() *schema.User
+	GetMySelf() *resource.User
 
 	// channels to receive changes
-	UserChan() chan<- *schema.User
-	MemberChan() chan<- *schema.Member
-	MessageChan() chan<- *schema.Message
+	UserChan() chan<- *resource.User
+	MemberChan() chan<- *resource.Member
+	MessageChan() chan<- *resource.Message
 
 	// Closer interface
 	Close() error
@@ -42,40 +43,40 @@ type StateCacher interface {
 
 func NewStateCache(evtDispatcher EvtDispatcher) *StateCache {
 	st := &StateCache{
-		guilds:   make(map[snowflake.ID]*schema.Guild),
-		users:    make(map[snowflake.ID]*schema.User),
-		channels: make(map[snowflake.ID]*schema.Channel),
-		mySelf:   &schema.User{},
+		guilds:   make(map[snowflake.ID]*resource.Guild),
+		users:    make(map[snowflake.ID]*resource.User),
+		channels: make(map[snowflake.ID]*resource.Channel),
+		mySelf:   &resource.User{},
 
-		userChan:   make(chan *schema.User),
-		memberChan: make(chan *schema.Member),
-		msgChan:    make(chan *schema.Message),
-		guildChan:  make(chan *schema.Guild),
+		userChan:   make(chan *resource.User),
+		memberChan: make(chan *resource.Member),
+		msgChan:    make(chan *resource.Message),
+		guildChan:  make(chan *resource.Guild),
 	}
 
 	// listen for changes, and update the cache
 	//go st.updaterGuild(evtDispatcher)
 	go st.updaterUser(evtDispatcher)
+	go st.updaterChannel(evtDispatcher)
 
 	return st
 }
 
 type StateCache struct {
-	guilds   map[snowflake.ID]*schema.Guild
-	channels map[snowflake.ID]*schema.Channel // DM, one-one, or groups
-	users    map[snowflake.ID]*schema.User
-	mySelf   *schema.User
+	guilds   map[snowflake.ID]*resource.Guild
+	channels map[snowflake.ID]*resource.Channel // DM, one-one, or groups
+	users    map[snowflake.ID]*resource.User
+	mySelf   *resource.User
 
-	guildsUpdateMutex sync.Mutex // update + delete
-	guildsAddMutex    sync.Mutex // creation
-
-	usersMutex sync.Mutex
+	usersMutex    sync.RWMutex
+	channelsMutex sync.RWMutex
+	guildsMutex   sync.RWMutex
 
 	// channels
-	userChan   chan *schema.User
-	memberChan chan *schema.Member
-	msgChan    chan *schema.Message
-	guildChan  chan *schema.Guild
+	userChan   chan *resource.User
+	memberChan chan *resource.Member
+	msgChan    chan *resource.Message
+	guildChan  chan *resource.Guild
 }
 
 // Channel listeners for object updates
@@ -83,7 +84,7 @@ type StateCache struct {
 
 func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 	for {
-		var guild *schema.Guild
+		var guild *resource.Guild
 		var action string
 
 		// listen for guild changes
@@ -104,7 +105,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 			if !alive {
 				continue
 			}
-			guild = schema.NewGuildFromUnavailable(box.UnavailableGuild)
+			guild = resource.NewGuildFromUnavailable(box.UnavailableGuild)
 			action = event.GuildDeleteKey
 		case g, alive := <-st.guildChan:
 			if !alive {
@@ -122,7 +123,7 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 		switch action {
 		case event.GuildCreateKey:
 			// Make sure changes to the cache, doesn't ruin the reactor pattern.
-			st.guilds[guild.ID] = &schema.Guild{}
+			st.guilds[guild.ID] = &resource.Guild{}
 			*(st.guilds[guild.ID]) = *guild // don't alter the pointer, but merely data at the mem location.
 		case event.GuildUpdateKey:
 			//TODO: store cached arrays, delete, set new guild, and update respective arrays
@@ -135,9 +136,88 @@ func (st *StateCache) updaterGuild(evtDispatcher EvtDispatcher) {
 	}
 }
 
+func (st *StateCache) cacheChannel(channel *resource.Channel) {
+	if _, exists := st.channels[channel.ID]; !exists {
+		st.channels[channel.ID] = &resource.Channel{}
+	}
+
+	var recipients []*resource.User
+	// DM will holds user objects
+	if channel.Type == resource.ChannelTypeDM || channel.Type == resource.ChannelTypeGroupDM {
+		recipients = make([]*resource.User, len(channel.Recipients))
+		// TODO: predefined length vs append speed. since the user objects will most likely exist.
+		for index, recipient := range channel.Recipients {
+			var user *resource.User
+			user, _ = st.User(recipient.ID)
+
+			// if the user is not in cache, he should be cached.
+			// with this users can suddenly not exist, and causes unnecessary requests
+			// TODO
+			if user == nil {
+				user = resource.NewUser()
+				user.Replicate(recipient)
+			}
+
+			recipients[index] = user
+		}
+	}
+
+	st.channels[channel.ID].Replicate(channel, recipients)
+}
+
+func (st *StateCache) updaterChannel(evtDispatcher EvtDispatcher) {
+	for {
+		var channel *resource.Channel
+		var guild *resource.Guild
+		var action string
+
+		// listen for channel changes
+		select {
+		case box, alive := <-evtDispatcher.ChannelCreateChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelCreateKey
+		case box, alive := <-evtDispatcher.ChannelUpdateChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelUpdateKey
+		case box, alive := <-evtDispatcher.ChannelDeleteChan():
+			if !alive {
+				continue
+			}
+			channel = box.Channel
+			action = event.ChannelDeleteKey
+		case box, alive := <-evtDispatcher.GuildCreateChan():
+			if !alive {
+				continue
+			}
+			guild = box.Guild
+			action = event.GuildCreateKey
+		}
+
+		st.channelsMutex.Lock()
+		if action == event.ChannelDeleteKey {
+			if _, exists := st.channels[channel.ID]; exists {
+				delete(st.channels, channel.ID)
+			}
+		} else if action == event.GuildCreateKey {
+			for _, ch := range guild.Channels {
+				st.cacheChannel(ch)
+			}
+		} else {
+			st.cacheChannel(channel)
+		}
+		st.channelsMutex.Unlock()
+	}
+}
+
 func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 	for {
-		var user *schema.User
+		var user *resource.User
 		var triggeredByChange bool
 
 		// listen for guild changes
@@ -200,9 +280,11 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 		var newUser bool
 		if _, exists := st.users[user.ID]; !exists {
 			// new user object
-			st.users[user.ID] = &schema.User{}
+			st.users[user.ID] = &resource.User{}
 			newUser = true
 		}
+
+		// TODO: method for saving/updating user object
 
 		// false: the user exists, but the incoming user object hasn't changed. It's just cached cause of activity
 		if triggeredByChange || newUser {
@@ -213,16 +295,16 @@ func (st *StateCache) updaterUser(evtDispatcher EvtDispatcher) {
 	}
 }
 
-func (st *StateCache) UserChan() chan<- *schema.User {
+func (st *StateCache) UserChan() chan<- *resource.User {
 	return st.userChan
 }
-func (st *StateCache) MemberChan() chan<- *schema.Member {
+func (st *StateCache) MemberChan() chan<- *resource.Member {
 	return st.memberChan
 }
-func (st *StateCache) MessageChan() chan<- *schema.Message {
+func (st *StateCache) MessageChan() chan<- *resource.Message {
 	return st.msgChan
 }
-func (st *StateCache) GuildChan() chan<- *schema.Guild {
+func (st *StateCache) GuildChan() chan<- *resource.Guild {
 	return st.guildChan
 }
 
@@ -310,67 +392,59 @@ func (st *StateCache) Close() error {
 //	}
 //}
 //
-//// users
-////
-//
-//// AddUser and return reference
-//func (s *StateCache) AddUser(u *user.User) (updated *user.User) {
-//	s.usersAddMutex.Lock()
-//	defer s.usersAddMutex.Unlock()
-//
-//	if _, exists := s.users[u.ID]; exists {
-//		updated, _ = s.UpdateUser(u)
-//		return
-//	}
-//	s.users[u.ID] = u
-//	updated = u
-//	return
-//}
-//
-//// UpdateUser and return the reference stored in cache
-//func (s *StateCache) UpdateUser(new *user.User) (*user.User, error) {
-//	s.usersUpdateMutex.Lock()
-//	defer s.usersUpdateMutex.Unlock()
-//
-//	if _, exists := s.users[new.ID]; !exists {
-//		return nil, errors.New("cannot update guild none-existant user in cache")
-//	}
-//
-//	old := s.users[new.ID]
-//
-//	old.Update(new)
-//	return old, nil
-//}
-//
-//func (s *StateCache) DeleteUser(u *user.User) {
-//	s.DeleteUserByID(u.ID)
-//}
-//
-//func (s *StateCache) DeleteUserByID(ID snowflake.ID) {
-//	s.usersUpdateMutex.Lock()
-//	defer s.usersUpdateMutex.Unlock()
-//	if u, ok := s.users[ID]; ok {
-//		u.Clear()
-//		delete(s.users, ID) // TODO: how good is the golang garbage collector?
-//	}
-//}
+
+func (st *StateCache) Channel(ID snowflake.ID) (*resource.Channel, error) {
+	st.channelsMutex.Lock()
+	defer st.channelsMutex.Unlock()
+
+	if cachedChannel, ok := st.channels[ID]; ok {
+		channel := resource.NewChannel()
+
+		var recipients []*resource.User
+		// TODO: this duplicates code from st.cacheChannel
+		// DM will holds user objects
+		if cachedChannel.Type == resource.ChannelTypeDM || cachedChannel.Type == resource.ChannelTypeGroupDM {
+			recipients = make([]*resource.User, len(cachedChannel.Recipients))
+			// TODO: predefined length vs append speed. since the user objects will most likely exist.
+			for index, recipient := range cachedChannel.Recipients {
+				var user *resource.User
+				user, _ = st.User(recipient.ID)
+
+				// if the user is not in cache, he should be cached.
+				// with this users can suddenly not exist, and causes unnecessary requests
+				// TODO
+				if user == nil {
+					user = resource.NewUser()
+					user.Replicate(recipient)
+				}
+
+				recipients[index] = user
+			}
+		}
+		channel.Replicate(cachedChannel, recipients)
+
+		return channel, nil
+	}
+
+	return nil, errors.New("channel with ID{" + ID.String() + "} does not exist in cache")
+}
 
 // User get a copy from the cache, which can be safely distributed without ruining the up to date discord cache.
 // See st.updaterUser(...) for more information why it's a copy only.
-func (st *StateCache) User(ID snowflake.ID) (*schema.User, error) {
+func (st *StateCache) User(ID snowflake.ID) (*resource.User, error) {
 	st.usersMutex.Lock()
 	defer st.usersMutex.Unlock()
 
-	if u, ok := st.users[ID]; ok {
-		return u, nil
+	if cachedUser, ok := st.users[ID]; ok {
+		user := resource.NewUser()
+		user.Replicate(cachedUser)
+
+		return user, nil
 	}
 
-	return nil, errors.New("guild with ID{" + ID.String() + "} does not exist in cache")
+	return nil, errors.New("user with ID{" + ID.String() + "} does not exist in cache")
 }
 
-//func (s *StateCache) UpdateMySelf(new *user.User) {
-//	s.mySelf.Update(new)
-//}
-func (s *StateCache) GetMySelf() *schema.User {
+func (s *StateCache) GetMySelf() *resource.User {
 	return s.mySelf
 }

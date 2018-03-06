@@ -1,4 +1,4 @@
-package schema
+package resource
 
 import "github.com/andersfylling/snowflake"
 
@@ -64,7 +64,6 @@ type Region struct {
 	// Custom whether this is a custom voice region (used for events/etc)
 	Custom bool `json:"custom"`
 }
-
 
 // EndpointVoiceRegions List Voice Regions
 // https://discordapp.com/developers/docs/resources/voice#list-voice-regions
