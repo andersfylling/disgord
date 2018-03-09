@@ -15,7 +15,15 @@ func NewGuild() *Guild {
 }
 
 func NewGuildFromJSON(data []byte) *Guild {
-	guild := &Guild{}
+	guild := &Guild{
+		Roles:       []*Role{},
+		Emojis:      []*Emoji{},
+		Features:    []string{},
+		VoiceStates: []*VoiceState{},
+		Members:     []*Member{},
+		Channels:    []*Channel{},
+		Presences:   []*UserPresence{},
+	}
 	err := json.Unmarshal(data, guild)
 	if err != nil {
 		panic(err)
@@ -24,13 +32,22 @@ func NewGuildFromJSON(data []byte) *Guild {
 	return guild
 }
 
-func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
-	g := &Guild{
-		ID:          gu.ID,
-		Unavailable: gu.Unavailable,
+func NewPartialGuild(ID snowflake.ID) *Guild {
+	return &Guild{
+		ID:          ID,
+		Unavailable: true,
+		Roles:       []*Role{},
+		Emojis:      []*Emoji{},
+		Features:    []string{},
+		VoiceStates: []*VoiceState{},
+		Members:     []*Member{},
+		Channels:    []*Channel{},
+		Presences:   []*UserPresence{},
 	}
+}
 
-	return g
+func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
+	return NewPartialGuild(gu.ID)
 }
 
 func NewGuildUnavailable(ID snowflake.ID) *GuildUnavailable {
@@ -103,7 +120,7 @@ type Guild struct {
 	Presences      []*UserPresence    `json:"presences,omitempty"`    // ?*|
 	PresencesMutex sync.RWMutex       `json:"-"`
 
-	sync.RWMutex `json:"-"`
+	mu sync.RWMutex `json:"-"`
 }
 
 //func (g *Guild) EverythingInMemory() bool {
@@ -315,8 +332,8 @@ func (g *Guild) Update(new *Guild) {
 		return
 	}
 
-	g.Lock()
-	new.RLock()
+	g.mu.Lock()
+	new.mu.RLock()
 
 	// if it's a unavailable guild object, don't update the remaining fields
 	if new.Unavailable {
@@ -326,14 +343,14 @@ func (g *Guild) Update(new *Guild) {
 		// TODO
 	}
 
-	g.Unlock()
-	new.RUnlock()
+	g.mu.Unlock()
+	new.mu.RUnlock()
 }
 
 // Clear all the pointers
 func (g *Guild) Clear() {
-	g.Lock() // what if another process tries to read this, but awais while locked for clearing?
-	defer g.Unlock()
+	g.mu.Lock() // what if another process tries to read this, but awais while locked for clearing?
+	defer g.mu.Unlock()
 
 	g.ApplicationID = nil
 	//g.Icon = nil // should this be cleared?
@@ -379,6 +396,54 @@ func (g *Guild) Clear() {
 	}
 	g.Presences = nil
 
+}
+
+func (g *Guild) DeepCopy() *Guild {
+	guild := NewGuild()
+
+	g.mu.RLock()
+
+	// TODO-guild: handle string pointers
+	guild.ID = g.ID
+	guild.ApplicationID = g.ApplicationID
+	guild.Name = g.Name
+	guild.Icon = g.Icon
+	guild.Splash = g.Splash
+	guild.Owner = g.Owner
+	guild.OwnerID = g.OwnerID
+	guild.Permissions = g.Permissions
+	guild.Region = g.Region
+	guild.AfkChannelID = g.AfkChannelID
+	guild.AfkTimeout = g.AfkTimeout
+	guild.EmbedEnabled = g.EmbedEnabled
+	guild.EmbedChannelID = g.EmbedChannelID
+	guild.VerificationLevel = g.VerificationLevel
+	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
+	guild.ExplicitContentFilter = g.ExplicitContentFilter
+	guild.MFALevel = g.MFALevel
+	guild.WidgetEnabled = g.WidgetEnabled
+	guild.WidgetChannelID = g.WidgetChannelID
+	guild.SystemChannelID = g.SystemChannelID
+	guild.JoinedAt = g.JoinedAt
+	guild.Large = g.Large
+	guild.Unavailable = g.Unavailable
+	guild.MemberCount = g.MemberCount
+	guild.PresencesMutex = g.PresencesMutex
+
+	// handle deep copy of slices
+	//TODO-guild: implement deep copying for fields
+	guild.Roles = g.Roles
+	guild.Emojis = g.Emojis
+	guild.Features = g.Features
+
+	guild.VoiceStates = g.VoiceStates
+	guild.Members = g.Members
+	guild.Channels = g.Channels
+	guild.Presences = g.Presences
+
+	g.mu.RUnlock()
+
+	return guild
 }
 
 //--------------

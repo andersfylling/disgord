@@ -29,6 +29,10 @@ type ChannelMessager interface {
 	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` permissions before sending.
 }
 
+func NewChannel() *Channel {
+	return &Channel{}
+}
+
 type Channel struct {
 	ID                   snowflake.ID                 `json:"id"`
 	Type                 uint                         `json:"type"`
@@ -47,10 +51,8 @@ type Channel struct {
 	ApplicationID        snowflake.ID                 `json:"applicaiton_id,omitempty"`        // ?|
 	ParentID             snowflake.ID                 `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPingTimestamp    discord.Timestamp            `json:"last_ping_timestamp,omitempty"`   // ?|
-}
 
-func NewChannel() *Channel {
-	return &Channel{}
+	mu sync.RWMutex `json:"-"`
 }
 
 func (c *Channel) Mention() string {
@@ -71,6 +73,40 @@ func (c *Channel) Replicate(channel *Channel, recipients []*User) {
 	} else {
 		c.Recipients = []*User{}
 	}
+}
+
+func (c *Channel) DeepCopy() *Channel {
+	channel := NewChannel()
+
+	c.mu.RLock()
+
+	channel.ID = c.ID
+	channel.Type = c.Type
+	channel.GuildID = c.GuildID
+	channel.Position = c.Position
+	channel.PermissionOverwrites = c.PermissionOverwrites
+	channel.Name = c.Name
+	channel.Topic = c.Topic
+	channel.NSFW = c.NSFW
+	channel.LastMessageID = c.LastMessageID
+	channel.Bitrate = c.Bitrate
+	channel.UserLimit = c.UserLimit
+	channel.Icon = c.Icon
+	channel.OwnerID = c.OwnerID
+	channel.ApplicationID = c.ApplicationID
+	channel.ParentID = c.ParentID
+	channel.LastPingTimestamp = c.LastPingTimestamp
+
+	// add recipients if it's a DM
+	if c.Type == ChannelTypeDM || c.Type == ChannelTypeGroupDM {
+		for _, recipient := range c.Recipients {
+			channel.Recipients = append(channel.Recipients, recipient.DeepCopy())
+		}
+	}
+
+	c.mu.RUnlock()
+
+	return channel
 }
 
 func (c *Channel) Clear() {
@@ -107,7 +143,7 @@ type DiscordAPIRequester interface {
 // GetChannel Get a channel by ID
 func GetChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
 	if id.Empty() {
-		return nil, errors.New("Not a valid snowflake")
+		return nil, errors.New("not a valid snowflake")
 	}
 
 	uri := "/channels/" + id.String()
@@ -118,7 +154,7 @@ func GetChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
 
 func UpdateChannel(client DiscordAPIRequester, changes *Channel) (*Channel, error) {
 	if changes.ID.Empty() {
-		return nil, errors.New("Not a valid snowflake")
+		return nil, errors.New("not a valid snowflake")
 	}
 
 	//uri := "/channels/" + changes.ID.String()
@@ -132,7 +168,7 @@ func UpdateChannel(client DiscordAPIRequester, changes *Channel) (*Channel, erro
 
 func DeleteChannel(client DiscordAPIRequester, id snowflake.ID) (*Channel, error) {
 	if id.Empty() {
-		return nil, errors.New("Not a valid snowflake")
+		return nil, errors.New("not a valid snowflake")
 	}
 
 	uri := "/channels/" + id.String()

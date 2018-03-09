@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -10,6 +9,7 @@ import (
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/request"
 	"github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/state"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
@@ -30,7 +30,7 @@ type Session interface {
 
 	// State reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
-	State() StateCacher
+	State() state.Cacher
 
 	// Discord Gateway, web socket
 	//
@@ -115,7 +115,7 @@ func NewClient(conf *Config) (*Client, error) {
 		socketEvtChan: dws.GetEventChannel(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
-		state:         NewStateCache(evtDispatcher),
+		state:         state.NewCache(),
 		req:           reqClient,
 	}
 
@@ -161,29 +161,7 @@ type Client struct {
 	httpClient *http.Client
 
 	// cache
-	state *StateCache
-}
-
-func (c *Client) eventObserver() {
-	for {
-		select {
-		case evt, alive := <-c.socketEvtChan:
-			if !alive {
-				logrus.Error("Event channel is dead!")
-				break
-			}
-
-			ctx := context.Background()
-
-			// TODO: parsing JSON uses panic and not logging on issues..
-
-			eventName := evt.Name()
-			data := evt.Data()
-
-			// fan out to specific channel types
-			go c.evtDispatch.trigger(eventName, c, ctx, data)
-		}
-	}
+	state *state.Cache
 }
 
 func (c *Client) logInfo(msg string) {
@@ -213,7 +191,7 @@ func (c *Client) Connect() (err error) {
 	c.logInfo("Connected")
 
 	// setup event observer
-	go c.eventObserver()
+	go c.eventHandler()
 
 	return nil
 }
@@ -240,7 +218,7 @@ func (c *Client) Evt() EvtDispatcher {
 	return c.evtDispatch
 }
 
-func (c *Client) State() StateCacher {
+func (c *Client) State() state.Cacher {
 	return c.state
 }
 
@@ -256,7 +234,7 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
 	ch := make(chan *resource.Channel)
 
-	go func(receiver chan<- *resource.Channel, storage StateCacher) {
+	go func(receiver chan<- *resource.Channel, storage *state.Cache) {
 		result := &resource.Channel{}
 		cached := true
 
@@ -285,7 +263,7 @@ func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
 func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel {
 	ch := make(chan map[snowflake.ID]*resource.Channel)
 
-	go func(receiver chan<- map[snowflake.ID]*resource.Channel, storage StateCacher) {
+	go func(receiver chan<- map[snowflake.ID]*resource.Channel, storage *state.Cache) {
 		result := make(map[snowflake.ID]*resource.Channel)
 		cached := true
 
@@ -315,7 +293,7 @@ func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resourc
 func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
 	ch := make(chan *resource.Guild)
 
-	go func(receiver chan<- *resource.Guild, storage StateCacher) {
+	go func(receiver chan<- *resource.Guild, storage *state.Cache) {
 		result := &resource.Guild{}
 		cached := true
 
@@ -343,7 +321,7 @@ func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
 func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
 	ch := make(chan *resource.Message)
 
-	go func(receiver chan<- *resource.Message, storage StateCacher) {
+	go func(receiver chan<- *resource.Message, storage *state.Cache) {
 		result := &resource.Message{}
 		cached := true
 
@@ -371,8 +349,7 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
 func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 	ch := make(chan *resource.User)
 
-
-	go func(userID snowflake.ID, receiver chan<- *resource.User, storage StateCacher) {
+	go func(userID snowflake.ID, receiver chan<- *resource.User, storage *state.Cache) {
 		var result *resource.User
 		var err error
 		cached := true
@@ -405,7 +382,10 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 
 		// update cache with new result, if not found
 		if !cached {
-			storage.UserChan() <- result
+			storage.ProcessUser(&state.UserDetail{
+				User:  result,
+				Dirty: false,
+			})
 		}
 
 		// kill the channel
@@ -417,7 +397,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
 	ch := make(chan *resource.Member)
 
-	go func(receiver chan<- *resource.Member, storage StateCacher) {
+	go func(receiver chan<- *resource.Member, storage *state.Cache) {
 		result := &resource.Member{}
 		cached := true
 
@@ -445,7 +425,7 @@ func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
 func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member {
 	ch := make(chan map[snowflake.ID]*resource.Member)
 
-	go func(receiver chan<- map[snowflake.ID]*resource.Member, storage StateCacher) {
+	go func(receiver chan<- map[snowflake.ID]*resource.Member, storage *state.Cache) {
 		result := make(map[snowflake.ID]*resource.Member)
 		cached := true
 

@@ -26,3 +26,7 @@ func TestClientImplementInterfaces(t *testing.T) {
 		missingImplError(t, "DiscordDeleter")
 	}
 }
+
+func TestRateLimiter(t *testing.T) {
+
+}

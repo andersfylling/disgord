@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -35,6 +36,7 @@ func NewRateLimit() *RateLimit {
 // but any major endpoint prefix does not: `/channels/1` != `/channels/2`
 type RateLimit struct {
 	buckets map[string]*Bucket
+	mu      sync.RWMutex
 }
 
 func (r *RateLimit) Bucket(key string) *Bucket {
@@ -61,11 +63,15 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 		endpoint = key
 	}
 
+	r.mu.Lock()
 	if bucket, exists = r.buckets[key]; !exists {
-		bucket = &Bucket{
+		r.buckets[key] = &Bucket{
 			endpoint: key,
+			reset:    time.Now().UnixNano() / 1000,
 		}
+		bucket = r.buckets[key]
 	}
+	r.mu.Unlock()
 
 	return bucket
 }
@@ -82,6 +88,8 @@ func (r *RateLimit) RateLimited(key string) bool {
 
 func (r *RateLimit) HandleResponse(key string, res *http.Response) {
 	bucket := r.Bucket(key)
+	bucket.mu.Lock()
+	defer bucket.mu.Unlock()
 
 	if !bucket.global && res.Header.Get(XRateLimitGlobal) == "true" {
 		bucket.global = true
@@ -124,14 +132,26 @@ type Bucket struct {
 	endpoint  string // endpoint where rate limit is applied. endpoint = key
 	limit     uint64 // total allowed requests before rate limit
 	remaining uint64 // remaining requests
-	reset     int64  // milliseconds, even tho discord prefers seconds. global uses milliseconds however.
+	reset     int64  // unix milliseconds, even tho discord prefers seconds. global uses milliseconds however.
 	global    bool   // global rate limiter
+
+	mu sync.RWMutex
 }
 
 func (b *Bucket) limited() bool {
-	return ((time.Now().UnixNano() / 1000) - b.reset) < 0
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	return b.reset > (time.Now().UnixNano() / 1000)
 }
 
 func (b *Bucket) timeout() int64 {
-	return (time.Now().UnixNano() / 1000) - b.reset
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	now := time.Now().UnixNano() / 1000
+	if b.reset > now {
+		return b.reset - now
+	}
+	return 0
 }

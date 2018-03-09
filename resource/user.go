@@ -57,6 +57,12 @@ func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator + "{" + u.ID.String() + "}"
 }
 
+// Partial check if this is not a complete user object
+// Assumption: has a snowflake.
+func (u *User) Partial() bool {
+	return (u.Username + u.Discriminator) == ""
+}
+
 func (u *User) MarshalJSON() ([]byte, error) {
 	if u.ID.Empty() {
 		return []byte("{}"), nil
@@ -81,37 +87,28 @@ func (u *User) SendMessageStr(requester request.DiscordRequester, msg string) (c
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 
-func (u *User) Replicate(user *User) error {
-	if user == nil {
-		return errors.New("cannot copy nil object")
-	}
+func (u *User) DeepCopy() *User {
+	user := NewUser()
 
-	if u == user {
-		return errors.New("cannot copy itself, makes no sense")
-	}
+	u.RLock()
 
-	user.RLock()
-	u.Lock()
+	user.ID = u.ID
+	user.Username = u.Username
+	user.Discriminator = u.Discriminator
+	user.Email = u.Email
+	user.Token = u.Token
+	user.Verified = u.Verified
+	user.MFAEnabled = u.MFAEnabled
+	user.Bot = u.Bot
 
-	// deep copy, without changing the avatar pointer address
-	var avatarAddress *string
 	if u.Avatar != nil {
-		avatarAddress = u.Avatar
-	} else {
-		avatar := ""
-		avatarAddress = &avatar
+		avatar := *u.Avatar
+		user.Avatar = &avatar
 	}
 
-	uMutex := u.RWMutex
-	*u = *user                   // copy all the fields
-	u.RWMutex = uMutex           // make sure the mutex isn't deleted
-	u.Avatar = avatarAddress     // point to a different location than user.Avatar
-	*(u.Avatar) = *(user.Avatar) // copy the Base64 image
+	u.RUnlock()
 
-	u.Unlock()
-	user.RUnlock()
-
-	return nil
+	return user
 }
 
 // -------
@@ -153,7 +150,7 @@ type UserConnection struct {
 
 // GetUser [GET] Returns a user object for a given user ID.
 func ReqUser(requester request.DiscordGetter, id snowflake.ID) (*User, error) {
-	endpoint := EndpointUser
+	var endpoint string = EndpointUser
 	path := EndpointUser + id.String()
 
 	result := NewUser()
@@ -206,7 +203,7 @@ func ReqLeaveGuild(requester request.DiscordDeleter, id snowflake.ID) error {
 	return err
 }
 
-type ReqStructCreateDM struct {
+type BodyUserCreateDM struct {
 	RecipientID snowflake.ID `json:"recipient_id"`
 }
 
@@ -214,7 +211,7 @@ type ReqStructCreateDM struct {
 func ReqCreateDM(requester request.DiscordPoster, user *User) (*Channel, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyChannels
-	params := ReqStructCreateDM{
+	params := BodyUserCreateDM{
 		RecipientID: user.ID,
 	}
 
@@ -224,9 +221,9 @@ func ReqCreateDM(requester request.DiscordPoster, user *User) (*Channel, error) 
 	return result, err
 }
 
-// ReqStructCreateGroupDM
+// BodyUserCreateGroupDM
 // https://discordapp.com/developers/docs/resources/user#create-group-dm
-type ReqStructCreateGroupDM struct {
+type BodyUserCreateGroupDM struct {
 	AccessTokens []string                `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
 	Nicks        map[snowflake.ID]string `json:"nicks"`         // userID => nickname
 }
@@ -237,7 +234,7 @@ func ReqCreateGroupDM(requester request.DiscordPoster, user *User) (*Channel, er
 	return nil, errors.New("not implemented")
 	endpoint := EndpointUser
 	path := EndpointUserMyChannels
-	params := ReqStructCreateGroupDM{}
+	params := BodyUserCreateGroupDM{}
 
 	var result *Channel
 	_, err := requester.Post(endpoint, path, result, &params)
