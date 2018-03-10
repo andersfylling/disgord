@@ -8,6 +8,7 @@ import (
 
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
+	"errors"
 )
 
 func TestChannels_implementsChannelCacher(t *testing.T) {
@@ -16,8 +17,18 @@ func TestChannels_implementsChannelCacher(t *testing.T) {
 	}
 }
 
-type Mock_UserCacher struct {}
-func (muc *Mock_UserCacher) Process(ud *UserDetail) {}
+type Mock_UserCacher struct {
+	users map[snowflake.ID]*resource.User
+}
+func (muc *Mock_UserCacher) Process(ud *UserDetail) {
+	muc.users[ud.User.ID] = ud.User
+}
+func (muc *Mock_UserCacher) User(id snowflake.ID) (*resource.User, error) {
+	if _, exists := muc.users[id]; exists {
+		return muc.users[id], nil
+	}
+	return nil, errors.New("no such user")
+}
 
 func TestChannels_cacheSize(t *testing.T) {
 	// incoming user object
@@ -58,7 +69,7 @@ func TestChannels_cacheClear(t *testing.T) {
 	// generate a significant amount of random users,
 	// add to cache, and clear it
 	// compare memstat before and after
-	N := 1000000 // 5000000 =< 1.5G
+	N := 1000000 // 0.6GiB
 	userCacher := &Mock_UserCacher{}
 	cache := NewChannelCache(userCacher)
 
@@ -78,10 +89,10 @@ func TestChannels_cacheClear(t *testing.T) {
 	var m1 runtime.MemStats
 	runtime.ReadMemStats(&m1)
 
-	// cache all users
-	for _, user := range channels {
+	// cache all channels
+	for _, channel := range channels {
 		cache.Process(&ChannelDetail{
-			Channel: user,
+			Channel: channel,
 		})
 	}
 
@@ -168,4 +179,44 @@ func TestChannelCache_Save(t *testing.T) {
 	if cachedChannel == nil {
 		t.Error("local var deleted, once the cache was cleared: cachedChannel")
 	}
+}
+
+func TestChannelCache_inputOutput(t *testing.T) {
+	// make sure that the recipients are the same after as before caching
+	channel := resource.NewChannel()
+
+	channel.ID = snowflake.NewID(11111111111111)
+	channel.Name = "new object from disgord"
+	channel.Type = resource.ChannelTypeGroupDM
+	for i:= 0; i < 10; i++ {
+		user := resource.NewUser()
+		user.ID = snowflake.NewID(3546345 + uint64(i + i*i))
+		channel.Recipients = append(channel.Recipients, user)
+	}
+
+	// add to cache
+	userCacher := &Mock_UserCacher{
+		users: make(map[snowflake.ID]*resource.User),
+	}
+	cache := NewChannelCache(userCacher)
+	cache.Process(&ChannelDetail{
+		Channel:  channel,
+		Dirty: true,
+	})
+
+	cachedChannel, err := cache.Channel(channel.ID)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(channel.Recipients) != len(cachedChannel.Recipients) {
+		t.Error("incorrect number of users in DM channel")
+	}
+
+	for index, recipient := range cachedChannel.Recipients {
+		if channel.Recipients[index].ID != recipient.ID {
+			t.Error("incorrect user id")
+		}
+	}
+
 }

@@ -13,6 +13,9 @@ Objects will have methods to simplify interaction: `User.sendMsgStr(...)`, or `C
 The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache.
 This lib handles caching for you, so whenever you send a request to the REST API or receive a discord event. The contents are cached auto-magically to a separate memory space.
 
+As a structure is sent into the cache module, everything is deep copied as mentioned, however if the object hold discord objects consistent of a snowflake, it does not do a deep copy. It converts given field to a nil, and stores the snowflake only in a separate struct/map. This makes sure that there will only exist one version of an object. Making updating fairly easy.
+When the object goes out of cache, a copy is created and every sub object containing a snowflake is deep copied from the cache as well, to create a wholesome object.
+
 #### Requests
 For every REST API request (which is the only way to get objects from the discord interface, without waiting for changes as events) the request is rate limited auto-magically by the library (caching coming soon for resource funcs).
 The functions in `resource` pkg are blocking, and should be used with care. For async requests, use the methods found at the `Session` interface, such as:
