@@ -33,6 +33,7 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
+type PartialChannel = Channel
 type Channel struct {
 	ID                   snowflake.ID                 `json:"id"`
 	Type                 uint                         `json:"type"`

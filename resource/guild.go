@@ -84,6 +84,7 @@ type GuildInterface interface {
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
 // TODO: lazyload everything
+type PartialGuild = Guild
 type Guild struct {
 	ID                          snowflake.ID                          `json:"id"`
 	ApplicationID               *snowflake.ID                         `json:"application_id"` //   |?
