@@ -31,7 +31,7 @@ func NewCache() *Cache {
 	st := &Cache{}
 	st.Users = NewUserCache()
 	st.Channels = NewChannelCache(st.Users)
-	st.Guilds = NewGuildCache(st.Users, st.Channels)
+	//st.Guilds = NewGuildCache(st.Users, st.Channels)
 
 	return st
 }

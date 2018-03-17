@@ -541,3 +541,7 @@ func (r *Role) Mention() string {
 func (r *Role) Clear() {
 
 }
+
+const (
+	EndpointGuild string = "/guilds/"
+)

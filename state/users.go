@@ -24,7 +24,7 @@ type UserCacher interface {
 func NewUserCache() *UserCache {
 	cacher := &UserCache{
 		users:   make(map[snowflake.ID]*resource.User),
-		channel: make(chan *UserDetail),
+		channel: make(chan *UserDetail, 100),
 	}
 	go cacher.userCacher()
 
@@ -64,13 +64,12 @@ func (st *UserCache) userCacher() {
 		}
 
 		st.mu.Lock()
-		user := userDetail.User
-		if _, exists := st.users[user.ID]; !exists {
+		if _, exists := st.users[userDetail.User.ID]; !exists {
 			// new user object
-			st.users[user.ID] = user.DeepCopy()
+			st.users[userDetail.User.ID] = userDetail.User.DeepCopy()
 		} else {
 			if userDetail.Dirty {
-				*(st.users[user.ID]) = *(user.DeepCopy())
+				*(st.users[userDetail.User.ID]) = *(userDetail.User.DeepCopy())
 			}
 		}
 		st.mu.Unlock()

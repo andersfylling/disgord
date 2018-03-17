@@ -55,7 +55,7 @@ func TestUsers_cacheClear(t *testing.T) {
 	// generate a significant amount of random users,
 	// add to cache, and clear it
 	// compare memstat before and after
-	N := 1000000 // 5000000 =< 1.5G
+	N := 10000000 // 5000000 =< 1.5G
 
 	var users []*resource.User
 	// gen random partial users

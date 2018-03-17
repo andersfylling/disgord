@@ -28,6 +28,7 @@ type GuildCacher interface {
 
 // NewGuildCache creates a new guild cacher, and starts listening for inputs
 func NewGuildCache(userCacher GuildUserCacher, channelCacher GuildChannelCacher) *GuildCache {
+	panic("Guild.DeepCopy, GuildHolder, string pointer, unit tests, not implemented yet")
 	cacher := &GuildCache{
 		guilds:  make(map[snowflake.ID]*resource.Guild),
 		channel: make(chan *GuildDetail),
