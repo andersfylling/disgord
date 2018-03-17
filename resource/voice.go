@@ -1,6 +1,9 @@
 package resource
 
-import "github.com/andersfylling/snowflake"
+import (
+	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/snowflake"
+)
 
 // State Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
@@ -39,7 +42,7 @@ func (vst *VoiceState) Clear() {
 
 // Region voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
-type Region struct {
+type VoiceRegion struct {
 	// ID unique ID for the region
 	ID snowflake.ID `json:"id"`
 
@@ -68,3 +71,9 @@ type Region struct {
 // EndpointVoiceRegions List Voice Regions
 // https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 const EndpointVoiceRegions string = "/voice/regions"
+
+func ReqVoiceRegions(requester request.DiscordGetter) (regions []*VoiceRegion, err error) {
+	_, err = requester.Get(EndpointVoiceRegions, EndpointVoiceRegions, regions)
+
+	return regions, err
+}
