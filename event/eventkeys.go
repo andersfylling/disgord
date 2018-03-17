@@ -1,9 +1,11 @@
 package event
 
-type KeyType string
+// KeyType Deprecated
+//type KeyType string
 
 // The different discord Event Keys
 const (
+	AllEventsKey string = "GOD_DAMN_EVERYTHING"
 
 	// Gateway events
 
@@ -19,7 +21,7 @@ const (
 	//       * Guilds []*discord.guild.Unavailable
 	//       * SessionID string
 	//       * Trace []string
-	ReadyKey KeyType = "READY"
+	ReadyKey = "READY"
 	// Resumed The resumed event is dispatched when a client has sent a resume
 	//         payload to the gateway (for resuming existing sessions).
 	//         Fields:

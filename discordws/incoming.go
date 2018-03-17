@@ -5,7 +5,6 @@ import (
 	"compress/zlib"
 	"encoding/json"
 
-	"github.com/andersfylling/disgord/event"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -78,10 +77,10 @@ func (pd *payloadData) ByteArr() []byte {
 }
 
 type gatewayEvent struct {
-	Op             uint          `json:"op"`
-	Data           payloadData   `json:"d"`
-	SequenceNumber uint          `json:"s"`
-	EventName      event.KeyType `json:"t"`
+	Op             uint        `json:"op"`
+	Data           payloadData `json:"d"`
+	SequenceNumber uint        `json:"s"`
+	EventName      string      `json:"t"`
 }
 
 type getGatewayResponse struct {
@@ -100,7 +99,7 @@ type readyPacket struct {
 }
 
 type EventInterface interface {
-	Name() event.KeyType
+	Name() string
 	Data() []byte
 	Unmarshal(interface{}) error
 }
@@ -109,7 +108,7 @@ type Event struct {
 	content *gatewayEvent
 }
 
-func (evt *Event) Name() event.KeyType {
+func (evt *Event) Name() string {
 	return evt.content.EventName
 }
 

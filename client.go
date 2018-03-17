@@ -1,32 +1,72 @@
 package disgord
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/channel"
 	"github.com/andersfylling/disgord/discordws"
-	"github.com/andersfylling/disgord/disgordctx"
-	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/guild"
+	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/state"
+	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	// APIComEncoding data encoding when communicating with the discord API
-	APIComEncoding string = "json"
+// Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
+type Session interface {
+	// main modules
+	//
 
-	// APIVersion desired API version to use
-	APIVersion int = 6
-)
+	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
+	// To read object state such as guilds, State() should be used in stead. However some data
+	// might not exist in the state. If so it should be requested.
+	Req() request.DiscordRequester
+
+	// Event let's developers listen for specific events, event groups, or every event as one listener.
+	// Supports both channels and callbacks
+	Evt() EvtDispatcher
+
+	// State reflects the latest changes received from Discord gateway.
+	// Should be used instead of requesting objects.
+	State() state.Cacher
+
+	// Discord Gateway, web socket
+	//
+	Connect() error
+	Disconnect() error
+
+	// module wrappers
+	//
+
+	// event callbacks
+	AddListener(evtName string, callback interface{})
+	AddListenerOnce(evtName string, callback interface{})
+
+	// state/caching module
+	// checks the cache first, otherwise do a http request
+	Guild(guildID snowflake.ID) <-chan *resource.Guild
+	Channel(channelID snowflake.ID) <-chan *resource.Channel
+	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel
+	Msg(msgID snowflake.ID) <-chan *resource.Message
+	User(userID snowflake.ID) <-chan *resource.User
+	Member(guildID, userID snowflake.ID) <-chan *resource.Member
+	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member
+}
 
 type Config struct {
 	Token      string
 	HTTPClient *http.Client
-	Debug      bool
+
+	CancelRequestWhenRateLimited bool
+
+	LoadAllMembers   bool
+	LoadAllChannels  bool
+	LoadAllRoles     bool
+	LoadAllPresences bool
+
+	Debug bool
 }
 
 // NewClient creates a new default disgord instance
@@ -54,49 +94,74 @@ func NewClient(conf *Config) (*Client, error) {
 		return nil, err
 	}
 
-	// create a disgord instance
-	d := &Client{
-		HTTPClient: conf.HTTPClient,
-		ws:         dws,
-		EventChan:  dws.GetEventChannel(),
-		Token:      conf.Token,
-		Dispatcher: event.NewDispatcher(),
-		State:      NewStateCache(),
+	// request client
+	reqConf := &request.Config{
+		APIVersion:                   APIVersion,
+		BotToken:                     conf.Token,
+		UserAgentSourceURL:           GitHubURL,
+		UserAgentVersion:             Version,
+		HTTPClient:                   conf.HTTPClient,
+		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
+	}
+	reqClient := request.NewClient(reqConf)
+
+	// event dispatcher
+	evtDispatcher := NewDispatch()
+
+	// create a disgord client/instance/session
+	c := &Client{
+		httpClient:    conf.HTTPClient,
+		ws:            dws,
+		socketEvtChan: dws.GetEventChannel(),
+		token:         conf.Token,
+		evtDispatch:   evtDispatcher,
+		state:         state.NewCache(),
+		req:           reqClient,
 	}
 
-	return d, nil
+	return c, nil
 }
 
-// NewRequiredClient same as NewDisgord, but exits program if an error occours
-func NewRequiredClient(conf *Config) *Client {
-	dg, err := NewClient(conf)
+func NewClientMustCompile(conf *Config) *Client {
+	client, err := NewClient(conf)
 	if err != nil {
-		logrus.Fatal(err)
+		panic(err)
 	}
 
-	return dg
+	return client
+}
+
+func NewSession(conf *Config) (Session, error) {
+	return NewClient(conf)
+}
+
+func NewSessionMustCompile(conf *Config) Session {
+	return NewClientMustCompile(conf)
 }
 
 type Client struct {
 	sync.RWMutex
 
-	Token string
+	token string
 
-	ws *discordws.Client
-
-	HTTPClient *http.Client
-
-	EventChan <-chan discordws.EventInterface
+	ws            *discordws.Client
+	socketEvtChan <-chan discordws.EventInterface
 
 	// register listeners for events
-	*event.Dispatcher
+	evtDispatch *Dispatch
+
+	// cancelRequestWhenRateLimited by default the client waits until either the HTTPClient.timeout or
+	// the rate limit ends before closing a request channel. If activated, in stead, requests will
+	// instantly be denied, and the channel closed.
+	cancelRequestWhenRateLimited bool
+
+	// discord http api
+	req *request.Client
+
+	httpClient *http.Client
 
 	// cache
-	State StateCacher
-}
-
-func (c *Client) String() string {
-	return c.ws.String()
+	state *state.Cache
 }
 
 func (c *Client) logInfo(msg string) {
@@ -111,6 +176,10 @@ func (c *Client) logErr(msg string) {
 	}).Error(msg)
 }
 
+func (c *Client) String() string {
+	return c.ws.String()
+}
+
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
 	c.logInfo("Connecting to discord Gateway")
@@ -122,7 +191,7 @@ func (c *Client) Connect() (err error) {
 	c.logInfo("Connected")
 
 	// setup event observer
-	go c.eventObserver()
+	go c.eventHandler()
 
 	return nil
 }
@@ -141,310 +210,243 @@ func (c *Client) Disconnect() (err error) {
 	return nil
 }
 
-func (c *Client) eventObserver() {
-	for {
-		select {
-		case evt, ok := <-c.EventChan:
-			if !ok {
-				logrus.Error("Event channel is dead!")
-				break
-			}
+func (c *Client) Req() request.DiscordRequester {
+	return c.req
+}
 
-			session := &disgordctx.Session{} //disgord context
-			ctx := context.Background()
+func (c *Client) Evt() EvtDispatcher {
+	return c.evtDispatch
+}
 
-			// TODO: parsing JSON uses panic and not logging on issues..
+func (c *Client) State() state.Cacher {
+	return c.state
+}
 
-			eventName := evt.Name()
-			data := evt.Data()
+func (c *Client) AddListener(evtName string, listener interface{}) {
+	c.evtDispatch.AddHandler(evtName, listener)
+}
 
-			switch eventName {
-			case event.ReadyKey:
-				r := &event.ReadyBox{}
-				r.Ctx = ctx
-				event.Unmarshal(data, r)
+// AddListenerOnce not implemented. Do not use.
+func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
+	c.evtDispatch.AddHandlerOnce(evtName, listener)
+}
 
-				go c.ReadyEvent.Trigger(session, r)
+func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
+	ch := make(chan *resource.Channel)
 
-				// allocate cache mem for guilds
-				// for _, gu := range r.Guilds {
-				// 	g := guild.NewGuildFromUnavailable(gu)
-				// 	c.State.AddGuild(g) // checks if the ID already exists
-				// }
+	go func(receiver chan<- *resource.Channel, storage *state.Cache) {
+		result := &resource.Channel{}
+		cached := true
 
-				// updated myself
-				//c.State.UpdateMySelf(r.User)
+		// check cache
 
-			case event.ResumedKey:
-				resumed := &event.ResumedBox{}
-				resumed.Ctx = ctx
-				event.Unmarshal(data, resumed)
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
 
-				// no need to handle this as its done at the socket level ...
-				go c.ResumedEvent.Trigger(session, resumed)
-			case event.ChannelCreateKey, event.ChannelUpdateKey, event.ChannelDeleteKey:
-				chanContent := &channel.Channel{}
-				event.Unmarshal(data, chanContent)
+		// return result
+		receiver <- result
 
-				switch eventName {
-				case event.ChannelCreateKey:
-					go c.ChannelCreateEvent.Trigger(session, &event.ChannelCreateBox{
-						Channel: chanContent,
-						Ctx:     ctx,
-					})
-				case event.ChannelUpdateKey:
-					go c.ChannelUpdateEvent.Trigger(session, &event.ChannelUpdateBox{
-						Channel: chanContent,
-						Ctx:     ctx,
-					})
-				case event.ChannelDeleteKey:
-					go c.ChannelDeleteEvent.Trigger(session, &event.ChannelDeleteBox{
-						Channel: chanContent,
-						Ctx:     ctx,
-					})
-				}
-			case event.ChannelPinsUpdateKey:
-				cpu := &event.ChannelPinsUpdateBox{}
-				cpu.Ctx = ctx
-				event.Unmarshal(data, cpu)
-				go c.ChannelPinsUpdateEvent.Trigger(session, cpu)
-			case event.GuildCreateKey, event.GuildUpdateKey, event.GuildDeleteKey:
-				g := &guild.Guild{}
-				event.Unmarshal(data, g)
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
 
-				switch eventName { // internal switch statement for guild events
-				case event.GuildCreateKey:
-					// notifify listeners
-					go c.GuildCreateEvent.Trigger(session, &event.GuildCreateBox{
-						Guild: g,
-						Ctx:   ctx,
-					})
-					// add to cache
-					//c.State.AddGuild(g)
-				case event.GuildUpdateKey:
-					// notifify listeners
-					go c.GuildUpdateEvent.Trigger(session, &event.GuildUpdateBox{
-						Guild: g,
-						Ctx:   ctx,
-					})
-					// update cache
-					//c.State.UpdateGuild(g)
-				case event.GuildDeleteKey:
-					// notify listeners
-					unavailGuild := guild.NewGuildUnavailable(g.ID)
-					go c.GuildDeleteEvent.Trigger(session, &event.GuildDeleteBox{
-						UnavailableGuild: unavailGuild,
-						Ctx:              ctx,
-					})
-					//
-					// cachedGuild, err := c.State.Guild(g.ID)
-					// if err != nil {
-					// 	// guild has not been cached earlier for some reason..
-					// } else {
-					// 	// update instance with complete info.
-					// 	// Assumption: The cached version has no outdated information.
-					// 	g = nil
-					// 	g = cachedGuild
-					// 	// delete the guild object from the cache
-					// 	c.State.DeleteGuild(g)
-					// }
-				} // END internal switch statement for guild events
-			case event.GuildBanAddKey:
-				gba := &event.GuildBanAddBox{}
-				gba.Ctx = ctx
-				event.Unmarshal(data, gba)
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
 
-				go c.GuildBanAddEvent.Trigger(session, gba)
-			case event.GuildBanRemoveKey:
-				gbr := &event.GuildBanRemoveBox{}
-				gbr.Ctx = ctx
-				event.Unmarshal(data, gbr)
+	return ch
+}
 
-				go c.GuildBanRemoveEvent.Trigger(session, gbr)
-			case event.GuildEmojisUpdateKey:
-				geu := &event.GuildEmojisUpdateBox{}
-				geu.Ctx = ctx
-				event.Unmarshal(data, geu)
+func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel {
+	ch := make(chan map[snowflake.ID]*resource.Channel)
 
-				go c.GuildEmojisUpdateEvent.Trigger(session, geu)
-			case event.GuildIntegrationsUpdateKey:
-				giu := &event.GuildIntegrationsUpdateBox{}
-				giu.Ctx = ctx
-				event.Unmarshal(data, giu)
+	go func(receiver chan<- map[snowflake.ID]*resource.Channel, storage *state.Cache) {
+		result := make(map[snowflake.ID]*resource.Channel)
+		cached := true
 
-				go c.GuildIntegrationsUpdateEvent.Trigger(session, giu)
-			case event.GuildMemberAddKey:
-				gma := &event.GuildMemberAddBox{}
-				gma.Ctx = ctx
-				event.Unmarshal(data, gma)
+		// check cache
 
-				go c.GuildMemberAddEvent.Trigger(session, gma)
-			case event.GuildMemberRemoveKey:
-				gmr := &event.GuildMemberRemoveBox{}
-				gmr.Ctx = ctx
-				event.Unmarshal(data, gmr)
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
 
-				go c.GuildMemberRemoveEvent.Trigger(session, gmr)
-			case event.GuildMemberUpdateKey:
-				gmu := &event.GuildMemberUpdateBox{}
-				gmu.Ctx = ctx
-				event.Unmarshal(data, gmu)
+		// return result
+		receiver <- result
 
-				go c.GuildMemberUpdateEvent.Trigger(session, gmu)
-			case event.GuildMembersChunkKey:
-				gmc := &event.GuildMembersChunkBox{}
-				gmc.Ctx = ctx
-				event.Unmarshal(data, gmc)
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
 
-				go c.GuildMembersChunkEvent.Trigger(session, gmc)
-			case event.GuildRoleCreateKey:
-				r := &event.GuildRoleCreateBox{}
-				r.Ctx = ctx
-				event.Unmarshal(data, r)
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
 
-				go c.GuildRoleCreateEvent.Trigger(session, r)
+	return ch
+}
 
-				// add to cache
-				// g, err := c.State.Guild(r.GuildID)
-				// if err != nil {
-				// 	panic("you haven't correctly cached all guilds you fool!")
-				// }
-				//g.Lock()
-				//g.AddRole(r.Role)
-				//g.Unlock()
-			case event.GuildRoleUpdateKey:
-				r := &event.GuildRoleUpdateBox{}
-				r.Ctx = ctx
-				event.Unmarshal(data, r)
+// state/caching module
+func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
+	ch := make(chan *resource.Guild)
 
-				go c.GuildRoleUpdateEvent.Trigger(session, r)
-				// CACHING
-				// g, err := c.State.Guild(r.GuildID)
-				// if err != nil {
-				// 	panic("you haven't correctly cached all guilds you fool!")
-				// }
-				//
-				// // add to cache
-				// g.Lock()
-				// g.UpdateRole(r.Role)
-				// g.Unlock()
-			case event.GuildRoleDeleteKey:
-				r := &event.GuildRoleDeleteBox{}
-				r.Ctx = ctx
-				event.Unmarshal(data, r)
+	go func(receiver chan<- *resource.Guild, storage *state.Cache) {
+		result := &resource.Guild{}
+		cached := true
 
-				go c.GuildRoleDeleteEvent.Trigger(session, r)
-				//
-				// g, err := c.State.Guild(r.GuildID)
-				// if err != nil {
-				// 	panic("you haven't correctly cached all guilds you fool!")
-				// }
-				// g.Lock()
-				// g.DeleteRoleByID(r.RoleID)
-				// g.Unlock()
-				// // TODO: remove role from guild members...
-			case event.MessageCreateKey, event.MessageUpdateKey, event.MessageDeleteKey:
-				msg := channel.NewMessage()
-				event.Unmarshal(data, msg)
+		// check cache
 
-				// TODO: should i cache msg?..
-				switch eventName {
-				case event.MessageCreateKey:
-					go c.MessageCreateEvent.Trigger(session, &event.MessageCreateBox{
-						Message: msg,
-						Ctx:     ctx,
-					})
-				case event.MessageUpdateKey:
-					go c.MessageUpdateEvent.Trigger(session, &event.MessageUpdateBox{
-						Message: msg,
-						Ctx:     ctx,
-					})
-				case event.MessageDeleteKey:
-					go c.MessageDeleteEvent.Trigger(session, &event.MessageDeleteBox{
-						MessageID: msg.ID,
-						ChannelID: msg.ChannelID,
-					})
-				}
-			case event.MessageDeleteBulkKey:
-				mdb := &event.MessageDeleteBulkBox{}
-				mdb.Ctx = ctx
-				event.Unmarshal(data, mdb)
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
 
-				go c.MessageDeleteBulkEvent.Trigger(session, mdb)
-			case event.MessageReactionAddKey:
-				mra := &event.MessageReactionAddBox{}
-				mra.Ctx = ctx
-				event.Unmarshal(data, mra)
+		// return result
+		receiver <- result
 
-				go c.MessageReactionAddEvent.Trigger(session, mra)
-			case event.MessageReactionRemoveKey:
-				mrr := &event.MessageReactionRemoveBox{}
-				mrr.Ctx = ctx
-				event.Unmarshal(data, mrr)
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
 
-				go c.MessageReactionRemoveEvent.Trigger(session, mrr)
-			case event.MessageReactionRemoveAllKey:
-				mrra := &event.MessageReactionRemoveAllBox{}
-				mrra.Ctx = ctx
-				event.Unmarshal(data, mrra)
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
 
-				go c.MessageReactionRemoveAllEvent.Trigger(session, mrra)
-			case event.PresenceUpdateKey:
-				pu := &event.PresenceUpdateBox{}
-				pu.Ctx = ctx
-				event.Unmarshal(data, pu)
+	return ch
+}
+func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
+	ch := make(chan *resource.Message)
 
-				go c.PresenceUpdateEvent.Trigger(session, pu)
-				//
-				// g, err := c.State.Guild(pu.GuildID)
-				// if err != nil {
-				// 	panic("you haven't correctly cached all guilds you fool!")
-				// }
-				// presence := &discord.Presence{
-				// 	User:   pu.User,
-				// 	Roles:  pu.RoleIDs,
-				// 	Game:   pu.Game,
-				// 	Status: pu.Status,
-				// }
-				// g.UpdatePresence(presence)
-			case event.TypingStartKey:
-				ts := &event.TypingStartBox{}
-				ts.Ctx = ctx
-				event.Unmarshal(data, ts)
+	go func(receiver chan<- *resource.Message, storage *state.Cache) {
+		result := &resource.Message{}
+		cached := true
 
-				go c.TypingStartEvent.Trigger(session, ts)
-			case event.UserUpdateKey:
-				u := &event.UserUpdateBox{}
-				u.Ctx = ctx
-				event.Unmarshal(data, u)
+		// check cache
 
-				// dispatch event
-				go c.UserUpdateEvent.Trigger(session, u)
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
 
-				// update cache
-				//c.State.UpdateMySelf(u.User)
-			case event.VoiceStateUpdateKey:
-				vsu := &event.VoiceStateUpdateBox{}
-				vsu.Ctx = ctx
-				event.Unmarshal(data, vsu)
+		// return result
+		receiver <- result
 
-				go c.VoiceStateUpdateEvent.Trigger(session, vsu)
-			case event.VoiceServerUpdateKey:
-				vsu := &event.VoiceServerUpdateBox{}
-				vsu.Ctx = ctx
-				event.Unmarshal(data, vsu)
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
 
-				go c.VoiceServerUpdateEvent.Trigger(session, vsu)
-			case event.WebhooksUpdateKey:
-				wsu := &event.WebhooksUpdateBox{}
-				wsu.Ctx = ctx
-				event.Unmarshal(data, wsu)
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
 
-				go c.WebhooksUpdateEvent.Trigger(session, wsu)
+	return ch
+}
+func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
+	ch := make(chan *resource.User)
 
-			default:
-				fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name(), string(evt.Data()))
+	go func(userID snowflake.ID, receiver chan<- *resource.User, storage *state.Cache) {
+		var result *resource.User
+		var err error
+		cached := true
+
+		// check cache
+		result, err = storage.User(userID)
+		if err != nil {
+			// log
+			fmt.Printf("User not in cache: id: %s\n", userID.String())
+		}
+
+		// TODO: cache dead objects, to avoid http requesting the same none existent object?
+		// will this ever be a problem
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+			result, err = resource.ReqUser(c.req, userID)
+			if err != nil {
+				// TODO: handle error
+				// issue: devs might either be rate limited or user not found, how would they know tho?
+				receiver <- nil
+				close(receiver)
+				return
 			}
 		}
-	}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			storage.ProcessUser(&state.UserDetail{
+				User:  result,
+				Dirty: false,
+			})
+		}
+
+		// kill the channel
+		close(receiver)
+	}(userID, ch, c.state)
+
+	return ch
+}
+func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
+	ch := make(chan *resource.Member)
+
+	go func(receiver chan<- *resource.Member, storage *state.Cache) {
+		result := &resource.Member{}
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
+}
+func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member {
+	ch := make(chan map[snowflake.ID]*resource.Member)
+
+	go func(receiver chan<- map[snowflake.ID]*resource.Member, storage *state.Cache) {
+		result := make(map[snowflake.ID]*resource.Member)
+		cached := true
+
+		// check cache
+
+		// do http request if none found
+		if result == nil {
+			cached = false
+		}
+
+		// return result
+		receiver <- result
+
+		// update cache with new result, if not found
+		if !cached {
+			//storage.MemberChan <- result
+		}
+
+		// kill the channel
+		close(ch)
+	}(ch, c.state)
+
+	return ch
 }
