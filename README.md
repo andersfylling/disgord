@@ -1,6 +1,9 @@
 # Disgord
 
-[![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/master.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/master)[![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) [![Coverage Status](https://coveralls.io/repos/github/andersfylling/disgord/badge.svg)](https://coveralls.io/github/andersfylling/disgord)
+## Health
+| Branch       | Build status  |
+| ------------ |:-------------:|
+| master       | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/master.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/master)[![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) [![Coverage Status](https://coveralls.io/repos/github/andersfylling/disgord/badge.svg)](https://coveralls.io/github/andersfylling/disgord) |
 
 ## About
 This library is split into three parts: caching, requests and events.
@@ -107,7 +110,7 @@ INFO[2018-02-16 19:07:30] Disconnected                                  lib="Dis
 
 ## Code flow
 
-The main design takes in a discord event and dispatches the event to a channel/callback suited for the event type. The channel can be retrieved and the callbacks set by the Session interface: `Session.Event.ChannelDeleteChan()`, `Session.Event.AddHandler(event.GuildCreateKey, func(...){})` ![the incoming event is fan out to respective channel/callbacks types](images/how_event_are_dispatched_over_channels_using_fan_out.png)
+The main design takes in a discord event and dispatches the event to a channel/callback suited for the event type. The channel can be retrieved and the callbacks set by the Session interface: `Session.Event.ChannelDeleteChan()`, `Session.Event.AddHandler(event.GuildCreateKey, func(...){})`
 
 Note that callbacks and channels are fired from the same place, to avoid overhead. However, channels are fired before the callbacks.
 
