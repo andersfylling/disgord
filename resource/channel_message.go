@@ -209,7 +209,6 @@ type ReqCreateMessageParams struct {
 // 									when uploading files. Make sure you set your Content-Type to multipart/form-data
 // 									if you're doing that. Note that in that case, the embed field cannot be used,
 // 									but you can pass an url-encoded JSON body as a form value for payload_json.
-// TODO: replace message with a message param struct(!)
 func ReqCreateChannelMessage(client request.DiscordPoster, channelID snowflake.ID, params *ReqCreateMessageParams) (*Message, error) {
 	if channelID.Empty() {
 		return nil, errors.New("channelID must be set to get channel messages")
@@ -225,3 +224,13 @@ func ReqCreateChannelMessage(client request.DiscordPoster, channelID snowflake.I
 	return generatedMessage, err
 }
 
+// -------------------------
+// -------------------------
+// REACTION
+
+// https://discordapp.com/developers/docs/resources/channel#reaction-object
+type Reaction struct {
+	Count uint          `json:"count"`
+	Me    bool          `json:"me"`
+	Emoji *PartialEmoji `json:"Emoji"`
+}
