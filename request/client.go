@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	BaseURL string = "https://discordapp.com/api"
+	BaseURL = "https://discordapp.com/api"
 
 	// Header
-	AuthorizationFormat string = "Bot %s"
-	UserAgentFormat     string = "DiscordBot (%s, %s) %s"
+	AuthorizationFormat = "Bot %s"
+	UserAgentFormat     = "DiscordBot (%s, %s) %s"
 )
 
 type DiscordRequester interface {

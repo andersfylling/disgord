@@ -2,9 +2,10 @@ package resource
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/andersfylling/disgord/request"
 	"github.com/andersfylling/snowflake"
-	"strconv"
 )
 
 // https://discordapp.com/developers/docs/resources/channel#reaction-object

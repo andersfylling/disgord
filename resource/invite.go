@@ -40,7 +40,7 @@ type InviteMetadata struct {
 }
 
 const (
-	EndpointInvite string = "/invites"
+	EndpointInvite = "/invites"
 )
 
 // ReqGetInvite Returns an invite object for the given code.

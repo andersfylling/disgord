@@ -1,18 +1,19 @@
 package state
 
 import (
+	"fmt"
 	"runtime"
 	"strconv"
 	"testing"
 	"time"
 
-	"fmt"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 )
 
 func TestUsers_implementsUserCacher(t *testing.T) {
-	if _, implemented := interface{}(&UserCache{}).(UserCacher); !implemented {
+	uc := &UserCache{}
+	if _, implemented := interface{}(uc).(UserCacher); !implemented {
 		t.Error("UserCache does not implement interface UserCacher")
 	}
 }
@@ -35,6 +36,7 @@ func TestUsers_cacheSize(t *testing.T) {
 	cache.Process(&UserDetail{
 		User: newUser,
 	})
+	time.Sleep(50 * time.Millisecond) // haxxor
 
 	// check if the cache grew
 	if cache.Size() == 0 {
@@ -118,6 +120,7 @@ func TestUserCache_Save(t *testing.T) {
 	// add to cache
 	cache := NewUserCache()
 	cache.Process(&UserDetail{User: newUser})
+	time.Sleep(50 * time.Millisecond) // haxor
 
 	// update the cache, and make sure the newUser memory space isn't affected
 	user1 := resource.NewUser()
@@ -127,10 +130,11 @@ func TestUserCache_Save(t *testing.T) {
 		User:  user1,
 		Dirty: true,
 	})
+	time.Sleep(50 * time.Millisecond) // haxor
 
 	// cache should not have been updated yet.
 	cachedUser1, _ := cache.User(user1.ID)
-	if cachedUser1.Username != "new object from disgord" {
+	if cachedUser1.Username != "different username" {
 		t.Errorf("the cached object does not hold the correct username: `%s`", cachedUser1.Username)
 	}
 

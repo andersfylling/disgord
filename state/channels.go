@@ -2,9 +2,7 @@ package state
 
 import (
 	"errors"
-
 	"runtime"
-
 	"sync"
 
 	"github.com/andersfylling/disgord/event"

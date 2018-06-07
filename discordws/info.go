@@ -12,15 +12,15 @@ const (
 	HighestAPIVersion = 6
 
 	// BaseURL The base URL for all API requests
-	BaseURL string = "https://discordapp.com/api"
+	BaseURL = "https://discordapp.com/api"
 
-	EncodingJSON string = "json"
-	EncodingETF  string = "etf"
+	EncodingJSON = "json"
+	EncodingETF  = "etf"
 
-	LibVersionMajor        = 0
-	LibVersionMinor        = 0
-	LibVersionPatch        = 0
-	LibName         string = "Disgord"
+	LibVersionMajor = 0
+	LibVersionMinor = 0
+	LibVersionPatch = 0
+	LibName         = "Disgord"
 )
 
 // Encodings legal

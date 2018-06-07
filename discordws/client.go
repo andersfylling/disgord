@@ -112,10 +112,10 @@ type Client struct {
 	ShardCount        uint         `json:"shard_count"`
 	ShardID           snowflake.ID `json:"shard_id"`
 
-	disconnected  chan struct{}            `json:"-"`
-	operationChan chan *gatewayEvent       `json:"-"`
-	eventChans    map[string](chan []byte) `json:"-"`
-	sendChan      chan *gatewayPayload     `json:"-"`
+	disconnected  chan struct{}          `json:"-"`
+	operationChan chan *gatewayEvent     `json:"-"`
+	eventChans    map[string]chan []byte `json:"-"`
+	sendChan      chan *gatewayPayload   `json:"-"`
 	iEventChan    chan EventInterface
 
 	//Myself         *user.User  `json:"user"`

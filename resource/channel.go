@@ -2,7 +2,6 @@ package resource
 
 import (
 	"errors"
-
 	"sync"
 
 	"github.com/andersfylling/disgord/discord"
@@ -188,12 +187,12 @@ func ReqModifyChannelPatch(client request.DiscordPatcher, changes *ModifyChannel
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	//uri := "/channels/" + changes.ID.String()
-	//data, err := json.Marshal(changes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PATCH" logic
+	// uri := "/channels/" + changes.ID.String()
+	// data, err := json.Marshal(changes)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PATCH" logic
 	return nil, nil
 }
 
@@ -203,12 +202,12 @@ func ReqModifyChannelUpdate(client request.DiscordPutter, changes *ModifyChannel
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	//uri := "/channels/" + changes.ID.String()
-	//data, err := json.Marshal(changes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PUT" logic
+	// uri := "/channels/" + changes.ID.String()
+	// data, err := json.Marshal(changes)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PUT" logic
 	return nil, nil
 }
 
@@ -275,105 +274,104 @@ type ReqCreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// ReqCreateChannelInvites [POST]	Create a new invite object for the channel. Only usable for guild channels.
-// 									Requires the CREATE_INSTANT_INVITE permission. All JSON paramaters for this
-// 									route are optional, however the request body is not. If you are not sending
-// 									any fields, you still have to send an empty JSON object ({}).
-// 									Returns an invite object.
-// Endpoint				   			/channels/{channel.id}/invites
-// Rate limiter [MAJOR]	   			/channels/{channel.id}
-// Discord documentation   			https://discordapp.com/developers/docs/resources/channel#create-channel-invite
-// Reviewed				   			2018-06-07
-// Comment				   			-
+// ReqCreateChannelInvites [POST] Create a new invite object for the channel. Only usable for guild channels.
+//                                Requires the CREATE_INSTANT_INVITE permission. All JSON paramaters for this
+//                                route are optional, however the request body is not. If you are not sending
+//                                any fields, you still have to send an empty JSON object ({}).
+//                                Returns an invite object.
+// Endpoint                       /channels/{channel.id}/invites
+// Rate limiter [MAJOR]           /channels/{channel.id}
+// Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
+// Reviewed                       2018-06-07
+// Comment                        -
 func ReqCreateChannelInvites(client request.DiscordPoster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) {
 
 }
 
-// ReqDeleteChannelPermission [DELETE]	Delete a channel permission overwrite for a user or role in a channel.
-// 										Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-// 										Returns a 204 empty response on success. For more information about
-// 										permissions, see permissions:
-// 										https://discordapp.com/developers/docs/topics/permissions#permissions
-// Endpoint				   				/channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]	   				/channels/{channel.id}
-// Discord documentation   				https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
-// Reviewed				   				2018-06-07
-// Comment				   				-
+// ReqDeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
+//                                      Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
+//                                      Returns a 204 empty response on success. For more information about
+//                                      permissions, see permissions:
+//                                      https://discordapp.com/developers/docs/topics/permissions#permissions
+// Endpoint                             /channels/{channel.id}/permissions/{overwrite.id}
+// Rate limiter [MAJOR]                 /channels/{channel.id}
+// Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
+// Reviewed                             2018-06-07
+// Comment                              -
 func ReqDeleteChannelPermission(client request.DiscordDeleter, channelID, overwriteID snowflake.ID) {
 
 }
 
-// ReqTriggerTypingIndicator [POST]	Post a typing indicator for the specified channel. Generally bots should
-// 									not implement this route. However, if a bot is responding to a command and
-// 									expects the computation to take a few seconds, this endpoint may be called
-// 									to let the user know that the bot is processing their message. Returns a 204
-// 									empty response on success. Fires a Typing Start Gateway event.
-// Endpoint				   			/channels/{channel.id}/typing
-// Rate limiter [MAJOR]	   			/channels/{channel.id}
-// Discord documentation   			https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
-// Reviewed				   			2018-06-07
-// Comment				   			-
+// ReqTriggerTypingIndicator [POST] Post a typing indicator for the specified channel. Generally bots should
+//                                  not implement this route. However, if a bot is responding to a command and
+//                                  expects the computation to take a few seconds, this endpoint may be called
+//                                  to let the user know that the bot is processing their message. Returns a 204
+//                                  empty response on success. Fires a Typing Start Gateway event.
+// Endpoint                         /channels/{channel.id}/typing
+// Rate limiter [MAJOR]             /channels/{channel.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
+// Reviewed                         2018-06-07
+// Comment                          -
 func ReqTriggerTypingIndicator(client request.DiscordPoster, channelID snowflake.ID) {
 
 }
 
-// ReqGetPinnedMessages [GET]	Returns all pinned messages in the channel as an array of message objects.
-// Endpoint				   		/channels/{channel.id}/pins
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
-// Reviewed				   		2018-06-07
-// Comment				   		-
+// ReqGetPinnedMessages [GET] Returns all pinned messages in the channel as an array of message objects.
+// Endpoint                   /channels/{channel.id}/pins
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
+// Reviewed                   2018-06-07
+// Comment                    -
 func ReqGetPinnedMessages(client request.DiscordGetter, channelID snowflake.ID) {
 
 }
 
-// ReqAddPinnedChannelMessage [GET]	Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-// 									Returns a 204 empty response on success.
-// Endpoint				   			/channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]	   			/channels/{channel.id}
-// Discord documentation   			https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
-// Reviewed				   			2018-06-07
-// Comment				   			-
+// ReqAddPinnedChannelMessage [GET] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+//                                  Returns a 204 empty response on success.
+// Endpoint                         /channels/{channel.id}/pins/{message.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
+// Reviewed                         2018-06-07
+// Comment                          -
 func ReqAddPinnedChannelMessage(client request.DiscordPutter, channelID, msgID snowflake.ID) {
 
 }
 
-// ReqDeletePinnedChannelMessage [DELETE]	Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
-// 											permission. Returns a 204 empty response on success.
-// 											Returns a 204 empty response on success.
-// Endpoint				   					/channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]	   					/channels/{channel.id}
-// Discord documentation   					https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
-// Reviewed				   					2018-06-07
-// Comment				   					-
+// ReqDeletePinnedChannelMessage [DELETE] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
+//                                        permission. Returns a 204 empty response on success.
+//                                        Returns a 204 empty response on success.
+// Endpoint                               /channels/{channel.id}/pins/{message.id}
+// Rate limiter [MAJOR]                   /channels/{channel.id}
+// Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
+// Reviewed                               2018-06-07
+// Comment                                -
 func ReqDeletePinnedChannelMessage(client request.DiscordPutter, channelID, msgID snowflake.ID) {
 
 }
 
-type ReqGroupDMAddRecipientParams struct{
+type ReqGroupDMAddRecipientParams struct {
 	AccessToken string `json:"access_token"` // access token of a user that has granted your app the gdm.join scope
-	Nickname string `json:"nick"` // nickname of the user being added
+	Nickname    string `json:"nick"`         // nickname of the user being added
 }
 
-// ReqGroupDMAddRecipient [PUT]	Adds a recipient to a Group DM using their access token.
-// 								Returns a 204 empty response on success.
-// Endpoint				   		/channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
-// Reviewed				   		2018-06-07
-// Comment				   		-
+// ReqGroupDMAddRecipient [PUT] Adds a recipient to a Group DM using their access token.
+//                              Returns a 204 empty response on success.
+// Endpoint                     /channels/{channel.id}/recipients/{user.id}
+// Rate limiter [MAJOR]         /channels/{channel.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+// Reviewed                     2018-06-07
+// Comment                      -
 func ReqGroupDMAddRecipient(client request.DiscordPutter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) {
 
 }
 
-
-// ReqGroupDMRemoveRecipient [DELETE]	Removes a recipient from a Group DM.
-// 										Returns a 204 empty response on success.
-// Endpoint				   				/channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]	   				/channels/{channel.id}
-// Discord documentation   				https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
-// Reviewed				   				2018-06-07
-// Comment				   				-
+// ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
+//                                    Returns a 204 empty response on success.
+// Endpoint                           /channels/{channel.id}/recipients/{user.id}
+// Rate limiter [MAJOR]               /channels/{channel.id}
+// Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
+// Reviewed                           2018-06-07
+// Comment                            -
 func ReqGroupDMRemoveRecipient(client request.DiscordPutter, channelID, userID snowflake.ID) {
 
 }

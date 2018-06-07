@@ -70,7 +70,7 @@ type VoiceRegion struct {
 
 // EndpointVoiceRegions List Voice Regions
 // https://discordapp.com/developers/docs/resources/voice#list-voice-regions
-const EndpointVoiceRegions string = "/voice/regions"
+const EndpointVoiceRegions = "/voice/regions"
 
 func ReqVoiceRegions(requester request.DiscordGetter) (regions []*VoiceRegion, err error) {
 	_, err = requester.Get(EndpointVoiceRegions, EndpointVoiceRegions, regions)

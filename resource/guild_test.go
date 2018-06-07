@@ -1,10 +1,9 @@
 package resource
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
-
-	"encoding/json"
 
 	"github.com/andersfylling/disgord/testutil"
 	"github.com/andersfylling/snowflake"

@@ -3,9 +3,8 @@ package resource
 import (
 	"encoding/json"
 	"errors"
-	"sync"
-
 	"fmt"
+	"sync"
 
 	"github.com/andersfylling/disgord/request"
 	"github.com/andersfylling/snowflake"
@@ -150,7 +149,7 @@ type UserConnection struct {
 
 // GetUser [GET] Returns a user object for a given user ID.
 func ReqUser(requester request.DiscordGetter, id snowflake.ID) (*User, error) {
-	var endpoint string = EndpointUser
+	var endpoint = EndpointUser
 	path := EndpointUser + id.String()
 
 	result := NewUser()

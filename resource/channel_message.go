@@ -3,15 +3,16 @@ package resource
 import (
 	"encoding/json"
 	"errors"
-	"github.com/andersfylling/disgord/request"
-	"github.com/andersfylling/snowflake"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/snowflake"
 )
 
 const (
-	_ int = iota
+	_ = iota
 	MessageActivityTypeJoin
 	MessageActivityTypeSpectate
 	MessageActivityTypeListen

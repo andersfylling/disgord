@@ -378,7 +378,7 @@ func (g *Guild) Clear() {
 	}
 	g.VoiceStates = nil
 
-	deletedUsers := []snowflake.ID{}
+	var deletedUsers []snowflake.ID
 	for _, m := range g.Members {
 		deletedUsers = append(deletedUsers, m.Clear())
 		m = nil
@@ -544,5 +544,5 @@ func (r *Role) Clear() {
 }
 
 const (
-	EndpointGuild string = "/guilds/"
+	EndpointGuild = "/guilds/"
 )

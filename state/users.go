@@ -2,10 +2,8 @@ package state
 
 import (
 	"errors"
-
-	"sync"
-
 	"runtime"
+	"sync"
 
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"

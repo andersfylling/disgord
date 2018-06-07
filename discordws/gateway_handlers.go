@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	ReadyKey   string = "READY"
-	ResumedKey string = "RESUMED"
+	ReadyKey   = "READY"
+	ResumedKey = "RESUMED"
 )
 
 // Connect establishes a websocket connection to the discord API
