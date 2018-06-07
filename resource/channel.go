@@ -3,14 +3,11 @@ package resource
 import (
 	"errors"
 
-	"time"
-
-	"encoding/json"
 	"sync"
 
 	"github.com/andersfylling/disgord/discord"
-	"github.com/andersfylling/snowflake"
 	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/snowflake"
 )
 
 const (
@@ -32,6 +29,7 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
+// Channel
 type Channel struct {
 	ID                   snowflake.ID                 `json:"id"`
 	Type                 uint                         `json:"type"`
@@ -65,6 +63,7 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 func (c *Channel) Replicate(channel *Channel, recipients []*User) {
+	// TODO: mutex is copied
 	*c = *channel
 
 	// WARNING: DM channels holds users. These should be fetched from cache.
@@ -133,13 +132,13 @@ func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 	return errors.New("not implemented")
 }
 
-// ReqChannel [GET] 	   Get a channel by ID. Returns a channel object.
+// ReqGetChannel [GET] 	   Get a channel by ID. Returns a channel object.
 // Endpoint				   /channels/{channel.id}
 // Rate limiter [MAJOR]	   /channels/{channel.id}
 // Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
 // Reviewed				   2018-06-07
 // Comment				   -
-func ReqChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, error) {
+func ReqGetChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, error) {
 	if id.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -150,6 +149,9 @@ func ReqChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, err
 	return content, err
 }
 
+// ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
+type ModifyChannelParams = Channel
+
 // ReqModifyChannel [PUT/PATCH] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
 // 								Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
 // 								Channel Update Gateway event. If modifying a category, individual Channel Update
@@ -157,10 +159,10 @@ func ReqChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, err
 // 								all the JSON Params are optional.
 // Endpoint				   		/channels/{channel.id}
 // Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-channel
+// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#modify-channel
 // Reviewed				   		2018-06-07
 // Comment				   		-
-func ReqModifyChannelPatch(client request.DiscordPatcher, changes *Channel) (*Channel, error) {
+func ReqModifyChannelPatch(client request.DiscordPatcher, changes *ModifyChannelParams) (*Channel, error) {
 	if changes.ID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -173,8 +175,9 @@ func ReqModifyChannelPatch(client request.DiscordPatcher, changes *Channel) (*Ch
 	//err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PATCH" logic
 	return nil, nil
 }
+
 // ReqModifyChannelUpdate see ReqModifyChannelPatch
-func ReqModifyChannelUpdate(client request.DiscordPutter, changes *Channel) (*Channel, error) {
+func ReqModifyChannelUpdate(client request.DiscordPutter, changes *ModifyChannelParams) (*Channel, error) {
 	if changes.ID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -188,87 +191,28 @@ func ReqModifyChannelUpdate(client request.DiscordPutter, changes *Channel) (*Ch
 	return nil, nil
 }
 
-func DeleteChannel(client request.DiscordDeleter, id snowflake.ID) (error) {
+// ReqDeleteChannel [DELETE]	Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
+// 								permission for the guild. Deleting a category does not delete its child
+// 								channels; they will have their parent_id removed and a Channel Update Gateway
+// 								event will fire for each of them. Returns a channel object on success. Fires a
+// 								Channel Delete Gateway event.
+// Endpoint				   		/channels/{channel.id}
+// Rate limiter [MAJOR]	   		/channels/{channel.id}
+// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
+// Reviewed				   		2018-06-07
+// Comment				   		Deleting a guild channel cannot be undone. Use this with caution, as it
+// 								is impossible to undo this action when performed on a guild channel. In
+// 								contrast, when used with a private message, it is possible to undo the
+// 								action by opening a private message with the recipient again.
+func ReqDeleteChannel(client request.DiscordDeleter, id snowflake.ID) (err error) {
 	if id.Empty() {
-		return errors.New("not a valid snowflake")
+		err = errors.New("not a valid snowflake")
+		return
 	}
 
 	uri := "/channels/" + id.String()
-	_, err := client.Delete(uri, uri)
-	return err
-}
-
-// ---------
-// Embeds
-// limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
-// TODO: implement NewEmbedX functions that ensures limitations
-
-// ChannelEmbed https://discordapp.com/developers/docs/resources/channel#embed-object
-type ChannelEmbed struct {
-	Title       string                 `json:"title"`       // title of embed
-	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
-	Description string                 `json:"description"` // description of embed
-	URL         string                 `json:"url"`         // url of embed
-	Timestamp   time.Time              `json:"timestamp"`   // timestamp	timestamp of embed content
-	Color       int                    `json:"color"`       // color code of the embed
-	Footer      *ChannelEmbedFooter    `json:"footer"`      // embed footer object	footer information
-	Image       *ChannelEmbedImage     `json:"image"`       // embed image object	image information
-	Thumbnail   *ChannelEmbedThumbnail `json:"thumbnail"`   // embed thumbnail object	thumbnail information
-	Video       *ChannelEmbedVideo     `json:"video"`       // embed video object	video information
-	Provider    *ChannelEmbedProvider  `json:"provider"`    // embed provider object	provider information
-	Author      *ChannelEmbedAuthor    `json:"author"`      // embed author object	author information
-	Fields      []*ChannelEmbedField   `json:"fields"`      //	array of embed field objects	fields information
-}
-
-// ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
-type ChannelEmbedThumbnail struct {
-	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
-	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
-	Height   int    `json:"height,omitempty"`    // ?| , height of image
-	Width    int    `json:"width,omitempty"`     // ?| , width of image
-}
-
-// ChannelEmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
-type ChannelEmbedVideo struct {
-	Url    string `json:"url,omitempty"`    // ?| , source url of video
-	Height int    `json:"height,omitempty"` // ?| , height of video
-	Width  int    `json:"width,omitempty"`  // ?| , width of video
-}
-
-// ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
-type ChannelEmbedImage struct {
-	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
-	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
-	Height   int    `json:"height,omitempty"`    // ?| , height of image
-	Width    int    `json:"width,omitempty"`     // ?| , width of image
-}
-
-// ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
-type ChannelEmbedProvider struct {
-	Name string `json:"name,omitempty"` // ?| , name of provider
-	Url  string `json:"url,omitempty"`  // ?| , url of provider
-}
-
-// ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
-type ChannelEmbedAuthor struct {
-	Name         string `json:"name,omitempty"`           // ?| , name of author
-	Url          string `json:"url,omitempty"`            // ?| , url of author
-	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
-	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
-}
-
-// ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
-type ChannelEmbedFooter struct {
-	Text         string `json:"text"`                     //  | , url of author
-	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
-	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
-}
-
-// ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
-type ChannelEmbedField struct {
-	Name   string `json:"name"`           //  | , name of the field
-	Value  string `json:"value"`          //  | , value of the field
-	Inline bool   `json:"bool,omitempty"` // ?| , whether or not this field should display inline
+	_, err = client.Delete(uri, uri)
+	return
 }
 
 // -------
@@ -285,103 +229,6 @@ type Attachment struct {
 	Width    uint         `json:"width"`
 }
 
-// -------
-// message
-
-const (
-	_ int = iota
-	MessageActivityTypeJoin
-	MessageActivityTypeSpectate
-	MessageActivityTypeListen
-	MessageActivityTypeJoinRequest
-)
-const (
-	MessageTypeDefault = iota
-	MessageTypeRecipientAdd
-	MessageTypeRecipientRemove
-	MessageTypeCall
-	MessageTypeChannelNameChange
-	MessageTypeChannelIconChange
-	MessageTypeChannelPinnedMessage
-	MessageTypeGuildMemberJoin
-)
-
-func NewMessage() *Message {
-	return &Message{}
-}
-
-func NewDeletedMessage() *DeletedMessage {
-	return &DeletedMessage{}
-}
-
-type DeletedMessage struct {
-	ID        snowflake.ID `json:"id"`
-	ChannelID snowflake.ID `json:"channel_id"`
-}
-
-// https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
-type MessageActivity struct {
-	Type    int    `json:"type"`
-	PartyID string `json:"party_id"`
-}
-
-// https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
-type MessageApplication struct {
-	ID          snowflake.ID `json:"id"`
-	CoverImage  string       `json:"cover_image"`
-	Description string       `json:"description"`
-	Icon        string       `json:"icon"`
-	Name        string       `json:"name"`
-}
-
-// https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
-type Message struct {
-	ID              snowflake.ID       `json:"id"`
-	ChannelID       snowflake.ID       `json:"channel_id"`
-	Author          *User              `json:"author"`
-	Content         string             `json:"content"`
-	Timestamp       time.Time          `json:"timestamp"`
-	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
-	Tts             bool               `json:"tts"`
-	MentionEveryone bool               `json:"mention_everyone"`
-	Mentions        []*User            `json:"mentions"`
-	MentionRoles    []snowflake.ID     `json:"mention_roles"`
-	Attachments     []*Attachment      `json:"attachments"`
-	Embeds          []*ChannelEmbed    `json:"embeds"`
-	Reactions       []*Reaction        `json:"reactions"` // ?
-	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
-	Pinned          bool               `json:"pinned"`
-	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
-	Type            uint               `json:"type"`
-	Activity        MessageActivity    `json:"activity"`
-	Application     MessageApplication `json:"application"`
-
-	sync.RWMutex `json:"-"`
-}
-
-func (m *Message) MarshalJSON() ([]byte, error) {
-	if m.ID.Empty() {
-		return []byte("{}"), nil
-	}
-
-	return json.Marshal(Message(*m))
-}
-
-func (m *Message) Delete() {}
-func (m *Message) Update() {}
-func (m *Message) Send()   {}
-
-func (m *Message) AddReaction(reaction *Reaction) {}
-func (m *Message) RemoveReaction(id snowflake.ID) {}
-
-// GET, based on ID? 0.o
-
-// func (m *Message) UnmarshalJSON(data []byte) error {
-// 	return json.Unmarshal(data, &m.messageJSON)
-// }
-
-func GetMessages() {}
-
 // ---------------
 
 // Overwrite: https://discordapp.com/developers/docs/resources/channel#overwrite-object
@@ -393,13 +240,3 @@ type ChannelPermissionOverwrite struct {
 }
 
 func (pmo *ChannelPermissionOverwrite) Clear() {}
-
-// -----------
-// reaction
-
-// https://discordapp.com/developers/docs/resources/channel#reaction-object
-type Reaction struct {
-	Count uint          `json:"count"`
-	Me    bool          `json:"me"`
-	Emoji *PartialEmoji `json:"Emoji"`
-}

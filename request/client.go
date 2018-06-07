@@ -20,32 +20,32 @@ const (
 )
 
 type DiscordRequester interface {
-	Request(method, endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Get(endpoint, path string, target interface{}) (timeout int64, err error)
-	Post(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Put(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Patch(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Delete(endpoint, path string) (timeout int64, err error)
+	Request(method, ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error)
+	Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Delete(ratelimiter, endpoint string) (timeout int64, err error)
 }
 
 type DiscordGetter interface {
-	Get(endpoint, path string, target interface{}) (timeout int64, err error)
+	Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error)
 }
 
 type DiscordPoster interface {
-	Post(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
 }
 
 type DiscordPutter interface {
-	Put(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
 }
 
 type DiscordPatcher interface {
-	Patch(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error)
+	Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
 }
 
 type DiscordDeleter interface {
-	Delete(endpoint, path string) (timeout int64, err error)
+	Delete(ratelimiter, endpoint string) (timeout int64, err error)
 }
 
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
@@ -126,7 +126,7 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 }
 
-func (c *Client) Request(method, endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
+func (c *Client) Request(method, ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
 
 	var jsonParamsReader io.Reader
 	if jsonParams != nil {
@@ -136,14 +136,14 @@ func (c *Client) Request(method, endpoint, path string, target interface{}, json
 		}
 	}
 
-	req, err := http.NewRequest(method, c.url+path, jsonParamsReader)
+	req, err := http.NewRequest(method, c.url+endpoint, jsonParamsReader)
 	if err != nil {
 		return
 	}
 
 	//check if rate limited
 	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.
-	timeout = c.rateLimit.RateLimitTimeout(endpoint)
+	timeout = c.rateLimit.RateLimitTimeout(ratelimiter)
 	if timeout > 0 {
 		// wait until rate limit is over.
 		// exception; if the rate limit timeout exceeds the http client timeout, return error.
@@ -164,7 +164,7 @@ func (c *Client) Request(method, endpoint, path string, target interface{}, json
 	defer res.Body.Close()
 
 	// update rate limits
-	c.rateLimit.HandleResponse(endpoint, res)
+	c.rateLimit.HandleResponse(ratelimiter, res)
 
 	// successful deletes return 204. TODO: confirm
 	if method == http.MethodDelete {
@@ -173,7 +173,7 @@ func (c *Client) Request(method, endpoint, path string, target interface{}, json
 			return
 		}
 
-		err = errors.New("Unable to delete resource at " + path)
+		err = errors.New("Unable to delete resource at " + endpoint)
 		return
 	}
 
@@ -186,24 +186,24 @@ func (c *Client) Request(method, endpoint, path string, target interface{}, json
 	return
 }
 
-func (c *Client) Get(endpoint, path string, target interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodGet, endpoint, path, target, nil)
+func (c *Client) Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error) {
+	return c.Request(http.MethodGet, ratelimiter, endpoint, target, nil)
 }
 
-func (c *Client) Post(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPost, endpoint, path, target, jsonParams)
+func (c *Client) Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
+	return c.Request(http.MethodPost, ratelimiter, endpoint, target, jsonParams)
 }
 
-func (c *Client) Put(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPut, endpoint, path, target, jsonParams)
+func (c *Client) Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
+	return c.Request(http.MethodPut, ratelimiter, endpoint, target, jsonParams)
 }
 
-func (c *Client) Patch(endpoint, path string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPatch, endpoint, path, target, jsonParams)
+func (c *Client) Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
+	return c.Request(http.MethodPatch, ratelimiter, endpoint, target, jsonParams)
 }
 
-func (c *Client) Delete(endpoint, path string) (timeout int64, err error) {
-	return c.Request(http.MethodDelete, endpoint, path, nil, nil)
+func (c *Client) Delete(ratelimiter, endpoint string) (timeout int64, err error) {
+	return c.Request(http.MethodDelete, ratelimiter, endpoint, nil, nil)
 }
 
 func (c *Client) RateLimiter() RateLimiter {
