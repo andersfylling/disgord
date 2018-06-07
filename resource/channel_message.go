@@ -1,13 +1,13 @@
 package resource
 
 import (
-	"time"
-	"sync"
 	"encoding/json"
-	"strconv"
-	"github.com/andersfylling/disgord/request"
 	"errors"
+	"github.com/andersfylling/disgord/request"
 	"github.com/andersfylling/snowflake"
+	"strconv"
+	"sync"
+	"time"
 )
 
 const (
@@ -187,7 +187,7 @@ type ReqCreateMessageParams struct {
 	Content     string        `json:"content"`
 	Nonce       snowflake.ID  `json:"nonce,omitempty"`
 	Tts         bool          `json:"tts,omitempty"`
-	File        interface{}   `json:"file,omitempty"` // TODO: what is this supposed to be?
+	File        interface{}   `json:"file,omitempty"`  // TODO: what is this supposed to be?
 	Embed       *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 	PayloadJSON string        `json:"payload_json,omitempty"`
 }
@@ -224,13 +224,128 @@ func ReqCreateChannelMessage(client request.DiscordPoster, channelID snowflake.I
 	return generatedMessage, err
 }
 
-// -------------------------
-// -------------------------
-// REACTION
+// ReqEditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
+type ReqEditMessageParams struct {
+	Content string        `json:"content,omitempty"`
+	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
+}
 
-// https://discordapp.com/developers/docs/resources/channel#reaction-object
-type Reaction struct {
-	Count uint          `json:"count"`
-	Me    bool          `json:"me"`
-	Emoji *PartialEmoji `json:"Emoji"`
+// ReqEditMessage [PATCH]	Edit a previously sent message. You can only edit messages that have been sent by
+// 							the current user. Returns a message object. Fires a Message Update Gateway event.
+// Endpoint				   	/channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]	   	/channels/{channel.id}
+// Discord documentation   	https://discordapp.com/developers/docs/resources/channel#edit-message
+// Reviewed				   	2018-06-07
+// Comment				   	All parameters to this endpoint are optional.
+func ReqEditMessage(client request.DiscordPatcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (*Message, error) {
+	if chanID.Empty() {
+		return nil, errors.New("channelID must be set to get channel messages")
+	}
+	if msgID.Empty() {
+		return nil, errors.New("msgID must be set to edit the message")
+	}
+
+	ratelimiter := "/channels/" + chanID.String()
+	endpoint := ratelimiter + "/messages/" + msgID.String()
+	var generatedMessage *Message
+	_, err := client.Patch(ratelimiter, endpoint, generatedMessage, params)
+	return generatedMessage, err
+}
+
+// ReqDeleteMessage [DELETE]	Delete a message. If operating on a guild channel and trying to delete a message that was not sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires a Message Delete Gateway event.
+// Endpoint				   		/channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]	   		/channels/{channel.id}
+// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed				   		2018-06-07
+// Comment				   		-
+func ReqDeleteMessage(client request.DiscordDeleter, chanID, msgID snowflake.ID) error {
+	if chanID.Empty() {
+		return errors.New("channelID must be set to get channel messages")
+	}
+	if msgID.Empty() {
+		return errors.New("msgID must be set to delete the message")
+	}
+
+	ratelimiter := "/channels/" + chanID.String()
+	endpoint := ratelimiter + "/messages/" + msgID.String()
+	_, err := client.Delete(ratelimiter, endpoint)
+	return err
+}
+
+// ReqBulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+type ReqBulkDeleteMessagesParams struct {
+	Messages []snowflake.ID `json:"messages"`
+	m        sync.RWMutex   `json:"-"`
+}
+
+func (p *ReqBulkDeleteMessagesParams) tooMany(messages int) error {
+	if messages > 100 {
+		return errors.New("must be 100 or less messages to delete")
+	}
+
+	return nil
+}
+
+func (p *ReqBulkDeleteMessagesParams) tooFew(messages int) error {
+	if messages < 2 {
+		return errors.New("must be at least two messages to delete")
+	}
+
+	return nil
+}
+
+func (p *ReqBulkDeleteMessagesParams) Valid() error {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
+	messages := len(p.Messages)
+	err := p.tooMany(messages)
+	if err != nil {
+		return err
+	}
+	err = p.tooFew(messages)
+	return err
+}
+
+func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) error {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	err := p.tooMany(len(p.Messages) + 1)
+	if err != nil {
+		return err
+	}
+
+	// TODO: check for duplicates as those are counted only once
+
+	p.Messages = append(p.Messages, msg.ID)
+	return nil
+}
+
+// ReqBulkDeleteMessages [POST]	Delete multiple messages in a single request. This endpoint can only be used
+// 								on guild channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204
+// 								empty response on success. Fires multiple Message Delete Gateway events.Any message
+// 								IDs given that do not exist or are invalid will count towards the minimum and
+// 								maximum message count (currently 2 and 100 respectively). Additionally,
+// 								duplicated IDs will only be counted once.
+// Endpoint				   		/channels/{channel.id}/messages/bulk-delete
+// Rate limiter [MAJOR]	   		/channels/{channel.id}
+// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed				   		2018-06-07
+// Comment				   		This endpoint will not delete messages older than 2 weeks, and will fail if
+// 								any message provided is older than that.
+func ReqBulkDeleteMessages(client request.DiscordPoster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
+	if chanID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	err = params.Valid()
+	if err != nil {
+		return
+	}
+
+	ratelimiter := "/channels/" + chanID.String()
+	endpoint := ratelimiter + "/messages/bulk-delete"
+	_, err = client.Post(ratelimiter, endpoint, nil, params)
+	return
 }
