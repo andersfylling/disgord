@@ -1,14 +1,14 @@
 package state
 
 import (
-	"testing"
-	"strconv"
 	"runtime"
+	"strconv"
+	"testing"
 	"time"
 
+	"fmt"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
-	"fmt"
 )
 
 func TestUsers_implementsUserCacher(t *testing.T) {
@@ -80,7 +80,7 @@ func TestUsers_cacheClear(t *testing.T) {
 	start := time.Now()
 	for _, user := range users {
 		cache.Process(&UserDetail{
-			User: user,
+			User:  user,
 			Dirty: false,
 		})
 	}

@@ -15,6 +15,7 @@ type Emoji struct {
 	Managed       bool           `json:"managed,omitempty"`
 	Animated      bool           `json:"animated,omitempty"`
 }
+type PartialEmoji = Emoji
 
 // Mention
 // TODO: review

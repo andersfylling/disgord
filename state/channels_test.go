@@ -1,14 +1,14 @@
 package state
 
 import (
-	"testing"
-	"strconv"
 	"runtime"
+	"strconv"
+	"testing"
 	"time"
 
+	"errors"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
-	"errors"
 )
 
 func TestChannels_implementsChannelCacher(t *testing.T) {
@@ -20,6 +20,7 @@ func TestChannels_implementsChannelCacher(t *testing.T) {
 type Mock_UserCacher struct {
 	users map[snowflake.ID]*resource.User
 }
+
 func (muc *Mock_UserCacher) Process(ud *UserDetail) {
 	muc.users[ud.User.ID] = ud.User
 }
@@ -132,8 +133,8 @@ func TestChannelCache_Save(t *testing.T) {
 	user1.ID = newChannel.ID
 	user1.Name = "different username"
 	cache.Process(&ChannelDetail{
-		Channel:  user1,
-		Dirty: true,
+		Channel: user1,
+		Dirty:   true,
 	})
 
 	// cache should not have been updated yet.
@@ -188,9 +189,9 @@ func TestChannelCache_inputOutput(t *testing.T) {
 	channel.ID = snowflake.NewID(11111111111111)
 	channel.Name = "new object from disgord"
 	channel.Type = resource.ChannelTypeGroupDM
-	for i:= 0; i < 10; i++ {
+	for i := 0; i < 10; i++ {
 		user := resource.NewUser()
-		user.ID = snowflake.NewID(3546345 + uint64(i + i*i))
+		user.ID = snowflake.NewID(3546345 + uint64(i+i*i))
 		channel.Recipients = append(channel.Recipients, user)
 	}
 
@@ -200,8 +201,8 @@ func TestChannelCache_inputOutput(t *testing.T) {
 	}
 	cache := NewChannelCache(userCacher)
 	cache.Process(&ChannelDetail{
-		Channel:  channel,
-		Dirty: true,
+		Channel: channel,
+		Dirty:   true,
 	})
 
 	cachedChannel, err := cache.Channel(channel.ID)

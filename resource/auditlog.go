@@ -115,11 +115,12 @@ const (
 )
 
 // AuditLogParams set params used in endpoint request
+// https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-parameters
 type AuditLogParams struct {
-	UserID     snowflake.ID `urlparam:"user_id,omitempty"`
-	ActionType uint         `urlparam:"action_type,omitempty"`
-	Before     snowflake.ID `urlparam:"before,omitempty"`
-	Limit      int          `urlparam:"limit,omitempty"`
+	UserID     snowflake.ID `urlparam:"user_id,omitempty"`     // filter the log for a user id
+	ActionType uint         `urlparam:"action_type,omitempty"` // the type of audit log event
+	Before     snowflake.ID `urlparam:"before,omitempty"`      // filter the log before a certain entry id
+	Limit      int          `urlparam:"limit,omitempty"`       // how many entries are returned (default 50, minimum 1, maximum 100)
 }
 
 // getQueryString this ins't really pretty, but it works.
@@ -149,6 +150,13 @@ func (params *AuditLogParams) getQueryString() string {
 	return query
 }
 
+// ReqGuildAuditLogs [GET] Returns an audit log object for the guild.
+// 						   Requires the 'VIEW_AUDIT_LOG' permission.
+// Endpoint				   /guilds/{guild.id}/audit-logs
+// Rate limiter [MAJOR]	   /guilds/{guild.id}
+// Discord documentation   https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
+// Reviewed				   2018-06-05
+// Comment				   -
 func ReqGuildAuditLogs(requester request.DiscordGetter, guildID string, params *AuditLogParams) (*AuditLog, error) {
 	endpoint := EndpointGuild + "/" + guildID
 	path := endpoint + "audit-logs" + params.getQueryString()
