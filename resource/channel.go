@@ -152,12 +152,12 @@ func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 	return errors.New("not implemented")
 }
 
-// ReqGetChannel [GET] 	   Get a channel by ID. Returns a channel object.
-// Endpoint				   /channels/{channel.id}
-// Rate limiter [MAJOR]	   /channels/{channel.id}
-// Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
-// Reviewed				   2018-06-07
-// Comment				   -
+// ReqGetChannel [GET]    Get a channel by ID. Returns a channel object.
+// Endpoint               /channels/{channel.id}
+// Rate limiter [MAJOR]   /channels/{channel.id}
+// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-channel
+// Reviewed               2018-06-07
+// Comment                -
 func ReqGetChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, error) {
 	if id.Empty() {
 		return nil, errors.New("not a valid snowflake")
@@ -173,15 +173,15 @@ func ReqGetChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, 
 type ModifyChannelParams = Channel
 
 // ReqModifyChannel [PUT/PATCH] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
-// 								Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
-// 								Channel Update Gateway event. If modifying a category, individual Channel Update
-// 								events will fire for each child channel that also changes. For the PATCH method,
-// 								all the JSON Params are optional.
-// Endpoint				   		/channels/{channel.id}
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#modify-channel
-// Reviewed				   		2018-06-07
-// Comment				   		-
+//                              Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
+//                              Channel Update Gateway event. If modifying a category, individual Channel Update
+//                              events will fire for each child channel that also changes. For the PATCH method,
+//                              all the JSON Params are optional.
+// Endpoint                     /channels/{channel.id}
+// Rate limiter [MAJOR]         /channels/{channel.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#modify-channel
+// Reviewed                     2018-06-07
+// Comment                      -
 func ReqModifyChannelPatch(client request.DiscordPatcher, changes *ModifyChannelParams) (*Channel, error) {
 	if changes.ID.Empty() {
 		return nil, errors.New("not a valid snowflake")
@@ -211,19 +211,19 @@ func ReqModifyChannelUpdate(client request.DiscordPutter, changes *ModifyChannel
 	return nil, nil
 }
 
-// ReqDeleteChannel [DELETE]	Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
-// 								permission for the guild. Deleting a category does not delete its child
-// 								channels; they will have their parent_id removed and a Channel Update Gateway
-// 								event will fire for each of them. Returns a channel object on success. Fires a
-// 								Channel Delete Gateway event.
-// Endpoint				   		/channels/{channel.id}
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
-// Reviewed				   		2018-06-07
-// Comment				   		Deleting a guild channel cannot be undone. Use this with caution, as it
-// 								is impossible to undo this action when performed on a guild channel. In
-// 								contrast, when used with a private message, it is possible to undo the
-// 								action by opening a private message with the recipient again.
+// ReqDeleteChannel [DELETE]  Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
+//                            permission for the guild. Deleting a category does not delete its child
+//                            channels; they will have their parent_id removed and a Channel Update Gateway
+//                            event will fire for each of them. Returns a channel object on success. Fires a
+//                            Channel Delete Gateway event.
+// Endpoint                   /channels/{channel.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
+// Reviewed                   2018-06-07
+// Comment                    Deleting a guild channel cannot be undone. Use this with caution, as it
+//                            is impossible to undo this action when performed on a guild channel. In
+//                            contrast, when used with a private message, it is possible to undo the
+//                            action by opening a private message with the recipient again.
 func ReqDeleteChannel(client request.DiscordDeleter, id snowflake.ID) (err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
@@ -242,26 +242,26 @@ type ReqEditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
-// ReqEditChannelPermissions [PUT]	Edit the channel permission overwrites for a user or role in a channel.
-// 									Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-// 									Returns a 204 empty response on success. For more information about
-// 									permissions, see permissions.
-// Endpoint				   			/channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]	   			/channels/{channel.id}
-// Discord documentation   			https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
-// Reviewed				   			2018-06-07
-// Comment				   			-
+// ReqEditChannelPermissions [PUT]  Edit the channel permission overwrites for a user or role in a channel.
+//                                  Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
+//                                  Returns a 204 empty response on success. For more information about
+//                                  permissions, see permissions.
+// Endpoint                         /channels/{channel.id}/permissions/{overwrite.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
+// Reviewed                         2018-06-07
+// Comment                          -
 func ReqEditChannelPermissions(client request.DiscordPutter, chanID, overwriteID snowflake.ID, params *ReqEditChannelPermissionsParams) {
 
 }
 
-// ReqGetChannelInvites [GET]	Returns a list of invite objects (with invite metadata) for the channel.
-// 								Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
-// Endpoint				   		/channels/{channel.id}/invites
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-channel-invites
-// Reviewed				   		2018-06-07
-// Comment				   		-
+// ReqGetChannelInvites [GET] Returns a list of invite objects (with invite metadata) for the channel.
+//                            Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
+// Endpoint                   /channels/{channel.id}/invites
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
+// Reviewed                   2018-06-07
+// Comment                    -
 func ReqGetChannelInvites(client request.DiscordGetter, channelID snowflake.ID) {
 
 }

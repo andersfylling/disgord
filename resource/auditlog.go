@@ -150,13 +150,13 @@ func (params *AuditLogParams) getQueryString() string {
 	return query
 }
 
-// ReqGuildAuditLogs [GET] Returns an audit log object for the guild.
-// 						   Requires the 'VIEW_AUDIT_LOG' permission.
-// Endpoint				   /guilds/{guild.id}/audit-logs
-// Rate limiter [MAJOR]	   /guilds/{guild.id}
-// Discord documentation   https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
-// Reviewed				   2018-06-05
-// Comment				   -
+// ReqGuildAuditLogs [GET]  Returns an audit log object for the guild.
+//                          Requires the 'VIEW_AUDIT_LOG' permission.
+// Endpoint                 /guilds/{guild.id}/audit-logs
+// Rate limiter [MAJOR]     /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
+// Reviewed                 2018-06-05
+// Comment                  -
 func ReqGuildAuditLogs(requester request.DiscordGetter, guildID string, params *AuditLogParams) (*AuditLog, error) {
 	endpoint := EndpointGuild + "/" + guildID
 	path := endpoint + "audit-logs" + params.getQueryString()

@@ -22,10 +22,10 @@ type Cacher interface {
 // TODO: guilds has copies of channels, that exists in the channels cacher
 // TODO: channels has copies of users, that exists in the users cacher
 // TODO: on caching, make sure only one of the objects exists in memory
-// 		 channel.Users[0].ID == 1234 should point to the users cacher where user.ID == 1234.
-// 		 Not hold a copy.
-//		 Discordgo solves this by having arrays of string snowflakes for relevant objects
-//		 But I feel this causes an extra step for the users, to extract a user object from say a guild/channel.
+//        channel.Users[0].ID == 1234 should point to the users cacher where user.ID == 1234.
+//        Not hold a copy.
+//        Discordgo solves this by having arrays of string snowflakes for relevant objects
+//        But I feel this causes an extra step for the users, to extract a user object from say a guild/channel.
 
 func NewCache() *Cache {
 	st := &Cache{}

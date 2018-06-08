@@ -323,18 +323,18 @@ func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) error {
 	return nil
 }
 
-// ReqBulkDeleteMessages [POST]	Delete multiple messages in a single request. This endpoint can only be used
-// 								on guild channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204
-// 								empty response on success. Fires multiple Message Delete Gateway events.Any message
-// 								IDs given that do not exist or are invalid will count towards the minimum and
-// 								maximum message count (currently 2 and 100 respectively). Additionally,
-// 								duplicated IDs will only be counted once.
-// Endpoint				   		/channels/{channel.id}/messages/bulk-delete
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#delete-message
-// Reviewed				   		2018-06-07
-// Comment				   		This endpoint will not delete messages older than 2 weeks, and will fail if
-// 								any message provided is older than that.
+// ReqBulkDeleteMessages [POST] Delete multiple messages in a single request. This endpoint can only be used
+//                              on guild channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204
+//                              empty response on success. Fires multiple Message Delete Gateway events.Any message
+//                              IDs given that do not exist or are invalid will count towards the minimum and
+//                              maximum message count (currently 2 and 100 respectively). Additionally,
+//                              duplicated IDs will only be counted once.
+// Endpoint                     /channels/{channel.id}/messages/bulk-delete
+// Rate limiter [MAJOR]         /channels/{channel.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed                     2018-06-07
+// Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
+//                              any message provided is older than that.
 func ReqBulkDeleteMessages(client request.DiscordPoster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")

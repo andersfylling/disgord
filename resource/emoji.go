@@ -47,11 +47,11 @@ func (e *Emoji) Clear() {
 // and you may encounter 429s.
 
 // ReqListGuildEmojis [GET] Returns a list of emoji objects for the given guild.
-// Endpoint				    /guilds/{guild.id}/emojis
-// Rate limiter [MAJOR]		/guilds/{guild.id}
-// Discord documentation	https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
-// Reviewed					2018-03-17
-// Comment					-
+// Endpoint                 /guilds/{guild.id}/emojis
+// Rate limiter [MAJOR]     /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
+// Reviewed                 2018-03-17
+// Comment                  -
 func ReqListGuildEmojis(requester request.DiscordGetter, guildID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis"
@@ -62,11 +62,11 @@ func ReqListGuildEmojis(requester request.DiscordGetter, guildID snowflake.ID) (
 }
 
 // ReqGetGuildEmoji [GET] Returns an emoji object for the given guild and emoji IDs.
-// Endpoint				  /guilds/{guild.id}/emojis/{emoji.id}
-// Rate limiter [MAJOR]	  /guilds/{guild.id}
+// Endpoint               /guilds/{guild.id}/emojis/{emoji.id}
+// Rate limiter [MAJOR]   /guilds/{guild.id}
 // Discord documentation  https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
-// Reviewed				  2018-03-17
-// Comment				  -
+// Reviewed               2018-03-17
+// Comment                -
 func ReqGetGuildEmoji(requester request.DiscordGetter, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
@@ -77,16 +77,16 @@ func ReqGetGuildEmoji(requester request.DiscordGetter, guildID, emojiID snowflak
 }
 
 // ReqCreateGuildEmoji [POST] Create a new emoji for the guild. Requires the
-// 							  'MANAGE_EMOJIS' permission. Returns the new emoji
-// 							  object on success. Fires a Guild Emojis Update Gateway event.
-// Endpoint					  /guilds/{guild.id}/emojis
-// Rate limiter [MAJOR]		  /guilds/{guild.id}
-// Discord documentation	  https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
-// Reviewed					  2018-03-17
-// Comment					  "Emojis and animated emojis have a maximum file size of 256kb.
-// 							   Attempting to upload an emoji larger than this limit will fail
-// 							   and return 400 Bad Request and an error message, but not a JSON
-// 							   status code." - Discord docs
+//                            'MANAGE_EMOJIS' permission. Returns the new emoji
+//                            object on success. Fires a Guild Emojis Update Gateway event.
+// Endpoint                   /guilds/{guild.id}/emojis
+// Rate limiter [MAJOR]       /guilds/{guild.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
+// Reviewed                   2018-03-17
+// Comment                    "Emojis and animated emojis have a maximum file size of 256kb.
+//                            Attempting to upload an emoji larger than this limit will fail
+//                            and return 400 Bad Request and an error message, but not a JSON
+//                            status code." - Discord docs
 func ReqCreateGuildEmoji(requester request.DiscordPoster, guildID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis"
@@ -96,14 +96,14 @@ func ReqCreateGuildEmoji(requester request.DiscordPoster, guildID snowflake.ID) 
 	return emoji, err
 }
 
-// ReqModifyGuildEmoji [PATCH] Modify the given emoji. Requires the 'MANAGE_EMOJIS'
-// 							   permission. Returns the updated emoji object on success.
-// 							   Fires a Guild Emojis Update Gateway event.
-// Endpoint					   /guilds/{guild.id}/emojis/{emoji.id}
-// Rate limiter [MAJOR]		   /guilds/{guild.id}
-// Discord documentation	   https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
-// Reviewed					   2018-03-17
-// Comment					   -
+// ReqModifyGuildEmoji [PATCH]  Modify the given emoji. Requires the 'MANAGE_EMOJIS'
+//                              permission. Returns the updated emoji object on success.
+//                              Fires a Guild Emojis Update Gateway event.
+// Endpoint                     /guilds/{guild.id}/emojis/{emoji.id}
+// Rate limiter [MAJOR]         /guilds/{guild.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
+// Reviewed                     2018-03-17
+// Comment                      -
 func ReqModifyGuildEmoji(requester request.DiscordPatcher, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
@@ -114,14 +114,14 @@ func ReqModifyGuildEmoji(requester request.DiscordPatcher, guildID, emojiID snow
 }
 
 // ReqDeleteGuildEmoji [DELETE] Delete the given emoji. Requires the
-// 								'MANAGE_EMOJIS' permission. Returns 204
-// 								No Content on success. Fires a Guild Emojis
-// 								Update Gateway event.
-// Endpoint						/guilds/{guild.id}/emojis/{emoji.id}
-// Rate limiter [MAJOR]		    /guilds/{guild.id}
-// Discord documentation		https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
-// Reviewed						2018-03-17
-// Comment						-
+//                              'MANAGE_EMOJIS' permission. Returns 204
+//                              No Content on success. Fires a Guild Emojis
+//                              Update Gateway event.
+// Endpoint                     /guilds/{guild.id}/emojis/{emoji.id}
+// Rate limiter [MAJOR]         /guilds/{guild.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
+// Reviewed                     2018-03-17
+// Comment                      -
 func ReqDeleteGuildEmoji(requester request.DiscordDeleter, guildID, emojiID snowflake.ID) (err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
