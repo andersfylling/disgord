@@ -1,18 +1,19 @@
 package state
 
 import (
+	"errors"
 	"runtime"
 	"strconv"
 	"testing"
 	"time"
 
-	"errors"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 )
 
 func TestChannels_implementsChannelCacher(t *testing.T) {
-	if _, implemented := interface{}(&ChannelCache{}).(ChannelCacher); !implemented {
+	cc := &ChannelCache{}
+	if _, implemented := interface{}(cc).(ChannelCacher); !implemented {
 		t.Error("ChannelCache does not implement interface ChannelCacher")
 	}
 }

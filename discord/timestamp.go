@@ -9,7 +9,7 @@ import (
 // discordTimeFormat to be able to correctly convert timestamps back into json,
 // we need the micro timestamp with an addition at the ending.
 // time.RFC3331 does not yield an output similar to the discord timestamp input, the date is however correct.
-const timestampFormat string = "2006-01-02T15:04:05.000000+00:00"
+const timestampFormat = "2006-01-02T15:04:05.000000+00:00"
 
 type Marshaler interface {
 	MarshalJSON() ([]byte, error)

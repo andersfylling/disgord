@@ -1,4 +1,4 @@
-package request
+package httd
 
 import (
 	"net/http"
@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/snowflake"
 )
 
 const (
@@ -22,7 +24,29 @@ var majorEndpointPrefixes = []string{
 	"/webhooks/",
 }
 
-type RateLimiter interface{}
+// TODO: fix ratelimiting logic
+func RatelimitChannel(id snowflake.ID) string {
+	return "c:" + id.String()
+}
+
+func RatelimitGuild(id snowflake.ID) string {
+	return "g:" + id.String()
+}
+
+func RatelimitWebsocket(id snowflake.ID) string {
+	return "w:" + id.String()
+}
+
+func RatelimitUsers() string {
+	return "u"
+}
+
+type RateLimiter interface {
+	Bucket(key string) *Bucket
+	RateLimitTimeout(key string) int64
+	RateLimited(key string) bool
+	HandleResponse(key string, res *http.Response)
+}
 
 func NewRateLimit() *RateLimit {
 	return &RateLimit{

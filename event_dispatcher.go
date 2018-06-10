@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"sync"
 
 	. "github.com/andersfylling/disgord/event"

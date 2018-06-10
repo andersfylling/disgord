@@ -7,7 +7,8 @@ func missingImplError(t *testing.T, structName string) {
 }
 
 func TestCache_ImplementsCacher(t *testing.T) {
-	if _, implemented := interface{}(&Cache{}).(Cacher); !implemented {
+	cache := &Cache{}
+	if _, implemented := interface{}(cache).(Cacher); !implemented {
 		missingImplError(t, "Cache")
 	}
 }

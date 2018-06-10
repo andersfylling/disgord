@@ -1,7 +1,9 @@
 package resource
 
 import (
-	"github.com/andersfylling/disgord/request"
+	"encoding/json"
+
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -70,10 +72,19 @@ type VoiceRegion struct {
 
 // EndpointVoiceRegions List Voice Regions
 // https://discordapp.com/developers/docs/resources/voice#list-voice-regions
-const EndpointVoiceRegions string = "/voice/regions"
+const EndpointVoiceRegions = "/voice/regions"
 
-func ReqVoiceRegions(requester request.DiscordGetter) (regions []*VoiceRegion, err error) {
-	_, err = requester.Get(EndpointVoiceRegions, EndpointVoiceRegions, regions)
+func ReqVoiceRegions(client httd.Getter) (ret []*VoiceRegion, err error) {
+	details := &httd.Request{
+		Ratelimiter:    EndpointVoiceRegions,
+		Endpoint:    EndpointVoiceRegions,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	return regions, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }

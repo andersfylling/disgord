@@ -1,0 +1,276 @@
+package resource
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/snowflake"
+)
+
+// https://discordapp.com/developers/docs/resources/channel#reaction-object
+type Reaction struct {
+	Count uint          `json:"count"`
+	Me    bool          `json:"me"`
+	Emoji *PartialEmoji `json:"Emoji"`
+}
+
+// ReqCreateReaction [PUT]  Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+//                          permission to be present on the current user. Additionally, if nobody else has
+//                          reacted to the message using this emoji, this endpoint requires the 'ADD_REACTIONS'
+//                          permission to be present on the current user. Returns a 204 empty response on success.
+//                          The maximum request size when sending a message is 8MB.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]     /channels/{channel.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#create-reaction
+// Reviewed                 2018-06-07
+// Comment                  -
+// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+func ReqCreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji interface{}) (ret *Reaction, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		err = errors.New("emoji type can only be a unicode string or a *Emoji struct")
+		return
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+	}
+	resp, err := client.Put(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
+}
+
+// ReqDeleteOwnReaction [DELETE]  Delete a reaction the current user has made for the message. Returns a 204
+//                                empty response on success.
+// Endpoint                       /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]           /channels/{channel.id}
+// Discord documentation          https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
+// Reviewed                       2018-06-07
+// Comment                        -
+// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, emoji interface{}) (err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+// ReqCreateReaction [DELETE] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
+//                            permission to be present on the current user. Returns a 204 empty response on success.
+// Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+// Reviewed                   2018-06-07
+// Comment                    -
+// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowflake.ID, emoji interface{}) (err error) {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if messageID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+	if emoji == nil {
+		return errors.New("emoji must be set in order to create a message reaction")
+	}
+	if userID.Empty() {
+		return errors.New("userID must be set to target the specific user reaction")
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+// ReqGetReactionParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
+type ReqGetReactionParams struct {
+	Before snowflake.ID `urlparam:"before,omitempty"` // get users before this user ID
+	After  snowflake.ID `urlparam:"after,omitempty"`  // get users after this user ID
+	Limit  int          `urlparam:"limit,omitempty"`  // max number of users to return (1-100)
+}
+
+// getQueryString this ins't really pretty, but it works.
+func (params *ReqGetReactionParams) getQueryString() string {
+	seperator := "?"
+	query := ""
+
+	if !params.Before.Empty() {
+		query += seperator + params.Before.String()
+		seperator = "&"
+	}
+
+	if !params.After.Empty() {
+		query += seperator + params.After.String()
+		seperator = "&"
+	}
+
+	if params.Limit > 0 {
+		query += seperator + strconv.Itoa(params.Limit)
+	}
+
+	return query
+}
+
+// ReqGetReaction [GET]   Get a list of users that reacted with this emoji. Returns an array of user
+//                        objects on success.
+// Endpoint               /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
+// Rate limiter [MAJOR]   /channels/{channel.id}
+// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-reactions
+// Reviewed               2018-06-07
+// Comment                -
+// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji interface{}, params *ReqGetReactionParams) (ret []*User, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	query := ""
+	if params != nil {
+		query += params.getQueryString()
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
+}
+
+// ReqCreateReaction [DELETE] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+//                            permission to be present on the current user.
+// Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
+// Reviewed                   2018-06-07
+// Comment                    -
+// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+func ReqDeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.ID) (err error) {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if messageID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions",
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// TODO: what is the response on a successful execution?
+	if false && resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}

@@ -5,7 +5,7 @@ package event
 
 // The different discord Event Keys
 const (
-	AllEventsKey string = "GOD_DAMN_EVERYTHING"
+	AllEventsKey = "GOD_DAMN_EVERYTHING"
 
 	// Gateway events
 

@@ -1,9 +1,8 @@
 package state
 
 import (
-	"sync"
-
 	"runtime"
+	"sync"
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/resource"
