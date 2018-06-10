@@ -183,6 +183,10 @@ func (c *Client) String() string {
 	return c.ws.String()
 }
 
+func (c *Client) RateLimiter() httd.RateLimiter {
+	return c.req.RateLimiter()
+}
+
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
 	c.logInfo("Connecting to discord Gateway")
@@ -370,7 +374,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 		// do http request if none found
 		if result == nil {
 			cached = false
-			result, err = resource.ReqUser(c.req, userID)
+			result, err = resource.ReqGetUser(c.req, userID)
 			if err != nil {
 				// TODO: handle error
 				// issue: devs might either be rate limited or user not found, how would they know tho?
