@@ -1,6 +1,10 @@
 package resource
 
 import (
+	"encoding/json"
+	"errors"
+	"net/http"
+
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
@@ -50,30 +54,42 @@ func (e *Emoji) Clear() {
 // Endpoint                 /guilds/{guild.id}/emojis
 // Rate limiter [MAJOR]     /guilds/{guild.id}
 // Discord documentation    https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
-// Reviewed                 2018-03-17
+// Reviewed                 2018-06-10
 // Comment                  -
-func ReqListGuildEmojis(requester httd.Getter, guildID snowflake.ID) (emoji *Emoji, err error) {
-	rateLimitKey := "/guilds/" + guildID.String()
-	path := rateLimitKey + "/emojis"
+func ReqListGuildEmojis(client httd.Getter, guildID snowflake.ID) (ret *Emoji, err error) {
+	details := &httd.Request{
+		Ratelimiter:    "/guilds/" + guildID.String(),
+		Endpoint:       "/emojis",
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	_, err = requester.Get(rateLimitKey, path, emoji)
-
-	return emoji, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqGetGuildEmoji [GET] Returns an emoji object for the given guild and emoji IDs.
 // Endpoint               /guilds/{guild.id}/emojis/{emoji.id}
 // Rate limiter [MAJOR]   /guilds/{guild.id}
 // Discord documentation  https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
-// Reviewed               2018-03-17
+// Reviewed               2018-06-10
 // Comment                -
-func ReqGetGuildEmoji(requester httd.Getter, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
-	rateLimitKey := "/guilds/" + guildID.String()
-	path := rateLimitKey + "/emojis/" + emojiID.String()
+func ReqGetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
+	details := &httd.Request{
+		Ratelimiter:    "/guilds/" + guildID.String(),
+		Endpoint:       "/emojis/" + emojiID.String(),
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	_, err = requester.Get(rateLimitKey, path, emoji)
-
-	return emoji, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqCreateGuildEmoji [POST] Create a new emoji for the guild. Requires the
@@ -82,18 +98,24 @@ func ReqGetGuildEmoji(requester httd.Getter, guildID, emojiID snowflake.ID) (emo
 // Endpoint                   /guilds/{guild.id}/emojis
 // Rate limiter [MAJOR]       /guilds/{guild.id}
 // Discord documentation      https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
-// Reviewed                   2018-03-17
+// Reviewed                   2018-06-10
 // Comment                    "Emojis and animated emojis have a maximum file size of 256kb.
 //                            Attempting to upload an emoji larger than this limit will fail
 //                            and return 400 Bad Request and an error message, but not a JSON
 //                            status code." - Discord docs
-func ReqCreateGuildEmoji(requester httd.Poster, guildID snowflake.ID) (emoji *Emoji, err error) {
-	rateLimitKey := "/guilds/" + guildID.String()
-	path := rateLimitKey + "/emojis"
+func ReqCreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, err error) {
+	details := &httd.Request{
+		Ratelimiter:    "/guilds/" + guildID.String(),
+		Endpoint:       "/emojis",
+	}
+	resp, err := client.Post(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	_, err = requester.Post(rateLimitKey, path, emoji, nil)
-
-	return emoji, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqModifyGuildEmoji [PATCH]  Modify the given emoji. Requires the 'MANAGE_EMOJIS'
@@ -102,15 +124,21 @@ func ReqCreateGuildEmoji(requester httd.Poster, guildID snowflake.ID) (emoji *Em
 // Endpoint                     /guilds/{guild.id}/emojis/{emoji.id}
 // Rate limiter [MAJOR]         /guilds/{guild.id}
 // Discord documentation        https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
-// Reviewed                     2018-03-17
+// Reviewed                     2018-06-10
 // Comment                      -
-func ReqModifyGuildEmoji(requester httd.Patcher, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
-	rateLimitKey := "/guilds/" + guildID.String()
-	path := rateLimitKey + "/emojis/" + emojiID.String()
+func ReqModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
+	details := &httd.Request{
+		Ratelimiter:    "/guilds/" + guildID.String(),
+		Endpoint:       "/emojis/" + emojiID.String(),
+	}
+	resp, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	_, err = requester.Patch(rateLimitKey, path, emoji, nil)
-
-	return emoji, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqDeleteGuildEmoji [DELETE] Delete the given emoji. Requires the
@@ -120,13 +148,22 @@ func ReqModifyGuildEmoji(requester httd.Patcher, guildID, emojiID snowflake.ID) 
 // Endpoint                     /guilds/{guild.id}/emojis/{emoji.id}
 // Rate limiter [MAJOR]         /guilds/{guild.id}
 // Discord documentation        https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
-// Reviewed                     2018-03-17
+// Reviewed                     2018-06-10
 // Comment                      -
-func ReqDeleteGuildEmoji(requester httd.Deleter, guildID, emojiID snowflake.ID) (err error) {
-	rateLimitKey := "/guilds/" + guildID.String()
-	path := rateLimitKey + "/emojis/" + emojiID.String()
+func ReqDeleteGuildEmoji(client httd.Deleter, guildID, emojiID snowflake.ID) (err error) {
+	details := &httd.Request{
+		Ratelimiter:    "/guilds/" + guildID.String(),
+		Endpoint:       "/emojis/" + emojiID.String(),
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	_, err = requester.Delete(rateLimitKey, path)
-
-	return err
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }

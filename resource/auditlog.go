@@ -168,8 +168,8 @@ func ReqGuildAuditLogs(requester httd.Getter, guildID string, params *AuditLogPa
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(log)
-	resp.Body.Close()
 	return
 }
