@@ -122,9 +122,6 @@ func (c *Client) Request(r *Request) (resp *http.Response, err error) {
 		}
 	}
 
-	// concate ratelimiter and endpoint
-	r.Endpoint = r.Ratelimiter + r.Endpoint
-
 	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
 	if err != nil {
 		return

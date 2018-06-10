@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/snowflake"
 )
 
 const (
@@ -20,6 +22,18 @@ var majorEndpointPrefixes = []string{
 	"/channels/",
 	"/guilds/",
 	"/webhooks/",
+}
+
+func RatelimitChannel(id snowflake.ID) string {
+	return "c:" + id.String()
+}
+
+func RatelimitGuild(id snowflake.ID) string {
+	return "g:" + id.String()
+}
+
+func RatelimitWebsocket(id snowflake.ID) string {
+	return "w:" + id.String()
 }
 
 type RateLimiter interface {

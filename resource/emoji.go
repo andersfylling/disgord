@@ -58,8 +58,8 @@ func (e *Emoji) Clear() {
 // Comment                  -
 func ReqListGuildEmojis(client httd.Getter, guildID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
-		Ratelimiter: "/guilds/" + guildID.String(),
-		Endpoint:    "/emojis",
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -79,8 +79,8 @@ func ReqListGuildEmojis(client httd.Getter, guildID snowflake.ID) (ret *Emoji, e
 // Comment                -
 func ReqGetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
-		Ratelimiter: "/guilds/" + guildID.String(),
-		Endpoint:    "/emojis/" + emojiID.String(),
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -105,8 +105,8 @@ func ReqGetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *E
 //                            status code." - Discord docs
 func ReqCreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
-		Ratelimiter: "/guilds/" + guildID.String(),
-		Endpoint:    "/emojis",
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
 	}
 	resp, err := client.Post(details)
 	if err != nil {
@@ -128,8 +128,8 @@ func ReqCreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, 
 // Comment                      -
 func ReqModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
-		Ratelimiter: "/guilds/" + guildID.String(),
-		Endpoint:    "/emojis/" + emojiID.String(),
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
 	resp, err := client.Patch(details)
 	if err != nil {
@@ -152,8 +152,8 @@ func ReqModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (re
 // Comment                      -
 func ReqDeleteGuildEmoji(client httd.Deleter, guildID, emojiID snowflake.ID) (err error) {
 	details := &httd.Request{
-		Ratelimiter: "/guilds/" + guildID.String(),
-		Endpoint:    "/emojis/" + emojiID.String(),
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {

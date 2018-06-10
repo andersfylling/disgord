@@ -147,25 +147,72 @@ type UserConnection struct {
 
 // ----------
 
-// GetUser [GET] Returns a user object for a given user ID.
-func ReqUser(requester httd.Getter, id snowflake.ID) (*User, error) {
-	var endpoint = EndpointUser
-	path := EndpointUser + id.String()
+// ReqGetUser [GET]         Returns the user object of the requester's account. For OAuth2, this requires
+//                          the identify scope, which will return the object without an email, and optionally
+//                          the email scope, which returns the object with an email.
+// Endpoint                 /users/@me
+// Rate limiter             /users/@me
+// Discord documentation    https://discordapp.com/developers/docs/resources/user#get-current-user
+// Reviewed                 2018-06-10
+// Comment                  -
+func ReqGetCurrentUser(client httd.Getter) (ret *User, err error) {
+	details := &httd.Request{
+		Ratelimiter: EndpointUserMyself,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	result := NewUser()
-	_, err := requester.Get(endpoint, path, result)
-
-	return result, err
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
-func ReqMyself(requester httd.Getter) (*User, error) {
-	endpoint := EndpointUser
-	path := EndpointUserMyself
+// ReqGetUser [GET]         Returns a user object for a given user ID.
+// Endpoint                 /users/{user.id}
+// Rate limiter             /users/{user.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/user#get-user
+// Reviewed                 2018-06-10
+// Comment                  -
+func ReqGetUser(client httd.Getter, userID snowflake.ID) (ret *User, err error) {
+	details := &httd.Request{
+		Ratelimiter: EndpointUser + userID.String(),
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	result := NewUser()
-	_, err := requester.Get(endpoint, path, result)
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
+}
 
-	return result, err
+type ReqModifyCurrentUserParams struct {
+	Username string `json:"username,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
+// ReqModifyCurrentUser [PATCH]  Modify the requester's user account settings. Returns a user object on success.
+// Endpoint                     /users/@me
+// Rate limiter                 /users/@me
+// Discord documentation        https://discordapp.com/developers/docs/resources/user#modify-current-user
+// Reviewed                     2018-06-10
+// Comment                      -
+func ReqModifyCurrentUser(client httd.Getter, params *ReqModifyCurrentUserParams) (ret *User, err error) {
+	details := &httd.Request{
+		Ratelimiter: EndpointUserMyself,
+		JSONParams: params,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // RequestMyGuilds [GET] Returns a list of partial guild objects the current user is a member of.
@@ -178,6 +225,17 @@ func ReqMyGuilds(requester httd.Getter) ([]*Guild, error) {
 	_, err := requester.Get(endpoint, path, result)
 
 	return result, err
+	details := &httd.Request{
+		Ratelimiter: EndpointUserMyGuilds,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqMyDMs [GET] Returns a list of DM channel objects.

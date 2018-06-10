@@ -166,7 +166,8 @@ func ReqGetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel,
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String(),
 	}
 	resp, err := requester.Get(details)
 	if err != nil {
@@ -198,7 +199,8 @@ func ReqModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *C
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + changes.ID.String(),
+		Ratelimiter: httd.RatelimitChannel(changes.ID),
+		Endpoint:    "/channels/" + changes.ID.String(),
 	}
 	resp, err := client.Patch(details)
 	if err != nil {
@@ -230,7 +232,8 @@ func ReqDeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -270,8 +273,8 @@ func ReqEditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + chanID.String(),
-		Endpoint:    "/permissions/" + overwriteID.String(),
+		Ratelimiter: httd.RatelimitChannel(chanID),
+		Endpoint:    "/channels/" + chanID.String() + "/permissions/" + overwriteID.String(),
 	}
 	resp, err := client.Put(details)
 	if err != nil {
@@ -300,8 +303,8 @@ func ReqGetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*In
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/invites",
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -341,8 +344,8 @@ func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params 
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/invites",
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
 	resp, err := client.Post(details)
 	if err != nil {
@@ -373,8 +376,8 @@ func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snow
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/permissions/" + overwriteID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/permissions/" + overwriteID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -402,8 +405,8 @@ func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snow
 func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err error) {
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/typing",
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/typing",
 	}
 	resp, err := client.Post(details)
 	if err != nil {
@@ -427,8 +430,8 @@ func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err 
 func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Message, err error) {
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/pins",
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/pins",
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -450,8 +453,8 @@ func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Me
 func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (err error) {
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/pints/" + msgID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/pints/" + msgID.String(),
 	}
 	resp, err := client.Put(details)
 	if err != nil {
@@ -483,8 +486,8 @@ func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowfla
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/pins/" + msgID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/pins/" + msgID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -520,8 +523,8 @@ func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, p
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/recipients/" + userID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
 	resp, err := client.Put(details)
 	if err != nil {
@@ -552,8 +555,8 @@ func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint:    "/recipients/" + userID.String(),
+		Ratelimiter: httd.RatelimitChannel(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {

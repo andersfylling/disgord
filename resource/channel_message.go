@@ -401,8 +401,8 @@ func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqB
 	}
 
 	details := &httd.Request{
-		Ratelimiter: "/channels/" + chanID.String(),
-		Endpoint:    "/messages/bulk-delete",
+		Ratelimiter: httd.RatelimitChannel(chanID),
+		Endpoint:    "/channels/" + chanID.String() + "/messages/bulk-delete",
 	}
 	resp, err := client.Post(details)
 	if err != nil {

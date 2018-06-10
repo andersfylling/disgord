@@ -72,8 +72,8 @@ func ReqGetInvite(requester httd.Getter, inviteCode string, withCounts bool) (in
 	}
 
 	details := &httd.Request{
-		Ratelimiter: EndpointInvite + "/" + inviteCode,
-		Endpoint:    query,
+		Ratelimiter: EndpointInvite,
+		Endpoint:    EndpointInvite + "/" + inviteCode + query,
 	}
 	resp, err := requester.Get(details)
 	if err != nil {
@@ -95,7 +95,8 @@ func ReqGetInvite(requester httd.Getter, inviteCode string, withCounts bool) (in
 func ReqDeleteInvite(requester httd.Deleter, inviteCode string) (invite *Invite, err error) {
 
 	details := &httd.Request{
-		Ratelimiter: EndpointInvite + "/" + inviteCode,
+		Ratelimiter: EndpointInvite,
+		Endpoint: EndpointInvite + "/" + inviteCode,
 	}
 	resp, err := requester.Delete(details)
 	if err != nil {

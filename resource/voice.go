@@ -77,6 +77,7 @@ const EndpointVoiceRegions = "/voice/regions"
 func ReqVoiceRegions(client httd.Getter) (ret []*VoiceRegion, err error) {
 	details := &httd.Request{
 		Ratelimiter:    EndpointVoiceRegions,
+		Endpoint:    EndpointVoiceRegions,
 	}
 	resp, err := client.Get(details)
 	if err != nil {

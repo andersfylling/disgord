@@ -158,11 +158,11 @@ func (params *AuditLogParams) getQueryString() string {
 // Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 // Reviewed                 2018-06-05
 // Comment                  -
-func ReqGuildAuditLogs(requester httd.Getter, guildID string, params *AuditLogParams) (log *AuditLog, err error) {
+func ReqGuildAuditLogs(requester httd.Getter, guildID snowflake.ID, params *AuditLogParams) (log *AuditLog, err error) {
 
 	details := &httd.Request{
-		Ratelimiter: EndpointGuild + "/" + guildID,
-		Endpoint:    "/audit-logs" + params.getQueryString(),
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    EndpointGuild + guildID.String() + "/audit-logs" + params.getQueryString(),
 	}
 	resp, err := requester.Get(details)
 	if err != nil {
