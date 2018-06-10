@@ -3,6 +3,7 @@ package resource
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -134,54 +135,72 @@ func (params *ReqGetChannelMessagesParams) getQueryString() string {
 	return query
 }
 
-// ReqGetChannelMessages [GET] 	Returns the messages for a channel. If operating on a guild channel, this
-// 								endpoint requires the 'VIEW_CHANNEL' permission to be present on the current
-// 								user. If the current user is missing the 'READ_MESSAGE_HISTORY' permission
-// 								in the channel then this will return no messages (since they cannot read
-// 								the message history). Returns an array of message objects on success.
-// Endpoint				   		/channels/{channel.id}/messages
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-channel-messages
-// Reviewed				   		2018-06-07
-// Comment				   		The before, after, and around keys are mutually exclusive, only one may
-// 								be passed at a time. see ReqGetChannelMessagesParams.
-func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *ReqGetChannelMessagesParams) ([]*Message, error) {
+// ReqGetChannelMessages [GET]  Returns the messages for a channel. If operating on a guild channel, this
+//                              endpoint requires the 'VIEW_CHANNEL' permission to be present on the current
+//                              user. If the current user is missing the 'READ_MESSAGE_HISTORY' permission
+//                              in the channel then this will return no messages (since they cannot read
+//                              the message history). Returns an array of message objects on success.
+// Endpoint                     /channels/{channel.id}/messages
+// Rate limiter [MAJOR]         /channels/{channel.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#get-channel-messages
+// Reviewed                     2018-06-10
+// Comment                      The before, after, and around keys are mutually exclusive, only one may
+//                              be passed at a time. see ReqGetChannelMessagesParams.
+func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *ReqGetChannelMessagesParams) (ret []*Message, err error) {
 	if channelID.Empty() {
-		return nil, errors.New("channelID must be set to get channel messages")
+		err = errors.New("channelID must be set to get channel messages")
+		return
 	}
 	query := ""
 	if params != nil {
 		query += params.getQueryString()
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
-	endpoint := ratelimiter + "/messages" + query
-	var messages []*Message
-	_, err := client.Get(ratelimiter, endpoint, messages)
-	return messages, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages" + query,
+		JSONParams: params,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
-// ReqGetChannelMessage [GET] 	Returns a specific message in the channel. If operating on a guild channel,
-// 								this endpoints requires the 'READ_MESSAGE_HISTORY' permission to be present
-// 								on the current user. Returns a message object on success.
-// Endpoint				   		/channels/{channel.id}/message/{message.id}
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-channel-message
-// Reviewed				   		2018-06-07
-// Comment				   		-
-func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (*Message, error) {
+// ReqGetChannelMessage [GET] Returns a specific message in the channel. If operating on a guild channel,
+//                            this endpoints requires the 'READ_MESSAGE_HISTORY' permission to be present
+//                            on the current user. Returns a message object on success.
+// Endpoint                   /channels/{channel.id}/message/{message.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-message
+// Reviewed                   2018-06-10
+// Comment                    -
+func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (ret *Message, err error) {
 	if channelID.Empty() {
-		return nil, errors.New("channelID must be set to get channel messages")
+		err = errors.New("channelID must be set to get channel messages")
+		return
 	}
 	if messageID.Empty() {
-		return nil, errors.New("messageID must be set to get a specific message from a channel")
+		err = errors.New("messageID must be set to get a specific message from a channel")
+		return
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
-	endpoint := ratelimiter + "/message/" + messageID.String()
-	var message *Message
-	_, err := client.Get(ratelimiter, endpoint, message)
-	return message, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String(),
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 type ReqCreateMessageParams struct {
@@ -193,36 +212,46 @@ type ReqCreateMessageParams struct {
 	PayloadJSON string        `json:"payload_json,omitempty"`
 }
 
-// ReqCreateChannelMessage [POST]	Post a message to a guild text or DM channel. If operating on a guild channel,
-// 									this endpoint requires the 'SEND_MESSAGES' permission to be present on the
-// 									current user. If the tts field is set to true, the SEND_TTS_MESSAGES permission
-// 									is required for the message to be spoken. Returns a message object. Fires a
-// 									Message Create Gateway event. See message formatting for more information on
-// 									how to properly format messages.
-// 									The maximum request size when sending a message is 8MB.
-// Endpoint				   			/channels/{channel.id}/messages
-// Rate limiter [MAJOR]	   			/channels/{channel.id}
-// Discord documentation   			https://discordapp.com/developers/docs/resources/channel#create-message
-// Reviewed				   			2018-06-07
-// Comment				   			Before using this endpoint, you must connect to and identify with a gateway
-// 									at least once. This endpoint supports both JSON and form data bodies. It does
-// 									require multipart/form-data requests instead of the normal JSON request type
-// 									when uploading files. Make sure you set your Content-Type to multipart/form-data
-// 									if you're doing that. Note that in that case, the embed field cannot be used,
-// 									but you can pass an url-encoded JSON body as a form value for payload_json.
-func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *ReqCreateMessageParams) (*Message, error) {
+// ReqCreateChannelMessage [POST] Post a message to a guild text or DM channel. If operating on a guild channel,
+//                                this endpoint requires the 'SEND_MESSAGES' permission to be present on the
+//                                current user. If the tts field is set to true, the SEND_TTS_MESSAGES permission
+//                                is required for the message to be spoken. Returns a message object. Fires a
+//                                Message Create Gateway event. See message formatting for more information on
+//                                how to properly format messages.
+//                                The maximum request size when sending a message is 8MB.
+// Endpoint                       /channels/{channel.id}/messages
+// Rate limiter [MAJOR]           /channels/{channel.id}
+// Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-message
+// Reviewed                       2018-06-10
+// Comment                        Before using this endpoint, you must connect to and identify with a gateway
+//                                at least once. This endpoint supports both JSON and form data bodies. It does
+//                                require multipart/form-data requests instead of the normal JSON request type
+//                                when uploading files. Make sure you set your Content-Type to multipart/form-data
+//                                if you're doing that. Note that in that case, the embed field cannot be used,
+//                                but you can pass an url-encoded JSON body as a form value for payload_json.
+func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *ReqCreateMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
-		return nil, errors.New("channelID must be set to get channel messages")
+		err = errors.New("channelID must be set to get channel messages")
+		return
 	}
 	if params == nil {
-		return nil, errors.New("message must be set")
+		err = errors.New("message must be set")
+		return
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
-	endpoint := ratelimiter + "/messages"
-	var generatedMessage *Message
-	_, err := client.Post(ratelimiter, endpoint, generatedMessage, params)
-	return generatedMessage, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages",
+		JSONParams: params,
+	}
+	resp, err := client.Post(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqEditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
@@ -231,46 +260,72 @@ type ReqEditMessageParams struct {
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 }
 
-// ReqEditMessage [PATCH]	Edit a previously sent message. You can only edit messages that have been sent by
-// 							the current user. Returns a message object. Fires a Message Update Gateway event.
-// Endpoint				   	/channels/{channel.id}/messages/{message.id}
-// Rate limiter [MAJOR]	   	/channels/{channel.id}
-// Discord documentation   	https://discordapp.com/developers/docs/resources/channel#edit-message
-// Reviewed				   	2018-06-07
-// Comment				   	All parameters to this endpoint are optional.
-func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (*Message, error) {
+// ReqEditMessage [PATCH] Edit a previously sent message. You can only edit messages that have been sent by
+//                        the current user. Returns a message object. Fires a Message Update Gateway event.
+// Endpoint               /channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]   /channels/{channel.id}
+// Discord documentation  https://discordapp.com/developers/docs/resources/channel#edit-message
+// Reviewed               2018-06-10
+// Comment                All parameters to this endpoint are optional.
+func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (ret *Message, err error) {
 	if chanID.Empty() {
-		return nil, errors.New("channelID must be set to get channel messages")
+		err = errors.New("channelID must be set to get channel messages")
+		return
 	}
 	if msgID.Empty() {
-		return nil, errors.New("msgID must be set to edit the message")
+		err = errors.New("msgID must be set to edit the message")
+		return
 	}
 
-	ratelimiter := "/channels/" + chanID.String()
-	endpoint := ratelimiter + "/messages/" + msgID.String()
-	var generatedMessage *Message
-	_, err := client.Patch(ratelimiter, endpoint, generatedMessage, params)
-	return generatedMessage, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + chanID.String(),
+		Endpoint: "/messages/" + msgID.String(),
+		JSONParams: params,
+	}
+	resp, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
-// ReqDeleteMessage [DELETE]	Delete a message. If operating on a guild channel and trying to delete a message that was not sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires a Message Delete Gateway event.
-// Endpoint				   		/channels/{channel.id}/messages/{message.id}
-// Rate limiter [MAJOR]	   		/channels/{channel.id}
-// Discord documentation   		https://discordapp.com/developers/docs/resources/channel#delete-message
-// Reviewed				   		2018-06-07
-// Comment				   		-
-func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) error {
+// ReqDeleteMessage [DELETE]  Delete a message. If operating on a guild channel and trying to delete a
+//                            message that was not sent by the current user, this endpoint requires the
+//                            'MANAGE_MESSAGES' permission. Returns a 204 empty response on success.
+//                            Fires a Message Delete Gateway event.
+// Endpoint                   /channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed                   2018-06-10
+// Comment                    -
+func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err error) {
 	if chanID.Empty() {
-		return errors.New("channelID must be set to get channel messages")
+		err = errors.New("channelID must be set to get channel messages")
+		return
 	}
 	if msgID.Empty() {
-		return errors.New("msgID must be set to delete the message")
+		err = errors.New("msgID must be set to delete the message")
+		return
 	}
 
-	ratelimiter := "/channels/" + chanID.String()
-	endpoint := ratelimiter + "/messages/" + msgID.String()
-	_, err := client.Delete(ratelimiter, endpoint)
-	return err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + chanID.String(),
+		Endpoint: "/messages/" + msgID.String(),
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqBulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
@@ -279,48 +334,48 @@ type ReqBulkDeleteMessagesParams struct {
 	m        sync.RWMutex   `json:"-"`
 }
 
-func (p *ReqBulkDeleteMessagesParams) tooMany(messages int) error {
+func (p *ReqBulkDeleteMessagesParams) tooMany(messages int) (err error) {
 	if messages > 100 {
-		return errors.New("must be 100 or less messages to delete")
+		err = errors.New("must be 100 or less messages to delete")
 	}
 
-	return nil
+	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) tooFew(messages int) error {
+func (p *ReqBulkDeleteMessagesParams) tooFew(messages int) (err error) {
 	if messages < 2 {
-		return errors.New("must be at least two messages to delete")
+		err = errors.New("must be at least two messages to delete")
 	}
 
-	return nil
+	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) Valid() error {
+func (p *ReqBulkDeleteMessagesParams) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
 	messages := len(p.Messages)
-	err := p.tooMany(messages)
+	err = p.tooMany(messages)
 	if err != nil {
-		return err
+		return
 	}
 	err = p.tooFew(messages)
-	return err
+	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) error {
+func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	err := p.tooMany(len(p.Messages) + 1)
+	err = p.tooMany(len(p.Messages) + 1)
 	if err != nil {
-		return err
+		return
 	}
 
 	// TODO: check for duplicates as those are counted only once
 
 	p.Messages = append(p.Messages, msg.ID)
-	return nil
+	return
 }
 
 // ReqBulkDeleteMessages [POST] Delete multiple messages in a single request. This endpoint can only be used
@@ -332,7 +387,7 @@ func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) error {
 // Endpoint                     /channels/{channel.id}/messages/bulk-delete
 // Rate limiter [MAJOR]         /channels/{channel.id}
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-message
-// Reviewed                     2018-06-07
+// Reviewed                     2018-06-10
 // Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
 //                              any message provided is older than that.
 func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
@@ -345,8 +400,19 @@ func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqB
 		return
 	}
 
-	ratelimiter := "/channels/" + chanID.String()
-	endpoint := ratelimiter + "/messages/bulk-delete"
-	_, err = client.Post(ratelimiter, endpoint, nil, params)
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + chanID.String(),
+		Endpoint: "/messages/bulk-delete",
+	}
+	resp, err := client.Post(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
 	return
 }

@@ -1,7 +1,9 @@
 package resource
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"strconv"
 
 	"github.com/andersfylling/disgord/httd"
@@ -26,30 +28,42 @@ type Reaction struct {
 // Reviewed                 2018-06-07
 // Comment                  -
 // emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
-func ReqCreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji interface{}) (*Reaction, error) {
+func ReqCreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji interface{}) (ret *Reaction, err error) {
 	if channelID.Empty() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		err = errors.New("channelID must be set to target the correct channel")
+		return
 	}
 	if messageID.Empty() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
 	}
 	if emoji == nil {
-		return nil, errors.New("emoji must be set in order to create a message reaction")
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
 	emojiCode := ""
 	if _, ok := emoji.(*Emoji); ok {
 		emojiCode = emoji.(*Emoji).ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
 	} else {
-		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
+		err = errors.New("emoji type can only be a unicode string or a *Emoji struct")
+		return
 	}
 
-	endpoint := ratelimiter + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me"
-	_, err := client.Put(ratelimiter, endpoint, nil, nil)
-	return nil, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+	}
+	resp, err := client.Put(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqDeleteOwnReaction [DELETE]  Delete a reaction the current user has made for the message. Returns a 204
@@ -60,18 +74,20 @@ func ReqCreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emo
 // Reviewed                       2018-06-07
 // Comment                        -
 // emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
-func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, emoji interface{}) error {
+func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, emoji interface{}) (err error) {
 	if channelID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
+		err = errors.New("channelID must be set to target the correct channel")
+		return
 	}
 	if messageID.Empty() {
-		return errors.New("messageID must be set to target the specific channel message")
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
 	}
 	if emoji == nil {
-		return errors.New("emoji must be set in order to create a message reaction")
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
 	emojiCode := ""
 	if _, ok := emoji.(*Emoji); ok {
 		emojiCode = emoji.(*Emoji).ID.String()
@@ -81,9 +97,21 @@ func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	endpoint := ratelimiter + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me"
-	_, err := client.Delete(ratelimiter, endpoint)
-	return err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqCreateReaction [DELETE] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
@@ -94,7 +122,7 @@ func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID
 // Reviewed                   2018-06-07
 // Comment                    -
 // emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
-func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowflake.ID, emoji interface{}) error {
+func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowflake.ID, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -108,7 +136,6 @@ func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID sno
 		return errors.New("userID must be set to target the specific user reaction")
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
 	emojiCode := ""
 	if _, ok := emoji.(*Emoji); ok {
 		emojiCode = emoji.(*Emoji).ID.String()
@@ -118,9 +145,21 @@ func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID sno
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	endpoint := ratelimiter + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String()
-	_, err := client.Delete(ratelimiter, endpoint)
-	return err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqGetReactionParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
@@ -160,18 +199,20 @@ func (params *ReqGetReactionParams) getQueryString() string {
 // Reviewed               2018-06-07
 // Comment                -
 // emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
-func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji interface{}, params *ReqGetReactionParams) ([]*User, error) {
+func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji interface{}, params *ReqGetReactionParams) (ret []*User, err error) {
 	if channelID.Empty() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		err = errors.New("channelID must be set to target the correct channel")
+		return
 	}
 	if messageID.Empty() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
 	}
 	if emoji == nil {
-		return nil, errors.New("emoji must be set in order to create a message reaction")
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
 	emojiCode := ""
 	if _, ok := emoji.(*Emoji); ok {
 		emojiCode = emoji.(*Emoji).ID.String()
@@ -185,10 +226,19 @@ func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji
 	if params != nil {
 		query += params.getQueryString()
 	}
-	endpoint := ratelimiter + "/messages/" + messageID.String() + "/reactions/" + emojiCode + query
-	var users []*User
-	_, err := client.Get(ratelimiter, endpoint, users)
-	return users, err
+
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqCreateReaction [DELETE] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
@@ -199,7 +249,7 @@ func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji
 // Reviewed                   2018-06-07
 // Comment                    -
 // emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
-func ReqDeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.ID) error {
+func ReqDeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -207,8 +257,20 @@ func ReqDeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.I
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	ratelimiter := "/channels/" + channelID.String()
-	endpoint := ratelimiter + "/messages/" + messageID.String() + "/reactions"
-	_, err := client.Delete(ratelimiter, endpoint)
-	return err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/messages/" + messageID.String() + "/reactions",
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// TODO: what is the response on a successful execution?
+	if false && resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }

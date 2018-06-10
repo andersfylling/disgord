@@ -331,7 +331,7 @@ type ReqCreateChannelInvitesParams struct {
 // Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 // Reviewed                       2018-06-07
 // Comment                        -
-func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) (err error) {
+func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) (ret *Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -364,7 +364,7 @@ func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params 
 // Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 // Reviewed                             2018-06-07
 // Comment                              -
-func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) error {
+func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -372,13 +372,21 @@ func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snow
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
-	details := &httd.Details{
+	details := &httd.Request{
 		Ratelimiter:     "/channels/" + channelID.String(),
 		Endpoint:        "/permissions/" + overwriteID.String(),
-		SuccessHttpCode: 204,
 	}
-	_, err := client.Delete(details)
-	return err
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqTriggerTypingIndicator [POST] Post a typing indicator for the specified channel. Generally bots should
@@ -389,20 +397,47 @@ func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snow
 // Endpoint                         /channels/{channel.id}/typing
 // Rate limiter [MAJOR]             /channels/{channel.id}
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
-// Reviewed                         2018-06-07
+// Reviewed                         2018-06-10
 // Comment                          -
-func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) {
+func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err error) {
 
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/typing",
+	}
+	resp, err := client.Post(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqGetPinnedMessages [GET] Returns all pinned messages in the channel as an array of message objects.
 // Endpoint                   /channels/{channel.id}/pins
 // Rate limiter [MAJOR]       /channels/{channel.id}
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
-// Reviewed                   2018-06-07
+// Reviewed                   2018-06-10
 // Comment                    -
-func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) {
+func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Message, err error) {
 
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/pins",
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqAddPinnedChannelMessage [GET] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
@@ -410,10 +445,25 @@ func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) {
 // Endpoint                         /channels/{channel.id}/pins/{message.id}
 // Rate limiter [MAJOR]             /channels/{channel.id}
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
-// Reviewed                         2018-06-07
+// Reviewed                         2018-06-10
 // Comment                          -
-func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) {
+func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (err error) {
 
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint: "/pints/" + msgID.String(),
+	}
+	resp, err := client.Put(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqDeletePinnedChannelMessage [DELETE] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
@@ -422,9 +472,9 @@ func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID
 // Endpoint                               /channels/{channel.id}/pins/{message.id}
 // Rate limiter [MAJOR]                   /channels/{channel.id}
 // Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
-// Reviewed                               2018-06-07
+// Reviewed                               2018-06-10
 // Comment                                -
-func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.ID) error {
+func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -432,13 +482,21 @@ func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowfla
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	details := &httd.Details{
+	details := &httd.Request{
 		Ratelimiter:     "/channels/" + channelID.String(),
 		Endpoint:        "/pins/" + msgID.String(),
-		SuccessHttpCode: 204,
 	}
-	_, err := client.Delete(details)
-	return err
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 type ReqGroupDMAddRecipientParams struct {
@@ -451,9 +509,9 @@ type ReqGroupDMAddRecipientParams struct {
 // Endpoint                     /channels/{channel.id}/recipients/{user.id}
 // Rate limiter [MAJOR]         /channels/{channel.id}
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
-// Reviewed                     2018-06-07
+// Reviewed                     2018-06-10
 // Comment                      -
-func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) error {
+func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -461,13 +519,21 @@ func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, p
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	details := &httd.Details{
+	details := &httd.Request{
 		Ratelimiter:     "/channels/" + channelID.String(),
 		Endpoint:        "/recipients/" + userID.String(),
-		SuccessHttpCode: 204,
 	}
-	_, err := client.Put(details, params)
-	return err
+	resp, err := client.Put(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
@@ -475,9 +541,9 @@ func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, p
 // Endpoint                           /channels/{channel.id}/recipients/{user.id}
 // Rate limiter [MAJOR]               /channels/{channel.id}
 // Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
-// Reviewed                           2018-06-07
+// Reviewed                           2018-06-10
 // Comment                            -
-func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID) error {
+func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -485,10 +551,19 @@ func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	details := &httd.Details{
+	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
 		Endpoint:    "/recipients/" + userID.String(),
 	}
-	_, err := client.Delete(details)
-	return err
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
