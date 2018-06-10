@@ -24,6 +24,7 @@ var majorEndpointPrefixes = []string{
 	"/webhooks/",
 }
 
+// TODO: fix ratelimiting logic
 func RatelimitChannel(id snowflake.ID) string {
 	return "c:" + id.String()
 }
@@ -34,6 +35,10 @@ func RatelimitGuild(id snowflake.ID) string {
 
 func RatelimitWebsocket(id snowflake.ID) string {
 	return "w:" + id.String()
+}
+
+func RatelimitUsers() string {
+	return "u"
 }
 
 type RateLimiter interface {
