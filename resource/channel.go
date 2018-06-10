@@ -1,11 +1,13 @@
 package resource
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"sync"
 
 	"github.com/andersfylling/disgord/discord"
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -36,14 +38,14 @@ type Attachment struct {
 }
 
 // Overwrite: https://discordapp.com/developers/docs/resources/channel#overwrite-object
-type ChannelPermissionOverwrite struct {
+type PermissionOverwrite struct {
 	ID    snowflake.ID `json:"id"`    // role or user id
 	Type  string       `json:"type"`  // either `role` or `member`
 	Allow int          `json:"allow"` // permission bit set
 	Deny  int          `json:"deny"`  // permission bit set
 }
 
-func (pmo *ChannelPermissionOverwrite) Clear() {}
+func (pmo *PermissionOverwrite) Clear() {}
 
 func NewChannel() *Channel {
 	return &Channel{}
@@ -51,23 +53,23 @@ func NewChannel() *Channel {
 
 // Channel
 type Channel struct {
-	ID                   snowflake.ID                 `json:"id"`
-	Type                 uint                         `json:"type"`
-	GuildID              snowflake.ID                 `json:"guild_id,omitempty"`              // ?|
-	Position             uint                         `json:"position,omitempty"`              // ?|
-	PermissionOverwrites []ChannelPermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
-	Name                 string                       `json:"name,omitempty"`                  // ?|
-	Topic                string                       `json:"topic,omitempty"`                 // ?|
-	NSFW                 bool                         `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        snowflake.ID                 `json:"last_message_id,omitempty"`       // ?|?, pointer
-	Bitrate              uint                         `json:"bitrate,omitempty"`               // ?|
-	UserLimit            uint                         `json:"user_limit,omitempty"`            // ?|
-	Recipients           []*User                      `json:"recipient,omitempty"`             // ?| , empty if not DM
-	Icon                 string                       `json:"icon,omitempty"`                  // ?|?, pointer
-	OwnerID              snowflake.ID                 `json:"owner_id,omitempty"`              // ?|
-	ApplicationID        snowflake.ID                 `json:"applicaiton_id,omitempty"`        // ?|
-	ParentID             snowflake.ID                 `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPingTimestamp    discord.Timestamp            `json:"last_ping_timestamp,omitempty"`   // ?|
+	ID                   snowflake.ID          `json:"id"`
+	Type                 uint                  `json:"type"`
+	GuildID              snowflake.ID          `json:"guild_id,omitempty"`              // ?|
+	Position             uint                  `json:"position,omitempty"`              // ?|
+	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
+	Name                 string                `json:"name,omitempty"`                  // ?|
+	Topic                string                `json:"topic,omitempty"`                 // ?|
+	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
+	LastMessageID        snowflake.ID          `json:"last_message_id,omitempty"`       // ?|?, pointer
+	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
+	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
+	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
+	Icon                 string                `json:"icon,omitempty"`                  // ?|?, pointer
+	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
+	ApplicationID        snowflake.ID          `json:"applicaiton_id,omitempty"`        // ?|
+	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
+	LastPingTimestamp    discord.Timestamp     `json:"last_ping_timestamp,omitempty"`   // ?|
 
 	mu sync.RWMutex `json:"-"`
 }
@@ -158,15 +160,22 @@ func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 // Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-channel
 // Reviewed               2018-06-07
 // Comment                -
-func ReqGetChannel(requester request.DiscordGetter, id snowflake.ID) (*Channel, error) {
-	if id.Empty() {
+func ReqGetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
+	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	uri := "/channels/" + id.String()
-	content := &Channel{}
-	_, err := requester.Get(uri, uri, content)
-	return content, err
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+	}
+	resp, err := requester.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
@@ -181,34 +190,24 @@ type ModifyChannelParams = Channel
 // Rate limiter [MAJOR]         /channels/{channel.id}
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#modify-channel
 // Reviewed                     2018-06-07
-// Comment                      -
-func ReqModifyChannelPatch(client request.DiscordPatcher, changes *ModifyChannelParams) (*Channel, error) {
+// Comment                      andersfylling: only implemented the patch method, as its parameters are optional.
+func ReqModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Channel, err error) {
 	if changes.ID.Empty() {
-		return nil, errors.New("not a valid snowflake")
+		err = errors.New("not a valid snowflake")
+		return
 	}
 
-	// uri := "/channels/" + changes.ID.String()
-	// data, err := json.Marshal(changes)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PATCH" logic
-	return nil, nil
-}
-
-// ReqModifyChannelUpdate see ReqModifyChannelPatch
-func ReqModifyChannelUpdate(client request.DiscordPutter, changes *ModifyChannelParams) (*Channel, error) {
-	if changes.ID.Empty() {
-		return nil, errors.New("not a valid snowflake")
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + changes.ID.String(),
 	}
+	resp, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-	// uri := "/channels/" + changes.ID.String()
-	// data, err := json.Marshal(changes)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err := client.Request("PUT", uri, bytes.NewBuffer(data)) // TODO implement "PUT" logic
-	return nil, nil
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqDeleteChannel [DELETE]  Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
@@ -224,14 +223,25 @@ func ReqModifyChannelUpdate(client request.DiscordPutter, changes *ModifyChannel
 //                            is impossible to undo this action when performed on a guild channel. In
 //                            contrast, when used with a private message, it is possible to undo the
 //                            action by opening a private message with the recipient again.
-func ReqDeleteChannel(client request.DiscordDeleter, id snowflake.ID) (err error) {
-	if id.Empty() {
+func ReqDeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
+	if channelID.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	uri := "/channels/" + id.String()
-	_, err = client.Delete(uri, uri)
+	details := &httd.Request{
+		Ratelimiter: "/channels/" + channelID.String(),
+	}
+	resp, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+
 	return
 }
 
@@ -251,8 +261,29 @@ type ReqEditChannelPermissionsParams struct {
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 // Reviewed                         2018-06-07
 // Comment                          -
-func ReqEditChannelPermissions(client request.DiscordPutter, chanID, overwriteID snowflake.ID, params *ReqEditChannelPermissionsParams) {
+func ReqEditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID, params *ReqEditChannelPermissionsParams) (err error) {
+	if chanID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if overwriteID.Empty() {
+		return errors.New("overwriteID must be set to target the specific channel permissions")
+	}
 
+	details := &httd.Request{
+		Ratelimiter:     "/channels/" + chanID.String(),
+		Endpoint:        "/permissions/" + overwriteID.String(),
+	}
+	resp, err := client.Put(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
 }
 
 // ReqGetChannelInvites [GET] Returns a list of invite objects (with invite metadata) for the channel.
@@ -262,8 +293,24 @@ func ReqEditChannelPermissions(client request.DiscordPutter, chanID, overwriteID
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 // Reviewed                   2018-06-07
 // Comment                    -
-func ReqGetChannelInvites(client request.DiscordGetter, channelID snowflake.ID) {
+func ReqGetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invite, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
 
+	details := &httd.Request{
+		Ratelimiter:     "/channels/" + channelID.String(),
+		Endpoint:        "/invites",
+	}
+	resp, err := client.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqCreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params
@@ -284,8 +331,27 @@ type ReqCreateChannelInvitesParams struct {
 // Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 // Reviewed                       2018-06-07
 // Comment                        -
-func ReqCreateChannelInvites(client request.DiscordPoster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) {
+func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) (err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if params == nil {
+		params = &ReqCreateChannelInvitesParams{} // have to send an empty JSON object ({})
+	}
 
+	details := &httd.Request{
+		Ratelimiter:     "/channels/" + channelID.String(),
+		Endpoint:        "/invites",
+	}
+	resp, err := client.Post(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(ret)
+	return
 }
 
 // ReqDeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
@@ -298,8 +364,21 @@ func ReqCreateChannelInvites(client request.DiscordPoster, channelID snowflake.I
 // Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 // Reviewed                             2018-06-07
 // Comment                              -
-func ReqDeleteChannelPermission(client request.DiscordDeleter, channelID, overwriteID snowflake.ID) {
+func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) error {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if overwriteID.Empty() {
+		return errors.New("overwriteID must be set to target the specific channel permissions")
+	}
 
+	details := &httd.Details{
+		Ratelimiter:     "/channels/" + channelID.String(),
+		Endpoint:        "/permissions/" + overwriteID.String(),
+		SuccessHttpCode: 204,
+	}
+	_, err := client.Delete(details)
+	return err
 }
 
 // ReqTriggerTypingIndicator [POST] Post a typing indicator for the specified channel. Generally bots should
@@ -312,7 +391,7 @@ func ReqDeleteChannelPermission(client request.DiscordDeleter, channelID, overwr
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
 // Reviewed                         2018-06-07
 // Comment                          -
-func ReqTriggerTypingIndicator(client request.DiscordPoster, channelID snowflake.ID) {
+func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) {
 
 }
 
@@ -322,7 +401,7 @@ func ReqTriggerTypingIndicator(client request.DiscordPoster, channelID snowflake
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
 // Reviewed                   2018-06-07
 // Comment                    -
-func ReqGetPinnedMessages(client request.DiscordGetter, channelID snowflake.ID) {
+func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) {
 
 }
 
@@ -333,7 +412,7 @@ func ReqGetPinnedMessages(client request.DiscordGetter, channelID snowflake.ID) 
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
 // Reviewed                         2018-06-07
 // Comment                          -
-func ReqAddPinnedChannelMessage(client request.DiscordPutter, channelID, msgID snowflake.ID) {
+func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) {
 
 }
 
@@ -345,8 +424,21 @@ func ReqAddPinnedChannelMessage(client request.DiscordPutter, channelID, msgID s
 // Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
 // Reviewed                               2018-06-07
 // Comment                                -
-func ReqDeletePinnedChannelMessage(client request.DiscordPutter, channelID, msgID snowflake.ID) {
+func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.ID) error {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if msgID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
 
+	details := &httd.Details{
+		Ratelimiter:     "/channels/" + channelID.String(),
+		Endpoint:        "/pins/" + msgID.String(),
+		SuccessHttpCode: 204,
+	}
+	_, err := client.Delete(details)
+	return err
 }
 
 type ReqGroupDMAddRecipientParams struct {
@@ -361,8 +453,21 @@ type ReqGroupDMAddRecipientParams struct {
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 // Reviewed                     2018-06-07
 // Comment                      -
-func ReqGroupDMAddRecipient(client request.DiscordPutter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) {
+func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) error {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if userID.Empty() {
+		return errors.New("userID must be set to target the specific recipient")
+	}
 
+	details := &httd.Details{
+		Ratelimiter:     "/channels/" + channelID.String(),
+		Endpoint:        "/recipients/" + userID.String(),
+		SuccessHttpCode: 204,
+	}
+	_, err := client.Put(details, params)
+	return err
 }
 
 // ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
@@ -372,6 +477,18 @@ func ReqGroupDMAddRecipient(client request.DiscordPutter, channelID, userID snow
 // Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 // Reviewed                           2018-06-07
 // Comment                            -
-func ReqGroupDMRemoveRecipient(client request.DiscordPutter, channelID, userID snowflake.ID) {
+func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID) error {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if userID.Empty() {
+		return errors.New("userID must be set to target the specific recipient")
+	}
 
+	details := &httd.Details{
+		Ratelimiter: "/channels/" + channelID.String(),
+		Endpoint:    "/recipients/" + userID.String(),
+	}
+	_, err := client.Delete(details)
+	return err
 }

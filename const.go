@@ -1,6 +1,6 @@
 package disgord
 
-const (
+const ( // TODO: move
 	// StatusIdle presence status for idle
 	StatusIdle = "idle"
 	// StatusDnd presence status for dnd

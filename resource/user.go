@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -78,11 +78,11 @@ func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) SendMessage(requester request.DiscordRequester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMessage(requester httd.Requester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 
-func (u *User) SendMessageStr(requester request.DiscordRequester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMessageStr(requester httd.Requester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 
@@ -148,7 +148,7 @@ type UserConnection struct {
 // ----------
 
 // GetUser [GET] Returns a user object for a given user ID.
-func ReqUser(requester request.DiscordGetter, id snowflake.ID) (*User, error) {
+func ReqUser(requester httd.Getter, id snowflake.ID) (*User, error) {
 	var endpoint = EndpointUser
 	path := EndpointUser + id.String()
 
@@ -158,7 +158,7 @@ func ReqUser(requester request.DiscordGetter, id snowflake.ID) (*User, error) {
 	return result, err
 }
 
-func ReqMyself(requester request.DiscordGetter) (*User, error) {
+func ReqMyself(requester httd.Getter) (*User, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyself
 
@@ -170,7 +170,7 @@ func ReqMyself(requester request.DiscordGetter) (*User, error) {
 
 // RequestMyGuilds [GET] Returns a list of partial guild objects the current user is a member of.
 //                       Requires the guilds OAuth2 scope.
-func ReqMyGuilds(requester request.DiscordGetter) ([]*Guild, error) {
+func ReqMyGuilds(requester httd.Getter) ([]*Guild, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyGuilds
 
@@ -181,7 +181,7 @@ func ReqMyGuilds(requester request.DiscordGetter) ([]*Guild, error) {
 }
 
 // ReqMyDMs [GET] Returns a list of DM channel objects.
-func ReqMyDMs(requester request.DiscordGetter) ([]*Channel, error) {
+func ReqMyDMs(requester httd.Getter) ([]*Channel, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyChannels
 
@@ -193,7 +193,7 @@ func ReqMyDMs(requester request.DiscordGetter) ([]*Channel, error) {
 
 // ReqLeaveGuild [DELETE] Leave a guild.
 // 						  Returns a 204 empty response on success.
-func ReqLeaveGuild(requester request.DiscordDeleter, id snowflake.ID) error {
+func ReqLeaveGuild(requester httd.Deleter, id snowflake.ID) error {
 	endpoint := EndpointUser
 	path := EndpointUserMyGuilds + "/" + id.String()
 
@@ -207,7 +207,7 @@ type BodyUserCreateDM struct {
 }
 
 // ReqCreateDM [POST, JSON] Create a new DM channel with a user. Returns a DM channel object.
-func ReqCreateDM(requester request.DiscordPoster, user *User) (*Channel, error) {
+func ReqCreateDM(requester httd.Poster, user *User) (*Channel, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyChannels
 	params := BodyUserCreateDM{
@@ -228,7 +228,7 @@ type BodyUserCreateGroupDM struct {
 }
 
 // ReqCreateGroupDM [POST, JSON] Create a new group DM channel with multiple users. Returns a DM channel object.
-func ReqCreateGroupDM(requester request.DiscordPoster, user *User) (*Channel, error) {
+func ReqCreateGroupDM(requester httd.Poster, user *User) (*Channel, error) {
 	fmt.Println("ReqCreateGroupDM HAS NOT YET BEEN IMPLEMENTED!")
 	return nil, errors.New("not implemented")
 	endpoint := EndpointUser
@@ -242,7 +242,7 @@ func ReqCreateGroupDM(requester request.DiscordPoster, user *User) (*Channel, er
 }
 
 // ReqMyConnections [GET] Returns a list of connection objects. Requires the connections OAuth2 scope.
-func ReqMyConnections(requester request.DiscordGetter) ([]*UserConnection, error) {
+func ReqMyConnections(requester httd.Getter) ([]*UserConnection, error) {
 	endpoint := EndpointUser
 	path := EndpointUserMyConnections
 

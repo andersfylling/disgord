@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/discordws"
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/state"
 	"github.com/andersfylling/snowflake"
@@ -22,7 +22,7 @@ type Session interface {
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested.
-	Req() request.DiscordRequester
+	Req() httd.Requester
 
 	// Event let's developers listen for specific events, event groups, or every event as one listener.
 	// Supports both channels and callbacks
@@ -31,6 +31,9 @@ type Session interface {
 	// State reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
 	State() state.Cacher
+
+	// RateLimiter the ratelimiter for the discord REST API
+	RateLimiter() httd.RateLimiter
 
 	// Discord Gateway, web socket
 	//
@@ -95,7 +98,7 @@ func NewClient(conf *Config) (*Client, error) {
 	}
 
 	// request client
-	reqConf := &request.Config{
+	reqConf := &httd.Config{
 		APIVersion:                   APIVersion,
 		BotToken:                     conf.Token,
 		UserAgentSourceURL:           GitHubURL,
@@ -103,7 +106,7 @@ func NewClient(conf *Config) (*Client, error) {
 		HTTPClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
 	}
-	reqClient := request.NewClient(reqConf)
+	reqClient := httd.NewClient(reqConf)
 
 	// event dispatcher
 	evtDispatcher := NewDispatch()
@@ -156,7 +159,7 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 
 	// discord http api
-	req *request.Client
+	req *httd.Client
 
 	httpClient *http.Client
 
@@ -210,7 +213,7 @@ func (c *Client) Disconnect() (err error) {
 	return nil
 }
 
-func (c *Client) Req() request.DiscordRequester {
+func (c *Client) Req() httd.Requester {
 	return c.req
 }
 

@@ -1,21 +1,35 @@
 package resource
 
 import (
+	"encoding/json"
+
 	"github.com/andersfylling/disgord/discord"
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 )
 
+// Invite Represents a code that when used, adds a user to a guild.
+// https://discordapp.com/developers/docs/resources/invite#invite-object
+// Reviewed: 2018-06-10
 type Invite struct {
 	// Code the invite code (unique ID)
 	Code string `json:"code"`
 
 	// Guild the guild this invite is for
-	Guild *PartialGuild
+	Guild *PartialGuild `json:"guild"`
 
 	// Channel the channel this invite is for
-	Channel *PartialChannel
+	Channel *PartialChannel `json:"channel"`
+
+	// ApproximatePresenceCount approximate count of online members
+	ApproximatePresenceCount int `json:"approximate_presence_count,omitempty"`
+
+	// ApproximatePresenceCount approximate count of total members
+	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
+// InviteMetadata Object
+// https://discordapp.com/developers/docs/resources/invite#invite-metadata-object
+// Reviewed: 2018-06-10
 type InviteMetadata struct {
 	// Inviter user who created the invite
 	Inviter *User `json:"inviter"`
@@ -43,21 +57,52 @@ const (
 	EndpointInvite = "/invites"
 )
 
-// ReqGetInvite Returns an invite object for the given code.
-func ReqGetInvite(requester request.DiscordGetter, code string) (invite *Invite, err error) {
-	path := EndpointInvite + "/" + code
-	_, err = requester.Get(EndpointInvite, path, invite)
+// ReqGetInvite [GET]     Returns an invite object for the given code.
+// Endpoint               /invites/{invite.code}
+// Rate limiter           /invites/{invite.code}
+// Discord documentation  https://discordapp.com/developers/docs/resources/invite#get-invite
+// Reviewed               2018-06-10
+// Comment                -
+//
+// withCounts whether the invite should contain approximate member counts
+func ReqGetInvite(requester httd.Getter, inviteCode string, withCounts bool) (invite *Invite, err error) {
+	query := ""
+	if withCounts {
+		query += "?with_counts=true"
+	}
 
-	return invite, err
+	details := &httd.Request{
+		Ratelimiter:    EndpointInvite + "/" + inviteCode,
+		Endpoint:       query,
+	}
+	resp, err := requester.Get(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(invite)
+	return
 }
 
-// ReqDeleteInvite Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
-func ReqDeleteInvite(requester request.DiscordGetter, code string) (invite *Invite, err error) {
-	path := EndpointInvite + "/" + code
-	_, err = requester.Get(EndpointInvite, path, invite)
+// ReqDeleteInvite [DELETE] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite
+//                          object on success.
+// Endpoint                 /invites/{invite.code}
+// Rate limiter             /invites/{invite.code}
+// Discord documentation    https://discordapp.com/developers/docs/resources/invite#delete-invite
+// Reviewed                 2018-06-10
+// Comment                  -
+func ReqDeleteInvite(requester httd.Deleter, inviteCode string) (invite *Invite, err error) {
 
-	return invite, err
+	details := &httd.Request{
+		Ratelimiter:    EndpointInvite + "/" + inviteCode,
+	}
+	resp, err := requester.Delete(details)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(invite)
+	return
 }
-
-// @Deprecated
-// func ReqAcceptInvite() {}

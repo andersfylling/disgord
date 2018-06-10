@@ -1,4 +1,4 @@
-package request
+package httd
 
 import (
 	"net/http"
@@ -22,7 +22,12 @@ var majorEndpointPrefixes = []string{
 	"/webhooks/",
 }
 
-type RateLimiter interface{}
+type RateLimiter interface {
+	Bucket(key string) *Bucket
+	RateLimitTimeout(key string) int64
+	RateLimited(key string) bool
+	HandleResponse(key string, res *http.Response)
+}
 
 func NewRateLimit() *RateLimit {
 	return &RateLimit{

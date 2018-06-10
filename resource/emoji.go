@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -52,7 +52,7 @@ func (e *Emoji) Clear() {
 // Discord documentation    https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 // Reviewed                 2018-03-17
 // Comment                  -
-func ReqListGuildEmojis(requester request.DiscordGetter, guildID snowflake.ID) (emoji *Emoji, err error) {
+func ReqListGuildEmojis(requester httd.Getter, guildID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis"
 
@@ -67,7 +67,7 @@ func ReqListGuildEmojis(requester request.DiscordGetter, guildID snowflake.ID) (
 // Discord documentation  https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
 // Reviewed               2018-03-17
 // Comment                -
-func ReqGetGuildEmoji(requester request.DiscordGetter, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
+func ReqGetGuildEmoji(requester httd.Getter, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
 
@@ -87,7 +87,7 @@ func ReqGetGuildEmoji(requester request.DiscordGetter, guildID, emojiID snowflak
 //                            Attempting to upload an emoji larger than this limit will fail
 //                            and return 400 Bad Request and an error message, but not a JSON
 //                            status code." - Discord docs
-func ReqCreateGuildEmoji(requester request.DiscordPoster, guildID snowflake.ID) (emoji *Emoji, err error) {
+func ReqCreateGuildEmoji(requester httd.Poster, guildID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis"
 
@@ -104,7 +104,7 @@ func ReqCreateGuildEmoji(requester request.DiscordPoster, guildID snowflake.ID) 
 // Discord documentation        https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
 // Reviewed                     2018-03-17
 // Comment                      -
-func ReqModifyGuildEmoji(requester request.DiscordPatcher, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
+func ReqModifyGuildEmoji(requester httd.Patcher, guildID, emojiID snowflake.ID) (emoji *Emoji, err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
 
@@ -122,7 +122,7 @@ func ReqModifyGuildEmoji(requester request.DiscordPatcher, guildID, emojiID snow
 // Discord documentation        https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
 // Reviewed                     2018-03-17
 // Comment                      -
-func ReqDeleteGuildEmoji(requester request.DiscordDeleter, guildID, emojiID snowflake.ID) (err error) {
+func ReqDeleteGuildEmoji(requester httd.Deleter, guildID, emojiID snowflake.ID) (err error) {
 	rateLimitKey := "/guilds/" + guildID.String()
 	path := rateLimitKey + "/emojis/" + emojiID.String()
 

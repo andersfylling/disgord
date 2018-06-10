@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -145,7 +145,7 @@ func (params *ReqGetChannelMessagesParams) getQueryString() string {
 // Reviewed				   		2018-06-07
 // Comment				   		The before, after, and around keys are mutually exclusive, only one may
 // 								be passed at a time. see ReqGetChannelMessagesParams.
-func ReqGetChannelMessages(client request.DiscordGetter, channelID snowflake.ID, params *ReqGetChannelMessagesParams) ([]*Message, error) {
+func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *ReqGetChannelMessagesParams) ([]*Message, error) {
 	if channelID.Empty() {
 		return nil, errors.New("channelID must be set to get channel messages")
 	}
@@ -169,7 +169,7 @@ func ReqGetChannelMessages(client request.DiscordGetter, channelID snowflake.ID,
 // Discord documentation   		https://discordapp.com/developers/docs/resources/channel#get-channel-message
 // Reviewed				   		2018-06-07
 // Comment				   		-
-func ReqGetChannelMessage(client request.DiscordGetter, channelID, messageID snowflake.ID) (*Message, error) {
+func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (*Message, error) {
 	if channelID.Empty() {
 		return nil, errors.New("channelID must be set to get channel messages")
 	}
@@ -210,7 +210,7 @@ type ReqCreateMessageParams struct {
 // 									when uploading files. Make sure you set your Content-Type to multipart/form-data
 // 									if you're doing that. Note that in that case, the embed field cannot be used,
 // 									but you can pass an url-encoded JSON body as a form value for payload_json.
-func ReqCreateChannelMessage(client request.DiscordPoster, channelID snowflake.ID, params *ReqCreateMessageParams) (*Message, error) {
+func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *ReqCreateMessageParams) (*Message, error) {
 	if channelID.Empty() {
 		return nil, errors.New("channelID must be set to get channel messages")
 	}
@@ -238,7 +238,7 @@ type ReqEditMessageParams struct {
 // Discord documentation   	https://discordapp.com/developers/docs/resources/channel#edit-message
 // Reviewed				   	2018-06-07
 // Comment				   	All parameters to this endpoint are optional.
-func ReqEditMessage(client request.DiscordPatcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (*Message, error) {
+func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (*Message, error) {
 	if chanID.Empty() {
 		return nil, errors.New("channelID must be set to get channel messages")
 	}
@@ -259,7 +259,7 @@ func ReqEditMessage(client request.DiscordPatcher, chanID, msgID snowflake.ID, p
 // Discord documentation   		https://discordapp.com/developers/docs/resources/channel#delete-message
 // Reviewed				   		2018-06-07
 // Comment				   		-
-func ReqDeleteMessage(client request.DiscordDeleter, chanID, msgID snowflake.ID) error {
+func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) error {
 	if chanID.Empty() {
 		return errors.New("channelID must be set to get channel messages")
 	}
@@ -335,7 +335,7 @@ func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) error {
 // Reviewed                     2018-06-07
 // Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
 //                              any message provided is older than that.
-func ReqBulkDeleteMessages(client request.DiscordPoster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
+func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return

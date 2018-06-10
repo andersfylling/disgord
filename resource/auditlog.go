@@ -1,9 +1,10 @@
 package resource
 
 import (
+	"encoding/json"
 	"strconv"
 
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -157,12 +158,18 @@ func (params *AuditLogParams) getQueryString() string {
 // Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 // Reviewed                 2018-06-05
 // Comment                  -
-func ReqGuildAuditLogs(requester request.DiscordGetter, guildID string, params *AuditLogParams) (*AuditLog, error) {
-	endpoint := EndpointGuild + "/" + guildID
-	path := endpoint + "audit-logs" + params.getQueryString()
+func ReqGuildAuditLogs(requester httd.Getter, guildID string, params *AuditLogParams) (log *AuditLog, err error) {
 
-	logs := &AuditLog{}
-	_, err := requester.Get(endpoint, path, logs)
+	details := &httd.Request{
+		Ratelimiter:    EndpointGuild + "/" + guildID,
+		Endpoint:       "/audit-logs" + params.getQueryString(),
+	}
+	resp, err := requester.Get(details)
+	if err != nil {
+		return
+	}
 
-	return logs, err
+	err = json.NewDecoder(resp.Body).Decode(log)
+	resp.Body.Close()
+	return
 }

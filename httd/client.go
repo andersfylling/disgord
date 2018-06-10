@@ -1,4 +1,4 @@
-package request
+package httd
 
 import (
 	"bytes"
@@ -17,36 +17,9 @@ const (
 	// Header
 	AuthorizationFormat = "Bot %s"
 	UserAgentFormat     = "DiscordBot (%s, %s) %s"
+
+	HTTPCodeRateLimit int = 429
 )
-
-type DiscordRequester interface {
-	Request(method, ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error)
-	Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-	Delete(ratelimiter, endpoint string) (timeout int64, err error)
-}
-
-type DiscordGetter interface {
-	Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error)
-}
-
-type DiscordPoster interface {
-	Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-}
-
-type DiscordPutter interface {
-	Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-}
-
-type DiscordPatcher interface {
-	Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error)
-}
-
-type DiscordDeleter interface {
-	Delete(ratelimiter, endpoint string) (timeout int64, err error)
-}
 
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
 func SupportsDiscordAPIVersion(version int) bool {
@@ -118,6 +91,20 @@ type Config struct {
 	UserAgentExtra     string
 }
 
+type Details struct {
+	Ratelimiter     string
+	Endpoint        string // always as a suffix to Ratelimiter(!)
+	ResponseStruct  interface{}
+	SuccessHttpCode int
+}
+
+type Request struct {
+	Method string
+	Ratelimiter string
+	Endpoint string
+	JSONParams interface{}
+}
+
 type Client struct {
 	url                          string // base url with API version
 	rateLimit                    *RateLimit
@@ -126,84 +113,49 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 }
 
-func (c *Client) Request(method, ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-
+func (c *Client) Request(r *Request) (resp *http.Response, err error) {
 	var jsonParamsReader io.Reader
-	if jsonParams != nil {
-		jsonParamsReader, err = convertStructToIOReader(jsonParams)
+	if r.JSONParams != nil {
+		jsonParamsReader, err = convertStructToIOReader(r.JSONParams)
 		if err != nil {
 			return
 		}
 	}
 
-	req, err := http.NewRequest(method, c.url+endpoint, jsonParamsReader)
+	// concate ratelimiter and endpoint
+	r.Endpoint = r.Ratelimiter + r.Endpoint
+
+	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
 	if err != nil {
 		return
 	}
 
-	//check if rate limited
+	// check if rate limited
 	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.
-	timeout = c.rateLimit.RateLimitTimeout(ratelimiter)
+	timeout := c.rateLimit.RateLimitTimeout(r.Ratelimiter)
 	if timeout > 0 {
 		// wait until rate limit is over.
 		// exception; if the rate limit timeout exceeds the http client timeout, return error.
 		//
 		// if cancelRequestWhenRateLimited, is activated
 		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= time.Millisecond*time.Duration(timeout)) {
-			return timeout, errors.New("rate limited")
+			err = errors.New("rate limited")
+			return
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(timeout))
 	}
 
 	req.Header = c.reqHeader
-	res, err := c.httpClient.Do(req)
+	resp, err = c.httpClient.Do(req)
 	if err != nil {
 		return
 	}
-	defer res.Body.Close()
 
 	// update rate limits
-	c.rateLimit.HandleResponse(ratelimiter, res)
-
-	// successful deletes return 204. TODO: confirm
-	if method == http.MethodDelete {
-		if res.Status == http.MethodDelete {
-			err = nil
-			return
-		}
-
-		err = errors.New("Unable to delete resource at " + endpoint)
-		return
-	}
-
-	// if a target has been provided for un-marshalling
-	err = nil
-	if target != nil {
-		err = json.NewDecoder(res.Body).Decode(target)
-	}
+	c.rateLimit.HandleResponse(r.Ratelimiter, resp)
 
 	return
-}
-
-func (c *Client) Get(ratelimiter, endpoint string, target interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodGet, ratelimiter, endpoint, target, nil)
-}
-
-func (c *Client) Post(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPost, ratelimiter, endpoint, target, jsonParams)
-}
-
-func (c *Client) Put(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPut, ratelimiter, endpoint, target, jsonParams)
-}
-
-func (c *Client) Patch(ratelimiter, endpoint string, target interface{}, jsonParams interface{}) (timeout int64, err error) {
-	return c.Request(http.MethodPatch, ratelimiter, endpoint, target, jsonParams)
-}
-
-func (c *Client) Delete(ratelimiter, endpoint string) (timeout int64, err error) {
-	return c.Request(http.MethodDelete, ratelimiter, endpoint, nil, nil)
 }
 
 func (c *Client) RateLimiter() RateLimiter {

@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"github.com/andersfylling/disgord/request"
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -72,7 +72,7 @@ type VoiceRegion struct {
 // https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 const EndpointVoiceRegions = "/voice/regions"
 
-func ReqVoiceRegions(requester request.DiscordGetter) (regions []*VoiceRegion, err error) {
+func ReqVoiceRegions(requester httd.Getter) (regions []*VoiceRegion, err error) {
 	_, err = requester.Get(EndpointVoiceRegions, EndpointVoiceRegions, regions)
 
 	return regions, err
