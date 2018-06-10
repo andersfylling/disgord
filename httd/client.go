@@ -99,10 +99,10 @@ type Details struct {
 }
 
 type Request struct {
-	Method string
+	Method      string
 	Ratelimiter string
-	Endpoint string
-	JSONParams interface{}
+	Endpoint    string
+	JSONParams  interface{}
 }
 
 type Client struct {

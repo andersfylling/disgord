@@ -158,8 +158,8 @@ func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *R
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages" + query,
-		JSONParams: params,
+		Endpoint:    "/messages" + query,
+		JSONParams:  params,
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -191,7 +191,7 @@ func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID)
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String(),
+		Endpoint:    "/messages/" + messageID.String(),
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -241,8 +241,8 @@ func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params 
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages",
-		JSONParams: params,
+		Endpoint:    "/messages",
+		JSONParams:  params,
 	}
 	resp, err := client.Post(details)
 	if err != nil {
@@ -279,8 +279,8 @@ func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *Req
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + chanID.String(),
-		Endpoint: "/messages/" + msgID.String(),
-		JSONParams: params,
+		Endpoint:    "/messages/" + msgID.String(),
+		JSONParams:  params,
 	}
 	resp, err := client.Patch(details)
 	if err != nil {
@@ -313,7 +313,7 @@ func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err erro
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + chanID.String(),
-		Endpoint: "/messages/" + msgID.String(),
+		Endpoint:    "/messages/" + msgID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -402,7 +402,7 @@ func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqB
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + chanID.String(),
-		Endpoint: "/messages/bulk-delete",
+		Endpoint:    "/messages/bulk-delete",
 	}
 	resp, err := client.Post(details)
 	if err != nil {

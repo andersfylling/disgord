@@ -54,7 +54,7 @@ func ReqCreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emo
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+		Endpoint:    "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
 	resp, err := client.Put(details)
 	if err != nil {
@@ -99,7 +99,7 @@ func ReqDeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
+		Endpoint:    "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -147,7 +147,7 @@ func ReqDeleteUserReaction(client httd.Deleter, channelID, messageID, userID sno
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
+		Endpoint:    "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
 	}
 	resp, err := client.Delete(details)
 	if err != nil {
@@ -229,7 +229,7 @@ func ReqGetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
+		Endpoint:    "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
 	}
 	resp, err := client.Get(details)
 	if err != nil {
@@ -259,7 +259,7 @@ func ReqDeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.I
 
 	details := &httd.Request{
 		Ratelimiter: "/channels/" + channelID.String(),
-		Endpoint: "/messages/" + messageID.String() + "/reactions",
+		Endpoint:    "/messages/" + messageID.String() + "/reactions",
 	}
 	resp, err := client.Delete(details)
 	if err != nil {

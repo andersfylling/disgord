@@ -161,8 +161,8 @@ func (params *AuditLogParams) getQueryString() string {
 func ReqGuildAuditLogs(requester httd.Getter, guildID string, params *AuditLogParams) (log *AuditLog, err error) {
 
 	details := &httd.Request{
-		Ratelimiter:    EndpointGuild + "/" + guildID,
-		Endpoint:       "/audit-logs" + params.getQueryString(),
+		Ratelimiter: EndpointGuild + "/" + guildID,
+		Endpoint:    "/audit-logs" + params.getQueryString(),
 	}
 	resp, err := requester.Get(details)
 	if err != nil {
