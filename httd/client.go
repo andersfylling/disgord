@@ -128,19 +128,32 @@ func (c *Client) Request(r *Request) (resp *http.Response, err error) {
 	}
 
 	// check if rate limited
+	timeout := int64(0)
+
+	// check global rate limit
+	if c.rateLimit.global.remaining == 0 {
+		timeout = c.rateLimit.global.timeout()
+	}
+
+	// route specific rate limit
+	if r.Ratelimiter != "" && timeout == 0 {
+		timeout = c.rateLimit.RateLimitTimeout(r.Ratelimiter)
+	}
+
 	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.
-	timeout := c.rateLimit.RateLimitTimeout(r.Ratelimiter)
 	if timeout > 0 {
 		// wait until rate limit is over.
 		// exception; if the rate limit timeout exceeds the http client timeout, return error.
 		//
 		// if cancelRequestWhenRateLimited, is activated
-		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= time.Millisecond*time.Duration(timeout)) {
+		deadtime := time.Millisecond*time.Duration(timeout)
+		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= deadtime) {
 			err = errors.New("rate limited")
+			// TODO: add the timeout to the return
 			return
 		}
 
-		time.Sleep(time.Millisecond * time.Duration(timeout))
+		time.Sleep(deadtime)
 	}
 
 	req.Header = c.reqHeader

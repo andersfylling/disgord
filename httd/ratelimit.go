@@ -1,6 +1,7 @@
 package httd
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ const (
 	XRateLimitRemaining = "X-RateLimit-Remaining"
 	XRateLimitReset     = "X-RateLimit-Reset"
 	XRateLimitGlobal    = "X-RateLimit-Global"
+	RateLimitRetryAfter = "Retry-After"
 )
 
 // const
@@ -51,6 +53,10 @@ type RateLimiter interface {
 func NewRateLimit() *RateLimit {
 	return &RateLimit{
 		buckets: make(map[string]*Bucket),
+		global: &Bucket{
+			global:true,
+
+		},
 	}
 }
 
@@ -60,6 +66,7 @@ func NewRateLimit() *RateLimit {
 // but any major endpoint prefix does not: `/channels/1` != `/channels/2`
 type RateLimit struct {
 	buckets map[string]*Bucket
+	global *Bucket
 	mu      sync.RWMutex
 }
 
@@ -110,42 +117,101 @@ func (r *RateLimit) RateLimited(key string) bool {
 	return bucket.limited()
 }
 
-func (r *RateLimit) HandleResponse(key string, res *http.Response) {
-	bucket := r.Bucket(key)
-	bucket.mu.Lock()
-	defer bucket.mu.Unlock()
+type ratelimitBody struct {
+	Message string `json:"message"`
+	RetryAfter int64 `json:"retry_after"`
+	Global bool `json:"global"`
+}
 
-	if !bucket.global && res.Header.Get(XRateLimitGlobal) == "true" {
-		bucket.global = true
+func (r *RateLimit) HandleResponse(key string, res *http.Response) {
+	var err error
+	var global bool
+	var limit uint64
+	var remaining uint64
+	var reset int64
+	var body *ratelimitBody
+	var noBody bool
+
+	// read body as well
+	defer res.Body.Close()
+	err = json.NewDecoder(res.Body).Decode(body)
+	if err != nil {
+		noBody = true
 	}
 
-	if bucket.limit == 0 && res.Header.Get(XRateLimitLimit) != "" {
-		limit, err := strconv.ParseUint(res.Header.Get(XRateLimitLimit), 10, 64)
-		if err == nil {
-			bucket.limit = limit
-		} else {
-			// TODO: log
+	// global?
+	if res.Header.Get(XRateLimitGlobal) == "true" || (!noBody && body.Global) {
+		global = true
+	}
+
+	// max number of request before reset
+	if res.Header.Get(XRateLimitLimit) != "" || (!noBody && body.Global) {
+		limit, err = strconv.ParseUint(res.Header.Get(XRateLimitLimit), 10, 64)
+		if err != nil {
+			// TODO: logging
 		}
 	}
 
+	// remaining requests before reset
 	remainingStr := res.Header.Get(XRateLimitRemaining)
 	if remainingStr != "" {
-		remaining, err := strconv.ParseUint(remainingStr, 10, 64)
-		if err == nil {
-			bucket.remaining = remaining
-		} else {
-			// TODO: log
+		remaining, err = strconv.ParseUint(remainingStr, 10, 64)
+		if err != nil {
+			// TODO: logging
 		}
 	}
 
+	// reset unix timestamp
 	resetStr := res.Header.Get(XRateLimitReset)
 	if resetStr != "" {
-		reset, err := strconv.ParseInt(remainingStr, 10, 64)
+		// here we get a unix timestamp in seconds, which we convert to milliseconds
+		reset, err = strconv.ParseInt(remainingStr, 10, 64)
 		if err == nil {
-			bucket.reset = reset * 1000 //convert seconds to milliseconds
-			// TODO: if global, reset should be remaining milliseconds. convert it => (time.now + globalReset)
+			reset *= 1000 // => milliseconds
 		} else {
-			// TODO: log
+			// TODO: logging
+		}
+	} else if res.Header.Get(RateLimitRetryAfter) != "" || (!noBody && body.RetryAfter > 0) {
+		// here we are given a delay in millisecond, which we need to convert into a timestamp
+		if res.Header.Get(RateLimitRetryAfter) != "" {
+			reset, err = strconv.ParseInt(res.Header.Get(RateLimitRetryAfter), 10, 64)
+			if err != nil {
+				reset = 0
+			}
+		} else if !noBody && body.RetryAfter > 0 {
+			reset = body.RetryAfter
+		}
+
+		// convert diff to timestamp
+		reset += time.Now().UnixNano() / 1000
+	}
+
+	if global {
+		r.global.mu.Lock()
+		defer r.global.mu.Unlock()
+
+		if limit != 0 {
+			r.global.limit = limit
+		}
+		if remaining != 0 {
+			r.global.remaining = remaining
+		}
+		if reset != 0 {
+			r.global.reset = reset
+		}
+	} else {
+		bucket := r.Bucket(key)
+		bucket.mu.Lock()
+		defer bucket.mu.Unlock()
+
+		if limit != 0 {
+			bucket.limit = limit
+		}
+		if remaining != 0 {
+			bucket.remaining = remaining
+		}
+		if reset != 0 {
+			bucket.reset = reset
 		}
 	}
 }
