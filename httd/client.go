@@ -146,7 +146,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, err error) {
 		// exception; if the rate limit timeout exceeds the http client timeout, return error.
 		//
 		// if cancelRequestWhenRateLimited, is activated
-		deadtime := time.Millisecond*time.Duration(timeout)
+		deadtime := time.Millisecond * time.Duration(timeout)
 		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= deadtime) {
 			err = errors.New("rate limited")
 			// TODO: add the timeout to the return

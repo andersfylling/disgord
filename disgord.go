@@ -3,11 +3,11 @@
 package disgord
 
 const (
-	// APIComEncoding data format used when communicating with the discord API
-	APIComEncoding = "json"
+	JSONEncoding = "JSON"
 
 	// APIVersion desired API version to use
-	APIVersion = 6 // February 5, 2018
+	APIVersion        = 6 // February 5, 2018
+	DefaultAPIVersion = 6
 
 	GitHubURL = "https://github.com/andersfylling/disgord"
 

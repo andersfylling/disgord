@@ -54,8 +54,7 @@ func NewRateLimit() *RateLimit {
 	return &RateLimit{
 		buckets: make(map[string]*Bucket),
 		global: &Bucket{
-			global:true,
-
+			global: true,
 		},
 	}
 }
@@ -66,7 +65,7 @@ func NewRateLimit() *RateLimit {
 // but any major endpoint prefix does not: `/channels/1` != `/channels/2`
 type RateLimit struct {
 	buckets map[string]*Bucket
-	global *Bucket
+	global  *Bucket
 	mu      sync.RWMutex
 }
 
@@ -118,9 +117,9 @@ func (r *RateLimit) RateLimited(key string) bool {
 }
 
 type ratelimitBody struct {
-	Message string `json:"message"`
-	RetryAfter int64 `json:"retry_after"`
-	Global bool `json:"global"`
+	Message    string `json:"message"`
+	RetryAfter int64  `json:"retry_after"`
+	Global     bool   `json:"global"`
 }
 
 func (r *RateLimit) HandleResponse(key string, res *http.Response) {

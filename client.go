@@ -6,12 +6,14 @@ import (
 	"sync"
 	"time"
 
+	"errors"
 	"github.com/andersfylling/disgord/discordws"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/state"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
+	"github.com/andersfylling/disgord/rest"
 )
 
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
@@ -21,8 +23,12 @@ type Session interface {
 
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
-	// might not exist in the state. If so it should be requested.
+	// might not exist in the state. If so it should be requested. Note that this only holds http
+	// CRUD operation and not the actual rest endpoints for discord (See Rest()).
 	Req() httd.Requester
+
+	// todo
+	//Rest()
 
 	// Event let's developers listen for specific events, event groups, or every event as one listener.
 	// Supports both channels and callbacks
@@ -62,6 +68,9 @@ type Config struct {
 	Token      string
 	HTTPClient *http.Client
 
+	APIVersion  int    // eg. version 6. 0 defaults to lowest supported api version
+	APIEncoding string // eg. json, use const. defaults to json
+
 	CancelRequestWhenRateLimited bool
 
 	LoadAllMembers   bool
@@ -75,6 +84,26 @@ type Config struct {
 // NewClient creates a new default disgord instance
 func NewClient(conf *Config) (*Client, error) {
 
+	// ensure valid api version
+	if conf.APIVersion == 0 {
+		conf.APIVersion = 6 // the current discord API, for now v6
+	}
+	switch conf.APIVersion { // todo: simplify
+	case 1:
+		fallthrough
+	case 2:
+		fallthrough
+	case 3:
+		fallthrough
+	case 4:
+		fallthrough
+	case 5:
+		return nil, errors.New("outdated API version")
+	case 6: // supported
+	default:
+		return nil, errors.New("Discord API version is not yet supported")
+	}
+
 	if conf.HTTPClient == nil {
 		// http client configuration
 		conf.HTTPClient = &http.Client{
@@ -83,6 +112,10 @@ func NewClient(conf *Config) (*Client, error) {
 	}
 
 	// Use discordws to keep the socket connection going
+	// default communication encoding to json
+	if conf.APIEncoding == "" {
+		conf.APIEncoding = JSONEncoding
+	}
 	dws, err := discordws.NewClient(&discordws.Config{
 		// user settings
 		Token:      conf.Token,
@@ -90,8 +123,8 @@ func NewClient(conf *Config) (*Client, error) {
 		Debug:      conf.Debug,
 
 		// lib specific
-		DAPIVersion:  APIVersion,
-		DAPIEncoding: APIComEncoding,
+		DAPIVersion:  conf.APIVersion,
+		DAPIEncoding: conf.APIEncoding,
 	})
 	if err != nil {
 		return nil, err
@@ -99,7 +132,7 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// request client
 	reqConf := &httd.Config{
-		APIVersion:                   APIVersion,
+		APIVersion:                   conf.APIVersion,
 		BotToken:                     conf.Token,
 		UserAgentSourceURL:           GitHubURL,
 		UserAgentVersion:             Version,
@@ -374,7 +407,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 		// do http request if none found
 		if result == nil {
 			cached = false
-			result, err = resource.ReqGetUser(c.req, userID)
+			result, err = rest.GetUser(c.req, userID)
 			if err != nil {
 				// TODO: handle error
 				// issue: devs might either be rate limited or user not found, how would they know tho?
