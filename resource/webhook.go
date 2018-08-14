@@ -15,16 +15,3 @@ type Webhook struct {
 	Avatar    string       `json:"avatar"`             //  |?
 	Token     string       `json:"token"`              //  |
 }
-
-func ReqCreateWebhook()                  {}
-func ReqGetChannelWebhooks()             {}
-func ReqGetGuildWebhooks()               {}
-func ReqGetWebhook()                     {}
-func ReqGetWebhookWithToken()            {}
-func ReqModifyWebhook()                  {}
-func ReqModifyWebhookWithToken()         {}
-func ReqDeleteWebhook()                  {}
-func ReqDeleteWebhookWithToken()         {}
-func ReqExecuteWebhook()                 {}
-func ReqExecuteSlackCompatibleWebhook()  {}
-func ReqExecuteGitHubCompatibleWebgook() {}
