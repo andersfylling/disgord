@@ -35,8 +35,8 @@ func RatelimitGuild(id snowflake.ID) string {
 	return "g:" + id.String()
 }
 
-func RatelimitWebsocket(id snowflake.ID) string {
-	return "w:" + id.String()
+func RatelimitWebhook() string {
+	return "wh"
 }
 
 func RatelimitUsers() string {

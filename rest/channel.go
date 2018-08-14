@@ -10,12 +10,16 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
-// ReqGetChannel [GET]    Get a channel by ID. Returns a channel object.
-// Endpoint               /channels/{channel.id}
-// Rate limiter [MAJOR]   /channels/{channel.id}
-// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-channel
-// Reviewed               2018-06-07
-// Comment                -
+const (
+	EndpointChannels = "/channels"
+)
+
+// GetChannel [GET]         Get a channel by ID. Returns a channel object.
+// Endpoint                 /channels/{channel.id}
+// Rate limiter [MAJOR]     /channels/{channel.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel
+// Reviewed                 2018-06-07
+// Comment                  -
 func GetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
 	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
@@ -38,7 +42,7 @@ func GetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, er
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
 type ModifyChannelParams = Channel
 
-// ReqModifyChannel [PUT/PATCH] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
+// ModifyChannel [PUT/PATCH]    Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
 //                              Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
 //                              Channel Update Gateway event. If modifying a category, individual Channel Update
 //                              events will fire for each child channel that also changes. For the PATCH method,
@@ -68,19 +72,19 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 	return
 }
 
-// ReqDeleteChannel [DELETE]  Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
-//                            permission for the guild. Deleting a category does not delete its child
-//                            channels; they will have their parent_id removed and a Channel Update Gateway
-//                            event will fire for each of them. Returns a channel object on success. Fires a
-//                            Channel Delete Gateway event.
-// Endpoint                   /channels/{channel.id}
-// Rate limiter [MAJOR]       /channels/{channel.id}
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
-// Reviewed                   2018-06-07
-// Comment                    Deleting a guild channel cannot be undone. Use this with caution, as it
-//                            is impossible to undo this action when performed on a guild channel. In
-//                            contrast, when used with a private message, it is possible to undo the
-//                            action by opening a private message with the recipient again.
+// DeleteChannel [DELETE]   Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
+//                          permission for the guild. Deleting a category does not delete its child
+//                          channels; they will have their parent_id removed and a Channel Update Gateway
+//                          event will fire for each of them. Returns a channel object on success. Fires a
+//                          Channel Delete Gateway event.
+// Endpoint                 /channels/{channel.id}
+// Rate limiter [MAJOR]     /channels/{channel.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
+// Reviewed                 2018-06-07
+// Comment                  Deleting a guild channel cannot be undone. Use this with caution, as it
+//                          is impossible to undo this action when performed on a guild channel. In
+//                          contrast, when used with a private message, it is possible to undo the
+//                          action by opening a private message with the recipient again.
 func DeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		err = errors.New("not a valid snowflake")
@@ -104,7 +108,7 @@ func DeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
 	return
 }
 
-// ReqEditChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
+// EditChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
 type EditChannelPermissionsParams struct {
 	Allow int    `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  int    `json:"deny"`  // the bitwise value of all disallowed permissions
