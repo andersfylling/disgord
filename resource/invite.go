@@ -1,11 +1,5 @@
 package resource
 
-import (
-	"encoding/json"
-
-	"github.com/andersfylling/disgord/discord"
-)
-
 // Invite Represents a code that when used, adds a user to a guild.
 // https://discordapp.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
@@ -46,7 +40,7 @@ type InviteMetadata struct {
 	Temporary bool `json:"temporary"`
 
 	// CreatedAt when this invite was created
-	CreatedAt discord.Timestamp `json:"created_at"`
+	CreatedAt Timestamp `json:"created_at"`
 
 	// Revoked whether this invite is revoked
 	Revoked bool `json:"revoked"`

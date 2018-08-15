@@ -7,7 +7,6 @@ import (
 
 	"github.com/andersfylling/snowflake"
 	"time"
-	"encoding/json"
 )
 
 const (
@@ -68,7 +67,7 @@ type Channel struct {
 	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        snowflake.ID          `json:"applicaiton_id,omitempty"`        // ?|
 	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPingTimestamp    discord.Timestamp     `json:"last_ping_timestamp,omitempty"`   // ?|
+	LastPingTimestamp    Timestamp     `json:"last_ping_timestamp,omitempty"`   // ?|
 
 	mu sync.RWMutex `json:"-"`
 }

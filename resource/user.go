@@ -3,8 +3,6 @@ package resource
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
-	"strconv"
 	"sync"
 
 	"github.com/andersfylling/disgord/httd"
