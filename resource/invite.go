@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"encoding/json"
+
 	"github.com/andersfylling/disgord/discord"
 )
 

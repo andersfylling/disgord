@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"encoding/json"
 	"errors"
 	"sync"
 
