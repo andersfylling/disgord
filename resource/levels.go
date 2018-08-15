@@ -1,4 +1,4 @@
-package discord
+package resource
 
 // ExplicitContentFilterLvl ...
 // https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level

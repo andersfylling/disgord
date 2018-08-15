@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 )
@@ -80,7 +79,7 @@ type ChannelPinsUpdateBox struct {
 	ChannelID snowflake.ID `json:"channel_id"`
 
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
-	LastPinTimestamp discord.Timestamp `json:"last_pin_timestamp,omitempty"` // ?|
+	LastPinTimestamp resource.Timestamp `json:"last_pin_timestamp,omitempty"` // ?|
 	Ctx              context.Context   `json:"-"`
 }
 

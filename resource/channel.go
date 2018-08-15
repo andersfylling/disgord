@@ -4,8 +4,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/snowflake"
+	"time"
+	"encoding/json"
 )
 
 const (
@@ -149,4 +150,181 @@ func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Messag
 
 func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 	return errors.New("not implemented")
+}
+
+// -----------------------------
+// Message
+
+
+const (
+	_ = iota
+	MessageActivityTypeJoin
+	MessageActivityTypeSpectate
+	MessageActivityTypeListen
+	MessageActivityTypeJoinRequest
+)
+const (
+	MessageTypeDefault = iota
+	MessageTypeRecipientAdd
+	MessageTypeRecipientRemove
+	MessageTypeCall
+	MessageTypeChannelNameChange
+	MessageTypeChannelIconChange
+	MessageTypeChannelPinnedMessage
+	MessageTypeGuildMemberJoin
+)
+
+func NewMessage() *Message {
+	return &Message{}
+}
+
+func NewDeletedMessage() *DeletedMessage {
+	return &DeletedMessage{}
+}
+
+type DeletedMessage struct {
+	ID        snowflake.ID `json:"id"`
+	ChannelID snowflake.ID `json:"channel_id"`
+}
+
+// https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
+type MessageActivity struct {
+	Type    int    `json:"type"`
+	PartyID string `json:"party_id"`
+}
+
+// https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
+type MessageApplication struct {
+	ID          snowflake.ID `json:"id"`
+	CoverImage  string       `json:"cover_image"`
+	Description string       `json:"description"`
+	Icon        string       `json:"icon"`
+	Name        string       `json:"name"`
+}
+
+// Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
+type Message struct {
+	ID              snowflake.ID       `json:"id"`
+	ChannelID       snowflake.ID       `json:"channel_id"`
+	Author          *User              `json:"author"`
+	Content         string             `json:"content"`
+	Timestamp       time.Time          `json:"timestamp"`
+	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
+	Tts             bool               `json:"tts"`
+	MentionEveryone bool               `json:"mention_everyone"`
+	Mentions        []*User            `json:"mentions"`
+	MentionRoles    []snowflake.ID     `json:"mention_roles"`
+	Attachments     []*Attachment      `json:"attachments"`
+	Embeds          []*ChannelEmbed    `json:"embeds"`
+	Reactions       []*Reaction        `json:"reactions"` // ?
+	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
+	Pinned          bool               `json:"pinned"`
+	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
+	Type            uint               `json:"type"`
+	Activity        MessageActivity    `json:"activity"`
+	Application     MessageApplication `json:"application"`
+
+	sync.RWMutex `json:"-"`
+}
+
+func (m *Message) MarshalJSON() ([]byte, error) {
+	if m.ID.Empty() {
+		return []byte("{}"), nil
+	}
+
+	//TODO: remove copying of mutex
+	return json.Marshal(Message(*m))
+}
+
+func (m *Message) Delete() {}
+func (m *Message) Update() {}
+func (m *Message) Send()   {}
+
+func (m *Message) AddReaction(reaction *Reaction) {}
+func (m *Message) RemoveReaction(id snowflake.ID) {}
+
+
+// ----------------
+// Reaction
+
+// https://discordapp.com/developers/docs/resources/channel#reaction-object
+type Reaction struct {
+	Count uint          `json:"count"`
+	Me    bool          `json:"me"`
+	Emoji *PartialEmoji `json:"Emoji"`
+}
+
+// -----------------
+// Embed
+
+
+// limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
+// TODO: implement NewEmbedX functions that ensures limitations
+
+// ChannelEmbed https://discordapp.com/developers/docs/resources/channel#embed-object
+type ChannelEmbed struct {
+	Title       string                 `json:"title"`       // title of embed
+	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
+	Description string                 `json:"description"` // description of embed
+	URL         string                 `json:"url"`         // url of embed
+	Timestamp   time.Time              `json:"timestamp"`   // timestamp	timestamp of embed content
+	Color       int                    `json:"color"`       // color code of the embed
+	Footer      *ChannelEmbedFooter    `json:"footer"`      // embed footer object	footer information
+	Image       *ChannelEmbedImage     `json:"image"`       // embed image object	image information
+	Thumbnail   *ChannelEmbedThumbnail `json:"thumbnail"`   // embed thumbnail object	thumbnail information
+	Video       *ChannelEmbedVideo     `json:"video"`       // embed video object	video information
+	Provider    *ChannelEmbedProvider  `json:"provider"`    // embed provider object	provider information
+	Author      *ChannelEmbedAuthor    `json:"author"`      // embed author object	author information
+	Fields      []*ChannelEmbedField   `json:"fields"`      //	array of embed field objects	fields information
+}
+
+// ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
+type ChannelEmbedThumbnail struct {
+	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	Height   int    `json:"height,omitempty"`    // ?| , height of image
+	Width    int    `json:"width,omitempty"`     // ?| , width of image
+}
+
+// ChannelEmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
+type ChannelEmbedVideo struct {
+	Url    string `json:"url,omitempty"`    // ?| , source url of video
+	Height int    `json:"height,omitempty"` // ?| , height of video
+	Width  int    `json:"width,omitempty"`  // ?| , width of video
+}
+
+// ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
+type ChannelEmbedImage struct {
+	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	Height   int    `json:"height,omitempty"`    // ?| , height of image
+	Width    int    `json:"width,omitempty"`     // ?| , width of image
+}
+
+// ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
+type ChannelEmbedProvider struct {
+	Name string `json:"name,omitempty"` // ?| , name of provider
+	Url  string `json:"url,omitempty"`  // ?| , url of provider
+}
+
+// ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
+type ChannelEmbedAuthor struct {
+	Name         string `json:"name,omitempty"`           // ?| , name of author
+	Url          string `json:"url,omitempty"`            // ?| , url of author
+	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
+	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
+}
+
+// ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
+type ChannelEmbedFooter struct {
+	Text         string `json:"text"`                     //  | , url of author
+	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
+	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
+}
+
+// ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
+type ChannelEmbedField struct {
+	Name   string `json:"name"`           //  | , name of the field
+	Value  string `json:"value"`          //  | , value of the field
+	Inline bool   `json:"bool,omitempty"` // ?| , whether or not this field should display inline
 }
