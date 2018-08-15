@@ -3,7 +3,7 @@ package rest
 import (
 	"encoding/json"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
 )
 

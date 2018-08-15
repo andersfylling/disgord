@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -73,11 +73,11 @@ func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) SendMessage(requester httd.Requester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMsg(requester httd.Requester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 
-func (u *User) SendMessageStr(requester httd.Requester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
+func (u *User) SendMsgString(requester httd.Requester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
 	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
 }
 

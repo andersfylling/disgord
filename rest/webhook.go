@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/rest/httd"
 	"encoding/json"
 	"github.com/andersfylling/snowflake"
 	. "github.com/andersfylling/disgord/resource"

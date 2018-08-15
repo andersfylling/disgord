@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
 )
