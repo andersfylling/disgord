@@ -22,7 +22,8 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d
+      - run: go get -v -t -d ./...
       #- run: go test -v  #circle ci bug :c
+      - run: go test -race -coverprofile=coverage.txt -covermode=atomic
       - run: go vet -v
       - run: curl -s https://codecov.io/bash
