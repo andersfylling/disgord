@@ -17,6 +17,13 @@ import (
 const (
 	ReadyKey   = "READY"
 	ResumedKey = "RESUMED"
+
+	operationDiscordEvent   = 0
+	operationPing           = 1
+	operationReconnect      = 7
+	operationInvalidSession = 9
+	operationHello          = 10
+	operationHeartbeat      = 11
 )
 
 // Connect establishes a websocket connection to the discord API
@@ -88,6 +95,37 @@ func (c *Client) Connect() (err error) {
 	return
 }
 
+func (c *Client) opHandlerEvt(gp *gatewayEvent) {
+	// discord events
+	// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
+
+	// increment the sequence number for each event to make sure everything is synced with discord
+	c.Lock()
+	c.sequenceNumber++ // = gp.SequenceNumber
+	c.Unlock()
+
+	// always store the session id
+	if gp.EventName == ReadyKey {
+		ready := &readyPacket{}
+		err := json.Unmarshal(gp.Data.ByteArr(), ready)
+		if err != nil {
+			logrus.Error(err)
+		}
+
+		c.RLock()
+		c.SessionID = ready.SessionID
+		c.Trace = ready.Trace
+		c.RUnlock()
+	} else if gp.EventName == ResumedKey {
+		// eh? debugging.
+	}
+
+	// dispatch events
+	eventPkt := &Event{gp}
+	c.iEventChan <- eventPkt
+} // end opHandlerEvt()
+
+// operation handler demultiplexer
 func (c *Client) operationHandlers() {
 	logrus.Debug("Ready to recieve operation codes...")
 	for {
@@ -100,53 +138,27 @@ func (c *Client) operationHandlers() {
 			}
 
 			switch gp.Op {
-			case 0:
-				// discord events
-				// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
-
-				// increment the sequence number for each event to make sure everything is synced with discord
-				c.Lock()
-				c.sequenceNumber++ // = gp.SequenceNumber
-				c.Unlock()
-
-				// always store the session id
-				if gp.EventName == ReadyKey {
-					ready := &readyPacket{}
-					err := json.Unmarshal(gp.Data.ByteArr(), ready)
-					if err != nil {
-						logrus.Error(err)
-					}
-
-					c.RLock()
-					c.SessionID = ready.SessionID
-					c.Trace = ready.Trace
-					c.RUnlock()
-				} else if gp.EventName == ResumedKey {
-					// eh? debugging.
-				}
-
-				// dispatch events
-				eventPkt := &Event{gp}
-				c.iEventChan <- eventPkt
-			case 1:
+			case operationDiscordEvent:
+				c.opHandlerEvt(gp)
+			case operationPing:
 				// ping
 				c.RLock()
 				snr := c.sequenceNumber
 				c.RUnlock()
 
-				c.sendChan <- &gatewayPayload{Op: 1, Data: &snr}
-			case 7:
+				c.sendChan <- &gatewayPayload{Op: operationPing, Data: &snr}
+			case operationReconnect:
 				// reconnect
 				c.Disconnect()
 				go c.reconnect()
-			case 9:
+			case operationInvalidSession:
 				time.Sleep(time.Second * time.Duration(rand.Intn(4)+1)) // [1,5]
 				// invalid session. Must respond with a identify packet
 				err := c.sendIdentity()
 				if err != nil {
 					logrus.Error(err)
 				}
-			case 10:
+			case operationHello:
 				// hello
 				helloPk := &helloPacket{}
 				err := json.Unmarshal(gp.Data.ByteArr(), helloPk)
@@ -184,7 +196,7 @@ func (c *Client) operationHandlers() {
 
 					c.sendChan <- resume
 				}
-			case 11:
+			case operationHeartbeat:
 				// heartbeat recieved
 				c.Lock()
 				c.heartbeatAcquired = time.Now()

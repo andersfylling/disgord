@@ -1,107 +1,19 @@
-package resource
+package rest
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/andersfylling/disgord/rest/httd"
+	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/snowflake"
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
-
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake"
 )
 
-const (
-	_ = iota
-	MessageActivityTypeJoin
-	MessageActivityTypeSpectate
-	MessageActivityTypeListen
-	MessageActivityTypeJoinRequest
-)
-const (
-	MessageTypeDefault = iota
-	MessageTypeRecipientAdd
-	MessageTypeRecipientRemove
-	MessageTypeCall
-	MessageTypeChannelNameChange
-	MessageTypeChannelIconChange
-	MessageTypeChannelPinnedMessage
-	MessageTypeGuildMemberJoin
-)
-
-func NewMessage() *Message {
-	return &Message{}
-}
-
-func NewDeletedMessage() *DeletedMessage {
-	return &DeletedMessage{}
-}
-
-type DeletedMessage struct {
-	ID        snowflake.ID `json:"id"`
-	ChannelID snowflake.ID `json:"channel_id"`
-}
-
-// https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
-type MessageActivity struct {
-	Type    int    `json:"type"`
-	PartyID string `json:"party_id"`
-}
-
-// https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
-type MessageApplication struct {
-	ID          snowflake.ID `json:"id"`
-	CoverImage  string       `json:"cover_image"`
-	Description string       `json:"description"`
-	Icon        string       `json:"icon"`
-	Name        string       `json:"name"`
-}
-
-// Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
-type Message struct {
-	ID              snowflake.ID       `json:"id"`
-	ChannelID       snowflake.ID       `json:"channel_id"`
-	Author          *User              `json:"author"`
-	Content         string             `json:"content"`
-	Timestamp       time.Time          `json:"timestamp"`
-	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
-	Tts             bool               `json:"tts"`
-	MentionEveryone bool               `json:"mention_everyone"`
-	Mentions        []*User            `json:"mentions"`
-	MentionRoles    []snowflake.ID     `json:"mention_roles"`
-	Attachments     []*Attachment      `json:"attachments"`
-	Embeds          []*ChannelEmbed    `json:"embeds"`
-	Reactions       []*Reaction        `json:"reactions"` // ?
-	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
-	Pinned          bool               `json:"pinned"`
-	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
-	Type            uint               `json:"type"`
-	Activity        MessageActivity    `json:"activity"`
-	Application     MessageApplication `json:"application"`
-
-	sync.RWMutex `json:"-"`
-}
-
-func (m *Message) MarshalJSON() ([]byte, error) {
-	if m.ID.Empty() {
-		return []byte("{}"), nil
-	}
-
-	//TODO: remove copying of mutex
-	return json.Marshal(Message(*m))
-}
-
-func (m *Message) Delete() {}
-func (m *Message) Update() {}
-func (m *Message) Send()   {}
-
-func (m *Message) AddReaction(reaction *Reaction) {}
-func (m *Message) RemoveReaction(id snowflake.ID) {}
-
-// ReqGetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
-type ReqGetChannelMessagesParams struct {
+type GetChannelMessagesParams struct {
 	Around snowflake.ID `urlparam:"around,omitempty"`
 	Before snowflake.ID `urlparam:"before,omitempty"`
 	After  snowflake.ID `urlparam:"after,omitempty"`
@@ -109,7 +21,7 @@ type ReqGetChannelMessagesParams struct {
 }
 
 // getQueryString this ins't really pretty, but it works.
-func (params *ReqGetChannelMessagesParams) getQueryString() string {
+func (params *GetChannelMessagesParams) getQueryString() string {
 	seperator := "?"
 	query := ""
 
@@ -146,7 +58,7 @@ func (params *ReqGetChannelMessagesParams) getQueryString() string {
 // Reviewed                     2018-06-10
 // Comment                      The before, after, and around keys are mutually exclusive, only one may
 //                              be passed at a time. see ReqGetChannelMessagesParams.
-func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *ReqGetChannelMessagesParams) (ret []*Message, err error) {
+func GetChannelMessages(client httd.Getter, channelID snowflake.ID, params *GetChannelMessagesParams) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -179,7 +91,7 @@ func ReqGetChannelMessages(client httd.Getter, channelID snowflake.ID, params *R
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-message
 // Reviewed                   2018-06-10
 // Comment                    -
-func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (ret *Message, err error) {
+func GetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -203,7 +115,7 @@ func ReqGetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID)
 	return
 }
 
-type ReqCreateMessageParams struct {
+type CreateMessageParams struct {
 	Content     string        `json:"content"`
 	Nonce       snowflake.ID  `json:"nonce,omitempty"`
 	Tts         bool          `json:"tts,omitempty"`
@@ -229,7 +141,7 @@ type ReqCreateMessageParams struct {
 //                                when uploading files. Make sure you set your Content-Type to multipart/form-data
 //                                if you're doing that. Note that in that case, the embed field cannot be used,
 //                                but you can pass an url-encoded JSON body as a form value for payload_json.
-func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *ReqCreateMessageParams) (ret *Message, err error) {
+func CreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *CreateMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -255,7 +167,7 @@ func ReqCreateChannelMessage(client httd.Poster, channelID snowflake.ID, params 
 }
 
 // ReqEditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
-type ReqEditMessageParams struct {
+type EditMessageParams struct {
 	Content string        `json:"content,omitempty"`
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 }
@@ -267,7 +179,7 @@ type ReqEditMessageParams struct {
 // Discord documentation  https://discordapp.com/developers/docs/resources/channel#edit-message
 // Reviewed               2018-06-10
 // Comment                All parameters to this endpoint are optional.
-func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *ReqEditMessageParams) (ret *Message, err error) {
+func EditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *EditMessageParams) (ret *Message, err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -301,7 +213,7 @@ func ReqEditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *Req
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-message
 // Reviewed                   2018-06-10
 // Comment                    -
-func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err error) {
+func DeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -329,12 +241,12 @@ func ReqDeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err erro
 }
 
 // ReqBulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
-type ReqBulkDeleteMessagesParams struct {
+type BulkDeleteMessagesParams struct {
 	Messages []snowflake.ID `json:"messages"`
 	m        sync.RWMutex   `json:"-"`
 }
 
-func (p *ReqBulkDeleteMessagesParams) tooMany(messages int) (err error) {
+func (p *BulkDeleteMessagesParams) tooMany(messages int) (err error) {
 	if messages > 100 {
 		err = errors.New("must be 100 or less messages to delete")
 	}
@@ -342,7 +254,7 @@ func (p *ReqBulkDeleteMessagesParams) tooMany(messages int) (err error) {
 	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) tooFew(messages int) (err error) {
+func (p *BulkDeleteMessagesParams) tooFew(messages int) (err error) {
 	if messages < 2 {
 		err = errors.New("must be at least two messages to delete")
 	}
@@ -350,7 +262,7 @@ func (p *ReqBulkDeleteMessagesParams) tooFew(messages int) (err error) {
 	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) Valid() (err error) {
+func (p *BulkDeleteMessagesParams) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
@@ -363,7 +275,7 @@ func (p *ReqBulkDeleteMessagesParams) Valid() (err error) {
 	return
 }
 
-func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
+func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -390,7 +302,7 @@ func (p *ReqBulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // Reviewed                     2018-06-10
 // Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
 //                              any message provided is older than that.
-func ReqBulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *ReqBulkDeleteMessagesParams) (err error) {
+func BulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *BulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return

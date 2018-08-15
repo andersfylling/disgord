@@ -6,7 +6,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/andersfylling/disgord/discord"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -172,10 +171,10 @@ type Guild struct {
 	AfkTimeout                  uint                                  `json:"afk_timeout"`
 	EmbedEnabled                bool                                  `json:"embed_enabled"`
 	EmbedChannelID              snowflake.ID                          `json:"embed_channel_id"`
-	VerificationLevel           discord.VerificationLvl               `json:"verification_level"`
-	DefaultMessageNotifications discord.DefaultMessageNotificationLvl `json:"default_message_notifications"`
-	ExplicitContentFilter       discord.ExplicitContentFilterLvl      `json:"explicit_content_filter"`
-	MFALevel                    discord.MFALvl                        `json:"mfa_level"`
+	VerificationLevel           VerificationLvl               `json:"verification_level"`
+	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
+	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
+	MFALevel                    MFALvl                        `json:"mfa_level"`
 	WidgetEnabled               bool                                  `json:"widget_enabled"`    //   |
 	WidgetChannelID             snowflake.ID                          `json:"widget_channel_id"` //   |
 	Roles                       []*Role                               `json:"roles"`
@@ -184,7 +183,7 @@ type Guild struct {
 	SystemChannelID             *snowflake.ID                         `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       *discord.Timestamp `json:"joined_at,omitempty"`    // ?*|
+	JoinedAt       *Timestamp `json:"joined_at,omitempty"`    // ?*|
 	Large          bool               `json:"large,omitempty"`        // ?*|
 	Unavailable    bool               `json:"unavailable"`            // ?*|
 	MemberCount    uint               `json:"member_count,omitempty"` // ?*|
@@ -547,7 +546,7 @@ type Member struct {
 	User     *User             `json:"user"`
 	Nick     string            `json:"nick,omitempty"` // ?|
 	Roles    []snowflake.ID    `json:"roles"`
-	JoinedAt discord.Timestamp `json:"joined_at,omitempty"`
+	JoinedAt Timestamp `json:"joined_at,omitempty"`
 	Deaf     bool              `json:"deaf"`
 	Mute     bool              `json:"mute"`
 

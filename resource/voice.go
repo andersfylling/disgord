@@ -1,10 +1,7 @@
 package resource
 
 import (
-	"encoding/json"
-
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake"
+    "github.com/andersfylling/snowflake"
 )
 
 // State Voice State structure
@@ -68,23 +65,4 @@ type VoiceRegion struct {
 
 	// Custom whether this is a custom voice region (used for events/etc)
 	Custom bool `json:"custom"`
-}
-
-// EndpointVoiceRegions List Voice Regions
-// https://discordapp.com/developers/docs/resources/voice#list-voice-regions
-const EndpointVoiceRegions = "/voice/regions"
-
-func ReqVoiceRegions(client httd.Getter) (ret []*VoiceRegion, err error) {
-	details := &httd.Request{
-		Ratelimiter:    EndpointVoiceRegions,
-		Endpoint:    EndpointVoiceRegions,
-	}
-	resp, err := client.Get(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
 }

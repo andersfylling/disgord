@@ -5,26 +5,25 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/testutil"
 	"github.com/andersfylling/snowflake"
 )
 
 func TestGuildMarshal(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
-	testutil.Check(err, t)
+	check(err, t)
 
 	v := Guild{}
-	err = testutil.ValidateJSONMarshalling(data, &v)
-	testutil.Check(err, t)
+	err = validateJSONMarshalling(data, &v)
+	check(err, t)
 }
 
 func TestGuildMarshalUnavailable(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/guildUnavailable1.json")
-	testutil.Check(err, t)
+	check(err, t)
 
 	v := Guild{}
-	err = testutil.ValidateJSONMarshalling(data, &v)
-	testutil.Check(err, t)
+	err = validateJSONMarshalling(data, &v)
+	check(err, t)
 }
 
 func TestGuild_ChannelSorting(t *testing.T) {
@@ -47,11 +46,11 @@ func TestGuild_ChannelSorting(t *testing.T) {
 // ---------
 func TestGuildBanObject(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
-	testutil.Check(err, t)
+	check(err, t)
 
 	ban := GuildBan{}
-	err = testutil.ValidateJSONMarshalling(data, &ban)
-	testutil.Check(err, t)
+	err = validateJSONMarshalling(data, &ban)
+	check(err, t)
 }
 
 // --------
@@ -80,9 +79,9 @@ func TestGuildEmbed(t *testing.T) {
 // -------------
 func TestGuildMemberMarshalling(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/member1.json")
-	testutil.Check(err, t)
+	check(err, t)
 
 	v := Member{}
-	err = testutil.ValidateJSONMarshalling(data, &v)
-	testutil.Check(err, t)
+	err = validateJSONMarshalling(data, &v)
+	check(err, t)
 }

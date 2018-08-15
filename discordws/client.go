@@ -39,6 +39,7 @@ func NewClient(conf *Config) (*Client, error) {
 		return nil, errors.New("missing Config.Token for discord authentication")
 	}
 
+	// ensure this socket module supports the given discord api version
 	if conf.DAPIVersion < LowestAPIVersion || conf.DAPIVersion > HighestAPIVersion {
 		return nil, fmt.Errorf("discord API version %d is not supported. Lowest supported version is %d, and highest is %d", conf.DAPIVersion, LowestAPIVersion, HighestAPIVersion)
 	}
