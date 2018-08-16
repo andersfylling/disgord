@@ -519,28 +519,44 @@ func (g *Guild) DeepCopy() *Guild {
 	return guild
 }
 
-//--------------
-type GuildBan struct {
+// --------------
+// Ban https://discordapp.com/developers/docs/resources/guild#ban-object
+type Ban struct {
 	Reason *string `json:"reason"`
 	User   *User   `json:"user"`
 }
 
-//------------
+// ------------
+// GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
 	Enabled   bool         `json:"enabled"`
 	ChannelID snowflake.ID `json:"channel_id"`
 }
 
 // -------
-type GuildIntegration struct {
+// Integration https://discordapp.com/developers/docs/resources/guild#integration-object
+type Integration struct {
+	ID snowflake.ID `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Enabled bool `json:"enabled"`
+	Syncing bool `json:"syncing"`
+	RoleID snowflake.ID `json:"role_id"`
+	ExpireBehavior int `json:"expire_behavior"`
+	ExpireGracePeriod int `json:"expire_grace_period"`
+	User *User `json:"user"`
+	Account *IntegrationAccount `json:"account"`
 }
 
-type GuildIntegrationAccount struct {
+// IntegrationAccount https://discordapp.com/developers/docs/resources/guild#integration-account-object
+type IntegrationAccount struct {
+	ID   string `json:"id"`   // id of the account
+	Name string `json:"name"` // name of the account
 }
 
 // -------
 
-// Member ...
+// Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
 	GuildID  snowflake.ID      `json:"guild_id,omitempty"`
 	User     *User             `json:"user"`
@@ -590,30 +606,6 @@ func (m *Member) Update(new *Member) (err error) {
 	return
 }
 
-// --------------
-
-type Role struct {
-	ID          snowflake.ID `json:"id"`
-	Name        string       `json:"name"`
-	Managed     bool         `json:"managed"`
-	Mentionable bool         `json:"mentionable"`
-	Hoist       bool         `json:"hoist"`
-	Color       int          `json:"color"`
-	Position    int          `json:"position"`
-	Permissions uint64       `json:"permissions"`
-}
-
-func NewRole() *Role {
-	return &Role{}
-}
-
-func (r *Role) Mention() string {
-	return "<@&" + r.ID.String() + ">"
-}
-
-func (r *Role) Clear() {
-
-}
 
 const (
 	EndpointGuild = "/guilds/"

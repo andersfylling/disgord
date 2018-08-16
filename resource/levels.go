@@ -64,3 +64,6 @@ func (dmnl *DefaultMessageNotificationLvl) AllMessages() bool {
 func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
 	return *dmnl == 1
 }
+func (dmnl *DefaultMessageNotificationLvl) Equals(v uint) bool {
+	return uint(*dmnl) == v
+}

@@ -48,7 +48,7 @@ func TestGuildBanObject(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
 	check(err, t)
 
-	ban := GuildBan{}
+	ban := Ban{}
 	err = validateJSONMarshalling(data, &ban)
 	check(err, t)
 }

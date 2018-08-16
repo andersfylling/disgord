@@ -137,12 +137,6 @@ func (p *UserPresence) Clear() {
 	p.Game = nil
 }
 
-// TODO: is this a partial Integration object?
-type IntegrationAccount struct {
-	ID   string `json:"id"`   // id of the account
-	Name string `json:"name"` // name of the account
-}
-
 type UserConnection struct {
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account
