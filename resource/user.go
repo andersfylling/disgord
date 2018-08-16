@@ -105,6 +105,10 @@ func (u *User) DeepCopy() *User {
 	return user
 }
 
+func (u *User) Valid() bool {
+	return u.ID > 0
+}
+
 // -------
 
 type UserPresence struct {

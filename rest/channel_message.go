@@ -73,13 +73,12 @@ func GetChannelMessages(client httd.Getter, channelID snowflake.ID, params *GetC
 		Endpoint:    "/messages" + query,
 		JSONParams:  params,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -105,13 +104,12 @@ func GetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (r
 		Ratelimiter: "/channels/" + channelID.String(),
 		Endpoint:    "/messages/" + messageID.String(),
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -156,13 +154,12 @@ func CreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *Cr
 		Endpoint:    "/messages",
 		JSONParams:  params,
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -194,13 +191,12 @@ func EditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *EditMe
 		Endpoint:    "/messages/" + msgID.String(),
 		JSONParams:  params,
 	}
-	resp, err := client.Patch(details)
+	_, body, err := client.Patch(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -227,11 +223,10 @@ func DeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err error) 
 		Ratelimiter: "/channels/" + chanID.String(),
 		Endpoint:    "/messages/" + msgID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -316,11 +311,10 @@ func BulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *BulkDel
 		Ratelimiter: httd.RatelimitChannel(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/bulk-delete",
 	}
-	resp, err := client.Post(details)
+	resp, _, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)

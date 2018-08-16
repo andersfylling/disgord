@@ -20,7 +20,7 @@ const (
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel
 // Reviewed                 2018-06-07
 // Comment                  -
-func GetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
+func GetChannel(client httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
 	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -29,13 +29,12 @@ func GetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, er
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String(),
 	}
-	resp, err := requester.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -62,13 +61,12 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 		Ratelimiter: httd.RatelimitChannel(changes.ID),
 		Endpoint:    "/channels/" + changes.ID.String(),
 	}
-	resp, err := client.Patch(details)
+	_, body, err := client.Patch(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -95,11 +93,10 @@ func DeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
@@ -136,11 +133,10 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID,
 		Ratelimiter: httd.RatelimitChannel(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/permissions/" + overwriteID.String(),
 	}
-	resp, err := client.Put(details)
+	resp, _, err := client.Put(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -166,13 +162,12 @@ func GetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invit
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -207,13 +202,12 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -239,11 +233,10 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowfla
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/permissions/" + overwriteID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -268,11 +261,10 @@ func TriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err err
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/typing",
 	}
-	resp, err := client.Post(details)
+	resp, _, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -293,13 +285,12 @@ func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Messa
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pins",
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -316,11 +307,10 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pints/" + msgID.String(),
 	}
-	resp, err := client.Put(details)
+	resp, _, err := client.Put(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -349,11 +339,10 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pins/" + msgID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -386,11 +375,10 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, para
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
-	resp, err := client.Put(details)
+	resp, _, err := client.Put(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -418,11 +406,10 @@ func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID)
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)

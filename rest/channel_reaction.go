@@ -50,13 +50,12 @@ func CreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji 
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
-	resp, err := client.Put(details)
+	_, body, err := client.Put(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -95,11 +94,10 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, e
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -143,11 +141,10 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowfl
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -225,13 +222,12 @@ func GetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji in
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -255,11 +251,10 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.ID) 
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions",
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	// TODO: what is the response on a successful execution?
 	if false && resp.StatusCode != http.StatusNoContent {

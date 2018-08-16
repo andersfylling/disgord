@@ -19,7 +19,7 @@ const (
 // Comment                -
 //
 // withCounts whether the invite should contain approximate member counts
-func GetInvite(requester httd.Getter, inviteCode string, withCounts bool) (invite *Invite, err error) {
+func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *Invite, err error) {
 	query := ""
 	if withCounts {
 		query += "?with_counts=true"
@@ -29,13 +29,12 @@ func GetInvite(requester httd.Getter, inviteCode string, withCounts bool) (invit
 		Ratelimiter: EndpointInvite,
 		Endpoint:    EndpointInvite + "/" + inviteCode + query,
 	}
-	resp, err := requester.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(invite)
+	err = json.Unmarshal(body, &invite)
 	return
 }
 
@@ -46,18 +45,17 @@ func GetInvite(requester httd.Getter, inviteCode string, withCounts bool) (invit
 // Discord documentation    https://discordapp.com/developers/docs/resources/invite#delete-invite
 // Reviewed                 2018-06-10
 // Comment                  -
-func DeleteInvite(requester httd.Deleter, inviteCode string) (invite *Invite, err error) {
+func DeleteInvite(client httd.Deleter, inviteCode string) (invite *Invite, err error) {
 
 	details := &httd.Request{
 		Ratelimiter: EndpointInvite,
 		Endpoint:    EndpointInvite + "/" + inviteCode,
 	}
-	resp, err := requester.Delete(details)
+	_, body, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(invite)
+	err = json.Unmarshal(body, &invite)
 	return
 }

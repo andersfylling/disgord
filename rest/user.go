@@ -9,6 +9,8 @@ import (
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/snowflake"
+	"io"
+	"compress/gzip"
 )
 
 const (
@@ -34,14 +36,22 @@ func GetCurrentUser(client httd.Getter) (ret *User, err error) {
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyself,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
+}
+
+type gzreadCloser struct {
+	*gzip.Reader
+	io.Closer
+}
+
+func (gz gzreadCloser) Close() error {
+	return gz.Closer.Close()
 }
 
 // ReqGetUser [GET]         Returns a user object for a given user ID.
@@ -55,13 +65,12 @@ func GetUser(client httd.Getter, userID snowflake.ID) (ret *User, err error) {
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUser + userID.String(),
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -82,13 +91,12 @@ func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret
 		Endpoint:    EndpointUserMyself,
 		JSONParams:  params,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -134,13 +142,12 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyGuilds + params.getQueryString(),
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -155,11 +162,10 @@ func LeaveGuild(client httd.Deleter, guildID snowflake.ID) (err error) {
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyGuilds + "/" + guildID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
@@ -179,13 +185,12 @@ func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyChannels,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -205,13 +210,12 @@ func CreateDM(client httd.Poster, recipientID snowflake.ID) (ret *Channel, err e
 		Endpoint:    EndpointUserMyChannels,
 		JSONParams:  &BodyUserCreateDM{recipientID},
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -234,13 +238,12 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 		Endpoint:    EndpointUserMyChannels,
 		JSONParams:  params,
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -255,12 +258,11 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyConnections,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }

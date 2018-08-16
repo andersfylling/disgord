@@ -132,7 +132,7 @@ func (r *RateLimit) HandleResponse(key string, res *http.Response) {
 	var noBody bool
 
 	// read body as well
-	defer res.Body.Close()
+	//defer res.Body.Close()
 	err = json.NewDecoder(res.Body).Decode(body)
 	if err != nil {
 		noBody = true

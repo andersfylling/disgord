@@ -16,12 +16,11 @@ func ReqVoiceRegions(client httd.Getter) (ret []*VoiceRegion, err error) {
 		Ratelimiter: EndpointVoiceRegions,
 		Endpoint:    EndpointVoiceRegions,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }

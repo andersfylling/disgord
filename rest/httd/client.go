@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"io/ioutil"
+	"compress/gzip"
 )
 
 const (
@@ -67,6 +69,7 @@ func NewClient(conf *Config) *Client {
 	header := map[string][]string{
 		"Authorization": {authorization},
 		"User-Agent":    {userAgent},
+		"Accept-Encoding": {"gzip"},
 	}
 
 	return &Client{
@@ -113,7 +116,7 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 }
 
-func (c *Client) Request(r *Request) (resp *http.Response, err error) {
+func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
 	var jsonParamsReader io.Reader
 	if r.JSONParams != nil {
 		jsonParamsReader, err = convertStructToIOReader(r.JSONParams)
@@ -160,6 +163,32 @@ func (c *Client) Request(r *Request) (resp *http.Response, err error) {
 	resp, err = c.httpClient.Do(req)
 	if err != nil {
 		return
+	}
+	defer resp.Body.Close()
+
+	buffer, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		b := bytes.NewBuffer(buffer)
+
+		var r io.Reader
+		r, err = gzip.NewReader(b)
+		if err != nil {
+			return
+		}
+
+		var resB bytes.Buffer
+		_, err = resB.ReadFrom(r)
+		if err != nil {
+			return
+		}
+
+		body = resB.Bytes()
+	} else {
+		body = buffer
 	}
 
 	// update rate limits

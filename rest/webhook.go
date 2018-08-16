@@ -37,13 +37,12 @@ func CreateWebhook(client httd.Poster, channelID snowflake.ID, params *CreateWeb
 		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
 		JSONParams:  params,
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -58,13 +57,12 @@ func GetChannelWebhooks(client httd.Getter, channelID snowflake.ID) (ret []*Webh
 		Ratelimiter: httd.RatelimitChannel(channelID),
 		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -79,13 +77,12 @@ func GetGuildWebhooks(client httd.Getter, guildID snowflake.ID) (ret []*Webhook,
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    EndpointChannels + "/" + guildID.String() + EndpointWebhooks,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -100,13 +97,12 @@ func GetWebhook(client httd.Getter, webhookID snowflake.ID) (ret *Webhook, err e
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    EndpointWebhooks + "/" + webhookID.String(),
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -122,13 +118,12 @@ func GetWebhookWithToken(client httd.Getter, webhookID snowflake.ID, token strin
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    EndpointWebhooks + "/" + webhookID.String() + "/" + token,
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -151,13 +146,12 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    EndpointWebhooks + "/" + newWebhook.ID.String(),
 	}
-	resp, err := client.Patch(details)
+	_, body, err := client.Patch(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -181,13 +175,12 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    EndpointWebhooks + "/" + newWebhook.ID.String() + "/" + newWebhook.Token,
 	}
-	resp, err := client.Patch(details)
+	_, body, err := client.Patch(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -216,11 +209,10 @@ func DeleteWebhookWithToken(client httd.Deleter, webhookID snowflake.ID, token s
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    endpoint,
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
@@ -267,13 +259,12 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 		Ratelimiter: httd.RatelimitWebhook(),
 		Endpoint:    EndpointWebhooks + "/" + params.WebhookID.String() + "/" + params.Token + URLSuffix,
 	}
-	resp, err := client.Post(details)
+	_, _, err = client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	//err = json.NewDecoder(resp.Body).Decode(ret) // TODO: how to verify success?
+	//err = json.Unmarshal(body, ret) // TODO: how to verify success?
 	return
 }
 

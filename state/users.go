@@ -15,6 +15,7 @@ type UserCacher interface {
 	User(ID snowflake.ID) (*resource.User, error)
 	Size() int
 	Clear()
+	StartListener() error
 	Close() error
 }
 
@@ -24,7 +25,6 @@ func NewUserCache() *UserCache {
 		users:   make(map[snowflake.ID]*resource.User),
 		channel: make(chan *UserDetail, 100),
 	}
-	go cacher.userCacher()
 
 	return cacher
 }
@@ -56,7 +56,7 @@ func (st *UserCache) userCacher() {
 			}
 
 			// make sure it has a legal snowflake
-			if userDetail.User.ID == 0 {
+			if !userDetail.User.Valid() {
 				continue
 			}
 		}
@@ -90,7 +90,6 @@ func (st *UserCache) User(ID snowflake.ID) (*resource.User, error) {
 
 	if cachedUser, ok := st.users[ID]; ok {
 		user := cachedUser.DeepCopy()
-
 		return user, nil
 	}
 
@@ -107,6 +106,16 @@ func (st *UserCache) Clear() {
 	st.users = make(map[snowflake.ID]*resource.User)
 	runtime.GC() // Blocks thread
 	st.mu.Unlock()
+}
+
+func (st *UserCache) StartListener() (err error) {
+	if st.users == nil || st.channel == nil {
+		err = errors.New("users map and/or channel have not been instantiated")
+		return
+	}
+
+	go st.userCacher()
+	return nil
 }
 
 func (st *UserCache) Close() (err error) {

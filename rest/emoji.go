@@ -29,13 +29,12 @@ func ListGuildEmojis(client httd.Getter, guildID snowflake.ID) (ret *Emoji, err 
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -50,13 +49,12 @@ func GetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoj
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
-	resp, err := client.Get(details)
+	_, body, err := client.Get(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -76,13 +74,12 @@ func CreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, err
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
 	}
-	resp, err := client.Post(details)
+	_, body, err := client.Post(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -99,13 +96,12 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (ret *
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
-	resp, err := client.Patch(details)
+	_, body, err := client.Patch(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
+	err = json.Unmarshal(body, &ret)
 	return
 }
 
@@ -123,11 +119,10 @@ func DeleteGuildEmoji(client httd.Deleter, guildID, emojiID snowflake.ID) (err e
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
 	}
-	resp, err := client.Delete(details)
+	resp, _, err := client.Delete(details)
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
