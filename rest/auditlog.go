@@ -24,22 +24,22 @@ func (params *AuditLogParams) getQueryString() string {
 	query := ""
 
 	if !params.UserID.Empty() {
-		query += seperator + params.UserID.String()
+		query += seperator + "user_id=" + params.UserID.String()
 		seperator = "&"
 	}
 
 	if params.ActionType > 0 {
-		query += seperator + strconv.FormatUint(uint64(params.ActionType), 10)
+		query += seperator + "action_type=" + strconv.FormatUint(uint64(params.ActionType), 10)
 		seperator = "&"
 	}
 
 	if !params.Before.Empty() {
-		query += seperator + params.Before.String()
+		query += seperator + "before=" + params.Before.String()
 		seperator = "&"
 	}
 
 	if params.Limit > 0 {
-		query += seperator + strconv.Itoa(params.Limit)
+		query += seperator + "limit=" + strconv.Itoa(params.Limit)
 	}
 
 	return query
