@@ -1,7 +1,6 @@
 package httd
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/snowflake"
+	"encoding/json"
 )
 
 const (
@@ -47,7 +47,7 @@ type RateLimiter interface {
 	Bucket(key string) *Bucket
 	RateLimitTimeout(key string) int64
 	RateLimited(key string) bool
-	HandleResponse(key string, res *http.Response)
+	HandleResponse(key string, res *http.Response, responseBody []byte)
 }
 
 func NewRateLimit() *RateLimit {
@@ -122,7 +122,8 @@ type ratelimitBody struct {
 	Global     bool   `json:"global"`
 }
 
-func (r *RateLimit) HandleResponse(key string, res *http.Response) {
+// TODO: rewrite
+func (r *RateLimit) HandleResponse(key string, res *http.Response, content []byte) {
 	var err error
 	var global bool
 	var limit uint64
@@ -132,10 +133,13 @@ func (r *RateLimit) HandleResponse(key string, res *http.Response) {
 	var noBody bool
 
 	// read body as well
-	//defer res.Body.Close()
-	err = json.NewDecoder(res.Body).Decode(body)
-	if err != nil {
+	if len(content) == 0 {
 		noBody = true
+	} else {
+		err = json.Unmarshal(content, body)
+		if err != nil {
+			return
+		}
 	}
 
 	// global?

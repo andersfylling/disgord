@@ -647,3 +647,395 @@ func CreateGuildRole(client httd.Poster, guildID snowflake.ID, params *CreateGui
 	err = json.Unmarshal(body, &ret)
 	return
 }
+
+
+// ModifyGuildRolePositionsParams https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
+type ModifyGuildRolePositionsParams struct {
+	ID snowflake.ID `json:"id"`
+	Position int `json:"position"`
+}
+
+// ModifyGuildRolePositions [PATCH] Modify the positions of a set of role objects for the guild. Requires the
+//                                  'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects
+//                                  on success. Fires multiple Guild Role Update Gateway events.
+// Endpoint                         /guilds/{guild.id}/roles
+// Rate limiter                     /guilds/{guild.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
+// Reviewed                         2018-08-18
+// Comment                          -
+func ModifyGuildRolePositions(client httd.Patcher, guildID snowflake.ID, params *ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/roles",
+		JSONParams:  params,
+	}
+	_, body, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+
+type ModifyGuildRoleParams struct {
+	Name string `json:"name,omitempty"`
+	Permissions int `json:"permissions,omitempty"`
+	Color int `json:"color,omitempty"`
+	Hoist bool `json:"hoist,omitempty"`
+	Mentionable bool `json:"mentionable,omitempty"`
+}
+
+// ModifyGuildRole [PATCH]  Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the updated
+//                          role on success. Fires a Guild Role Update Gateway event.
+// Endpoint                 /guilds/{guild.id}/roles/{role.id}
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#modify-guild-role
+// Reviewed                 2018-08-18
+// Comment                  -
+func ModifyGuildRole(client httd.Patcher, guildID, roleID snowflake.ID, params *ModifyGuildRoleParams) (ret []*Role, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/roles/" + roleID.String(),
+		JSONParams:  params,
+	}
+	_, body, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// DeleteGuildRole [DELETE] Delete a guild role. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty
+//                          response on success. Fires a Guild Role Delete Gateway event.
+// Endpoint                 /guilds/{guild.id}/roles/{role.id}
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#delete-guild-role
+// Reviewed                 2018-08-18
+// Comment                  -
+func DeleteGuildRole(client httd.Deleter, guildID, integrationID snowflake.ID) (err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations/" + integrationID.String(),
+	}
+	resp, _, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "Could not remove role. Do you have the MANAGE_ROLES permission?"
+		err = errors.New(msg)
+	}
+
+	return
+}
+
+// GetGuildPruneCountParams https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
+type GuildPruneParams struct {
+	Days int `urlparam:"days"` // number of days to count prune for (1 or more)
+}
+
+// getQueryString this ins't really pretty, but it works.
+func (params *GuildPruneParams) getQueryString() string {
+	seperator := "?"
+	query := ""
+
+	if params.Days > 0 {
+		query += seperator + "days=" + strconv.Itoa(params.Days)
+	}
+
+	return query
+}
+
+// GetGuildPruneCount [GET] Returns an object with one 'pruned' key indicating the number of members that would
+//                          be removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
+// Endpoint                 /guilds/{guild.id}/prune
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count
+// Reviewed                 2018-08-18
+// Comment                  -
+func GetGuildPruneCount(client httd.Getter, guildID snowflake.ID, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/prune" + params.getQueryString(),
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// BeginGuildPrune [POST]   Begin a prune operation. Requires the 'KICK_MEMBERS' permission. Returns an object
+//                          with one 'pruned' key indicating the number of members that were removed in the
+//                          prune operation. Fires multiple Guild Member Remove Gateway events.
+// Endpoint                 /guilds/{guild.id}/prune
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
+// Reviewed                 2018-08-18
+// Comment                  -
+func BeginGuildPrune(client httd.Poster, guildID snowflake.ID, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/prune" + params.getQueryString(),
+	}
+	_, body, err := client.Post(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// GetGuildVoiceRegions [GET]   Returns a list of voice region objects for the guild. Unlike the similar /voice
+//                              route, this returns VIP servers when the guild is VIP-enabled.
+// Endpoint                     /guilds/{guild.id}/regions
+// Rate limiter                 /guilds/{guild.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/guild#get-guild-voice-regions
+// Reviewed                     2018-08-18
+// Comment                      -
+func GetGuildVoiceRegions(client httd.Getter, guildID snowflake.ID) (ret []*VoiceRegion, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/regions",
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// GetGuildInvites [GET]    Returns a list of invite objects (with invite metadata) for the guild.
+//                          Requires the 'MANAGE_GUILD' permission.
+// Endpoint                 /guilds/{guild.id}/invites
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-invites
+// Reviewed                 2018-08-18
+// Comment                  -
+func GetGuildInvites(client httd.Getter, guildID snowflake.ID) (ret []*Invite, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/invites",
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// GetGuildIntegrations [GET]   Returns a list of integration objects for the guild.
+//                              Requires the 'MANAGE_GUILD' permission.
+// Endpoint                     /guilds/{guild.id}/integrations
+// Rate limiter                 /guilds/{guild.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
+// Reviewed                     2018-08-18
+// Comment                      -
+func GetGuildIntegrations(client httd.Getter, guildID snowflake.ID) (ret []*Integration, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations",
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+
+// CreateGuildIntegrationParams https://discordapp.com/developers/docs/resources/guild#create-guild-integration-json-params
+type CreateGuildIntegrationParams struct {
+	Type string `json:"type"`
+	ID snowflake.ID `json:"id"`
+}
+
+// CreateGuildIntegration [POST]    Attach an integration object from the current user to the guild. Requires
+//                                  the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+//                                  Fires a Guild Integrations Update Gateway event.
+// Endpoint                         /guilds/{guild.id}/integrations
+// Rate limiter                     /guilds/{guild.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/guild#create-guild-integration
+// Reviewed                         2018-08-18
+// Comment                          -
+func CreateGuildIntegration(client httd.Poster, guildID snowflake.ID, params *CreateGuildIntegrationParams) (err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations",
+		JSONParams:  params,
+	}
+	resp, _, err := client.Post(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "Could not create the integration object. Do you have the MANAGE_GUILD permission?"
+		err = errors.New(msg)
+	}
+
+	return
+}
+
+
+// ModifyGuildIntegrationParams https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
+type ModifyGuildIntegrationParams struct {
+	ExpireBehavior int `json:"expire_behavior"`
+	ExpireGracePeriod int `json:"expire_grace_period"`
+	EnableEmoticons bool `json:"enable_emoticons"`
+}
+
+// ModifyGuildIntegration [POST]    Modify the behavior and settings of a integration object for the guild.
+//                                  Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+//                                  Fires a Guild Integrations Update Gateway event.
+// Endpoint                         /guilds/{guild.id}/integrations/{integration.id}
+// Rate limiter                     /guilds/{guild.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
+// Reviewed                         2018-08-18
+// Comment                          -
+func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID snowflake.ID, params *ModifyGuildIntegrationParams) (err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations/" + integrationID.String(),
+		JSONParams:  params,
+	}
+	resp, _, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "Could not modify the integration object. Do you have the MANAGE_GUILD permission?"
+		err = errors.New(msg)
+	}
+
+	return
+}
+
+// DeleteGuildIntegration [DELETE]  Delete the attached integration object for the guild.
+//                                  Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+//                                  Fires a Guild Integrations Update Gateway event.
+// Endpoint                         /guilds/{guild.id}/integrations/{integration.id}
+// Rate limiter                     /guilds/{guild.id}
+// Discord documentation            https://discordapp.com/developers/docs/resources/guild#delete-guild-integration
+// Reviewed                         2018-08-18
+// Comment                          -
+func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID snowflake.ID) (err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations/" + integrationID.String(),
+	}
+	resp, _, err := client.Delete(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "Could not remove the integration object for the guild. Do you have the MANAGE_GUILD permission?"
+		err = errors.New(msg)
+	}
+
+	return
+}
+
+// SyncGuildIntegration [POST]  Sync an integration. Requires the 'MANAGE_GUILD' permission.
+//                              Returns a 204 empty response on success.
+// Endpoint                     /guilds/{guild.id}/integrations/{integration.id}/sync
+// Rate limiter                 /guilds/{guild.id}
+// Discord documentation        https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
+// Reviewed                     2018-08-18
+// Comment                      -
+func SyncGuildIntegration(client httd.Poster, guildID, integrationID snowflake.ID) (err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/integrations/" + integrationID.String() + "/sync",
+	}
+	resp, _, err := client.Post(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "could not sync guild integrations. Do you have the MANAGE_GUILD permission?"
+		err = errors.New(msg)
+	}
+	return
+}
+
+// GetGuildEmbed [GET]      Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
+// Endpoint                 /guilds/{guild.id}/embed
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-embed
+// Reviewed                 2018-08-18
+// Comment                  -
+func GetGuildEmbed(client httd.Getter, guildID snowflake.ID) (ret *GuildEmbed, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/embed",
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// ModifyGuildEmbed [PATCH] Modify a guild embed object for the guild. All attributes may be passed in
+//                          with JSON and modified. Requires the 'MANAGE_GUILD' permission.
+//                          Returns the updated guild embed object.
+// Endpoint                 /guilds/{guild.id}/embed
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#modify-guild-embed
+// Reviewed                 2018-08-18
+// Comment                  -
+func ModifyGuildEmbed(client httd.Patcher, guildID snowflake.ID, params *GuildEmbed) (ret *GuildEmbed, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/embed",
+		JSONParams:  params,
+	}
+	_, body, err := client.Patch(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// GetGuildVanityURL [GET]  Returns a partial invite object for guilds with that feature enabled.
+//                          Requires the 'MANAGE_GUILD' permission.
+// Endpoint                 /guilds/{guild.id}/vanity-url
+// Rate limiter             /guilds/{guild.id}
+// Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-vanity-url
+// Reviewed                 2018-08-18
+// Comment                  -
+func GetGuildVanityURL(client httd.Getter, guildID snowflake.ID) (ret *PartialInvite, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/vanity-url",
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}

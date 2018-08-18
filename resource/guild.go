@@ -610,3 +610,8 @@ func (m *Member) Update(new *Member) (err error) {
 const (
 	EndpointGuild = "/guilds/"
 )
+
+
+type GuildPruneCount struct {
+	Pruned int `json:"pruned"`
+}
