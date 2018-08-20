@@ -3,8 +3,8 @@ package rest
 import (
 	"encoding/json"
 
-	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
 )
 
 // EndpointVoiceRegions List Voice Regions

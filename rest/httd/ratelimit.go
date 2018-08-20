@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/snowflake"
 	"encoding/json"
+	"github.com/andersfylling/snowflake"
 )
 
 const (
@@ -48,6 +48,7 @@ type RateLimiter interface {
 	RateLimitTimeout(key string) int64
 	RateLimited(key string) bool
 	HandleResponse(key string, res *http.Response, responseBody []byte)
+	WaitTime(req *Request) time.Duration
 }
 
 func NewRateLimit() *RateLimit {
@@ -120,6 +121,19 @@ type ratelimitBody struct {
 	Message    string `json:"message"`
 	RetryAfter int64  `json:"retry_after"`
 	Global     bool   `json:"global"`
+}
+
+// WaitTime check both the global and route specific rate limiter bucket before sending any REST requests
+func (r *RateLimit) WaitTime(req *Request) time.Duration {
+	timeout := int64(0)
+	if r.global.remaining == 0 {
+		timeout = r.global.timeout()
+	} else if req.Ratelimiter != "" {
+		timeout = r.RateLimitTimeout(req.Ratelimiter)
+	}
+
+	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.
+	return time.Millisecond * time.Duration(timeout)
 }
 
 // TODO: rewrite

@@ -67,7 +67,7 @@ type Channel struct {
 	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        snowflake.ID          `json:"applicaiton_id,omitempty"`        // ?|
 	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPingTimestamp    Timestamp     `json:"last_ping_timestamp,omitempty"`   // ?|
+	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 
 	mu sync.RWMutex `json:"-"`
 }
@@ -154,7 +154,6 @@ func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 
 // -----------------------------
 // Message
-
 
 const (
 	_ = iota
@@ -243,7 +242,6 @@ func (m *Message) Send()   {}
 func (m *Message) AddReaction(reaction *Reaction) {}
 func (m *Message) RemoveReaction(id snowflake.ID) {}
 
-
 // ----------------
 // Reaction
 
@@ -256,7 +254,6 @@ type Reaction struct {
 
 // -----------------
 // Embed
-
 
 // limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
 // TODO: implement NewEmbedX functions that ensures limitations

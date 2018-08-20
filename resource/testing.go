@@ -1,6 +1,5 @@
 package resource
 
-
 import (
 	"bytes"
 	"encoding/json"
@@ -72,7 +71,6 @@ func validateJSONMarshalling(b []byte, v interface{}) error {
 
 	return nil
 }
-
 
 func check(err error, t *testing.T) {
 	// Hide function from stacktrace, PR#3

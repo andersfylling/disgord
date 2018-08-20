@@ -46,7 +46,6 @@ type InviteMetadata struct {
 	Revoked bool `json:"revoked"`
 }
 
-
 // PartialInvite
 // {
 //    "code": "abc"

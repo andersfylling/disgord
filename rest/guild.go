@@ -1,12 +1,12 @@
 package rest
 
 import (
-	"github.com/andersfylling/disgord/rest/httd"
-	. "github.com/andersfylling/disgord/resource"
 	"encoding/json"
+	"errors"
+	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
 	"net/http"
-	"errors"
 	"strconv"
 )
 
@@ -17,14 +17,14 @@ import (
 //    "type": 0
 // }
 type CreateGuildParams struct {
-	Name string `json:"name"`
-	Region string `json:"region"`
-	Icon string `json:"icon"`
-	VerificationLvl int `json:"verification_level"`
+	Name                    string                        `json:"name"`
+	Region                  string                        `json:"region"`
+	Icon                    string                        `json:"icon"`
+	VerificationLvl         int                           `json:"verification_level"`
 	DefaultMsgNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
-	ExplicitContentFilter ExplicitContentFilterLvl `json:"explicit_content_filter"`
-	Roles []*Role `json:"roles"`
-	Channels []*PartialChannel `json:"channels"`
+	ExplicitContentFilter   ExplicitContentFilterLvl      `json:"explicit_content_filter"`
+	Roles                   []*Role                       `json:"roles"`
+	Channels                []*PartialChannel             `json:"channels"`
 }
 
 // CreateGuild [POST]       Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
@@ -71,20 +71,19 @@ func GetGuild(client httd.Getter, guildID snowflake.ID) (ret *Guild, err error) 
 	return
 }
 
-
 // ModifyGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
 type ModifyGuildParams struct {
-	Name string `json:"name,omitempty"`
-	Region string `json:"region,omitempty"`
-	VerificationLvl int `json:"verification_level,omitempty"`
+	Name                    string                        `json:"name,omitempty"`
+	Region                  string                        `json:"region,omitempty"`
+	VerificationLvl         int                           `json:"verification_level,omitempty"`
 	DefaultMsgNotifications DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
-	ExplicitContentFilter ExplicitContentFilterLvl `json:"explicit_content_filter,omitempty"`
-	AFKChannelID snowflake.ID `json:"afk_channel_id,omitempty"`
-	AFKTimeout int `json:"afk_timeout,omitempty"`
-	Icon string `json:"icon,omitempty"`
-	OwnerID snowflake.ID `json:"owner_id,omitempty"`
-	Splash string `json:"splash,omitempty"`
-	SystemChannelID snowflake.ID `json:"system_channel_id,omitempty"`
+	ExplicitContentFilter   ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
+	AFKChannelID            snowflake.ID                  `json:"afk_channel_id,omitempty"`
+	AFKTimeout              int                           `json:"afk_timeout,omitempty"`
+	Icon                    string                        `json:"icon,omitempty"`
+	OwnerID                 snowflake.ID                  `json:"owner_id,omitempty"`
+	Splash                  string                        `json:"splash,omitempty"`
+	SystemChannelID         snowflake.ID                  `json:"system_channel_id,omitempty"`
 }
 
 // ModifyGuild [PATCH]      Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated
@@ -139,7 +138,7 @@ func DeleteGuild(client httd.Deleter, guildID snowflake.ID) (err error) {
 // Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 // Reviewed                 2018-08-17
 // Comment                  -
-func GetGuildChannels(client httd.Getter, guildID snowflake.ID)  (ret *[]Channel, err error) {
+func GetGuildChannels(client httd.Getter, guildID snowflake.ID) (ret *[]Channel, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/channels",
@@ -152,7 +151,6 @@ func GetGuildChannels(client httd.Getter, guildID snowflake.ID)  (ret *[]Channel
 	err = json.Unmarshal(body, &ret)
 	return
 }
-
 
 // CreateGuildChannelParams https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
 type CreateGuildChannelParams struct {
@@ -188,12 +186,10 @@ func CreateGuildChannel(client httd.Poster, guildID snowflake.ID, params *Create
 	return
 }
 
-
-
 // ModifyGuildChannelPositionsParams https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
 type ModifyGuildChannelPositionsParams struct {
-	ID snowflake.ID `json:"id"`
-	Position int `json:"position"`
+	ID       snowflake.ID `json:"id"`
+	Position int          `json:"position"`
 }
 
 // ModifyGuildChannelPositions [PATCH]  Modify the positions of a set of channel objects for the guild. Requires
@@ -226,7 +222,7 @@ func ModifyGuildChannelPositions(client httd.Patcher, guildID snowflake.ID, para
 // Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-member
 // Reviewed                 2018-08-17
 // Comment                  -
-func GetGuildMember(client httd.Getter, guildID, userID snowflake.ID)  (ret *Member, err error) {
+func GetGuildMember(client httd.Getter, guildID, userID snowflake.ID) (ret *Member, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/members/" + userID.String(),
@@ -240,8 +236,6 @@ func GetGuildMember(client httd.Getter, guildID, userID snowflake.ID)  (ret *Mem
 	return
 }
 
-
-
 // GetGuildMembers [GET]    Returns a list of guild member objects that are members of the guild.
 // Endpoint                 /guilds/{guild.id}/members
 // Rate limiter             /guilds/{guild.id}
@@ -250,7 +244,7 @@ func GetGuildMember(client httd.Getter, guildID, userID snowflake.ID)  (ret *Mem
 // Comment                  All parameters to this endpoint are optional
 // Comment#2                "List Guild Members"
 // Comment#3                https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func GetGuildMembers(client httd.Getter, guildID, after snowflake.ID, limit int)  (ret []*Member, err error) {
+func GetGuildMembers(client httd.Getter, guildID, after snowflake.ID, limit int) (ret []*Member, err error) {
 	// TODO: convert after and limit to a query struct
 	// omg i hate myself. use reflection to convert a query struct to string(?). it's at least better.
 	query := ""
@@ -285,11 +279,11 @@ func GetGuildMembers(client httd.Getter, guildID, after snowflake.ID, limit int)
 
 // AddGuildMemberParams https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
-	AccessToken string `json:"access_token"`
-	Nick string `json:"nick,omitempty"`
-	Roles []snowflake.ID `json:"roles"`
-	Mute bool `json:"mute"`
-	Deaf bool `json:"deaf"`
+	AccessToken string         `json:"access_token"`
+	Nick        string         `json:"nick,omitempty"`
+	Roles       []snowflake.ID `json:"roles"`
+	Mute        bool           `json:"mute"`
+	Deaf        bool           `json:"deaf"`
 }
 
 // AddGuildMember [PUT]     Adds a user to the guild, provided you have a valid oauth2 access token for the user
@@ -325,14 +319,13 @@ func AddGuildMember(client httd.Puter, guildID, userID snowflake.ID, params *Add
 	return
 }
 
-
 // ModifyGuildMemberParams https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyGuildMemberParams struct {
-	Nick string `json:"nick,omitempty"` // :MANAGE_NICKNAMES
-	Roles []snowflake.ID `json:"roles,omitempty"` // :MANAGE_ROLES
-	Mute bool `json:"mute,omitempty"`             // :MUTE_MEMBERS
-	Deaf bool `json:"deaf,omitempty"`             // :DEAFEN_MEMBERS
-	ChannelID snowflake.ID `json:"channel_id,omitempty"` // :MOVE_MEMBERS
+	Nick      string         `json:"nick,omitempty"`       // :MANAGE_NICKNAMES
+	Roles     []snowflake.ID `json:"roles,omitempty"`      // :MANAGE_ROLES
+	Mute      bool           `json:"mute,omitempty"`       // :MUTE_MEMBERS
+	Deaf      bool           `json:"deaf,omitempty"`       // :DEAFEN_MEMBERS
+	ChannelID snowflake.ID   `json:"channel_id,omitempty"` // :MOVE_MEMBERS
 }
 
 // ModifyGuildMember [PATCH]    Modify attributes of a guild member. Returns a 204 empty response on success.
@@ -362,7 +355,6 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID snowflake.ID, params
 
 	return
 }
-
 
 // ModifyGuildMemberParams https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyCurrentUserNickParams struct {
@@ -396,7 +388,6 @@ func ModifyCurrentUserNick(client httd.Patcher, guildID snowflake.ID, params *Mo
 	err = json.Unmarshal(body, nickname)
 	return
 }
-
 
 // AddGuildMemberRole [PUT] Adds a role to a guild member. Requires the 'MANAGE_ROLES' permission. Returns a 204
 //                          empty response on success. Fires a Guild Member Update Gateway event.
@@ -473,8 +464,6 @@ func RemoveGuildMember(client httd.Deleter, guildID, userID snowflake.ID) (err e
 	return
 }
 
-
-
 // GetGuildBans [GET]       Returns a list of ban objects for the users banned from this guild.
 //                          Requires the 'BAN_MEMBERS' permission.
 // Endpoint                 /guilds/{guild.id}/bans
@@ -524,8 +513,8 @@ func GetGuildBan(client httd.Getter, guildID, userID snowflake.ID) (ret *Ban, er
 
 // CreateGuildBanParams https://discordapp.com/developers/docs/resources/guild#create-guild-ban-query-string-params
 type CreateGuildBanParams struct {
-	DeleteMessageDays int `urlparam:"delete_message_days"` // number of days to delete messages for (0-7)
-	Reason string `urlparam:"reason"` // reason for being banned
+	DeleteMessageDays int    `urlparam:"delete_message_days"` // number of days to delete messages for (0-7)
+	Reason            string `urlparam:"reason"`              // reason for being banned
 }
 
 // getQueryString this ins't really pretty, but it works.
@@ -616,14 +605,13 @@ func GetGuildRoles(client httd.Getter, guildID snowflake.ID) (ret []*Role, err e
 	return
 }
 
-
 // CreateGuildRoleParams https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRoleParams struct {
-	Name string `json:"name,omitempty"`
-	Permissions int `json:"permissions,omitempty"`
-	Color int `json:"color,omitempty"`
-	Hoist bool `json:"hoist,omitempty"`
-	Mentionable bool `json:"mentionable,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Permissions int    `json:"permissions,omitempty"`
+	Color       int    `json:"color,omitempty"`
+	Hoist       bool   `json:"hoist,omitempty"`
+	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
 // CreateGuildRole [POST]   Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
@@ -648,11 +636,10 @@ func CreateGuildRole(client httd.Poster, guildID snowflake.ID, params *CreateGui
 	return
 }
 
-
 // ModifyGuildRolePositionsParams https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type ModifyGuildRolePositionsParams struct {
-	ID snowflake.ID `json:"id"`
-	Position int `json:"position"`
+	ID       snowflake.ID `json:"id"`
+	Position int          `json:"position"`
 }
 
 // ModifyGuildRolePositions [PATCH] Modify the positions of a set of role objects for the guild. Requires the
@@ -678,13 +665,12 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID snowflake.ID, params 
 	return
 }
 
-
 type ModifyGuildRoleParams struct {
-	Name string `json:"name,omitempty"`
-	Permissions int `json:"permissions,omitempty"`
-	Color int `json:"color,omitempty"`
-	Hoist bool `json:"hoist,omitempty"`
-	Mentionable bool `json:"mentionable,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Permissions int    `json:"permissions,omitempty"`
+	Color       int    `json:"color,omitempty"`
+	Hoist       bool   `json:"hoist,omitempty"`
+	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
 // ModifyGuildRole [PATCH]  Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the updated
@@ -857,11 +843,10 @@ func GetGuildIntegrations(client httd.Getter, guildID snowflake.ID) (ret []*Inte
 	return
 }
 
-
 // CreateGuildIntegrationParams https://discordapp.com/developers/docs/resources/guild#create-guild-integration-json-params
 type CreateGuildIntegrationParams struct {
-	Type string `json:"type"`
-	ID snowflake.ID `json:"id"`
+	Type string       `json:"type"`
+	ID   snowflake.ID `json:"id"`
 }
 
 // CreateGuildIntegration [POST]    Attach an integration object from the current user to the guild. Requires
@@ -891,12 +876,11 @@ func CreateGuildIntegration(client httd.Poster, guildID snowflake.ID, params *Cr
 	return
 }
 
-
 // ModifyGuildIntegrationParams https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
 type ModifyGuildIntegrationParams struct {
-	ExpireBehavior int `json:"expire_behavior"`
-	ExpireGracePeriod int `json:"expire_grace_period"`
-	EnableEmoticons bool `json:"enable_emoticons"`
+	ExpireBehavior    int  `json:"expire_behavior"`
+	ExpireGracePeriod int  `json:"expire_grace_period"`
+	EnableEmoticons   bool `json:"enable_emoticons"`
 }
 
 // ModifyGuildIntegration [POST]    Modify the behavior and settings of a integration object for the guild.

@@ -1,11 +1,11 @@
 package httd
 
 import (
-	"testing"
-	"net/http"
-	"io/ioutil"
 	"bytes"
 	"compress/gzip"
+	"io/ioutil"
+	"net/http"
+	"testing"
 )
 
 func missingImplError(t *testing.T, interfaceName string) {

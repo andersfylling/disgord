@@ -1,7 +1,7 @@
 package resource
 
 import (
-    "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/snowflake"
 )
 
 // State Voice State structure

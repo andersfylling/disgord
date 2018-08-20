@@ -1,11 +1,11 @@
 package disgord
 
 import (
-	"testing"
-	"os"
 	"fmt"
 	"github.com/andersfylling/disgord/rest"
 	"github.com/andersfylling/snowflake"
+	"os"
+	"testing"
 )
 
 func TestRESTClient_users(t *testing.T) {
@@ -14,7 +14,6 @@ func TestRESTClient_users(t *testing.T) {
 		fmt.Println("not running unit-test: testClient_REST_endpoints; missing token")
 		return
 	}
-
 
 	conf := &Config{
 		Token: token,
