@@ -21,6 +21,9 @@ const (
 	UserAgentFormat     = "DiscordBot (%s, %s) %s"
 
 	HTTPCodeRateLimit int = 429
+
+	ContentEncoding = "Content-Encoding"
+	GZIPCompression = "gzip"
 )
 
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
@@ -116,6 +119,36 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 }
 
+func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {
+	buffer, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	switch resp.Header.Get(ContentEncoding) {
+	case GZIPCompression:
+		b := bytes.NewBuffer(buffer)
+
+		var r io.Reader
+		r, err = gzip.NewReader(b)
+		if err != nil {
+			return
+		}
+
+		var resB bytes.Buffer
+		_, err = resB.ReadFrom(r)
+		if err != nil {
+			return
+		}
+
+		body = resB.Bytes()
+	default:
+		body = buffer
+	}
+
+	return
+}
+
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
 	var jsonParamsReader io.Reader
 	if r.JSONParams != nil {
@@ -166,30 +199,8 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	}
 	defer resp.Body.Close()
 
-	buffer, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
+	body, err = c.decodeResponseBody(resp)
 
-	if resp.Header.Get("Content-Encoding") == "gzip" {
-		b := bytes.NewBuffer(buffer)
-
-		var r io.Reader
-		r, err = gzip.NewReader(b)
-		if err != nil {
-			return
-		}
-
-		var resB bytes.Buffer
-		_, err = resB.ReadFrom(r)
-		if err != nil {
-			return
-		}
-
-		body = resB.Bytes()
-	} else {
-		body = buffer
-	}
 
 	// update rate limits
 	c.rateLimit.HandleResponse(r.Ratelimiter, resp, body)
