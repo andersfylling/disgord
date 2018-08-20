@@ -72,7 +72,7 @@ Using the live chat application will most likely give you a faster result.
 ### Reporting Bugs
 Reporting a bug should help the community improving Disgord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](TEMPLATE_BUG.md).
 
-### Suggesting enhancement
+### Suggesting enhancements
 We don't currently have a template for this. Provide benchmarks or demonstrations why your suggestion is an improvement or how it can help benefit this project is of great apriciation.
 
 
