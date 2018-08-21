@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -55,7 +54,7 @@ func CreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji 
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -225,7 +224,7 @@ func GetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji in
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 

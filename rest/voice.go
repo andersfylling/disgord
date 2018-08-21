@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
-
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 )
@@ -27,6 +25,6 @@ func ListVoiceRegions(client httd.Getter) (ret []*VoiceRegion, err error) {
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }

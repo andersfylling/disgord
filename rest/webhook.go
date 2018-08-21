@@ -1,12 +1,12 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
+	"net/http"
+
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
-	"net/http"
 )
 
 const (
@@ -40,7 +40,7 @@ func CreateWebhook(client httd.Poster, channelID snowflake.ID, params *CreateWeb
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -60,7 +60,7 @@ func GetChannelWebhooks(client httd.Getter, channelID snowflake.ID) (ret []*Webh
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -80,7 +80,7 @@ func GetGuildWebhooks(client httd.Getter, guildID snowflake.ID) (ret []*Webhook,
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -100,7 +100,7 @@ func GetWebhook(client httd.Getter, webhookID snowflake.ID) (ret *Webhook, err e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -121,7 +121,7 @@ func GetWebhookWithToken(client httd.Getter, webhookID snowflake.ID, token strin
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -148,7 +148,7 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -176,7 +176,7 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -260,7 +260,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 		return
 	}
 
-	//err = json.Unmarshal(body, ret) // TODO: how to verify success?
+	//err = unmarshal(body, ret) // TODO: how to verify success?
 	return
 }
 

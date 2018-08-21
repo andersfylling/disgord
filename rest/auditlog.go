@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"strconv"
 
 	. "github.com/andersfylling/disgord/resource"
@@ -63,6 +62,6 @@ func GuildAuditLogs(client httd.Getter, guildID snowflake.ID, params *AuditLogPa
 		return
 	}
 
-	err = json.Unmarshal(body, &log)
+	err = unmarshal(body, &log)
 	return
 }

@@ -1,14 +1,14 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
-	. "github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
 	"net/http"
 	"strconv"
 	"sync"
+
+	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
+	"github.com/andersfylling/snowflake"
 )
 
 // GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
@@ -78,7 +78,7 @@ func GetChannelMessages(client httd.Getter, channelID snowflake.ID, params *GetC
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -109,7 +109,7 @@ func GetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (r
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -159,7 +159,7 @@ func CreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *Cr
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -196,7 +196,7 @@ func EditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *EditMe
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 

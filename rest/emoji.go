@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -34,16 +33,16 @@ func ListGuildEmojis(client httd.Getter, guildID snowflake.ID) (ret *Emoji, err 
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
-// ReqGetGuildEmoji [GET] Returns an emoji object for the given guild and emoji IDs.
-// Endpoint               /guilds/{guild.id}/emojis/{emoji.id}
-// Rate limiter [MAJOR]   /guilds/{guild.id} // TODO: no idea if this is correct
-// Discord documentation  https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
-// Reviewed               2018-06-10
-// Comment                -
+// GetGuildEmoji [GET]      Returns an emoji object for the given guild and emoji IDs.
+// Endpoint                 /guilds/{guild.id}/emojis/{emoji.id}
+// Rate limiter [MAJOR]     /guilds/{guild.id} // TODO: no idea if this is correct
+// Discord documentation    https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
+// Reviewed                 2018-06-10
+// Comment                  -
 func GetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
@@ -54,21 +53,21 @@ func GetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoj
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
-// ReqCreateGuildEmoji [POST] Create a new emoji for the guild. Requires the
-//                            'MANAGE_EMOJIS' permission. Returns the new emoji
-//                            object on success. Fires a Guild Emojis Update Gateway event.
-// Endpoint                   /guilds/{guild.id}/emojis
-// Rate limiter [MAJOR]       /guilds/{guild.id} // TODO: no idea if this is correct
-// Discord documentation      https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
-// Reviewed                   2018-06-10
-// Comment                    "Emojis and animated emojis have a maximum file size of 256kb.
-//                            Attempting to upload an emoji larger than this limit will fail
-//                            and return 400 Bad Request and an error message, but not a JSON
-//                            status code." - Discord docs
+// CreateGuildEmoji [POST]  Create a new emoji for the guild. Requires the
+//                          'MANAGE_EMOJIS' permission. Returns the new emoji
+//                          object on success. Fires a Guild Emojis Update Gateway event.
+// Endpoint                 /guilds/{guild.id}/emojis
+// Rate limiter [MAJOR]     /guilds/{guild.id} // TODO: no idea if this is correct
+// Discord documentation    https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
+// Reviewed                 2018-06-10
+// Comment                  Emojis and animated emojis have a maximum file size of 256kb.
+//                          Attempting to upload an emoji larger than this limit will fail
+//                          and return 400 Bad Request and an error message, but not a JSON
+//                          status code.
 func CreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
@@ -79,18 +78,18 @@ func CreateGuildEmoji(client httd.Poster, guildID snowflake.ID) (ret *Emoji, err
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
-// ReqModifyGuildEmoji [PATCH]  Modify the given emoji. Requires the 'MANAGE_EMOJIS'
-//                              permission. Returns the updated emoji object on success.
-//                              Fires a Guild Emojis Update Gateway event.
-// Endpoint                     /guilds/{guild.id}/emojis/{emoji.id}
-// Rate limiter [MAJOR]         /guilds/{guild.id} // TODO: no idea if this is correct
-// Discord documentation        https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
-// Reviewed                     2018-06-10
-// Comment                      -
+// ModifyGuildEmoji [PATCH] Modify the given emoji. Requires the 'MANAGE_EMOJIS'
+//                          permission. Returns the updated emoji object on success.
+//                          Fires a Guild Emojis Update Gateway event.
+// Endpoint                 /guilds/{guild.id}/emojis/{emoji.id}
+// Rate limiter [MAJOR]     /guilds/{guild.id} // TODO: no idea if this is correct
+// Discord documentation    https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
+// Reviewed                 2018-06-10
+// Comment                  -
 func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
@@ -101,11 +100,11 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID snowflake.ID) (ret *
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
-// ReqDeleteGuildEmoji [DELETE] Delete the given emoji. Requires the
+// DeleteGuildEmoji [DELETE]    Delete the given emoji. Requires the
 //                              'MANAGE_EMOJIS' permission. Returns 204
 //                              No Content on success. Fires a Guild Emojis
 //                              Update Gateway event.

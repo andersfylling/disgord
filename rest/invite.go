@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
-
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 )
@@ -34,7 +32,7 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 		return
 	}
 
-	err = json.Unmarshal(body, &invite)
+	err = unmarshal(body, &invite)
 	return
 }
 
@@ -56,6 +54,6 @@ func DeleteInvite(client httd.Deleter, inviteCode string) (invite *Invite, err e
 		return
 	}
 
-	err = json.Unmarshal(body, &invite)
+	err = unmarshal(body, &invite)
 	return
 }

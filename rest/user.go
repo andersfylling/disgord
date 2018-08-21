@@ -1,16 +1,13 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
-	"compress/gzip"
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
-	"io"
 )
 
 const (
@@ -41,17 +38,8 @@ func GetCurrentUser(client httd.Getter) (ret *User, err error) {
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
-}
-
-type gzreadCloser struct {
-	*gzip.Reader
-	io.Closer
-}
-
-func (gz gzreadCloser) Close() error {
-	return gz.Closer.Close()
 }
 
 // ReqGetUser [GET]         Returns a user object for a given user ID.
@@ -70,7 +58,7 @@ func GetUser(client httd.Getter, userID snowflake.ID) (ret *User, err error) {
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -96,7 +84,7 @@ func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -147,7 +135,7 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -190,7 +178,7 @@ func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -215,7 +203,7 @@ func CreateDM(client httd.Poster, recipientID snowflake.ID) (ret *Channel, err e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -243,7 +231,7 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -263,6 +251,6 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }

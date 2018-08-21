@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -34,7 +33,7 @@ func GetChannel(client httd.Getter, channelID snowflake.ID) (ret *Channel, err e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -66,7 +65,7 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -167,7 +166,7 @@ func GetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invit
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -207,7 +206,7 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -290,7 +289,7 @@ func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Messa
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 

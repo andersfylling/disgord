@@ -1,13 +1,13 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
+	"net/http"
+	"strconv"
+
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
-	"net/http"
-	"strconv"
 )
 
 // CreateGuildParams https://discordapp.com/developers/docs/resources/guild#create-guild-json-params
@@ -47,7 +47,7 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -67,7 +67,7 @@ func GetGuild(client httd.Getter, guildID snowflake.ID) (ret *Guild, err error) 
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -104,7 +104,7 @@ func ModifyGuild(client httd.Patcher, guildID snowflake.ID, params *ModifyGuildP
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -148,7 +148,7 @@ func GetGuildChannels(client httd.Getter, guildID snowflake.ID) (ret *[]Channel,
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -182,7 +182,7 @@ func CreateGuildChannel(client httd.Poster, guildID snowflake.ID, params *Create
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -212,7 +212,7 @@ func ModifyGuildChannelPositions(client httd.Patcher, guildID snowflake.ID, para
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -232,7 +232,7 @@ func GetGuildMember(client httd.Getter, guildID, userID snowflake.ID) (ret *Memb
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -273,7 +273,7 @@ func GetGuildMembers(client httd.Getter, guildID, after snowflake.ID, limit int)
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -307,7 +307,7 @@ func AddGuildMember(client httd.Puter, guildID, userID snowflake.ID, params *Add
 	}
 
 	if resp.StatusCode == http.StatusCreated {
-		err = json.Unmarshal(body, &ret)
+		err = unmarshal(body, &ret)
 		return
 	}
 
@@ -385,7 +385,7 @@ func ModifyCurrentUserNick(client httd.Patcher, guildID snowflake.ID, params *Mo
 		return
 	}
 
-	err = json.Unmarshal(body, nickname)
+	err = unmarshal(body, nickname)
 	return
 }
 
@@ -481,7 +481,7 @@ func GetGuildBans(client httd.Getter, guildID snowflake.ID) (ret []*Ban, err err
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -507,7 +507,7 @@ func GetGuildBan(client httd.Getter, guildID, userID snowflake.ID) (ret *Ban, er
 		err = errors.New(msg)
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -601,7 +601,7 @@ func GetGuildRoles(client httd.Getter, guildID snowflake.ID) (ret []*Role, err e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -632,7 +632,7 @@ func CreateGuildRole(client httd.Poster, guildID snowflake.ID, params *CreateGui
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -661,7 +661,7 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID snowflake.ID, params 
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -691,7 +691,7 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID snowflake.ID, params *
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -754,7 +754,7 @@ func GetGuildPruneCount(client httd.Getter, guildID snowflake.ID, params *GuildP
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -776,7 +776,7 @@ func BeginGuildPrune(client httd.Poster, guildID snowflake.ID, params *GuildPrun
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -797,7 +797,7 @@ func GetGuildVoiceRegions(client httd.Getter, guildID snowflake.ID) (ret []*Voic
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -818,7 +818,7 @@ func GetGuildInvites(client httd.Getter, guildID snowflake.ID) (ret []*Invite, e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -839,7 +839,7 @@ func GetGuildIntegrations(client httd.Getter, guildID snowflake.ID) (ret []*Inte
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -976,7 +976,7 @@ func GetGuildEmbed(client httd.Getter, guildID snowflake.ID) (ret *GuildEmbed, e
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -999,7 +999,7 @@ func ModifyGuildEmbed(client httd.Patcher, guildID snowflake.ID, params *GuildEm
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -1020,6 +1020,6 @@ func GetGuildVanityURL(client httd.Getter, guildID snowflake.ID) (ret *PartialIn
 		return
 	}
 
-	err = json.Unmarshal(body, &ret)
+	err = unmarshal(body, &ret)
 	return
 }
