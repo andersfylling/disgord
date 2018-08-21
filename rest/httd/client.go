@@ -238,7 +238,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	body, err = c.decodeResponseBody(resp)
 
 	// update rate limits
-	c.RateLimiter().HandleResponse(r.Ratelimiter, resp, body)
+	c.RateLimiter().UpdateRegisters(r.Ratelimiter, resp, body)
 
 	return
 }

@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	XRateLimitLimit     = "X-RateLimit-Limit"
-	XRateLimitRemaining = "X-RateLimit-Remaining"
-	XRateLimitReset     = "X-RateLimit-Reset"
-	XRateLimitGlobal    = "X-RateLimit-Global"
-	RateLimitRetryAfter = "Retry-After"
+	XRateLimitLimit      = "X-RateLimit-Limit"
+	XRateLimitRemaining  = "X-RateLimit-Remaining"
+	XRateLimitReset      = "X-RateLimit-Reset"
+	XRateLimitGlobal     = "X-RateLimit-Global"
+	RateLimitRetryAfter  = "Retry-After"
+	GlobalRateLimiterKey = ""
 )
 
 // const
@@ -47,16 +48,86 @@ type RateLimiter interface {
 	Bucket(key string) *Bucket
 	RateLimitTimeout(key string) int64
 	RateLimited(key string) bool
-	HandleResponse(key string, res *http.Response, responseBody []byte)
+	UpdateRegisters(key string, res *http.Response, responseBody []byte)
 	WaitTime(req *Request) time.Duration
+}
+
+type ratelimitBody struct {
+	Message    string `json:"message"`
+	RetryAfter int64  `json:"retry_after"`
+	Global     bool   `json:"global"`
+	Empty      bool   `json:"-"`
+}
+
+type RateLimitInfo struct {
+	Message    string `json:"message"`
+	RetryAfter int64  `json:"retry_after"`
+	Global     bool   `json:"global"`
+	Limit      int    `json:"-"`
+	Remaining  int    `json:"-"`
+	Reset      int64  `json:"-"`
+	Empty      bool   `json:"-"`
+}
+
+func RateLimited(resp *http.Response) bool {
+	return resp.StatusCode == http.StatusTooManyRequests
+}
+
+// GlobalRateLimit assumes that there will always be a header entry when a global rate limit kicks in
+func GlobalRateLimit(resp *http.Response) bool {
+	return resp.Header.Get(XRateLimitGlobal) == "true"
+}
+
+func GlobalRateLimitSafe(resp *http.Response, body *ratelimitBody) bool {
+	return GlobalRateLimit(resp) && !body.Empty && body.Global
+}
+
+func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo, err error) {
+	// extract header information
+	limitStr := resp.Header.Get(XRateLimitLimit)
+	remainingStr := resp.Header.Get(XRateLimitRemaining)
+	resetStr := resp.Header.Get(XRateLimitReset)
+	retryAfterStr := resp.Header.Get(RateLimitRetryAfter)
+
+	// convert types
+	if limitStr != "" {
+		info.Limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			return
+		}
+	}
+	if remainingStr != "" {
+		info.Remaining, err = strconv.Atoi(remainingStr)
+		if err != nil {
+			return
+		}
+	}
+	if resetStr != "" {
+		info.Reset, err = strconv.ParseInt(resetStr, 10, 64)
+		if err != nil {
+			return
+		}
+		info.Reset *= 1000 // second => milliseconds
+	}
+	if retryAfterStr != "" {
+		info.RetryAfter, err = strconv.ParseInt(retryAfterStr, 10, 64)
+		if err != nil {
+			return
+		}
+	}
+	info.Global = GlobalRateLimit(resp) // useless? assuming that global info exists when exceeded an rate limit
+
+	// the body only contains information when a rate limit is exceeded
+	if RateLimited(resp) {
+		err = json.Unmarshal(body, &info)
+	}
+	return
 }
 
 func NewRateLimit() *RateLimit {
 	return &RateLimit{
 		buckets: make(map[string]*Bucket),
-		global: &Bucket{
-			global: true,
-		},
+		global:  &Bucket{},
 	}
 }
 
@@ -117,12 +188,6 @@ func (r *RateLimit) RateLimited(key string) bool {
 	return bucket.limited()
 }
 
-type ratelimitBody struct {
-	Message    string `json:"message"`
-	RetryAfter int64  `json:"retry_after"`
-	Global     bool   `json:"global"`
-}
-
 // WaitTime check both the global and route specific rate limiter bucket before sending any REST requests
 func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	timeout := int64(0)
@@ -137,99 +202,23 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 }
 
 // TODO: rewrite
-func (r *RateLimit) HandleResponse(key string, res *http.Response, content []byte) {
-	var err error
-	var global bool
-	var limit uint64
-	var remaining uint64
-	var reset int64
-	var body *ratelimitBody
-	var noBody bool
+func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []byte) {
 
-	// read body as well
-	if len(content) == 0 {
-		noBody = true
-	} else {
-		err = json.Unmarshal(content, body)
-		if err != nil {
-			return
-		}
+	info, err := ExtractRateLimitInfo(resp, content)
+	if err != nil {
+		return // TODO: logging
 	}
 
-	// global?
-	if res.Header.Get(XRateLimitGlobal) == "true" || (!noBody && body.Global) {
-		global = true
-	}
-
-	// max number of request before reset
-	if res.Header.Get(XRateLimitLimit) != "" || (!noBody && body.Global) {
-		limit, err = strconv.ParseUint(res.Header.Get(XRateLimitLimit), 10, 64)
-		if err != nil {
-			// TODO: logging
-		}
-	}
-
-	// remaining requests before reset
-	remainingStr := res.Header.Get(XRateLimitRemaining)
-	if remainingStr != "" {
-		remaining, err = strconv.ParseUint(remainingStr, 10, 64)
-		if err != nil {
-			// TODO: logging
-		}
-	}
-
-	// reset unix timestamp
-	resetStr := res.Header.Get(XRateLimitReset)
-	if resetStr != "" {
-		// here we get a unix timestamp in seconds, which we convert to milliseconds
-		reset, err = strconv.ParseInt(remainingStr, 10, 64)
-		if err == nil {
-			reset *= 1000 // => milliseconds
-		} else {
-			// TODO: logging
-		}
-	} else if res.Header.Get(RateLimitRetryAfter) != "" || (!noBody && body.RetryAfter > 0) {
-		// here we are given a delay in millisecond, which we need to convert into a timestamp
-		if res.Header.Get(RateLimitRetryAfter) != "" {
-			reset, err = strconv.ParseInt(res.Header.Get(RateLimitRetryAfter), 10, 64)
-			if err != nil {
-				reset = 0
-			}
-		} else if !noBody && body.RetryAfter > 0 {
-			reset = body.RetryAfter
-		}
-
-		// convert diff to timestamp
-		reset += time.Now().UnixNano() / 1000
-	}
-
-	if global {
+	// TODO: what if "key" is an endpoint with a global rate limiter only?
+	if info.Global {
 		r.global.mu.Lock()
-		defer r.global.mu.Unlock()
-
-		if limit != 0 {
-			r.global.limit = limit
-		}
-		if remaining != 0 {
-			r.global.remaining = remaining
-		}
-		if reset != 0 {
-			r.global.reset = reset
-		}
+		r.global.update(info)
+		r.global.mu.Unlock()
 	} else {
 		bucket := r.Bucket(key)
 		bucket.mu.Lock()
-		defer bucket.mu.Unlock()
-
-		if limit != 0 {
-			bucket.limit = limit
-		}
-		if remaining != 0 {
-			bucket.remaining = remaining
-		}
-		if reset != 0 {
-			bucket.reset = reset
-		}
+		bucket.update(info)
+		bucket.mu.Unlock()
 	}
 }
 
@@ -240,9 +229,14 @@ type Bucket struct {
 	limit     uint64 // total allowed requests before rate limit
 	remaining uint64 // remaining requests
 	reset     int64  // unix milliseconds, even tho discord prefers seconds. global uses milliseconds however.
-	global    bool   // global rate limiter
 
 	mu sync.RWMutex
+}
+
+func (b *Bucket) update(info *RateLimitInfo) {
+	b.limit = uint64(info.Limit)
+	b.remaining = uint64(info.Remaining)
+	b.reset = info.Reset + info.RetryAfter
 }
 
 func (b *Bucket) limited() bool {
