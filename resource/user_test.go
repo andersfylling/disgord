@@ -3,8 +3,6 @@ package resource
 import (
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/disgord/testutil"
 )
 
 func TestImplementsUserInterface(t *testing.T) {
@@ -16,11 +14,11 @@ func TestImplementsUserInterface(t *testing.T) {
 
 func verifyUserMashaller(t *testing.T, file string) {
 	data, err := ioutil.ReadFile(file)
-	testutil.Check(err, t)
+	check(err, t)
 
 	user := User{}
-	err = testutil.ValidateJSONMarshalling(data, &user)
-	testutil.Check(err, t)
+	err = validateJSONMarshalling(data, &user)
+	check(err, t)
 }
 
 func TestUserMarshalling(t *testing.T) {

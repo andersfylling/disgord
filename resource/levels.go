@@ -1,4 +1,4 @@
-package discord
+package resource
 
 // ExplicitContentFilterLvl ...
 // https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
@@ -63,4 +63,7 @@ func (dmnl *DefaultMessageNotificationLvl) AllMessages() bool {
 }
 func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
 	return *dmnl == 1
+}
+func (dmnl *DefaultMessageNotificationLvl) Equals(v uint) bool {
+	return uint(*dmnl) == v
 }

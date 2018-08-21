@@ -27,6 +27,7 @@ func TestUsers_cacheSize(t *testing.T) {
 
 	// check if it exists in cache
 	cache := NewUserCache()
+	cache.StartListener()
 	u1, _ := cache.User(newUser.ID)
 	if u1 != nil {
 		t.Error("User was found in cache, even tho it was not saved in cache")
@@ -47,7 +48,7 @@ func TestUsers_cacheSize(t *testing.T) {
 	}
 
 	// clear the cache
-	cache.Clear()
+	cache.Close()
 	if cache.Size() != 0 {
 		t.Error("cache was cleared, but size is not 0. Size: " + strconv.Itoa(cache.Size()))
 	}
@@ -73,6 +74,7 @@ func TestUsers_cacheClear(t *testing.T) {
 	}
 
 	cache := NewUserCache()
+	cache.StartListener()
 
 	// store current mem stat
 	var m1 runtime.MemStats
@@ -96,7 +98,7 @@ func TestUsers_cacheClear(t *testing.T) {
 	runtime.ReadMemStats(&m2)
 
 	// clear cache and compare results
-	cache.Clear()
+	cache.Close()
 	var m3 runtime.MemStats
 	runtime.ReadMemStats(&m3)
 
@@ -119,6 +121,7 @@ func TestUserCache_Save(t *testing.T) {
 
 	// add to cache
 	cache := NewUserCache()
+	cache.StartListener()
 	cache.Process(&UserDetail{User: newUser})
 	time.Sleep(50 * time.Millisecond) // haxor
 
@@ -168,7 +171,7 @@ func TestUserCache_Save(t *testing.T) {
 	}
 
 	// clearing the cache should not delete local variables
-	cache.Clear()
+	cache.Close()
 	if newUser == nil {
 		t.Error("local var deleted, once the cache was cleared: newUser")
 	}

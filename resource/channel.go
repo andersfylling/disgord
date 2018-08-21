@@ -3,12 +3,10 @@ package resource
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"sync"
 
-	"github.com/andersfylling/disgord/discord"
-	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake"
+	"time"
 )
 
 const (
@@ -69,9 +67,9 @@ type Channel struct {
 	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        snowflake.ID          `json:"applicaiton_id,omitempty"`        // ?|
 	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPingTimestamp    discord.Timestamp     `json:"last_ping_timestamp,omitempty"`   // ?|
+	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 
-	mu sync.RWMutex `json:"-"`
+	mu sync.RWMutex
 }
 type PartialChannel = Channel
 
@@ -85,8 +83,8 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 func (c *Channel) Replicate(channel *Channel, recipients []*User) {
-	// TODO: mutex is copied
 	*c = *channel
+	c.mu = sync.RWMutex{}
 
 	// WARNING: DM channels holds users. These should be fetched from cache.
 	if recipients != nil && len(recipients) > 0 {
@@ -154,419 +152,176 @@ func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
 	return errors.New("not implemented")
 }
 
-// ReqGetChannel [GET]    Get a channel by ID. Returns a channel object.
-// Endpoint               /channels/{channel.id}
-// Rate limiter [MAJOR]   /channels/{channel.id}
-// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-channel
-// Reviewed               2018-06-07
-// Comment                -
-func ReqGetChannel(requester httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
-	if channelID.Empty() {
-		return nil, errors.New("not a valid snowflake")
-	}
+// -----------------------------
+// Message
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String(),
-	}
-	resp, err := requester.Get(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+const (
+	_ = iota
+	MessageActivityTypeJoin
+	MessageActivityTypeSpectate
+	MessageActivityTypeListen
+	MessageActivityTypeJoinRequest
+)
+const (
+	MessageTypeDefault = iota
+	MessageTypeRecipientAdd
+	MessageTypeRecipientRemove
+	MessageTypeCall
+	MessageTypeChannelNameChange
+	MessageTypeChannelIconChange
+	MessageTypeChannelPinnedMessage
+	MessageTypeGuildMemberJoin
+)
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
+func NewMessage() *Message {
+	return &Message{}
 }
 
-// ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-type ModifyChannelParams = Channel
-
-// ReqModifyChannel [PUT/PATCH] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
-//                              Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
-//                              Channel Update Gateway event. If modifying a category, individual Channel Update
-//                              events will fire for each child channel that also changes. For the PATCH method,
-//                              all the JSON Params are optional.
-// Endpoint                     /channels/{channel.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#modify-channel
-// Reviewed                     2018-06-07
-// Comment                      andersfylling: only implemented the patch method, as its parameters are optional.
-func ReqModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Channel, err error) {
-	if changes.ID.Empty() {
-		err = errors.New("not a valid snowflake")
-		return
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(changes.ID),
-		Endpoint:    "/channels/" + changes.ID.String(),
-	}
-	resp, err := client.Patch(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
+func NewDeletedMessage() *DeletedMessage {
+	return &DeletedMessage{}
 }
 
-// ReqDeleteChannel [DELETE]  Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
-//                            permission for the guild. Deleting a category does not delete its child
-//                            channels; they will have their parent_id removed and a Channel Update Gateway
-//                            event will fire for each of them. Returns a channel object on success. Fires a
-//                            Channel Delete Gateway event.
-// Endpoint                   /channels/{channel.id}
-// Rate limiter [MAJOR]       /channels/{channel.id}
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
-// Reviewed                   2018-06-07
-// Comment                    Deleting a guild channel cannot be undone. Use this with caution, as it
-//                            is impossible to undo this action when performed on a guild channel. In
-//                            contrast, when used with a private message, it is possible to undo the
-//                            action by opening a private message with the recipient again.
-func ReqDeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
-	if channelID.Empty() {
-		err = errors.New("not a valid snowflake")
-		return
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String(),
-	}
-	resp, err := client.Delete(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-
-	return
+type DeletedMessage struct {
+	ID        snowflake.ID `json:"id"`
+	ChannelID snowflake.ID `json:"channel_id"`
 }
 
-// ReqEditChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
-type ReqEditChannelPermissionsParams struct {
-	Allow int    `json:"allow"` // the bitwise value of all allowed permissions
-	Deny  int    `json:"deny"`  // the bitwise value of all disallowed permissions
-	Type  string `json:"type"`  // "member" for a user or "role" for a role
+// https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
+type MessageActivity struct {
+	Type    int    `json:"type"`
+	PartyID string `json:"party_id"`
 }
 
-// ReqEditChannelPermissions [PUT]  Edit the channel permission overwrites for a user or role in a channel.
-//                                  Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                                  Returns a 204 empty response on success. For more information about
-//                                  permissions, see permissions.
-// Endpoint                         /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
-// Reviewed                         2018-06-07
-// Comment                          -
-func ReqEditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID, params *ReqEditChannelPermissionsParams) (err error) {
-	if chanID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
-	}
-	if overwriteID.Empty() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(chanID),
-		Endpoint:    "/channels/" + chanID.String() + "/permissions/" + overwriteID.String(),
-	}
-	resp, err := client.Put(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
+type MessageApplication struct {
+	ID          snowflake.ID `json:"id"`
+	CoverImage  string       `json:"cover_image"`
+	Description string       `json:"description"`
+	Icon        string       `json:"icon"`
+	Name        string       `json:"name"`
 }
 
-// ReqGetChannelInvites [GET] Returns a list of invite objects (with invite metadata) for the channel.
-//                            Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
-// Endpoint                   /channels/{channel.id}/invites
-// Rate limiter [MAJOR]       /channels/{channel.id}
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
-// Reviewed                   2018-06-07
-// Comment                    -
-func ReqGetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invite, err error) {
-	if channelID.Empty() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return
-	}
+// Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
+type Message struct {
+	ID              snowflake.ID       `json:"id"`
+	ChannelID       snowflake.ID       `json:"channel_id"`
+	Author          *User              `json:"author"`
+	Content         string             `json:"content"`
+	Timestamp       time.Time          `json:"timestamp"`
+	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
+	Tts             bool               `json:"tts"`
+	MentionEveryone bool               `json:"mention_everyone"`
+	Mentions        []*User            `json:"mentions"`
+	MentionRoles    []snowflake.ID     `json:"mention_roles"`
+	Attachments     []*Attachment      `json:"attachments"`
+	Embeds          []*ChannelEmbed    `json:"embeds"`
+	Reactions       []*Reaction        `json:"reactions"` // ?
+	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
+	Pinned          bool               `json:"pinned"`
+	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
+	Type            uint               `json:"type"`
+	Activity        MessageActivity    `json:"activity"`
+	Application     MessageApplication `json:"application"`
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/invites",
-	}
-	resp, err := client.Get(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
+	sync.RWMutex `json:"-"`
 }
 
-// ReqCreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params
-type ReqCreateChannelInvitesParams struct {
-	MaxAge    int  `json:"max_age,omitempty"`   // duration of invite in seconds before expiry, or 0 for never. default 86400 (24 hours)
-	MaxUses   int  `json:"max_uses,omitempty"`  // max number of uses or 0 for unlimited. default 0
-	Temporary bool `json:"temporary,omitempty"` // whether this invite only grants temporary membership. default false
-	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
+func (m *Message) MarshalJSON() ([]byte, error) {
+	if m.ID.Empty() {
+		return []byte("{}"), nil
+	}
+
+	//TODO: remove copying of mutex
+	return json.Marshal(Message(*m))
 }
 
-// ReqCreateChannelInvites [POST] Create a new invite object for the channel. Only usable for guild channels.
-//                                Requires the CREATE_INSTANT_INVITE permission. All JSON paramaters for this
-//                                route are optional, however the request body is not. If you are not sending
-//                                any fields, you still have to send an empty JSON object ({}).
-//                                Returns an invite object.
-// Endpoint                       /channels/{channel.id}/invites
-// Rate limiter [MAJOR]           /channels/{channel.id}
-// Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
-// Reviewed                       2018-06-07
-// Comment                        -
-func ReqCreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *ReqCreateChannelInvitesParams) (ret *Invite, err error) {
-	if channelID.Empty() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return
-	}
-	if params == nil {
-		params = &ReqCreateChannelInvitesParams{} // have to send an empty JSON object ({})
-	}
+func (m *Message) Delete() {}
+func (m *Message) Update() {}
+func (m *Message) Send()   {}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/invites",
-	}
-	resp, err := client.Post(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+func (m *Message) AddReaction(reaction *Reaction) {}
+func (m *Message) RemoveReaction(id snowflake.ID) {}
 
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
+// ----------------
+// Reaction
+
+// https://discordapp.com/developers/docs/resources/channel#reaction-object
+type Reaction struct {
+	Count uint          `json:"count"`
+	Me    bool          `json:"me"`
+	Emoji *PartialEmoji `json:"Emoji"`
 }
 
-// ReqDeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
-//                                      Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                                      Returns a 204 empty response on success. For more information about
-//                                      permissions, see permissions:
-//                                      https://discordapp.com/developers/docs/topics/permissions#permissions
-// Endpoint                             /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]                 /channels/{channel.id}
-// Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
-// Reviewed                             2018-06-07
-// Comment                              -
-func ReqDeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) (err error) {
-	if channelID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
-	}
-	if overwriteID.Empty() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
-	}
+// -----------------
+// Embed
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/permissions/" + overwriteID.String(),
-	}
-	resp, err := client.Delete(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+// limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
+// TODO: implement NewEmbedX functions that ensures limitations
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbed https://discordapp.com/developers/docs/resources/channel#embed-object
+type ChannelEmbed struct {
+	Title       string                 `json:"title"`       // title of embed
+	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
+	Description string                 `json:"description"` // description of embed
+	URL         string                 `json:"url"`         // url of embed
+	Timestamp   time.Time              `json:"timestamp"`   // timestamp	timestamp of embed content
+	Color       int                    `json:"color"`       // color code of the embed
+	Footer      *ChannelEmbedFooter    `json:"footer"`      // embed footer object	footer information
+	Image       *ChannelEmbedImage     `json:"image"`       // embed image object	image information
+	Thumbnail   *ChannelEmbedThumbnail `json:"thumbnail"`   // embed thumbnail object	thumbnail information
+	Video       *ChannelEmbedVideo     `json:"video"`       // embed video object	video information
+	Provider    *ChannelEmbedProvider  `json:"provider"`    // embed provider object	provider information
+	Author      *ChannelEmbedAuthor    `json:"author"`      // embed author object	author information
+	Fields      []*ChannelEmbedField   `json:"fields"`      //	array of embed field objects	fields information
 }
 
-// ReqTriggerTypingIndicator [POST] Post a typing indicator for the specified channel. Generally bots should
-//                                  not implement this route. However, if a bot is responding to a command and
-//                                  expects the computation to take a few seconds, this endpoint may be called
-//                                  to let the user know that the bot is processing their message. Returns a 204
-//                                  empty response on success. Fires a Typing Start Gateway event.
-// Endpoint                         /channels/{channel.id}/typing
-// Rate limiter [MAJOR]             /channels/{channel.id}
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
-// Reviewed                         2018-06-10
-// Comment                          -
-func ReqTriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err error) {
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/typing",
-	}
-	resp, err := client.Post(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
+type ChannelEmbedThumbnail struct {
+	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	Height   int    `json:"height,omitempty"`    // ?| , height of image
+	Width    int    `json:"width,omitempty"`     // ?| , width of image
 }
 
-// ReqGetPinnedMessages [GET] Returns all pinned messages in the channel as an array of message objects.
-// Endpoint                   /channels/{channel.id}/pins
-// Rate limiter [MAJOR]       /channels/{channel.id}
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
-// Reviewed                   2018-06-10
-// Comment                    -
-func ReqGetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Message, err error) {
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pins",
-	}
-	resp, err := client.Get(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(ret)
-	return
+// ChannelEmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
+type ChannelEmbedVideo struct {
+	Url    string `json:"url,omitempty"`    // ?| , source url of video
+	Height int    `json:"height,omitempty"` // ?| , height of video
+	Width  int    `json:"width,omitempty"`  // ?| , width of video
 }
 
-// ReqAddPinnedChannelMessage [GET] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-//                                  Returns a 204 empty response on success.
-// Endpoint                         /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
-// Reviewed                         2018-06-10
-// Comment                          -
-func ReqAddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (err error) {
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pints/" + msgID.String(),
-	}
-	resp, err := client.Put(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
+type ChannelEmbedImage struct {
+	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	Height   int    `json:"height,omitempty"`    // ?| , height of image
+	Width    int    `json:"width,omitempty"`     // ?| , width of image
 }
 
-// ReqDeletePinnedChannelMessage [DELETE] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
-//                                        permission. Returns a 204 empty response on success.
-//                                        Returns a 204 empty response on success.
-// Endpoint                               /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]                   /channels/{channel.id}
-// Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
-// Reviewed                               2018-06-10
-// Comment                                -
-func ReqDeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.ID) (err error) {
-	if channelID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
-	}
-	if msgID.Empty() {
-		return errors.New("messageID must be set to target the specific channel message")
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pins/" + msgID.String(),
-	}
-	resp, err := client.Delete(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
+type ChannelEmbedProvider struct {
+	Name string `json:"name,omitempty"` // ?| , name of provider
+	Url  string `json:"url,omitempty"`  // ?| , url of provider
 }
 
-type ReqGroupDMAddRecipientParams struct {
-	AccessToken string `json:"access_token"` // access token of a user that has granted your app the gdm.join scope
-	Nickname    string `json:"nick"`         // nickname of the user being added
+// ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
+type ChannelEmbedAuthor struct {
+	Name         string `json:"name,omitempty"`           // ?| , name of author
+	Url          string `json:"url,omitempty"`            // ?| , url of author
+	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
+	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
 }
 
-// ReqGroupDMAddRecipient [PUT] Adds a recipient to a Group DM using their access token.
-//                              Returns a 204 empty response on success.
-// Endpoint                     /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
-// Reviewed                     2018-06-10
-// Comment                      -
-func ReqGroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, params *ReqGroupDMAddRecipientParams) (err error) {
-	if channelID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
-	}
-	if userID.Empty() {
-		return errors.New("userID must be set to target the specific recipient")
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
-	}
-	resp, err := client.Put(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
+type ChannelEmbedFooter struct {
+	Text         string `json:"text"`                     //  | , url of author
+	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
+	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
 }
 
-// ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
-//                                    Returns a 204 empty response on success.
-// Endpoint                           /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]               /channels/{channel.id}
-// Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
-// Reviewed                           2018-06-10
-// Comment                            -
-func ReqGroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID) (err error) {
-	if channelID.Empty() {
-		return errors.New("channelID must be set to target the correct channel")
-	}
-	if userID.Empty() {
-		return errors.New("userID must be set to target the specific recipient")
-	}
-
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
-	}
-	resp, err := client.Delete(details)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+// ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
+type ChannelEmbedField struct {
+	Name   string `json:"name"`           //  | , name of the field
+	Value  string `json:"value"`          //  | , value of the field
+	Inline bool   `json:"bool,omitempty"` // ?| , whether or not this field should display inline
 }

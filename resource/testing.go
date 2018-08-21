@@ -1,15 +1,16 @@
-package testutil
+package resource
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // ValidateJSONMarshalling never comment on this. Never.
-func ValidateJSONMarshalling(b []byte, v interface{}) error {
+func validateJSONMarshalling(b []byte, v interface{}) error {
 	var err error
 
 	// convert to struct
@@ -69,4 +70,13 @@ func ValidateJSONMarshalling(b []byte, v interface{}) error {
 	}
 
 	return nil
+}
+
+func check(err error, t *testing.T) {
+	// Hide function from stacktrace, PR#3
+	t.Helper()
+
+	if err != nil {
+		t.Error(err)
+	}
 }
