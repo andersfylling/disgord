@@ -75,41 +75,26 @@ func main() {
         }
     }()
 
-    // retrieve a specific user from the Discord servers
-    userID := snowflake.NewID(228846961774559232)
-    user := <- sess.User(userID) // sends a request to discord
-    user2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
-
     // connect to the discord gateway to receive events
     err = sess.Connect()
     if err != nil {
         panic(err)
     }
 
+    // eg. retrieve a specific user from the Discord servers
+    userID := snowflake.NewID(228846961774559232)
+    user := <- sess.User(userID) // sends a request to discord
+    user2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
+
+    // keep the app alive until terminated
     <-termSignal
     sess.Disconnect()
 }
 ```
 
-Output:
-
-```
-╰─ go build && ./disgordtest
-INFO[2018-02-16 19:05:47] Connecting to discord Gateway                 lib="Disgord v0.0.0"
-INFO[2018-02-16 19:05:48] Connected                                     lib="Disgord v0.0.0"
-
-```
-
-Then on a system interrupt, here pressing `Ctrl+C`, you will see the following:
-
-```
-^C
-INFO[2018-02-16 19:07:28] Closing Discord gateway connection            lib="Disgord v0.0.0"
-INFO[2018-02-16 19:07:30] Disconnected                                  lib="Disgord v0.0.0"
-```
-
 ## WARNING
 All the REST endpoints are implemented, but may not exist on the interface yet. Create a Disgord session/client and use the REST functions found in the rest package directly (for now).
+See [using the rest functions directly](#using-the-rest-functions-directly).
 
 ## Code flow
 
@@ -125,9 +110,46 @@ Note that callbacks and channels are fired from the same place, to avoid overhea
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```
 
+## Using the REST functions directly
+The goal is to have all the functions in the main interface (session) to handle caching and concurrency. However, not every method is implemented in the session interface and the caching is still under development. So it might be of interest to use the functions residing within the rest package directly.
+
+Each REST function does require a client which is found in the session interface:
+```GoLang
+Session.Req() // request client for REST
+```
+
+The typical design for each REST function is to take the request client, some url parameters and optionally a query object and/or a json object:
+```GoLang
+func GetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitGuild(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
+	}
+	_, body, err := client.Get(details)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(body, &ret)
+	return
+}
+
+// -----
+// usage
+emoji, err := rest.GetGuildEmoji(session.Req(), guildID, emojiID)
+if err != nil {
+    return err
+}
+
+// tada, you now have queried the discord API for an emoji within a guild.
+```
+
+
+
+
+
+
+
 ## Thanks to
-* [github.com/s1kx](https://github.com/s1kx)
+* [github.com/s1kx](https://github.com/s1kx) for different design suggestions.
 
-## Progress
-
-[Progression for different Discord implementations](PROGRESS.md)
