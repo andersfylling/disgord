@@ -158,42 +158,42 @@ type GuildInterface interface {
 // TODO: lazyload everything
 type PartialGuild = Guild
 type Guild struct {
-	ID                          snowflake.ID                          `json:"id"`
-	ApplicationID               *snowflake.ID                         `json:"application_id"` //   |?
-	Name                        string                                `json:"name"`
-	Icon                        *string                               `json:"icon"`            //  |?, icon hash
-	Splash                      *string                               `json:"splash"`          //  |?, image hash
-	Owner                       bool                                  `json:"owner,omitempty"` // ?|
-	OwnerID                     snowflake.ID                          `json:"owner_id"`
-	Permissions                 uint64                                `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
-	Region                      string                                `json:"region"`
-	AfkChannelID                snowflake.ID                          `json:"afk_channel_id"`
-	AfkTimeout                  uint                                  `json:"afk_timeout"`
-	EmbedEnabled                bool                                  `json:"embed_enabled"`
-	EmbedChannelID              snowflake.ID                          `json:"embed_channel_id"`
+	ID                          snowflake.ID                  `json:"id"`
+	ApplicationID               *snowflake.ID                 `json:"application_id"` //   |?
+	Name                        string                        `json:"name"`
+	Icon                        *string                       `json:"icon"`            //  |?, icon hash
+	Splash                      *string                       `json:"splash"`          //  |?, image hash
+	Owner                       bool                          `json:"owner,omitempty"` // ?|
+	OwnerID                     snowflake.ID                  `json:"owner_id"`
+	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
+	Region                      string                        `json:"region"`
+	AfkChannelID                snowflake.ID                  `json:"afk_channel_id"`
+	AfkTimeout                  uint                          `json:"afk_timeout"`
+	EmbedEnabled                bool                          `json:"embed_enabled"`
+	EmbedChannelID              snowflake.ID                  `json:"embed_channel_id"`
 	VerificationLevel           VerificationLvl               `json:"verification_level"`
 	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
 	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
 	MFALevel                    MFALvl                        `json:"mfa_level"`
-	WidgetEnabled               bool                                  `json:"widget_enabled"`    //   |
-	WidgetChannelID             snowflake.ID                          `json:"widget_channel_id"` //   |
-	Roles                       []*Role                               `json:"roles"`
-	Emojis                      []*Emoji                              `json:"emojis"`
-	Features                    []string                              `json:"features"`
-	SystemChannelID             *snowflake.ID                         `json:"system_channel_id,omitempty"` //   |?
+	WidgetEnabled               bool                          `json:"widget_enabled"`    //   |
+	WidgetChannelID             snowflake.ID                  `json:"widget_channel_id"` //   |
+	Roles                       []*Role                       `json:"roles"`
+	Emojis                      []*Emoji                      `json:"emojis"`
+	Features                    []string                      `json:"features"`
+	SystemChannelID             *snowflake.ID                 `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       *Timestamp `json:"joined_at,omitempty"`    // ?*|
-	Large          bool               `json:"large,omitempty"`        // ?*|
-	Unavailable    bool               `json:"unavailable"`            // ?*|
-	MemberCount    uint               `json:"member_count,omitempty"` // ?*|
-	VoiceStates    []*VoiceState      `json:"voice_states,omitempty"` // ?*|
-	Members        []*Member          `json:"members,omitempty"`      // ?*|
-	Channels       []*Channel         `json:"channels,omitempty"`     // ?*|
-	Presences      []*UserPresence    `json:"presences,omitempty"`    // ?*|
-	PresencesMutex sync.RWMutex       `json:"-"`
+	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
+	Large          bool            `json:"large,omitempty"`        // ?*|
+	Unavailable    bool            `json:"unavailable"`            // ?*|
+	MemberCount    uint            `json:"member_count,omitempty"` // ?*|
+	VoiceStates    []*VoiceState   `json:"voice_states,omitempty"` // ?*|
+	Members        []*Member       `json:"members,omitempty"`      // ?*|
+	Channels       []*Channel      `json:"channels,omitempty"`     // ?*|
+	Presences      []*UserPresence `json:"presences,omitempty"`    // ?*|
+	PresencesMutex sync.RWMutex    `json:"-"`
 
-	mu sync.RWMutex `json:"-"`
+	mu sync.RWMutex
 }
 
 //func (g *Guild) EverythingInMemory() bool {
@@ -210,6 +210,7 @@ func (g *Guild) Compare(other *Guild) bool {
 // 	return json.Unmarshal(data, &g.guildJSON)
 // }
 
+// TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
 	var jsonData []byte
 	var err error
@@ -501,7 +502,7 @@ func (g *Guild) DeepCopy() *Guild {
 	guild.Large = g.Large
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
-	guild.PresencesMutex = g.PresencesMutex
+	//guild.PresencesMutex = g.PresencesMutex // TODO: do not copy lock value
 
 	// handle deep copy of slices
 	//TODO-guild: implement deep copying for fields
@@ -536,16 +537,16 @@ type GuildEmbed struct {
 // -------
 // Integration https://discordapp.com/developers/docs/resources/guild#integration-object
 type Integration struct {
-	ID snowflake.ID `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Enabled bool `json:"enabled"`
-	Syncing bool `json:"syncing"`
-	RoleID snowflake.ID `json:"role_id"`
-	ExpireBehavior int `json:"expire_behavior"`
-	ExpireGracePeriod int `json:"expire_grace_period"`
-	User *User `json:"user"`
-	Account *IntegrationAccount `json:"account"`
+	ID                snowflake.ID        `json:"id"`
+	Name              string              `json:"name"`
+	Type              string              `json:"type"`
+	Enabled           bool                `json:"enabled"`
+	Syncing           bool                `json:"syncing"`
+	RoleID            snowflake.ID        `json:"role_id"`
+	ExpireBehavior    int                 `json:"expire_behavior"`
+	ExpireGracePeriod int                 `json:"expire_grace_period"`
+	User              *User               `json:"user"`
+	Account           *IntegrationAccount `json:"account"`
 }
 
 // IntegrationAccount https://discordapp.com/developers/docs/resources/guild#integration-account-object
@@ -558,13 +559,13 @@ type IntegrationAccount struct {
 
 // Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID  snowflake.ID      `json:"guild_id,omitempty"`
-	User     *User             `json:"user"`
-	Nick     string            `json:"nick,omitempty"` // ?|
-	Roles    []snowflake.ID    `json:"roles"`
-	JoinedAt Timestamp `json:"joined_at,omitempty"`
-	Deaf     bool              `json:"deaf"`
-	Mute     bool              `json:"mute"`
+	GuildID  snowflake.ID   `json:"guild_id,omitempty"`
+	User     *User          `json:"user"`
+	Nick     string         `json:"nick,omitempty"` // ?|
+	Roles    []snowflake.ID `json:"roles"`
+	JoinedAt Timestamp      `json:"joined_at,omitempty"`
+	Deaf     bool           `json:"deaf"`
+	Mute     bool           `json:"mute"`
 
 	sync.RWMutex `json:"-"`
 }
@@ -606,11 +607,9 @@ func (m *Member) Update(new *Member) (err error) {
 	return
 }
 
-
 const (
 	EndpointGuild = "/guilds/"
 )
-
 
 type GuildPruneCount struct {
 	Pruned int `json:"pruned"`

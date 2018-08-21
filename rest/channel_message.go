@@ -3,8 +3,8 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
 	"net/http"
 	"strconv"
@@ -238,7 +238,7 @@ func DeleteMessage(client httd.Deleter, chanID, msgID snowflake.ID) (err error) 
 // ReqBulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
 type BulkDeleteMessagesParams struct {
 	Messages []snowflake.ID `json:"messages"`
-	m        sync.RWMutex   `json:"-"`
+	m        sync.RWMutex
 }
 
 func (p *BulkDeleteMessagesParams) tooMany(messages int) (err error) {

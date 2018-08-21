@@ -94,40 +94,40 @@ func NewClient(conf *Config) (*Client, error) {
 type Client struct {
 	sync.RWMutex `json:"-"`
 
-	urlAPIVersion string `json:"-"`
+	urlAPIVersion string
 
 	// URL Websocket URL web socket url
-	url string `json:"-"`
+	url string
 
-	httpClient *http.Client `json:"-"`
+	httpClient *http.Client
 
-	dAPIVersion    int    `json:"-"`
-	dAPIEncoding   string `json:"-"`
-	token          string `json:"-"`
-	sequenceNumber uint   `json:"s"`
+	dAPIVersion    int
+	dAPIEncoding   string
+	token          string
+	sequenceNumber uint
 
-	HeartbeatInterval uint         `json:"heartbeat_interval"`
-	heartbeatAcquired time.Time    `json:"-"`
+	HeartbeatInterval uint `json:"heartbeat_interval"`
+	heartbeatAcquired time.Time
 	Trace             []string     `json:"_trace"`
 	SessionID         string       `json:"session_id"`
 	ShardCount        uint         `json:"shard_count"`
 	ShardID           snowflake.ID `json:"shard_id"`
 
-	disconnected  chan struct{}          `json:"-"`
-	operationChan chan *gatewayEvent     `json:"-"`
-	eventChans    map[string]chan []byte `json:"-"`
-	sendChan      chan *gatewayPayload   `json:"-"`
+	disconnected  chan struct{}
+	operationChan chan *gatewayEvent
+	eventChans    map[string]chan []byte
+	sendChan      chan *gatewayPayload
 	iEventChan    chan EventInterface
 
 	//Myself         *user.User  `json:"user"`
 	//MyselfSettings interface{} `json:"user_settings"`
 
 	// websocket connection
-	conn    *websocket.Conn `json:"-"`
-	wsMutex sync.Mutex      `json:"-"` // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
+	conn    *websocket.Conn
+	wsMutex sync.Mutex // https://hackernoon.com/dancing-with-go-s-mutexes-92407ae927bf
 
 	// heartbeat mutex keeps us from creating another pulser
-	pulseMutex sync.Mutex `json:"-"`
+	pulseMutex sync.Mutex
 }
 
 func (c *Client) String() string {

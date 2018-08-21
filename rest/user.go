@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/andersfylling/disgord/rest/httd"
+	"compress/gzip"
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
 	"io"
-	"compress/gzip"
 )
 
 const (

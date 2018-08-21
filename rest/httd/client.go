@@ -2,15 +2,15 @@ package httd
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-	"io/ioutil"
-	"compress/gzip"
 )
 
 const (
@@ -21,7 +21,64 @@ const (
 	UserAgentFormat     = "DiscordBot (%s, %s) %s"
 
 	HTTPCodeRateLimit int = 429
+
+	ContentEncoding = "Content-Encoding"
+	GZIPCompression = "gzip"
 )
+
+type Requester interface {
+	Request(req *Request) (resp *http.Response, body []byte, err error)
+	Get(req *Request) (resp *http.Response, body []byte, err error)
+	Post(req *Request) (resp *http.Response, body []byte, err error)
+	Put(req *Request) (resp *http.Response, body []byte, err error)
+	Patch(req *Request) (resp *http.Response, body []byte, err error)
+	Delete(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type Getter interface {
+	Get(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type Poster interface {
+	Post(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type Puter interface {
+	Put(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type Patcher interface {
+	Patch(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type Deleter interface {
+	Delete(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+func (c *Client) Get(req *Request) (resp *http.Response, body []byte, err error) {
+	req.Method = http.MethodGet
+	return c.Request(req)
+}
+
+func (c *Client) Post(req *Request) (resp *http.Response, body []byte, err error) {
+	req.Method = http.MethodPost
+	return c.Request(req)
+}
+
+func (c *Client) Put(req *Request) (resp *http.Response, body []byte, err error) {
+	req.Method = http.MethodPut
+	return c.Request(req)
+}
+
+func (c *Client) Patch(req *Request) (resp *http.Response, body []byte, err error) {
+	req.Method = http.MethodPatch
+	return c.Request(req)
+}
+
+func (c *Client) Delete(req *Request) (resp *http.Response, body []byte, err error) {
+	req.Method = http.MethodDelete
+	return c.Request(req)
+}
 
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
 func SupportsDiscordAPIVersion(version int) bool {
@@ -67,8 +124,8 @@ func NewClient(conf *Config) *Client {
 	authorization := fmt.Sprintf(AuthorizationFormat, conf.BotToken)
 	userAgent := fmt.Sprintf(UserAgentFormat, conf.UserAgentSourceURL, conf.UserAgentVersion, conf.UserAgentExtra)
 	header := map[string][]string{
-		"Authorization": {authorization},
-		"User-Agent":    {userAgent},
+		"Authorization":   {authorization},
+		"User-Agent":      {userAgent},
 		"Accept-Encoding": {"gzip"},
 	}
 
@@ -116,62 +173,14 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 }
 
-func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
-	var jsonParamsReader io.Reader
-	if r.JSONParams != nil {
-		jsonParamsReader, err = convertStructToIOReader(r.JSONParams)
-		if err != nil {
-			return
-		}
-	}
-
-	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
-	if err != nil {
-		return
-	}
-
-	// check if rate limited
-	timeout := int64(0)
-
-	// check global rate limit
-	if c.rateLimit.global.remaining == 0 {
-		timeout = c.rateLimit.global.timeout()
-	}
-
-	// route specific rate limit
-	if r.Ratelimiter != "" && timeout == 0 {
-		timeout = c.rateLimit.RateLimitTimeout(r.Ratelimiter)
-	}
-
-	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.
-	if timeout > 0 {
-		// wait until rate limit is over.
-		// exception; if the rate limit timeout exceeds the http client timeout, return error.
-		//
-		// if cancelRequestWhenRateLimited, is activated
-		deadtime := time.Millisecond * time.Duration(timeout)
-		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= deadtime) {
-			err = errors.New("rate limited")
-			// TODO: add the timeout to the return
-			return
-		}
-
-		time.Sleep(deadtime)
-	}
-
-	req.Header = c.reqHeader
-	resp, err = c.httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
+func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {
 	buffer, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	if resp.Header.Get("Content-Encoding") == "gzip" {
+	switch resp.Header.Get(ContentEncoding) {
+	case GZIPCompression:
 		b := bytes.NewBuffer(buffer)
 
 		var r io.Reader
@@ -187,12 +196,49 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 		}
 
 		body = resB.Bytes()
-	} else {
+	default:
 		body = buffer
 	}
 
+	return
+}
+
+func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
+	var jsonParamsReader io.Reader
+	if r.JSONParams != nil {
+		jsonParamsReader, err = convertStructToIOReader(r.JSONParams)
+		if err != nil {
+			return
+		}
+	}
+
+	// check the rate limiter for how long we must wait before sending the request
+	deadtime := c.RateLimiter().WaitTime(r)
+	if deadtime.Nanoseconds() > 0 {
+		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= deadtime) {
+			err = errors.New("rate limited")
+			// TODO: add the timeout to the return?
+			return
+		}
+
+		time.Sleep(deadtime)
+	}
+
+	// send request
+	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
+	if err != nil {
+		return
+	}
+	req.Header = c.reqHeader
+	resp, err = c.httpClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	body, err = c.decodeResponseBody(resp)
+
 	// update rate limits
-	c.rateLimit.HandleResponse(r.Ratelimiter, resp, body)
+	c.RateLimiter().UpdateRegisters(r.Ratelimiter, resp, body)
 
 	return
 }

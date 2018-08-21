@@ -80,7 +80,7 @@ type ChannelPinsUpdateBox struct {
 
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
 	LastPinTimestamp resource.Timestamp `json:"last_pin_timestamp,omitempty"` // ?|
-	Ctx              context.Context   `json:"-"`
+	Ctx              context.Context    `json:"-"`
 }
 
 // GuildCreateBox	This event can be sent in three different scenarios:

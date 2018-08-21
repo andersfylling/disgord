@@ -1,26 +1,24 @@
 package rest
 
 import (
-	"github.com/andersfylling/disgord/rest/httd"
 	"encoding/json"
-	"github.com/andersfylling/snowflake"
-	. "github.com/andersfylling/disgord/resource"
 	"errors"
+	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
+	"github.com/andersfylling/snowflake"
 	"net/http"
 )
 
 const (
-	EndpointWebhooks = "/webhooks"
-	EndpointSlackWebhook = "/slack"
+	EndpointWebhooks      = "/webhooks"
+	EndpointSlackWebhook  = "/slack"
 	EndpointGitHubWebhook = "/github"
 )
-
-
 
 // CreateWebhookParams json params for the create webhook rest request
 // avatar string: https://discordapp.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
-	Name string `json:"name"` // name of the webhook (2-32 characters)
+	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 }
 
@@ -127,7 +125,6 @@ func GetWebhookWithToken(client httd.Getter, webhookID snowflake.ID, token strin
 	return
 }
 
-
 // ModifyWebhook [PATCH]    Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 //                          Returns the updated webhook object on success.
 // Endpoint                 /webhooks/{webhook.id}
@@ -154,7 +151,6 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 	err = json.Unmarshal(body, &ret)
 	return
 }
-
 
 // ModifyWebhookWithToken [PATCH]   Same as ModifyWebhook, except this call does not require authentication,
 //                                  does not accept a channel_id parameter in the body, and does not return
@@ -194,6 +190,7 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 func DeleteWebhook(client httd.Deleter, webhookID snowflake.ID) (err error) {
 	return DeleteWebhookWithToken(client, webhookID, "")
 }
+
 // DeleteWebhookWithToken [DELETE]  Same as DeleteWebhook, except this call does not require authentication.
 // Endpoint                         /webhooks/{webhook.id}/{webhook.token}
 // Rate limiter                     /webhooks
@@ -221,24 +218,23 @@ func DeleteWebhookWithToken(client httd.Deleter, webhookID snowflake.ID, token s
 	return
 }
 
-
 func NewExecuteWebhookParams(id snowflake.ID, token string) (ret *ExecuteWebhookParams, err error) {
 	return &ExecuteWebhookParams{
 		WebhookID: id,
-		Token: token,
+		Token:     token,
 	}, nil
 }
 
 type ExecuteWebhookParams struct {
 	WebhookID snowflake.ID `json:"-"`
-	Token string `json:"-"`
+	Token     string       `json:"-"`
 
-	Content string `json:"content"`
-	Username string `json:"username"`
-	AvatarURL string `json:"avatar_url"`
-	TTS bool `json:"tts"`
-	File interface{} `json:"file"`
-	Embeds []*ChannelEmbed `json:"embeds"`
+	Content   string          `json:"content"`
+	Username  string          `json:"username"`
+	AvatarURL string          `json:"avatar_url"`
+	TTS       bool            `json:"tts"`
+	File      interface{}     `json:"file"`
+	Embeds    []*ChannelEmbed `json:"embeds"`
 }
 
 // ExecuteWebhook [POST]    Trigger a webhook in Discord.

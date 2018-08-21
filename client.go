@@ -8,12 +8,12 @@ import (
 
 	"errors"
 	"github.com/andersfylling/disgord/discordws"
-	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/state"
 	"github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
-	"github.com/andersfylling/disgord/rest"
 )
 
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/snowflake"
 )
 
