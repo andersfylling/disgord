@@ -56,11 +56,10 @@ func TestDecodingResponseBodyWithGZIP(t *testing.T) {
 	expected := "9ng574g8573g394g3874gf837g"
 	client := &Client{}
 	resp := &http.Response{
-		Body: ioutil.NopCloser(bytes.NewBufferString(expected)),
-		Header: map[string][]string{
-			ContentEncoding: {GZIPCompression},
-		},
+		Body:   ioutil.NopCloser(bytes.NewBufferString(expected)),
+		Header: make(http.Header, 0),
 	}
+	resp.Header.Set(ContentEncoding, GZIPCompression)
 
 	// expect to fail as body is not gzip compressed yet
 	_, err := client.decodeResponseBody(resp)

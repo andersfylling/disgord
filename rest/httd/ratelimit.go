@@ -14,7 +14,7 @@ import (
 const (
 	XRateLimitLimit      = "X-RateLimit-Limit"
 	XRateLimitRemaining  = "X-RateLimit-Remaining"
-	XRateLimitReset      = "X-RateLimit-Reset"
+	XRateLimitReset      = "X-RateLimit-Reset" // is converted from seconds to milliseconds!
 	XRateLimitGlobal     = "X-RateLimit-Global"
 	RateLimitRetryAfter  = "Retry-After"
 	GlobalRateLimiterKey = ""
@@ -83,6 +83,8 @@ func GlobalRateLimitSafe(resp *http.Response, body *ratelimitBody) bool {
 }
 
 func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo, err error) {
+	info = &RateLimitInfo{}
+
 	// extract header information
 	limitStr := resp.Header.Get(XRateLimitLimit)
 	remainingStr := resp.Header.Get(XRateLimitRemaining)
@@ -203,23 +205,24 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 
 // TODO: rewrite
 func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []byte) {
-
 	info, err := ExtractRateLimitInfo(resp, content)
 	if err != nil {
 		return // TODO: logging
 	}
 
+	// select bucket
 	// TODO: what if "key" is an endpoint with a global rate limiter only?
+	var bucket *Bucket
 	if info.Global {
-		r.global.mu.Lock()
-		r.global.update(info)
-		r.global.mu.Unlock()
+		bucket = r.global
 	} else {
-		bucket := r.Bucket(key)
-		bucket.mu.Lock()
-		bucket.update(info)
-		bucket.mu.Unlock()
+		bucket = r.Bucket(key)
 	}
+
+	// update
+	bucket.mu.Lock()
+	bucket.update(info)
+	bucket.mu.Unlock()
 }
 
 // ---------------------
@@ -236,7 +239,14 @@ type Bucket struct {
 func (b *Bucket) update(info *RateLimitInfo) {
 	b.limit = uint64(info.Limit)
 	b.remaining = uint64(info.Remaining)
-	b.reset = info.Reset + info.RetryAfter
+	b.reset = info.Reset
+
+	// assumption: Retry-After and X-RateLimit-Reset points to the same time.
+	// info.Reset is converted to milliseconds when the type is converted from
+	// string to int64.
+	if info.Reset == 0 && info.RetryAfter > 0 {
+		b.reset = (time.Now().UnixNano() / 1000) + info.RetryAfter
+	}
 }
 
 func (b *Bucket) limited() bool {

@@ -108,6 +108,9 @@ INFO[2018-02-16 19:07:28] Closing Discord gateway connection            lib="Dis
 INFO[2018-02-16 19:07:30] Disconnected                                  lib="Disgord v0.0.0"
 ```
 
+## WARNING
+All the REST endpoints are implemented, but may not exist on the interface yet. Create a Disgord session/client and use the REST functions found in the rest package directly (for now).
+
 ## Code flow
 
 The main design takes in a discord event and dispatches the event to a channel/callback suited for the event type. The channel can be retrieved and the callbacks set by the Session interface: `Session.Event.ChannelDeleteChan()`, `Session.Event.AddHandler(event.GuildCreateKey, func(...){})`
