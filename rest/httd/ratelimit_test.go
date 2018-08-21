@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func createErrMsg(t string, a, b int) error {
@@ -49,7 +50,7 @@ func TestExtractRateLimitInfo(t *testing.T) {
 func TestExtractRateLimitInfoGlobal(t *testing.T) {
 	limit := 2
 	remaining := 4
-	reset := int64(456344)
+	reset := int64(time.Now().Nanosecond() / 100) // just a large epoch ms
 
 	resp := &http.Response{
 		Header: make(http.Header, 4),
@@ -67,5 +68,27 @@ func TestExtractRateLimitInfoGlobal(t *testing.T) {
 	verifyRateLimitInfo(t, info, limit, remaining, reset)
 	if !info.Global {
 		t.Error("rate limit is not registered as global even though it is global")
+	}
+}
+
+func TestExtractRateLimitGlobal(t *testing.T) {
+	limit := 2
+	remaining := 4
+	reset := int64(time.Now().UnixNano()) // just a large epoch ms
+
+	resp := &http.Response{
+		Header:     make(http.Header, 4),
+		StatusCode: http.StatusTooManyRequests,
+	}
+	resp.Header.Set(XRateLimitLimit, strconv.Itoa(limit))
+	resp.Header.Set(XRateLimitRemaining, strconv.Itoa(remaining))
+	resp.Header.Set(XRateLimitReset, strconv.FormatInt(reset, 10))
+	resp.Header.Set(XRateLimitGlobal, "true")
+
+	rl := NewRateLimit()
+	rl.UpdateRegisters("something", resp, []byte(""))
+
+	if !rl.RateLimited("random") {
+		t.Error("was not rate limited on a global scale")
 	}
 }

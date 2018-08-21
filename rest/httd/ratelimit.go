@@ -117,11 +117,13 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 			return
 		}
 	}
-	info.Global = GlobalRateLimit(resp) // useless? assuming that global info exists when exceeded an rate limit
 
 	// the body only contains information when a rate limit is exceeded
-	if RateLimited(resp) {
+	if RateLimited(resp) && len(body) > 0 {
 		err = json.Unmarshal(body, &info)
+	}
+	if !info.Global && GlobalRateLimit(resp) {
+		info.Global = true
 	}
 	return
 }
@@ -181,11 +183,19 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 }
 
 func (r *RateLimit) RateLimitTimeout(key string) int64 {
+	if r.global.limited() {
+		return r.global.timeout()
+	}
+
 	bucket := r.Bucket(key)
 	return bucket.timeout()
 }
 
 func (r *RateLimit) RateLimited(key string) bool {
+	if r.global.limited() {
+		return true
+	}
+
 	bucket := r.Bucket(key)
 	return bucket.limited()
 }
@@ -253,7 +263,8 @@ func (b *Bucket) limited() bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	return b.reset > (time.Now().UnixNano() / 1000)
+	now := time.Now().UnixNano() / 1000
+	return b.reset > now
 }
 
 func (b *Bucket) timeout() int64 {

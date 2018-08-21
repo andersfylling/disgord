@@ -193,7 +193,7 @@ type Guild struct {
 	Presences      []*UserPresence `json:"presences,omitempty"`    // ?*|
 	PresencesMutex sync.RWMutex    `json:"-"`
 
-	mu sync.RWMutex `json:"-"`
+	mu sync.RWMutex
 }
 
 //func (g *Guild) EverythingInMemory() bool {
@@ -210,6 +210,7 @@ func (g *Guild) Compare(other *Guild) bool {
 // 	return json.Unmarshal(data, &g.guildJSON)
 // }
 
+// TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
 	var jsonData []byte
 	var err error
@@ -501,7 +502,7 @@ func (g *Guild) DeepCopy() *Guild {
 	guild.Large = g.Large
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
-	guild.PresencesMutex = g.PresencesMutex
+	//guild.PresencesMutex = g.PresencesMutex // TODO: do not copy lock value
 
 	// handle deep copy of slices
 	//TODO-guild: implement deep copying for fields

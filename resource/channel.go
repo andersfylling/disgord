@@ -69,7 +69,7 @@ type Channel struct {
 	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 
-	mu sync.RWMutex `json:"-"`
+	mu sync.RWMutex
 }
 type PartialChannel = Channel
 
@@ -83,8 +83,8 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 func (c *Channel) Replicate(channel *Channel, recipients []*User) {
-	// TODO: mutex is copied
 	*c = *channel
+	c.mu = sync.RWMutex{}
 
 	// WARNING: DM channels holds users. These should be fetched from cache.
 	if recipients != nil && len(recipients) > 0 {
