@@ -117,7 +117,7 @@ type EditChannelPermissionsParams struct {
 //                                  Returns a 204 empty response on success. For more information about
 //                                  permissions, see permissions.
 // Endpoint                         /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}/permissions
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 // Reviewed                         2018-06-07
 // Comment                          -
@@ -130,7 +130,7 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID,
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(chanID),
+		Ratelimiter: httd.RatelimitChannelPermissions(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/permissions/" + overwriteID.String(),
 	}
 	resp, _, err := client.Put(details)
@@ -148,7 +148,7 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID,
 // ReqGetChannelInvites [GET] Returns a list of invite objects (with invite metadata) for the channel.
 //                            Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
 // Endpoint                   /channels/{channel.id}/invites
-// Rate limiter [MAJOR]       /channels/{channel.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}/invites
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 // Reviewed                   2018-06-07
 // Comment                    -
@@ -159,7 +159,7 @@ func GetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invit
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelInvites(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
 	_, body, err := client.Get(details)
@@ -185,7 +185,7 @@ type CreateChannelInvitesParams struct {
 //                                any fields, you still have to send an empty JSON object ({}).
 //                                Returns an invite object.
 // Endpoint                       /channels/{channel.id}/invites
-// Rate limiter [MAJOR]           /channels/{channel.id}
+// Rate limiter [MAJOR]           /channels/{channel.id}/invites
 // Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 // Reviewed                       2018-06-07
 // Comment                        -
@@ -199,7 +199,7 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelInvites(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/invites",
 	}
 	_, body, err := client.Post(details)
@@ -217,7 +217,7 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 //                                      permissions, see permissions:
 //                                      https://discordapp.com/developers/docs/topics/permissions#permissions
 // Endpoint                             /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]                 /channels/{channel.id}
+// Rate limiter [MAJOR]                 /channels/{channel.id}/permissions
 // Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 // Reviewed                             2018-06-07
 // Comment                              -
@@ -230,7 +230,7 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowfla
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelPermissions(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/permissions/" + overwriteID.String(),
 	}
 	resp, _, err := client.Delete(details)
@@ -251,14 +251,14 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowfla
 //                                  to let the user know that the bot is processing their message. Returns a 204
 //                                  empty response on success. Fires a Typing Start Gateway event.
 // Endpoint                         /channels/{channel.id}/typing
-// Rate limiter [MAJOR]             /channels/{channel.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}/typing
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
 // Reviewed                         2018-06-10
 // Comment                          -
 func TriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err error) {
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelTyping(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/typing",
 	}
 	resp, _, err := client.Post(details)
@@ -275,14 +275,14 @@ func TriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err err
 
 // ReqGetPinnedMessages [GET] Returns all pinned messages in the channel as an array of message objects.
 // Endpoint                   /channels/{channel.id}/pins
-// Rate limiter [MAJOR]       /channels/{channel.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}/pins
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
 // Reviewed                   2018-06-10
 // Comment                    -
 func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Message, err error) {
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelPins(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pins",
 	}
 	_, body, err := client.Get(details)
@@ -297,14 +297,14 @@ func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Messa
 // ReqAddPinnedChannelMessage [GET] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 //                                  Returns a 204 empty response on success.
 // Endpoint                         /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}/pins
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
 // Reviewed                         2018-06-10
 // Comment                          -
 func AddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (err error) {
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelPins(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pints/" + msgID.String(),
 	}
 	resp, _, err := client.Put(details)
@@ -323,7 +323,7 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (
 //                                        permission. Returns a 204 empty response on success.
 //                                        Returns a 204 empty response on success.
 // Endpoint                               /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]                   /channels/{channel.id}
+// Rate limiter [MAJOR]                   /channels/{channel.id}/pins
 // Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
 // Reviewed                               2018-06-10
 // Comment                                -
@@ -336,7 +336,7 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelPins(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/pins/" + msgID.String(),
 	}
 	resp, _, err := client.Delete(details)
@@ -359,7 +359,7 @@ type GroupDMAddRecipientParams struct {
 // ReqGroupDMAddRecipient [PUT] Adds a recipient to a Group DM using their access token.
 //                              Returns a 204 empty response on success.
 // Endpoint                     /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}
+// Rate limiter [MAJOR]         /channels/{channel.id}/recipients
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 // Reviewed                     2018-06-10
 // Comment                      -
@@ -372,7 +372,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, para
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelRecipients(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
 	resp, _, err := client.Put(details)
@@ -390,7 +390,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, para
 // ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
 //                                    Returns a 204 empty response on success.
 // Endpoint                           /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]               /channels/{channel.id}
+// Rate limiter [MAJOR]               /channels/{channel.id}/recipients
 // Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 // Reviewed                           2018-06-10
 // Comment                            -
@@ -403,7 +403,7 @@ func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID)
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelRecipients(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
 	}
 	resp, _, err := client.Delete(details)

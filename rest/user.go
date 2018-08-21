@@ -131,7 +131,7 @@ func (params *GetCurrentUserGuildsParams) getQueryString() string {
 // ReqGetCurrentUserGuilds [GET]  Returns a list of partial guild objects the current user is a member of.
 //                                Requires the guilds OAuth2 scope.
 // Endpoint                       /users/@me/guilds
-// Rate limiter                   /users
+// Rate limiter                   /users TODO: is this correct?
 // Discord documentation          https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
 // Reviewed                       2018-06-10
 // Comment                        This endpoint returns 100 guilds by default, which is the maximum number of
@@ -153,7 +153,7 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 
 // ReqLeaveGuild [DELETE] Leave a guild. Returns a 204 empty response on success.
 // Endpoint               /users/@me/guilds/{guild.id}
-// Rate limiter           /users
+// Rate limiter           /users TODO: is this correct?
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#leave-guild
 // Reviewed               2018-06-10
 // Comment                -
@@ -176,7 +176,7 @@ func LeaveGuild(client httd.Deleter, guildID snowflake.ID) (err error) {
 
 // ReqGetUserDMs [GET]    Returns a list of DM channel objects.
 // Endpoint               /users/@me/channels
-// Rate limiter           /users
+// Rate limiter           /users TODO: is this correct?
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#get-user-dms
 // Reviewed               2018-06-10
 // Comment                -
@@ -200,7 +200,7 @@ type BodyUserCreateDM struct {
 
 // ReqGetUserDMs [POST]   Create a new DM channel with a user. Returns a DM channel object.
 // Endpoint               /users/@me/channels
-// Rate limiter           /users
+// Rate limiter           /users TODO: is this correct?
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#create-dm
 // Reviewed               2018-06-10
 // Comment                -
@@ -228,7 +228,7 @@ type CreateGroupDMParams struct {
 
 // ReqCreateGroupDM [POST]  Create a new group DM channel with multiple users. Returns a DM channel object.
 // Endpoint                 /users/@me/channels
-// Rate limiter             /users
+// Rate limiter             /users TODO: is this correct?
 // Discord documentation    https://discordapp.com/developers/docs/resources/user#create-group-dm
 // Reviewed                 2018-06-10
 // Comment                  -
@@ -249,7 +249,7 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 
 // ReqCreateGroupDM [GET] Returns a list of connection objects. Requires the connections OAuth2 scope.
 // Endpoint               /users/@me/connections
-// Rate limiter           /users
+// Rate limiter           /users TODO: is this correct?
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#get-user-connections
 // Reviewed               2018-06-10
 // Comment                -

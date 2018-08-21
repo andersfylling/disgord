@@ -11,13 +11,13 @@ import (
 	"github.com/andersfylling/snowflake"
 )
 
-// ReqCreateReaction [PUT]  Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+// CreateReaction [PUT]     Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 //                          permission to be present on the current user. Additionally, if nobody else has
 //                          reacted to the message using this emoji, this endpoint requires the 'ADD_REACTIONS'
 //                          permission to be present on the current user. Returns a 204 empty response on success.
 //                          The maximum request size when sending a message is 8MB.
 // Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]     /channels/{channel.id}
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages TODO: I have no idea what the key is
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#create-reaction
 // Reviewed                 2018-06-07
 // Comment                  -
@@ -47,7 +47,7 @@ func CreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji 
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
 	_, body, err := client.Put(details)
@@ -59,14 +59,13 @@ func CreateReaction(client httd.Puter, channelID, messageID snowflake.ID, emoji 
 	return
 }
 
-// ReqDeleteOwnReaction [DELETE]  Delete a reaction the current user has made for the message. Returns a 204
-//                                empty response on success.
-// Endpoint                       /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]           /channels/{channel.id}
-// Discord documentation          https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
-// Reviewed                       2018-06-07
-// Comment                        -
-// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+// DeleteOwnReaction [DELETE]   Delete a reaction the current user has made for the message. Returns a 204
+//                              empty response on success.
+// Endpoint                     /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]         /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
+// Reviewed                     2018-06-07
+// Comment                      emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
 func DeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -91,7 +90,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, e
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/@me",
 	}
 	resp, _, err := client.Delete(details)
@@ -106,14 +105,13 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID snowflake.ID, e
 	return
 }
 
-// ReqCreateReaction [DELETE] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
-//                            permission to be present on the current user. Returns a 204 empty response on success.
-// Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]       /channels/{channel.id}
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
-// Reviewed                   2018-06-07
-// Comment                    -
-// emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
+// CreateReaction [DELETE]  Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
+//                          permission to be present on the current user. Returns a 204 empty response on success.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+// Reviewed                 2018-06-07
+// Comment                  emoji either unicode (string) or *Emoji with an snowflake ID if it's custom
 func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowflake.ID, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -138,7 +136,7 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID snowfl
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + "/" + userID.String(),
 	}
 	resp, _, err := client.Delete(details)
@@ -185,7 +183,7 @@ func (params *GetReactionParams) getQueryString() string {
 // ReqGetReaction [GET]   Get a list of users that reacted with this emoji. Returns an array of user
 //                        objects on success.
 // Endpoint               /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
-// Rate limiter [MAJOR]   /channels/{channel.id}
+// Rate limiter [MAJOR]   /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
 // Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-reactions
 // Reviewed               2018-06-07
 // Comment                -
@@ -219,7 +217,7 @@ func GetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji in
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions/" + emojiCode + query,
 	}
 	_, body, err := client.Get(details)
@@ -234,7 +232,7 @@ func GetReaction(client httd.Getter, channelID, messageID snowflake.ID, emoji in
 // ReqCreateReaction [DELETE] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 //                            permission to be present on the current user.
 // Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions
-// Rate limiter [MAJOR]       /channels/{channel.id}
+// Rate limiter [MAJOR]       /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
 // Reviewed                   2018-06-07
 // Comment                    -
@@ -248,7 +246,7 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID snowflake.ID) 
 	}
 
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages/" + messageID.String() + "/reactions",
 	}
 	resp, _, err := client.Delete(details)

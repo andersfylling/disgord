@@ -31,13 +31,70 @@ var majorEndpointPrefixes = []string{
 func RatelimitChannel(id snowflake.ID) string {
 	return "c:" + id.String()
 }
+func RatelimitChannelPermissions(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":perm"
+}
+func RatelimitChannelInvites(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":i"
+}
+func RatelimitChannelTyping(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":t"
+}
+func RatelimitChannelPins(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":pins"
+}
+func RatelimitChannelRecipients(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":r"
+}
+func RatelimitChannelMessages(id snowflake.ID) string {
+	return RatelimitChannel(id) + ":m"
+}
+func RatelimitChannelMessagesDelete(id snowflake.ID) string {
+	return RatelimitChannelMessages(id) + "_"
+}
+func RatelimitChannelWebhooks(id snowflake.ID) string {
+	return RatelimitChannelMessages(id) + ":w"
+}
 
 func RatelimitGuild(id snowflake.ID) string {
 	return "g:" + id.String()
 }
+func RatelimitGuildAuditLogs(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":a-l"
+}
+func RatelimitGuildEmbed(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":e"
+}
+func RatelimitGuildVanityURL(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":vurl"
+}
+func RatelimitGuildChannels(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":c"
+}
+func RatelimitGuildMembers(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":m"
+}
+func RatelimitGuildBans(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":b"
+}
+func RatelimitGuildRoles(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":r"
+}
+func RatelimitGuildRegions(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":regions"
+}
+func RatelimitGuildIntegrations(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":i"
+}
+func RatelimitGuildInvites(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":inv"
+}
+func RatelimitGuildPrune(id snowflake.ID) string {
+	return RatelimitGuild(id) + ":p"
+}
 
-func RatelimitWebhook() string {
-	return "wh"
+func RatelimitWebhook(id snowflake.ID) string {
+	return "wh:" + id.String()
 }
 
 func RatelimitUsers() string {
