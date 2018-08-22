@@ -113,6 +113,12 @@ func GetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (r
 	return
 }
 
+func NewCreateMessageByString(content string) *CreateMessageParams {
+	return &CreateMessageParams{
+		Content: content,
+	}
+}
+
 type CreateMessageParams struct {
 	Content     string        `json:"content"`
 	Nonce       snowflake.ID  `json:"nonce,omitempty"`
