@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// eventHandler Takes a incoming event from teh discordws package, parses it, and sends
+// eventHandler Takes a incoming event from the discordws package, parses it, and sends
 // trigger requests to the event dispatcher and state cacher.
 func (c *Client) eventHandler() {
 	for {

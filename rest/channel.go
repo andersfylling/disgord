@@ -178,16 +178,16 @@ type CreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// ReqCreateChannelInvites [POST] Create a new invite object for the channel. Only usable for guild channels.
-//                                Requires the CREATE_INSTANT_INVITE permission. All JSON paramaters for this
-//                                route are optional, however the request body is not. If you are not sending
-//                                any fields, you still have to send an empty JSON object ({}).
-//                                Returns an invite object.
-// Endpoint                       /channels/{channel.id}/invites
-// Rate limiter [MAJOR]           /channels/{channel.id}/invites
-// Discord documentation          https://discordapp.com/developers/docs/resources/channel#create-channel-invite
-// Reviewed                       2018-06-07
-// Comment                        -
+// CreateChannelInvites [POST] Create a new invite object for the channel. Only usable for guild channels.
+//                             Requires the CREATE_INSTANT_INVITE permission. All JSON parameters for this
+//                             route are optional, however the request body is not. If you are not sending
+//                             any fields, you still have to send an empty JSON object ({}).
+//                             Returns an invite object.
+// Endpoint                    /channels/{channel.id}/invites
+// Rate limiter [MAJOR]        /channels/{channel.id}/invites
+// Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-channel-invite
+// Reviewed                    2018-06-07
+// Comment                     -
 func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *CreateChannelInvitesParams) (ret *Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -210,16 +210,16 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 	return
 }
 
-// ReqDeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
-//                                      Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                                      Returns a 204 empty response on success. For more information about
-//                                      permissions, see permissions:
-//                                      https://discordapp.com/developers/docs/topics/permissions#permissions
-// Endpoint                             /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]                 /channels/{channel.id}/permissions
-// Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
-// Reviewed                             2018-06-07
-// Comment                              -
+// DeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
+//                                   Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
+//                                   Returns a 204 empty response on success. For more information about
+//                                   permissions, see permissions:
+//                                   https://discordapp.com/developers/docs/topics/permissions#permissions
+// Endpoint                          /channels/{channel.id}/permissions/{overwrite.id}
+// Rate limiter [MAJOR]              /channels/{channel.id}/permissions
+// Discord documentation             https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
+// Reviewed                          2018-06-07
+// Comment                           -
 func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")

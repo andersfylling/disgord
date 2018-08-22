@@ -19,26 +19,26 @@ type AuditLogParams struct {
 
 // getQueryString this ins't really pretty, but it works.
 func (params *AuditLogParams) getQueryString() string {
-	seperator := "?"
+	separator := "?"
 	query := ""
 
 	if !params.UserID.Empty() {
-		query += seperator + "user_id=" + params.UserID.String()
-		seperator = "&"
+		query += separator + "user_id=" + params.UserID.String()
+		separator = "&"
 	}
 
 	if params.ActionType > 0 {
-		query += seperator + "action_type=" + strconv.FormatUint(uint64(params.ActionType), 10)
-		seperator = "&"
+		query += separator + "action_type=" + strconv.FormatUint(uint64(params.ActionType), 10)
+		separator = "&"
 	}
 
 	if !params.Before.Empty() {
-		query += seperator + "before=" + params.Before.String()
-		seperator = "&"
+		query += separator + "before=" + params.Before.String()
+		separator = "&"
 	}
 
 	if params.Limit > 0 {
-		query += seperator + "limit=" + strconv.Itoa(params.Limit)
+		query += separator + "limit=" + strconv.Itoa(params.Limit)
 	}
 
 	return query

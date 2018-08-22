@@ -65,7 +65,7 @@ type Channel struct {
 	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
 	Icon                 string                `json:"icon,omitempty"`                  // ?|?, pointer
 	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
-	ApplicationID        snowflake.ID          `json:"applicaiton_id,omitempty"`        // ?|
+	ApplicationID        snowflake.ID          `json:"application_id,omitempty"`        // ?|
 	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 

@@ -159,21 +159,21 @@ type GetReactionParams struct {
 
 // getQueryString this ins't really pretty, but it works.
 func (params *GetReactionParams) getQueryString() string {
-	seperator := "?"
+	separator := "?"
 	query := ""
 
 	if !params.Before.Empty() {
-		query += seperator + params.Before.String()
-		seperator = "&"
+		query += separator + params.Before.String()
+		separator = "&"
 	}
 
 	if !params.After.Empty() {
-		query += seperator + params.After.String()
-		seperator = "&"
+		query += separator + params.After.String()
+		separator = "&"
 	}
 
 	if params.Limit > 0 {
-		query += seperator + strconv.Itoa(params.Limit)
+		query += separator + strconv.Itoa(params.Limit)
 	}
 
 	return query

@@ -50,7 +50,7 @@ func NewDispatch() *Dispatch {
 		listenOnceOnly: make(map[string][]int),
 	}
 
-	// make sure every channel has a reciever to avoid deadlock
+	// make sure every channel has a receiver to avoid deadlock
 	// hack...
 	dispatcher.alwaysListenToChans()
 
