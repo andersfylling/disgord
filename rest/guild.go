@@ -519,16 +519,16 @@ type CreateGuildBanParams struct {
 
 // getQueryString this ins't really pretty, but it works.
 func (params *CreateGuildBanParams) getQueryString() string {
-	seperator := "?"
+	separator := "?"
 	query := ""
 
 	if params.DeleteMessageDays > 0 {
-		query += seperator + "delete_message_days=" + strconv.Itoa(params.DeleteMessageDays)
-		seperator = "&"
+		query += separator + "delete_message_days=" + strconv.Itoa(params.DeleteMessageDays)
+		separator = "&"
 	}
 
 	if params.Reason != "" {
-		query += seperator + "reason=" + params.Reason
+		query += separator + "reason=" + params.Reason
 	}
 
 	return query
@@ -727,11 +727,11 @@ type GuildPruneParams struct {
 
 // getQueryString this ins't really pretty, but it works.
 func (params *GuildPruneParams) getQueryString() string {
-	seperator := "?"
+	separator := "?"
 	query := ""
 
 	if params.Days > 0 {
-		query += seperator + "days=" + strconv.Itoa(params.Days)
+		query += separator + "days=" + strconv.Itoa(params.Days)
 	}
 
 	return query

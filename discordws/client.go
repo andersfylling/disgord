@@ -139,7 +139,7 @@ func (c *Client) Dead() bool {
 	return c.conn == nil
 }
 
-// Routed checks if the client has recieved the root endpoint for discord API communication
+// Routed checks if the client has received the root endpoint for discord API communication
 func (c *Client) Routed() bool {
 	return c.url != ""
 }

@@ -127,7 +127,7 @@ func (c *Client) opHandlerEvt(gp *gatewayEvent) {
 
 // operation handler demultiplexer
 func (c *Client) operationHandlers() {
-	logrus.Debug("Ready to recieve operation codes...")
+	logrus.Debug("Ready to receive operation codes...")
 	for {
 		select {
 		case gp, ok := <-c.operationChan:
@@ -197,7 +197,7 @@ func (c *Client) operationHandlers() {
 					c.sendChan <- resume
 				}
 			case operationHeartbeat:
-				// heartbeat recieved
+				// heartbeat received
 				c.Lock()
 				c.heartbeatAcquired = time.Now()
 				c.Unlock()
@@ -299,7 +299,7 @@ func (c *Client) pulsate(ws *websocket.Conn, disconnected chan struct{}) {
 			c.Unlock()
 
 			if die {
-				logrus.Debug("heartbeat ACK was not recieved")
+				logrus.Debug("heartbeat ACK was not received")
 				c.Disconnect()
 				go c.reconnect()
 			}
