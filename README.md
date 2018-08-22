@@ -1,16 +1,38 @@
 # Disgord
+[![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/contains-technical-debt.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/for-you.svg)](https://forthebadge.com)
 
 ## Health
-| Branch       | Build status  | Maintainability | Test Coverage | Comment Coverage |
+| Branch       | Build status  | Code climate | Go Report Card | Codacy |
 | ------------ |:-------------:|:---------------:|:-------------:|:----------------:|
-| master       | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/master.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/master) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) | [![Coverage Status](https://coveralls.io/repos/github/andersfylling/disgord/badge.svg)](https://coveralls.io/github/andersfylling/disgord) |
+| master       | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/master.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/master) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
+| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | - | - | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
+
+
 
 ## About
-This library is split into three parts: caching, requests and events.
-Disgord is currently under heavy development and should not be used for production. Contributions are welcome.
+GoLang library for interacting with the Discord API. Supports socketing and REST functions. Compared to Discordgo this library will be a little more heavy and support helper functions on objects such as Channel, Message, etc.
+ eg. `Channel.SendMsg(...)`, `Message.Respond(...)`.
 
-Objects will have methods to simplify interaction: `User.sendMsgStr(...)`, or `Channel.SendMsgStr(...)`.
+To get started see the examples in [docs](docs/examples)
 
+## package structure
+```Markdown
+github.com/andersfylling/disgord
+└──discordws    :Deals with the discord socket connection
+└──docs         :Examples, templates, (documentation)
+└──event        :Data structures, callbacks, event types
+└──resource     :All the Discord data structures (same setup as the Discord docs)
+└──rest         :All the endpoints found in the documentation (same as resource)
+└──state/cache  :Logic for caching incoming Discord information
+```
+
+## Contributing
+Please see the [CONTRIBUTING.md file](CONTRIBUTING.md)
+
+## The Wiki
+Yes, the wiki might hold some information. But I believe everything will be placed within the "docs" package in the end.
+
+## Mental model
 
 #### Caching
 The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache.
@@ -93,14 +115,7 @@ func main() {
 ```
 
 ## WARNING
-All the REST endpoints are implemented, but may not exist on the interface yet. Create a Disgord session/client and use the REST functions found in the rest package directly (for now).
-See [using the rest functions directly](#using-the-rest-functions-directly).
-
-## Code flow
-
-The main design takes in a discord event and dispatches the event to a channel/callback suited for the event type. The channel can be retrieved and the callbacks set by the Session interface: `Session.Event.ChannelDeleteChan()`, `Session.Event.AddHandler(event.GuildCreateKey, func(...){})`
-
-Note that callbacks and channels are fired from the same place, to avoid overhead. However, channels are fired before the callbacks.
+All the REST endpoints are implemented, but may not exist on the interface yet. Create a Disgord session/client and use the REST functions found in the rest package directly (for now). See the examples in docs for using the functions in the rest package directly.
 
 ## Q&A
 
@@ -108,40 +123,6 @@ Note that callbacks and channels are fired from the same place, to avoid overhea
 1. Reason for making another Discord lib in GoLang?
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
-```
-
-## Using the REST functions directly
-The goal is to have all the functions in the main interface (session) to handle caching and concurrency. However, not every method is implemented in the session interface and the caching is still under development. So it might be of interest to use the functions residing within the rest package directly.
-
-Each REST function does require a client which is found in the session interface:
-```GoLang
-Session.Req() // request client for REST
-```
-
-The typical design for each REST function is to take the request client, some url parameters and optionally a query object and/or a json object:
-```GoLang
-func GetGuildEmoji(client httd.Getter, guildID, emojiID snowflake.ID) (ret *Emoji, err error) {
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
-	}
-	_, body, err := client.Get(details)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(body, &ret)
-	return
-}
-
-// -----
-// usage
-emoji, err := rest.GetGuildEmoji(session.Req(), guildID, emojiID)
-if err != nil {
-    return err
-}
-
-// tada, you now have queried the discord API for an emoji within a guild.
 ```
 
 
