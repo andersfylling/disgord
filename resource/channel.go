@@ -7,7 +7,7 @@ import (
 
 	"time"
 
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 const (

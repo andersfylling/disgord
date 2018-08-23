@@ -1,6 +1,6 @@
 package resource
 
-import . "github.com/andersfylling/snowflake"
+import . "github.com/andersfylling/disgord/snowflake"
 
 // State Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object

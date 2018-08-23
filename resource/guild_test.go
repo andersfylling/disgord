@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 func TestGuildMarshal(t *testing.T) {

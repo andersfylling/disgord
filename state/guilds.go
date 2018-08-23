@@ -6,7 +6,7 @@ import (
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/resource"
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 type GuildUserCacher interface {

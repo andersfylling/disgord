@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/resource"
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 func TestChannels_implementsChannelCacher(t *testing.T) {
