@@ -7,7 +7,7 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
@@ -42,13 +42,13 @@ func GetCurrentUser(client httd.Getter) (ret *User, err error) {
 	return
 }
 
-// ReqGetUser [GET]         Returns a user object for a given user ID.
+// ReqGetUser [GET]         Returns a user object for a given user Snowflake.
 // Endpoint                 /users/{user.id}
 // Rate limiter             /users
 // Discord documentation    https://discordapp.com/developers/docs/resources/user#get-user
 // Reviewed                 2018-06-10
 // Comment                  -
-func GetUser(client httd.Getter, userID snowflake.ID) (ret *User, err error) {
+func GetUser(client httd.Getter, userID Snowflake) (ret *User, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUser + userID.String(),
@@ -89,8 +89,8 @@ func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret
 }
 
 type GetCurrentUserGuildsParams struct {
-	Before snowflake.ID `urlparam:"before,omitempty"`
-	After  snowflake.ID `urlparam:"after,omitempty"`
+	Before Snowflake `urlparam:"before,omitempty"`
+	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  int          `urlparam:"limit,omitempty"`
 }
 
@@ -145,7 +145,7 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#leave-guild
 // Reviewed               2018-06-10
 // Comment                -
-func LeaveGuild(client httd.Deleter, guildID snowflake.ID) (err error) {
+func LeaveGuild(client httd.Deleter, guildID Snowflake) (err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyGuilds + "/" + guildID.String(),
@@ -183,7 +183,7 @@ func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
 }
 
 type BodyUserCreateDM struct {
-	RecipientID snowflake.ID `json:"recipient_id"`
+	RecipientID Snowflake `json:"recipient_id"`
 }
 
 // ReqGetUserDMs [POST]   Create a new DM channel with a user. Returns a DM channel object.
@@ -192,7 +192,7 @@ type BodyUserCreateDM struct {
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#create-dm
 // Reviewed               2018-06-10
 // Comment                -
-func CreateDM(client httd.Poster, recipientID snowflake.ID) (ret *Channel, err error) {
+func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    EndpointUserMyChannels,
@@ -211,7 +211,7 @@ func CreateDM(client httd.Poster, recipientID snowflake.ID) (ret *Channel, err e
 // https://discordapp.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
 	AccessTokens []string                `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
-	Nicks        map[snowflake.ID]string `json:"nicks"`         // userID => nickname
+	Nicks        map[Snowflake]string `json:"nicks"`         // userID => nickname
 }
 
 // ReqCreateGroupDM [POST]  Create a new group DM channel with multiple users. Returns a DM channel object.

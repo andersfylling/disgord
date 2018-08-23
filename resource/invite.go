@@ -4,7 +4,7 @@ package resource
 // https://discordapp.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
-	// Code the invite code (unique ID)
+	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
 
 	// Guild the guild this invite is for

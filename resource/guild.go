@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // consts inspired by: https://github.com/bwmarrin/discordgo/blob/master/structs.go
@@ -104,7 +104,7 @@ func NewGuildFromJSON(data []byte) *Guild {
 	return guild
 }
 
-func NewPartialGuild(ID snowflake.ID) *Guild {
+func NewPartialGuild(ID Snowflake) *Guild {
 	return &Guild{
 		ID:          ID,
 		Unavailable: true,
@@ -122,7 +122,7 @@ func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
 	return NewPartialGuild(gu.ID)
 }
 
-func NewGuildUnavailable(ID snowflake.ID) *GuildUnavailable {
+func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
 	gu := &GuildUnavailable{
 		ID:          ID,
 		Unavailable: true,
@@ -132,20 +132,20 @@ func NewGuildUnavailable(ID snowflake.ID) *GuildUnavailable {
 }
 
 type GuildUnavailable struct {
-	ID           snowflake.ID `json:"id"`
-	Unavailable  bool         `json:"unavailable"` // ?*|
+	ID           Snowflake `json:"id"`
+	Unavailable  bool      `json:"unavailable"` // ?*|
 	sync.RWMutex `json:"-"`
 }
 
 type GuildInterface interface {
-	Channel(ID snowflake.ID)
+	Channel(ID Snowflake)
 }
 
 // if loading is deactivated, then check state, then do a request.
 // if loading is activated, check state only.
 // type Members interface {
-// 	Member(userID snowflake.ID) *Member
-// 	MembersWithName( /*username*/ name string) map[snowflake.ID]*Member
+// 	Member(userID snowflake.Snowflake) *Member
+// 	MembersWithName( /*username*/ name string) map[snowflake.Snowflake]*Member
 // 	MemberByUsername( /*username#discriminator*/ username string) *Member
 // 	MemberByAlias(alias string) *Member
 // 	EverythingInMemory() bool
@@ -158,29 +158,29 @@ type GuildInterface interface {
 // TODO: lazyload everything
 type PartialGuild = Guild
 type Guild struct {
-	ID                          snowflake.ID                  `json:"id"`
-	ApplicationID               *snowflake.ID                 `json:"application_id"` //   |?
+	ID                          Snowflake                     `json:"id"`
+	ApplicationID               *Snowflake                    `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
 	Icon                        *string                       `json:"icon"`            //  |?, icon hash
 	Splash                      *string                       `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
-	OwnerID                     snowflake.ID                  `json:"owner_id"`
+	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
-	AfkChannelID                snowflake.ID                  `json:"afk_channel_id"`
+	AfkChannelID                Snowflake                     `json:"afk_channel_id"`
 	AfkTimeout                  uint                          `json:"afk_timeout"`
 	EmbedEnabled                bool                          `json:"embed_enabled"`
-	EmbedChannelID              snowflake.ID                  `json:"embed_channel_id"`
+	EmbedChannelID              Snowflake                     `json:"embed_channel_id"`
 	VerificationLevel           VerificationLvl               `json:"verification_level"`
 	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
 	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
 	MFALevel                    MFALvl                        `json:"mfa_level"`
 	WidgetEnabled               bool                          `json:"widget_enabled"`    //   |
-	WidgetChannelID             snowflake.ID                  `json:"widget_channel_id"` //   |
+	WidgetChannelID             Snowflake                     `json:"widget_channel_id"` //   |
 	Roles                       []*Role                       `json:"roles"`
 	Emojis                      []*Emoji                      `json:"emojis"`
 	Features                    []string                      `json:"features"`
-	SystemChannelID             *snowflake.ID                 `json:"system_channel_id,omitempty"` //   |?
+	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
 	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
@@ -247,7 +247,7 @@ func (g *Guild) AddChannel(c *Channel) error {
 func (g *Guild) DeleteChannel(c *Channel) error {
 	return g.DeleteChannelByID(c.ID)
 }
-func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
+func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	index := -1
 	for i, c := range g.Channels {
 		if c.ID == ID {
@@ -256,7 +256,7 @@ func (g *Guild) DeleteChannelByID(ID snowflake.ID) error {
 	}
 
 	if index == -1 {
-		return errors.New("channel with ID{" + ID.String() + "} does not exist in cache")
+		return errors.New("channel with Snowflake{" + ID.String() + "} does not exist in cache")
 	}
 
 	// delete the entry
@@ -284,7 +284,7 @@ func (g *Guild) AddRole(role *Role) error {
 }
 
 // Member return a member by his/her userid
-func (g *Guild) Member(id snowflake.ID) (*Member, error) {
+func (g *Guild) Member(id Snowflake) (*Member, error) {
 	for _, member := range g.Members {
 		if member.User.ID == id {
 			return member, nil
@@ -311,7 +311,7 @@ func (g *Guild) MemberByName(name string) ([]*Member, error) {
 }
 
 // Role retrieve a role based on role id
-func (g *Guild) Role(id snowflake.ID) (*Role, error) {
+func (g *Guild) Role(id Snowflake) (*Role, error) {
 	for _, role := range g.Roles {
 		if role.ID == id {
 			return role, nil
@@ -329,7 +329,7 @@ func (g *Guild) UpdateRole(r *Role) {
 		}
 	}
 }
-func (g *Guild) DeleteRoleByID(ID snowflake.ID) {
+func (g *Guild) DeleteRoleByID(ID Snowflake) {
 	index := -1
 	for i, r := range g.Roles {
 		if r.ID == ID {
@@ -362,7 +362,7 @@ func (g *Guild) RoleByName(name string) ([]*Role, error) {
 	return roles, nil
 }
 
-func (g *Guild) Channel(id snowflake.ID) (*Channel, error) {
+func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 	for _, channel := range g.Channels {
 		if channel.ID == id {
 			return channel, nil
@@ -396,7 +396,7 @@ func (g *Guild) UpdatePresence(p *UserPresence) {
 
 // Update update the reference content
 func (g *Guild) Update(new *Guild) {
-	// must have same ID
+	// must have same Snowflake
 	if g.ID != new.ID {
 		return
 	}
@@ -451,7 +451,7 @@ func (g *Guild) Clear() {
 	}
 	g.VoiceStates = nil
 
-	var deletedUsers []snowflake.ID
+	var deletedUsers []Snowflake
 	for _, m := range g.Members {
 		deletedUsers = append(deletedUsers, m.Clear())
 		m = nil
@@ -530,19 +530,19 @@ type Ban struct {
 // ------------
 // GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
-	Enabled   bool         `json:"enabled"`
-	ChannelID snowflake.ID `json:"channel_id"`
+	Enabled   bool      `json:"enabled"`
+	ChannelID Snowflake `json:"channel_id"`
 }
 
 // -------
 // Integration https://discordapp.com/developers/docs/resources/guild#integration-object
 type Integration struct {
-	ID                snowflake.ID        `json:"id"`
+	ID                Snowflake           `json:"id"`
 	Name              string              `json:"name"`
 	Type              string              `json:"type"`
 	Enabled           bool                `json:"enabled"`
 	Syncing           bool                `json:"syncing"`
-	RoleID            snowflake.ID        `json:"role_id"`
+	RoleID            Snowflake           `json:"role_id"`
 	ExpireBehavior    int                 `json:"expire_behavior"`
 	ExpireGracePeriod int                 `json:"expire_grace_period"`
 	User              *User               `json:"user"`
@@ -559,18 +559,18 @@ type IntegrationAccount struct {
 
 // Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID  snowflake.ID   `json:"guild_id,omitempty"`
-	User     *User          `json:"user"`
-	Nick     string         `json:"nick,omitempty"` // ?|
-	Roles    []snowflake.ID `json:"roles"`
-	JoinedAt Timestamp      `json:"joined_at,omitempty"`
-	Deaf     bool           `json:"deaf"`
-	Mute     bool           `json:"mute"`
+	GuildID  Snowflake   `json:"guild_id,omitempty"`
+	User     *User       `json:"user"`
+	Nick     string      `json:"nick,omitempty"` // ?|
+	Roles    []Snowflake `json:"roles"`
+	JoinedAt Timestamp   `json:"joined_at,omitempty"`
+	Deaf     bool        `json:"deaf"`
+	Mute     bool        `json:"mute"`
 
 	sync.RWMutex `json:"-"`
 }
 
-func (m *Member) Clear() snowflake.ID {
+func (m *Member) Clear() Snowflake {
 	// do i want to delete user?.. what if there is a PM?
 	// Check for user id in DM's
 	// or.. since the user object is sent on channel_create events, the user can be reintialized when needed.
@@ -579,13 +579,13 @@ func (m *Member) Clear() snowflake.ID {
 	id := m.User.ID
 	m.User = nil
 
-	// use this ID to check in other places. To avoid pointing to random memory spaces
+	// use this Snowflake to check in other places. To avoid pointing to random memory spaces
 	return id
 }
 
 func (m *Member) Update(new *Member) (err error) {
 	if m.User.ID != new.User.ID || m.GuildID != new.GuildID {
-		err = errors.New("cannot update user when the new struct has a different ID")
+		err = errors.New("cannot update user when the new struct has a different Snowflake")
 		return
 	}
 	// make sure that new is not the same pointer!

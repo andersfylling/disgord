@@ -12,7 +12,7 @@ import (
 	"github.com/andersfylling/disgord/rest"
 	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/state"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,13 +55,13 @@ type Session interface {
 
 	// state/caching module
 	// checks the cache first, otherwise do a http request
-	Guild(guildID snowflake.ID) <-chan *resource.Guild
-	Channel(channelID snowflake.ID) <-chan *resource.Channel
-	Channels(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel
-	Msg(msgID snowflake.ID) <-chan *resource.Message
-	User(userID snowflake.ID) <-chan *resource.User
-	Member(guildID, userID snowflake.ID) <-chan *resource.Member
-	Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member
+	Guild(guildID Snowflake) <-chan *resource.Guild
+	Channel(channelID Snowflake) <-chan *resource.Channel
+	Channels(guildID Snowflake) <-chan map[Snowflake]*resource.Channel
+	Msg(msgID Snowflake) <-chan *resource.Message
+	User(userID Snowflake) <-chan *resource.User
+	Member(guildID, userID Snowflake) <-chan *resource.Member
+	Members(guildID Snowflake) <-chan map[Snowflake]*resource.Member
 }
 
 type Config struct {
@@ -271,7 +271,7 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandlerOnce(evtName, listener)
 }
 
-func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
+func (c *Client) Channel(channelID Snowflake) <-chan *resource.Channel {
 	ch := make(chan *resource.Channel)
 
 	go func(receiver chan<- *resource.Channel, storage *state.Cache) {
@@ -300,11 +300,11 @@ func (c *Client) Channel(channelID snowflake.ID) <-chan *resource.Channel {
 	return ch
 }
 
-func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resource.Channel {
-	ch := make(chan map[snowflake.ID]*resource.Channel)
+func (c *Client) Channels(GuildID Snowflake) <-chan map[Snowflake]*resource.Channel {
+	ch := make(chan map[Snowflake]*resource.Channel)
 
-	go func(receiver chan<- map[snowflake.ID]*resource.Channel, storage *state.Cache) {
-		result := make(map[snowflake.ID]*resource.Channel)
+	go func(receiver chan<- map[Snowflake]*resource.Channel, storage *state.Cache) {
+		result := make(map[Snowflake]*resource.Channel)
 		cached := true
 
 		// check cache
@@ -330,7 +330,7 @@ func (c *Client) Channels(GuildID snowflake.ID) <-chan map[snowflake.ID]*resourc
 }
 
 // state/caching module
-func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
+func (c *Client) Guild(guildID Snowflake) <-chan *resource.Guild {
 	ch := make(chan *resource.Guild)
 
 	go func(receiver chan<- *resource.Guild, storage *state.Cache) {
@@ -358,7 +358,7 @@ func (c *Client) Guild(guildID snowflake.ID) <-chan *resource.Guild {
 
 	return ch
 }
-func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
+func (c *Client) Msg(msgID Snowflake) <-chan *resource.Message {
 	ch := make(chan *resource.Message)
 
 	go func(receiver chan<- *resource.Message, storage *state.Cache) {
@@ -386,10 +386,10 @@ func (c *Client) Msg(msgID snowflake.ID) <-chan *resource.Message {
 
 	return ch
 }
-func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
+func (c *Client) User(userID Snowflake) <-chan *resource.User {
 	ch := make(chan *resource.User)
 
-	go func(userID snowflake.ID, receiver chan<- *resource.User, storage *state.Cache) {
+	go func(userID Snowflake, receiver chan<- *resource.User, storage *state.Cache) {
 		var result *resource.User
 		var err error
 		cached := true
@@ -434,7 +434,7 @@ func (c *Client) User(userID snowflake.ID) <-chan *resource.User {
 
 	return ch
 }
-func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
+func (c *Client) Member(guildID, userID Snowflake) <-chan *resource.Member {
 	ch := make(chan *resource.Member)
 
 	go func(receiver chan<- *resource.Member, storage *state.Cache) {
@@ -462,11 +462,11 @@ func (c *Client) Member(guildID, userID snowflake.ID) <-chan *resource.Member {
 
 	return ch
 }
-func (c *Client) Members(guildID snowflake.ID) <-chan map[snowflake.ID]*resource.Member {
-	ch := make(chan map[snowflake.ID]*resource.Member)
+func (c *Client) Members(guildID Snowflake) <-chan map[Snowflake]*resource.Member {
+	ch := make(chan map[Snowflake]*resource.Member)
 
-	go func(receiver chan<- map[snowflake.ID]*resource.Member, storage *state.Cache) {
-		result := make(map[snowflake.ID]*resource.Member)
+	go func(receiver chan<- map[Snowflake]*resource.Member, storage *state.Cache) {
+		result := make(map[Snowflake]*resource.Member)
 		cached := true
 
 		// check cache

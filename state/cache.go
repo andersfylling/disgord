@@ -4,14 +4,14 @@ import (
 	"errors"
 
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // Cacher used by the session interface, so the user cannot access methods to ruin the cache state
 type Cacher interface {
-	User(ID snowflake.ID) (*resource.User, error)
-	Channel(ID snowflake.ID) (*resource.Channel, error)
-	Guild(ID snowflake.ID) (*resource.Guild, error)
+	User(ID Snowflake) (*resource.User, error)
+	Channel(ID Snowflake) (*resource.Channel, error)
+	Guild(ID Snowflake) (*resource.Guild, error)
 	Myself() *resource.User
 
 	// clear all the cached objects
@@ -22,7 +22,7 @@ type Cacher interface {
 // TODO: guilds has copies of channels, that exists in the channels cacher
 // TODO: channels has copies of users, that exists in the users cacher
 // TODO: on caching, make sure only one of the objects exists in memory
-//        channel.Users[0].ID == 1234 should point to the users cacher where user.ID == 1234.
+//        channel.Users[0].Snowflake == 1234 should point to the users cacher where user.Snowflake == 1234.
 //        Not hold a copy.
 //        Discordgo solves this by having arrays of string snowflakes for relevant objects
 //        But I feel this causes an extra step for the users, to extract a user object from say a guild/channel.
@@ -47,7 +47,7 @@ type Cache struct {
 // -----
 // Users
 //
-func (st *Cache) User(ID snowflake.ID) (*resource.User, error) {
+func (st *Cache) User(ID Snowflake) (*resource.User, error) {
 	if st.Users == nil {
 		return nil, errors.New("user caching has not been activated/implemented")
 	}
@@ -64,7 +64,7 @@ func (st *Cache) ProcessUser(details *UserDetail) {
 // Channels
 //
 
-func (st *Cache) Channel(ID snowflake.ID) (*resource.Channel, error) {
+func (st *Cache) Channel(ID Snowflake) (*resource.Channel, error) {
 	if st.Channels == nil {
 		return nil, errors.New("channel caching has not been activated/implemented")
 	}
@@ -80,7 +80,7 @@ func (st *Cache) ProcessChannel(details *ChannelDetail) {
 // ------
 // Guilds
 //
-func (st *Cache) Guild(ID snowflake.ID) (*resource.Guild, error) {
+func (st *Cache) Guild(ID Snowflake) (*resource.Guild, error) {
 	if st.Guilds == nil {
 		return nil, errors.New("guild caching has not been activated/implemented")
 	}

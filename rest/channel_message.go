@@ -8,15 +8,15 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
 type GetChannelMessagesParams struct {
-	Around snowflake.ID `urlparam:"around,omitempty"`
-	Before snowflake.ID `urlparam:"before,omitempty"`
-	After  snowflake.ID `urlparam:"after,omitempty"`
+	Around Snowflake `urlparam:"around,omitempty"`
+	Before Snowflake `urlparam:"before,omitempty"`
+	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  int          `urlparam:"limit,omitempty"`
 }
 
@@ -58,7 +58,7 @@ func (params *GetChannelMessagesParams) getQueryString() string {
 // Reviewed                 2018-06-10
 // Comment                  The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func GetChannelMessages(client httd.Getter, channelID snowflake.ID, params *GetChannelMessagesParams) (ret []*Message, err error) {
+func GetChannelMessages(client httd.Getter, channelID Snowflake, params *GetChannelMessagesParams) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -90,7 +90,7 @@ func GetChannelMessages(client httd.Getter, channelID snowflake.ID, params *GetC
 // Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
 // Reviewed                2018-06-10
 // Comment                 -
-func GetChannelMessage(client httd.Getter, channelID, messageID snowflake.ID) (ret *Message, err error) {
+func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -121,7 +121,7 @@ func NewCreateMessageByString(content string) *CreateMessageParams {
 
 type CreateMessageParams struct {
 	Content     string        `json:"content"`
-	Nonce       snowflake.ID  `json:"nonce,omitempty"`
+	Nonce       Snowflake  `json:"nonce,omitempty"`
 	Tts         bool          `json:"tts,omitempty"`
 	File        interface{}   `json:"file,omitempty"`  // TODO: what is this supposed to be?
 	Embed       *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
@@ -145,7 +145,7 @@ type CreateMessageParams struct {
 //                             when uploading files. Make sure you set your Content-Type to multipart/form-data
 //                             if you're doing that. Note that in that case, the embed field cannot be used,
 //                             but you can pass an url-encoded JSON body as a form value for payload_json.
-func CreateChannelMessage(client httd.Poster, channelID snowflake.ID, params *CreateMessageParams) (ret *Message, err error) {
+func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -182,7 +182,7 @@ type EditMessageParams struct {
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#edit-message
 // Reviewed                 2018-06-10
 // Comment                  All parameters to this endpoint are optional.
-func EditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *EditMessageParams) (ret *Message, err error) {
+func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -215,7 +215,7 @@ func EditMessage(client httd.Patcher, chanID, msgID snowflake.ID, params *EditMe
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-message
 // Reviewed                 2018-06-10
 // Comment                  -
-func DeleteMessage(client httd.Deleter, channelID, msgID snowflake.ID) (err error) {
+func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -243,7 +243,7 @@ func DeleteMessage(client httd.Deleter, channelID, msgID snowflake.ID) (err erro
 
 // BulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
 type BulkDeleteMessagesParams struct {
-	Messages []snowflake.ID `json:"messages"`
+	Messages []Snowflake `json:"messages"`
 	m        sync.RWMutex
 }
 
@@ -303,7 +303,7 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // Reviewed                     2018-06-10
 // Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
 //                              any message provided is older than that.
-func BulkDeleteMessages(client httd.Poster, chanID snowflake.ID, params *BulkDeleteMessagesParams) (err error) {
+func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return

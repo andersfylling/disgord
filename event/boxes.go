@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // event.Box is a container for a given event type which holds different data structures.
@@ -76,7 +76,7 @@ type ChannelDeleteBox struct {
 // ChannelPinsUpdateBox	message was pinned or unpinned
 type ChannelPinsUpdateBox struct {
 	// ChannelID snowflake	the id of the channel
-	ChannelID snowflake.ID `json:"channel_id"`
+	ChannelID Snowflake `json:"channel_id"`
 
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
 	LastPinTimestamp resource.Timestamp `json:"last_pin_timestamp,omitempty"` // ?|
@@ -119,14 +119,14 @@ type GuildBanRemoveBox struct {
 
 // GuildEmojisUpdateBox	guild emojis were updated
 type GuildEmojisUpdateBox struct {
-	GuildID snowflake.ID      `json:"guild_id"`
+	GuildID Snowflake      `json:"guild_id"`
 	Emojis  []*resource.Emoji `json:"emojis"`
 	Ctx     context.Context   `json:"-"`
 }
 
 // GuildIntegrationsUpdateBox	guild integration was updated
 type GuildIntegrationsUpdateBox struct {
-	GuildID snowflake.ID    `json:"guild_id"`
+	GuildID Snowflake    `json:"guild_id"`
 	Ctx     context.Context `json:"-"`
 }
 
@@ -138,14 +138,14 @@ type GuildMemberAddBox struct {
 
 // GuildMemberRemoveBox	user was removed from a guild
 type GuildMemberRemoveBox struct {
-	GuildID snowflake.ID    `json:"guild_id"`
+	GuildID Snowflake    `json:"guild_id"`
 	User    *resource.User  `json:"user"`
 	Ctx     context.Context `json:"-"`
 }
 
 // GuildMemberUpdateBox	guild member was updated
 type GuildMemberUpdateBox struct {
-	GuildID snowflake.ID     `json:"guild_id"`
+	GuildID Snowflake     `json:"guild_id"`
 	Roles   []*resource.Role `json:"roles"`
 	User    *resource.User   `json:"user"`
 	Nick    string           `json:"nick"`
@@ -154,29 +154,29 @@ type GuildMemberUpdateBox struct {
 
 // GuildMembersChunkBox	response to Request Guild Members
 type GuildMembersChunkBox struct {
-	GuildID snowflake.ID       `json:"guild_id"`
+	GuildID Snowflake       `json:"guild_id"`
 	Members []*resource.Member `json:"members"`
 	Ctx     context.Context    `json:"-"`
 }
 
 // GuildRoleCreateBox	guild role was created
 type GuildRoleCreateBox struct {
-	GuildID snowflake.ID    `json:"guild_id"`
+	GuildID Snowflake    `json:"guild_id"`
 	Role    *resource.Role  `json:"role"`
 	Ctx     context.Context `json:"-"`
 }
 
 // GuildRoleUpdateBox	guild role was updated
 type GuildRoleUpdateBox struct {
-	GuildID snowflake.ID    `json:"guild_id"`
+	GuildID Snowflake    `json:"guild_id"`
 	Role    *resource.Role  `json:"role"`
 	Ctx     context.Context `json:"-"`
 }
 
 // GuildRoleDeleteBox	guild role was deleted
 type GuildRoleDeleteBox struct {
-	GuildID snowflake.ID    `json:"guild_id"`
-	RoleID  snowflake.ID    `json:"role_id"`
+	GuildID Snowflake    `json:"guild_id"`
+	RoleID  Snowflake    `json:"role_id"`
 	Ctx     context.Context `json:"-"`
 }
 
@@ -194,23 +194,23 @@ type MessageUpdateBox struct {
 
 // MessageDeleteBox	message was deleted
 type MessageDeleteBox struct {
-	MessageID snowflake.ID    `json:"id"`
-	ChannelID snowflake.ID    `json:"channel_id"`
+	MessageID Snowflake    `json:"id"`
+	ChannelID Snowflake    `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 }
 
 // MessageDeleteBulkBox	multiple messages were deleted at once
 type MessageDeleteBulkBox struct {
-	MessageIDs []snowflake.ID  `json:"ids"`
-	ChannelID  snowflake.ID    `json:"channel_id"`
+	MessageIDs []Snowflake  `json:"ids"`
+	ChannelID  Snowflake    `json:"channel_id"`
 	Ctx        context.Context `json:"-"`
 }
 
 // MessageReactionAddBox	user reacted to a message
 type MessageReactionAddBox struct {
-	UserID    snowflake.ID `json:"user_id"`
-	ChannelID snowflake.ID `json:"channel_id"`
-	MessageID snowflake.ID `json:"message_id"`
+	UserID    Snowflake `json:"user_id"`
+	ChannelID Snowflake `json:"channel_id"`
+	MessageID Snowflake `json:"message_id"`
 	// PartialEmoji id and name. id might be nil
 	PartialEmoji *resource.Emoji `json:"emoji"`
 	Ctx          context.Context `json:"-"`
@@ -218,9 +218,9 @@ type MessageReactionAddBox struct {
 
 // MessageReactionRemoveBox	user removed a reaction from a message
 type MessageReactionRemoveBox struct {
-	UserID    snowflake.ID `json:"user_id"`
-	ChannelID snowflake.ID `json:"channel_id"`
-	MessageID snowflake.ID `json:"message_id"`
+	UserID    Snowflake `json:"user_id"`
+	ChannelID Snowflake `json:"channel_id"`
+	MessageID Snowflake `json:"message_id"`
 	// PartialEmoji id and name. id might be nil
 	PartialEmoji *resource.Emoji `json:"emoji"`
 	Ctx          context.Context `json:"-"`
@@ -228,17 +228,17 @@ type MessageReactionRemoveBox struct {
 
 // MessageReactionRemoveAllBox	all reactions were explicitly removed from a message
 type MessageReactionRemoveAllBox struct {
-	ChannelID snowflake.ID    `json:"channel_id"`
-	MessageID snowflake.ID    `json:"id"`
+	ChannelID Snowflake    `json:"channel_id"`
+	MessageID Snowflake    `json:"id"`
 	Ctx       context.Context `json:"-"`
 }
 
 // PresenceUpdateBox	user's presence was updated in a guild
 type PresenceUpdateBox struct {
 	User    *resource.User         `json:"user"`
-	RoleIDs []snowflake.ID         `json:"roles"`
+	RoleIDs []Snowflake         `json:"roles"`
 	Game    *resource.UserActivity `json:"game"`
-	GuildID snowflake.ID           `json:"guild_id"`
+	GuildID Snowflake           `json:"guild_id"`
 
 	// Status either "idle", "dnd", "online", or "offline"
 	// TODO: constants somewhere..
@@ -248,8 +248,8 @@ type PresenceUpdateBox struct {
 
 // TypingStartBox	user started typing in a channel
 type TypingStartBox struct {
-	ChannelID     snowflake.ID    `json:"channel_id"`
-	UserID        snowflake.ID    `json:"user_id"`
+	ChannelID     Snowflake    `json:"channel_id"`
+	UserID        Snowflake    `json:"user_id"`
 	TimestampUnix int             `json:"timestamp"`
 	Ctx           context.Context `json:"-"`
 }
@@ -272,14 +272,14 @@ type VoiceStateUpdateBox struct {
 // and when the current voice instance fails over to a new server.
 type VoiceServerUpdateBox struct {
 	Token    string          `json:"token"`
-	GuildID  snowflake.ID    `json:"guild_id"`
+	GuildID  Snowflake    `json:"guild_id"`
 	Endpoint string          `json:"endpoint"`
 	Ctx      context.Context `json:"-"`
 }
 
 // WebhooksUpdateBox guild channel webhook was created, update, or deleted
 type WebhooksUpdateBox struct {
-	GuildID   snowflake.ID    `json:"guild_id"`
-	ChannelID snowflake.ID    `json:"channel_id"`
+	GuildID   Snowflake    `json:"guild_id"`
+	ChannelID Snowflake    `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 }

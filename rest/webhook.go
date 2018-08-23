@@ -6,7 +6,7 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
@@ -29,7 +29,7 @@ type CreateWebhookParams struct {
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#create-webhook
 // Reviewed                 2018-08-14
 // Comment                  -
-func CreateWebhook(client httd.Poster, channelID snowflake.ID, params *CreateWebhookParams) (ret *Webhook, err error) {
+func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelWebhooks(channelID),
 		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
@@ -50,7 +50,7 @@ func CreateWebhook(client httd.Poster, channelID snowflake.ID, params *CreateWeb
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#get-channel-webhooks
 // Reviewed                 2018-08-14
 // Comment                  -
-func GetChannelWebhooks(client httd.Getter, channelID snowflake.ID) (ret []*Webhook, err error) {
+func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelWebhooks(channelID),
 		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
@@ -70,7 +70,7 @@ func GetChannelWebhooks(client httd.Getter, channelID snowflake.ID) (ret []*Webh
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#get-guild-webhooks
 // Reviewed                 2018-08-14
 // Comment                  -
-func GetGuildWebhooks(client httd.Getter, guildID snowflake.ID) (ret []*Webhook, err error) {
+func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelWebhooks(guildID),
 		Endpoint:    EndpointChannels + "/" + guildID.String() + EndpointWebhooks,
@@ -90,7 +90,7 @@ func GetGuildWebhooks(client httd.Getter, guildID snowflake.ID) (ret []*Webhook,
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#get-webhook
 // Reviewed                 2018-08-14
 // Comment                  -
-func GetWebhook(client httd.Getter, webhookID snowflake.ID) (ret *Webhook, err error) {
+func GetWebhook(client httd.Getter, webhookID Snowflake) (ret *Webhook, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitWebhook(webhookID),
 		Endpoint:    EndpointWebhooks + "/" + webhookID.String(),
@@ -111,7 +111,7 @@ func GetWebhook(client httd.Getter, webhookID snowflake.ID) (ret *Webhook, err e
 // Discord documentation        https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 // Reviewed                     2018-08-14
 // Comment                      -
-func GetWebhookWithToken(client httd.Getter, webhookID snowflake.ID, token string) (ret *Webhook, err error) {
+func GetWebhookWithToken(client httd.Getter, webhookID Snowflake, token string) (ret *Webhook, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitWebhook(webhookID),
 		Endpoint:    EndpointWebhooks + "/" + webhookID.String() + "/" + token,
@@ -187,7 +187,7 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#delete-webhook
 // Reviewed                 2018-08-14
 // Comment                  -
-func DeleteWebhook(client httd.Deleter, webhookID snowflake.ID) (err error) {
+func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
 	return DeleteWebhookWithToken(client, webhookID, "")
 }
 
@@ -197,7 +197,7 @@ func DeleteWebhook(client httd.Deleter, webhookID snowflake.ID) (err error) {
 // Discord documentation            https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 // Reviewed                         2018-08-14
 // Comment                          -
-func DeleteWebhookWithToken(client httd.Deleter, webhookID snowflake.ID, token string) (err error) {
+func DeleteWebhookWithToken(client httd.Deleter, webhookID Snowflake, token string) (err error) {
 	endpoint := EndpointWebhooks + "/" + webhookID.String()
 	if token != "" {
 		endpoint += "/" + token
@@ -218,7 +218,7 @@ func DeleteWebhookWithToken(client httd.Deleter, webhookID snowflake.ID, token s
 	return
 }
 
-func NewExecuteWebhookParams(id snowflake.ID, token string) (ret *ExecuteWebhookParams, err error) {
+func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookParams, err error) {
 	return &ExecuteWebhookParams{
 		WebhookID: id,
 		Token:     token,
@@ -226,7 +226,7 @@ func NewExecuteWebhookParams(id snowflake.ID, token string) (ret *ExecuteWebhook
 }
 
 type ExecuteWebhookParams struct {
-	WebhookID snowflake.ID `json:"-"`
+	WebhookID Snowflake `json:"-"`
 	Token     string       `json:"-"`
 
 	Content   string          `json:"content"`

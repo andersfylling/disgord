@@ -5,15 +5,15 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // AuditLogParams set params used in endpoint request
 // https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-parameters
 type AuditLogParams struct {
-	UserID     snowflake.ID `urlparam:"user_id,omitempty"`     // filter the log for a user id
+	UserID     Snowflake `urlparam:"user_id,omitempty"`     // filter the log for a user id
 	ActionType uint         `urlparam:"action_type,omitempty"` // the type of audit log event
-	Before     snowflake.ID `urlparam:"before,omitempty"`      // filter the log before a certain entry id
+	Before     Snowflake `urlparam:"before,omitempty"`      // filter the log before a certain entry id
 	Limit      int          `urlparam:"limit,omitempty"`       // how many entries are returned (default 50, minimum 1, maximum 100)
 }
 
@@ -51,7 +51,7 @@ func (params *AuditLogParams) getQueryString() string {
 // Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 // Reviewed                 2018-06-05
 // Comment                  -
-func GuildAuditLogs(client httd.Getter, guildID snowflake.ID, params *AuditLogParams) (log *AuditLog, err error) {
+func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *AuditLogParams) (log *AuditLog, err error) {
 
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuildAuditLogs(guildID),

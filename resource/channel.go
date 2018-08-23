@@ -5,8 +5,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/snowflake"
 	"time"
+
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
@@ -26,21 +27,21 @@ type ChannelMessager interface {
 
 // Attachment https://discordapp.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
-	ID       snowflake.ID `json:"id"`
-	Filename string       `json:"filename"`
-	Size     uint         `json:"size"`
-	URL      string       `json:"url"`
-	ProxyURL string       `json:"proxy_url"`
-	Height   uint         `json:"height"`
-	Width    uint         `json:"width"`
+	ID       Snowflake `json:"id"`
+	Filename string    `json:"filename"`
+	Size     uint      `json:"size"`
+	URL      string    `json:"url"`
+	ProxyURL string    `json:"proxy_url"`
+	Height   uint      `json:"height"`
+	Width    uint      `json:"width"`
 }
 
 // Overwrite: https://discordapp.com/developers/docs/resources/channel#overwrite-object
 type PermissionOverwrite struct {
-	ID    snowflake.ID `json:"id"`    // role or user id
-	Type  string       `json:"type"`  // either `role` or `member`
-	Allow int          `json:"allow"` // permission bit set
-	Deny  int          `json:"deny"`  // permission bit set
+	ID    Snowflake `json:"id"`    // role or user id
+	Type  string    `json:"type"`  // either `role` or `member`
+	Allow int       `json:"allow"` // permission bit set
+	Deny  int       `json:"deny"`  // permission bit set
 }
 
 func (pmo *PermissionOverwrite) Clear() {}
@@ -51,22 +52,22 @@ func NewChannel() *Channel {
 
 // Channel
 type Channel struct {
-	ID                   snowflake.ID          `json:"id"`
+	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
-	GuildID              snowflake.ID          `json:"guild_id,omitempty"`              // ?|
+	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
 	Position             uint                  `json:"position,omitempty"`              // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	Name                 string                `json:"name,omitempty"`                  // ?|
 	Topic                string                `json:"topic,omitempty"`                 // ?|
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        snowflake.ID          `json:"last_message_id,omitempty"`       // ?|?, pointer
+	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?, pointer
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
 	Icon                 string                `json:"icon,omitempty"`                  // ?|?, pointer
-	OwnerID              snowflake.ID          `json:"owner_id,omitempty"`              // ?|
-	ApplicationID        snowflake.ID          `json:"application_id,omitempty"`        // ?|
-	ParentID             snowflake.ID          `json:"parent_id,omitempty"`             // ?|?, pointer
+	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
+	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
+	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 
 	mu sync.RWMutex
@@ -182,8 +183,8 @@ func NewDeletedMessage() *DeletedMessage {
 }
 
 type DeletedMessage struct {
-	ID        snowflake.ID `json:"id"`
-	ChannelID snowflake.ID `json:"channel_id"`
+	ID        Snowflake `json:"id"`
+	ChannelID Snowflake `json:"channel_id"`
 }
 
 // https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
@@ -194,17 +195,17 @@ type MessageActivity struct {
 
 // https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {
-	ID          snowflake.ID `json:"id"`
-	CoverImage  string       `json:"cover_image"`
-	Description string       `json:"description"`
-	Icon        string       `json:"icon"`
-	Name        string       `json:"name"`
+	ID          Snowflake `json:"id"`
+	CoverImage  string    `json:"cover_image"`
+	Description string    `json:"description"`
+	Icon        string    `json:"icon"`
+	Name        string    `json:"name"`
 }
 
 // Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
-	ID              snowflake.ID       `json:"id"`
-	ChannelID       snowflake.ID       `json:"channel_id"`
+	ID              Snowflake          `json:"id"`
+	ChannelID       Snowflake          `json:"channel_id"`
 	Author          *User              `json:"author"`
 	Content         string             `json:"content"`
 	Timestamp       time.Time          `json:"timestamp"`
@@ -212,13 +213,13 @@ type Message struct {
 	Tts             bool               `json:"tts"`
 	MentionEveryone bool               `json:"mention_everyone"`
 	Mentions        []*User            `json:"mentions"`
-	MentionRoles    []snowflake.ID     `json:"mention_roles"`
+	MentionRoles    []Snowflake        `json:"mention_roles"`
 	Attachments     []*Attachment      `json:"attachments"`
 	Embeds          []*ChannelEmbed    `json:"embeds"`
 	Reactions       []*Reaction        `json:"reactions"` // ?
-	Nonce           snowflake.ID       `json:"nonce"`     // ?, used for validating a message was sent
+	Nonce           Snowflake          `json:"nonce"`     // ?, used for validating a message was sent
 	Pinned          bool               `json:"pinned"`
-	WebhookID       snowflake.ID       `json:"webhook_id"` // ?
+	WebhookID       Snowflake          `json:"webhook_id"` // ?
 	Type            uint               `json:"type"`
 	Activity        MessageActivity    `json:"activity"`
 	Application     MessageApplication `json:"application"`
@@ -240,7 +241,7 @@ func (m *Message) Update() {}
 func (m *Message) Send()   {}
 
 func (m *Message) AddReaction(reaction *Reaction) {}
-func (m *Message) RemoveReaction(id snowflake.ID) {}
+func (m *Message) RemoveReaction(id Snowflake)    {}
 
 // ----------------
 // Reaction

@@ -6,7 +6,7 @@ import (
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 type GuildUserCacher interface {
@@ -20,7 +20,7 @@ type GuildChannelCacher interface {
 type GuildCacher interface {
 	Process(cd *GuildDetail)
 	Chan() chan<- *GuildDetail
-	Guild(ID snowflake.ID) (*resource.Guild, error)
+	Guild(ID Snowflake) (*resource.Guild, error)
 	Clear()
 	Close() error
 }
@@ -29,7 +29,7 @@ type GuildCacher interface {
 func NewGuildCache(userCacher GuildUserCacher, channelCacher GuildChannelCacher) *GuildCache {
 	panic("Guild.DeepCopy, GuildHolder, string pointer, unit tests, not implemented yet")
 	cacher := &GuildCache{
-		guilds:  make(map[snowflake.ID]*resource.Guild),
+		guilds:  make(map[Snowflake]*resource.Guild),
 		channel: make(chan *GuildDetail),
 
 		userCacher:    userCacher,
@@ -42,7 +42,7 @@ func NewGuildCache(userCacher GuildUserCacher, channelCacher GuildChannelCacher)
 
 // GuildCache handles guild caching
 type GuildCache struct {
-	guilds  map[snowflake.ID]*resource.Guild
+	guilds  map[Snowflake]*resource.Guild
 	channel chan *GuildDetail
 
 	// saving channels and users
@@ -99,7 +99,7 @@ func (st *GuildCache) Chan() chan<- *GuildDetail {
 	return st.channel
 }
 
-func (st *GuildCache) Guild(ID snowflake.ID) (*resource.Guild, error) {
+func (st *GuildCache) Guild(ID Snowflake) (*resource.Guild, error) {
 	return nil, nil
 }
 
@@ -118,7 +118,7 @@ func (st *GuildCache) Clear() {
 		guild.Channels = nil
 	}
 
-	st.guilds = make(map[snowflake.ID]*resource.Guild)
+	st.guilds = make(map[Snowflake]*resource.Guild)
 	runtime.GC() // Blocks thread
 	st.mu.Unlock()
 }

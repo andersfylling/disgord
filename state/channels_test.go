@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 func TestChannels_implementsChannelCacher(t *testing.T) {
@@ -19,13 +19,13 @@ func TestChannels_implementsChannelCacher(t *testing.T) {
 }
 
 type Mock_UserCacher struct {
-	users map[snowflake.ID]*resource.User
+	users map[Snowflake]*resource.User
 }
 
 func (muc *Mock_UserCacher) Process(ud *UserDetail) {
 	muc.users[ud.User.ID] = ud.User
 }
-func (muc *Mock_UserCacher) User(id snowflake.ID) (*resource.User, error) {
+func (muc *Mock_UserCacher) User(id Snowflake) (*resource.User, error) {
 	if _, exists := muc.users[id]; exists {
 		return muc.users[id], nil
 	}
@@ -36,7 +36,7 @@ func TestChannels_cacheSize(t *testing.T) {
 	// incoming user object
 	newChannel := resource.NewChannel()
 
-	newChannel.ID = snowflake.NewID(11111111111111)
+	newChannel.ID = Snowflake(11111111111111)
 	newChannel.Name = "new object from disgord"
 
 	// check if it exists in cache
@@ -80,7 +80,7 @@ func TestChannels_cacheClear(t *testing.T) {
 	for i := 0; i < N; i++ {
 		channel := resource.NewChannel()
 		channel.Type = resource.ChannelTypeGuildCategory
-		channel.ID = snowflake.NewID(234234 + uint64(i))
+		channel.ID = Snowflake(234234 + uint64(i))
 		channel.Name = "242sdflkjsfjlksdhfkjsdf"
 		channel.Topic = "sldkflks lks jdlf j klsdjf lskdjf klljkds flksdj fjkl"
 
@@ -121,7 +121,7 @@ func TestChannelCache_Save(t *testing.T) {
 	// that no race condition takes place once the cache is updated
 	newChannel := resource.NewChannel()
 
-	newChannel.ID = snowflake.NewID(11111111111111)
+	newChannel.ID = Snowflake(11111111111111)
 	newChannel.Name = "new object from disgord"
 
 	// add to cache
@@ -187,18 +187,18 @@ func TestChannelCache_inputOutput(t *testing.T) {
 	// make sure that the recipients are the same after as before caching
 	channel := resource.NewChannel()
 
-	channel.ID = snowflake.NewID(11111111111111)
+	channel.ID = Snowflake(11111111111111)
 	channel.Name = "new object from disgord"
 	channel.Type = resource.ChannelTypeGroupDM
 	for i := 0; i < 10; i++ {
 		user := resource.NewUser()
-		user.ID = snowflake.NewID(3546345 + uint64(i+i*i))
+		user.ID = Snowflake(3546345 + uint64(i+i*i))
 		channel.Recipients = append(channel.Recipients, user)
 	}
 
 	// add to cache
 	userCacher := &Mock_UserCacher{
-		users: make(map[snowflake.ID]*resource.User),
+		users: make(map[Snowflake]*resource.User),
 	}
 	cache := NewChannelCache(userCacher)
 	cache.Process(&ChannelDetail{

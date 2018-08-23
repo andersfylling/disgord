@@ -1,20 +1,18 @@
 package resource
 
-import (
-	"github.com/andersfylling/snowflake"
-)
+import . "github.com/andersfylling/snowflake"
 
 // State Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
 type VoiceState struct {
 	// GuildID the guild id this voice state is for
-	GuildID snowflake.ID `json:"guild_id,omitempty"` // ? |
+	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
 	// ChannelID the channel id this user is connected to
-	ChannelID snowflake.ID `json:"channel_id"` // |
+	ChannelID Snowflake `json:"channel_id"` // |
 
 	// UserID the user id this voice state is for
-	UserID snowflake.ID `json:"user_id"` // |
+	UserID Snowflake `json:"user_id"` // |
 
 	// SessionID the session id for this voice state
 	SessionID string `json:"session_id"` // |
@@ -42,8 +40,8 @@ func (vst *VoiceState) Clear() {
 // Region voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
-	// ID unique ID for the region
-	ID snowflake.ID `json:"id"`
+	// Snowflake unique Snowflake for the region
+	ID Snowflake `json:"id"`
 
 	// Name name of the region
 	Name string `json:"name"`
