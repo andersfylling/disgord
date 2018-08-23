@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/resource"
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // event.Box is a container for a given event type which holds different data structures.

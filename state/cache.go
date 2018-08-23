@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/andersfylling/disgord/resource"
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // Cacher used by the session interface, so the user cannot access methods to ruin the cache state

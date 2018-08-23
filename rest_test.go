@@ -5,7 +5,7 @@ import (
 	"github.com/andersfylling/disgord/rest"
 	"os"
 	"testing"
-    . "github.com/andersfylling/disgord/snowflake"
+    . "github.com/andersfylling/snowflake"
 )
 
 func TestRESTClient_users(t *testing.T) {

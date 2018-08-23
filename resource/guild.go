@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // consts inspired by: https://github.com/bwmarrin/discordgo/blob/master/structs.go
