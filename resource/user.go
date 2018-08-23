@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
@@ -31,21 +31,21 @@ type UserActivity struct{}
 
 // ---------
 
-// TODO: should a user object always have a ID?
+// TODO: should a user object always have a Snowflake?
 func NewUser() *User {
 	return &User{}
 }
 
 type User struct {
-	ID            snowflake.ID `json:"id,omitempty"`
-	Username      string       `json:"username,omitempty"`
-	Discriminator string       `json:"discriminator,omitempty"`
-	Email         string       `json:"email,omitempty"`
-	Avatar        *string      `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA
-	Token         string       `json:"token,omitempty"`
-	Verified      bool         `json:"verified,omitempty"`
-	MFAEnabled    bool         `json:"mfa_enabled,omitempty"`
-	Bot           bool         `json:"bot,omitempty"`
+	ID            Snowflake `json:"id,omitempty"`
+	Username      string    `json:"username,omitempty"`
+	Discriminator string    `json:"discriminator,omitempty"`
+	Email         string    `json:"email,omitempty"`
+	Avatar        *string   `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA
+	Token         string    `json:"token,omitempty"`
+	Verified      bool      `json:"verified,omitempty"`
+	MFAEnabled    bool      `json:"mfa_enabled,omitempty"`
+	Bot           bool      `json:"bot,omitempty"`
 
 	sync.RWMutex `json:"-"`
 }
@@ -84,12 +84,12 @@ func (u *User) Clear() {
 	//u.d.Avatar = nil
 }
 
-func (u *User) SendMsg(requester httd.Requester, msg *Message) (channelID snowflake.ID, messageID snowflake.ID, err error) {
-	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
+func (u *User) SendMsg(requester httd.Requester, msg *Message) (channelID Snowflake, messageID Snowflake, err error) {
+	return NewSnowflake(0), NewSnowflake(0), errors.New("not implemented")
 }
 
-func (u *User) SendMsgString(requester httd.Requester, msg string) (channelID snowflake.ID, messageID snowflake.ID, err error) {
-	return snowflake.NewID(0), snowflake.NewID(0), errors.New("not implemented")
+func (u *User) SendMsgString(requester httd.Requester, msg string) (channelID Snowflake, messageID Snowflake, err error) {
+	return NewSnowflake(0), NewSnowflake(0), errors.New("not implemented")
 }
 
 func (u *User) DeepCopy() *User {
@@ -123,12 +123,12 @@ func (u *User) Valid() bool {
 // -------
 
 type UserPresence struct {
-	User    *User          `json:"user"`
-	Roles   []snowflake.ID `json:"roles"`
-	Game    *UserActivity  `json:"activity"`
-	GuildID snowflake.ID   `json:"guild_id"`
-	Nick    string         `json:"nick"`
-	Status  string         `json:"status"`
+	User    *User         `json:"user"`
+	Roles   []Snowflake   `json:"roles"`
+	Game    *UserActivity `json:"activity"`
+	GuildID Snowflake     `json:"guild_id"`
+	Nick    string        `json:"nick"`
+	Status  string        `json:"status"`
 }
 
 func NewUserPresence() *UserPresence {

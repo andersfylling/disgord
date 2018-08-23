@@ -9,8 +9,7 @@ import (
 	"sync"
 	"time"
 
-	//"github.com/andersfylling/disgord/user"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -111,7 +110,7 @@ type Client struct {
 	Trace             []string     `json:"_trace"`
 	SessionID         string       `json:"session_id"`
 	ShardCount        uint         `json:"shard_count"`
-	ShardID           snowflake.ID `json:"shard_id"`
+	ShardID           Snowflake `json:"shard_id"`
 
 	disconnected  chan struct{}
 	operationChan chan *gatewayEvent

@@ -7,18 +7,18 @@ import (
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 type ChannelUserCacher interface {
 	Process(ud *UserDetail)
-	User(ID snowflake.ID) (*resource.User, error)
+	User(ID Snowflake) (*resource.User, error)
 }
 
 type ChannelCacher interface {
 	Process(cd *ChannelDetail)
 	Chan() chan<- *ChannelDetail
-	Channel(ID snowflake.ID) (*resource.Channel, error)
+	Channel(ID Snowflake) (*resource.Channel, error)
 	Size() int
 	Clear()
 	Close() error
@@ -27,7 +27,7 @@ type ChannelCacher interface {
 func NewChannelCache(userCacher ChannelUserCacher) *ChannelCache {
 	cacher := &ChannelCache{
 		channel:    make(chan *ChannelDetail),
-		channels:   make(map[snowflake.ID]*channelHolder),
+		channels:   make(map[Snowflake]*channelHolder),
 		userCacher: userCacher,
 	}
 	go cacher.channelCacher()
@@ -37,7 +37,7 @@ func NewChannelCache(userCacher ChannelUserCacher) *ChannelCache {
 
 type ChannelCache struct {
 	channel  chan *ChannelDetail
-	channels map[snowflake.ID]*channelHolder
+	channels map[Snowflake]*channelHolder
 
 	// for saving users to cache
 	userCacher ChannelUserCacher
@@ -53,7 +53,7 @@ type ChannelDetail struct {
 	Action  string //event.* for specific behavior, such as delete
 }
 
-// channelHolder has the channel struct along with partials for any snowflake ID'able objects.
+// channelHolder has the channel struct along with partials for any snowflake Snowflake'able objects.
 // as an example Channel.Recipients is set to nil, after all the user snowflakes have been
 // moved to a map/slice. This saves memory, and makes it easy to lookup users later.
 type channelHolder struct {
@@ -61,13 +61,13 @@ type channelHolder struct {
 	Channel *resource.Channel
 	// Recipients, snowflake only
 	// Since discord has limited the size to 10, we use a slice as that is faster.
-	Recipients []snowflake.ID
+	Recipients []Snowflake
 }
 
 func newChannelHolder(channel *resource.Channel) *channelHolder {
 	holder := &channelHolder{
 		Channel:    channel.DeepCopy(),
-		Recipients: make([]snowflake.ID, len(channel.Recipients)),
+		Recipients: make([]Snowflake, len(channel.Recipients)),
 	}
 
 	for index, recipient := range holder.Channel.Recipients {
@@ -125,7 +125,7 @@ func (st *ChannelCache) Process(cd *ChannelDetail) {
 	st.channel <- cd
 }
 
-func (st *ChannelCache) Channel(ID snowflake.ID) (*resource.Channel, error) {
+func (st *ChannelCache) Channel(ID Snowflake) (*resource.Channel, error) {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
@@ -147,7 +147,7 @@ func (st *ChannelCache) Channel(ID snowflake.ID) (*resource.Channel, error) {
 		return channel, nil
 	}
 
-	return nil, errors.New("channel with ID{" + ID.String() + "} does not exist in cache")
+	return nil, errors.New("channel with Snowflake{" + ID.String() + "} does not exist in cache")
 }
 
 func (st *ChannelCache) Chan() chan<- *ChannelDetail {
@@ -161,7 +161,7 @@ func (st *ChannelCache) Size() int {
 // Clear empty the cache
 func (st *ChannelCache) Clear() {
 	st.mu.Lock()
-	st.channels = make(map[snowflake.ID]*channelHolder)
+	st.channels = make(map[Snowflake]*channelHolder)
 	runtime.GC() // Blocks thread
 	st.mu.Unlock()
 }

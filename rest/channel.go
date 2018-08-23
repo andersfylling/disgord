@@ -6,20 +6,20 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
 	EndpointChannels = "/channels"
 )
 
-// GetChannel [GET]         Get a channel by ID. Returns a channel object.
+// GetChannel [GET]         Get a channel by Snowflake. Returns a channel object.
 // Endpoint                 /channels/{channel.id}
 // Rate limiter [MAJOR]     /channels/{channel.id}
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel
 // Reviewed                 2018-06-07
 // Comment                  -
-func GetChannel(client httd.Getter, channelID snowflake.ID) (ret *Channel, err error) {
+func GetChannel(client httd.Getter, channelID Snowflake) (ret *Channel, err error) {
 	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -82,7 +82,7 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func DeleteChannel(client httd.Deleter, channelID snowflake.ID) (err error) {
+func DeleteChannel(client httd.Deleter, channelID Snowflake) (err error) {
 	if channelID.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -120,7 +120,7 @@ type EditChannelPermissionsParams struct {
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 // Reviewed                         2018-06-07
 // Comment                          -
-func EditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID, params *EditChannelPermissionsParams) (err error) {
+func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
 	if chanID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -151,7 +151,7 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID snowflake.ID,
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 // Reviewed                   2018-06-07
 // Comment                    -
-func GetChannelInvites(client httd.Getter, channelID snowflake.ID) (ret []*Invite, err error) {
+func GetChannelInvites(client httd.Getter, channelID Snowflake) (ret []*Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -188,7 +188,7 @@ type CreateChannelInvitesParams struct {
 // Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 // Reviewed                    2018-06-07
 // Comment                     -
-func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *CreateChannelInvitesParams) (ret *Invite, err error) {
+func CreateChannelInvites(client httd.Poster, channelID Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -220,7 +220,7 @@ func CreateChannelInvites(client httd.Poster, channelID snowflake.ID, params *Cr
 // Discord documentation             https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 // Reviewed                          2018-06-07
 // Comment                           -
-func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowflake.ID) (err error) {
+func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -254,7 +254,7 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID snowfla
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
 // Reviewed                         2018-06-10
 // Comment                          -
-func TriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err error) {
+func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error) {
 
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelTyping(channelID),
@@ -278,7 +278,7 @@ func TriggerTypingIndicator(client httd.Poster, channelID snowflake.ID) (err err
 // Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
 // Reviewed                   2018-06-10
 // Comment                    -
-func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Message, err error) {
+func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message, err error) {
 
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelPins(channelID),
@@ -300,7 +300,7 @@ func GetPinnedMessages(client httd.Getter, channelID snowflake.ID) (ret []*Messa
 // Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
 // Reviewed                         2018-06-10
 // Comment                          -
-func AddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (err error) {
+func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err error) {
 
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitChannelPins(channelID),
@@ -326,7 +326,7 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID snowflake.ID) (
 // Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
 // Reviewed                               2018-06-10
 // Comment                                -
-func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID snowflake.ID) (err error) {
+func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -362,7 +362,7 @@ type GroupDMAddRecipientParams struct {
 // Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 // Reviewed                     2018-06-10
 // Comment                      -
-func GroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, params *GroupDMAddRecipientParams) (err error) {
+func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -393,7 +393,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID snowflake.ID, para
 // Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 // Reviewed                           2018-06-10
 // Comment                            -
-func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID snowflake.ID) (err error) {
+func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}

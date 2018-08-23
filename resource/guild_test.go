@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 func TestGuildMarshal(t *testing.T) {
@@ -30,13 +30,13 @@ func TestGuild_ChannelSorting(t *testing.T) {
 	g := &Guild{}
 	total := 1000
 	for i := total; i > 0; i-- {
-		c := &Channel{ID: snowflake.NewID(uint64(i))}
+		c := &Channel{ID: NewSnowflake(uint64(i))}
 		g.AddChannel(c)
 	}
 
 	chans := g.Channels
 	for i := 1; i <= total; i++ {
-		if chans[i-1].ID != snowflake.NewID(uint64(i)) {
+		if chans[i-1].ID != NewSnowflake(uint64(i)) {
 			t.Error("wrong order")
 			break
 		}

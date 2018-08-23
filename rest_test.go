@@ -3,9 +3,9 @@ package disgord
 import (
 	"fmt"
 	"github.com/andersfylling/disgord/rest"
-	"github.com/andersfylling/snowflake"
 	"os"
 	"testing"
+    . "github.com/andersfylling/snowflake"
 )
 
 func TestRESTClient_users(t *testing.T) {
@@ -27,7 +27,7 @@ func TestRESTClient_users(t *testing.T) {
 
 	req := client.Req()
 
-	usr, err := rest.GetUser(req, snowflake.NewID(228846961774559232))
+	usr, err := rest.GetUser(req, NewSnowflake(228846961774559232))
 	if err != nil {
 		t.Error(err.Error())
 	}

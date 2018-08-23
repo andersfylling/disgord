@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"encoding/json"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
@@ -28,72 +28,72 @@ var majorEndpointPrefixes = []string{
 }
 
 // TODO: fix ratelimiting logic
-func RatelimitChannel(id snowflake.ID) string {
+func RatelimitChannel(id Snowflake) string {
 	return "c:" + id.String()
 }
-func RatelimitChannelPermissions(id snowflake.ID) string {
+func RatelimitChannelPermissions(id Snowflake) string {
 	return RatelimitChannel(id) + ":perm"
 }
-func RatelimitChannelInvites(id snowflake.ID) string {
+func RatelimitChannelInvites(id Snowflake) string {
 	return RatelimitChannel(id) + ":i"
 }
-func RatelimitChannelTyping(id snowflake.ID) string {
+func RatelimitChannelTyping(id Snowflake) string {
 	return RatelimitChannel(id) + ":t"
 }
-func RatelimitChannelPins(id snowflake.ID) string {
+func RatelimitChannelPins(id Snowflake) string {
 	return RatelimitChannel(id) + ":pins"
 }
-func RatelimitChannelRecipients(id snowflake.ID) string {
+func RatelimitChannelRecipients(id Snowflake) string {
 	return RatelimitChannel(id) + ":r"
 }
-func RatelimitChannelMessages(id snowflake.ID) string {
+func RatelimitChannelMessages(id Snowflake) string {
 	return RatelimitChannel(id) + ":m"
 }
-func RatelimitChannelMessagesDelete(id snowflake.ID) string {
+func RatelimitChannelMessagesDelete(id Snowflake) string {
 	return RatelimitChannelMessages(id) + "_"
 }
-func RatelimitChannelWebhooks(id snowflake.ID) string {
+func RatelimitChannelWebhooks(id Snowflake) string {
 	return RatelimitChannelMessages(id) + ":w"
 }
 
-func RatelimitGuild(id snowflake.ID) string {
+func RatelimitGuild(id Snowflake) string {
 	return "g:" + id.String()
 }
-func RatelimitGuildAuditLogs(id snowflake.ID) string {
+func RatelimitGuildAuditLogs(id Snowflake) string {
 	return RatelimitGuild(id) + ":a-l"
 }
-func RatelimitGuildEmbed(id snowflake.ID) string {
+func RatelimitGuildEmbed(id Snowflake) string {
 	return RatelimitGuild(id) + ":e"
 }
-func RatelimitGuildVanityURL(id snowflake.ID) string {
+func RatelimitGuildVanityURL(id Snowflake) string {
 	return RatelimitGuild(id) + ":vurl"
 }
-func RatelimitGuildChannels(id snowflake.ID) string {
+func RatelimitGuildChannels(id Snowflake) string {
 	return RatelimitGuild(id) + ":c"
 }
-func RatelimitGuildMembers(id snowflake.ID) string {
+func RatelimitGuildMembers(id Snowflake) string {
 	return RatelimitGuild(id) + ":m"
 }
-func RatelimitGuildBans(id snowflake.ID) string {
+func RatelimitGuildBans(id Snowflake) string {
 	return RatelimitGuild(id) + ":b"
 }
-func RatelimitGuildRoles(id snowflake.ID) string {
+func RatelimitGuildRoles(id Snowflake) string {
 	return RatelimitGuild(id) + ":r"
 }
-func RatelimitGuildRegions(id snowflake.ID) string {
+func RatelimitGuildRegions(id Snowflake) string {
 	return RatelimitGuild(id) + ":regions"
 }
-func RatelimitGuildIntegrations(id snowflake.ID) string {
+func RatelimitGuildIntegrations(id Snowflake) string {
 	return RatelimitGuild(id) + ":i"
 }
-func RatelimitGuildInvites(id snowflake.ID) string {
+func RatelimitGuildInvites(id Snowflake) string {
 	return RatelimitGuild(id) + ":inv"
 }
-func RatelimitGuildPrune(id snowflake.ID) string {
+func RatelimitGuildPrune(id Snowflake) string {
 	return RatelimitGuild(id) + ":p"
 }
 
-func RatelimitWebhook(id snowflake.ID) string {
+func RatelimitWebhook(id Snowflake) string {
 	return "wh:" + id.String()
 }
 

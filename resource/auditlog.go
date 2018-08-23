@@ -1,8 +1,6 @@
 package resource
 
-import (
-	"github.com/andersfylling/snowflake"
-)
+import . "github.com/andersfylling/snowflake"
 
 type AuditLog struct {
 	Webhooks        []*Webhook       `json:"webhooks"`
@@ -11,10 +9,10 @@ type AuditLog struct {
 }
 
 type AuditLogEntry struct {
-	TargetID   snowflake.ID      `json:"target_id"`
+	TargetID   Snowflake         `json:"target_id"`
 	Changes    []*AuditLogChange `json:"changes,omitempty"`
-	UserID     snowflake.ID      `json:"user_id"`
-	ID         snowflake.ID      `json:"id"`
+	UserID     Snowflake         `json:"user_id"`
+	ID         Snowflake         `json:"id"`
 	ActionType uint              `json:"action_type"`
 	Options    []*AuditLogOption `json:"options,omitempty"`
 	Reason     string            `json:"reason,omitempty"`
@@ -50,13 +48,13 @@ const (
 )
 
 type AuditLogOption struct {
-	DeleteMemberDays string       `json:"delete_member_days"`
-	MembersRemoved   string       `json:"members_removed"`
-	ChannelID        snowflake.ID `json:"channel_id"`
-	Count            string       `json:"count"`
-	ID               snowflake.ID `json:"id"`
-	Type             string       `json:"type"` // type of overwritten entity ("member" or "role")
-	RoleName         string       `json:"role_name"`
+	DeleteMemberDays string    `json:"delete_member_days"`
+	MembersRemoved   string    `json:"members_removed"`
+	ChannelID        Snowflake `json:"channel_id"`
+	Count            string    `json:"count"`
+	ID               Snowflake `json:"id"`
+	Type             string    `json:"type"` // type of overwritten entity ("member" or "role")
+	RoleName         string    `json:"role_name"`
 }
 
 type AuditLogChange struct {

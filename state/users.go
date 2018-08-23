@@ -6,13 +6,13 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 type UserCacher interface {
 	Process(ud *UserDetail)
 	Chan() chan<- *UserDetail
-	User(ID snowflake.ID) (*resource.User, error)
+	User(ID Snowflake) (*resource.User, error)
 	Size() int
 	Clear()
 	StartListener() error
@@ -22,7 +22,7 @@ type UserCacher interface {
 // NewUserCache creates a new user cacher, and starts listening for inputs
 func NewUserCache() *UserCache {
 	cacher := &UserCache{
-		users:   make(map[snowflake.ID]*resource.User),
+		users:   make(map[Snowflake]*resource.User),
 		channel: make(chan *UserDetail, 100),
 	}
 
@@ -31,7 +31,7 @@ func NewUserCache() *UserCache {
 
 // UserCache handles user caching
 type UserCache struct {
-	users   map[snowflake.ID]*resource.User
+	users   map[Snowflake]*resource.User
 	channel chan *UserDetail
 	mu      sync.RWMutex
 }
@@ -84,7 +84,7 @@ func (st *UserCache) Chan() chan<- *UserDetail {
 
 // User get a copy from the cache, which can be safely distributed without ruining the up to date discord cache.
 // See st.updaterUser(...) for more information why it's a copy only.
-func (st *UserCache) User(ID snowflake.ID) (*resource.User, error) {
+func (st *UserCache) User(ID Snowflake) (*resource.User, error) {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
@@ -93,7 +93,7 @@ func (st *UserCache) User(ID snowflake.ID) (*resource.User, error) {
 		return user, nil
 	}
 
-	return nil, errors.New("user with ID{" + ID.String() + "} does not exist in cache")
+	return nil, errors.New("user with Snowflake{" + ID.String() + "} does not exist in cache")
 }
 
 func (st *UserCache) Size() int {
@@ -103,7 +103,7 @@ func (st *UserCache) Size() int {
 // Clear empty the cache
 func (st *UserCache) Clear() {
 	st.mu.Lock()
-	st.users = make(map[snowflake.ID]*resource.User)
+	st.users = make(map[Snowflake]*resource.User)
 	runtime.GC() // Blocks thread
 	st.mu.Unlock()
 }

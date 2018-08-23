@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 func TestUsers_implementsUserCacher(t *testing.T) {
@@ -22,7 +22,7 @@ func TestUsers_cacheSize(t *testing.T) {
 	// incoming user object
 	newUser := resource.NewUser()
 
-	newUser.ID = snowflake.NewID(11111111111111)
+	newUser.ID = Snowflake(11111111111111)
 	newUser.Username = "new object from disgord"
 
 	// check if it exists in cache
@@ -65,7 +65,7 @@ func TestUsers_cacheClear(t *testing.T) {
 	for i := 0; i < N; i++ {
 		avatar := "sdfkijsdljflsdjfjsdlfjlksdjf"
 		users = append(users, &resource.User{
-			ID:            snowflake.NewID(652342343 + uint64(i)),
+			ID:            Snowflake(652342343 + uint64(i)),
 			Username:      "iufhhsuaifuhs",
 			Discriminator: "34234",
 			Email:         "andersfylling@adnersfylling.internet",
@@ -116,7 +116,7 @@ func TestUserCache_Save(t *testing.T) {
 	// that no race condition takes place once the cache is updated
 	newUser := resource.NewUser()
 
-	newUser.ID = snowflake.NewID(11111111111111)
+	newUser.ID = Snowflake(11111111111111)
 	newUser.Username = "new object from disgord"
 
 	// add to cache

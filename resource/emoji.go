@@ -1,18 +1,16 @@
 package resource
 
-import (
-	"github.com/andersfylling/snowflake"
-)
+import . "github.com/andersfylling/snowflake"
 
 // Emoji
 type Emoji struct {
-	ID            snowflake.ID   `json:"id"`
-	Name          string         `json:"name"`
-	Roles         []snowflake.ID `json:"roles,omitempty"`
-	User          *User          `json:"user,omitempty"` // the user who created the emoji
-	RequireColons bool           `json:"require_colons,omitempty"`
-	Managed       bool           `json:"managed,omitempty"`
-	Animated      bool           `json:"animated,omitempty"`
+	ID            Snowflake   `json:"id"`
+	Name          string      `json:"name"`
+	Roles         []Snowflake `json:"roles,omitempty"`
+	User          *User       `json:"user,omitempty"` // the user who created the emoji
+	RequireColons bool        `json:"require_colons,omitempty"`
+	Managed       bool        `json:"managed,omitempty"`
+	Animated      bool        `json:"animated,omitempty"`
 }
 type PartialEmoji = Emoji
 
