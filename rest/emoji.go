@@ -6,7 +6,7 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // endpoints

@@ -1,6 +1,6 @@
 package resource
 
-import . "github.com/andersfylling/disgord/snowflake"
+import . "github.com/andersfylling/snowflake"
 
 func NewRole() *Role {
 	return &Role{}

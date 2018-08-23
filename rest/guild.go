@@ -7,7 +7,7 @@ import (
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 // CreateGuildParams https://discordapp.com/developers/docs/resources/guild#create-guild-json-params

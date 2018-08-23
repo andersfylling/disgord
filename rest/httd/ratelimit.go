@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"encoding/json"
-	. "github.com/andersfylling/disgord/snowflake"
+	. "github.com/andersfylling/snowflake"
 )
 
 const (
