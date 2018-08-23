@@ -1,6 +1,6 @@
 package resource
 
-import . "github.com/andersfylling/snowflake"
+import . "github.com/andersfylling/disgord/snowflake"
 
 // Webhook Used to represent a webhook
 // https://discordapp.com/developers/docs/resources/webhook#webhook-object

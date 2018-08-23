@@ -1,6 +1,6 @@
 package resource
 
-import . "github.com/andersfylling/snowflake"
+import . "github.com/andersfylling/disgord/snowflake"
 
 // Emoji
 type Emoji struct {

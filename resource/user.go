@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/rest/httd"
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 const (

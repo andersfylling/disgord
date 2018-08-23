@@ -1,6 +1,6 @@
 package resource
 
-import . "github.com/andersfylling/snowflake"
+import . "github.com/andersfylling/disgord/snowflake"
 
 type AuditLog struct {
 	Webhooks        []*Webhook       `json:"webhooks"`

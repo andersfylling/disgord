@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/resource"
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 )
 
 type UserCacher interface {

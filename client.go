@@ -12,7 +12,7 @@ import (
 	"github.com/andersfylling/disgord/rest"
 	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/state"
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 	"github.com/sirupsen/logrus"
 )
 

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/andersfylling/snowflake"
+	. "github.com/andersfylling/disgord/snowflake"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
