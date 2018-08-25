@@ -59,7 +59,7 @@ type Session interface {
 	Channel(channelID Snowflake) <-chan *resource.Channel
 	Channels(guildID Snowflake) <-chan map[Snowflake]*resource.Channel
 	Msg(msgID Snowflake) <-chan *resource.Message
-	User(userID Snowflake) <-chan *resource.User
+	User(userID Snowflake) <-chan *UserChan
 	Member(guildID, userID Snowflake) <-chan *resource.Member
 	Members(guildID Snowflake) <-chan map[Snowflake]*resource.Member
 }
@@ -386,44 +386,38 @@ func (c *Client) Msg(msgID Snowflake) <-chan *resource.Message {
 
 	return ch
 }
-func (c *Client) User(userID Snowflake) <-chan *resource.User {
-	ch := make(chan *resource.User)
 
-	go func(userID Snowflake, receiver chan<- *resource.User, storage *state.Cache) {
-		var result *resource.User
-		var err error
-		cached := true
+type UserChan struct {
+	User *resource.User
+	Err error
+	Cache bool
+}
+func (c *Client) User(userID Snowflake) <-chan *UserChan {
+	ch := make(chan *UserChan)
+
+	go func(userID Snowflake, receiver chan<- *UserChan, storage *state.Cache) {
+		response := &UserChan{
+			Cache: true,
+		}
 
 		// check cache
-		result, err = storage.User(userID)
-		if err != nil {
-			// log
-			fmt.Printf("User not in cache: id: %s\n", userID.String())
+		response.User, response.Err = storage.User(userID)
+		if response.Err != nil {
+			response.Cache = false
+			response.Err = nil
+			response.User, response.Err = rest.GetUser(c.req, userID)
 		}
 
 		// TODO: cache dead objects, to avoid http requesting the same none existent object?
 		// will this ever be a problem
 
-		// do http request if none found
-		if result == nil {
-			cached = false
-			result, err = rest.GetUser(c.req, userID)
-			if err != nil {
-				// TODO: handle error
-				// issue: devs might either be rate limited or user not found, how would they know tho?
-				receiver <- nil
-				close(receiver)
-				return
-			}
-		}
-
 		// return result
-		receiver <- result
+		receiver <- response
 
 		// update cache with new result, if not found
-		if !cached {
+		if !response.Cache && response.User != nil {
 			storage.ProcessUser(&state.UserDetail{
-				User:  result,
+				User:  response.User,
 				Dirty: false,
 			})
 		}

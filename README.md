@@ -105,8 +105,21 @@ func main() {
 
     // eg. retrieve a specific user from the Discord servers
     userID := snowflake.NewID(228846961774559232)
-    user := <- sess.User(userID) // sends a request to discord
-    user2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
+    userResponse := <- sess.User(userID) // sends a request to discord
+    userResponse2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
+
+    // check if there was an issue (eg. rate limited or not found)
+    if userResponse.Err != nil {
+        panic(userResponse.Err)
+    }
+
+    // check if this is retrieved from the cache
+    if userResponse.Cache {
+        // ...
+    }
+
+    // get the user info
+    user := userResponse.User
 
     // keep the app alive until terminated
     <-termSignal
