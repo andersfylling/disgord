@@ -104,7 +104,7 @@ func main() {
     }
 
     // eg. retrieve a specific user from the Discord servers
-    userID := snowflake.NewID(228846961774559232)
+    userID := NewSnowflake(228846961774559232)
     userResponse := <- sess.User(userID) // sends a request to discord
     userResponse2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
 

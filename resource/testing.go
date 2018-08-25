@@ -3,7 +3,9 @@ package resource
 import (
 	"encoding/json"
 	"testing"
-	"errors"
+	"bytes"
+	"github.com/sergi/go-diff/diffmatchpatch"
+	"fmt"
 )
 
 // ValidateJSONMarshalling
@@ -23,6 +25,7 @@ func validateJSONMarshalling(b []byte, v interface{}) error {
 	}
 
 	// sort the data by keys
+	// omg im getting lost in my own train of thought
 	omg := make(map[string]interface{})
 	err = json.Unmarshal(prettyJSON, &omg)
 	if err != nil {
@@ -35,33 +38,36 @@ func validateJSONMarshalling(b []byte, v interface{}) error {
 		return err
 	}
 
-	// it is expected that v will contain at least all keys that exists in b
-	var missing []string
-	for ki, _ := range omgAgain {
-		var found bool
-		for kj, _ := range omg {
-			if kj == ki {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			missing = append(missing, ki)
-		}
+	// back to json
+	prettyJSON, err = json.MarshalIndent(&omg, "", "    ")
+	if err != nil {
+		return err
 	}
 
-	if len(missing) > 0 {
-		missingRows := "JSON data differs. Missing the following keys in struct:\n"
-		for _, i := range missing {
-			missingRows += i + "\n"
-		}
-		return errors.New(missingRows)
+	b, err = json.MarshalIndent(&omgAgain, "", "    ")
+	if err != nil {
+		return err
 	}
 
-	// Note: this test doesn't compare the values. I won't bother with handling string pointers and such.. yet.
-	// TODO: could still create a test for this. check if it's either nil or an empty value. Although I assume
-	// TODO-1: that json.Unmarshal will always fill in the values given the correct data type
+	// minify for comparison
+	dst1 := bytes.Buffer{}
+	err = json.Compact(&dst1, b)
+	if err != nil {
+		return err
+	}
+	dst2 := bytes.Buffer{}
+	err = json.Compact(&dst2, prettyJSON)
+	if err != nil {
+		return err
+	}
+
+	// compare
+	if dst2.String() != dst1.String() {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(string(b), string(prettyJSON), false)
+		return fmt.Errorf("json data differs. \nDifference \n%s", dmp.DiffPrettyText(diffs))
+	}
+
 	return nil
 }
 
