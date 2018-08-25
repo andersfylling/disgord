@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"errors"
-	"github.com/andersfylling/disgord/discordws"
+	"github.com/andersfylling/disgordws"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest"
 	"github.com/andersfylling/disgord/rest/httd"
@@ -111,12 +111,12 @@ func NewClient(conf *Config) (*Client, error) {
 		}
 	}
 
-	// Use discordws to keep the socket connection going
+	// Use disgordws to keep the socket connection going
 	// default communication encoding to json
 	if conf.APIEncoding == "" {
 		conf.APIEncoding = JSONEncoding
 	}
-	dws, err := discordws.NewClient(&discordws.Config{
+	dws, err := disgordws.NewClient(&disgordws.Config{
 		// user settings
 		Token:      conf.Token,
 		HTTPClient: conf.HTTPClient,
@@ -180,8 +180,8 @@ type Client struct {
 
 	token string
 
-	ws            *discordws.Client
-	socketEvtChan <-chan discordws.EventInterface
+	ws            *disgordws.Client
+	socketEvtChan <-chan disgordws.EventInterface
 
 	// register listeners for events
 	evtDispatch *Dispatch
