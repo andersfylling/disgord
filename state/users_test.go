@@ -22,7 +22,7 @@ func TestUsers_cacheSize(t *testing.T) {
 	// incoming user object
 	newUser := resource.NewUser()
 
-	newUser.ID = Snowflake(11111111111111)
+	newUser.ID = NewSnowflake(11111111111111)
 	newUser.Username = "new object from disgord"
 
 	// check if it exists in cache
@@ -65,11 +65,11 @@ func TestUsers_cacheClear(t *testing.T) {
 	for i := 0; i < N; i++ {
 		avatar := "sdfkijsdljflsdjfjsdlfjlksdjf"
 		users = append(users, &resource.User{
-			ID:            Snowflake(652342343 + uint64(i)),
+			ID:            NewSnowflake(652342343 + uint64(i)),
 			Username:      "iufhhsuaifuhs",
 			Discriminator: "34234",
 			Email:         "andersfylling@adnersfylling.internet",
-			Avatar:        avatar,
+			Avatar:        &avatar,
 		})
 	}
 
@@ -116,11 +116,12 @@ func TestUserCache_Save(t *testing.T) {
 	// that no race condition takes place once the cache is updated
 	newUser := resource.NewUser()
 
-	newUser.ID = Snowflake(11111111111111)
+	newUser.ID = NewSnowflake(11111111111111)
 	newUser.Username = "new object from disgord"
 
 	// add to cache
 	cache := NewUserCache()
+	cache.StartListener()
 	cache.StartListener()
 	cache.Process(&UserDetail{User: newUser})
 	time.Sleep(50 * time.Millisecond) // haxor

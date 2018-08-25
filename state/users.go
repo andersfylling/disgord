@@ -51,14 +51,15 @@ func (st *UserCache) userCacher() {
 
 		select {
 		case userDetail, openChan = <-st.channel:
-			if !openChan {
-				break
-			}
+		}
 
-			// make sure it has a legal snowflake
-			if !userDetail.User.Valid() {
-				continue
-			}
+		if !openChan {
+			break
+		}
+
+		// make sure it has a legal snowflake
+		if !userDetail.User.Valid() {
+			continue
 		}
 
 		st.mu.Lock()

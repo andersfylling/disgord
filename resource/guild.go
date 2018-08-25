@@ -156,36 +156,37 @@ type GuildInterface interface {
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
 // TODO: lazyload everything
+// reviewed: 2018-08-25
 type PartialGuild = Guild
 type Guild struct {
 	ID                          Snowflake                     `json:"id"`
-	ApplicationID               Snowflake                    `json:"application_id"` //   |?
+	ApplicationID               *Snowflake                    `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
-	Icon                        string                       `json:"icon"`            //  |?, icon hash
-	Splash                      string                       `json:"splash"`          //  |?, image hash
+	Icon                        *string                       `json:"icon"`            //  |?, icon hash
+	Splash                      *string                       `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
 	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
-	AfkChannelID                Snowflake                     `json:"afk_channel_id"`
+	AfkChannelID                *Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
-	EmbedEnabled                bool                          `json:"embed_enabled"`
-	EmbedChannelID              Snowflake                     `json:"embed_channel_id"`
+	EmbedEnabled                bool                          `json:"embed_enabled,omit_empty"`
+	EmbedChannelID              Snowflake                     `json:"embed_channel_id,omit_empty"`
 	VerificationLevel           VerificationLvl               `json:"verification_level"`
 	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
 	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
-	MFALevel                    MFALvl                        `json:"mfa_level"`
-	WidgetEnabled               bool                          `json:"widget_enabled"`    //   |
-	WidgetChannelID             Snowflake                     `json:"widget_channel_id"` //   |
 	Roles                       []*Role                       `json:"roles"`
 	Emojis                      []*Emoji                      `json:"emojis"`
 	Features                    []string                      `json:"features"`
-	SystemChannelID             Snowflake                    `json:"system_channel_id,omitempty"` //   |?
+	MFALevel                    MFALvl                        `json:"mfa_level"`
+	WidgetEnabled               bool                          `json:"widget_enabled,omit_empty"`    //   |
+	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |
+	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       Timestamp      `json:"joined_at,omitempty"`    // ?*|
+	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
 	Large          bool            `json:"large,omitempty"`        // ?*|
-	Unavailable    bool            `json:"unavailable"`            // ?*|
+	Unavailable    bool            `json:"unavailable"`            // ?*| omitempty?
 	MemberCount    uint            `json:"member_count,omitempty"` // ?*|
 	VoiceStates    []*VoiceState   `json:"voice_states,omitempty"` // ?*|
 	Members        []*Member       `json:"members,omitempty"`      // ?*|
