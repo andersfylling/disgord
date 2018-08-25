@@ -159,10 +159,10 @@ type GuildInterface interface {
 type PartialGuild = Guild
 type Guild struct {
 	ID                          Snowflake                     `json:"id"`
-	ApplicationID               *Snowflake                    `json:"application_id"` //   |?
+	ApplicationID               Snowflake                    `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
-	Icon                        *string                       `json:"icon"`            //  |?, icon hash
-	Splash                      *string                       `json:"splash"`          //  |?, image hash
+	Icon                        string                       `json:"icon"`            //  |?, icon hash
+	Splash                      string                       `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
 	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
@@ -180,10 +180,10 @@ type Guild struct {
 	Roles                       []*Role                       `json:"roles"`
 	Emojis                      []*Emoji                      `json:"emojis"`
 	Features                    []string                      `json:"features"`
-	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"` //   |?
+	SystemChannelID             Snowflake                    `json:"system_channel_id,omitempty"` //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
+	JoinedAt       Timestamp      `json:"joined_at,omitempty"`    // ?*|
 	Large          bool            `json:"large,omitempty"`        // ?*|
 	Unavailable    bool            `json:"unavailable"`            // ?*|
 	MemberCount    uint            `json:"member_count,omitempty"` // ?*|
@@ -426,7 +426,6 @@ func (g *Guild) Clear() {
 	g.mu.Lock() // what if another process tries to read this, but awais while locked for clearing?
 	defer g.mu.Unlock()
 
-	g.ApplicationID = nil
 	//g.Icon = nil // should this be cleared?
 	//g.Splash = nil // should this be cleared?
 
@@ -441,9 +440,6 @@ func (g *Guild) Clear() {
 		e = nil
 	}
 	g.Emojis = nil
-
-	g.SystemChannelID = nil
-	g.JoinedAt = nil
 
 	for _, vst := range g.VoiceStates {
 		vst.Clear()
@@ -523,7 +519,7 @@ func (g *Guild) DeepCopy() *Guild {
 // --------------
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
-	Reason *string `json:"reason"`
+	Reason string `json:"reason"`
 	User   *User   `json:"user"`
 }
 

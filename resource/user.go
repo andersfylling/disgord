@@ -41,7 +41,7 @@ type User struct {
 	Username      string    `json:"username,omitempty"`
 	Discriminator string    `json:"discriminator,omitempty"`
 	Email         string    `json:"email,omitempty"`
-	Avatar        *string   `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA
+	Avatar        string   `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
 	Token         string    `json:"token,omitempty"`
 	Verified      bool      `json:"verified,omitempty"`
 	MFAEnabled    bool      `json:"mfa_enabled,omitempty"`
@@ -105,11 +105,7 @@ func (u *User) DeepCopy() *User {
 	user.Verified = u.Verified
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
-
-	if u.Avatar != nil {
-		avatar := *u.Avatar
-		user.Avatar = &avatar
-	}
+	user.Avatar = u.Avatar
 
 	u.RUnlock()
 
