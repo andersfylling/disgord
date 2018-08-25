@@ -69,7 +69,7 @@ func TestUsers_cacheClear(t *testing.T) {
 			Username:      "iufhhsuaifuhs",
 			Discriminator: "34234",
 			Email:         "andersfylling@adnersfylling.internet",
-			Avatar:        &avatar,
+			Avatar:        avatar,
 		})
 	}
 
