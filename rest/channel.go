@@ -3,15 +3,21 @@ package rest
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"sync"
+
+	. "github.com/andersfylling/snowflake"
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
-	. "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 const (
 	EndpointChannels = "/channels"
 )
+
+
 
 // GetChannel [GET]         Get a channel by Snowflake. Returns a channel object.
 // Endpoint                 /channels/{channel.id}
@@ -19,16 +25,15 @@ const (
 // Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel
 // Reviewed                 2018-06-07
 // Comment                  -
-func GetChannel(client httd.Getter, channelID Snowflake) (ret *Channel, err error) {
-	if channelID.Empty() {
+func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
+	if id.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String(),
-	}
-	_, body, err := client.Get(details)
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitChannel(id),
+		Endpoint:    endpoint.Channel(id),
+	})
 	if err != nil {
 		return
 	}
@@ -51,16 +56,16 @@ type ModifyChannelParams = Channel
 // Reviewed                     2018-06-07
 // Comment                      andersfylling: only implemented the patch method, as its parameters are optional.
 func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Channel, err error) {
-	if changes.ID.Empty() {
+	id := changes.ID
+	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(changes.ID),
-		Endpoint:    "/channels/" + changes.ID.String(),
-	}
-	_, body, err := client.Patch(details)
+	_, body, err := client.Patch(&httd.Request{
+		Ratelimiter: httd.RatelimitChannel(id),
+		Endpoint:    endpoint.Channel(id),
+	})
 	if err != nil {
 		return
 	}
@@ -82,20 +87,20 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func DeleteChannel(client httd.Deleter, channelID Snowflake) (err error) {
-	if channelID.Empty() {
+func DeleteChannel(client httd.Deleter, id Snowflake) (err error) {
+	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannel(channelID),
-		Endpoint:    "/channels/" + channelID.String(),
-	}
-	resp, _, err := client.Delete(details)
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitChannel(id),
+		Endpoint:    endpoint.Channel(id),
+	})
 	if err != nil {
 		return
 	}
+
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
@@ -111,15 +116,15 @@ type EditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
-// ReqEditChannelPermissions [PUT]  Edit the channel permission overwrites for a user or role in a channel.
-//                                  Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                                  Returns a 204 empty response on success. For more information about
-//                                  permissions, see permissions.
-// Endpoint                         /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}/permissions
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
-// Reviewed                         2018-06-07
-// Comment                          -
+// EditChannelPermissions [PUT] Edit the channel permission overwrites for a user or role in a channel.
+//                              Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
+//                              Returns a 204 empty response on success. For more information about
+//                              permissions, see permissions.
+// Endpoint                     /channels/{channel.id}/permissions/{overwrite.id}
+// Rate limiter [MAJOR]         /channels/{channel.id}/permissions
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
+// Reviewed                     2018-06-07
+// Comment                      -
 func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
 	if chanID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -128,11 +133,10 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelPermissions(chanID),
-		Endpoint:    "/channels/" + chanID.String() + "/permissions/" + overwriteID.String(),
-	}
-	resp, _, err := client.Put(details)
+		Endpoint:    endpoint.ChannelPermission(chanID, overwriteID),
+	})
 	if err != nil {
 		return
 	}
@@ -144,24 +148,23 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	return
 }
 
-// ReqGetChannelInvites [GET] Returns a list of invite objects (with invite metadata) for the channel.
-//                            Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
-// Endpoint                   /channels/{channel.id}/invites
-// Rate limiter [MAJOR]       /channels/{channel.id}/invites
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-channel-invites
-// Reviewed                   2018-06-07
-// Comment                    -
-func GetChannelInvites(client httd.Getter, channelID Snowflake) (ret []*Invite, err error) {
-	if channelID.Empty() {
+// GetChannelInvites [GET]  Returns a list of invite objects (with invite metadata) for the channel.
+//                          Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
+// Endpoint                 /channels/{channel.id}/invites
+// Rate limiter [MAJOR]     /channels/{channel.id}/invites
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel-invites
+// Reviewed                 2018-06-07
+// Comment                  -
+func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error) {
+	if id.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannelInvites(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/invites",
-	}
-	_, body, err := client.Get(details)
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelInvites(id),
+		Endpoint:    endpoint.ChannelInvites(id),
+	})
 	if err != nil {
 		return
 	}
@@ -188,20 +191,20 @@ type CreateChannelInvitesParams struct {
 // Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 // Reviewed                    2018-06-07
 // Comment                     -
-func CreateChannelInvites(client httd.Poster, channelID Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
-	if channelID.Empty() {
+func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
+	if id.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
 	if params == nil {
-		params = &CreateChannelInvitesParams{} // have to send an empty JSON object ({})
+		params = &CreateChannelInvitesParams{} // have to send an empty JSON object ({}). maybe just struct{}?
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannelInvites(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/invites",
-	}
-	_, body, err := client.Post(details)
+	_, body, err := client.Post(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelInvites(id),
+		Endpoint:    endpoint.ChannelInvites(id),
+		JSONParams:  params,
+	})
 	if err != nil {
 		return
 	}
@@ -228,11 +231,10 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Delete(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelPermissions(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/permissions/" + overwriteID.String(),
-	}
-	resp, _, err := client.Delete(details)
+		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
+	})
 	if err != nil {
 		return
 	}
@@ -244,7 +246,7 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 	return
 }
 
-// ReqTriggerTypingIndicator [POST] Post a typing indicator for the specified channel. Generally bots should
+// TriggerTypingIndicator [POST]    Post a typing indicator for the specified channel. Generally bots should
 //                                  not implement this route. However, if a bot is responding to a command and
 //                                  expects the computation to take a few seconds, this endpoint may be called
 //                                  to let the user know that the bot is processing their message. Returns a 204
@@ -255,12 +257,10 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 // Reviewed                         2018-06-10
 // Comment                          -
 func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error) {
-
-	details := &httd.Request{
+	resp, _, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelTyping(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/typing",
-	}
-	resp, _, err := client.Post(details)
+		Endpoint:    endpoint.ChannelTyping(channelID),
+	})
 	if err != nil {
 		return
 	}
@@ -272,19 +272,17 @@ func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error)
 	return
 }
 
-// ReqGetPinnedMessages [GET] Returns all pinned messages in the channel as an array of message objects.
-// Endpoint                   /channels/{channel.id}/pins
-// Rate limiter [MAJOR]       /channels/{channel.id}/pins
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
-// Reviewed                   2018-06-10
-// Comment                    -
+// GetPinnedMessages [GET]  Returns all pinned messages in the channel as an array of message objects.
+// Endpoint                 /channels/{channel.id}/pins
+// Rate limiter [MAJOR]     /channels/{channel.id}/pins
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
+// Reviewed                 2018-06-10
+// Comment                  -
 func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message, err error) {
-
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelPins(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pins",
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.ChannelPins(channelID),
+	})
 	if err != nil {
 		return
 	}
@@ -293,7 +291,7 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 	return
 }
 
-// ReqAddPinnedChannelMessage [GET] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// AddPinnedChannelMessage [GET]    Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 //                                  Returns a 204 empty response on success.
 // Endpoint                         /channels/{channel.id}/pins/{message.id}
 // Rate limiter [MAJOR]             /channels/{channel.id}/pins
@@ -301,12 +299,10 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 // Reviewed                         2018-06-10
 // Comment                          -
 func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err error) {
-
-	details := &httd.Request{
+	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelPins(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pints/" + msgID.String(),
-	}
-	resp, _, err := client.Put(details)
+		Endpoint:    endpoint.ChannelPin(channelID, msgID),
+	})
 	if err != nil {
 		return
 	}
@@ -318,14 +314,14 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err
 	return
 }
 
-// ReqDeletePinnedChannelMessage [DELETE] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
-//                                        permission. Returns a 204 empty response on success.
-//                                        Returns a 204 empty response on success.
-// Endpoint                               /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]                   /channels/{channel.id}/pins
-// Discord documentation                  https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
-// Reviewed                               2018-06-10
-// Comment                                -
+// DeletePinnedChannelMessage [DELETE]  Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
+//                                      permission. Returns a 204 empty response on success.
+//                                      Returns a 204 empty response on success.
+// Endpoint                             /channels/{channel.id}/pins/{message.id}
+// Rate limiter [MAJOR]                 /channels/{channel.id}/pins
+// Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
+// Reviewed                             2018-06-10
+// Comment                              -
 func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -334,11 +330,10 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake)
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Delete(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelPins(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/pins/" + msgID.String(),
-	}
-	resp, _, err := client.Delete(details)
+		Endpoint:    endpoint.ChannelPin(channelID, msgID),
+	})
 	if err != nil {
 		return
 	}
@@ -355,7 +350,7 @@ type GroupDMAddRecipientParams struct {
 	Nickname    string `json:"nick"`         // nickname of the user being added
 }
 
-// ReqGroupDMAddRecipient [PUT] Adds a recipient to a Group DM using their access token.
+// GroupDMAddRecipient [PUT]    Adds a recipient to a Group DM using their access token.
 //                              Returns a 204 empty response on success.
 // Endpoint                     /channels/{channel.id}/recipients/{user.id}
 // Rate limiter [MAJOR]         /channels/{channel.id}/recipients
@@ -370,11 +365,11 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelRecipients(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
-	}
-	resp, _, err := client.Put(details)
+		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
+		JSONParams:  params,
+	})
 	if err != nil {
 		return
 	}
@@ -386,13 +381,12 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 	return
 }
 
-// ReqGroupDMRemoveRecipient [DELETE] Removes a recipient from a Group DM.
-//                                    Returns a 204 empty response on success.
-// Endpoint                           /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]               /channels/{channel.id}/recipients
-// Discord documentation              https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
-// Reviewed                           2018-06-10
-// Comment                            -
+// GroupDMRemoveRecipient [DELETE]  Removes a recipient from a Group DM. Returns a 204 empty response on success.
+// Endpoint                         /channels/{channel.id}/recipients/{user.id}
+// Rate limiter [MAJOR]             /channels/{channel.id}/recipients
+// Discord documentation            https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
+// Reviewed                         2018-06-10
+// Comment                          -
 func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -401,16 +395,581 @@ func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (e
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Delete(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelRecipients(channelID),
-		Endpoint:    "/channels/" + channelID.String() + "/recipients/" + userID.String(),
-	}
-	resp, _, err := client.Delete(details)
+		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
+	})
 	if err != nil {
 		return
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+
+// -----------------------------------------
+// Message
+
+// GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// TODO: ensure limits
+type GetChannelMessagesParams struct {
+	Around Snowflake `urlparam:"around,omitempty"`
+	Before Snowflake `urlparam:"before,omitempty"`
+	After  Snowflake `urlparam:"after,omitempty"`
+	Limit  int       `urlparam:"limit,omitempty"`
+}
+
+// getQueryString this ins't really pretty, but it works.
+func (params *GetChannelMessagesParams) GetQueryString() string {
+	separator := "?"
+	query := ""
+
+	if !params.Around.Empty() {
+		query += separator + params.Around.String()
+		separator = "&"
+	}
+
+	if !params.Before.Empty() {
+		query += separator + params.Before.String()
+		separator = "&"
+	}
+
+	if !params.After.Empty() {
+		query += separator + params.After.String()
+		separator = "&"
+	}
+
+	if params.Limit > 0 {
+		query += separator + strconv.Itoa(params.Limit)
+	}
+
+	return query
+}
+
+// GetChannelMessages [GET] Returns the messages for a channel. If operating on a guild channel, this
+//                          endpoint requires the 'VIEW_CHANNEL' permission to be present on the current
+//                          user. If the current user is missing the 'READ_MESSAGE_HISTORY' permission
+//                          in the channel then this will return no messages (since they cannot read
+//                          the message history). Returns an array of message objects on success.
+// Endpoint                 /channels/{channel.id}/messages
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel-messages
+// Reviewed                 2018-06-10
+// Comment                  The before, after, and around keys are mutually exclusive, only one may
+//                          be passed at a time. see ReqGetChannelMessagesParams.
+func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	query := ""
+	if params != nil {
+		query += params.GetQueryString()
+	}
+
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
+		Endpoint:    endpoint.ChannelMessages(channelID) + query,
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+// GetChannelMessage [GET] Returns a specific message in the channel. If operating on a guild channel,
+//                         this endpoints requires the 'READ_MESSAGE_HISTORY' permission to be present
+//                         on the current user. Returns a message object on success.
+// Endpoint                /channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]    /channels/{channel.id}/messages
+// Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
+// Reviewed                2018-06-10
+// Comment                 -
+func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to get a specific message from a channel")
+		return
+	}
+
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
+		Endpoint:    endpoint.ChannelMessage(channelID, messageID),
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+func NewCreateMessageByString(content string) *CreateMessageParams {
+	return &CreateMessageParams{
+		Content: content,
+	}
+}
+
+type CreateMessageParams struct {
+	Content     string        `json:"content"`
+	Nonce       Snowflake     `json:"nonce,omitempty"`
+	Tts         bool          `json:"tts,omitempty"`
+	File        interface{}   `json:"file,omitempty"`  // TODO: what is this supposed to be?
+	Embed       *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
+	PayloadJSON string        `json:"payload_json,omitempty"`
+}
+
+// CreateChannelMessage [POST] Post a message to a guild text or DM channel. If operating on a guild channel,
+//                             this endpoint requires the 'SEND_MESSAGES' permission to be present on the
+//                             current user. If the tts field is set to true, the SEND_TTS_MESSAGES permission
+//                             is required for the message to be spoken. Returns a message object. Fires a
+//                             Message Create Gateway event. See message formatting for more information on
+//                             how to properly format messages.
+//                             The maximum request size when sending a message is 8MB.
+// Endpoint                    /channels/{channel.id}/messages
+// Rate limiter [MAJOR]        /channels/{channel.id}/messages
+// Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-message
+// Reviewed                    2018-06-10
+// Comment                     Before using this endpoint, you must connect to and identify with a gateway
+//                             at least once. This endpoint supports both JSON and form data bodies. It does
+//                             require multipart/form-data requests instead of the normal JSON request type
+//                             when uploading files. Make sure you set your Content-Type to multipart/form-data
+//                             if you're doing that. Note that in that case, the embed field cannot be used,
+//                             but you can pass an url-encoded JSON body as a form value for payload_json.
+func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	if params == nil {
+		err = errors.New("message must be set")
+		return
+	}
+
+	_, body, err := client.Post(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
+		Endpoint:    "/channels/" + channelID.String() + "/messages",
+		JSONParams:  params,
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+// EditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
+type EditMessageParams struct {
+	Content string        `json:"content,omitempty"`
+	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
+}
+
+// EditMessage [PATCH]      Edit a previously sent message. You can only edit messages that have been sent by
+//                          the current user. Returns a message object. Fires a Message Update Gateway event.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#edit-message
+// Reviewed                 2018-06-10
+// Comment                  All parameters to this endpoint are optional.
+func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
+	if chanID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	if msgID.Empty() {
+		err = errors.New("msgID must be set to edit the message")
+		return
+	}
+
+	_, body, err := client.Patch(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(chanID),
+		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
+		JSONParams:  params,
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+// DeleteMessage [DELETE]   Delete a message. If operating on a guild channel and trying to delete a
+//                          message that was not sent by the current user, this endpoint requires the
+//                          'MANAGE_MESSAGES' permission. Returns a 204 empty response on success.
+//                          Fires a Message Delete Gateway event.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages [DELETE]
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed                 2018-06-10
+// Comment                  -
+func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	if msgID.Empty() {
+		err = errors.New("msgID must be set to delete the message")
+		return
+	}
+
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
+		Endpoint:    endpoint.ChannelMessage(channelID, msgID),
+	})
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+// BulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+type BulkDeleteMessagesParams struct {
+	Messages []Snowflake `json:"messages"`
+	m        sync.RWMutex
+}
+
+func (p *BulkDeleteMessagesParams) tooMany(messages int) (err error) {
+	if messages > 100 {
+		err = errors.New("must be 100 or less messages to delete")
+	}
+
+	return
+}
+
+func (p *BulkDeleteMessagesParams) tooFew(messages int) (err error) {
+	if messages < 2 {
+		err = errors.New("must be at least two messages to delete")
+	}
+
+	return
+}
+
+func (p *BulkDeleteMessagesParams) Valid() (err error) {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
+	messages := len(p.Messages)
+	err = p.tooMany(messages)
+	if err != nil {
+		return
+	}
+	err = p.tooFew(messages)
+	return
+}
+
+func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	err = p.tooMany(len(p.Messages) + 1)
+	if err != nil {
+		return
+	}
+
+	// TODO: check for duplicates as those are counted only once
+
+	p.Messages = append(p.Messages, msg.ID)
+	return
+}
+
+// BulkDeleteMessages [POST]    Delete multiple messages in a single request. This endpoint can only be used
+//                              on guild channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204
+//                              empty response on success. Fires multiple Message Delete Gateway events.Any message
+//                              IDs given that do not exist or are invalid will count towards the minimum and
+//                              maximum message count (currently 2 and 100 respectively). Additionally,
+//                              duplicated IDs will only be counted once.
+// Endpoint                     /channels/{channel.id}/messages/bulk-delete
+// Rate limiter [MAJOR]         /channels/{channel.id}/messages [DELETE] TODO: is this limiter key incorrect?
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-message
+// Reviewed                     2018-06-10
+// Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
+//                              any message provided is older than that.
+func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
+	if chanID.Empty() {
+		err = errors.New("channelID must be set to get channel messages")
+		return
+	}
+	err = params.Valid()
+	if err != nil {
+		return
+	}
+
+	details := &httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(chanID),
+		Endpoint:    endpoint.ChannelMessagesBulkDelete(chanID),
+	}
+	resp, _, err := client.Post(details)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+
+// ------------------------------------------
+// Reaction
+
+
+// CreateReaction [PUT]     Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+//                          permission to be present on the current user. Additionally, if nobody else has
+//                          reacted to the message using this emoji, this endpoint requires the 'ADD_REACTIONS'
+//                          permission to be present on the current user. Returns a 204 empty response on success.
+//                          The maximum request size when sending a message is 8MB.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages TODO: I have no idea what the key is
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#create-reaction
+// Reviewed                 2018-06-07
+// Comment                  -
+// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		err = errors.New("emoji type can only be a unicode string or a *Emoji struct")
+		return
+	}
+
+	_, body, err := client.Put(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
+		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+// DeleteOwnReaction [DELETE]   Delete a reaction the current user has made for the message. Returns a 204
+//                              empty response on success.
+// Endpoint                     /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]         /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
+// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
+// Reviewed                     2018-06-07
+// Comment                      emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoji interface{}) (err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
+		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+	})
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+// CreateReaction [DELETE]  Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
+//                          permission to be present on the current user. Returns a 204 empty response on success.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]     /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+// Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+// Reviewed                 2018-06-07
+// Comment                  emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if messageID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+	if emoji == nil {
+		return errors.New("emoji must be set in order to create a message reaction")
+	}
+	if userID.Empty() {
+		return errors.New("userID must be set to target the specific user reaction")
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
+		Endpoint:    endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
+	})
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
+	return
+}
+
+// ReqGetReactionParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
+type GetReactionURLParams struct {
+	Before Snowflake `urlparam:"before,omitempty"` // get users before this user Snowflake
+	After  Snowflake `urlparam:"after,omitempty"`  // get users after this user Snowflake
+	Limit  int       `urlparam:"limit,omitempty"`  // max number of users to return (1-100)
+}
+
+// getQueryString this ins't really pretty, but it works.
+func (params *GetReactionURLParams) GetQueryString() string {
+	separator := "?"
+	query := ""
+
+	if !params.Before.Empty() {
+		query += separator + params.Before.String()
+		separator = "&"
+	}
+
+	if !params.After.Empty() {
+		query += separator + params.After.String()
+		separator = "&"
+	}
+
+	if params.Limit > 0 {
+		query += separator + strconv.Itoa(params.Limit)
+	}
+
+	return query
+}
+
+// ReqGetReaction [GET]   Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+// Endpoint               /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
+// Rate limiter [MAJOR]   /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
+// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-reactions
+// Reviewed               2018-06-07
+// Comment                -
+// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
+	if channelID.Empty() {
+		err = errors.New("channelID must be set to target the correct channel")
+		return
+	}
+	if messageID.Empty() {
+		err = errors.New("messageID must be set to target the specific channel message")
+		return
+	}
+	if emoji == nil {
+		err = errors.New("emoji must be set in order to create a message reaction")
+		return
+	}
+
+	emojiCode := ""
+	if _, ok := emoji.(*Emoji); ok {
+		emojiCode = emoji.(*Emoji).ID.String()
+	} else if _, ok := emoji.(string); ok {
+		emojiCode = emoji.(string) // unicode
+	} else {
+		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+
+	query := ""
+	if params != nil {
+		query += params.GetQueryString()
+	}
+
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessages(channelID),
+		Endpoint:    endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
+	})
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &ret)
+	return
+}
+
+// ReqCreateReaction [DELETE] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+//                            permission to be present on the current user.
+// Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions
+// Rate limiter [MAJOR]       /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
+// Reviewed                   2018-06-07
+// Comment                    -
+// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (err error) {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if messageID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitChannelMessagesDelete(channelID),
+		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
+	})
+	if err != nil {
+		return
+	}
+
+	// TODO: what is the response on a successful execution?
+	if false && resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}

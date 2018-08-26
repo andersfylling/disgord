@@ -7,12 +7,7 @@ import (
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-)
-
-const (
-	EndpointWebhooks      = "/webhooks"
-	EndpointSlackWebhook  = "/slack"
-	EndpointGitHubWebhook = "/github"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // CreateWebhookParams json params for the create webhook rest request
@@ -30,12 +25,11 @@ type CreateWebhookParams struct {
 // Reviewed                 2018-08-14
 // Comment                  -
 func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
-	details := &httd.Request{
+	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelWebhooks(channelID),
-		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
+		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		JSONParams:  params,
-	}
-	_, body, err := client.Post(details)
+	})
 	if err != nil {
 		return
 	}
@@ -51,11 +45,10 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 // Reviewed                 2018-08-14
 // Comment                  -
 func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitChannelWebhooks(channelID),
-		Endpoint:    EndpointChannels + "/" + channelID.String() + EndpointWebhooks,
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.ChannelWebhooks(channelID),
+	})
 	if err != nil {
 		return
 	}
@@ -71,11 +64,10 @@ func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook
 // Reviewed                 2018-08-14
 // Comment                  -
 func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, err error) {
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitChannelWebhooks(guildID),
-		Endpoint:    EndpointChannels + "/" + guildID.String() + EndpointWebhooks,
-	}
-	_, body, err := client.Get(details)
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitGuildWebhooks(guildID),
+		Endpoint:    endpoint.GuildWebhooks(guildID),
+	})
 	if err != nil {
 		return
 	}
@@ -90,10 +82,10 @@ func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, er
 // Discord documentation    https://discordapp.com/developers/docs/resources/webhook#get-webhook
 // Reviewed                 2018-08-14
 // Comment                  -
-func GetWebhook(client httd.Getter, webhookID Snowflake) (ret *Webhook, err error) {
+func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
 	details := &httd.Request{
-		Ratelimiter: httd.RatelimitWebhook(webhookID),
-		Endpoint:    EndpointWebhooks + "/" + webhookID.String(),
+		Ratelimiter: httd.RatelimitWebhook(id),
+		Endpoint:    endpoint.Webhook(id),
 	}
 	_, body, err := client.Get(details)
 	if err != nil {
@@ -111,12 +103,11 @@ func GetWebhook(client httd.Getter, webhookID Snowflake) (ret *Webhook, err erro
 // Discord documentation        https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 // Reviewed                     2018-08-14
 // Comment                      -
-func GetWebhookWithToken(client httd.Getter, webhookID Snowflake, token string) (ret *Webhook, err error) {
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitWebhook(webhookID),
-		Endpoint:    EndpointWebhooks + "/" + webhookID.String() + "/" + token,
-	}
-	_, body, err := client.Get(details)
+func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *Webhook, err error) {
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitWebhook(id),
+		Endpoint:    endpoint.WebhookToken(id, token),
+	})
 	if err != nil {
 		return
 	}
@@ -134,16 +125,16 @@ func GetWebhookWithToken(client httd.Getter, webhookID Snowflake, token string) 
 // Comment                  All parameters to this endpoint are optional. Not tested:extra json fields might
 //                          cause an issue. Consider writing a json params object.
 func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
-	if newWebhook.ID.Empty() {
+	id := newWebhook.ID
+	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitWebhook(newWebhook.ID),
-		Endpoint:    EndpointWebhooks + "/" + newWebhook.ID.String(),
-	}
-	_, body, err := client.Patch(details)
+	_, body, err := client.Patch(&httd.Request{
+		Ratelimiter: httd.RatelimitWebhook(id),
+		Endpoint:    endpoint.Webhook(id),
+	})
 	if err != nil {
 		return
 	}
@@ -162,16 +153,16 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 // Comment                          All parameters to this endpoint are optional. Not tested:extra json fields might
 //                                  cause an issue. Consider writing a json params object.
 func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
-	if newWebhook.ID.Empty() {
+	id := newWebhook.ID
+	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitWebhook(newWebhook.ID),
-		Endpoint:    EndpointWebhooks + "/" + newWebhook.ID.String() + "/" + newWebhook.Token,
-	}
-	_, body, err := client.Patch(details)
+	_, body, err := client.Patch(&httd.Request{
+		Ratelimiter: httd.RatelimitWebhook(id),
+		Endpoint:    endpoint.WebhookToken(id, newWebhook.Token),
+	})
 	if err != nil {
 		return
 	}
@@ -197,16 +188,18 @@ func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
 // Discord documentation            https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 // Reviewed                         2018-08-14
 // Comment                          -
-func DeleteWebhookWithToken(client httd.Deleter, webhookID Snowflake, token string) (err error) {
-	endpoint := EndpointWebhooks + "/" + webhookID.String()
+func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (err error) {
+	var e string
 	if token != "" {
-		endpoint += "/" + token
+		e = endpoint.WebhookToken(id, token)
+	} else {
+		e = endpoint.Webhook(id)
 	}
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitWebhook(webhookID),
-		Endpoint:    endpoint,
-	}
-	resp, _, err := client.Delete(details)
+
+	resp, _, err := client.Delete(&httd.Request{
+		Ratelimiter: httd.RatelimitWebhook(id),
+		Endpoint:    e,
+	})
 	if err != nil {
 		return
 	}
@@ -250,12 +243,12 @@ type ExecuteWebhookParams struct {
 // Comment#2                For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
+// TODO
 func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
-	details := &httd.Request{
+	_, _, err = client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitWebhook(params.WebhookID),
-		Endpoint:    EndpointWebhooks + "/" + params.WebhookID.String() + "/" + params.Token + URLSuffix,
-	}
-	_, _, err = client.Post(details)
+		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix,
+	})
 	if err != nil {
 		return
 	}
@@ -272,7 +265,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 // Comment                      Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                              icon_emoji, mrkdwn, or mrkdwn_in properties.
 func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool) (err error) {
-	return ExecuteWebhook(client, params, wait, EndpointSlackWebhook)
+	return ExecuteWebhook(client, params, wait, endpoint.Slack())
 }
 
 // ExecuteGitHubWebhook [POST]  Trigger a webhook in Discord from the GitHub app.
@@ -285,5 +278,5 @@ func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait 
 //                              choosing the "Let me select individual events" option and selecting individual
 //                              events for the new webhook you're configuring.
 func ExecuteGitHubWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool) (err error) {
-	return ExecuteWebhook(client, params, wait, EndpointGitHubWebhook)
+	return ExecuteWebhook(client, params, wait, endpoint.GitHub())
 }

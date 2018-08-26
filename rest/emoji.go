@@ -7,6 +7,7 @@ import (
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // endpoints
@@ -23,12 +24,11 @@ import (
 // Discord documentation    https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 // Reviewed                 2018-06-10
 // Comment                  -
-func ListGuildEmojis(client httd.Getter, guildID Snowflake) (ret *Emoji, err error) {
-	details := &httd.Request{
-		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
-	}
-	_, body, err := client.Get(details)
+func ListGuildEmojis(client httd.Getter, id Snowflake) (ret *Emoji, err error) {
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: httd.RatelimitGuild(id),
+		Endpoint:    endpoint.GuildEmojis(id),
+	})
 	if err != nil {
 		return
 	}
@@ -44,11 +44,10 @@ func ListGuildEmojis(client httd.Getter, guildID Snowflake) (ret *Emoji, err err
 // Reviewed                 2018-06-10
 // Comment                  -
 func GetGuildEmoji(client httd.Getter, guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+	})
 	if err != nil {
 		return
 	}
@@ -69,11 +68,10 @@ func GetGuildEmoji(client httd.Getter, guildID, emojiID Snowflake) (ret *Emoji, 
 //                          and return 400 Bad Request and an error message, but not a JSON
 //                          status code.
 func CreateGuildEmoji(client httd.Poster, guildID Snowflake) (ret *Emoji, err error) {
-	details := &httd.Request{
+	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis",
-	}
-	_, body, err := client.Post(details)
+		Endpoint:    endpoint.GuildEmojis(guildID),
+	})
 	if err != nil {
 		return
 	}
@@ -91,11 +89,10 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake) (ret *Emoji, err er
 // Reviewed                 2018-06-10
 // Comment                  -
 func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	details := &httd.Request{
+	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
-	}
-	_, body, err := client.Patch(details)
+		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+	})
 	if err != nil {
 		return
 	}
@@ -114,11 +111,10 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake) (ret *Emo
 // Reviewed                     2018-06-10
 // Comment                      -
 func DeleteGuildEmoji(client httd.Deleter, guildID, emojiID Snowflake) (err error) {
-	details := &httd.Request{
+	resp, _, err := client.Delete(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/emojis/" + emojiID.String(),
-	}
-	resp, _, err := client.Delete(details)
+		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+	})
 	if err != nil {
 		return
 	}

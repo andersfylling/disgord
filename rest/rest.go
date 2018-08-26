@@ -5,6 +5,10 @@ import (
 	"github.com/json-iterator/go"
 )
 
+type URLParameters interface {
+	GetQueryString() string
+}
+
 // unmarshalJSONIterator https://github.com/json-iterator/go
 func unmarshalJSONIterator(data []byte, v interface{}) (err error) {
 	err = jsoniter.Unmarshal(data, v)

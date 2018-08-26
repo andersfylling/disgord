@@ -53,7 +53,7 @@ func RatelimitChannelMessagesDelete(id Snowflake) string {
 	return RatelimitChannelMessages(id) + "_"
 }
 func RatelimitChannelWebhooks(id Snowflake) string {
-	return RatelimitChannelMessages(id) + ":w"
+	return RatelimitChannel(id) + ":w"
 }
 
 func RatelimitGuild(id Snowflake) string {
@@ -91,6 +91,9 @@ func RatelimitGuildInvites(id Snowflake) string {
 }
 func RatelimitGuildPrune(id Snowflake) string {
 	return RatelimitGuild(id) + ":p"
+}
+func RatelimitGuildWebhooks(id Snowflake) string {
+	return RatelimitGuild(id) + ":w"
 }
 
 func RatelimitWebhook(id Snowflake) string {
