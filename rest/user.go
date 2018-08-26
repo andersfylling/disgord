@@ -8,19 +8,10 @@ import (
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
-const (
-	EndpointUser              = "/users/"
-	EndpointUserMyself        = EndpointUser + "@me"
-	EndpointUserMyGuilds      = EndpointUserMyself + "/guilds"
-	EndpointUserMyChannels    = EndpointUserMyself + "/channels"
-	EndpointUserMyConnections = EndpointUserMyself + "/connections"
-)
-
-// ----------
-
-// ReqGetUser [GET]         Returns the user object of the requester's account. For OAuth2, this requires
+// GetUser [GET]            Returns the user object of the requester's account. For OAuth2, this requires
 //                          the identify scope, which will return the object without an email, and optionally
 //                          the email scope, which returns the object with an email.
 // Endpoint                 /users/@me
@@ -29,11 +20,10 @@ const (
 // Reviewed                 2018-06-10
 // Comment                  -
 func GetCurrentUser(client httd.Getter) (ret *User, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyself,
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.UserMe(),
+	})
 	if err != nil {
 		return
 	}
@@ -42,18 +32,17 @@ func GetCurrentUser(client httd.Getter) (ret *User, err error) {
 	return
 }
 
-// ReqGetUser [GET]         Returns a user object for a given user Snowflake.
+// GetUser [GET]            Returns a user object for a given user Snowflake.
 // Endpoint                 /users/{user.id}
 // Rate limiter             /users
 // Discord documentation    https://discordapp.com/developers/docs/resources/user#get-user
 // Reviewed                 2018-06-10
 // Comment                  -
-func GetUser(client httd.Getter, userID Snowflake) (ret *User, err error) {
-	details := &httd.Request{
+func GetUser(client httd.Getter, id Snowflake) (ret *User, err error) {
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUser + userID.String(),
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.User(id),
+	})
 	if err != nil {
 		return
 	}
@@ -74,12 +63,11 @@ type ModifyCurrentUserParams struct {
 // Reviewed                     2018-06-10
 // Comment                      -
 func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret *User, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyself,
+		Endpoint:    endpoint.UserMe(),
 		JSONParams:  params,
-	}
-	_, body, err := client.Get(details)
+	})
 	if err != nil {
 		return
 	}
@@ -91,11 +79,11 @@ func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret
 type GetCurrentUserGuildsParams struct {
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
-	Limit  int          `urlparam:"limit,omitempty"`
+	Limit  int       `urlparam:"limit,omitempty"`
 }
 
 // getQueryString this ins't really pretty, but it works.
-func (params *GetCurrentUserGuildsParams) getQueryString() string {
+func (params *GetCurrentUserGuildsParams) GetQueryString() string {
 	separator := "?"
 	query := ""
 
@@ -116,21 +104,20 @@ func (params *GetCurrentUserGuildsParams) getQueryString() string {
 	return query
 }
 
-// ReqGetCurrentUserGuilds [GET]  Returns a list of partial guild objects the current user is a member of.
-//                                Requires the guilds OAuth2 scope.
-// Endpoint                       /users/@me/guilds
-// Rate limiter                   /users TODO: is this correct?
-// Discord documentation          https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
-// Reviewed                       2018-06-10
-// Comment                        This endpoint returns 100 guilds by default, which is the maximum number of
-//                                guilds a non-bot user can join. Therefore, pagination is not needed for
-//                                integrations that need to get a list of users' guilds.
+// GetCurrentUserGuilds [GET]   Returns a list of partial guild objects the current user is a member of.
+//                              Requires the guilds OAuth2 scope.
+// Endpoint                     /users/@me/guilds
+// Rate limiter                 /users TODO: is this correct?
+// Discord documentation        https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
+// Reviewed                     2018-06-10
+// Comment                      This endpoint returns 100 guilds by default, which is the maximum number of
+//                              guilds a non-bot user can join. Therefore, pagination is not needed for
+//                              integrations that need to get a list of users' guilds.
 func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyGuilds + params.getQueryString(),
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.UserMeGuilds() + params.GetQueryString(),
+	})
 	if err != nil {
 		return
 	}
@@ -139,18 +126,17 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 	return
 }
 
-// ReqLeaveGuild [DELETE] Leave a guild. Returns a 204 empty response on success.
+// LeaveGuild [DELETE]    Leave a guild. Returns a 204 empty response on success.
 // Endpoint               /users/@me/guilds/{guild.id}
 // Rate limiter           /users TODO: is this correct?
 // Discord documentation  https://discordapp.com/developers/docs/resources/user#leave-guild
 // Reviewed               2018-06-10
 // Comment                -
-func LeaveGuild(client httd.Deleter, guildID Snowflake) (err error) {
-	details := &httd.Request{
+func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
+	resp, _, err := client.Delete(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyGuilds + "/" + guildID.String(),
-	}
-	resp, _, err := client.Delete(details)
+		Endpoint:    endpoint.UserMeGuild(id),
+	})
 	if err != nil {
 		return
 	}
@@ -162,18 +148,17 @@ func LeaveGuild(client httd.Deleter, guildID Snowflake) (err error) {
 	return
 }
 
-// ReqGetUserDMs [GET]    Returns a list of DM channel objects.
-// Endpoint               /users/@me/channels
-// Rate limiter           /users TODO: is this correct?
-// Discord documentation  https://discordapp.com/developers/docs/resources/user#get-user-dms
-// Reviewed               2018-06-10
-// Comment                -
+// GetUserDMs [GET]         Returns a list of DM channel objects.
+// Endpoint                 /users/@me/channels
+// Rate limiter             /users TODO: is this correct?
+// Discord documentation    https://discordapp.com/developers/docs/resources/user#get-user-dms
+// Reviewed                 2018-06-10
+// Comment                  -
 func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyChannels,
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.UserMeChannels(),
+	})
 	if err != nil {
 		return
 	}
@@ -186,19 +171,18 @@ type BodyUserCreateDM struct {
 	RecipientID Snowflake `json:"recipient_id"`
 }
 
-// ReqGetUserDMs [POST]   Create a new DM channel with a user. Returns a DM channel object.
-// Endpoint               /users/@me/channels
-// Rate limiter           /users TODO: is this correct?
-// Discord documentation  https://discordapp.com/developers/docs/resources/user#create-dm
-// Reviewed               2018-06-10
-// Comment                -
+// GetUserDMs [POST]        Create a new DM channel with a user. Returns a DM channel object.
+// Endpoint                 /users/@me/channels
+// Rate limiter             /users TODO: is this correct?
+// Discord documentation    https://discordapp.com/developers/docs/resources/user#create-dm
+// Reviewed                 2018-06-10
+// Comment                  -
 func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err error) {
-	details := &httd.Request{
+	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyChannels,
+		Endpoint:    endpoint.UserMeChannels(),
 		JSONParams:  &BodyUserCreateDM{recipientID},
-	}
-	_, body, err := client.Post(details)
+	})
 	if err != nil {
 		return
 	}
@@ -214,19 +198,18 @@ type CreateGroupDMParams struct {
 	Nicks        map[Snowflake]string `json:"nicks"`         // userID => nickname
 }
 
-// ReqCreateGroupDM [POST]  Create a new group DM channel with multiple users. Returns a DM channel object.
+// CreateGroupDM [POST]     Create a new group DM channel with multiple users. Returns a DM channel object.
 // Endpoint                 /users/@me/channels
 // Rate limiter             /users TODO: is this correct?
 // Discord documentation    https://discordapp.com/developers/docs/resources/user#create-group-dm
 // Reviewed                 2018-06-10
 // Comment                  -
 func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channel, err error) {
-	details := &httd.Request{
+	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyChannels,
+		Endpoint:    endpoint.UserMeChannels(),
 		JSONParams:  params,
-	}
-	_, body, err := client.Post(details)
+	})
 	if err != nil {
 		return
 	}
@@ -235,18 +218,17 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 	return
 }
 
-// ReqCreateGroupDM [GET] Returns a list of connection objects. Requires the connections OAuth2 scope.
-// Endpoint               /users/@me/connections
-// Rate limiter           /users TODO: is this correct?
-// Discord documentation  https://discordapp.com/developers/docs/resources/user#get-user-connections
-// Reviewed               2018-06-10
-// Comment                -
+// CreateGroupDM [GET]      Returns a list of connection objects. Requires the connections OAuth2 scope.
+// Endpoint                 /users/@me/connections
+// Rate limiter             /users TODO: is this correct?
+// Discord documentation    https://discordapp.com/developers/docs/resources/user#get-user-connections
+// Reviewed                 2018-06-10
+// Comment                  -
 func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
-	details := &httd.Request{
+	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
-		Endpoint:    EndpointUserMyConnections,
-	}
-	_, body, err := client.Get(details)
+		Endpoint:    endpoint.UserMeConnections(),
+	})
 	if err != nil {
 		return
 	}

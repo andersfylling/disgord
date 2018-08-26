@@ -6,6 +6,7 @@ import (
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // AuditLogParams set params used in endpoint request
@@ -44,7 +45,7 @@ func (params *AuditLogParams) getQueryString() string {
 	return query
 }
 
-// ReqGuildAuditLogs [GET]  Returns an audit log object for the guild.
+// GuildAuditLogs [GET]     Returns an audit log object for the guild.
 //                          Requires the 'VIEW_AUDIT_LOG' permission.
 // Endpoint                 /guilds/{guild.id}/audit-logs
 // Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs
@@ -55,7 +56,7 @@ func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *AuditLogParam
 
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuildAuditLogs(guildID),
-		Endpoint:    EndpointGuild + guildID.String() + "/audit-logs" + params.getQueryString(),
+		Endpoint:    endpoint.GuildAuditLogs(guildID) + params.getQueryString(),
 	}
 	_, body, err := client.Get(details)
 	if err != nil {

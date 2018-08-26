@@ -3,18 +3,15 @@ package rest
 import (
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/httd"
+	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
-const (
-	EndpointInvite = "/invites"
-)
-
-// ReqGetInvite [GET]     Returns an invite object for the given code.
-// Endpoint               /invites/{invite.code}
-// Rate limiter           /invites/{invite.code}
-// Discord documentation  https://discordapp.com/developers/docs/resources/invite#get-invite
-// Reviewed               2018-06-10
-// Comment                -
+// GetInvite [GET]          Returns an invite object for the given code.
+// Endpoint                 /invites/{invite.code}
+// Rate limiter             /invites
+// Discord documentation    https://discordapp.com/developers/docs/resources/invite#get-invite
+// Reviewed                 2018-06-10
+// Comment                  -
 //
 // withCounts whether the invite should contain approximate member counts
 func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *Invite, err error) {
@@ -23,11 +20,10 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 		query += "?with_counts=true"
 	}
 
-	details := &httd.Request{
-		Ratelimiter: EndpointInvite,
-		Endpoint:    EndpointInvite + "/" + inviteCode + query,
-	}
-	_, body, err := client.Get(details)
+	_, body, err := client.Get(&httd.Request{
+		Ratelimiter: endpoint.Invites(),
+		Endpoint:    endpoint.Invite(inviteCode) + query,
+	})
 	if err != nil {
 		return
 	}
@@ -36,20 +32,18 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 	return
 }
 
-// ReqDeleteInvite [DELETE] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite
+// DeleteInvite [DELETE]    Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite
 //                          object on success.
 // Endpoint                 /invites/{invite.code}
-// Rate limiter             /invites/{invite.code}
+// Rate limiter             /invites
 // Discord documentation    https://discordapp.com/developers/docs/resources/invite#delete-invite
 // Reviewed                 2018-06-10
 // Comment                  -
 func DeleteInvite(client httd.Deleter, inviteCode string) (invite *Invite, err error) {
-
-	details := &httd.Request{
-		Ratelimiter: EndpointInvite,
-		Endpoint:    EndpointInvite + "/" + inviteCode,
-	}
-	_, body, err := client.Delete(details)
+	_, body, err := client.Delete(&httd.Request{
+		Ratelimiter: endpoint.Invites(),
+		Endpoint:    endpoint.Invite(inviteCode),
+	})
 	if err != nil {
 		return
 	}
