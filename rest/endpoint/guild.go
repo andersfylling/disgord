@@ -39,7 +39,7 @@ func GuildMembersMeNick(guildID Snowflake) string {
 
 // GuildMemberRole /guilds/{guild.id}/members/{user.id}/roles/{role.id}
 func GuildMemberRole(guildID, userID, roleID Snowflake) string {
-	return GuildMember(guildID, userID) + roles + "/" +roleID.String()
+	return GuildMember(guildID, userID) + roles + "/" + roleID.String()
 }
 
 // GuildBans /builds/{guild.id}/bans

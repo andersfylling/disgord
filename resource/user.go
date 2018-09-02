@@ -122,7 +122,6 @@ func (u *User) Valid() bool {
 
 // -------
 
-
 func NewUserPresence() *UserPresence {
 	return &UserPresence{}
 }

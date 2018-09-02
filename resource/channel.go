@@ -238,7 +238,28 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 
 func (m *Message) Delete() {}
 func (m *Message) Update() {}
-func (m *Message) Send()   {}
+
+type MessageSender interface {
+	SendMsg(channelID Snowflake, message *Message) (msg *Message, err error)
+}
+
+func (m *Message) Send(client MessageSender) (msg *Message, err error) {
+	msg, err = client.SendMsg(m.ChannelID, m)
+	return
+}
+func (m *Message) Respond(client MessageSender, message *Message) (msg *Message, err error) {
+	message.ChannelID = m.ChannelID
+	msg, err = message.Send(client)
+	return
+}
+func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
+	message := &Message{
+		ChannelID: m.ChannelID,
+		Content:   content,
+	}
+	msg, err = message.Send(client)
+	return
+}
 
 func (m *Message) AddReaction(reaction *Reaction) {}
 func (m *Message) RemoveReaction(id Snowflake)    {}

@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // endpoints

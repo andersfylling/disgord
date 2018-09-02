@@ -1,11 +1,11 @@
 package resource
 
 import (
-	"encoding/json"
-	"testing"
 	"bytes"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"encoding/json"
 	"fmt"
+	"github.com/sergi/go-diff/diffmatchpatch"
+	"testing"
 )
 
 // ValidateJSONMarshalling

@@ -4,18 +4,18 @@ import (
 	"strconv"
 
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // AuditLogParams set params used in endpoint request
 // https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-parameters
 type AuditLogParams struct {
 	UserID     Snowflake `urlparam:"user_id,omitempty"`     // filter the log for a user id
-	ActionType uint         `urlparam:"action_type,omitempty"` // the type of audit log event
+	ActionType uint      `urlparam:"action_type,omitempty"` // the type of audit log event
 	Before     Snowflake `urlparam:"before,omitempty"`      // filter the log before a certain entry id
-	Limit      int          `urlparam:"limit,omitempty"`       // how many entries are returned (default 50, minimum 1, maximum 100)
+	Limit      int       `urlparam:"limit,omitempty"`       // how many entries are returned (default 50, minimum 1, maximum 100)
 }
 
 // getQueryString this ins't really pretty, but it works.

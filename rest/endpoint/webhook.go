@@ -2,7 +2,6 @@ package endpoint
 
 import . "github.com/andersfylling/snowflake"
 
-
 // Slack /slack suffix
 func Slack() string {
 	return slack
@@ -12,7 +11,6 @@ func Slack() string {
 func GitHub() string {
 	return github
 }
-
 
 // Webhook /webhooks/{webhook.id}
 func Webhook(id Snowflake) string {

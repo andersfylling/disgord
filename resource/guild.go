@@ -168,7 +168,7 @@ type Guild struct {
 	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
-	AfkChannelID                *Snowflake                     `json:"afk_channel_id"` // |?
+	AfkChannelID                *Snowflake                    `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
 	EmbedEnabled                bool                          `json:"embed_enabled,omit_empty"`
 	EmbedChannelID              Snowflake                     `json:"embed_channel_id,omit_empty"`
@@ -181,7 +181,7 @@ type Guild struct {
 	MFALevel                    MFALvl                        `json:"mfa_level"`
 	WidgetEnabled               bool                          `json:"widget_enabled,omit_empty"`    //   |
 	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |
-	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"` //   |?
+	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"`  //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
 	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
@@ -521,7 +521,7 @@ func (g *Guild) DeepCopy() *Guild {
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
 	Reason string `json:"reason"`
-	User   *User   `json:"user"`
+	User   *User  `json:"user"`
 }
 
 // ------------

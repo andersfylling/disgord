@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // GetUser [GET]            Returns the user object of the requester's account. For OAuth2, this requires
@@ -194,7 +194,7 @@ func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err erro
 // BodyUserCreateGroupDM
 // https://discordapp.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
-	AccessTokens []string                `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
+	AccessTokens []string             `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
 	Nicks        map[Snowflake]string `json:"nicks"`         // userID => nickname
 }
 

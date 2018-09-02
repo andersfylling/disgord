@@ -9,15 +9,13 @@ import (
 	. "github.com/andersfylling/snowflake"
 
 	. "github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/rest/endpoint"
+	"github.com/andersfylling/disgord/rest/httd"
 )
 
 const (
 	EndpointChannels = "/channels"
 )
-
-
 
 // GetChannel [GET]         Get a channel by Snowflake. Returns a channel object.
 // Endpoint                 /channels/{channel.id}
@@ -410,7 +408,6 @@ func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (e
 	return
 }
 
-
 // -----------------------------------------
 // Message
 
@@ -513,13 +510,13 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 	return
 }
 
-func NewCreateMessageByString(content string) *CreateMessageParams {
-	return &CreateMessageParams{
+func NewMessageByString(content string) *CreateChannelMessageParams {
+	return &CreateChannelMessageParams{
 		Content: content,
 	}
 }
 
-type CreateMessageParams struct {
+type CreateChannelMessageParams struct {
 	Content     string        `json:"content"`
 	Nonce       Snowflake     `json:"nonce,omitempty"`
 	Tts         bool          `json:"tts,omitempty"`
@@ -545,7 +542,7 @@ type CreateMessageParams struct {
 //                             when uploading files. Make sure you set your Content-Type to multipart/form-data
 //                             if you're doing that. Note that in that case, the embed field cannot be used,
 //                             but you can pass an url-encoded JSON body as a form value for payload_json.
-func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -726,10 +723,8 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 	return
 }
 
-
 // ------------------------------------------
 // Reaction
-
 
 // CreateReaction [PUT]     Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 //                          permission to be present on the current user. Additionally, if nobody else has

@@ -2,8 +2,8 @@ package rest
 
 import (
 	. "github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/disgord/rest/httd"
 	"github.com/andersfylling/disgord/rest/endpoint"
+	"github.com/andersfylling/disgord/rest/httd"
 )
 
 // GetInvite [GET]          Returns an invite object for the given code.

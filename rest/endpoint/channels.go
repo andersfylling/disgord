@@ -2,7 +2,6 @@ package endpoint
 
 import . "github.com/andersfylling/snowflake"
 
-
 func Channels() string {
 	return channels
 }

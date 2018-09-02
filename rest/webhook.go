@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // CreateWebhookParams json params for the create webhook rest request
@@ -220,7 +220,7 @@ func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookPar
 
 type ExecuteWebhookParams struct {
 	WebhookID Snowflake `json:"-"`
-	Token     string       `json:"-"`
+	Token     string    `json:"-"`
 
 	Content   string          `json:"content"`
 	Username  string          `json:"username"`

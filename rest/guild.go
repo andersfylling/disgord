@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	. "github.com/andersfylling/disgord/resource"
+	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
 	. "github.com/andersfylling/snowflake"
-	"github.com/andersfylling/disgord/rest/endpoint"
 )
 
 // CreateGuildParams https://discordapp.com/developers/docs/resources/guild#create-guild-json-params
@@ -77,12 +77,12 @@ type ModifyGuildParams struct {
 	VerificationLvl         int                           `json:"verification_level,omitempty"`
 	DefaultMsgNotifications DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
 	ExplicitContentFilter   ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
-	AFKChannelID            Snowflake                  `json:"afk_channel_id,omitempty"`
+	AFKChannelID            Snowflake                     `json:"afk_channel_id,omitempty"`
 	AFKTimeout              int                           `json:"afk_timeout,omitempty"`
 	Icon                    string                        `json:"icon,omitempty"`
-	OwnerID                 Snowflake                  `json:"owner_id,omitempty"`
+	OwnerID                 Snowflake                     `json:"owner_id,omitempty"`
 	Splash                  string                        `json:"splash,omitempty"`
-	SystemChannelID         Snowflake                  `json:"system_channel_id,omitempty"`
+	SystemChannelID         Snowflake                     `json:"system_channel_id,omitempty"`
 }
 
 // ModifyGuild [PATCH]      Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated
@@ -156,7 +156,7 @@ type CreateGuildChannelParams struct {
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
-	ParentID             Snowflake          `json:"parent_id,omitempty"`             // ?|
+	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
 }
 
@@ -271,11 +271,11 @@ func GetGuildMembers(client httd.Getter, guildID, after Snowflake, limit int) (r
 
 // AddGuildMemberParams https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
-	AccessToken string         `json:"access_token"`
-	Nick        string         `json:"nick,omitempty"`
-	Roles       []Snowflake    `json:"roles"`
-	Mute        bool           `json:"mute"`
-	Deaf        bool           `json:"deaf"`
+	AccessToken string      `json:"access_token"`
+	Nick        string      `json:"nick,omitempty"`
+	Roles       []Snowflake `json:"roles"`
+	Mute        bool        `json:"mute"`
+	Deaf        bool        `json:"deaf"`
 }
 
 // AddGuildMember [PUT]     Adds a user to the guild, provided you have a valid oauth2 access token for the user
@@ -819,7 +819,7 @@ func GetGuildIntegrations(client httd.Getter, id Snowflake) (ret []*Integration,
 
 // CreateGuildIntegrationParams https://discordapp.com/developers/docs/resources/guild#create-guild-integration-json-params
 type CreateGuildIntegrationParams struct {
-	Type string       `json:"type"`
+	Type string    `json:"type"`
 	ID   Snowflake `json:"id"`
 }
 
