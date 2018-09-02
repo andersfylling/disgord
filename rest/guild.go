@@ -135,7 +135,7 @@ func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
 // Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 // Reviewed                 2018-08-17
 // Comment                  -
-func GetGuildChannels(client httd.Getter, id Snowflake) (ret *[]Channel, err error) {
+func GetGuildChannels(client httd.Getter, id Snowflake) (ret []*Channel, err error) {
 	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),

@@ -24,7 +24,7 @@ import (
 // Discord documentation    https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 // Reviewed                 2018-06-10
 // Comment                  -
-func ListGuildEmojis(client httd.Getter, id Snowflake) (ret *Emoji, err error) {
+func ListGuildEmojis(client httd.Getter, id Snowflake) (ret []*Emoji, err error) {
 	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(id),
 		Endpoint:    endpoint.GuildEmojis(id),
