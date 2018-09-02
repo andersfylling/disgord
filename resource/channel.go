@@ -20,11 +20,6 @@ const (
 	ChannelTypeGuildCategory
 )
 
-// ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
-type ChannelMessager interface {
-	CreateMessage(*Message) error // TODO: check cache for `SEND_MESSAGES` and `SEND_TTS_MESSAGES` permissions before sending.
-}
-
 // Attachment https://discordapp.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -50,6 +45,19 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
+// ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
+type ChannelMessager interface {
+	CreateMessage(*Message) error
+}
+type ChannelFetcher interface {
+	GetChannel(id Snowflake) (ret *Channel, err error)
+}
+type ChannelDeleter interface {
+	DeleteChannel(id Snowflake) (err error)
+}
+type ChannelUpdater interface {
+}
+
 // Channel
 type Channel struct {
 	ID                   Snowflake             `json:"id"`
@@ -70,7 +78,7 @@ type Channel struct {
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
 
-	mu sync.RWMutex
+	sync.RWMutex
 }
 type PartialChannel = Channel
 
@@ -85,7 +93,7 @@ func (c *Channel) Compare(other *Channel) bool {
 
 func (c *Channel) Replicate(channel *Channel, recipients []*User) {
 	*c = *channel
-	c.mu = sync.RWMutex{}
+	c.RWMutex = sync.RWMutex{}
 
 	// WARNING: DM channels holds users. These should be fetched from cache.
 	if recipients != nil && len(recipients) > 0 {
@@ -98,7 +106,7 @@ func (c *Channel) Replicate(channel *Channel, recipients []*User) {
 func (c *Channel) DeepCopy() *Channel {
 	channel := NewChannel()
 
-	c.mu.RLock()
+	c.RWMutex.RLock()
 
 	channel.ID = c.ID
 	channel.Type = c.Type
@@ -124,7 +132,7 @@ func (c *Channel) DeepCopy() *Channel {
 		}
 	}
 
-	c.mu.RUnlock()
+	c.RWMutex.RUnlock()
 
 	return channel
 }
@@ -133,24 +141,39 @@ func (c *Channel) Clear() {
 	// TODO
 }
 
-func (c *Channel) Update() {
+// Update send channel changes to the Discord API
+func (c *Channel) Update(client ChannelUpdater) {
 
 }
 
-func (c *Channel) Delete() {
-
+// Delete sends a Discord REST request to delete the related channel
+func (c *Channel) Delete(client ChannelDeleter) (err error) {
+	err = client.DeleteChannel(c.ID)
+	return
 }
 
 func (c *Channel) Create() {
 	// check if channel already exists.
 }
 
-func (c *Channel) SendMsgStr(client ChannelMessager, msgStr string) (msg *Message, err error) {
-	return &Message{}, errors.New("not implemented")
+// Fetch check if there are any updates to the channel values
+//func (c *Channel) Fetch(client ChannelFetcher) (err error) {
+//	if c.ID.Empty() {
+//		err = errors.New("missing channel ID")
+//		return
+//	}
+//
+//	client.GetChannel(c.ID)
+//}
+
+func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Message, err error) {
+	msg, err = client.SendMsgString(c.ID, content)
+	return
 }
 
-func (c *Channel) SendMsg(client ChannelMessager, msg *Message) (err error) {
-	return errors.New("not implemented")
+func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message, err error) {
+	msg, err = client.SendMsg(c.ID, message)
+	return
 }
 
 // -----------------------------
@@ -264,6 +287,7 @@ func (m *Message) Update(client MessageUpdater) (msg *Message, err error) {
 
 type MessageSender interface {
 	SendMsg(channelID Snowflake, message *Message) (msg *Message, err error)
+	SendMsgString(channelID Snowflake, content string) (msg *Message, err error)
 }
 
 func (m *Message) Send(client MessageSender) (msg *Message, err error) {
@@ -276,11 +300,7 @@ func (m *Message) Respond(client MessageSender, message *Message) (msg *Message,
 	return
 }
 func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
-	message := &Message{
-		ChannelID: m.ChannelID,
-		Content:   content,
-	}
-	msg, err = message.Send(client)
+	msg, err = client.SendMsgString(m.ChannelID, content)
 	return
 }
 

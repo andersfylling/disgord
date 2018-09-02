@@ -160,6 +160,7 @@ type Session interface {
 	SendMsg(channelID Snowflake, message *resource.Message) (msg *resource.Message, err error)
 	SendMsgString(channelID Snowflake, content string) (msg *resource.Message, err error)
 	UpdateMessage(message *resource.Message) (msg *resource.Message, err error)
+	UpdateChannel(channel *resource.Channel) (err error)
 
 	// same as above. Except these returns a channel
 	// WARNING: none below should be assumed to be working.
@@ -790,6 +791,12 @@ func (c *Client) UpdateMessage(message *resource.Message) (msg *resource.Message
 
 	msg, err = c.EditMessage(message.ChannelID, message.ID, params)
 	return
+}
+
+func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
+	// there are several different REST calls that needs to be made in order
+	// to update the channel. But how exactly do we know what has changed?
+	return errors.New("not implemented")
 }
 
 // ---------------------------------
