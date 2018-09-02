@@ -159,6 +159,7 @@ type Session interface {
 	// Custom
 	SendMsg(channelID Snowflake, message *resource.Message) (msg *resource.Message, err error)
 	SendMsgString(channelID Snowflake, content string) (msg *resource.Message, err error)
+	UpdateMessage(message *resource.Message) (msg *resource.Message, err error)
 
 	// same as above. Except these returns a channel
 	// WARNING: none below should be assumed to be working.
@@ -775,6 +776,24 @@ func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *resour
 	msg, err = c.CreateChannelMessage(channelID, params)
 	return
 }
+
+func (c *Client) UpdateMessage(message *resource.Message) (msg *resource.Message, err error) {
+	message.RLock()
+	defer message.RUnlock()
+
+	params := &rest.EditMessageParams{
+		Content: message.Content,
+	}
+	if len(message.Embeds) > 0 {
+		params.Embed = message.Embeds[0]
+	}
+
+	msg, err = c.EditMessage(message.ChannelID, message.ID, params)
+	return
+}
+
+// ---------------------------------
+// REST with GoLang channels
 
 func (c *Client) ChannelChan(channelID Snowflake) <-chan *resource.Channel {
 	ch := make(chan *resource.Channel)

@@ -236,8 +236,31 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Message(*m))
 }
 
-func (m *Message) Delete() {}
-func (m *Message) Update() {}
+type MessageDeleter interface {
+	DeleteMessage(channelID, msgID Snowflake) (err error)
+}
+
+// Delete sends a delete request to Discord for the related message
+func (m *Message) Delete(client MessageDeleter) (err error) {
+	if m.ID.Empty() {
+		err = errors.New("message is missing snowflake")
+		return
+	}
+
+	err = client.DeleteMessage(m.ChannelID, m.ID)
+	return
+}
+
+type MessageUpdater interface {
+	UpdateMessage(message *Message) (msg *Message, err error)
+}
+
+// Update after changing the message object, call update to notify Discord
+//        about any changes made
+func (m *Message) Update(client MessageUpdater) (msg *Message, err error) {
+	msg, err = client.UpdateMessage(m)
+	return
+}
 
 type MessageSender interface {
 	SendMsg(channelID Snowflake, message *Message) (msg *Message, err error)
