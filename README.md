@@ -4,8 +4,7 @@
 ## Health
 | Branch       | Build status  | Code climate | Go Report Card | Codacy |
 | ------------ |:-------------:|:---------------:|:-------------:|:----------------:|
-| master       | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/master.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/master) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
-| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | - | - | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
+| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
 
 
 
@@ -15,15 +14,24 @@ GoLang library for interacting with the Discord API. Supports socketing and REST
 
 To get started see the examples in [docs](docs/examples)
 
-## package structure
+## Package structure
 ```Markdown
 github.com/andersfylling/disgord
-└──discordws    :Deals with the discord socket connection
 └──docs         :Examples, templates, (documentation)
 └──event        :Data structures, callbacks, event types
 └──resource     :All the Discord data structures (same setup as the Discord docs)
 └──rest         :All the endpoints found in the documentation (same as resource)
 └──state/cache  :Logic for caching incoming Discord information
+```
+
+### Dependencies
+```Markdown
+github.com/andersfylling/disgord
+└──github.com/andersfylling/snowflake  :The snowflake ID designed for Discord
+└──github.com/andersfylling/disgordws  :Handles the socket connection with discord
+└──github.com/json-iterator/go         :For faster JSON decoding/encoding
+└──github.com/sergi/go-diff            :Unit testing for checking json encoding/decoding of structs
+└──github.com/sirupsen/logrus          :Logging (will be replaced with a simplified interface for DI)
 ```
 
 ## Contributing
@@ -32,8 +40,10 @@ Please see the [CONTRIBUTING.md file](CONTRIBUTING.md)
 ## The Wiki
 Yes, the wiki might hold some information. But I believe everything will be placed within the "docs" package in the end.
 
-## Mental model
+## Git branching model
+The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest release", for stable releases we use git tags. When a patch needs to be applied and help is needed a branch for the given commit will be created, and then deleted again when the patch tag is added.
 
+## Mental model
 #### Caching
 The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache.
 This lib handles caching for you, so whenever you send a request to the REST API or receive a discord event. The contents are cached auto-magically to a separate memory space.
@@ -65,6 +75,7 @@ import (
 )
 
 func main() {
+    var err error
     termSignal := make(chan os.Signal, 1)
     signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 
@@ -102,11 +113,24 @@ func main() {
     if err != nil {
         panic(err)
     }
-
-    // eg. retrieve a specific user from the Discord servers
+    
+    // eg. retrieve a specific user from the Discord API
+    var user *resource.User 
     userID := NewSnowflake(228846961774559232)
-    userResponse := <- sess.User(userID) // sends a request to discord
-    userResponse2 := <- sess.User(userID) // does a cache look up, to prevent rate limiting/banning
+    user, err = session.GetUser(userID) // will do a cache lookup in the future
+    if err != nil {
+       panic(err)
+    }
+    
+    // bypassing the cache
+    user, err = rest.GetUser(session.Req(), userID)
+    if err != nil {
+       panic(err)
+    }
+
+    // eg. retrieve a specific user from the Discord API using GoLang channels
+    userResponse := <- sess.UserChan(userID) // sends a request to discord
+    userResponse2 := <- sess.UserChan(userID) // does a cache look up, to prevent rate limiting/banning
 
     // check if there was an issue (eg. rate limited or not found)
     if userResponse.Err != nil {
