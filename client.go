@@ -231,6 +231,10 @@ func NewClient(conf *Config) (*Client, error) {
 		HTTPClient: conf.HTTPClient,
 		Debug:      conf.Debug,
 
+		// identity
+		Browser: "DisgordWS",
+		Device:  "Disgord",
+
 		// lib specific
 		DAPIVersion:  conf.APIVersion,
 		DAPIEncoding: conf.APIEncoding,
@@ -257,7 +261,7 @@ func NewClient(conf *Config) (*Client, error) {
 	c := &Client{
 		httpClient:    conf.HTTPClient,
 		ws:            dws,
-		socketEvtChan: dws.GetEventChannel(),
+		socketEvtChan: dws.DiscordWSEventChan(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
 		state:         state.NewCache(),
@@ -289,8 +293,8 @@ type Client struct {
 
 	token string
 
-	ws            *disgordws.Client
-	socketEvtChan <-chan disgordws.EventInterface
+	ws            disgordws.DiscordWebsocket
+	socketEvtChan <-chan disgordws.DiscordWSEvent
 
 	// register listeners for events
 	evtDispatch *Dispatch
@@ -311,18 +315,18 @@ type Client struct {
 
 func (c *Client) logInfo(msg string) {
 	logrus.WithFields(logrus.Fields{
-		"lib": c.ws.String(),
+		"lib": LibraryInfo(),
 	}).Info(msg)
 }
 
 func (c *Client) logErr(msg string) {
 	logrus.WithFields(logrus.Fields{
-		"lib": c.ws.String(),
+		"lib": LibraryInfo(),
 	}).Error(msg)
 }
 
 func (c *Client) String() string {
-	return c.ws.String()
+	return LibraryInfo()
 }
 
 func (c *Client) RateLimiter() httd.RateLimiter {
