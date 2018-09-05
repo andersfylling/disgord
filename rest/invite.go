@@ -1,6 +1,9 @@
 package rest
 
 import (
+	"fmt"
+	"net/http"
+
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/endpoint"
 	"github.com/andersfylling/disgord/rest/httd"
@@ -20,12 +23,16 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 		query += "?with_counts=true"
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	resp, body, err := client.Get(&httd.Request{
 		Ratelimiter: endpoint.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode) + query,
 	})
 	if err != nil {
 		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println(resp.StatusCode)
 	}
 
 	err = unmarshal(body, &invite)
