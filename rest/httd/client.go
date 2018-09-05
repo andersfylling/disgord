@@ -240,6 +240,16 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	// update rate limits
 	c.RateLimiter().UpdateRegisters(r.Ratelimiter, resp, body)
 
+	// check if request was successful
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		// not within successful http range
+		// TODO: redirects?
+		msg := "response was not within the successful http code range [200, 300). code: "
+		msg += strconv.Itoa(resp.StatusCode) + ", response: "
+		msg += string(body)
+		err = errors.New(msg)
+	}
+
 	return
 }
 
