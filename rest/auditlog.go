@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"strconv"
 
 	. "github.com/andersfylling/disgord/resource"
@@ -11,7 +12,7 @@ import (
 
 // AuditLogParams set params used in endpoint request
 // https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-parameters
-type AuditLogParams struct {
+type GuildAuditLogsParams struct {
 	UserID     Snowflake `urlparam:"user_id,omitempty"`     // filter the log for a user id
 	ActionType uint      `urlparam:"action_type,omitempty"` // the type of audit log event
 	Before     Snowflake `urlparam:"before,omitempty"`      // filter the log before a certain entry id
@@ -19,7 +20,7 @@ type AuditLogParams struct {
 }
 
 // getQueryString this ins't really pretty, but it works.
-func (params *AuditLogParams) getQueryString() string {
+func (params *GuildAuditLogsParams) GetQueryString() string {
 	separator := "?"
 	query := ""
 
@@ -52,14 +53,18 @@ func (params *AuditLogParams) getQueryString() string {
 // Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 // Reviewed                 2018-06-05
 // Comment                  -
-func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *AuditLogParams) (log *AuditLog, err error) {
-
+func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error) {
 	details := &httd.Request{
 		Ratelimiter: httd.RatelimitGuildAuditLogs(guildID),
-		Endpoint:    endpoint.GuildAuditLogs(guildID) + params.getQueryString(),
+		Endpoint:    endpoint.GuildAuditLogs(guildID) + params.GetQueryString(),
 	}
-	_, body, err := client.Get(details)
+	resp, body, err := client.Get(details)
 	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		err = errors.New("incorrect status code. Got " + strconv.Itoa(resp.StatusCode) + ", wants 200. Message: " + string(body))
 		return
 	}
 
