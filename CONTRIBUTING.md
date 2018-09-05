@@ -14,11 +14,13 @@ These are mostly guidelines, not rules. Use your best judgment, and feel free to
 [What should I know before I get started?](#what-should-i-know-before-i-get-started)
   * [Introduction to Disgord](#introduction)
   * [Design Decisions](#design-decisions)
+  * [Running Unit Tests](#running-unit-tests)
 
 [How Can I Contribute?](#how-can-i-contribute)
   * [Reporting Bugs](#reporting-bugs)
   * [Suggesting Enhancements](#suggesting-enhancements)
   * [Your First Code Contribution](#your-first-code-contribution)
+  * [Unit Tests](#unit-tests)
   * [Pull Requests](#pull-requests)
 
 [Styleguides](#styleguides)
@@ -37,7 +39,7 @@ Use the GoLang formatter tool. Regarding commenting on REST functionality, do fo
 
 Example (use spaces):
 ```GoLang
-// CreateGuild [POST]       Create a new guild. Returns a guild object on success. Fires a Guild Create 
+// CreateGuild [POST]       Create a new guild. Returns a guild object on success. Fires a Guild Create
 //                          Gateway event.
 // Endpoint                 /guilds
 // Rate limiter             /guilds
@@ -63,17 +65,36 @@ I won't accept pull requests where the author has created a singleton structure.
 This repository has it's own discord guild/server: https://discord.gg/KjbVrak
 Using the live chat application will most likely give you a faster result.
 
-## What should I know before I get started?
+## What Should I Know Before I Get Started?
 
 ### Introduction
+
+### Design Decisions
+
+### Running Unit Tests
+You can run unit tests without the need of a bot token. However, if you want to properly test all the implementations you need to provide a bot token under the environment variable: "DISGORD_TEST_BOT". Any integration tests depending on this token is skipped whenever it is missing. The following environment variables must exist in order to properly execute a complete integration test (see constant package for information):
+ 1. DISGORD_TEST_BOT
+ 2. DISGORD_TEST_GUILD_ADMIN
+ 3. DISGORD_TEST_GUILD_DEFAULT
+
+
+Editing the event handlers or rest package requires that you test with a bot token to verify success. (Note that tests aren't complete and is considered a work in progress).
+
+> **Note:** The module DisgordWS (dependency) utilises a different environment variable for the bot token, so tests regarding integration testing there are skipped. There should be no need to test the DisgordWS module while developing on the Disgord module.
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
 Reporting a bug should help the community improving Disgord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](TEMPLATE_BUG.md).
 
-### Suggesting enhancements
-We don't currently have a template for this. Provide benchmarks or demonstrations why your suggestion is an improvement or how it can help benefit this project is of great apriciation.
+### Suggesting Enhancements
+We don't currently have a template for this. Provide benchmarks or demonstrations why your suggestion is an improvement or how it can help benefit this project is of great appreciation.
+
+### Your First Code Contribution
+
+### Unit Tests
+
+### Pull Requests
 
 
 ## Styleguides
@@ -101,7 +122,7 @@ We don't currently have a template for this. Provide benchmarks or demonstration
     * :arrow_up: `:arrow_up:` when upgrading dependencies
     * :arrow_down: `:arrow_down:` when downgrading dependencies
     * :shirt: `:shirt:` when removing linter warnings
-    
+
 
 ## Additional notes
 
