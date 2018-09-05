@@ -41,7 +41,7 @@ func (vst *VoiceState) Clear() {
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
 	// Snowflake unique Snowflake for the region
-	ID Snowflake `json:"id"`
+	ID string `json:"id"`
 
 	// Name name of the region
 	Name string `json:"name"`

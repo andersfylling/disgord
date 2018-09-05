@@ -8,6 +8,7 @@ import (
 
 	"errors"
 
+	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest"
 	"github.com/andersfylling/disgord/rest/httd"
@@ -60,7 +61,7 @@ type Session interface {
 	// all discord REST functions
 	// TODO: support caching for each
 	// Audit-log
-	GetGuildAuditLogs(guildID Snowflake, params *rest.AuditLogParams) (log *resource.AuditLog, err error)
+	GetGuildAuditLogs(guildID Snowflake, params *rest.GuildAuditLogsParams) (log *resource.AuditLog, err error)
 	// Channel
 	GetChannel(id Snowflake) (ret *resource.Channel, err error)
 	ModifyChannel(changes *rest.ModifyChannelParams) (ret *resource.Channel, err error)
@@ -248,7 +249,7 @@ func NewClient(conf *Config) (*Client, error) {
 		APIVersion:                   conf.APIVersion,
 		BotToken:                     conf.Token,
 		UserAgentSourceURL:           GitHubURL,
-		UserAgentVersion:             Version,
+		UserAgentVersion:             constant.Version,
 		HTTPClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
 	}
@@ -385,7 +386,7 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 }
 
 // Audit-log
-func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *rest.AuditLogParams) (log *resource.AuditLog, err error) {
+func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *rest.GuildAuditLogsParams) (log *resource.AuditLog, err error) {
 	log, err = rest.GuildAuditLogs(c.req, guildID, params)
 	return
 }
