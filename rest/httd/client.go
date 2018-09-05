@@ -23,6 +23,8 @@ const (
 	HTTPCodeRateLimit int = 429
 
 	ContentEncoding = "Content-Encoding"
+	ContentType     = "Content-Type"
+	ContentTypeJSON = "application/json"
 	GZIPCompression = "gzip"
 )
 
@@ -224,12 +226,17 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 		time.Sleep(deadtime)
 	}
 
-	// send request
+	// create request
 	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
 	if err != nil {
 		return
 	}
 	req.Header = c.reqHeader
+	if r.JSONParams != nil {
+		req.Header.Set(ContentType, ContentTypeJSON)
+	}
+
+	// send request
 	resp, err = c.httpClient.Do(req)
 	if err != nil {
 		return

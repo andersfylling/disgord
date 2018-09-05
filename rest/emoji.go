@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	. "github.com/andersfylling/disgord/resource"
 	"github.com/andersfylling/disgord/rest/endpoint"
@@ -56,6 +57,18 @@ func GetGuildEmoji(client httd.Getter, guildID, emojiID Snowflake) (ret *Emoji, 
 	return
 }
 
+func validEmojiName(name string) bool {
+	// TODO: what is the allowed format?
+	// a test showed that using "-" caused regex issues
+	return !strings.Contains(name, "-")
+}
+
+type CreateGuildEmojiParams struct {
+	Name  string      `json:"name"`
+	Image string      `json:"image"`
+	Roles []Snowflake `json:"roles"`
+}
+
 // CreateGuildEmoji [POST]  Create a new emoji for the guild. Requires the
 //                          'MANAGE_EMOJIS' permission. Returns the new emoji
 //                          object on success. Fires a Guild Emojis Update Gateway event.
@@ -67,10 +80,15 @@ func GetGuildEmoji(client httd.Getter, guildID, emojiID Snowflake) (ret *Emoji, 
 //                          Attempting to upload an emoji larger than this limit will fail
 //                          and return 400 Bad Request and an error message, but not a JSON
 //                          status code.
-func CreateGuildEmoji(client httd.Poster, guildID Snowflake) (ret *Emoji, err error) {
+func CreateGuildEmoji(client httd.Poster, guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
+	if !validEmojiName(params.Name) {
+		err = errors.New("emoji name contains illegal characters. Did not send request")
+		return
+	}
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),
+		JSONParams:  params,
 	})
 	if err != nil {
 		return
@@ -78,6 +96,11 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake) (ret *Emoji, err er
 
 	err = unmarshal(body, &ret)
 	return
+}
+
+type ModifyGuildEmojiParams struct {
+	Name  string      `json:"name"`
+	Roles []Snowflake `json:"roles"`
 }
 
 // ModifyGuildEmoji [PATCH] Modify the given emoji. Requires the 'MANAGE_EMOJIS'
@@ -88,10 +111,15 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake) (ret *Emoji, err er
 // Discord documentation    https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
 // Reviewed                 2018-06-10
 // Comment                  -
-func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake) (ret *Emoji, err error) {
+func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
+	if !validEmojiName(params.Name) {
+		err = errors.New("emoji name contains illegal characters. Did not send request")
+		return
+	}
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: httd.RatelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+		JSONParams:  params,
 	})
 	if err != nil {
 		return

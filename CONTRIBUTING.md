@@ -75,7 +75,8 @@ Using the live chat application will most likely give you a faster result.
 You can run unit tests without the need of a bot token. However, if you want to properly test all the implementations you need to provide a bot token under the environment variable: "DISGORD_TEST_BOT". Any integration tests depending on this token is skipped whenever it is missing. The following environment variables must exist in order to properly execute a complete integration test (see constant package for information):
  1. DISGORD_TEST_BOT
  2. DISGORD_TEST_GUILD_ADMIN
- 3. DISGORD_TEST_GUILD_DEFAULT
+ 3. DISGORD_TEST_GUILD_DEFAULT (must have one custom emoji)
+ 3. DISGORD_TEST_GUILD_DEFAULT_EMOJI_SNOWFLAKE (snowflake id of emoji)
 
 
 Editing the event handlers or rest package requires that you test with a bot token to verify success. (Note that tests aren't complete and is considered a work in progress).

@@ -10,6 +10,10 @@ const DisgordTestGuildAdmin = "DISGORD_TEST_GUILD_ADMIN"
 // permission assigned when joining a vanilla guild
 const DisgordTestGuildDefault = "DISGORD_TEST_GUILD_DEFAULT"
 
+// DisgordTestGuildDefaultEmojiSnowflake the default guild should have one custom
+// emoji which can be retrieved during testing
+const DisgordTestGuildDefaultEmojiSnowflake = "DISGORD_TEST_GUILD_DEFAULT_EMOJI_SNOWFLAKE"
+
 // GitHubURL repository url
 const GitHubURL = "https://github.com/andersfylling/disgord"
 
