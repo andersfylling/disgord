@@ -18,6 +18,7 @@ func TestAuditLogParams(t *testing.T) {
 	s := "438543957"
 	params.UserID, _ = GetSnowflake(s)
 	wants = "?user_id=" + s
+	verifyQueryString(t, params, wants)
 
 	params.ActionType = 6
 	wants += "&action_type=6"

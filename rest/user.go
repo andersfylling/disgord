@@ -88,17 +88,17 @@ func (params *GetCurrentUserGuildsParams) GetQueryString() string {
 	query := ""
 
 	if !params.Before.Empty() {
-		query += separator + params.Before.String()
+		query += separator + "before=" + params.Before.String()
 		separator = "&"
 	}
 
 	if !params.After.Empty() {
-		query += separator + params.After.String()
+		query += separator + "after=" + params.After.String()
 		separator = "&"
 	}
 
 	if params.Limit > 0 {
-		query += separator + strconv.Itoa(params.Limit)
+		query += separator + "limit=" + strconv.Itoa(params.Limit)
 	}
 
 	return query
