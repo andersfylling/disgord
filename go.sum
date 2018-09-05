@@ -4,8 +4,6 @@ github.com/alecthomas/gometalinter v2.0.7+incompatible h1:sf/Xx0DUGcwKwQbAMbhfzI
 github.com/alecthomas/gometalinter v2.0.7+incompatible/go.mod h1:qfIpQGGz3d+NmgyPBqv+LSh50emm1pt72EtcX2vKYQk=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZqLG4oE62mJzwPIB8+Tee4RNCL9ulrY=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/andersfylling/disgordws v0.1.0 h1:nj9fI4P2mw61yM9RzJ9ak4Izwv4Uw5GNUDqUZCqcFjI=
-github.com/andersfylling/disgordws v0.1.0/go.mod h1:MKYtSs3Cb605LgoQ2m5meMtQFtefKEJ6HH1bQC29+FU=
 github.com/andersfylling/disgordws v1.0.0 h1:56HJIy21fuxPUYx6dE7fN4FikZjXij1PyskLdoTDKvw=
 github.com/andersfylling/disgordws v1.0.0/go.mod h1:DX4V4tNUjaa6tVA61eVkZ12hXb5cGYfDZB4NhL+Fj8c=
 github.com/andersfylling/snowflake v1.2.0 h1:PglrfC7f+cIfeMojginSXIAJKDarGiHYLeX7YtVSjTY=
