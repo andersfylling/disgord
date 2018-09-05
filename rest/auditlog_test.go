@@ -57,6 +57,4 @@ func TestGuildAuditLogs(t *testing.T) {
 	if log == nil {
 		t.Error("did not get a datastructure from rest.GuildAuditLogs()")
 	}
-
-	t.Logf(":::: %+v", log)
 }
