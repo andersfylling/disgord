@@ -62,8 +62,8 @@ type ModifyCurrentUserParams struct {
 // Discord documentation        https://discordapp.com/developers/docs/resources/user#modify-current-user
 // Reviewed                     2018-06-10
 // Comment                      -
-func ModifyCurrentUser(client httd.Getter, params *ModifyCurrentUserParams) (ret *User, err error) {
-	_, body, err := client.Get(&httd.Request{
+func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (ret *User, err error) {
+	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: httd.RatelimitUsers(),
 		Endpoint:    endpoint.UserMe(),
 		JSONParams:  params,
