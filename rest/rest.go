@@ -40,7 +40,7 @@ func createTestRequester() (*httd.Client, error) {
 		UserAgentSourceURL: constant.GitHubURL,
 		UserAgentVersion:   constant.Version,
 		HTTPClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 		},
 		CancelRequestWhenRateLimited: false,
 	}

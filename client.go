@@ -90,8 +90,8 @@ type Session interface {
 	// Emoji
 	GetGuildEmojis(id Snowflake) (ret []*resource.Emoji, err error)
 	GetGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji, err error)
-	CreateGuildEmoji(guildID Snowflake) (ret *resource.Emoji, err error)
-	ModifyGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji, err error)
+	CreateGuildEmoji(guildID Snowflake, params *rest.CreateGuildEmojiParams) (ret *resource.Emoji, err error)
+	ModifyGuildEmoji(guildID, emojiID Snowflake, params *rest.ModifyGuildEmojiParams) (ret *resource.Emoji, err error)
 	DeleteGuildEmoji(guildID, emojiID Snowflake) (err error)
 	// Guild
 	CreateGuild(params *rest.CreateGuildParams) (ret *resource.Guild, err error)
@@ -498,12 +498,12 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji,
 	ret, err = rest.GetGuildEmoji(c.req, guildID, emojiID)
 	return
 }
-func (c *Client) CreateGuildEmoji(guildID Snowflake) (ret *resource.Emoji, err error) {
-	ret, err = rest.CreateGuildEmoji(c.req, guildID)
+func (c *Client) CreateGuildEmoji(guildID Snowflake, params *rest.CreateGuildEmojiParams) (ret *resource.Emoji, err error) {
+	ret, err = rest.CreateGuildEmoji(c.req, guildID, params)
 	return
 }
-func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji, err error) {
-	ret, err = rest.ModifyGuildEmoji(c.req, guildID, emojiID)
+func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *rest.ModifyGuildEmojiParams) (ret *resource.Emoji, err error) {
+	ret, err = rest.ModifyGuildEmoji(c.req, guildID, emojiID, params)
 	return
 }
 func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {

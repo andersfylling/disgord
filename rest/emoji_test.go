@@ -3,6 +3,7 @@ package rest
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/resource"
@@ -65,6 +66,9 @@ func TestGetGuildEmoji(t *testing.T) {
 	if emoji.ID != emojiID {
 		t.Error("emoji ID missmatch")
 	}
+
+	// TODO: use rate limiter instead
+	time.Sleep(1 * time.Second)
 }
 
 func TestCreateAndDeleteGuildEmoji(t *testing.T) {
@@ -182,6 +186,9 @@ func TestModifyGuildEmoji(t *testing.T) {
 		}
 	})
 
+	// TODO: use rate limiter instead
+	time.Sleep(1 * time.Second)
+
 	t.Run("delete created emoji", func(t *testing.T) {
 		err = DeleteGuildEmoji(client, guildID, emoji.ID)
 		if err != nil {
@@ -195,6 +202,9 @@ func TestModifyGuildEmoji(t *testing.T) {
 			t.Error("emoji was found when it should have been deleted")
 		}
 	})
+
+	// TODO: use rate limiter instead
+	time.Sleep(1 * time.Second)
 }
 
 func TestValidEmojiName(t *testing.T) {
@@ -275,4 +285,7 @@ func TestValidEmojiName(t *testing.T) {
 			t.Error("emoji was found when it should have been deleted")
 		}
 	})
+
+	// TODO: use rate limiter instead
+	time.Sleep(1 * time.Second)
 }
