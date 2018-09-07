@@ -14,6 +14,10 @@ const DisgordTestGuildDefault = "DISGORD_TEST_GUILD_DEFAULT"
 // emoji which can be retrieved during testing
 const DisgordTestGuildDefaultEmojiSnowflake = "DISGORD_TEST_GUILD_DEFAULT_EMOJI_SNOWFLAKE"
 
+// DisgordTestLive set to true to properly test the functionality against
+// Discord before a release is drafted
+const DisgordTestLive = "DISGORD_TEST_LIVE"
+
 // GitHubURL repository url
 const GitHubURL = "https://github.com/andersfylling/disgord"
 

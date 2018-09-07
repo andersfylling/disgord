@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"encoding/json"
+
 	. "github.com/andersfylling/snowflake"
 )
 
@@ -263,10 +264,18 @@ func (r *RateLimit) RateLimited(key string) bool {
 // WaitTime check both the global and route specific rate limiter bucket before sending any REST requests
 func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	timeout := int64(0)
-	if r.global.remaining == 0 {
+	if r.global.remaining > 0 {
 		timeout = r.global.timeout()
-	} else if req.Ratelimiter != "" {
-		timeout = r.RateLimitTimeout(req.Ratelimiter)
+	}
+
+	if req.Ratelimiter != "" {
+		// avoid overwriting the global rate limit
+		// but do not overwrite the global rate limit if
+		// the local rate limit is shorter
+		localTimeout := r.RateLimitTimeout(req.Ratelimiter)
+		if timeout < localTimeout {
+			timeout = localTimeout
+		}
 	}
 
 	// discord specifies this in seconds, however it is converted to milliseconds before stored in memory.

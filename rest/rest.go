@@ -34,6 +34,10 @@ func unmarshal(data []byte, v interface{}) error {
 
 // testing
 func createTestRequester() (*httd.Client, error) {
+	if os.Getenv(constant.DisgordTestLive) != "true" {
+		return nil, errors.New("live testing is deactivated")
+	}
+
 	reqConf := &httd.Config{
 		APIVersion:         6,
 		BotToken:           os.Getenv(constant.DisgordTestBot),
