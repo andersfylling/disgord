@@ -249,7 +249,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 
 	// check if request was successful
 	noDiff := resp.StatusCode == http.StatusNotModified
-	withinSuccessScope = 200 <= resp.StatusCode && resp.StatusCode < 300
+	withinSuccessScope := 200 <= resp.StatusCode && resp.StatusCode < 300
 	if !(noDiff || withinSuccessScope) {
 		// not within successful http range
 		// TODO: redirects?
