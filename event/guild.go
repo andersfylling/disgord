@@ -7,56 +7,6 @@ import (
 	. "github.com/andersfylling/snowflake"
 )
 
-// GuildMemberAdd	new user joined a guild
-type GuildMemberAdd struct {
-	Member *resource.Member `json:"member"`
-	Ctx    context.Context  `json:"-"`
-}
-
-// GuildMemberRemove	user was removed from a guild
-type GuildMemberRemove struct {
-	GuildID Snowflake       `json:"guild_id"`
-	User    *resource.User  `json:"user"`
-	Ctx     context.Context `json:"-"`
-}
-
-// GuildMemberUpdate	guild member was updated
-type GuildMemberUpdate struct {
-	GuildID Snowflake        `json:"guild_id"`
-	Roles   []*resource.Role `json:"roles"`
-	User    *resource.User   `json:"user"`
-	Nick    string           `json:"nick"`
-	Ctx     context.Context  `json:"-"`
-}
-
-// GuildMembersChunk	response to Request Guild Members
-type GuildMembersChunk struct {
-	GuildID Snowflake          `json:"guild_id"`
-	Members []*resource.Member `json:"members"`
-	Ctx     context.Context    `json:"-"`
-}
-
-// GuildRoleCreate	guild role was created
-type GuildRoleCreate struct {
-	GuildID Snowflake       `json:"guild_id"`
-	Role    *resource.Role  `json:"role"`
-	Ctx     context.Context `json:"-"`
-}
-
-// GuildRoleUpdate	guild role was updated
-type GuildRoleUpdate struct {
-	GuildID Snowflake       `json:"guild_id"`
-	Role    *resource.Role  `json:"role"`
-	Ctx     context.Context `json:"-"`
-}
-
-// GuildRoleDelete	guild role was deleted
-type GuildRoleDelete struct {
-	GuildID Snowflake       `json:"guild_id"`
-	RoleID  Snowflake       `json:"role_id"`
-	Ctx     context.Context `json:"-"`
-}
-
 // KeyGuildCreate This event can be sent in three different scenarios:
 //             1. When a user is initially connecting, to lazily load and
 //                backfill information for all unavailable guilds sent in the
@@ -136,12 +86,25 @@ type GuildIntegrationsUpdate struct {
 //                * GuildID int64 or discord.Snowflake
 const KeyGuildMemberAdd = "GUILD_MEMBER_ADD"
 
+// GuildMemberAdd	new user joined a guild
+type GuildMemberAdd struct {
+	Member *resource.Member `json:"member"`
+	Ctx    context.Context  `json:"-"`
+}
+
 // KeyGuildMemberRemove Sent when a user is removed from a guild
 //                   (leave/kick/ban).
 //                   Fields:
 //                   * GuildID int64 or discord.Snowflake
 //                   * User *discord.user.User
 const KeyGuildMemberRemove = "GUILD_MEMBER_REMOVE"
+
+// GuildMemberRemove	user was removed from a guild
+type GuildMemberRemove struct {
+	GuildID Snowflake       `json:"guild_id"`
+	User    *resource.User  `json:"user"`
+	Ctx     context.Context `json:"-"`
+}
 
 // KeyGuildMemberUpdate Sent when a guild member is updated.
 //                   Fields:
@@ -151,11 +114,27 @@ const KeyGuildMemberRemove = "GUILD_MEMBER_REMOVE"
 //                   * Nick string
 const KeyGuildMemberUpdate = "GUILD_MEMBER_UPDATE"
 
+// GuildMemberUpdate	guild member was updated
+type GuildMemberUpdate struct {
+	GuildID Snowflake        `json:"guild_id"`
+	Roles   []*resource.Role `json:"roles"`
+	User    *resource.User   `json:"user"`
+	Nick    string           `json:"nick"`
+	Ctx     context.Context  `json:"-"`
+}
+
 // KeyGuildMemberChunk Sent in response to Gateway Request Guild Members.
 //                  Fields:
 //                  * GuildID int64 or discord.Snowflake
 //                  * Members []*discord.member.Member
 const KeyGuildMembersChunk = "GUILD_MEMBER_CHUNK"
+
+// GuildMembersChunk	response to Request Guild Members
+type GuildMembersChunk struct {
+	GuildID Snowflake          `json:"guild_id"`
+	Members []*resource.Member `json:"members"`
+	Ctx     context.Context    `json:"-"`
+}
 
 // KeyGuildRoleCreate Sent when a guild role is created.
 //                 Fields:
@@ -163,17 +142,38 @@ const KeyGuildMembersChunk = "GUILD_MEMBER_CHUNK"
 //                 * Role *discord.role.Role
 const KeyGuildRoleCreate = "GUILD_ROLE_CREATE"
 
+// GuildRoleCreate	guild role was created
+type GuildRoleCreate struct {
+	GuildID Snowflake       `json:"guild_id"`
+	Role    *resource.Role  `json:"role"`
+	Ctx     context.Context `json:"-"`
+}
+
 // KeyGuildRoleUpdate Sent when a guild role is created.
 //                 Fields:
 //                 * GuildID int64 or discord.Snowflake
 //                 * Role    *discord.role.Role
 const KeyGuildRoleUpdate = "GUILD_ROLE_UPDATE"
 
+// GuildRoleUpdate	guild role was updated
+type GuildRoleUpdate struct {
+	GuildID Snowflake       `json:"guild_id"`
+	Role    *resource.Role  `json:"role"`
+	Ctx     context.Context `json:"-"`
+}
+
 // KeyGuildRoleDelete Sent when a guild role is created.
 //                 Fields:
 //                 * GuildID int64 or discord.Snowflake
 //                 * RoleID  int64 or discord.Snowflake
 const KeyGuildRoleDelete = "GUILD_ROLE_DELETE"
+
+// GuildRoleDelete	guild role was deleted
+type GuildRoleDelete struct {
+	GuildID Snowflake       `json:"guild_id"`
+	RoleID  Snowflake       `json:"role_id"`
+	Ctx     context.Context `json:"-"`
+}
 
 // KeyPresenceUpdate A user's presence is their current state on a guild.
 //                This event is sent when a user's presence is updated
