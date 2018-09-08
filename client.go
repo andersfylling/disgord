@@ -337,6 +337,7 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
 	c.logInfo("Connecting to discord Gateway")
+	c.evtDispatch.start()
 	err = c.ws.Connect()
 	if err != nil {
 		c.logErr(err.Error())
@@ -354,6 +355,7 @@ func (c *Client) Connect() (err error) {
 func (c *Client) Disconnect() (err error) {
 	fmt.Println()
 	c.logInfo("Closing Discord gateway connection")
+	c.evtDispatch.stop()
 	err = c.ws.Disconnect()
 	if err != nil {
 		c.logErr(err.Error())

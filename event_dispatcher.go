@@ -48,11 +48,9 @@ func NewDispatch() *Dispatch {
 
 		listeners:      make(map[string][]interface{}),
 		listenOnceOnly: make(map[string][]int),
-	}
 
-	// make sure every channel has a receiver to avoid deadlock
-	// hack...
-	dispatcher.alwaysListenToChans()
+		shutdown: make(chan struct{}),
+	}
 
 	return dispatcher
 }
@@ -137,7 +135,19 @@ type Dispatch struct {
 	listeners      map[string][]interface{}
 	listenOnceOnly map[string][]int
 
+	shutdown chan struct{}
+
 	listenersLock sync.RWMutex
+}
+
+func (d *Dispatch) start() {
+	// make sure every channel has a receiver to avoid deadlock
+	// TODO: review, this feels hacky
+	d.alwaysListenToChans()
+}
+
+func (d *Dispatch) stop() {
+	close(d.shutdown)
 }
 
 // On places listeners into their respected stacks
@@ -148,6 +158,7 @@ type Dispatch struct {
 // alwaysListenToChans makes sure no deadlocks occure
 func (d *Dispatch) alwaysListenToChans() {
 	go func() {
+		stop := false
 		for {
 			select {
 			case <-d.allChan:
@@ -184,6 +195,12 @@ func (d *Dispatch) alwaysListenToChans() {
 			case <-d.voiceStateUpdateChan:
 			case <-d.voiceServerUpdateChan:
 			case <-d.webhooksUpdateChan:
+			case <-d.shutdown:
+				stop = true
+			}
+
+			if stop {
+				break
 			}
 		}
 	}()
@@ -537,10 +554,10 @@ func (d *Dispatch) AddHandlerOnce(evtName string, listener interface{}) {
 	d.listenOnceOnly[evtName] = append(d.listenOnceOnly[evtName], index)
 }
 
-// wtf is this
+// TODO: review
 func Unmarshal(data []byte, box interface{}) {
 	err := json.Unmarshal(data, box)
 	if err != nil {
-		panic(err)
+		panic(err) // !
 	}
 }

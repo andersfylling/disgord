@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/resource"
@@ -174,7 +175,7 @@ func TestModifyGuildEmoji(t *testing.T) {
 	})
 
 	t.Run("delete created emoji", func(t *testing.T) {
-    time.Sleep(1 * time.Second) // just ensure that this get's run
+		time.Sleep(1 * time.Second) // just ensure that this get's run
 		err = DeleteGuildEmoji(client, guildID, emoji.ID)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
@@ -220,7 +221,7 @@ func TestValidEmojiName(t *testing.T) {
 		})
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
-		}Error(err)
+		}
 		if err != nil {
 			return
 		}
