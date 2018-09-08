@@ -16,13 +16,13 @@ if err != nil {
 }
 
 // create a handler and bind it to new message events
-session.AddListener(event.MessageCreateKey, func(session Session, box *event.MessageCreateBox) {
-    msg := box.Message
+session.AddListener(event.KeyMessageCreate, func(session Session, data *event.MessageCreate) {
+    msg := data.Message
 
     fmt.Printf("user{%s} said: `%s`\n", msg.Author.Username, msg.Content) // noob logging
     if msg.Content == "ping" {
-        pong := rest.NewCreateMessageByString("pong")
-        rest.CreateChannelMessage(session.Req(), msg.ChannelID, pong) // send pong response
+        msg.RespondString(session, "pong")
+        // alternative: session.SendMsgString(msg.ChannelID, "pong")
     }
 })
 
@@ -36,20 +36,4 @@ if err != nil {
 <-termSignal
 session.Disconnect()
 ```
-If the function `CreateChannelMessage` is slow. You are most likely rate limited, and Disgord is trying to wait out the rate limit delay before the message is sent. If you want to get an error message in stead of waiting enable the config option on session creation, `Config.CancelRequestWhenRateLimited`. Note that if the bot has to wait a time that is longer than the http.Client.Timeout value, it always returns an error saying you were rate limited.
-
-
-### I know that does not look great
-So the main part:
-```GoLang
-pong := rest.NewMessageByString("pong")
-rest.CreateChannelMessage(session.Req(), msg.ChannelID, pong) // send pong response
-```
-Is the hard way to send a message. Unfortunately, the Session interface does not yet have a implementation for sending messages. Once implemented however, sending a pong response will look more like this (psuedo):
-```GoLang
-if msg.Content == "ping" {
-    msg.Respond(session, "pong") // send pong response
-}
-```
-
-That day can't come soon enough.
+If sending the response is slow. You are most likely rate limited, and Disgord is trying to wait out the rate limit delay before the message is sent. If you want to get an error message in stead of waiting enable the config option upon session creation, `Config.CancelRequestWhenRateLimited`. Note that if the bot has to wait a time that is longer than the http.Client.Timeout value, it always returns an error saying you were rate limited.

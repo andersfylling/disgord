@@ -61,98 +61,98 @@ The reactor pattern with goroutines, or a pro-actor pattern is used. This will a
 Incoming events from the discord servers are parsed into respective structs and dispatched to either a) callbacks, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. So it doesn't matter which one you pick, chose your preference.
 
 ## Quick example
+> **NOTE:** To see more examples go visit the docs/examples folder.
 
+The following example is used as a prerequisite for the coming examples later on in this README file.
 ```go
-package main
+var err error
+termSignal := make(chan os.Signal, 1)
+signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 
-import (
-    "os"
-    "os/signal"
-    "syscall"
-
-    "github.com/andersfylling/disgord"
-    "github.com/sirupsen/logrus"
-)
-
-func main() {
-    var err error
-    termSignal := make(chan os.Signal, 1)
-    signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
-    sess, err := disgord.NewSession(&disgord.Config{
-        Token: os.Getenv("DISGORD_TOKEN"),
-    })
-    if err != nil {
-        panic(err)
-    }
-
-    // add a event listener
-    sess.AddListener(event.GuildCreateKey, func(session Session, box *event.GuildCreateBox) {
-        guild := box.Guild
-        // do something with guild
-    })
-
-    // or use a channel to listen for events
-    go func() {
-        for {
-            select {
-            case box, alive := <- sess.Evt().GuildCreateChan():
-                if !alive {
-                    fmt.Println("channel is dead")
-                    break
-                }
-
-                guild := box.Guild
-                // do something with guild
-            }
-        }
-    }()
-
-    // connect to the discord gateway to receive events
-    err = sess.Connect()
-    if err != nil {
-        panic(err)
-    }
-    
-    // eg. retrieve a specific user from the Discord API
-    var user *resource.User 
-    userID := NewSnowflake(228846961774559232)
-    user, err = session.GetUser(userID) // will do a cache lookup in the future
-    if err != nil {
-       panic(err)
-    }
-    
-    // bypassing the cache
-    user, err = rest.GetUser(session.Req(), userID)
-    if err != nil {
-       panic(err)
-    }
-
-    // eg. retrieve a specific user from the Discord API using GoLang channels
-    userResponse := <- sess.UserChan(userID) // sends a request to discord
-    userResponse2 := <- sess.UserChan(userID) // does a cache look up, to prevent rate limiting/banning
-
-    // check if there was an issue (eg. rate limited or not found)
-    if userResponse.Err != nil {
-        panic(userResponse.Err)
-    }
-
-    // check if this is retrieved from the cache
-    if userResponse.Cache {
-        // ...
-    }
-
-    // get the user info
-    user := userResponse.User
-
-    // keep the app alive until terminated
-    <-termSignal
-    sess.Disconnect()
+sess, err := disgord.NewSession(&disgord.Config{
+  Token: os.Getenv("DISGORD_TOKEN"),
+})
+if err != nil {
+    panic(err)
 }
 ```
 
-## WARNING
-All the REST endpoints are implemented, but may not exist on the interface yet. Create a Disgord session/client and use the REST functions found in the rest package directly (for now). See the examples in docs for using the functions in the rest package directly.
+Listening for events can be done in two ways. Firstly, the reactor pattern and secondly, a GoLang channel:
+```GoLang
+// add a event listener
+sess.AddListener(event.KeyGuildCreate, func(session Session, data *event.GuildCreate) {
+  guild := data.Guild
+  // do something with guild
+})
+
+// or use a channel to listen for events
+go func() {
+    for {
+        select {
+        case data, alive := <- sess.Evt().GuildCreateChan():
+            if !alive {
+                fmt.Println("channel is dead")
+                break
+            }
+
+            guild := data.Guild
+            // do something with guild
+        }
+    }
+}()
+
+// connect to the discord gateway to receive events
+err = sess.Connect()
+if err != nil {
+    panic(err)
+}
+```
+
+Remember that when you call Session.Connect() it is recommended to call Session.Disconnect for a graceful shutdown and closing channels and Goroutines.
+```GoLang
+// keep the app alive until terminated
+<-termSignal
+sess.Disconnect()
+```
+
+To retrieve information from the Discord REST API you utilize the Session interface as it will in the future implement features such as caching, control checks, etc
+```GoLang
+// retrieve a specific user from the Discord API
+var user *resource.User
+userID := NewSnowflake(228846961774559232)
+user, err = session.GetUser(userID) // will do a cache lookup in the future
+if err != nil {
+   panic(err)
+}
+```
+However, if you think the Session interface is incorrect (outdated cache, or another issue) you can bypass the interface and call the REST method directly while you wait for a patch:
+```GoLang
+// bypassing the cache
+user, err = rest.GetUser(session.Req(), userID)
+if err != nil {
+   panic(err)
+}
+```
+
+There's also another way to retrieve content: channels. These methods will return a GoLang channel to help with concurrency. However, their implementation is down prioritized and I recommend using the normal REST methods for now. (Currently only the Session.User method is working, and might be temporary deprecated).
+```GoLang
+// eg. retrieve a specific user from the Discord API using GoLang channels
+userResponse := <- sess.UserChan(userID) // sends a request to discord
+userResponse2 := <- sess.UserChan(userID) // does a cache look up, to prevent rate limiting/banning
+
+// check if there was an issue (eg. rate limited or not found)
+if userResponse.Err != nil {
+    panic(userResponse.Err)
+}
+
+// check if this is retrieved from the cache
+if userResponse.Cache {
+    // ...
+}
+
+// get the user info
+user := userResponse.User
+```
 
 ## Q&A
 
@@ -170,4 +170,3 @@ I'm trying to take over the world and then become a intergalactic war lord. Have
 
 ## Thanks to
 * [github.com/s1kx](https://github.com/s1kx) for different design suggestions.
-

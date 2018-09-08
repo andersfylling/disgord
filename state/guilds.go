@@ -76,7 +76,7 @@ func (st *GuildCache) guildCacher() {
 		action := guildDetail.Action
 		dirty := guildDetail.Dirty
 		switch action {
-		case event.GuildDeleteKey:
+		case event.KeyGuildDelete:
 			if _, exists := st.guilds[guild.ID]; exists {
 				delete(st.guilds, guild.ID)
 			}
@@ -111,7 +111,7 @@ func (st *GuildCache) Clear() {
 		for _, channel := range guild.Channels {
 			st.channelCacher.Process(&ChannelDetail{
 				Channel: channel,
-				Action:  event.ChannelDeleteKey,
+				Action:  event.KeyChannelDelete,
 			})
 		}
 

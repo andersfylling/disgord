@@ -97,7 +97,7 @@ func (st *ChannelCache) channelCacher() {
 		action := channelDetail.Action
 		dirty := channelDetail.Dirty
 		switch action {
-		case event.ChannelDeleteKey:
+		case event.KeyChannelDelete:
 			if _, exists := st.channels[channel.ID]; exists {
 				delete(st.channels, channel.ID)
 			}

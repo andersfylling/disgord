@@ -10,8 +10,8 @@ if err != nil {
 }
 
 // create a handler and bind it to new message events
-session.AddListener(event.MessageCreateKey, func(session Session, box *event.MessageCreateBox) {
-    fmt.Println(box.Message.Content)
+session.AddListener(event.KeyMessageCreate, func(session Session, data *event.MessageCreate) {
+    fmt.Println(data.Message.Content)
 })
 
 // connect to the discord gateway to receive events
@@ -41,12 +41,12 @@ go func() {
 
         // wait for a new message
         select {
-        case box, alive := <- session.Evt().MessageCreateChan():
+        case data, alive := <- session.Evt().MessageCreateChan():
             if !alive {
                 fmt.Println("channel is dead")
                 break
             }
-            msg = box.Message
+            msg = data.Message
         }
 
         // print the message

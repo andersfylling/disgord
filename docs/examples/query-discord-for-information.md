@@ -7,7 +7,7 @@ Imagine that you want to fetch information about a Discord user. Since Disgord s
 
 The REST functions are located in the rest package and are blocking operations. It's important to note that these functions do not update the state (or the cache). They do however implement rate limiting (which you should not bypass). A reason to use these is when you want to force a request, as the functionality in the Session interface always checks the cache first to avoid asking for information that you already have locally. See [Query Discord using the REST functions](query-discord-using-the-rest-functions).
 
-The Session interface is the recommended way to query objects from the Discord API. It supports caching, and even handles concurrency by returning a channel. By returning a channel you can decide the query to be either blocking or handle the response later (see [Query Discord using the session interface](#query-discord-using-the-session-interface)).
+The Session interface is the recommended way to query objects from the Discord API. It supports caching, and some other implementations might even handle concurrency by returning a channel (in the future, right now it's not complete and have a low priority). By returning a channel you can decide the query to be either blocking or handle the response later (see [Query Discord using the session interface](#query-discord-using-the-session-interface)).
 
 
 
@@ -34,6 +34,8 @@ if err != nil {
 
 ### Query Discord using the session interface
 > **Note:** It is assumed you understand how to create a session. You do not need to use Session.Connect and Session.Disconnect for _most_ REST queries.
+
+Channel methods might become deprecated or temporarily removed until correctly implemented.
 ```GoLang
 // The user id of this repository's owner
 userID := snowflake.NewID(228846961774559232)
