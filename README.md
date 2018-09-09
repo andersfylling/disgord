@@ -9,13 +9,11 @@
 
 
 ## About
-GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Channel.SendMsg(session, &Message{...})` for simplicity/readability. 
+GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Channel.SendMsg(session, &Message{...})` for simplicity/readability.
 
-Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the disgord REST implementations. The socketing is not complete, but does support all event types (using both channels and callbacks). 
+Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the disgord REST implementations. The socketing is not complete, but does support all event types (using both channels and callbacks).
 
-Note that, the code philosophy here is more focused at organizing code (to help maintenance) by using subpackages and easing code navigating by mimicking the layout of the Discord docs, to some degree. Some might consider this a negative approach as you will interact with subpackages of disgord in your project. eg. `disgord.Session` and `resource.Message`, both exist within disgord, but the data structures are stored in a subpackage. 
-
-I do want most functionality to be accessible from the main package, and as such there exists a Session interface. The Session interface contains wrappers to subpackages like `rest`, `state`/`cache`, so that you most likely won't need to directly access subpackages unless you are dealing with the discord data structures or need to bypass the implementations of the Session interface (see examples in docs). 
+Note that caching is yet to be implemented. Versions from v0.5.1 and below, had caching to some degree, but was scrapped once a complete rework of the project structure was done.
 
 Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON.
 
