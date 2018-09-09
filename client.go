@@ -1241,7 +1241,7 @@ func (c *Client) eventHandler() {
 			data := evt.Data()
 
 			switch evtName {
-			case KeyReady:
+			case EventReady:
 				box := &Ready{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1258,27 +1258,27 @@ func (c *Client) eventHandler() {
 				// 	})
 				// }
 				// TODO-caching: c.state.Myself()
-			case KeyResumed:
+			case EventResumed:
 				box := &Resumed{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyChannelCreate, KeyChannelUpdate, KeyChannelDelete:
+			case EventChannelCreate, EventChannelUpdate, EventChannelDelete:
 				chanContent := &Channel{}
 				unmarshal(data, chanContent)
 
 				switch evtName { // internal switch statement for ChannelEvt
-				case KeyChannelCreate:
+				case EventChannelCreate:
 					box := &ChannelCreate{Channel: chanContent, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyChannelUpdate:
+				case EventChannelUpdate:
 					box := &ChannelUpdate{Channel: chanContent, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyChannelDelete:
+				case EventChannelDelete:
 					box := &ChannelDelete{Channel: chanContent, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1290,7 +1290,7 @@ func (c *Client) eventHandler() {
 				// 	Dirty:   true,
 				// 	Action:  evtName,
 				// })
-			case KeyChannelPinsUpdate:
+			case EventChannelPinsUpdate:
 				box := &ChannelPinsUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1299,20 +1299,20 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// cache what?
-			case KeyGuildCreate, KeyGuildUpdate, KeyGuildDelete:
+			case EventGuildCreate, EventGuildUpdate, EventGuildDelete:
 				g := &Guild{}
 				unmarshal(data, g)
 
 				switch evtName { // internal switch statement for guild events
-				case KeyGuildCreate:
+				case EventGuildCreate:
 					box := &GuildCreate{Guild: g, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyGuildUpdate:
+				case EventGuildUpdate:
 					box := &GuildUpdate{Guild: g, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyGuildDelete:
+				case EventGuildDelete:
 					unavailGuild := NewGuildUnavailable(g.ID)
 					box := &GuildDelete{UnavailableGuild: unavailGuild, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
@@ -1326,7 +1326,7 @@ func (c *Client) eventHandler() {
 				// 	Dirty:  true,
 				// 	Action: evtName,
 				// })
-			case KeyGuildBanAdd:
+			case EventGuildBanAdd:
 				box := &GuildBanAdd{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1339,14 +1339,14 @@ func (c *Client) eventHandler() {
 				// 	User:  box.User,
 				// 	Dirty: true,
 				// })
-			case KeyGuildBanRemove:
+			case EventGuildBanRemove:
 				box := &GuildBanRemove{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyGuildEmojisUpdate:
+			case EventGuildEmojisUpdate:
 				box := &GuildEmojisUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1355,14 +1355,14 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// TODO-caching: emoji
-			case KeyGuildIntegrationsUpdate:
+			case EventGuildIntegrationsUpdate:
 				box := &GuildIntegrationsUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyGuildMemberAdd:
+			case EventGuildMemberAdd:
 				box := &GuildMemberAdd{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1371,7 +1371,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// TODO-caching: caching members
-			case KeyGuildMemberRemove:
+			case EventGuildMemberRemove:
 				box := &GuildMemberRemove{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1379,7 +1379,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				// TODO-caching: remove cached members
-			case KeyGuildMemberUpdate:
+			case EventGuildMemberUpdate:
 				box := &GuildMemberUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1387,7 +1387,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				// TODO-caching: update a member
-			case KeyGuildMembersChunk:
+			case EventGuildMembersChunk:
 				box := &GuildMembersChunk{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1395,7 +1395,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				// TODO-caching: member chunk.. ?
-			case KeyGuildRoleCreate:
+			case EventGuildRoleCreate:
 				box := &GuildRoleCreate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1403,7 +1403,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				//TODO-caching: guild role add
-			case KeyGuildRoleUpdate:
+			case EventGuildRoleUpdate:
 				box := &GuildRoleUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1411,7 +1411,7 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				//TODO-caching: guild role change
-			case KeyGuildRoleDelete:
+			case EventGuildRoleDelete:
 				box := &GuildRoleDelete{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1419,67 +1419,67 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				//TODO-caching: remove guild role
-			case KeyMessageCreate, KeyMessageUpdate, KeyMessageDelete:
+			case EventMessageCreate, EventMessageUpdate, EventMessageDelete:
 				msg := NewMessage()
 				unmarshal(data, msg)
 
 				switch evtName { // internal switch statement for MessageEvt
-				case KeyMessageCreate:
+				case EventMessageCreate:
 					box := &MessageCreate{Message: msg, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyMessageUpdate:
+				case EventMessageUpdate:
 					box := &MessageUpdate{Message: msg, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-				case KeyMessageDelete:
+				case EventMessageDelete:
 					box := &MessageDelete{MessageID: msg.ID, ChannelID: msg.ChannelID}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				} // END internal switch statement for MessageEvt
-			case KeyMessageDeleteBulk:
+			case EventMessageDeleteBulk:
 				box := &MessageDeleteBulk{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyMessageReactionAdd:
+			case EventMessageReactionAdd:
 				box := &MessageReactionAdd{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyMessageReactionRemove:
+			case EventMessageReactionRemove:
 				box := &MessageReactionRemove{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyMessageReactionRemoveAll:
+			case EventMessageReactionRemoveAll:
 				box := &MessageReactionRemoveAll{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyPresenceUpdate:
+			case EventPresenceUpdate:
 				box := &PresenceUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyTypingStart:
+			case EventTypingStart:
 				box := &TypingStart{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyUserUpdate:
+			case EventUserUpdate:
 				box := &UserUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
@@ -1487,21 +1487,21 @@ func (c *Client) eventHandler() {
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				//TODO-caching: user update, is this @me?
-			case KeyVoiceStateUpdate:
+			case EventVoiceStateUpdate:
 				box := &VoiceStateUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyVoiceServerUpdate:
+			case EventVoiceServerUpdate:
 				box := &VoiceServerUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
-			case KeyWebhooksUpdate:
+			case EventWebhooksUpdate:
 				box := &WebhooksUpdate{}
 				box.Ctx = ctx
 				unmarshal(data, box)

@@ -10,7 +10,7 @@ if err != nil {
 }
 
 // create a handler and bind it to new message events
-session.AddListener(event.KeyMessageCreate, func(session Session, data *event.MessageCreate) {
+session.AddListener(disgord.EventMessageCreate, func(session Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
 })
 
@@ -37,7 +37,7 @@ if err != nil {
 // or use a channel to listen for events
 go func() {
     for {
-        var msg *resource.Message
+        var msg *disgord.Message
 
         // wait for a new message
         select {

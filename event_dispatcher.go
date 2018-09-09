@@ -210,71 +210,71 @@ func (d *Dispatch) alwaysListenToChans() {
 
 func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
-	case KeyReady:
+	case EventReady:
 		d.readyChan <- box.(*Ready)
-	case KeyResumed:
+	case EventResumed:
 		d.resumedChan <- box.(*Resumed)
-	case KeyChannelCreate:
+	case EventChannelCreate:
 		d.channelCreateChan <- box.(*ChannelCreate)
-	case KeyChannelUpdate:
+	case EventChannelUpdate:
 		d.channelUpdateChan <- box.(*ChannelUpdate)
-	case KeyChannelDelete:
+	case EventChannelDelete:
 		d.channelDeleteChan <- box.(*ChannelDelete)
-	case KeyChannelPinsUpdate:
+	case EventChannelPinsUpdate:
 		d.channelPinsUpdateChan <- box.(*ChannelPinsUpdate)
-	case KeyGuildCreate:
+	case EventGuildCreate:
 		d.guildCreateChan <- box.(*GuildCreate)
-	case KeyGuildUpdate:
+	case EventGuildUpdate:
 		d.guildUpdateChan <- box.(*GuildUpdate)
-	case KeyGuildDelete:
+	case EventGuildDelete:
 		d.guildDeleteChan <- box.(*GuildDelete)
-	case KeyGuildBanAdd:
+	case EventGuildBanAdd:
 		d.guildBanAddChan <- box.(*GuildBanAdd)
-	case KeyGuildBanRemove:
+	case EventGuildBanRemove:
 		d.guildBanRemoveChan <- box.(*GuildBanRemove)
-	case KeyGuildEmojisUpdate:
+	case EventGuildEmojisUpdate:
 		d.guildEmojisUpdateChan <- box.(*GuildEmojisUpdate)
-	case KeyGuildIntegrationsUpdate:
+	case EventGuildIntegrationsUpdate:
 		d.guildIntegrationsUpdateChan <- box.(*GuildIntegrationsUpdate)
-	case KeyGuildMemberAdd:
+	case EventGuildMemberAdd:
 		d.guildMemberAddChan <- box.(*GuildMemberAdd)
-	case KeyGuildMemberRemove:
+	case EventGuildMemberRemove:
 		d.guildMemberRemoveChan <- box.(*GuildMemberRemove)
-	case KeyGuildMemberUpdate:
+	case EventGuildMemberUpdate:
 		d.guildMemberUpdateChan <- box.(*GuildMemberUpdate)
-	case KeyGuildMembersChunk:
+	case EventGuildMembersChunk:
 		d.guildMembersChunkChan <- box.(*GuildMembersChunk)
-	case KeyGuildRoleCreate:
+	case EventGuildRoleCreate:
 		d.guildRoleCreateChan <- box.(*GuildRoleCreate)
-	case KeyGuildRoleUpdate:
+	case EventGuildRoleUpdate:
 		d.guildRoleUpdateChan <- box.(*GuildRoleUpdate)
-	case KeyGuildRoleDelete:
+	case EventGuildRoleDelete:
 		d.guildRoleDeleteChan <- box.(*GuildRoleDelete)
-	case KeyMessageCreate:
+	case EventMessageCreate:
 		d.messageCreateChan <- box.(*MessageCreate)
-	case KeyMessageUpdate:
+	case EventMessageUpdate:
 		d.messageUpdateChan <- box.(*MessageUpdate)
-	case KeyMessageDelete:
+	case EventMessageDelete:
 		d.messageDeleteChan <- box.(*MessageDelete)
-	case KeyMessageDeleteBulk:
+	case EventMessageDeleteBulk:
 		d.messageDeleteBulkChan <- box.(*MessageDeleteBulk)
-	case KeyMessageReactionAdd:
+	case EventMessageReactionAdd:
 		d.messageReactionAddChan <- box.(*MessageReactionAdd)
-	case KeyMessageReactionRemove:
+	case EventMessageReactionRemove:
 		d.messageReactionRemoveChan <- box.(*MessageReactionRemove)
-	case KeyMessageReactionRemoveAll:
+	case EventMessageReactionRemoveAll:
 		d.messageReactionRemoveAllChan <- box.(*MessageReactionRemoveAll)
-	case KeyPresenceUpdate:
+	case EventPresenceUpdate:
 		d.presenceUpdateChan <- box.(*PresenceUpdate)
-	case KeyTypingStart:
+	case EventTypingStart:
 		d.typingStartChan <- box.(*TypingStart)
-	case KeyUserUpdate:
+	case EventUserUpdate:
 		d.userUpdateChan <- box.(*UserUpdate)
-	case KeyVoiceStateUpdate:
+	case EventVoiceStateUpdate:
 		d.voiceStateUpdateChan <- box.(*VoiceStateUpdate)
-	case KeyVoiceServerUpdate:
+	case EventVoiceServerUpdate:
 		d.voiceServerUpdateChan <- box.(*VoiceServerUpdate)
-	case KeyWebhooksUpdate:
+	case EventWebhooksUpdate:
 		d.webhooksUpdateChan <- box.(*WebhooksUpdate)
 	default:
 		fmt.Printf("------\nTODO\nImplement channel for `%s`\n------\n\n", evtName)
@@ -283,136 +283,136 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 
 func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
-	case KeyReady:
-		for _, listener := range d.listeners[KeyReady] {
+	case EventReady:
+		for _, listener := range d.listeners[EventReady] {
 			go (listener.(ReadyCallback))(session, box.(*Ready))
 		}
-	case KeyResumed:
-		for _, listener := range d.listeners[KeyResumed] {
+	case EventResumed:
+		for _, listener := range d.listeners[EventResumed] {
 			go (listener.(ResumedCallback))(session, box.(*Resumed))
 		}
-	case KeyChannelCreate:
-		for _, listener := range d.listeners[KeyChannelCreate] {
+	case EventChannelCreate:
+		for _, listener := range d.listeners[EventChannelCreate] {
 			go (listener.(ChannelCreateCallback))(session, box.(*ChannelCreate))
 		}
-	case KeyChannelUpdate:
-		for _, listener := range d.listeners[KeyChannelUpdate] {
+	case EventChannelUpdate:
+		for _, listener := range d.listeners[EventChannelUpdate] {
 			go (listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdate))
 		}
-	case KeyChannelDelete:
-		for _, listener := range d.listeners[KeyChannelDelete] {
+	case EventChannelDelete:
+		for _, listener := range d.listeners[EventChannelDelete] {
 			go (listener.(ChannelDeleteCallback))(session, box.(*ChannelDelete))
 		}
-	case KeyChannelPinsUpdate:
-		for _, listener := range d.listeners[KeyChannelPinsUpdate] {
+	case EventChannelPinsUpdate:
+		for _, listener := range d.listeners[EventChannelPinsUpdate] {
 			go (listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdate))
 		}
-	case KeyGuildCreate:
-		for _, listener := range d.listeners[KeyGuildCreate] {
+	case EventGuildCreate:
+		for _, listener := range d.listeners[EventGuildCreate] {
 			go (listener.(GuildCreateCallback))(session, box.(*GuildCreate))
 		}
-	case KeyGuildUpdate:
-		for _, listener := range d.listeners[KeyGuildUpdate] {
+	case EventGuildUpdate:
+		for _, listener := range d.listeners[EventGuildUpdate] {
 			go (listener.(GuildUpdateCallback))(session, box.(*GuildUpdate))
 		}
-	case KeyGuildDelete:
-		for _, listener := range d.listeners[KeyGuildDelete] {
+	case EventGuildDelete:
+		for _, listener := range d.listeners[EventGuildDelete] {
 			go (listener.(GuildDeleteCallback))(session, box.(*GuildDelete))
 		}
-	case KeyGuildBanAdd:
-		for _, listener := range d.listeners[KeyGuildBanAdd] {
+	case EventGuildBanAdd:
+		for _, listener := range d.listeners[EventGuildBanAdd] {
 			go (listener.(GuildBanAddCallback))(session, box.(*GuildBanAdd))
 		}
-	case KeyGuildBanRemove:
-		for _, listener := range d.listeners[KeyGuildBanRemove] {
+	case EventGuildBanRemove:
+		for _, listener := range d.listeners[EventGuildBanRemove] {
 			go (listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemove))
 		}
-	case KeyGuildEmojisUpdate:
-		for _, listener := range d.listeners[KeyGuildEmojisUpdate] {
+	case EventGuildEmojisUpdate:
+		for _, listener := range d.listeners[EventGuildEmojisUpdate] {
 			go (listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdate))
 		}
-	case KeyGuildIntegrationsUpdate:
-		for _, listener := range d.listeners[KeyGuildIntegrationsUpdate] {
+	case EventGuildIntegrationsUpdate:
+		for _, listener := range d.listeners[EventGuildIntegrationsUpdate] {
 			go (listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdate))
 		}
-	case KeyGuildMemberAdd:
-		for _, listener := range d.listeners[KeyGuildMemberAdd] {
+	case EventGuildMemberAdd:
+		for _, listener := range d.listeners[EventGuildMemberAdd] {
 			go (listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAdd))
 		}
-	case KeyGuildMemberRemove:
-		for _, listener := range d.listeners[KeyGuildMemberRemove] {
+	case EventGuildMemberRemove:
+		for _, listener := range d.listeners[EventGuildMemberRemove] {
 			go (listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemove))
 		}
-	case KeyGuildMemberUpdate:
-		for _, listener := range d.listeners[KeyGuildMemberUpdate] {
+	case EventGuildMemberUpdate:
+		for _, listener := range d.listeners[EventGuildMemberUpdate] {
 			go (listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdate))
 		}
-	case KeyGuildMembersChunk:
-		for _, listener := range d.listeners[KeyGuildMembersChunk] {
+	case EventGuildMembersChunk:
+		for _, listener := range d.listeners[EventGuildMembersChunk] {
 			go (listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunk))
 		}
-	case KeyGuildRoleCreate:
-		for _, listener := range d.listeners[KeyGuildRoleCreate] {
+	case EventGuildRoleCreate:
+		for _, listener := range d.listeners[EventGuildRoleCreate] {
 			go (listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreate))
 		}
-	case KeyGuildRoleUpdate:
-		for _, listener := range d.listeners[KeyGuildRoleUpdate] {
+	case EventGuildRoleUpdate:
+		for _, listener := range d.listeners[EventGuildRoleUpdate] {
 			go (listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdate))
 		}
-	case KeyGuildRoleDelete:
-		for _, listener := range d.listeners[KeyGuildRoleDelete] {
+	case EventGuildRoleDelete:
+		for _, listener := range d.listeners[EventGuildRoleDelete] {
 			go (listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDelete))
 		}
-	case KeyMessageCreate:
-		for _, listener := range d.listeners[KeyMessageCreate] {
+	case EventMessageCreate:
+		for _, listener := range d.listeners[EventMessageCreate] {
 			go (listener.(MessageCreateCallback))(session, box.(*MessageCreate))
 		}
-	case KeyMessageUpdate:
-		for _, listener := range d.listeners[KeyMessageUpdate] {
+	case EventMessageUpdate:
+		for _, listener := range d.listeners[EventMessageUpdate] {
 			go (listener.(MessageUpdateCallback))(session, box.(*MessageUpdate))
 		}
-	case KeyMessageDelete:
-		for _, listener := range d.listeners[KeyMessageDelete] {
+	case EventMessageDelete:
+		for _, listener := range d.listeners[EventMessageDelete] {
 			go (listener.(MessageDeleteCallback))(session, box.(*MessageDelete))
 		}
-	case KeyMessageDeleteBulk:
-		for _, listener := range d.listeners[KeyMessageDeleteBulk] {
+	case EventMessageDeleteBulk:
+		for _, listener := range d.listeners[EventMessageDeleteBulk] {
 			go (listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulk))
 		}
-	case KeyMessageReactionAdd:
-		for _, listener := range d.listeners[KeyMessageReactionAdd] {
+	case EventMessageReactionAdd:
+		for _, listener := range d.listeners[EventMessageReactionAdd] {
 			go (listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAdd))
 		}
-	case KeyMessageReactionRemove:
-		for _, listener := range d.listeners[KeyMessageReactionRemove] {
+	case EventMessageReactionRemove:
+		for _, listener := range d.listeners[EventMessageReactionRemove] {
 			go (listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemove))
 		}
-	case KeyMessageReactionRemoveAll:
-		for _, listener := range d.listeners[KeyMessageReactionRemoveAll] {
+	case EventMessageReactionRemoveAll:
+		for _, listener := range d.listeners[EventMessageReactionRemoveAll] {
 			go (listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAll))
 		}
-	case KeyPresenceUpdate:
-		for _, listener := range d.listeners[KeyPresenceUpdate] {
+	case EventPresenceUpdate:
+		for _, listener := range d.listeners[EventPresenceUpdate] {
 			go (listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
 		}
-	case KeyTypingStart:
-		for _, listener := range d.listeners[KeyTypingStart] {
+	case EventTypingStart:
+		for _, listener := range d.listeners[EventTypingStart] {
 			go (listener.(TypingStartCallback))(session, box.(*TypingStart))
 		}
-	case KeyUserUpdate:
-		for _, listener := range d.listeners[KeyUserUpdate] {
+	case EventUserUpdate:
+		for _, listener := range d.listeners[EventUserUpdate] {
 			go (listener.(UserUpdateCallback))(session, box.(*UserUpdate))
 		}
-	case KeyVoiceStateUpdate:
-		for _, listener := range d.listeners[KeyVoiceStateUpdate] {
+	case EventVoiceStateUpdate:
+		for _, listener := range d.listeners[EventVoiceStateUpdate] {
 			go (listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdate))
 		}
-	case KeyVoiceServerUpdate:
-		for _, listener := range d.listeners[KeyVoiceServerUpdate] {
+	case EventVoiceServerUpdate:
+		for _, listener := range d.listeners[EventVoiceServerUpdate] {
 			go (listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdate))
 		}
-	case KeyWebhooksUpdate:
-		for _, listener := range d.listeners[KeyWebhooksUpdate] {
+	case EventWebhooksUpdate:
+		for _, listener := range d.listeners[EventWebhooksUpdate] {
 			go (listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
 		}
 	default:
