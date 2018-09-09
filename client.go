@@ -47,7 +47,7 @@ type Session interface {
 	//
 	Connect() error
 	Disconnect() error
-	DisconnectWhenTerminated() error
+	DisconnectOnInterrupt() error
 
 	// module wrappers
 	//
@@ -377,8 +377,8 @@ func (c *Client) Disconnect() (err error) {
 	return nil
 }
 
-// DisconnectWhenTerminated wait until a termination signal is detected
-func (c *Client) DisconnectWhenTerminated() (err error) {
+// DisconnectOnInterrupt wait until a termination signal is detected
+func (c *Client) DisconnectOnInterrupt() (err error) {
 	// create a channel to listen for termination signals (graceful shutdown)
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
