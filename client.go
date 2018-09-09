@@ -10,15 +10,9 @@ import (
 	"errors"
 
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/resource"
-	"github.com/andersfylling/disgord/rest"
-	"github.com/andersfylling/disgord/rest/httd"
-	"github.com/andersfylling/disgord/state"
-	"github.com/andersfylling/disgordws"
-	. "github.com/andersfylling/snowflake"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/websocket"
 	"github.com/sirupsen/logrus"
-
-	. "github.com/andersfylling/disgord/event"
 )
 
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
@@ -41,7 +35,7 @@ type Session interface {
 
 	// State reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
-	State() state.Cacher
+	State() Cacher
 
 	// RateLimiter the ratelimiter for the discord REST API
 	RateLimiter() httd.RateLimiter
@@ -64,118 +58,118 @@ type Session interface {
 	// all discord REST functions
 	// TODO: support caching for each
 	// Audit-log
-	GetGuildAuditLogs(guildID Snowflake, params *rest.GuildAuditLogsParams) (log *resource.AuditLog, err error)
+	GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error)
 	// Channel
-	GetChannel(id Snowflake) (ret *resource.Channel, err error)
-	ModifyChannel(changes *rest.ModifyChannelParams) (ret *resource.Channel, err error)
+	GetChannel(id Snowflake) (ret *Channel, err error)
+	ModifyChannel(changes *ModifyChannelParams) (ret *Channel, err error)
 	DeleteChannel(id Snowflake) (err error)
-	EditChannelPermissions(chanID, overwriteID Snowflake, params *rest.EditChannelPermissionsParams) (err error)
-	GetChannelInvites(id Snowflake) (ret []*resource.Invite, err error)
-	CreateChannelInvites(id Snowflake, params *rest.CreateChannelInvitesParams) (ret *resource.Invite, err error)
+	EditChannelPermissions(chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error)
+	GetChannelInvites(id Snowflake) (ret []*Invite, err error)
+	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error)
 	DeleteChannelPermission(channelID, overwriteID Snowflake) (err error)
 	TriggerTypingIndicator(channelID Snowflake) (err error)
-	GetPinnedMessages(channelID Snowflake) (ret []*resource.Message, err error)
+	GetPinnedMessages(channelID Snowflake) (ret []*Message, err error)
 	AddPinnedChannelMessage(channelID, msgID Snowflake) (err error)
 	DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error)
-	GroupDMAddRecipient(channelID, userID Snowflake, params *rest.GroupDMAddRecipientParams) (err error)
+	GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error)
 	GroupDMRemoveRecipient(channelID, userID Snowflake) (err error)
-	GetChannelMessages(channelID Snowflake, params rest.URLParameters) (ret []*resource.Message, err error)
-	GetChannelMessage(channelID, messageID Snowflake) (ret *resource.Message, err error)
-	CreateChannelMessage(channelID Snowflake, params *rest.CreateChannelMessageParams) (ret *resource.Message, err error)
-	EditMessage(chanID, msgID Snowflake, params *rest.EditMessageParams) (ret *resource.Message, err error)
+	GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error)
+	GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error)
+	CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error)
+	EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error)
 	DeleteMessage(channelID, msgID Snowflake) (err error)
-	BulkDeleteMessages(chanID Snowflake, params *rest.BulkDeleteMessagesParams) (err error)
-	CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *resource.Reaction, err error)
+	BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error)
+	CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error)
 	DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error)
 	DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error)
-	GetReaction(channelID, messageID Snowflake, emoji interface{}, params rest.URLParameters) (ret []*resource.User, err error)
+	GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error)
 	DeleteAllReactions(channelID, messageID Snowflake) (err error)
 	// Emoji
-	GetGuildEmojis(id Snowflake) (ret []*resource.Emoji, err error)
-	GetGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji, err error)
-	CreateGuildEmoji(guildID Snowflake, params *rest.CreateGuildEmojiParams) (ret *resource.Emoji, err error)
-	ModifyGuildEmoji(guildID, emojiID Snowflake, params *rest.ModifyGuildEmojiParams) (ret *resource.Emoji, err error)
+	GetGuildEmojis(id Snowflake) (ret []*Emoji, err error)
+	GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error)
+	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error)
+	ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error)
 	DeleteGuildEmoji(guildID, emojiID Snowflake) (err error)
 	// Guild
-	CreateGuild(params *rest.CreateGuildParams) (ret *resource.Guild, err error)
-	GetGuild(id Snowflake) (ret *resource.Guild, err error)
-	ModifyGuild(id Snowflake, params *rest.ModifyGuildParams) (ret *resource.Guild, err error)
+	CreateGuild(params *CreateGuildParams) (ret *Guild, err error)
+	GetGuild(id Snowflake) (ret *Guild, err error)
+	ModifyGuild(id Snowflake, params *ModifyGuildParams) (ret *Guild, err error)
 	DeleteGuild(id Snowflake) (err error)
-	GetGuildChannels(id Snowflake) (ret []*resource.Channel, err error)
-	CreateGuildChannel(id Snowflake, params *rest.CreateGuildChannelParams) (ret *resource.Channel, err error)
-	GetGuildMember(guildID, userID Snowflake) (ret *resource.Member, err error)
-	GetGuildMembers(guildID, after Snowflake, limit int) (ret []*resource.Member, err error)
-	AddGuildMember(guildID, userID Snowflake, params *rest.AddGuildMemberParams) (ret *resource.Member, err error)
-	ModifyGuildMember(guildID, userID Snowflake, params *rest.ModifyGuildMemberParams) (err error)
-	ModifyCurrentUserNick(id Snowflake, params *rest.ModifyCurrentUserNickParams) (nick string, err error)
+	GetGuildChannels(id Snowflake) (ret []*Channel, err error)
+	CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error)
+	GetGuildMember(guildID, userID Snowflake) (ret *Member, err error)
+	GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error)
+	AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error)
+	ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error)
+	ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error)
 	AddGuildMemberRole(guildID, userID, roleID Snowflake) (err error)
 	RemoveGuildMemberRole(guildID, userID, roleID Snowflake) (err error)
 	RemoveGuildMember(guildID, userID Snowflake) (err error)
-	GetGuildBans(id Snowflake) (ret []*resource.Ban, err error)
-	GetGuildBan(guildID, userID Snowflake) (ret *resource.Ban, err error)
-	CreateGuildBan(guildID, userID Snowflake, params *rest.CreateGuildBanParams) (err error)
+	GetGuildBans(id Snowflake) (ret []*Ban, err error)
+	GetGuildBan(guildID, userID Snowflake) (ret *Ban, err error)
+	CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams) (err error)
 	RemoveGuildBan(guildID, userID Snowflake) (err error)
-	GetGuildRoles(guildID Snowflake) (ret []*resource.Role, err error)
-	CreateGuildRole(id Snowflake, params *rest.CreateGuildRoleParams) (ret *resource.Role, err error)
-	ModifyGuildRolePositions(guildID Snowflake, params *rest.ModifyGuildRolePositionsParams) (ret []*resource.Role, err error)
-	ModifyGuildRole(guildID, roleID Snowflake, params *rest.ModifyGuildRoleParams) (ret []*resource.Role, err error)
+	GetGuildRoles(guildID Snowflake) (ret []*Role, err error)
+	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error)
+	ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error)
+	ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret []*Role, err error)
 	DeleteGuildRole(guildID, roleID Snowflake) (err error)
-	GetGuildPruneCount(id Snowflake, params *rest.GuildPruneParams) (ret *resource.GuildPruneCount, err error)
-	BeginGuildPrune(id Snowflake, params *rest.GuildPruneParams) (ret *resource.GuildPruneCount, err error)
-	GetGuildVoiceRegions(id Snowflake) (ret []*resource.VoiceRegion, err error)
-	GetGuildInvites(id Snowflake) (ret []*resource.Invite, err error)
-	GetGuildIntegrations(id Snowflake) (ret []*resource.Integration, err error)
-	CreateGuildIntegration(guildID Snowflake, params *rest.CreateGuildIntegrationParams) (err error)
-	ModifyGuildIntegration(guildID, integrationID Snowflake, params *rest.ModifyGuildIntegrationParams) (err error)
+	GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error)
+	BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error)
+	GetGuildVoiceRegions(id Snowflake) (ret []*VoiceRegion, err error)
+	GetGuildInvites(id Snowflake) (ret []*Invite, err error)
+	GetGuildIntegrations(id Snowflake) (ret []*Integration, err error)
+	CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams) (err error)
+	ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error)
 	DeleteGuildIntegration(guildID, integrationID Snowflake) (err error)
 	SyncGuildIntegration(guildID, integrationID Snowflake) (err error)
-	GetGuildEmbed(guildID Snowflake) (ret *resource.GuildEmbed, err error)
-	ModifyGuildEmbed(guildID Snowflake, params *resource.GuildEmbed) (ret *resource.GuildEmbed, err error)
-	GetGuildVanityURL(guildID Snowflake) (ret *resource.PartialInvite, err error)
+	GetGuildEmbed(guildID Snowflake) (ret *GuildEmbed, err error)
+	ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error)
+	GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error)
 	// Invite
-	GetInvite(inviteCode string, withCounts bool) (invite *resource.Invite, err error)
-	DeleteInvite(inviteCode string) (invite *resource.Invite, err error)
+	GetInvite(inviteCode string, withCounts bool) (invite *Invite, err error)
+	DeleteInvite(inviteCode string) (invite *Invite, err error)
 	// User
-	GetCurrentUser() (ret *resource.User, err error)
-	GetUser(id Snowflake) (ret *resource.User, err error)
-	ModifyCurrentUser(params *rest.ModifyCurrentUserParams) (ret *resource.User, err error)
-	GetCurrentUserGuilds(params *rest.GetCurrentUserGuildsParams) (ret []*resource.Guild, err error)
+	GetCurrentUser() (ret *User, err error)
+	GetUser(id Snowflake) (ret *User, err error)
+	ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error)
+	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
 	LeaveGuild(id Snowflake) (err error)
-	GetUserDMs() (ret []*resource.Channel, err error)
-	CreateDM(recipientID Snowflake) (ret *resource.Channel, err error)
-	CreateGroupDM(params *rest.CreateGroupDMParams) (ret *resource.Channel, err error)
-	GetUserConnections() (ret []*resource.UserConnection, err error)
+	GetUserDMs() (ret []*Channel, err error)
+	CreateDM(recipientID Snowflake) (ret *Channel, err error)
+	CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error)
+	GetUserConnections() (ret []*UserConnection, err error)
 	// Voice
-	GetVoiceRegions() (ret []*resource.VoiceRegion, err error)
+	GetVoiceRegions() (ret []*VoiceRegion, err error)
 	// Webhook
-	CreateWebhook(channelID Snowflake, params *rest.CreateWebhookParams) (ret *resource.Webhook, err error)
-	GetChannelWebhooks(channelID Snowflake) (ret []*resource.Webhook, err error)
-	GetGuildWebhooks(guildID Snowflake) (ret []*resource.Webhook, err error)
-	GetWebhook(id Snowflake) (ret *resource.Webhook, err error)
-	GetWebhookWithToken(id Snowflake, token string) (ret *resource.Webhook, err error)
-	ModifyWebhook(newWebhook *resource.Webhook) (ret *resource.Webhook, err error)
-	ModifyWebhookWithToken(newWebhook *resource.Webhook) (ret *resource.Webhook, err error)
+	CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error)
+	GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error)
+	GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error)
+	GetWebhook(id Snowflake) (ret *Webhook, err error)
+	GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error)
+	ModifyWebhook(newWebhook *Webhook) (ret *Webhook, err error)
+	ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error)
 	DeleteWebhook(webhookID Snowflake) (err error)
 	DeleteWebhookWithToken(id Snowflake, token string) (err error)
-	ExecuteWebhook(params *rest.ExecuteWebhookParams, wait bool, URLSuffix string) (err error)
-	ExecuteSlackWebhook(params *rest.ExecuteWebhookParams, wait bool) (err error)
-	ExecuteGitHubWebhook(params *rest.ExecuteWebhookParams, wait bool) (err error)
+	ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error)
+	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (err error)
+	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error)
 	// Custom
-	SendMsg(channelID Snowflake, message *resource.Message) (msg *resource.Message, err error)
-	SendMsgString(channelID Snowflake, content string) (msg *resource.Message, err error)
-	UpdateMessage(message *resource.Message) (msg *resource.Message, err error)
-	UpdateChannel(channel *resource.Channel) (err error)
+	SendMsg(channelID Snowflake, message *Message) (msg *Message, err error)
+	SendMsgString(channelID Snowflake, content string) (msg *Message, err error)
+	UpdateMessage(message *Message) (msg *Message, err error)
+	UpdateChannel(channel *Channel) (err error)
 
 	// same as above. Except these returns a channel
 	// WARNING: none below should be assumed to be working.
 	// TODO: implement in the future!
-	//GuildChan(guildID Snowflake) <-chan *resource.Guild
-	//ChannelChan(channelID Snowflake) <-chan *resource.Channel
-	//ChannelsChan(guildID Snowflake) <-chan map[Snowflake]*resource.Channel
-	//MsgChan(msgID Snowflake) <-chan *resource.Message
+	//GuildChan(guildID Snowflake) <-chan *Guild
+	//ChannelChan(channelID Snowflake) <-chan *Channel
+	//ChannelsChan(guildID Snowflake) <-chan map[Snowflake]*Channel
+	//MsgChan(msgID Snowflake) <-chan *Message
 	//UserChan(userID Snowflake) <-chan *UserChan
-	//MemberChan(guildID, userID Snowflake) <-chan *resource.Member
-	//MembersChan(guildID Snowflake) <-chan map[Snowflake]*resource.Member
+	//MemberChan(guildID, userID Snowflake) <-chan *Member
+	//MembersChan(guildID Snowflake) <-chan map[Snowflake]*Member
 }
 
 // Config Configuration for the Disgord client
@@ -226,19 +220,19 @@ func NewClient(conf *Config) (*Client, error) {
 		}
 	}
 
-	// Use disgordws to keep the socket connection going
+	// Use websocket to keep the socket connection going
 	// default communication encoding to json
 	if conf.APIEncoding == "" {
 		conf.APIEncoding = JSONEncoding
 	}
-	dws, err := disgordws.NewClient(&disgordws.Config{
+	dws, err := websocket.NewClient(&websocket.Config{
 		// user settings
 		Token:      conf.Token,
 		HTTPClient: conf.HTTPClient,
 		Debug:      conf.Debug,
 
 		// identity
-		Browser: "DisgordWS",
+		Browser: "Disgord",
 		Device:  "Disgord",
 
 		// lib specific
@@ -270,7 +264,7 @@ func NewClient(conf *Config) (*Client, error) {
 		socketEvtChan: dws.DiscordWSEventChan(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
-		state:         state.NewCache(),
+		state:         NewCache(),
 		req:           reqClient,
 	}
 
@@ -304,8 +298,8 @@ type Client struct {
 
 	token string
 
-	ws            disgordws.DiscordWebsocket
-	socketEvtChan <-chan disgordws.DiscordWSEvent
+	ws            websocket.DiscordWebsocket
+	socketEvtChan <-chan websocket.DiscordWSEvent
 
 	// register listeners for events
 	evtDispatch *Dispatch
@@ -321,7 +315,7 @@ type Client struct {
 	httpClient *http.Client
 
 	// cache
-	state *state.Cache
+	state *Cache
 }
 
 func (c *Client) logInfo(msg string) {
@@ -390,12 +384,12 @@ func (c *Client) Evt() EvtDispatcher {
 }
 
 // State is the cache....
-func (c *Client) State() state.Cacher {
+func (c *Client) State() Cacher {
 	return c.state
 }
 
 // AddListener register a listener for a specific event key/type
-// (see event.Key...)
+// (see Key...)
 func (c *Client) AddListener(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandler(evtName, listener)
 }
@@ -408,550 +402,550 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 // Audit-log
 
 // GetGuildAuditLogs ...
-func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *rest.GuildAuditLogsParams) (log *resource.AuditLog, err error) {
-	log, err = rest.GuildAuditLogs(c.req, guildID, params)
+func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error) {
+	log, err = GuildAuditLogs(c.req, guildID, params)
 	return
 }
 
 // Channel
 
 // GetChannel ...
-func (c *Client) GetChannel(id Snowflake) (ret *resource.Channel, err error) {
-	ret, err = rest.GetChannel(c.req, id)
+func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
+	ret, err = GetChannel(c.req, id)
 	return
 }
 
 // ModifyChannel ...
-func (c *Client) ModifyChannel(changes *rest.ModifyChannelParams) (ret *resource.Channel, err error) {
-	ret, err = rest.ModifyChannel(c.req, changes)
+func (c *Client) ModifyChannel(changes *ModifyChannelParams) (ret *Channel, err error) {
+	ret, err = ModifyChannel(c.req, changes)
 	return
 }
 
 // DeleteChannel ...
 func (c *Client) DeleteChannel(id Snowflake) (err error) {
-	err = rest.DeleteChannel(c.req, id)
+	err = DeleteChannel(c.req, id)
 	return
 }
 
 // EditChannelPermissions ...
-func (c *Client) EditChannelPermissions(chanID, overwriteID Snowflake, params *rest.EditChannelPermissionsParams) (err error) {
-	err = rest.EditChannelPermissions(c.req, chanID, overwriteID, params)
+func (c *Client) EditChannelPermissions(chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
+	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
 	return
 }
 
 // GetChannelInvites ...
-func (c *Client) GetChannelInvites(id Snowflake) (ret []*resource.Invite, err error) {
-	ret, err = rest.GetChannelInvites(c.req, id)
+func (c *Client) GetChannelInvites(id Snowflake) (ret []*Invite, err error) {
+	ret, err = GetChannelInvites(c.req, id)
 	return
 }
 
 // CreateChannelInvites ...
-func (c *Client) CreateChannelInvites(id Snowflake, params *rest.CreateChannelInvitesParams) (ret *resource.Invite, err error) {
-	ret, err = rest.CreateChannelInvites(c.req, id, params)
+func (c *Client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
+	ret, err = CreateChannelInvites(c.req, id, params)
 	return
 }
 
 // DeleteChannelPermission .
 func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake) (err error) {
-	err = rest.DeleteChannelPermission(c.req, channelID, overwriteID)
+	err = DeleteChannelPermission(c.req, channelID, overwriteID)
 	return
 }
 
 // TriggerTypingIndicator .
 func (c *Client) TriggerTypingIndicator(channelID Snowflake) (err error) {
-	err = rest.TriggerTypingIndicator(c.req, channelID)
+	err = TriggerTypingIndicator(c.req, channelID)
 	return
 }
 
 // GetPinnedMessages .
-func (c *Client) GetPinnedMessages(channelID Snowflake) (ret []*resource.Message, err error) {
-	ret, err = rest.GetPinnedMessages(c.req, channelID)
+func (c *Client) GetPinnedMessages(channelID Snowflake) (ret []*Message, err error) {
+	ret, err = GetPinnedMessages(c.req, channelID)
 	return
 }
 
 // AddPinnedChannelMessage .
 func (c *Client) AddPinnedChannelMessage(channelID, msgID Snowflake) (err error) {
-	err = rest.AddPinnedChannelMessage(c.req, channelID, msgID)
+	err = AddPinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // DeletePinnedChannelMessage .
 func (c *Client) DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error) {
-	err = rest.DeletePinnedChannelMessage(c.req, channelID, msgID)
+	err = DeletePinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // GroupDMAddRecipient .
-func (c *Client) GroupDMAddRecipient(channelID, userID Snowflake, params *rest.GroupDMAddRecipientParams) (err error) {
-	err = rest.GroupDMAddRecipient(c.req, channelID, userID, params)
+func (c *Client) GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
+	err = GroupDMAddRecipient(c.req, channelID, userID, params)
 	return
 }
 
 // GroupDMRemoveRecipient .
 func (c *Client) GroupDMRemoveRecipient(channelID, userID Snowflake) (err error) {
-	err = rest.GroupDMRemoveRecipient(c.req, channelID, userID)
+	err = GroupDMRemoveRecipient(c.req, channelID, userID)
 	return
 }
 
 // GetChannelMessages .
-func (c *Client) GetChannelMessages(channelID Snowflake, params rest.URLParameters) (ret []*resource.Message, err error) {
-	ret, err = rest.GetChannelMessages(c.req, channelID, params)
+func (c *Client) GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+	ret, err = GetChannelMessages(c.req, channelID, params)
 	return
 }
 
 // GetChannelMessage .
-func (c *Client) GetChannelMessage(channelID, messageID Snowflake) (ret *resource.Message, err error) {
-	ret, err = rest.GetChannelMessage(c.req, channelID, messageID)
+func (c *Client) GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error) {
+	ret, err = GetChannelMessage(c.req, channelID, messageID)
 	return
 }
 
 // CreateChannelMessage .
-func (c *Client) CreateChannelMessage(channelID Snowflake, params *rest.CreateChannelMessageParams) (ret *resource.Message, err error) {
-	ret, err = rest.CreateChannelMessage(c.req, channelID, params)
+func (c *Client) CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
+	ret, err = CreateChannelMessage(c.req, channelID, params)
 	return
 }
 
 // EditMessage .
-func (c *Client) EditMessage(chanID, msgID Snowflake, params *rest.EditMessageParams) (ret *resource.Message, err error) {
-	ret, err = rest.EditMessage(c.req, chanID, msgID, params)
+func (c *Client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
+	ret, err = EditMessage(c.req, chanID, msgID, params)
 	return
 }
 
 // DeleteMessage .
 func (c *Client) DeleteMessage(channelID, msgID Snowflake) (err error) {
-	err = rest.DeleteMessage(c.req, channelID, msgID)
+	err = DeleteMessage(c.req, channelID, msgID)
 	return
 }
 
 // BulkDeleteMessages .
-func (c *Client) BulkDeleteMessages(chanID Snowflake, params *rest.BulkDeleteMessagesParams) (err error) {
-	err = rest.BulkDeleteMessages(c.req, chanID, params)
+func (c *Client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
+	err = BulkDeleteMessages(c.req, chanID, params)
 	return
 }
 
 // CreateReaction .
-func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *resource.Reaction, err error) {
-	ret, err = rest.CreateReaction(c.req, channelID, messageID, emoji)
+func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
+	ret, err = CreateReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteOwnReaction .
 func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
-	err = rest.DeleteOwnReaction(c.req, channelID, messageID, emoji)
+	err = DeleteOwnReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteUserReaction .
 func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
-	err = rest.DeleteUserReaction(c.req, channelID, messageID, userID, emoji)
+	err = DeleteUserReaction(c.req, channelID, messageID, userID, emoji)
 	return
 }
 
 // GetReaction .
-func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params rest.URLParameters) (ret []*resource.User, err error) {
-	ret, err = rest.GetReaction(c.req, channelID, messageID, emoji, params)
+func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
+	ret, err = GetReaction(c.req, channelID, messageID, emoji, params)
 	return
 }
 
 // DeleteAllReactions .
 func (c *Client) DeleteAllReactions(channelID, messageID Snowflake) (err error) {
-	err = rest.DeleteAllReactions(c.req, channelID, messageID)
+	err = DeleteAllReactions(c.req, channelID, messageID)
 	return
 }
 
 // Emoji
 
 // GetGuildEmojis .
-func (c *Client) GetGuildEmojis(id Snowflake) (ret []*resource.Emoji, err error) {
-	ret, err = rest.ListGuildEmojis(c.req, id)
+func (c *Client) GetGuildEmojis(id Snowflake) (ret []*Emoji, err error) {
+	ret, err = ListGuildEmojis(c.req, id)
 	return
 }
 
 // GetGuildEmoji .
-func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *resource.Emoji, err error) {
-	ret, err = rest.GetGuildEmoji(c.req, guildID, emojiID)
+func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
+	ret, err = GetGuildEmoji(c.req, guildID, emojiID)
 	return
 }
 
 // CreateGuildEmoji .
-func (c *Client) CreateGuildEmoji(guildID Snowflake, params *rest.CreateGuildEmojiParams) (ret *resource.Emoji, err error) {
-	ret, err = rest.CreateGuildEmoji(c.req, guildID, params)
+func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
+	ret, err = CreateGuildEmoji(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildEmoji .
-func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *rest.ModifyGuildEmojiParams) (ret *resource.Emoji, err error) {
-	ret, err = rest.ModifyGuildEmoji(c.req, guildID, emojiID, params)
+func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
+	ret, err = ModifyGuildEmoji(c.req, guildID, emojiID, params)
 	return
 }
 
 // DeleteGuildEmoji .
 func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
-	err = rest.DeleteGuildEmoji(c.req, guildID, emojiID)
+	err = DeleteGuildEmoji(c.req, guildID, emojiID)
 	return
 }
 
 // Guild
 
 // CreateGuild .
-func (c *Client) CreateGuild(params *rest.CreateGuildParams) (ret *resource.Guild, err error) {
-	ret, err = rest.CreateGuild(c.req, params)
+func (c *Client) CreateGuild(params *CreateGuildParams) (ret *Guild, err error) {
+	ret, err = CreateGuild(c.req, params)
 	return
 }
 
 // GetGuild .
-func (c *Client) GetGuild(id Snowflake) (ret *resource.Guild, err error) {
-	ret, err = rest.GetGuild(c.req, id)
+func (c *Client) GetGuild(id Snowflake) (ret *Guild, err error) {
+	ret, err = GetGuild(c.req, id)
 	return
 }
 
 // ModifyGuild .
-func (c *Client) ModifyGuild(id Snowflake, params *rest.ModifyGuildParams) (ret *resource.Guild, err error) {
-	ret, err = rest.ModifyGuild(c.req, id, params)
+func (c *Client) ModifyGuild(id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
+	ret, err = ModifyGuild(c.req, id, params)
 	return
 }
 
 // DeleteGuild .
 func (c *Client) DeleteGuild(id Snowflake) (err error) {
-	err = rest.DeleteGuild(c.req, id)
+	err = DeleteGuild(c.req, id)
 	return
 }
 
 // GetGuildChannels .
-func (c *Client) GetGuildChannels(id Snowflake) (ret []*resource.Channel, err error) {
-	ret, err = rest.GetGuildChannels(c.req, id)
+func (c *Client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
+	ret, err = GetGuildChannels(c.req, id)
 	return
 }
 
 // CreateGuildChannel .
-func (c *Client) CreateGuildChannel(id Snowflake, params *rest.CreateGuildChannelParams) (ret *resource.Channel, err error) {
-	ret, err = rest.CreateGuildChannel(c.req, id, params)
+func (c *Client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
+	ret, err = CreateGuildChannel(c.req, id, params)
 	return
 }
 
 // GetGuildMember .
-func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *resource.Member, err error) {
-	ret, err = rest.GetGuildMember(c.req, guildID, userID)
+func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
+	ret, err = GetGuildMember(c.req, guildID, userID)
 	return
 }
 
 // GetGuildMembers .
-func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*resource.Member, err error) {
-	ret, err = rest.GetGuildMembers(c.req, guildID, after, limit)
+func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error) {
+	ret, err = GetGuildMembers(c.req, guildID, after, limit)
 	return
 }
 
 // AddGuildMember .
-func (c *Client) AddGuildMember(guildID, userID Snowflake, params *rest.AddGuildMemberParams) (ret *resource.Member, err error) {
-	ret, err = rest.AddGuildMember(c.req, guildID, userID, params)
+func (c *Client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
+	ret, err = AddGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyGuildMember .
-func (c *Client) ModifyGuildMember(guildID, userID Snowflake, params *rest.ModifyGuildMemberParams) (err error) {
-	err = rest.ModifyGuildMember(c.req, guildID, userID, params)
+func (c *Client) ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
+	err = ModifyGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyCurrentUserNick .
-func (c *Client) ModifyCurrentUserNick(id Snowflake, params *rest.ModifyCurrentUserNickParams) (nick string, err error) {
-	nick, err = rest.ModifyCurrentUserNick(c.req, id, params)
+func (c *Client) ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
+	nick, err = ModifyCurrentUserNick(c.req, id, params)
 	return
 }
 
 // AddGuildMemberRole .
 func (c *Client) AddGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
-	err = rest.AddGuildMemberRole(c.req, guildID, userID, roleID)
+	err = AddGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMemberRole .
 func (c *Client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
-	err = rest.RemoveGuildMemberRole(c.req, guildID, userID, roleID)
+	err = RemoveGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMember .
 func (c *Client) RemoveGuildMember(guildID, userID Snowflake) (err error) {
-	err = rest.RemoveGuildMember(c.req, guildID, userID)
+	err = RemoveGuildMember(c.req, guildID, userID)
 	return
 }
 
 // GetGuildBans .
-func (c *Client) GetGuildBans(id Snowflake) (ret []*resource.Ban, err error) {
-	ret, err = rest.GetGuildBans(c.req, id)
+func (c *Client) GetGuildBans(id Snowflake) (ret []*Ban, err error) {
+	ret, err = GetGuildBans(c.req, id)
 	return
 }
 
 // GetGuildBan .
-func (c *Client) GetGuildBan(guildID, userID Snowflake) (ret *resource.Ban, err error) {
-	ret, err = rest.GetGuildBan(c.req, guildID, userID)
+func (c *Client) GetGuildBan(guildID, userID Snowflake) (ret *Ban, err error) {
+	ret, err = GetGuildBan(c.req, guildID, userID)
 	return
 }
 
 // CreateGuildBan .
-func (c *Client) CreateGuildBan(guildID, userID Snowflake, params *rest.CreateGuildBanParams) (err error) {
-	err = rest.CreateGuildBan(c.req, guildID, userID, params)
+func (c *Client) CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
+	err = CreateGuildBan(c.req, guildID, userID, params)
 	return
 }
 
 // RemoveGuildBan .
 func (c *Client) RemoveGuildBan(guildID, userID Snowflake) (err error) {
-	err = rest.RemoveGuildBan(c.req, guildID, userID)
+	err = RemoveGuildBan(c.req, guildID, userID)
 	return
 }
 
 // GetGuildRoles .
-func (c *Client) GetGuildRoles(guildID Snowflake) (ret []*resource.Role, err error) {
-	ret, err = rest.GetGuildRoles(c.req, guildID)
+func (c *Client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
+	ret, err = GetGuildRoles(c.req, guildID)
 	return
 }
 
 // CreateGuildRole .
-func (c *Client) CreateGuildRole(id Snowflake, params *rest.CreateGuildRoleParams) (ret *resource.Role, err error) {
-	ret, err = rest.CreateGuildRole(c.req, id, params)
+func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
+	ret, err = CreateGuildRole(c.req, id, params)
 	return
 }
 
 // ModifyGuildRolePositions .
-func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params *rest.ModifyGuildRolePositionsParams) (ret []*resource.Role, err error) {
-	ret, err = rest.ModifyGuildRolePositions(c.req, guildID, params)
+func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+	ret, err = ModifyGuildRolePositions(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildRole .
-func (c *Client) ModifyGuildRole(guildID, roleID Snowflake, params *rest.ModifyGuildRoleParams) (ret []*resource.Role, err error) {
-	ret, err = rest.ModifyGuildRole(c.req, guildID, roleID, params)
+func (c *Client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret []*Role, err error) {
+	ret, err = ModifyGuildRole(c.req, guildID, roleID, params)
 	return
 }
 
 // DeleteGuildRole .
 func (c *Client) DeleteGuildRole(guildID, roleID Snowflake) (err error) {
-	err = rest.DeleteGuildRole(c.req, guildID, roleID)
+	err = DeleteGuildRole(c.req, guildID, roleID)
 	return
 }
 
 // GetGuildPruneCount .
-func (c *Client) GetGuildPruneCount(id Snowflake, params *rest.GuildPruneParams) (ret *resource.GuildPruneCount, err error) {
-	ret, err = rest.GetGuildPruneCount(c.req, id, params)
+func (c *Client) GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+	ret, err = GetGuildPruneCount(c.req, id, params)
 	return
 }
 
 // BeginGuildPrune .
-func (c *Client) BeginGuildPrune(id Snowflake, params *rest.GuildPruneParams) (ret *resource.GuildPruneCount, err error) {
-	ret, err = rest.BeginGuildPrune(c.req, id, params)
+func (c *Client) BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+	ret, err = BeginGuildPrune(c.req, id, params)
 	return
 }
 
 // GetGuildVoiceRegions .
-func (c *Client) GetGuildVoiceRegions(id Snowflake) (ret []*resource.VoiceRegion, err error) {
-	ret, err = rest.GetGuildVoiceRegions(c.req, id)
+func (c *Client) GetGuildVoiceRegions(id Snowflake) (ret []*VoiceRegion, err error) {
+	ret, err = GetGuildVoiceRegions(c.req, id)
 	return
 }
 
 // GetGuildInvites .
-func (c *Client) GetGuildInvites(id Snowflake) (ret []*resource.Invite, err error) {
-	ret, err = rest.GetGuildInvites(c.req, id)
+func (c *Client) GetGuildInvites(id Snowflake) (ret []*Invite, err error) {
+	ret, err = GetGuildInvites(c.req, id)
 	return
 }
 
 // GetGuildIntegrations .
-func (c *Client) GetGuildIntegrations(id Snowflake) (ret []*resource.Integration, err error) {
-	ret, err = rest.GetGuildIntegrations(c.req, id)
+func (c *Client) GetGuildIntegrations(id Snowflake) (ret []*Integration, err error) {
+	ret, err = GetGuildIntegrations(c.req, id)
 	return
 }
 
 // CreateGuildIntegration .
-func (c *Client) CreateGuildIntegration(guildID Snowflake, params *rest.CreateGuildIntegrationParams) (err error) {
-	err = rest.CreateGuildIntegration(c.req, guildID, params)
+func (c *Client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
+	err = CreateGuildIntegration(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildIntegration .
-func (c *Client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *rest.ModifyGuildIntegrationParams) (err error) {
-	err = rest.ModifyGuildIntegration(c.req, guildID, integrationID, params)
+func (c *Client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
+	err = ModifyGuildIntegration(c.req, guildID, integrationID, params)
 	return
 }
 
 // DeleteGuildIntegration .
 func (c *Client) DeleteGuildIntegration(guildID, integrationID Snowflake) (err error) {
-	err = rest.DeleteGuildIntegration(c.req, guildID, integrationID)
+	err = DeleteGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // SyncGuildIntegration .
 func (c *Client) SyncGuildIntegration(guildID, integrationID Snowflake) (err error) {
-	err = rest.SyncGuildIntegration(c.req, guildID, integrationID)
+	err = SyncGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // GetGuildEmbed .
-func (c *Client) GetGuildEmbed(guildID Snowflake) (ret *resource.GuildEmbed, err error) {
-	ret, err = rest.GetGuildEmbed(c.req, guildID)
+func (c *Client) GetGuildEmbed(guildID Snowflake) (ret *GuildEmbed, err error) {
+	ret, err = GetGuildEmbed(c.req, guildID)
 	return
 }
 
 // ModifyGuildEmbed .
-func (c *Client) ModifyGuildEmbed(guildID Snowflake, params *resource.GuildEmbed) (ret *resource.GuildEmbed, err error) {
-	ret, err = rest.ModifyGuildEmbed(c.req, guildID, params)
+func (c *Client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
+	ret, err = ModifyGuildEmbed(c.req, guildID, params)
 	return
 }
 
 // GetGuildVanityURL .
-func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *resource.PartialInvite, err error) {
-	ret, err = rest.GetGuildVanityURL(c.req, guildID)
+func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error) {
+	ret, err = GetGuildVanityURL(c.req, guildID)
 	return
 }
 
 // Invite
 
 // GetInvite .
-func (c *Client) GetInvite(inviteCode string, withCounts bool) (invite *resource.Invite, err error) {
-	invite, err = rest.GetInvite(c.req, inviteCode, withCounts)
+func (c *Client) GetInvite(inviteCode string, withCounts bool) (invite *Invite, err error) {
+	invite, err = GetInvite(c.req, inviteCode, withCounts)
 	return
 }
 
 // DeleteInvite .
-func (c *Client) DeleteInvite(inviteCode string) (invite *resource.Invite, err error) {
-	invite, err = rest.DeleteInvite(c.req, inviteCode)
+func (c *Client) DeleteInvite(inviteCode string) (invite *Invite, err error) {
+	invite, err = DeleteInvite(c.req, inviteCode)
 	return
 }
 
 // User
 
 // GetCurrentUser .
-func (c *Client) GetCurrentUser() (ret *resource.User, err error) {
-	ret, err = rest.GetCurrentUser(c.req)
+func (c *Client) GetCurrentUser() (ret *User, err error) {
+	ret, err = GetCurrentUser(c.req)
 	return
 }
 
 // GetUser .
-func (c *Client) GetUser(id Snowflake) (ret *resource.User, err error) {
-	ret, err = rest.GetUser(c.req, id)
+func (c *Client) GetUser(id Snowflake) (ret *User, err error) {
+	ret, err = GetUser(c.req, id)
 	return
 }
 
 // ModifyCurrentUser .
-func (c *Client) ModifyCurrentUser(params *rest.ModifyCurrentUserParams) (ret *resource.User, err error) {
-	ret, err = rest.ModifyCurrentUser(c.req, params)
+func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
+	ret, err = ModifyCurrentUser(c.req, params)
 	return
 }
 
 // GetCurrentUserGuilds .
-func (c *Client) GetCurrentUserGuilds(params *rest.GetCurrentUserGuildsParams) (ret []*resource.Guild, err error) {
-	ret, err = rest.GetCurrentUserGuilds(c.req, params)
+func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+	ret, err = GetCurrentUserGuilds(c.req, params)
 	return
 }
 
 // LeaveGuild .
 func (c *Client) LeaveGuild(id Snowflake) (err error) {
-	err = rest.LeaveGuild(c.req, id)
+	err = LeaveGuild(c.req, id)
 	return
 }
 
 // GetUserDMs .
-func (c *Client) GetUserDMs() (ret []*resource.Channel, err error) {
-	ret, err = rest.GetUserDMs(c.req)
+func (c *Client) GetUserDMs() (ret []*Channel, err error) {
+	ret, err = GetUserDMs(c.req)
 	return
 }
 
 // CreateDM .
-func (c *Client) CreateDM(recipientID Snowflake) (ret *resource.Channel, err error) {
-	ret, err = rest.CreateDM(c.req, recipientID)
+func (c *Client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
+	ret, err = CreateDM(c.req, recipientID)
 	return
 }
 
 // CreateGroupDM .
-func (c *Client) CreateGroupDM(params *rest.CreateGroupDMParams) (ret *resource.Channel, err error) {
-	ret, err = rest.CreateGroupDM(c.req, params)
+func (c *Client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
+	ret, err = CreateGroupDM(c.req, params)
 	return
 }
 
 // GetUserConnections .
-func (c *Client) GetUserConnections() (ret []*resource.UserConnection, err error) {
-	ret, err = rest.GetUserConnections(c.req)
+func (c *Client) GetUserConnections() (ret []*UserConnection, err error) {
+	ret, err = GetUserConnections(c.req)
 	return
 }
 
 // Voice
 
 // GetVoiceRegions .
-func (c *Client) GetVoiceRegions() (ret []*resource.VoiceRegion, err error) {
-	ret, err = rest.ListVoiceRegions(c.req)
+func (c *Client) GetVoiceRegions() (ret []*VoiceRegion, err error) {
+	ret, err = ListVoiceRegions(c.req)
 	return
 }
 
 // Webhook
 
 // CreateWebhook .
-func (c *Client) CreateWebhook(channelID Snowflake, params *rest.CreateWebhookParams) (ret *resource.Webhook, err error) {
-	ret, err = rest.CreateWebhook(c.req, channelID, params)
+func (c *Client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
+	ret, err = CreateWebhook(c.req, channelID, params)
 	return
 }
 
 // GetChannelWebhooks .
-func (c *Client) GetChannelWebhooks(channelID Snowflake) (ret []*resource.Webhook, err error) {
-	ret, err = rest.GetChannelWebhooks(c.req, channelID)
+func (c *Client) GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error) {
+	ret, err = GetChannelWebhooks(c.req, channelID)
 	return
 }
 
 // GetGuildWebhooks .
-func (c *Client) GetGuildWebhooks(guildID Snowflake) (ret []*resource.Webhook, err error) {
-	ret, err = rest.GetGuildWebhooks(c.req, guildID)
+func (c *Client) GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error) {
+	ret, err = GetGuildWebhooks(c.req, guildID)
 	return
 }
 
 // GetWebhook .
-func (c *Client) GetWebhook(id Snowflake) (ret *resource.Webhook, err error) {
-	ret, err = rest.GetWebhook(c.req, id)
+func (c *Client) GetWebhook(id Snowflake) (ret *Webhook, err error) {
+	ret, err = GetWebhook(c.req, id)
 	return
 }
 
 // GetWebhookWithToken .
-func (c *Client) GetWebhookWithToken(id Snowflake, token string) (ret *resource.Webhook, err error) {
-	ret, err = rest.GetWebhookWithToken(c.req, id, token)
+func (c *Client) GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error) {
+	ret, err = GetWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ModifyWebhook .
-func (c *Client) ModifyWebhook(newWebhook *resource.Webhook) (ret *resource.Webhook, err error) {
-	ret, err = rest.ModifyWebhook(c.req, newWebhook)
+func (c *Client) ModifyWebhook(newWebhook *Webhook) (ret *Webhook, err error) {
+	ret, err = ModifyWebhook(c.req, newWebhook)
 	return
 }
 
 // ModifyWebhookWithToken .
-func (c *Client) ModifyWebhookWithToken(newWebhook *resource.Webhook) (ret *resource.Webhook, err error) {
-	ret, err = rest.ModifyWebhookWithToken(c.req, newWebhook)
+func (c *Client) ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error) {
+	ret, err = ModifyWebhookWithToken(c.req, newWebhook)
 	return
 }
 
 // DeleteWebhook .
 func (c *Client) DeleteWebhook(webhookID Snowflake) (err error) {
-	err = rest.DeleteWebhook(c.req, webhookID)
+	err = DeleteWebhook(c.req, webhookID)
 	return
 }
 
 // DeleteWebhookWithToken .
 func (c *Client) DeleteWebhookWithToken(id Snowflake, token string) (err error) {
-	err = rest.DeleteWebhookWithToken(c.req, id, token)
+	err = DeleteWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ExecuteWebhook .
-func (c *Client) ExecuteWebhook(params *rest.ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
-	err = rest.ExecuteWebhook(c.req, params, wait, URLSuffix)
+func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
+	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
 	return
 }
 
 // ExecuteSlackWebhook .
-func (c *Client) ExecuteSlackWebhook(params *rest.ExecuteWebhookParams, wait bool) (err error) {
-	err = rest.ExecuteSlackWebhook(c.req, params, wait)
+func (c *Client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+	err = ExecuteSlackWebhook(c.req, params, wait)
 	return
 }
 
 // ExecuteGitHubWebhook .
-func (c *Client) ExecuteGitHubWebhook(params *rest.ExecuteWebhookParams, wait bool) (err error) {
-	err = rest.ExecuteGitHubWebhook(c.req, params, wait)
+func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+	err = ExecuteGitHubWebhook(c.req, params, wait)
 	return
 }
 
@@ -959,9 +953,9 @@ func (c *Client) ExecuteGitHubWebhook(params *rest.ExecuteWebhookParams, wait bo
 // -----
 
 // SendMsg .
-func (c *Client) SendMsg(channelID Snowflake, message *resource.Message) (msg *resource.Message, err error) {
+func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
 	message.RLock()
-	params := &rest.CreateChannelMessageParams{
+	params := &CreateChannelMessageParams{
 		Content: message.Content,
 		Nonce:   message.Nonce,
 		Tts:     message.Tts,
@@ -977,8 +971,8 @@ func (c *Client) SendMsg(channelID Snowflake, message *resource.Message) (msg *r
 }
 
 // SendMsgString .
-func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *resource.Message, err error) {
-	params := &rest.CreateChannelMessageParams{
+func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *Message, err error) {
+	params := &CreateChannelMessageParams{
 		Content: content,
 	}
 
@@ -987,11 +981,11 @@ func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *resour
 }
 
 // UpdateMessage .
-func (c *Client) UpdateMessage(message *resource.Message) (msg *resource.Message, err error) {
+func (c *Client) UpdateMessage(message *Message) (msg *Message, err error) {
 	message.RLock()
 	defer message.RUnlock()
 
-	params := &rest.EditMessageParams{
+	params := &EditMessageParams{
 		Content: message.Content,
 	}
 	if len(message.Embeds) > 0 {
@@ -1003,7 +997,7 @@ func (c *Client) UpdateMessage(message *resource.Message) (msg *resource.Message
 }
 
 // UpdateChannel Not implemented yet
-func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
+func (c *Client) UpdateChannel(channel *Channel) (err error) {
 	// there are several different REST calls that needs to be made in order
 	// to update the channel. But how exactly do we know what has changed?
 	return errors.New("not implemented")
@@ -1015,11 +1009,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 // implementation for the Discord API, socket, caching, etc.
 
 // ChannelChan .
-// func (c *Client) ChannelChan(channelID Snowflake) <-chan *resource.Channel {
-// 	ch := make(chan *resource.Channel)
+// func (c *Client) ChannelChan(channelID Snowflake) <-chan *Channel {
+// 	ch := make(chan *Channel)
 //
-// 	go func(receiver chan<- *resource.Channel, storage *state.Cache) {
-// 		result := &resource.Channel{}
+// 	go func(receiver chan<- *Channel, storage *state.Cache) {
+// 		result := &Channel{}
 // 		cached := true
 //
 // 		// check cache
@@ -1044,11 +1038,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 // 	return ch
 // }
 //
-// func (c *Client) ChannelsChan(GuildID Snowflake) <-chan map[Snowflake]*resource.Channel {
-// 	ch := make(chan map[Snowflake]*resource.Channel)
+// func (c *Client) ChannelsChan(GuildID Snowflake) <-chan map[Snowflake]*Channel {
+// 	ch := make(chan map[Snowflake]*Channel)
 //
-// 	go func(receiver chan<- map[Snowflake]*resource.Channel, storage *state.Cache) {
-// 		result := make(map[Snowflake]*resource.Channel)
+// 	go func(receiver chan<- map[Snowflake]*Channel, storage *state.Cache) {
+// 		result := make(map[Snowflake]*Channel)
 // 		cached := true
 //
 // 		// check cache
@@ -1074,11 +1068,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 // }
 //
 // // state/caching module
-// func (c *Client) GuildChan(guildID Snowflake) <-chan *resource.Guild {
-// 	ch := make(chan *resource.Guild)
+// func (c *Client) GuildChan(guildID Snowflake) <-chan *Guild {
+// 	ch := make(chan *Guild)
 //
-// 	go func(receiver chan<- *resource.Guild, storage *state.Cache) {
-// 		result := &resource.Guild{}
+// 	go func(receiver chan<- *Guild, storage *state.Cache) {
+// 		result := &Guild{}
 // 		cached := true
 //
 // 		// check cache
@@ -1102,11 +1096,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 //
 // 	return ch
 // }
-// func (c *Client) MsgChan(msgID Snowflake) <-chan *resource.Message {
-// 	ch := make(chan *resource.Message)
+// func (c *Client) MsgChan(msgID Snowflake) <-chan *Message {
+// 	ch := make(chan *Message)
 //
-// 	go func(receiver chan<- *resource.Message, storage *state.Cache) {
-// 		result := &resource.Message{}
+// 	go func(receiver chan<- *Message, storage *state.Cache) {
+// 		result := &Message{}
 // 		cached := true
 //
 // 		// check cache
@@ -1132,7 +1126,7 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 // }
 //
 // type UserChan struct {
-// 	User  *resource.User
+// 	User  *User
 // 	Err   error
 // 	Cache bool
 // }
@@ -1150,7 +1144,7 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 // 		if response.Err != nil {
 // 			response.Cache = false
 // 			response.Err = nil
-// 			response.User, response.Err = rest.GetUser(c.req, userID)
+// 			response.User, response.Err = GetUser(c.req, userID)
 // 		}
 //
 // 		// TODO: cache dead objects, to avoid http requesting the same none existent object?
@@ -1173,11 +1167,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 //
 // 	return ch
 // }
-// func (c *Client) MemberChan(guildID, userID Snowflake) <-chan *resource.Member {
-// 	ch := make(chan *resource.Member)
+// func (c *Client) MemberChan(guildID, userID Snowflake) <-chan *Member {
+// 	ch := make(chan *Member)
 //
-// 	go func(receiver chan<- *resource.Member, storage *state.Cache) {
-// 		result := &resource.Member{}
+// 	go func(receiver chan<- *Member, storage *state.Cache) {
+// 		result := &Member{}
 // 		cached := true
 //
 // 		// check cache
@@ -1201,11 +1195,11 @@ func (c *Client) UpdateChannel(channel *resource.Channel) (err error) {
 //
 // 	return ch
 // }
-// func (c *Client) MembersChan(guildID Snowflake) <-chan map[Snowflake]*resource.Member {
-// 	ch := make(chan map[Snowflake]*resource.Member)
+// func (c *Client) MembersChan(guildID Snowflake) <-chan map[Snowflake]*Member {
+// 	ch := make(chan map[Snowflake]*Member)
 //
-// 	go func(receiver chan<- map[Snowflake]*resource.Member, storage *state.Cache) {
-// 		result := make(map[Snowflake]*resource.Member)
+// 	go func(receiver chan<- map[Snowflake]*Member, storage *state.Cache) {
+// 		result := make(map[Snowflake]*Member)
 // 		cached := true
 //
 // 		// check cache
@@ -1250,30 +1244,30 @@ func (c *Client) eventHandler() {
 			case KeyReady:
 				box := &Ready{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// cache
-				for _, partialGuild := range box.Guilds {
-					c.state.ProcessGuild(&state.GuildDetail{
-						Guild:  resource.NewGuildFromUnavailable(partialGuild),
-						Dirty:  true,
-						Action: evtName,
-					})
-				}
+				// for _, partialGuild := range box.Guilds {
+				// 	c.state.ProcessGuild(&state.GuildDetail{
+				// 		Guild:  NewGuildFromUnavailable(partialGuild),
+				// 		Dirty:  true,
+				// 		Action: evtName,
+				// 	})
+				// }
 				// TODO-caching: c.state.Myself()
 			case KeyResumed:
 				box := &Resumed{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyChannelCreate, KeyChannelUpdate, KeyChannelDelete:
-				chanContent := &resource.Channel{}
-				Unmarshal(data, chanContent)
+				chanContent := &Channel{}
+				unmarshal(data, chanContent)
 
 				switch evtName { // internal switch statement for ChannelEvt
 				case KeyChannelCreate:
@@ -1291,23 +1285,23 @@ func (c *Client) eventHandler() {
 				} // END internal switch statement for ChannelEvt
 
 				// cache channel
-				c.state.ProcessChannel(&state.ChannelDetail{
-					Channel: chanContent,
-					Dirty:   true,
-					Action:  evtName,
-				})
+				// c.state.ProcessChannel(&state.ChannelDetail{
+				// 	Channel: chanContent,
+				// 	Dirty:   true,
+				// 	Action:  evtName,
+				// })
 			case KeyChannelPinsUpdate:
 				box := &ChannelPinsUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// cache what?
 			case KeyGuildCreate, KeyGuildUpdate, KeyGuildDelete:
-				g := &resource.Guild{}
-				Unmarshal(data, g)
+				g := &Guild{}
+				unmarshal(data, g)
 
 				switch evtName { // internal switch statement for guild events
 				case KeyGuildCreate:
@@ -1319,7 +1313,7 @@ func (c *Client) eventHandler() {
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				case KeyGuildDelete:
-					unavailGuild := resource.NewGuildUnavailable(g.ID)
+					unavailGuild := NewGuildUnavailable(g.ID)
 					box := &GuildDelete{UnavailableGuild: unavailGuild, Ctx: ctx}
 					c.evtDispatch.triggerChan(ctx, evtName, session, box)
 					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1327,35 +1321,35 @@ func (c *Client) eventHandler() {
 
 				// cache
 				// TODO-caching: channels, users on guild create / update
-				c.state.ProcessGuild(&state.GuildDetail{
-					Guild:  g,
-					Dirty:  true,
-					Action: evtName,
-				})
+				// c.state.ProcessGuild(&state.GuildDetail{
+				// 	Guild:  g,
+				// 	Dirty:  true,
+				// 	Action: evtName,
+				// })
 			case KeyGuildBanAdd:
 				box := &GuildBanAdd{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 
 				// cache
-				c.state.ProcessUser(&state.UserDetail{
-					User:  box.User,
-					Dirty: true,
-				})
+				// c.state.ProcessUser(&state.UserDetail{
+				// 	User:  box.User,
+				// 	Dirty: true,
+				// })
 			case KeyGuildBanRemove:
 				box := &GuildBanRemove{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyGuildEmojisUpdate:
 				box := &GuildEmojisUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1364,14 +1358,14 @@ func (c *Client) eventHandler() {
 			case KeyGuildIntegrationsUpdate:
 				box := &GuildIntegrationsUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyGuildMemberAdd:
 				box := &GuildMemberAdd{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1380,7 +1374,7 @@ func (c *Client) eventHandler() {
 			case KeyGuildMemberRemove:
 				box := &GuildMemberRemove{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1388,7 +1382,7 @@ func (c *Client) eventHandler() {
 			case KeyGuildMemberUpdate:
 				box := &GuildMemberUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1396,7 +1390,7 @@ func (c *Client) eventHandler() {
 			case KeyGuildMembersChunk:
 				box := &GuildMembersChunk{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1404,7 +1398,7 @@ func (c *Client) eventHandler() {
 			case KeyGuildRoleCreate:
 				box := &GuildRoleCreate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1412,7 +1406,7 @@ func (c *Client) eventHandler() {
 			case KeyGuildRoleUpdate:
 				box := &GuildRoleUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1420,14 +1414,14 @@ func (c *Client) eventHandler() {
 			case KeyGuildRoleDelete:
 				box := &GuildRoleDelete{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 				//TODO-caching: remove guild role
 			case KeyMessageCreate, KeyMessageUpdate, KeyMessageDelete:
-				msg := resource.NewMessage()
-				Unmarshal(data, msg)
+				msg := NewMessage()
+				unmarshal(data, msg)
 
 				switch evtName { // internal switch statement for MessageEvt
 				case KeyMessageCreate:
@@ -1446,49 +1440,49 @@ func (c *Client) eventHandler() {
 			case KeyMessageDeleteBulk:
 				box := &MessageDeleteBulk{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyMessageReactionAdd:
 				box := &MessageReactionAdd{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyMessageReactionRemove:
 				box := &MessageReactionRemove{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyMessageReactionRemoveAll:
 				box := &MessageReactionRemoveAll{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyPresenceUpdate:
 				box := &PresenceUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyTypingStart:
 				box := &TypingStart{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyUserUpdate:
 				box := &UserUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
@@ -1496,21 +1490,21 @@ func (c *Client) eventHandler() {
 			case KeyVoiceStateUpdate:
 				box := &VoiceStateUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyVoiceServerUpdate:
 				box := &VoiceServerUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
 			case KeyWebhooksUpdate:
 				box := &WebhooksUpdate{}
 				box.Ctx = ctx
-				Unmarshal(data, box)
+				unmarshal(data, box)
 
 				c.evtDispatch.triggerChan(ctx, evtName, session, box)
 				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)

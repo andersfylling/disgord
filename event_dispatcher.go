@@ -2,11 +2,8 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
-
-	. "github.com/andersfylling/disgord/event"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
@@ -638,13 +635,4 @@ func (d *Dispatch) AddHandlerOnce(evtName string, listener interface{}) {
 	index := len(d.listeners[evtName])
 	d.listeners[evtName] = append(d.listeners[evtName], listener)
 	d.listenOnceOnly[evtName] = append(d.listenOnceOnly[evtName], index)
-}
-
-// Unmarshal ...
-// TODO: review
-func Unmarshal(data []byte, box interface{}) {
-	err := json.Unmarshal(data, box)
-	if err != nil {
-		panic(err) // !
-	}
 }

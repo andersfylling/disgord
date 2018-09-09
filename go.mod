@@ -6,6 +6,7 @@ require (
 	github.com/andersfylling/snowflake v1.2.0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
+	github.com/gorilla/websocket v1.3.0
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.5
 	github.com/onsi/ginkgo v1.6.0 // indirect
