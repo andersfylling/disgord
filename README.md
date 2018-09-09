@@ -9,10 +9,19 @@
 
 
 ## About
-GoLang library for interacting with the Discord API. Supports socketing and REST functions. Compared to Discordgo this library will be a little more heavy and support helper functions on objects such as Channel, Message, etc.
- eg. `Channel.SendMsg(...)`, `Message.Respond(...)`.
+GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Channel.SendMsg(session, &Message{...})` for simplicity/readability. 
+
+Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the disgord REST implementations. The socketing is not complete, but does support all event types (using both channels and callbacks). 
+
+Note that, the code philosophy here is more focused at organizing code (to help maintenance) by using subpackages and easing code navigating by mimicking the layout of the Discord docs, to some degree. Some might consider this a negative approach as you will interact with subpackages of disgord in your project. eg. `disgord.Session` and `resource.Message`, both exist within disgord, but the data structures are stored in a subpackage. 
+
+I do want most functionality to be accessible from the main package, and as such there exists a Session interface. The Session interface contains wrappers to subpackages like `rest`, `state`/`cache`, so that you most likely won't need to directly access subpackages unless you are dealing with the discord data structures or need to bypass the implementations of the Session interface (see examples in docs). 
+
+Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON.
 
 To get started see the examples in [docs](docs/examples)
+
+Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmartin/discordgo)
 
 ## Package structure
 ```Markdown
@@ -41,23 +50,20 @@ Please see the [CONTRIBUTING.md file](CONTRIBUTING.md)
 Yes, the wiki might hold some information. But I believe everything will be placed within the "docs" package in the end.
 
 ## Git branching model
-The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest release", for stable releases we use git tags. When a patch needs to be applied and help is needed a branch for the given commit will be created, and then deleted again when the patch tag is added.
+The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest branch" except the git tags (or releases).
 
 ## Mental model
 #### Caching
-The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache.
-This lib handles caching for you, so whenever you send a request to the REST API or receive a discord event. The contents are cached auto-magically to a separate memory space.
+The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache. This lib handles caching for you, so whenever you send a request to the REST API or receive a discord event. The contents are cached auto-magically to a separate memory space.
 
-As a structure is sent into the cache module, everything is deep copied as mentioned, however if the object hold discord objects consistent of a snowflake, it does not do a deep copy. It converts given field to a nil, and stores the snowflake only in a separate struct/map. This makes sure that there will only exist one version of an object. Making updating fairly easy.
-When the object goes out of cache, a copy is created and every sub object containing a snowflake is deep copied from the cache as well, to create a wholesome object.
+As a structure is sent into the cache module, everything is deep copied as mentioned, however if the object hold discord objects consistent of a snowflake, it does not do a deep copy. It converts given field to a nil, and stores only the snowflake in a separate struct/map. This makes sure that there will only exist one version of an object. Making updating fairly easy.
+When the object goes out of cache, a copy is created and every sub object containing a snowflake is deep copied from the cache as well, to return a wholesome object.
 
 #### Requests
-For every REST API request (which is the only way to get objects from the discord interface, without waiting for changes as events) the request is rate limited auto-magically by the library (caching coming soon for resource funcs).
-The functions in `resource` pkg are blocking, and should be used with care. For async requests, use the methods found at the `Session` interface, such as:
-`Session.User(userID)` which returns a channel. The channel will get content from the REST API, if not found in the cache.
+For every REST API request the request is rate limited auto-magically by disgord. The functions in `resource` pkg are blocking, and should be used with care. In the future there might be implementations of channel methods if requested.
 
 #### Events
-The reactor pattern with goroutines, or a pro-actor pattern is used. This will always be the default behavior, synchronous triggering of listeners might be implemented in the future.
+The reactor pattern with goroutines, or a pro-actor pattern is used. This will always be the default behavior, synchronous triggering of listeners might be implemented in the future as an option.
 Incoming events from the discord servers are parsed into respective structs and dispatched to either a) callbacks, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. So it doesn't matter which one you pick, chose your preference.
 
 ## Quick example
