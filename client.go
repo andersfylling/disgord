@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"errors"
@@ -44,6 +47,7 @@ type Session interface {
 	//
 	Connect() error
 	Disconnect() error
+	DisconnectWhenTerminated() error
 
 	// module wrappers
 	//
@@ -299,6 +303,7 @@ type Client struct {
 
 	token string
 
+	connected     sync.Mutex
 	ws            websocket.DiscordWebsocket
 	socketEvtChan <-chan websocket.DiscordWSEvent
 
@@ -359,7 +364,7 @@ func (c *Client) Connect() (err error) {
 
 // Disconnect closes the discord websocket connection
 func (c *Client) Disconnect() (err error) {
-	fmt.Println()
+	fmt.Println() // to keep ^C on it's own line
 	c.logInfo("Closing Discord gateway connection")
 	c.evtDispatch.stop()
 	err = c.ws.Disconnect()
@@ -370,6 +375,16 @@ func (c *Client) Disconnect() (err error) {
 	c.logInfo("Disconnected")
 
 	return nil
+}
+
+// DisconnectWhenTerminated wait until a termination signal is detected
+func (c *Client) DisconnectWhenTerminated() (err error) {
+	// create a channel to listen for termination signals (graceful shutdown)
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-termSignal
+
+	return c.Disconnect()
 }
 
 // Req return the request object. Used in REST requests to handle rate limits,
