@@ -22,30 +22,29 @@ To get started see the examples in [docs](docs/examples)
 Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmartin/discordgo)
 
 ## Package structure
+None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
 github.com/andersfylling/disgord
+└──.circleci    :CircleCI configuration
+└──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
-└──event        :Data structures, callbacks, event types
-└──resource     :All the Discord data structures (same setup as the Discord docs)
-└──rest         :All the endpoints found in the documentation (same as resource)
-└──state/cache  :Logic for caching incoming Discord information
+└──endpoint     :All the REST endpoints of Discord
+└──httd         :Deals with rate limits and http calls
+└──testdata     :Holds all test data for unit tests (typically JSON files)
+└──websocket    :Discord Websocket logic (reconnect, resume, etc.)
 ```
 
 ### Dependencies
 ```Markdown
 github.com/andersfylling/disgord
 └──github.com/andersfylling/snowflake  :The snowflake ID designed for Discord
-└──github.com/andersfylling/disgordws  :Handles the socket connection with discord
 └──github.com/json-iterator/go         :For faster JSON decoding/encoding
-└──github.com/sergi/go-diff            :Unit testing for checking json encoding/decoding of structs
+└──github.com/sergi/go-diff            :Unit testing for checking JSON encoding/decoding of structs
 └──github.com/sirupsen/logrus          :Logging (will be replaced with a simplified interface for DI)
 ```
 
 ## Contributing
 Please see the [CONTRIBUTING.md file](CONTRIBUTING.md)
-
-## The Wiki
-Yes, the wiki might hold some information. But I believe everything will be placed within the "docs" package in the end.
 
 ## Git branching model
 The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest branch" except the git tags (or releases).
