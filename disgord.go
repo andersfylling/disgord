@@ -8,7 +8,7 @@ import (
 
 const (
 	// JSONEncoding const for JSON encoding type
-	JSONEncoding = "JSON"
+	JSONEncoding = "json"
 
 	// APIVersion desired API version to use
 	APIVersion = 6 // February 5, 2018

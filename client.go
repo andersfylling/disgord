@@ -236,8 +236,9 @@ func NewClient(conf *Config) (*Client, error) {
 		Device:  "Disgord",
 
 		// lib specific
-		DAPIVersion:  conf.APIVersion,
-		DAPIEncoding: "json",
+		DAPIVersion:   conf.APIVersion,
+		DAPIEncoding:  conf.APIEncoding,
+		ChannelBuffer: 1,
 	})
 	if err != nil {
 		return nil, err
