@@ -12,6 +12,7 @@ import (
 	"github.com/json-iterator/go"
 )
 
+// URLParameters converts a struct of values to a valid URL query string
 type URLParameters interface {
 	GetQueryString() string
 }

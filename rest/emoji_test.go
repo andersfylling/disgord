@@ -207,7 +207,7 @@ func TestValidEmojiName(t *testing.T) {
 		return
 	}
 
-	var mustDelete bool = false
+	var mustDelete = false
 	t.Run("create emoji", func(t *testing.T) {
 		params := &CreateGuildEmojiParams{
 			Name:  illegalNames[0],

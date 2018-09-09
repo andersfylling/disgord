@@ -13,10 +13,6 @@ import (
 	"github.com/andersfylling/disgord/rest/httd"
 )
 
-const (
-	EndpointChannels = "/channels"
-)
-
 // GetChannel [GET]         Get a channel by Snowflake. Returns a channel object.
 // Endpoint                 /channels/{channel.id}
 // Rate limiter [MAJOR]     /channels/{channel.id}
@@ -171,7 +167,7 @@ func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err err
 	return
 }
 
-// ReqCreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params
+// CreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params
 type CreateChannelInvitesParams struct {
 	MaxAge    int  `json:"max_age,omitempty"`   // duration of invite in seconds before expiry, or 0 for never. default 86400 (24 hours)
 	MaxUses   int  `json:"max_uses,omitempty"`  // max number of uses or 0 for unlimited. default 0
@@ -343,6 +339,7 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake)
 	return
 }
 
+// GroupDMAddRecipientParams JSON params for GroupDMAddRecipient
 type GroupDMAddRecipientParams struct {
 	AccessToken string `json:"access_token"` // access token of a user that has granted your app the gdm.join scope
 	Nickname    string `json:"nick"`         // nickname of the user being added
@@ -420,7 +417,7 @@ type GetChannelMessagesParams struct {
 	Limit  int       `urlparam:"limit,omitempty"`
 }
 
-// getQueryString this ins't really pretty, but it works.
+// GetQueryString .
 func (params *GetChannelMessagesParams) GetQueryString() string {
 	separator := "?"
 	query := ""
@@ -510,12 +507,14 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 	return
 }
 
+// NewMessageByString creates a message object from a string/content
 func NewMessageByString(content string) *CreateChannelMessageParams {
 	return &CreateChannelMessageParams{
 		Content: content,
 	}
 }
 
+// CreateChannelMessageParams JSON params for CreateChannelMessage
 type CreateChannelMessageParams struct {
 	Content     string        `json:"content"`
 	Nonce       Snowflake     `json:"nonce,omitempty"`
@@ -657,6 +656,7 @@ func (p *BulkDeleteMessagesParams) tooFew(messages int) (err error) {
 	return
 }
 
+// Valid validates the BulkDeleteMessagesParams data
 func (p *BulkDeleteMessagesParams) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
@@ -670,6 +670,7 @@ func (p *BulkDeleteMessagesParams) Valid() (err error) {
 	return
 }
 
+// AddMessage Adds a message to be deleted
 func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
@@ -818,13 +819,13 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	return
 }
 
-// CreateReaction [DELETE]  Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
-//                          permission to be present on the current user. Returns a 204 empty response on success.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]     /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
-// Reviewed                 2018-06-07
-// Comment                  emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// DeleteUserReaction [DELETE]	Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
+//                          		permission to be present on the current user. Returns a 204 empty response on success.
+// Endpoint                 		/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+// Rate limiter [MAJOR]     		/channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+// Discord documentation    		https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+// Reviewed                 		2018-06-07
+// Comment                  		emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -863,14 +864,14 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 	return
 }
 
-// ReqGetReactionParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
+// GetReactionURLParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
 type GetReactionURLParams struct {
 	Before Snowflake `urlparam:"before,omitempty"` // get users before this user Snowflake
 	After  Snowflake `urlparam:"after,omitempty"`  // get users after this user Snowflake
 	Limit  int       `urlparam:"limit,omitempty"`  // max number of users to return (1-100)
 }
 
-// getQueryString this ins't really pretty, but it works.
+// GetQueryString .
 func (params *GetReactionURLParams) GetQueryString() string {
 	separator := "?"
 	query := ""
@@ -892,7 +893,7 @@ func (params *GetReactionURLParams) GetQueryString() string {
 	return query
 }
 
-// ReqGetReaction [GET]   Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+// GetReaction [GET]   		Get a list of users that reacted with this emoji. Returns an array of user objects on success.
 // Endpoint               /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
 // Rate limiter [MAJOR]   /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
 // Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-reactions
@@ -939,13 +940,13 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	return
 }
 
-// ReqCreateReaction [DELETE] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
-//                            permission to be present on the current user.
-// Endpoint                   /channels/{channel.id}/messages/{message.id}/reactions
-// Rate limiter [MAJOR]       /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
-// Discord documentation      https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
-// Reviewed                   2018-06-07
-// Comment                    -
+// DeleteAllReactions [DELETE]	Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+//                            	permission to be present on the current user.
+// Endpoint                   	/channels/{channel.id}/messages/{message.id}/reactions
+// Rate limiter [MAJOR]       	/channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+// Discord documentation      	https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
+// Reviewed                   	2018-06-07
+// Comment                    	-
 // emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (err error) {
 	if channelID.Empty() {

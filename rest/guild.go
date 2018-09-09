@@ -346,7 +346,7 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 	return
 }
 
-// ModifyGuildMemberParams https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
+// ModifyCurrentUserNickParams https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyCurrentUserNickParams struct {
 	Nick string `json:"nick"` // :CHANGE_NICKNAME
 }
@@ -501,7 +501,7 @@ type CreateGuildBanParams struct {
 	Reason            string `urlparam:"reason"`              // reason for being banned
 }
 
-// getQueryString this ins't really pretty, but it works.
+// GetQueryString .
 func (params *CreateGuildBanParams) GetQueryString() string {
 	separator := "?"
 	query := ""
@@ -646,6 +646,7 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 	return
 }
 
+// ModifyGuildRoleParams JSON params for func ModifyGuildRole
 type ModifyGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
 	Permissions int    `json:"permissions,omitempty"`
@@ -699,12 +700,12 @@ func DeleteGuildRole(client httd.Deleter, guildID, roleID Snowflake) (err error)
 	return
 }
 
-// GetGuildPruneCountParams https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
+// GuildPruneParams https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
 type GuildPruneParams struct {
 	Days int `urlparam:"days"` // number of days to count prune for (1 or more)
 }
 
-// getQueryString this ins't really pretty, but it works.
+// GetQueryString .
 func (params *GuildPruneParams) GetQueryString() string {
 	separator := "?"
 	query := ""

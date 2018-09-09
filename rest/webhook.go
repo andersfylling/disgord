@@ -211,6 +211,7 @@ func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (er
 	return
 }
 
+// NewExecuteWebhookParams creates params for func ExecuteWebhook
 func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookParams, err error) {
 	return &ExecuteWebhookParams{
 		WebhookID: id,
@@ -218,6 +219,7 @@ func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookPar
 	}, nil
 }
 
+// ExecuteWebhookParams JSON params for func ExecuteWebhook
 type ExecuteWebhookParams struct {
 	WebhookID Snowflake `json:"-"`
 	Token     string    `json:"-"`

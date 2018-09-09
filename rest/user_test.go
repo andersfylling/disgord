@@ -44,8 +44,7 @@ func TestModifyCurrentUser(t *testing.T) {
 
 	// this has been verified to work
 	// however, you cannot change username often so this is
-	// deactivated until someone messes with the functionality
-	return
+	// can give an error
 
 	var originalUsername string
 	t.Run("getting original username", func(t *testing.T) {

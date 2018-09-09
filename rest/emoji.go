@@ -63,6 +63,7 @@ func validEmojiName(name string) bool {
 	return !strings.Contains(name, "-")
 }
 
+// CreateGuildEmojiParams JSON params for func CreateGuildEmoji
 type CreateGuildEmojiParams struct {
 	Name  string      `json:"name"`
 	Image string      `json:"image"`
@@ -98,6 +99,7 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake, params *CreateGuild
 	return
 }
 
+// ModifyGuildEmojiParams JSON params for func ModifyGuildEmoji
 type ModifyGuildEmojiParams struct {
 	Name  string      `json:"name"`
 	Roles []Snowflake `json:"roles"`

@@ -9,6 +9,8 @@ import (
 	. "github.com/andersfylling/disgord/event"
 )
 
+// NewDispatch construct a Dispatch object for reacting to web socket events
+// from discord
 func NewDispatch() *Dispatch {
 	dispatcher := &Dispatch{
 		allChan:                      make(chan interface{}),
@@ -55,7 +57,8 @@ func NewDispatch() *Dispatch {
 	return dispatcher
 }
 
-//
+// EvtDispatcher interface for developers using the module. Gives access to
+// channels and the option to add callbacks to specific event types.
 type EvtDispatcher interface {
 	AllChan() <-chan interface{} // any event
 	ReadyChan() <-chan *Ready
@@ -96,6 +99,8 @@ type EvtDispatcher interface {
 	AddHandlerOnce(evtName string, listener interface{})
 }
 
+// Dispatch holds all the channels and internal state for all registered
+// observers
 type Dispatch struct {
 	allChan                      chan interface{} // any event
 	readyChan                    chan *Ready
@@ -206,7 +211,7 @@ func (d *Dispatch) alwaysListenToChans() {
 	}()
 }
 
-func (d *Dispatch) triggerChan(evtName string, session Session, ctx context.Context, box interface{}) {
+func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
 	case KeyReady:
 		d.readyChan <- box.(*Ready)
@@ -279,7 +284,7 @@ func (d *Dispatch) triggerChan(evtName string, session Session, ctx context.Cont
 	}
 }
 
-func (d *Dispatch) triggerCallbacks(evtName string, session Session, ctx context.Context, box interface{}) {
+func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
 	case KeyReady:
 		for _, listener := range d.listeners[KeyReady] {
@@ -435,109 +440,188 @@ func (d *Dispatch) triggerCallbacks(evtName string, session Session, ctx context
 	}
 }
 
+// AllChan sends all event types
 func (d *Dispatch) AllChan() <-chan interface{} {
 	return d.allChan
 }
+
+// ReadyChan for READY events
 func (d *Dispatch) ReadyChan() <-chan *Ready {
 	return d.readyChan
 }
+
+// ResumedChan for RESUME events
 func (d *Dispatch) ResumedChan() <-chan *Resumed {
 	return d.resumedChan
 }
+
+// ChannelCreateChan for CHANNEL_CREATE, when a channel is created
 func (d *Dispatch) ChannelCreateChan() <-chan *ChannelCreate {
 	return d.channelCreateChan
 }
+
+// ChannelUpdateChan for CHANNEL_UPDATE, when a channel is updated
 func (d *Dispatch) ChannelUpdateChan() <-chan *ChannelUpdate {
 	return d.channelUpdateChan
 }
+
+// ChannelDeleteChan for CHANNEL_DELETE, when a channel is deleted
 func (d *Dispatch) ChannelDeleteChan() <-chan *ChannelDelete {
 	return d.channelDeleteChan
 }
+
+// ChannelPinsUpdateChan for CHANNEL_PIN_UPDATE. Message was pinned or unpinned
 func (d *Dispatch) ChannelPinsUpdateChan() <-chan *ChannelPinsUpdate {
 	return d.channelPinsUpdateChan
 }
+
+// GuildCreateChan for GUILD_CREATE. Lazy-load for unavailable guild, guild
+// became available, or user joined a new guild
 func (d *Dispatch) GuildCreateChan() <-chan *GuildCreate {
 	return d.guildCreateChan
 }
+
+// GuildUpdateChan for GUILD_UPDATE. Guild was updated
 func (d *Dispatch) GuildUpdateChan() <-chan *GuildUpdate {
 	return d.guildUpdateChan
 }
+
+// GuildDeleteChan for GUILD_DELETE, guild became unavailable, or user
+// left/was removed from a guild
 func (d *Dispatch) GuildDeleteChan() <-chan *GuildDelete {
 	return d.guildDeleteChan
 }
+
+// GuildBanAddChan for GUILD_BAN_ADD. A user was banned from a guild
 func (d *Dispatch) GuildBanAddChan() <-chan *GuildBanAdd {
 	return d.guildBanAddChan
 }
+
+// GuildBanRemoveChan for GUILD_BAN_REMOVE. A user was unbanned from a guild
 func (d *Dispatch) GuildBanRemoveChan() <-chan *GuildBanRemove {
 	return d.guildBanRemoveChan
 }
+
+// GuildEmojisUpdateChan for GUILD_EMOJI_UPDATE. Guild emojis were updated
 func (d *Dispatch) GuildEmojisUpdateChan() <-chan *GuildEmojisUpdate {
 	return d.guildEmojisUpdateChan
 }
+
+// GuildIntegrationsUpdateChan for GUILD_INTEGRATIONS_UPDATE. Guild integration
+// was updated
 func (d *Dispatch) GuildIntegrationsUpdateChan() <-chan *GuildIntegrationsUpdate {
 	return d.guildIntegrationsUpdateChan
 }
+
+// GuildMemberAddChan for GUILD_MEMBER_ADD. New user joined a guild.
 func (d *Dispatch) GuildMemberAddChan() <-chan *GuildMemberAdd {
 	return d.guildMemberAddChan
 }
+
+// GuildMemberRemoveChan for GUILD_MEMBER_REMOVE. User was removed from guild.
 func (d *Dispatch) GuildMemberRemoveChan() <-chan *GuildMemberRemove {
 	return d.guildMemberRemoveChan
 }
+
+// GuildMemberUpdateChan for GUILD_MEMBER_UPDATE. Guild member was updated.
 func (d *Dispatch) GuildMemberUpdateChan() <-chan *GuildMemberUpdate {
 	return d.guildMemberUpdateChan
 }
+
+// GuildMembersChunkChan for GUILD_MEMBERS_CHUNK. Response to socket command
+// 'Request Guild Members'
 func (d *Dispatch) GuildMembersChunkChan() <-chan *GuildMembersChunk {
 	return d.guildMembersChunkChan
 }
-func (d *Dispatch) GuildRoleUpdateChan() <-chan *GuildRoleUpdate {
-	return d.guildRoleUpdateChan
-}
+
+// GuildRoleCreateChan for GUILD_ROLE_CREATE. Guild role was created.
 func (d *Dispatch) GuildRoleCreateChan() <-chan *GuildRoleCreate {
 	return d.guildRoleCreateChan
 }
+
+// GuildRoleUpdateChan for GUILD_ROLE_UPDATE. Guild role was updated.
+func (d *Dispatch) GuildRoleUpdateChan() <-chan *GuildRoleUpdate {
+	return d.guildRoleUpdateChan
+}
+
+// GuildRoleDeleteChan for GUILD_ROLE_DELETE. Guild role was deleted.
 func (d *Dispatch) GuildRoleDeleteChan() <-chan *GuildRoleDelete {
 	return d.guildRoleDeleteChan
 }
+
+// MessageCreateChan for MESSAGE_CREATE. New message was created.
 func (d *Dispatch) MessageCreateChan() <-chan *MessageCreate {
 	return d.messageCreateChan
 }
+
+// MessageUpdateChan for MESSAGE_UPDATE. Message was updated.
 func (d *Dispatch) MessageUpdateChan() <-chan *MessageUpdate {
 	return d.messageUpdateChan
 }
+
+// MessageDeleteChan for MESSAGE_DELETE. Message was deleted.
 func (d *Dispatch) MessageDeleteChan() <-chan *MessageDelete {
 	return d.messageDeleteChan
 }
+
+// MessageDeleteBulkChan for MESSAGE_DELETE_BULK. Multiple messages were
+// deleted at once.
 func (d *Dispatch) MessageDeleteBulkChan() <-chan *MessageDeleteBulk {
 	return d.messageDeleteBulkChan
 }
+
+// MessageReactionAddChan for MESSAGE_REACTION_ADD. A user reacted to a message.
 func (d *Dispatch) MessageReactionAddChan() <-chan *MessageReactionAdd {
 	return d.messageReactionAddChan
 }
+
+// MessageReactionRemoveChan for MESSAGE_REACTION_REMOVE. A user removed a
+// a reaction to a message.
 func (d *Dispatch) MessageReactionRemoveChan() <-chan *MessageReactionRemove {
 	return d.messageReactionRemoveChan
 }
+
+// MessageReactionRemoveAllChan for MESSAGE_REACTION_REMOVE_ALL. All reactions
+// were explicitly removed from a message
 func (d *Dispatch) MessageReactionRemoveAllChan() <-chan *MessageReactionRemoveAll {
 	return d.messageReactionRemoveAllChan
 }
+
+// PresenceUpdateChan for PRESENCE_UPDATE. A user's presence was updated in a
+// guild.
 func (d *Dispatch) PresenceUpdateChan() <-chan *PresenceUpdate {
 	return d.presenceUpdateChan
 }
+
+// TypingStartChan for TYPING_START. A user started typing in a channel.
 func (d *Dispatch) TypingStartChan() <-chan *TypingStart {
 	return d.typingStartChan
 }
+
+// UserUpdateChan for USER_UPDATE. Properties about a user changed
 func (d *Dispatch) UserUpdateChan() <-chan *UserUpdate {
 	return d.userUpdateChan
 }
+
+// VoiceStateUpdateChan for VOICE_STATE_UPDATE. Someone joined, left, or moved
+// a voice channel
 func (d *Dispatch) VoiceStateUpdateChan() <-chan *VoiceStateUpdate {
 	return d.voiceStateUpdateChan
 }
+
+// VoiceServerUpdateChan for VOICE_SERVER_UPDATE. Guild's voice server was
+// updated
 func (d *Dispatch) VoiceServerUpdateChan() <-chan *VoiceServerUpdate {
 	return d.voiceServerUpdateChan
 }
+
+// WebhooksUpdateChan for WEBHOOK_UPDATE. A guild channel webhook was created,
+// update, or deleted
 func (d *Dispatch) WebhooksUpdateChan() <-chan *WebhooksUpdate {
 	return d.webhooksUpdateChan
 }
 
+// AddHandler bind a callback to a event type. See event.Key...
 func (d *Dispatch) AddHandler(evtName string, listener interface{}) {
 	d.listenersLock.Lock()
 	defer d.listenersLock.Unlock()
@@ -545,6 +629,8 @@ func (d *Dispatch) AddHandler(evtName string, listener interface{}) {
 	d.listeners[evtName] = append(d.listeners[evtName], listener)
 }
 
+// AddHandlerOnce same as AddHandler except that the callback is only
+// triggered once
 func (d *Dispatch) AddHandlerOnce(evtName string, listener interface{}) {
 	d.listenersLock.Lock()
 	defer d.listenersLock.Unlock()
@@ -554,6 +640,7 @@ func (d *Dispatch) AddHandlerOnce(evtName string, listener interface{}) {
 	d.listenOnceOnly[evtName] = append(d.listenOnceOnly[evtName], index)
 }
 
+// Unmarshal ...
 // TODO: review
 func Unmarshal(data []byte, box interface{}) {
 	err := json.Unmarshal(data, box)

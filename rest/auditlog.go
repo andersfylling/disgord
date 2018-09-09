@@ -10,7 +10,7 @@ import (
 	. "github.com/andersfylling/snowflake"
 )
 
-// AuditLogParams set params used in endpoint request
+// GuildAuditLogsParams set params used in endpoint request
 // https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-parameters
 type GuildAuditLogsParams struct {
 	UserID     Snowflake `urlparam:"user_id,omitempty"`     // filter the log for a user id
@@ -19,7 +19,7 @@ type GuildAuditLogsParams struct {
 	Limit      int       `urlparam:"limit,omitempty"`       // how many entries are returned (default 50, minimum 1, maximum 100)
 }
 
-// getQueryString this ins't really pretty, but it works.
+// GetQueryString .
 func (params *GuildAuditLogsParams) GetQueryString() string {
 	separator := "?"
 	query := ""
