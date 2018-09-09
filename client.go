@@ -237,7 +237,7 @@ func NewClient(conf *Config) (*Client, error) {
 
 		// lib specific
 		DAPIVersion:  conf.APIVersion,
-		DAPIEncoding: conf.APIEncoding,
+		DAPIEncoding: "json",
 	})
 	if err != nil {
 		return nil, err
