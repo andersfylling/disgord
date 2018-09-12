@@ -5,11 +5,32 @@ import (
 	"testing"
 )
 
-func TestImplementsUserInterface(t *testing.T) {
+func TestUser_InterfaceImplementations(t *testing.T) {
 	var u interface{} = &User{}
-	if _, ok := u.(UserInterface); !ok {
-		t.Error("User does not implement UserInterface")
-	}
+
+	t.Run("UserInterface", func(t *testing.T) {
+		if _, ok := u.(UserInterface); !ok {
+			t.Error("User does not implement UserInterface")
+		}
+	})
+
+	t.Run("DeepCopy", func(t *testing.T) {
+		if _, ok := u.(DeepCopy); !ok {
+			t.Error("User does not implement DeepCopy")
+		}
+	})
+
+	t.Run("Copier", func(t *testing.T) {
+		if _, ok := u.(Copier); !ok {
+			t.Error("User does not implement Copier")
+		}
+	})
+
+	t.Run("DiscordSaver", func(t *testing.T) {
+		if _, ok := u.(DiscordSaver); !ok {
+			t.Error("User does not implement DiscordSaver")
+		}
+	})
 }
 
 func verifyUserMashaller(t *testing.T, file string) {

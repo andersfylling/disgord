@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"encoding/json"
+	"errors"
 	"sync"
 )
 
@@ -157,10 +158,23 @@ func (u *User) SendMsgString(session Session, content string) (channel *Channel,
 	return
 }
 
-func (u *User) DeepCopy() *User {
-	user := NewUser()
+func (u *User) DeepCopy() (copy interface{}) {
+	copy = NewUser()
+	u.CopyOverTo(copy)
+
+	return
+}
+
+func (u *User) CopyOverTo(other interface{}) (err error) {
+	var user *User
+	var valid bool
+	if user, valid = other.(*User); !valid {
+		err = NewErrorUnsupportedType("argument given is not a *User type")
+		return
+	}
 
 	u.RLock()
+	user.Lock()
 
 	user.ID = u.ID
 	user.Username = u.Username
@@ -177,8 +191,15 @@ func (u *User) DeepCopy() *User {
 	}
 
 	u.RUnlock()
+	user.Unlock()
 
-	return user
+	return
+}
+
+func (u *User) SaveToDiscord(session Session) (err error) {
+	// TODO: check snowflake if ID is current user
+	// call both modify methods
+	return errors.New("not implemented")
 }
 
 func (u *User) Valid() bool {

@@ -126,7 +126,7 @@ func (c *Channel) DeepCopy() *Channel {
 	// add recipients if it's a DM
 	if c.Type == ChannelTypeDM || c.Type == ChannelTypeGroupDM {
 		for _, recipient := range c.Recipients {
-			channel.Recipients = append(channel.Recipients, recipient.DeepCopy())
+			channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
 		}
 	}
 
