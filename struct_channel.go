@@ -89,28 +89,67 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-func (c *Channel) Replicate(channel *Channel, recipients []*User) {
-	*c = *channel
-	c.RWMutex = sync.RWMutex{}
-
-	// WARNING: DM channels holds users. These should be fetched from cache.
-	if recipients != nil && len(recipients) > 0 {
-		c.Recipients = recipients
-	} else {
-		c.Recipients = []*User{}
+func (c *Channel) SaveToDiscord(session Session) (err error) {
+	if c.GuildID.Empty() {
+		err = NewErrorMissingSnowflake("guild id/snowflake is empty or missing")
+		return
 	}
+	if c.Name == "" {
+		err = NewErrorEmptyValue("must have a channel name before creating channel")
+	}
+	params := &CreateGuildChannelParams{
+		Name:                 c.Name,
+		Type:                 c.Type,
+		Topic:                c.Topic,
+		Bitrate:              c.Bitrate,
+		UserLimit:            c.UserLimit,
+		PermissionOverwrites: c.PermissionOverwrites,
+		ParentID:             c.ParentID,
+		NSFW:                 c.NSFW,
+	}
+	var creation *Channel
+	creation, err = session.CreateGuildChannel(c.GuildID, params)
+	if err != nil {
+		return
+	}
+
+	// update current channel object
+	creation.CopyOverTo(c)
+	return
 }
 
-func (c *Channel) DeepCopy() *Channel {
-	channel := NewChannel()
+func (c *Channel) DeleteFromDiscord(session Session) (err error) {
+	if c.ID.Empty() {
+		err = NewErrorMissingSnowflake("channel id/snowflake is empty or missing")
+		return
+	}
+	err = session.DeleteChannel(c.ID)
+	return
+}
+
+func (c *Channel) DeepCopy() (copy interface{}) {
+	copy = NewChannel()
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *Channel) CopyOverTo(other interface{}) (err error) {
+	var channel *Channel
+	var valid bool
+	if channel, valid = other.(*Channel); !valid {
+		err = NewErrorUnsupportedType("argument given is not a *Channel type")
+		return
+	}
 
 	c.RWMutex.RLock()
+	channel.RWMutex.Lock()
 
 	channel.ID = c.ID
 	channel.Type = c.Type
 	channel.GuildID = c.GuildID
 	channel.Position = c.Position
-	channel.PermissionOverwrites = c.PermissionOverwrites
+	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
 	channel.Name = c.Name
 	channel.Topic = c.Topic
 	channel.NSFW = c.NSFW
@@ -131,8 +170,9 @@ func (c *Channel) DeepCopy() *Channel {
 	}
 
 	c.RWMutex.RUnlock()
+	channel.RWMutex.Unlock()
 
-	return channel
+	return
 }
 
 func (c *Channel) Clear() {

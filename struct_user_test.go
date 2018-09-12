@@ -14,9 +14,9 @@ func TestUser_InterfaceImplementations(t *testing.T) {
 		}
 	})
 
-	t.Run("DeepCopy", func(t *testing.T) {
-		if _, ok := u.(DeepCopy); !ok {
-			t.Error("User does not implement DeepCopy")
+	t.Run("DeepCopier", func(t *testing.T) {
+		if _, ok := u.(DeepCopier); !ok {
+			t.Error("User does not implement DeepCopier")
 		}
 	})
 

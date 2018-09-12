@@ -47,8 +47,8 @@ type DiscordDeleter interface {
 	DeleteFromDiscord(session Session) error
 }
 
-// DeepCopy holds the DeepCopy method which creates and returns a deep copy of
+// DeepCopier holds the DeepCopy method which creates and returns a deep copy of
 // any struct.
-type DeepCopy interface {
+type DeepCopier interface {
 	DeepCopy() interface{}
 }

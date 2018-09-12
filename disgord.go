@@ -42,3 +42,31 @@ func NewSnowflake(id uint64) Snowflake {
 func ParseSnowflakeString(v string) Snowflake {
 	return Snowflake(snowflake.ParseSnowflakeString(v))
 }
+
+func NewErrorMissingSnowflake(message string) *ErrorMissingSnowflake {
+	return &ErrorMissingSnowflake{
+		info: message,
+	}
+}
+
+type ErrorMissingSnowflake struct {
+	info string
+}
+
+func (e *ErrorMissingSnowflake) Error() string {
+	return e.info
+}
+
+func NewErrorEmptyValue(message string) *ErrorEmptyValue {
+	return &ErrorEmptyValue{
+		info: message,
+	}
+}
+
+type ErrorEmptyValue struct {
+	info string
+}
+
+func (e *ErrorEmptyValue) Error() string {
+	return e.info
+}

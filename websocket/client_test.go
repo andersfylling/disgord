@@ -5,8 +5,6 @@ import "os"
 import "net/http"
 import (
 	"fmt"
-	"os/signal"
-	"syscall"
 )
 
 const DISCORD_TOKEN = "DISCORD_DISGORDWS_TOKEN_TEST"
@@ -33,6 +31,10 @@ func createClient(t *testing.T) (DiscordWebsocket, error) {
 }
 
 func TestClientConnection(t *testing.T) {
+	if os.Getenv(DISCORD_TEST_MANUALLY) != "true" {
+		fmt.Printf("missing environment token '%s', skipping manual connection test.\n", DISCORD_TEST_MANUALLY)
+		t.Skip()
+	}
 	var err error
 
 	client, err := createClient(t)
@@ -49,28 +51,4 @@ func TestClientConnection(t *testing.T) {
 			client.Disconnect()
 		}
 	}(client)
-}
-
-func TestClientConnectionManually(t *testing.T) {
-	if os.Getenv(DISCORD_TEST_MANUALLY) != "true" {
-		fmt.Printf("missing environment token '%s', skipping manual connection test.\n", DISCORD_TEST_MANUALLY)
-		t.Skip()
-	}
-	var err error
-
-	termSignal := make(chan os.Signal, 1)
-	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
-	client, err := createClient(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	client.MockEventChanReciever()
-	err = client.Connect()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	<-termSignal
-	client.Disconnect()
 }
