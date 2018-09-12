@@ -16,18 +16,78 @@ const (
 	StatusOffline = "offline"
 )
 
+const (
+	ActivityFlagInstance    = 1 << 0
+	ActivityFlagJoin        = 1 << 1
+	ActivityFlagSpectate    = 1 << 2
+	ActivityFlagJoinRequest = 1 << 3
+	ActivityFlagSync        = 1 << 4
+	ActivityFlagPlay        = 1 << 5
+)
+
 type UserInterface interface {
 	Mention() string
 	MentionNickname() string
 	String() string
 }
 
-// TODO: https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
-type UserActivity struct{}
+type ActivityParty struct {
+	ID   string `json:"id,omitempty"`   // the id of the party
+	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
+}
+
+// Limit shows the maximum number of guests/people allowed
+func (ap *ActivityParty) Limit() int {
+	if len(ap.Size) != 2 {
+		return 0
+	}
+
+	return ap.Size[1]
+}
+
+// NumberOfPeople shows the current number of people attending the Party
+func (ap *ActivityParty) NumberOfPeople() int {
+	if len(ap.Size) != 1 {
+		return 0
+	}
+
+	return ap.Size[0]
+}
+
+type ActivityAssets struct {
+	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
+	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
+	SmallImage string `json:"small_image,omitempty"` // the id for a small asset of the activity, usually a snowflake
+	SmallText  string `json:"small_text,omitempty"`  //	text displayed when hovering over the small image of the activity
+}
+type ActivitySecrets struct {
+	Join     string `json:"join,omitempty"`     // the secret for joining a party
+	Spectate string `json:"spectate,omitempty"` // the secret for spectating a game
+	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
+}
+type ActivityTimestamp struct {
+	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
+	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
+}
+
+// UserActivity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
+type UserActivity struct {
+	Name          string               `json:"name"`                     // the activity's name
+	Type          int                  `json:"type"`                     // activity type
+	URL           *string              `json:"url,omitempty"`            //stream url, is validated when type is 1
+	Timestamps    []*ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
+	ApplicationID Snowflake            `json:"application_id,omitempty"` //?	snowflake	application id for the game
+	Details       *string              `json:"details,omitempty"`        //?	?string	what the player is currently doing
+	State         *string              `json:"state,omitempty"`          //state?	?string	the user's current party status
+	Party         *ActivityParty       `json:"party"`                    //party?	party object	information for the current party of the player
+	Assets        *ActivityAssets      `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
+	Secrets       *ActivitySecrets     `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
+	Instance      bool                 `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session
+	Flags         int                  `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
+}
 
 // ---------
 
-// TODO: should a user object always have a Snowflake?
 func NewUser() *User {
 	return &User{}
 }
