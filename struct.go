@@ -6,7 +6,21 @@ package disgord
 // struct to another. Note that this requires a deep copy.
 // useful when overwriting already existing content in the cache to reduce GC.
 type Copier interface {
-	CopyOverTo(other interface{})
+	CopyOverTo(other interface{}) error
+}
+
+func NewErrorUnsupportedType(message string) *ErrorUnsupportedType {
+	return &ErrorUnsupportedType{
+		info: message,
+	}
+}
+
+type ErrorUnsupportedType struct {
+	info string
+}
+
+func (eut *ErrorUnsupportedType) Error() string {
+	return eut.info
 }
 
 // DiscordUpdater holds the Update method for updating any given Discord struct
@@ -36,5 +50,5 @@ type DiscordDeleter interface {
 // DeepCopy holds the DeepCopy method which creates and returns a deep copy of
 // any struct.
 type DeepCopy interface {
-	DeepCopy() (v interface{})
+	DeepCopy() interface{}
 }
