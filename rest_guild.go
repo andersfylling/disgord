@@ -653,8 +653,8 @@ func GetGuildRoles(client httd.Getter, guildID Snowflake) (ret []*Role, err erro
 // CreateGuildRoleParams https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
-	Permissions int    `json:"permissions,omitempty"`
-	Color       int    `json:"color,omitempty"`
+	Permissions uint64 `json:"permissions,omitempty"`
+	Color       uint   `json:"color,omitempty"`
 	Hoist       bool   `json:"hoist,omitempty"`
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
@@ -689,7 +689,7 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 // ModifyGuildRolePositionsParams https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type ModifyGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
-	Position int       `json:"position"`
+	Position uint      `json:"position"`
 }
 
 // ModifyGuildRolePositions [PATCH] Modify the positions of a set of role objects for the guild. Requires the
@@ -726,8 +726,8 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 // ModifyGuildRoleParams JSON params for func ModifyGuildRole
 type ModifyGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
-	Permissions int    `json:"permissions,omitempty"`
-	Color       int    `json:"color,omitempty"`
+	Permissions uint64 `json:"permissions,omitempty"`
+	Color       uint   `json:"color,omitempty"`
 	Hoist       bool   `json:"hoist,omitempty"`
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
