@@ -81,11 +81,7 @@ const (
 )
 
 func NewGuild() *Guild {
-	return &Guild{}
-}
-
-func NewGuildFromJSON(data []byte) *Guild {
-	guild := &Guild{
+	return &Guild{
 		Roles:       []*Role{},
 		Emojis:      []*Emoji{},
 		Features:    []string{},
@@ -94,6 +90,10 @@ func NewGuildFromJSON(data []byte) *Guild {
 		Channels:    []*Channel{},
 		Presences:   []*UserPresence{},
 	}
+}
+
+func NewGuildFromJSON(data []byte) (guild *Guild) {
+	guild = NewGuild()
 	err := json.Unmarshal(data, guild)
 	if err != nil {
 		panic(err)
@@ -102,18 +102,12 @@ func NewGuildFromJSON(data []byte) *Guild {
 	return guild
 }
 
-func NewPartialGuild(ID Snowflake) *Guild {
-	return &Guild{
-		ID:          ID,
-		Unavailable: true,
-		Roles:       []*Role{},
-		Emojis:      []*Emoji{},
-		Features:    []string{},
-		VoiceStates: []*VoiceState{},
-		Members:     []*Member{},
-		Channels:    []*Channel{},
-		Presences:   []*UserPresence{},
-	}
+func NewPartialGuild(ID Snowflake) (guild *Guild) {
+	guild = NewGuild()
+	guild.ID = ID
+	guild.Unavailable = true
+
+	return
 }
 
 func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
@@ -157,6 +151,8 @@ type GuildInterface interface {
 // reviewed: 2018-08-25
 type PartialGuild = Guild
 type Guild struct {
+	sync.RWMutex `json:"-"`
+
 	ID                          Snowflake                     `json:"id"`
 	ApplicationID               *Snowflake                    `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
@@ -182,17 +178,14 @@ type Guild struct {
 	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"`  //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt       *Timestamp      `json:"joined_at,omitempty"`    // ?*|
-	Large          bool            `json:"large,omitempty"`        // ?*|
-	Unavailable    bool            `json:"unavailable"`            // ?*| omitempty?
-	MemberCount    uint            `json:"member_count,omitempty"` // ?*|
-	VoiceStates    []*VoiceState   `json:"voice_states,omitempty"` // ?*|
-	Members        []*Member       `json:"members,omitempty"`      // ?*|
-	Channels       []*Channel      `json:"channels,omitempty"`     // ?*|
-	Presences      []*UserPresence `json:"presences,omitempty"`    // ?*|
-	PresencesMutex sync.RWMutex    `json:"-"`
-
-	mu sync.RWMutex
+	JoinedAt    *Timestamp      `json:"joined_at,omitempty"`    // ?*|
+	Large       bool            `json:"large,omitempty"`        // ?*|
+	Unavailable bool            `json:"unavailable"`            // ?*| omitempty?
+	MemberCount uint            `json:"member_count,omitempty"` // ?*|
+	VoiceStates []*VoiceState   `json:"voice_states,omitempty"` // ?*|
+	Members     []*Member       `json:"members,omitempty"`      // ?*|
+	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
+	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
 }
 
 //func (g *Guild) EverythingInMemory() bool {
@@ -200,10 +193,11 @@ type Guild struct {
 //}
 
 // Compare two guild objects
-func (g *Guild) Compare(other *Guild) bool {
-	// TODO: this is shit..
-	return (g == nil && other == nil) || (other != nil && g.ID == other.ID)
-}
+// TODO: remove?
+//func (g *Guild) Compare(other *Guild) bool {
+//	// TODO: this is shit..
+//	return (g == nil && other == nil) || (other != nil && g.ID == other.ID)
+//}
 
 // func (g *Guild) UnmarshalJSON(data []byte) (err error) {
 // 	return json.Unmarshal(data, &g.guildJSON)
@@ -211,6 +205,10 @@ func (g *Guild) Compare(other *Guild) bool {
 
 // TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
+	g.Lock()
+	defer g.Unlock()
+	// TODO: check for dead locks
+
 	var jsonData []byte
 	var err error
 	if g.Unavailable {
@@ -237,6 +235,9 @@ func (g *Guild) sortChannels() {
 }
 
 func (g *Guild) AddChannel(c *Channel) error {
+	g.Lock()
+	defer g.Unlock()
+
 	g.Channels = append(g.Channels, c)
 	g.sortChannels()
 
@@ -247,6 +248,9 @@ func (g *Guild) DeleteChannel(c *Channel) error {
 	return g.DeleteChannelByID(c.ID)
 }
 func (g *Guild) DeleteChannelByID(ID Snowflake) error {
+	g.Lock()
+	defer g.Unlock()
+
 	index := -1
 	for i, c := range g.Channels {
 		if c.ID == ID {
@@ -269,6 +273,9 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 }
 
 func (g *Guild) AddMember(member *Member) error {
+	g.Lock()
+	defer g.Unlock()
+
 	// TODO: implement sorting for faster searching later
 	g.Members = append(g.Members, member)
 
@@ -276,7 +283,11 @@ func (g *Guild) AddMember(member *Member) error {
 }
 
 func (g *Guild) AddRole(role *Role) error {
+	g.Lock()
+	defer g.Unlock()
+
 	// TODO: implement sorting for faster searching later
+	role.guildID = g.ID
 	g.Roles = append(g.Roles, role)
 
 	return nil
@@ -284,6 +295,9 @@ func (g *Guild) AddRole(role *Role) error {
 
 // Member return a member by his/her userid
 func (g *Guild) Member(id Snowflake) (*Member, error) {
+	g.RLock()
+	defer g.RUnlock()
+
 	for _, member := range g.Members {
 		if member.User.ID == id {
 			return member, nil
@@ -293,42 +307,49 @@ func (g *Guild) Member(id Snowflake) (*Member, error) {
 	return nil, errors.New("member not found in guild")
 }
 
-// MemberByName retrieve a slice of members with same username or nickname
-func (g *Guild) MemberByName(name string) ([]*Member, error) {
-	var members []*Member
+// MembersByName retrieve a slice of members with same username or nickname
+func (g *Guild) MembersByName(name string) (members []*Member) {
+	g.RLock()
+	defer g.RUnlock()
+
 	for _, member := range g.Members {
 		if member.Nick == name || member.User.Username == name {
 			members = append(members, member)
 		}
 	}
 
-	if len(members) == 0 {
-		return nil, errors.New("no members with that nick or username was found in guild")
-	}
-
-	return members, nil
+	return
 }
 
 // Role retrieve a role based on role id
-func (g *Guild) Role(id Snowflake) (*Role, error) {
-	for _, role := range g.Roles {
+func (g *Guild) Role(id Snowflake) (role *Role, err error) {
+	g.RLock()
+	defer g.RUnlock()
+
+	for _, role = range g.Roles {
 		if role.ID == id {
-			return role, nil
+			return
 		}
 	}
 
-	return nil, errors.New("role not found in guild")
+	err = errors.New("role not found in guild")
+	return
 }
 
-func (g *Guild) UpdateRole(r *Role) {
-	for _, role := range g.Roles {
-		if role.ID == r.ID {
-			*role = *r
-			break
-		}
-	}
-}
+// TODO
+//func (g *Guild) UpdateRole(r *Role) {
+//	for _, role := range g.Roles {
+//		if role.ID == r.ID {
+//			*role = *r
+//			break
+//		}
+//	}
+//}
+
 func (g *Guild) DeleteRoleByID(ID Snowflake) {
+	g.Lock()
+	defer g.Unlock()
+
 	index := -1
 	for i, r := range g.Roles {
 		if r.ID == ID {
@@ -347,6 +368,9 @@ func (g *Guild) DeleteRoleByID(ID Snowflake) {
 
 // RoleByTitle retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*Role, error) {
+	g.RLock()
+	defer g.RUnlock()
+
 	var roles []*Role
 	for _, role := range g.Roles {
 		if role.Name == name {
@@ -362,6 +386,9 @@ func (g *Guild) RoleByName(name string) ([]*Role, error) {
 }
 
 func (g *Guild) Channel(id Snowflake) (*Channel, error) {
+	g.RLock()
+	defer g.RUnlock()
+
 	for _, channel := range g.Channels {
 		if channel.ID == id {
 			return channel, nil
@@ -371,74 +398,75 @@ func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 	return nil, errors.New("channel not found in guild")
 }
 
-func (g *Guild) UpdatePresence(p *UserPresence) {
-	g.PresencesMutex.RLock()
-	index := -1
-	for i, presence := range g.Presences {
-		if presence.User.ID == p.User.ID {
-			index = i
-			break
-		}
-	}
-	g.PresencesMutex.RUnlock()
-
-	if index != -1 {
-		// update
-		return
-	}
-
-	// otherwise add
-	g.PresencesMutex.Lock()
-	g.Presences = append(g.Presences, p) // TODO: update the user pointer?
-	g.PresencesMutex.Unlock()
-}
+// TODO
+// func (g *Guild) UpdatePresence(p *UserPresence) {
+// 	g.RLock()
+// 	index := -1
+// 	for i, presence := range g.Presences {
+// 		if presence.User.ID == p.User.ID {
+// 			index = i
+// 			break
+// 		}
+// 	}
+// 	g.RUnlock()
+//
+// 	if index != -1 {
+// 		// update
+// 		return
+// 	}
+//
+// 	// otherwise add
+// 	g.Lock()
+// 	g.Presences = append(g.Presences, p) // TODO: update the user pointer?
+// 	g.Unlock()
+// }
 
 // Clear all the pointers
-func (g *Guild) Clear() {
-	g.mu.Lock() // what if another process tries to read this, but awais while locked for clearing?
-	defer g.mu.Unlock()
-
-	//g.Icon = nil // should this be cleared?
-	//g.Splash = nil // should this be cleared?
-
-	for _, r := range g.Roles {
-		r.Clear()
-		r = nil
-	}
-	g.Roles = nil
-
-	for _, e := range g.Emojis {
-		e.Clear()
-		e = nil
-	}
-	g.Emojis = nil
-
-	for _, vst := range g.VoiceStates {
-		vst.Clear()
-		vst = nil
-	}
-	g.VoiceStates = nil
-
-	var deletedUsers []Snowflake
-	for _, m := range g.Members {
-		deletedUsers = append(deletedUsers, m.Clear())
-		m = nil
-	}
-	g.Members = nil
-
-	for _, c := range g.Channels {
-		c.Clear()
-		c = nil
-	}
-	g.Channels = nil
-
-	for _, p := range g.Presences {
-		p.Clear()
-		p = nil
-	}
-	g.Presences = nil
-
-}
+// func (g *Guild) Clear() {
+// 	g.Lock() // what if another process tries to read this, but awais while locked for clearing?
+// 	defer g.Unlock()
+//
+// 	//g.Icon = nil // should this be cleared?
+// 	//g.Splash = nil // should this be cleared?
+//
+// 	for _, r := range g.Roles {
+// 		r.Clear()
+// 		r = nil
+// 	}
+// 	g.Roles = nil
+//
+// 	for _, e := range g.Emojis {
+// 		e.Clear()
+// 		e = nil
+// 	}
+// 	g.Emojis = nil
+//
+// 	for _, vst := range g.VoiceStates {
+// 		vst.Clear()
+// 		vst = nil
+// 	}
+// 	g.VoiceStates = nil
+//
+// 	var deletedUsers []Snowflake
+// 	for _, m := range g.Members {
+// 		deletedUsers = append(deletedUsers, m.Clear())
+// 		m = nil
+// 	}
+// 	g.Members = nil
+//
+// 	for _, c := range g.Channels {
+// 		c.Clear()
+// 		c = nil
+// 	}
+// 	g.Channels = nil
+//
+// 	for _, p := range g.Presences {
+// 		p.Clear()
+// 		p = nil
+// 	}
+// 	g.Presences = nil
+//
+// }
 
 func (g *Guild) DeepCopy() (copy interface{}) {
 	copy = NewGuild()
@@ -455,15 +483,12 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	g.mu.RLock()
-	guild.mu.Lock()
+	g.RLock()
+	guild.Lock()
 
 	// TODO-guild: handle string pointers
 	guild.ID = g.ID
-	guild.ApplicationID = g.ApplicationID
 	guild.Name = g.Name
-	guild.Icon = g.Icon
-	guild.Splash = g.Splash
 	guild.Owner = g.Owner
 	guild.OwnerID = g.OwnerID
 	guild.Permissions = g.Permissions
@@ -479,25 +504,55 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.WidgetEnabled = g.WidgetEnabled
 	guild.WidgetChannelID = g.WidgetChannelID
 	guild.SystemChannelID = g.SystemChannelID
-	guild.JoinedAt = g.JoinedAt
 	guild.Large = g.Large
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
-	//guild.PresencesMutex = g.PresencesMutex // TODO: do not copy lock value
 
-	// handle deep copy of slices
-	//TODO-guild: implement deep copying for fields
-	guild.Roles = g.Roles
-	guild.Emojis = g.Emojis
+	// pointers
+	if g.ApplicationID != nil {
+		id := *g.ApplicationID
+		guild.ApplicationID = &id
+	}
+	if g.Icon != nil {
+		icon := *g.Icon
+		guild.Icon = &icon
+	}
+	if g.Splash != nil {
+		splash := *g.Splash
+		guild.Splash = &splash
+	}
+	if g.AfkChannelID != nil {
+		channel := *g.AfkChannelID
+		guild.AfkChannelID = &channel
+	}
+	if g.JoinedAt != nil {
+		joined := *g.JoinedAt
+		guild.JoinedAt = &joined
+	}
+
+	for _, roleP := range g.Roles {
+		guild.Roles = append(guild.Roles, roleP.DeepCopy().(*Role))
+	}
+	for _, emojiP := range g.Emojis {
+		guild.Emojis = append(guild.Emojis, emojiP.DeepCopy().(*Emoji))
+	}
 	guild.Features = g.Features
 
-	guild.VoiceStates = g.VoiceStates
-	guild.Members = g.Members
-	guild.Channels = g.Channels
-	guild.Presences = g.Presences
+	for _, vsP := range g.VoiceStates {
+		guild.VoiceStates = append(guild.VoiceStates, vsP.DeepCopy().(*VoiceState))
+	}
+	for _, memberP := range g.Members {
+		guild.Members = append(guild.Members, memberP.DeepCopy().(*Member))
+	}
+	for _, channelP := range g.Channels {
+		guild.Channels = append(guild.Channels, channelP.DeepCopy().(*Channel))
+	}
+	for _, presenceP := range g.Presences {
+		guild.Presences = append(guild.Presences, presenceP.DeepCopy().(*UserPresence))
+	}
 
-	g.mu.RUnlock()
-	guild.mu.Unlock()
+	g.RUnlock()
+	guild.Unlock()
 
 	return
 }
@@ -549,6 +604,8 @@ type IntegrationAccount struct {
 
 // Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
+	sync.RWMutex `json:"-"`
+
 	GuildID  Snowflake   `json:"guild_id,omitempty"`
 	User     *User       `json:"user"`
 	Nick     string      `json:"nick,omitempty"` // ?|
@@ -556,50 +613,80 @@ type Member struct {
 	JoinedAt Timestamp   `json:"joined_at,omitempty"`
 	Deaf     bool        `json:"deaf"`
 	Mute     bool        `json:"mute"`
-
-	sync.RWMutex `json:"-"`
 }
 
-func (m *Member) Clear() Snowflake {
-	// do i want to delete user?.. what if there is a PM?
-	// Check for user id in DM's
-	// or.. since the user object is sent on channel_create events, the user can be reintialized when needed.
-	// but should be properly removed from other arrays.
-	m.User.Clear()
-	id := m.User.ID
-	m.User = nil
-
-	// use this Snowflake to check in other places. To avoid pointing to random memory spaces
-	return id
+func (m *Member) String() string {
+	return "member{user:" + m.User.Username + ", nick:" + m.Nick + ", ID:" + m.User.ID.String() + "}"
 }
+func (m *Member) Mention() string {
+	return m.User.Mention()
+}
+func (m *Member) DeepCopy() (copy interface{}) {
+	copy = &Member{}
+	m.CopyOverTo(copy)
 
-func (m *Member) Update(new *Member) (err error) {
-	if m.User.ID != new.User.ID || m.GuildID != new.GuildID {
-		err = errors.New("cannot update user when the new struct has a different Snowflake")
-		return
-	}
-	// make sure that new is not the same pointer!
-	if m == new {
-		err = errors.New("cannot update user when the new struct points to the same memory space")
+	return
+}
+func (m *Member) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var member *Member
+	if member, ok = other.(*Member); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *Member")
 		return
 	}
 
-	m.Lock()
-	new.RLock()
-	m.Nick = new.Nick
-	m.Roles = new.Roles
-	m.JoinedAt = new.JoinedAt
-	m.Deaf = new.Deaf
-	m.Mute = new.Mute
-	new.RUnlock()
-	m.Unlock()
+	m.RLock()
+	member.Lock()
+	old := member.RWMutex
+
+	*member = *m
+	member.RWMutex = old
+	member.User = m.User.DeepCopy().(*User)
+
+	m.RUnlock()
+	member.Unlock()
 
 	return
 }
 
-const (
-	EndpointGuild = "/guilds/"
-)
+// TODO
+// func (m *Member) Clear() Snowflake {
+// 	// do i want to delete user?.. what if there is a PM?
+// 	// Check for user id in DM's
+// 	// or.. since the user object is sent on channel_create events, the user can be reintialized when needed.
+// 	// but should be properly removed from other arrays.
+// 	m.User.Clear()
+// 	id := m.User.ID
+// 	m.User = nil
+//
+// 	// use this Snowflake to check in other places. To avoid pointing to random memory spaces
+// 	return id
+// }
+
+// TODO
+// func (m *Member) Update(new *Member) (err error) {
+// 	if m.User.ID != new.User.ID || m.GuildID != new.GuildID {
+// 		err = errors.New("cannot update user when the new struct has a different Snowflake")
+// 		return
+// 	}
+// 	// make sure that new is not the same pointer!
+// 	if m == new {
+// 		err = errors.New("cannot update user when the new struct points to the same memory space")
+// 		return
+// 	}
+//
+// 	m.Lock()
+// 	new.RLock()
+// 	m.Nick = new.Nick
+// 	m.Roles = new.Roles
+// 	m.JoinedAt = new.JoinedAt
+// 	m.Deaf = new.Deaf
+// 	m.Mute = new.Mute
+// 	new.RUnlock()
+// 	m.Unlock()
+//
+// 	return
+// }
 
 type GuildPruneCount struct {
 	Pruned int `json:"pruned"`

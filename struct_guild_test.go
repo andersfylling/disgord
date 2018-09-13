@@ -112,3 +112,85 @@ func TestGuildMemberMarshalling(t *testing.T) {
 	err = validateJSONMarshalling(data, &v)
 	check(err, t)
 }
+
+func TestGuild_sortChannels(t *testing.T) {
+	snowflakes := []Snowflake{
+		NewSnowflake(6),
+		NewSnowflake(65),
+		NewSnowflake(324),
+		NewSnowflake(5435),
+		NewSnowflake(63453),
+		NewSnowflake(111111111),
+	}
+
+	guild := NewGuild()
+
+	for i := range snowflakes {
+		channel := NewChannel()
+		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
+
+		guild.Channels = append(guild.Channels, channel)
+	}
+
+	guild.sortChannels()
+	for i, c := range guild.Channels {
+		if snowflakes[i] != c.ID {
+			t.Error("channels in guild did not sort correctly")
+		}
+	}
+}
+
+func TestGuild_AddChannel(t *testing.T) {
+	snowflakes := []Snowflake{
+		NewSnowflake(6),
+		NewSnowflake(65),
+		NewSnowflake(324),
+		NewSnowflake(5435),
+		NewSnowflake(63453),
+		NewSnowflake(111111111),
+	}
+
+	guild := NewGuild()
+
+	for i := range snowflakes {
+		channel := NewChannel()
+		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
+
+		guild.AddChannel(channel)
+	}
+
+	for i, c := range guild.Channels {
+		if snowflakes[i] != c.ID {
+			t.Error("channels in guild did not sort correctly")
+		}
+	}
+}
+
+func TestGuild_DeleteChannel(t *testing.T) {
+	snowflakes := []Snowflake{
+		NewSnowflake(6),
+		NewSnowflake(65),
+		NewSnowflake(324),
+		NewSnowflake(5435),
+		NewSnowflake(63453),
+		NewSnowflake(111111111),
+	}
+
+	guild := NewGuild()
+
+	for i := range snowflakes {
+		channel := NewChannel()
+		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
+
+		guild.AddChannel(channel)
+	}
+
+	id := snowflakes[3]
+	channel := NewChannel()
+	channel.ID = id
+	guild.DeleteChannel(channel)
+	_, err := guild.Channel(id)
+	if err == nil {
+		t.Error("no error given when requesting a deleted channel")
+	}
+}
