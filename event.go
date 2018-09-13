@@ -25,6 +25,19 @@ type HelloCallback = func(session Session, h *Hello)
 
 // ---------------------------
 
+// EventPresencesReplace Holds and array of presence update objects
+const EventPresencesReplace = "PRESENCES_REPLACE"
+
+// PresencesReplace holds teh event content
+type PresencesReplace struct {
+	Presnces []*PresenceUpdate // TODO: json tag
+}
+
+// PresencesReplaceCallback callback for EventPresencesReplace
+type PresencesReplaceCallback = func(session Session, pr *PresencesReplace)
+
+// ---------------------------
+
 // EventReady The ready event is dispatched when a client has completed the
 //       initial handshake with the gateway (for new sessions). The ready
 //       event can be the largest and most complex event the gateway will

@@ -39,6 +39,7 @@ func NewDispatch() *Dispatch {
 		messageReactionRemoveChan:    make(chan *MessageReactionRemove),
 		messageReactionRemoveAllChan: make(chan *MessageReactionRemoveAll),
 		presenceUpdateChan:           make(chan *PresenceUpdate),
+		presencesReplaceChan:         make(chan *PresencesReplace),
 		typingStartChan:              make(chan *TypingStart),
 		userUpdateChan:               make(chan *UserUpdate),
 		voiceStateUpdateChan:         make(chan *VoiceStateUpdate),
@@ -86,6 +87,7 @@ type EvtDispatcher interface {
 	MessageReactionRemoveChan() <-chan *MessageReactionRemove
 	MessageReactionRemoveAllChan() <-chan *MessageReactionRemoveAll
 	PresenceUpdateChan() <-chan *PresenceUpdate
+	PresencesReplaceChan() <-chan *PresencesReplace
 	TypingStartChan() <-chan *TypingStart
 	UserUpdateChan() <-chan *UserUpdate
 	VoiceStateUpdateChan() <-chan *VoiceStateUpdate
@@ -128,6 +130,7 @@ type Dispatch struct {
 	messageReactionRemoveChan    chan *MessageReactionRemove
 	messageReactionRemoveAllChan chan *MessageReactionRemoveAll
 	presenceUpdateChan           chan *PresenceUpdate
+	presencesReplaceChan         chan *PresencesReplace
 	typingStartChan              chan *TypingStart
 	userUpdateChan               chan *UserUpdate
 	voiceStateUpdateChan         chan *VoiceStateUpdate
@@ -192,6 +195,7 @@ func (d *Dispatch) alwaysListenToChans() {
 			case <-d.messageReactionRemoveChan:
 			case <-d.messageUpdateChan:
 			case <-d.presenceUpdateChan:
+			case <-d.presencesReplaceChan:
 			case <-d.typingStartChan:
 			case <-d.userUpdateChan:
 			case <-d.voiceStateUpdateChan:
@@ -266,6 +270,8 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 		d.messageReactionRemoveAllChan <- box.(*MessageReactionRemoveAll)
 	case EventPresenceUpdate:
 		d.presenceUpdateChan <- box.(*PresenceUpdate)
+	case EventPresencesReplace:
+		d.presencesReplaceChan <- box.(*PresencesReplace)
 	case EventTypingStart:
 		d.typingStartChan <- box.(*TypingStart)
 	case EventUserUpdate:
@@ -394,6 +400,10 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 	case EventPresenceUpdate:
 		for _, listener := range d.listeners[EventPresenceUpdate] {
 			go (listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
+		}
+	case EventPresencesReplace:
+		for _, listener := range d.listeners[EventPresencesReplace] {
+			go (listener.(PresencesReplaceCallback))(session, box.(*PresencesReplace))
 		}
 	case EventTypingStart:
 		for _, listener := range d.listeners[EventTypingStart] {
@@ -588,6 +598,12 @@ func (d *Dispatch) MessageReactionRemoveAllChan() <-chan *MessageReactionRemoveA
 // guild.
 func (d *Dispatch) PresenceUpdateChan() <-chan *PresenceUpdate {
 	return d.presenceUpdateChan
+}
+
+// PresenceUpdateChan for PRESENCE_UPDATE. A user's presence was updated in a
+// guild.
+func (d *Dispatch) PresencesReplaceChan() <-chan *PresencesReplace {
+	return d.presencesReplaceChan
 }
 
 // TypingStartChan for TYPING_START. A user started typing in a channel.
