@@ -183,21 +183,6 @@ func (c *Channel) Clear() {
 	// TODO
 }
 
-// Update send channel changes to the Discord API
-func (c *Channel) Update(client ChannelUpdater) {
-
-}
-
-// Delete sends a Discord REST request to delete the related channel
-func (c *Channel) Delete(client ChannelDeleter) (err error) {
-	err = client.DeleteChannel(c.ID)
-	return
-}
-
-func (c *Channel) Create() {
-	// check if channel already exists.
-}
-
 // Fetch check if there are any updates to the channel values
 //func (c *Channel) Fetch(client ChannelFetcher) (err error) {
 //	if c.ID.Empty() {
