@@ -33,6 +33,8 @@ type UserInterface interface {
 }
 
 type ActivityParty struct {
+	sync.RWMutex `json:"-"`
+
 	ID   string `json:"id,omitempty"`   // the id of the party
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
 }
@@ -55,24 +57,151 @@ func (ap *ActivityParty) NumberOfPeople() int {
 	return ap.Size[0]
 }
 
+func (a *ActivityParty) DeepCopy() (copy interface{}) {
+	copy = &ActivityParty{}
+	a.CopyOverTo(copy)
+
+	return
+}
+
+func (a *ActivityParty) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var activity *ActivityParty
+	if activity, ok = other.(*ActivityParty); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityParty")
+		return
+	}
+
+	a.RLock()
+	activity.Lock()
+
+	activity.ID = a.ID
+	activity.Size = a.Size
+
+	a.RUnlock()
+	activity.Unlock()
+
+	return
+}
+
 type ActivityAssets struct {
+	sync.RWMutex `json:"-"`
+
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
 	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
 	SmallImage string `json:"small_image,omitempty"` // the id for a small asset of the activity, usually a snowflake
 	SmallText  string `json:"small_text,omitempty"`  //	text displayed when hovering over the small image of the activity
 }
+
+func (a *ActivityAssets) DeepCopy() (copy interface{}) {
+	copy = &ActivityAssets{}
+	a.CopyOverTo(copy)
+
+	return
+}
+
+func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var activity *ActivityAssets
+	if activity, ok = other.(*ActivityAssets); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityAssets")
+		return
+	}
+
+	a.RLock()
+	activity.Lock()
+
+	activity.LargeImage = a.LargeImage
+	activity.LargeText = a.LargeText
+	activity.SmallImage = a.SmallImage
+	activity.SmallText = a.SmallText
+
+	a.RUnlock()
+	activity.Unlock()
+
+	return
+}
+
 type ActivitySecrets struct {
+	sync.RWMutex `json:"-"`
+
 	Join     string `json:"join,omitempty"`     // the secret for joining a party
 	Spectate string `json:"spectate,omitempty"` // the secret for spectating a game
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
 }
+
+func (a *ActivitySecrets) DeepCopy() (copy interface{}) {
+	copy = &ActivitySecrets{}
+	a.CopyOverTo(copy)
+
+	return
+}
+
+func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var activity *ActivitySecrets
+	if activity, ok = other.(*ActivitySecrets); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *ActivitySecrets")
+		return
+	}
+
+	a.RLock()
+	activity.Lock()
+
+	activity.Join = a.Join
+	activity.Spectate = a.Spectate
+	activity.Match = a.Match
+
+	a.RUnlock()
+	activity.Unlock()
+
+	return
+}
+
 type ActivityTimestamp struct {
+	sync.RWMutex `json:"-"`
+
 	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
 }
 
+func (a *ActivityTimestamp) DeepCopy() (copy interface{}) {
+	copy = &ActivityTimestamp{}
+	a.CopyOverTo(copy)
+
+	return
+}
+
+func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var activity *ActivityTimestamp
+	if activity, ok = other.(*ActivityTimestamp); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityTimestamp")
+		return
+	}
+
+	a.RLock()
+	activity.Lock()
+
+	activity.Start = a.Start
+	activity.End = a.End
+
+	a.RUnlock()
+	activity.Unlock()
+
+	return
+}
+
+func NewUserActivity() (activity *UserActivity) {
+	return &UserActivity{
+		Timestamps: []*ActivityTimestamp{},
+	}
+}
+
 // UserActivity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
 type UserActivity struct {
+	sync.RWMutex `json:"-"`
+
 	Name          string               `json:"name"`                     // the activity's name
 	Type          int                  `json:"type"`                     // activity type
 	URL           *string              `json:"url,omitempty"`            //stream url, is validated when type is 1
@@ -87,6 +216,66 @@ type UserActivity struct {
 	Flags         int                  `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
+func (a *UserActivity) DeepCopy() (copy interface{}) {
+	copy = &UserActivity{}
+	a.CopyOverTo(copy)
+
+	return
+}
+
+func (a *UserActivity) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var activity *UserActivity
+	if activity, ok = other.(*UserActivity); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *UserActivity")
+		return
+	}
+
+	a.RLock()
+	activity.Lock()
+
+	activity.Name = a.Name
+	activity.Type = a.Type
+	activity.ApplicationID = a.ApplicationID
+	activity.Instance = a.Instance
+	activity.Flags = a.Flags
+
+	if a.URL != nil {
+		url := *a.URL
+		activity.URL = &url
+	}
+	if a.Timestamps != nil {
+		if activity.Timestamps == nil {
+			activity.Timestamps = make([]*ActivityTimestamp, len(a.Timestamps))
+		}
+		for i, timestampP := range a.Timestamps {
+			if timestampP == nil {
+				continue
+			}
+			activity.Timestamps[i] = timestampP.DeepCopy().(*ActivityTimestamp)
+		}
+	}
+	if a.Details != nil {
+		details := *a.Details
+		activity.Details = &details
+	}
+	if a.State != nil {
+		state := *a.State
+		activity.State = &state
+	}
+	if a.Party != nil {
+		activity.Party = a.Party.DeepCopy().(*ActivityParty)
+	}
+	if a.Assets != nil {
+		activity.Assets = a.Assets.DeepCopy().(*ActivityAssets)
+	}
+	if a.Secrets != nil {
+		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
+	}
+
+	return
+}
+
 // ---------
 
 func NewUser() *User {
@@ -94,6 +283,8 @@ func NewUser() *User {
 }
 
 type User struct {
+	sync.RWMutex `json:"-"`
+
 	ID            Snowflake `json:"id,omitempty"`
 	Username      string    `json:"username,omitempty"`
 	Discriminator string    `json:"discriminator,omitempty"`
@@ -103,8 +294,6 @@ type User struct {
 	Verified      bool      `json:"verified,omitempty"`
 	MFAEnabled    bool      `json:"mfa_enabled,omitempty"`
 	Bot           bool      `json:"bot,omitempty"`
-
-	sync.RWMutex `json:"-"`
 }
 
 func (u *User) Mention() string {
@@ -216,7 +405,7 @@ func NewUserPresence() *UserPresence {
 
 // UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
 
 	User    *User         `json:"user"`
 	Roles   []Snowflake   `json:"roles"`
@@ -247,10 +436,13 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 
 	p.RLock()
 	presence.Lock()
-	old := presence.RWMutex
 
-	*presence = *p
-	presence.RWMutex = old
+	presence.User = p.User.DeepCopy().(*User)
+	presence.Roles = p.Roles
+	presence.Game = p.Game.DeepCopy().(*UserActivity)
+	presence.GuildID = p.GuildID
+	presence.Nick = p.Nick
+	presence.Status = p.Status
 
 	p.RUnlock()
 	presence.Unlock()

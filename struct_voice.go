@@ -5,7 +5,8 @@ import "sync"
 // VoiceState Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
 type VoiceState struct {
-	sync.RWMutex
+	sync.RWMutex `json:"-"`
+
 	// GuildID the guild id this voice state is for
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
@@ -55,10 +56,16 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 
 	v.RLock()
 	voiceState.Lock()
-	old := voiceState.RWMutex
 
-	*voiceState = *v
-	voiceState.RWMutex = old
+	voiceState.GuildID = v.GuildID
+	voiceState.ChannelID = v.ChannelID
+	voiceState.UserID = v.UserID
+	voiceState.SessionID = v.SessionID
+	voiceState.Deaf = v.Deaf
+	voiceState.Mute = v.Mute
+	voiceState.SelfDeaf = v.SelfDeaf
+	voiceState.SelfMute = v.SelfMute
+	voiceState.Suppress = v.Suppress
 
 	v.RUnlock()
 	voiceState.Unlock()

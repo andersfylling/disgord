@@ -8,6 +8,8 @@ func NewRole() *Role {
 
 // Role https://discordapp.com/developers/docs/topics/permissions#role-object
 type Role struct {
+	sync.RWMutex `json:"-"`
+
 	ID          Snowflake `json:"id"`
 	Name        string    `json:"name"`
 	Color       uint      `json:"color"`
@@ -18,7 +20,6 @@ type Role struct {
 	Mentionable bool      `json:"mentionable"`
 
 	guildID Snowflake
-	sync.RWMutex
 }
 
 func (r *Role) Mention() string {
@@ -47,9 +48,15 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	r.RLock()
 	role.Lock()
 
-	oldMutex := role.RWMutex
-	*role = *r
-	role.RWMutex = oldMutex
+	role.ID = r.ID
+	role.Name = r.Name
+	role.Color = r.Color
+	role.Hoist = r.Hoist
+	role.Position = r.Position
+	role.Permissions = r.Permissions
+	role.Managed = r.Managed
+	role.Mentionable = r.Mentionable
+	role.guildID = r.guildID
 
 	r.RUnlock()
 	role.Unlock()
