@@ -37,14 +37,18 @@ func (eut *ErrorUnsupportedType) Error() string {
 // If you change any of the values and want to notify Discord about your change,
 // use the Save method to send a REST request (assuming that the struct values
 // can be updated).
-type DiscordSaver interface {
-	SaveToDiscord(session Session) error
+//
+// NOTE! if the struct has an snowflake/ID, it will update content. But if the
+// snowflake is missing/not set, it will create content (if possible,
+// otherwise you will get an error)
+type discordSaver interface {
+	saveToDiscord(session Session) error
 }
 
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.
-type DiscordDeleter interface {
-	DeleteFromDiscord(session Session) error
+type discordDeleter interface {
+	deleteFromDiscord(session Session) error
 }
 
 // DeepCopier holds the DeepCopy method which creates and returns a deep copy of

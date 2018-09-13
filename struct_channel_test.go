@@ -39,15 +39,15 @@ func TestChannel_InterfaceImplementations(t *testing.T) {
 		}
 	})
 
-	t.Run("DiscordSaver", func(t *testing.T) {
-		if _, ok := c.(DiscordSaver); !ok {
-			t.Error("Channel does not implement DiscordSaver")
+	t.Run("discordSaver", func(t *testing.T) {
+		if _, ok := c.(discordSaver); !ok {
+			t.Error("Channel does not implement discordSaver")
 		}
 	})
 
-	t.Run("DiscordDeleter", func(t *testing.T) {
-		if _, ok := c.(DiscordDeleter); !ok {
-			t.Error("Channel does not implement DiscordDeleter")
+	t.Run("discordDeleter", func(t *testing.T) {
+		if _, ok := c.(discordDeleter); !ok {
+			t.Error("Channel does not implement discordDeleter")
 		}
 	})
 }

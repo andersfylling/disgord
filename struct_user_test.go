@@ -27,8 +27,8 @@ func TestUser_InterfaceImplementations(t *testing.T) {
 	})
 
 	t.Run("DiscordSaver", func(t *testing.T) {
-		if _, ok := u.(DiscordSaver); !ok {
-			t.Error("User does not implement DiscordSaver")
+		if _, ok := u.(discordSaver); !ok {
+			t.Error("User does not implement discordSaver")
 		}
 	})
 }

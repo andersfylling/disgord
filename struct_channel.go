@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"encoding/json"
-	"errors"
 	"sync"
 
 	"time"
@@ -66,7 +65,7 @@ type Channel struct {
 	Name                 string                `json:"name,omitempty"`                  // ?|
 	Topic                string                `json:"topic,omitempty"`                 // ?|
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?, pointer
+	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?, pointer
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
@@ -89,7 +88,7 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-func (c *Channel) SaveToDiscord(session Session) (err error) {
+func (c *Channel) saveToDiscord(session Session) (err error) {
 	if c.GuildID.Empty() {
 		err = NewErrorMissingSnowflake("guild id/snowflake is empty or missing")
 		return
@@ -118,7 +117,7 @@ func (c *Channel) SaveToDiscord(session Session) (err error) {
 	return
 }
 
-func (c *Channel) DeleteFromDiscord(session Session) (err error) {
+func (c *Channel) deleteFromDiscord(session Session) (err error) {
 	if c.ID.Empty() {
 		err = NewErrorMissingSnowflake("channel id/snowflake is empty or missing")
 		return
@@ -161,6 +160,11 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	channel.ApplicationID = c.ApplicationID
 	channel.ParentID = c.ParentID
 	channel.LastPingTimestamp = c.LastPingTimestamp
+
+	if c.LastMessageID != nil {
+		lastMsgID := *c.LastMessageID
+		channel.LastMessageID = &lastMsgID
+	}
 
 	// add recipients if it's a DM
 	if c.Type == ChannelTypeDM || c.Type == ChannelTypeGroupDM {
@@ -205,12 +209,37 @@ func (c *Channel) Create() {
 //}
 
 func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Message, err error) {
-	msg, err = client.SendMsgString(c.ID, content)
+	if c.ID.Empty() {
+		err = NewErrorMissingSnowflake("snowflake ID not set for channel")
+		return
+	}
+	params := &CreateChannelMessageParams{
+		Content: content,
+	}
+
+	msg, err = client.CreateChannelMessage(c.ID, params)
 	return
 }
 
 func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message, err error) {
-	msg, err = client.SendMsg(c.ID, message)
+	if c.ID.Empty() {
+		err = NewErrorMissingSnowflake("snowflake ID not set for channel")
+		return
+	}
+	message.RLock()
+	params := &CreateChannelMessageParams{
+		Content: message.Content,
+		Nonce:   *message.Nonce,
+		Tts:     message.Tts,
+		// File: ...
+		// Embed: ...
+	}
+	if len(message.Embeds) > 0 {
+		params.Embed = message.Embeds[0]
+	}
+	message.RUnlock()
+
+	msg, err = client.CreateChannelMessage(c.ID, params)
 	return
 }
 
@@ -277,8 +306,8 @@ type Message struct {
 	MentionRoles    []Snowflake        `json:"mention_roles"`
 	Attachments     []*Attachment      `json:"attachments"`
 	Embeds          []*ChannelEmbed    `json:"embeds"`
-	Reactions       []*Reaction        `json:"reactions"` // ?
-	Nonce           Snowflake          `json:"nonce"`     // ?, used for validating a message was sent
+	Reactions       []*Reaction        `json:"reactions"`       // ?
+	Nonce           *Snowflake         `json:"nonce,omitempty"` // ?, used for validating a message was sent
 	Pinned          bool               `json:"pinned"`
 	WebhookID       Snowflake          `json:"webhook_id"` // ?
 	Type            uint               `json:"type"`
@@ -297,18 +326,35 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Message(*m))
 }
 
-type MessageDeleter interface {
+// TODO: await for caching
+//func (m *Message) DirectMessage(session Session) bool {
+//	return m.Type == ChannelTypeDM
+//}
+
+type messageDeleter interface {
 	DeleteMessage(channelID, msgID Snowflake) (err error)
 }
 
-// Delete sends a delete request to Discord for the related message
-func (m *Message) Delete(client MessageDeleter) (err error) {
+func (m *Message) deleteFromDiscord(session Session) (err error) {
 	if m.ID.Empty() {
-		err = errors.New("message is missing snowflake")
+		err = NewErrorMissingSnowflake("message is missing snowflake")
 		return
 	}
 
-	err = client.DeleteMessage(m.ChannelID, m.ID)
+	err = session.DeleteMessage(m.ChannelID, m.ID)
+	return
+}
+func (m *Message) saveToDiscord(session Session) (err error) {
+	var message *Message
+	if m.ID.Empty() {
+		message, err = m.Send(session)
+	} else {
+		message, err = m.update(session)
+	}
+
+	(*m) = (*message)
+	m.RWMutex = sync.RWMutex{}
+
 	return
 }
 
@@ -318,27 +364,52 @@ type MessageUpdater interface {
 
 // Update after changing the message object, call update to notify Discord
 //        about any changes made
-func (m *Message) Update(client MessageUpdater) (msg *Message, err error) {
+func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
 	msg, err = client.UpdateMessage(m)
 	return
 }
 
 type MessageSender interface {
-	SendMsg(channelID Snowflake, message *Message) (msg *Message, err error)
-	SendMsgString(channelID Snowflake, content string) (msg *Message, err error)
+	CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error)
 }
 
 func (m *Message) Send(client MessageSender) (msg *Message, err error) {
-	msg, err = client.SendMsg(m.ChannelID, m)
+	m.RLock()
+	params := &CreateChannelMessageParams{
+		Content: m.Content,
+		Tts:     m.Tts,
+		// File: ...
+		// Embed: ...
+	}
+	if m.Nonce != nil {
+		params.Nonce = *m.Nonce
+	}
+	if len(m.Embeds) > 0 {
+		params.Embed = m.Embeds[0]
+	}
+	channelID := m.ChannelID
+	m.RUnlock()
+
+	msg, err = client.CreateChannelMessage(channelID, params)
 	return
 }
 func (m *Message) Respond(client MessageSender, message *Message) (msg *Message, err error) {
+	m.RLock()
+	message.Lock()
 	message.ChannelID = m.ChannelID
+	m.RUnlock()
 	msg, err = message.Send(client)
+	message.Unlock()
 	return
 }
 func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
-	msg, err = client.SendMsgString(m.ChannelID, content)
+	params := &CreateChannelMessageParams{
+		Content: content,
+	}
+
+	m.RLock()
+	defer m.RUnlock()
+	msg, err = client.CreateChannelMessage(m.ChannelID, params)
 	return
 }
 

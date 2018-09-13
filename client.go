@@ -56,6 +56,10 @@ type Session interface {
 	AddListener(evtName string, callback interface{})
 	AddListenerOnce(evtName string, callback interface{})
 
+	// Generic CRUD operations with Discord
+	DeleteFromDiscord(obj discordDeleter) error
+	SaveToDiscord(obj discordSaver) error
+
 	// state/caching module
 	// checks the cache first, otherwise do a http request
 
@@ -415,6 +419,17 @@ func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
 	c.evtDispatch.AddHandlerOnce(evtName, listener)
 }
 
+// Generic CRUDS
+func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
+	err = obj.deleteFromDiscord(c)
+	return
+}
+func (c *Client) SaveToDiscord(obj discordSaver) (err error) {
+	err = obj.saveToDiscord(c)
+	return
+}
+
+// REST
 // Audit-log
 
 // GetGuildAuditLogs ...
@@ -973,10 +988,12 @@ func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 	message.RLock()
 	params := &CreateChannelMessageParams{
 		Content: message.Content,
-		Nonce:   message.Nonce,
 		Tts:     message.Tts,
 		// File: ...
 		// Embed: ...
+	}
+	if message.Nonce != nil {
+		params.Nonce = *message.Nonce
 	}
 	if len(message.Embeds) > 0 {
 		params.Embed = message.Embeds[0]

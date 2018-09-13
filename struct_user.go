@@ -196,7 +196,7 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (u *User) SaveToDiscord(session Session) (err error) {
+func (u *User) saveToDiscord(session Session) (err error) {
 	// TODO: check snowflake if ID is current user
 	// call both modify methods
 	return errors.New("not implemented")

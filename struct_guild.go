@@ -393,33 +393,6 @@ func (g *Guild) UpdatePresence(p *UserPresence) {
 	g.PresencesMutex.Unlock()
 }
 
-// Update update the reference content
-func (g *Guild) Update(new *Guild) {
-	// must have same Snowflake
-	if g.ID != new.ID {
-		return
-	}
-
-	// must not be the same pointer as it causes a deadlock
-	if g == new {
-		return
-	}
-
-	g.mu.Lock()
-	new.mu.RLock()
-
-	// if it's a unavailable guild object, don't update the remaining fields
-	if new.Unavailable {
-		g.Unavailable = true
-	} else {
-		// normal update
-		// TODO
-	}
-
-	g.mu.Unlock()
-	new.mu.RUnlock()
-}
-
 // Clear all the pointers
 func (g *Guild) Clear() {
 	g.mu.Lock() // what if another process tries to read this, but awais while locked for clearing?
@@ -467,10 +440,23 @@ func (g *Guild) Clear() {
 
 }
 
-func (g *Guild) DeepCopy() *Guild {
-	guild := NewGuild()
+func (g *Guild) DeepCopy() (copy interface{}) {
+	copy = NewGuild()
+	g.CopyOverTo(copy)
+
+	return
+}
+
+func (g *Guild) CopyOverTo(other interface{}) (err error) {
+	var guild *Guild
+	var valid bool
+	if guild, valid = other.(*Guild); !valid {
+		err = NewErrorUnsupportedType("argument given is not a *Guild type")
+		return
+	}
 
 	g.mu.RLock()
+	guild.mu.Lock()
 
 	// TODO-guild: handle string pointers
 	guild.ID = g.ID
@@ -511,8 +497,16 @@ func (g *Guild) DeepCopy() *Guild {
 	guild.Presences = g.Presences
 
 	g.mu.RUnlock()
+	guild.mu.Unlock()
 
-	return guild
+	return
+}
+
+func (g *Guild) saveToDiscord(session Session) (err error) {
+	return
+}
+func (g *Guild) deleteFromDiscord(session Session) (err error) {
+	return
 }
 
 // --------------
