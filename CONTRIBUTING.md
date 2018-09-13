@@ -49,6 +49,7 @@ Example (use spaces):
 //                          categories from this endpoint is not supported.
 ```
 
+#### Functions and param interfaces
 When creating a function, make sure that it has one purpose. It shouldn't hold any hidden functionality, and it could be wise to take dependencies as a parameter:
 ```GoLang
 func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err error) {
@@ -56,6 +57,12 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 }
 ```
 
+When you use a dependency as a parameter, either use an existing interface which holds all the methods you require. Or create a new interface for the functions needs (again, keep it purposeful such that other can reuse the interface).
+
+#### Mutex
+Struct's that utlises mutex must handle locking in their public methods. However, avoid locking in private methods such that they can be reused. eg. by public methods. The mutex should also be embedded (public accessible), such that developers can lock the object by their own needs.
+
+#### Singletons
 I won't accept pull requests where the author has created a singleton structure. I do not want package singletons either, as I'm worried it might cause technical debt. If you disagree you are welcome to create a discussion (not about the pattern, but why your implementation requires a singleton).
 
 ## I don't want to read this whole thing I just have a question!!!
