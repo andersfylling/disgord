@@ -120,7 +120,7 @@ type Session interface {
 	GetGuildRoles(guildID Snowflake) (ret []*Role, err error)
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error)
 	ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error)
-	ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret []*Role, err error)
+	ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error)
 	DeleteGuildRole(guildID, roleID Snowflake) (err error)
 	GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error)
 	BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error)
@@ -745,7 +745,7 @@ func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuild
 }
 
 // ModifyGuildRole .
-func (c *Client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret []*Role, err error) {
+func (c *Client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
 	ret, err = ModifyGuildRole(c.req, guildID, roleID, params)
 	return
 }

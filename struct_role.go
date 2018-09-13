@@ -14,6 +14,8 @@ type Role struct {
 	Permissions uint64    `json:"permissions"`
 	Managed     bool      `json:"managed"`
 	Mentionable bool      `json:"mentionable"`
+
+	guildID Snowflake
 }
 
 func (r *Role) Mention() string {

@@ -105,6 +105,15 @@ func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to roles
+	for _, role := range ret.Roles {
+		role.guildID = id
+	}
+
 	return
 }
 
@@ -141,6 +150,14 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to roles
+	for _, role := range ret.Roles {
+		role.guildID = id
+	}
 	return
 }
 
@@ -622,6 +639,14 @@ func GetGuildRoles(client httd.Getter, guildID Snowflake) (ret []*Role, err erro
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to roles
+	for _, role := range ret {
+		role.guildID = guildID
+	}
 	return
 }
 
@@ -652,6 +677,12 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to roles
+	ret.guildID = id
 	return
 }
 
@@ -681,6 +712,14 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to roles
+	for _, role := range ret {
+		role.guildID = guildID
+	}
 	return
 }
 
@@ -700,7 +739,7 @@ type ModifyGuildRoleParams struct {
 // Discord documentation    https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 // Reviewed                 2018-08-18
 // Comment                  -
-func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret []*Role, err error) {
+func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
@@ -711,6 +750,12 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *Mod
 	}
 
 	err = unmarshal(body, &ret)
+	if err != nil {
+		return
+	}
+
+	// add guild id to role
+	ret.guildID = guildID
 	return
 }
 

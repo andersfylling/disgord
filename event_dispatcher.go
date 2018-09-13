@@ -227,8 +227,14 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 	case EventChannelPinsUpdate:
 		d.channelPinsUpdateChan <- box.(*ChannelPinsUpdate)
 	case EventGuildCreate:
+		for _, role := range (box.(*GuildCreate)).Guild.Roles {
+			role.guildID = (box.(*GuildCreate)).Guild.ID
+		}
 		d.guildCreateChan <- box.(*GuildCreate)
 	case EventGuildUpdate:
+		for _, role := range (box.(*GuildCreate)).Guild.Roles {
+			role.guildID = (box.(*GuildCreate)).Guild.ID
+		}
 		d.guildUpdateChan <- box.(*GuildUpdate)
 	case EventGuildDelete:
 		d.guildDeleteChan <- box.(*GuildDelete)
@@ -241,16 +247,22 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 	case EventGuildIntegrationsUpdate:
 		d.guildIntegrationsUpdateChan <- box.(*GuildIntegrationsUpdate)
 	case EventGuildMemberAdd:
+		// Member.Roles is just a snowflake list
 		d.guildMemberAddChan <- box.(*GuildMemberAdd)
 	case EventGuildMemberRemove:
 		d.guildMemberRemoveChan <- box.(*GuildMemberRemove)
 	case EventGuildMemberUpdate:
+		for _, role := range (box.(*GuildMemberUpdate)).Roles {
+			role.guildID = (box.(*GuildMemberUpdate)).GuildID
+		}
 		d.guildMemberUpdateChan <- box.(*GuildMemberUpdate)
 	case EventGuildMembersChunk:
 		d.guildMembersChunkChan <- box.(*GuildMembersChunk)
 	case EventGuildRoleCreate:
+		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildCreate)).Guild.ID
 		d.guildRoleCreateChan <- box.(*GuildRoleCreate)
 	case EventGuildRoleUpdate:
+		(box.(*GuildRoleUpdate)).Role.guildID = (box.(*GuildRoleUpdate)).GuildID
 		d.guildRoleUpdateChan <- box.(*GuildRoleUpdate)
 	case EventGuildRoleDelete:
 		d.guildRoleDeleteChan <- box.(*GuildRoleDelete)
