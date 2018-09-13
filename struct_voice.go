@@ -1,8 +1,11 @@
 package disgord
 
-// State Voice State structure
+import "sync"
+
+// VoiceState Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
 type VoiceState struct {
+	sync.RWMutex
 	// GuildID the guild id this voice state is for
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
@@ -31,11 +34,39 @@ type VoiceState struct {
 	Suppress bool `json:"suppress"` // |
 }
 
-func (vst *VoiceState) Clear() {
+//func (vst *VoiceState) Clear() {
+//
+//}
 
+func (v *VoiceState) DeepCopy() (copy interface{}) {
+	copy = &VoiceState{}
+	v.CopyOverTo(copy)
+
+	return
 }
 
-// Region voice region structure
+func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var voiceState *VoiceState
+	if voiceState, ok = other.(*VoiceState); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *VoiceState")
+		return
+	}
+
+	v.RLock()
+	voiceState.Lock()
+	old := voiceState.RWMutex
+
+	*voiceState = *v
+	voiceState.RWMutex = old
+
+	v.RUnlock()
+	voiceState.Unlock()
+
+	return
+}
+
+// VoiceRegion voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
 	// Snowflake unique Snowflake for the region
