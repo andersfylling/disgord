@@ -1,5 +1,7 @@
 package disgord
 
+import "sync"
+
 // Emoji
 type Emoji struct {
 	ID            Snowflake   `json:"id"`
@@ -9,18 +11,19 @@ type Emoji struct {
 	RequireColons bool        `json:"require_colons,omitempty"`
 	Managed       bool        `json:"managed,omitempty"`
 	Animated      bool        `json:"animated,omitempty"`
+
+	//	image string // base 64 string, with prefix and everything
+	mu sync.RWMutex
 }
 type PartialEmoji = Emoji
 
-// Mention
-// TODO: review
-func (e *Emoji) Mention() string {
-	return "<" + e.Name + ":" + e.ID.String() + ">"
-}
+// SetBase64Image use this before creating the emoji for the first time
+//func (e *Emoji) SetBase64Image(img string) {
+//	e.image = img
+//}
 
-// MentionAnimated add the animation prefix if a animated emoji
-// TODO: review
-func (e *Emoji) MentionAnimated() string {
+// Mention mentions an emoji. Adds the animation prefix, if animated
+func (e *Emoji) Mention() string {
 	prefix := ""
 	if e.Animated {
 		prefix = "a:"
@@ -28,6 +31,65 @@ func (e *Emoji) MentionAnimated() string {
 
 	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
+
+func (e *Emoji) DeepCopy() (copy interface{}) {
+	copy = &Emoji{}
+	e.CopyOverTo(copy)
+
+	return
+}
+
+func (e *Emoji) CopyOverTo(other interface{}) (err error) {
+	var emoji *Emoji
+	var ok bool
+	if emoji, ok = other.(*Emoji); !ok {
+		err = NewErrorUnsupportedType("given type is not *Emoji")
+		return
+	}
+
+	e.mu.RLock()
+	emoji.mu.Lock()
+
+	*emoji = *e
+	emoji.User = e.User.DeepCopy().(*User)
+	emoji.mu = sync.RWMutex{}
+
+	e.mu.RUnlock()
+	emoji.mu.Unlock()
+
+	return
+}
+
+// Missing GuildID...
+//func (e *Emoji) saveToDiscord(session Session) (err error) {
+//	session.Emoji
+//}
+//func (e *Emoji) deleteFromDiscord(session Session) (err error) {
+//	session.DeleteGuildEmoji(guildID, emojiID)
+//}
+
+//func (e *Emoji) createGuildEmoji(session Session) (err error) {
+//	params := &CreateGuildEmojiParams{
+//		Name:  e.Name,
+//		Image: e.image,
+//		Roles: e.Roles,
+//	}
+//
+//	var creation *Emoji
+//	creation, err = session.CreateGuildEmoji(, params)
+//	if err != nil {
+//		return
+//	}
+//
+//	creation.CopyOverTo(e)
+//	return
+//}
+//func (e *Emoji) modifyGuildEmoji(session Session) (err error) {
+//	params := &ModifyGuildEmojiParams{
+//		Name:  e.Name,
+//		Roles: e.Roles,
+//	}
+//}
 
 func (e *Emoji) Clear() {
 	// obviously don't delete the user ...

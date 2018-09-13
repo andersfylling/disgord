@@ -502,11 +502,12 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// saveToDiscord creates a new Guild if ID is empty or updates an existing one
 func (g *Guild) saveToDiscord(session Session) (err error) {
-	return
+	return errors.New("not implemented")
 }
 func (g *Guild) deleteFromDiscord(session Session) (err error) {
-	return
+	return errors.New("not implemented")
 }
 
 // --------------
