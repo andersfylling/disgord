@@ -209,10 +209,15 @@ func (u *User) Valid() bool {
 // -------
 
 func NewUserPresence() *UserPresence {
-	return &UserPresence{}
+	return &UserPresence{
+		Roles: []Snowflake{},
+	}
 }
 
+// UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
+	sync.RWMutex
+
 	User    *User         `json:"user"`
 	Roles   []Snowflake   `json:"roles"`
 	Game    *UserActivity `json:"activity"`
@@ -221,19 +226,39 @@ type UserPresence struct {
 	Status  string        `json:"status"`
 }
 
-func (p *UserPresence) Update(status string) {
-	// Update the presence.
-	// talk to the discord api
-}
-
 func (p *UserPresence) String() string {
 	return p.Status
 }
 
-func (p *UserPresence) Clear() {
-	p.Game = nil
+func (p *UserPresence) DeepCopy() (copy interface{}) {
+	copy = NewUserPresence()
+	p.CopyOverTo(copy)
+
+	return
 }
 
+func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var presence *UserPresence
+	if presence, ok = other.(*UserPresence); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *UserPresence")
+		return
+	}
+
+	p.RLock()
+	presence.Lock()
+	old := presence.RWMutex
+
+	*presence = *p
+	presence.RWMutex = old
+
+	p.RUnlock()
+	presence.Unlock()
+
+	return
+}
+
+// UserConnection ...
 type UserConnection struct {
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account

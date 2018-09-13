@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
 )
@@ -51,4 +52,33 @@ func TestUserMarshalling(t *testing.T) {
 	for _, file := range files {
 		verifyUserMashaller(t, file)
 	}
+}
+
+func TestUserPresence_InterfaceImplementations(t *testing.T) {
+	var u interface{} = NewUserPresence()
+
+	t.Run("Stringer", func(t *testing.T) {
+		if _, ok := u.(fmt.Stringer); !ok {
+			t.Error("UserPresence does not implement fmt.Stringer")
+		}
+	})
+
+	t.Run("DeepCopier", func(t *testing.T) {
+		if _, ok := u.(DeepCopier); !ok {
+			t.Error("UserPresence does not implement DeepCopier")
+		}
+	})
+
+	t.Run("Copier", func(t *testing.T) {
+		if _, ok := u.(Copier); !ok {
+			t.Error("UserPresence does not implement Copier")
+		}
+	})
+
+	// TODO
+	// t.Run("DiscordSaver", func(t *testing.T) {
+	// 	if _, ok := u.(discordSaver); !ok {
+	// 		t.Error("UserPresence does not implement discordSaver")
+	// 	}
+	// })
 }
