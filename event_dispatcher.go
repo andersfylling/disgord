@@ -8,7 +8,7 @@ import (
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch() *Dispatch {
+func NewDispatch(parallel bool) *Dispatch {
 	dispatcher := &Dispatch{
 		allChan:                      make(chan interface{}),
 		readyChan:                    make(chan *Ready),
@@ -50,6 +50,8 @@ func NewDispatch() *Dispatch {
 		listenOnceOnly: make(map[string][]int),
 
 		shutdown: make(chan struct{}),
+
+		parallel: parallel,
 	}
 
 	return dispatcher
@@ -143,6 +145,8 @@ type Dispatch struct {
 	shutdown chan struct{}
 
 	listenersLock sync.RWMutex
+
+	parallel bool
 }
 
 func (d *Dispatch) start() {
@@ -303,139 +307,275 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 	switch evtName {
 	case EventReady:
 		for _, listener := range d.listeners[EventReady] {
-			go (listener.(ReadyCallback))(session, box.(*Ready))
+			if d.parallel {
+				go (listener.(ReadyCallback))(session, box.(*Ready))
+			} else {
+				(listener.(ReadyCallback))(session, box.(*Ready))
+			}
 		}
 	case EventResumed:
 		for _, listener := range d.listeners[EventResumed] {
-			go (listener.(ResumedCallback))(session, box.(*Resumed))
+			if d.parallel {
+				go (listener.(ResumedCallback))(session, box.(*Resumed))
+			} else {
+				(listener.(ResumedCallback))(session, box.(*Resumed))
+			}
 		}
 	case EventChannelCreate:
 		for _, listener := range d.listeners[EventChannelCreate] {
-			go (listener.(ChannelCreateCallback))(session, box.(*ChannelCreate))
+			if d.parallel {
+				go (listener.(ChannelCreateCallback))(session, box.(*ChannelCreate))
+			} else {
+				(listener.(ChannelCreateCallback))(session, box.(*ChannelCreate))
+			}
 		}
 	case EventChannelUpdate:
 		for _, listener := range d.listeners[EventChannelUpdate] {
-			go (listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdate))
+			if d.parallel {
+				go (listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdate))
+			} else {
+				(listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdate))
+			}
 		}
 	case EventChannelDelete:
 		for _, listener := range d.listeners[EventChannelDelete] {
-			go (listener.(ChannelDeleteCallback))(session, box.(*ChannelDelete))
+			if d.parallel {
+				go (listener.(ChannelDeleteCallback))(session, box.(*ChannelDelete))
+			} else {
+				(listener.(ChannelDeleteCallback))(session, box.(*ChannelDelete))
+			}
 		}
 	case EventChannelPinsUpdate:
 		for _, listener := range d.listeners[EventChannelPinsUpdate] {
-			go (listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdate))
+			if d.parallel {
+				go (listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdate))
+			} else {
+				(listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdate))
+			}
 		}
 	case EventGuildCreate:
 		for _, listener := range d.listeners[EventGuildCreate] {
-			go (listener.(GuildCreateCallback))(session, box.(*GuildCreate))
+			if d.parallel {
+				go (listener.(GuildCreateCallback))(session, box.(*GuildCreate))
+			} else {
+				(listener.(GuildCreateCallback))(session, box.(*GuildCreate))
+			}
 		}
 	case EventGuildUpdate:
 		for _, listener := range d.listeners[EventGuildUpdate] {
-			go (listener.(GuildUpdateCallback))(session, box.(*GuildUpdate))
+			if d.parallel {
+				go (listener.(GuildUpdateCallback))(session, box.(*GuildUpdate))
+			} else {
+				(listener.(GuildUpdateCallback))(session, box.(*GuildUpdate))
+			}
 		}
 	case EventGuildDelete:
 		for _, listener := range d.listeners[EventGuildDelete] {
-			go (listener.(GuildDeleteCallback))(session, box.(*GuildDelete))
+			if d.parallel {
+				go (listener.(GuildDeleteCallback))(session, box.(*GuildDelete))
+			} else {
+				(listener.(GuildDeleteCallback))(session, box.(*GuildDelete))
+			}
 		}
 	case EventGuildBanAdd:
 		for _, listener := range d.listeners[EventGuildBanAdd] {
-			go (listener.(GuildBanAddCallback))(session, box.(*GuildBanAdd))
+			if d.parallel {
+				go (listener.(GuildBanAddCallback))(session, box.(*GuildBanAdd))
+			} else {
+				(listener.(GuildBanAddCallback))(session, box.(*GuildBanAdd))
+			}
 		}
 	case EventGuildBanRemove:
 		for _, listener := range d.listeners[EventGuildBanRemove] {
-			go (listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemove))
+			if d.parallel {
+				go (listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemove))
+			} else {
+				(listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemove))
+			}
 		}
 	case EventGuildEmojisUpdate:
 		for _, listener := range d.listeners[EventGuildEmojisUpdate] {
-			go (listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdate))
+			if d.parallel {
+				go (listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdate))
+			} else {
+				(listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdate))
+			}
 		}
 	case EventGuildIntegrationsUpdate:
 		for _, listener := range d.listeners[EventGuildIntegrationsUpdate] {
-			go (listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdate))
+			if d.parallel {
+				go (listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdate))
+			} else {
+				(listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdate))
+			}
 		}
 	case EventGuildMemberAdd:
 		for _, listener := range d.listeners[EventGuildMemberAdd] {
-			go (listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAdd))
+			if d.parallel {
+				go (listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAdd))
+			} else {
+				(listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAdd))
+			}
 		}
 	case EventGuildMemberRemove:
 		for _, listener := range d.listeners[EventGuildMemberRemove] {
-			go (listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemove))
+			if d.parallel {
+				go (listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemove))
+			} else {
+				(listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemove))
+			}
 		}
 	case EventGuildMemberUpdate:
 		for _, listener := range d.listeners[EventGuildMemberUpdate] {
-			go (listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdate))
+			if d.parallel {
+				go (listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdate))
+			} else {
+				(listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdate))
+			}
 		}
 	case EventGuildMembersChunk:
 		for _, listener := range d.listeners[EventGuildMembersChunk] {
-			go (listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunk))
+			if d.parallel {
+				go (listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunk))
+			} else {
+				(listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunk))
+			}
 		}
 	case EventGuildRoleCreate:
 		for _, listener := range d.listeners[EventGuildRoleCreate] {
-			go (listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreate))
+			if d.parallel {
+				go (listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreate))
+			} else {
+				(listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreate))
+			}
 		}
 	case EventGuildRoleUpdate:
 		for _, listener := range d.listeners[EventGuildRoleUpdate] {
-			go (listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdate))
+			if d.parallel {
+				go (listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdate))
+			} else {
+				(listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdate))
+			}
 		}
 	case EventGuildRoleDelete:
 		for _, listener := range d.listeners[EventGuildRoleDelete] {
-			go (listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDelete))
+			if d.parallel {
+				go (listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDelete))
+			} else {
+				(listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDelete))
+			}
 		}
 	case EventMessageCreate:
 		for _, listener := range d.listeners[EventMessageCreate] {
-			go (listener.(MessageCreateCallback))(session, box.(*MessageCreate))
+			if d.parallel {
+				go (listener.(MessageCreateCallback))(session, box.(*MessageCreate))
+			} else {
+				(listener.(MessageCreateCallback))(session, box.(*MessageCreate))
+			}
 		}
 	case EventMessageUpdate:
 		for _, listener := range d.listeners[EventMessageUpdate] {
-			go (listener.(MessageUpdateCallback))(session, box.(*MessageUpdate))
+			if d.parallel {
+				go (listener.(MessageUpdateCallback))(session, box.(*MessageUpdate))
+			} else {
+				(listener.(MessageUpdateCallback))(session, box.(*MessageUpdate))
+			}
 		}
 	case EventMessageDelete:
 		for _, listener := range d.listeners[EventMessageDelete] {
-			go (listener.(MessageDeleteCallback))(session, box.(*MessageDelete))
+			if d.parallel {
+				go (listener.(MessageDeleteCallback))(session, box.(*MessageDelete))
+			} else {
+				(listener.(MessageDeleteCallback))(session, box.(*MessageDelete))
+			}
 		}
 	case EventMessageDeleteBulk:
 		for _, listener := range d.listeners[EventMessageDeleteBulk] {
-			go (listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulk))
+			if d.parallel {
+				go (listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulk))
+			} else {
+				(listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulk))
+			}
 		}
 	case EventMessageReactionAdd:
 		for _, listener := range d.listeners[EventMessageReactionAdd] {
-			go (listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAdd))
+			if d.parallel {
+				go (listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAdd))
+			} else {
+				(listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAdd))
+			}
 		}
 	case EventMessageReactionRemove:
 		for _, listener := range d.listeners[EventMessageReactionRemove] {
-			go (listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemove))
+			if d.parallel {
+				go (listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemove))
+			} else {
+				(listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemove))
+			}
 		}
 	case EventMessageReactionRemoveAll:
 		for _, listener := range d.listeners[EventMessageReactionRemoveAll] {
-			go (listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAll))
+			if d.parallel {
+				go (listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAll))
+			} else {
+				(listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAll))
+			}
 		}
 	case EventPresenceUpdate:
 		for _, listener := range d.listeners[EventPresenceUpdate] {
-			go (listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
+			if d.parallel {
+				go (listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
+			} else {
+				(listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
+			}
 		}
 	case EventPresencesReplace:
 		for _, listener := range d.listeners[EventPresencesReplace] {
-			go (listener.(PresencesReplaceCallback))(session, box.(*PresencesReplace))
+			if d.parallel {
+				go (listener.(PresencesReplaceCallback))(session, box.(*PresencesReplace))
+			} else {
+				(listener.(PresencesReplaceCallback))(session, box.(*PresencesReplace))
+			}
 		}
 	case EventTypingStart:
 		for _, listener := range d.listeners[EventTypingStart] {
-			go (listener.(TypingStartCallback))(session, box.(*TypingStart))
+			if d.parallel {
+				go (listener.(TypingStartCallback))(session, box.(*TypingStart))
+			} else {
+				(listener.(TypingStartCallback))(session, box.(*TypingStart))
+			}
 		}
 	case EventUserUpdate:
 		for _, listener := range d.listeners[EventUserUpdate] {
-			go (listener.(UserUpdateCallback))(session, box.(*UserUpdate))
+			if d.parallel {
+				go (listener.(UserUpdateCallback))(session, box.(*UserUpdate))
+			} else {
+				(listener.(UserUpdateCallback))(session, box.(*UserUpdate))
+			}
 		}
 	case EventVoiceStateUpdate:
 		for _, listener := range d.listeners[EventVoiceStateUpdate] {
-			go (listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdate))
+			if d.parallel {
+				go (listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdate))
+			} else {
+				(listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdate))
+			}
 		}
 	case EventVoiceServerUpdate:
 		for _, listener := range d.listeners[EventVoiceServerUpdate] {
-			go (listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdate))
+			if d.parallel {
+				go (listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdate))
+			} else {
+				(listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdate))
+			}
 		}
 	case EventWebhooksUpdate:
 		for _, listener := range d.listeners[EventWebhooksUpdate] {
-			go (listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
+			if d.parallel {
+				go (listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
+			} else {
+				(listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
+			}
 		}
 	default:
 		fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
