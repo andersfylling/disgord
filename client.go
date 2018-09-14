@@ -188,15 +188,6 @@ type Config struct {
 	APIVersion  int    // eg. version 6. 0 defaults to lowest supported api version
 	APIEncoding string // eg. json, use const. defaults to json
 
-	// ParallelEventHandlers setting to true will cause handlers with the same
-	// event type to run in parallel. Default setting is sequential.
-	// Note! If you activate this, you must take extra precausion in using mutexes
-	// correctly. Many of the public methods are already thread safe, but you must
-	// read the code to verify behaviour. This only affects listeners, not logic
-	// utilising channels for event handling (as these always run in parallel).
-	// Recommended setting: false
-	ParallelEventHandlers bool
-
 	CancelRequestWhenRateLimited bool
 
 	LoadAllMembers   bool
@@ -273,7 +264,7 @@ func NewClient(conf *Config) (*Client, error) {
 	reqClient := httd.NewClient(reqConf)
 
 	// event dispatcher
-	evtDispatcher := NewDispatch(conf.ParallelEventHandlers)
+	evtDispatcher := NewDispatch()
 
 	// create a disgord client/instance/session
 	c := &Client{
