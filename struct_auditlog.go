@@ -1,20 +1,6 @@
 package disgord
 
-type AuditLog struct {
-	Webhooks        []*Webhook       `json:"webhooks"`
-	Users           []*User          `json:"users"`
-	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
-}
-
-type AuditLogEntry struct {
-	TargetID   Snowflake         `json:"target_id"`
-	Changes    []*AuditLogChange `json:"changes,omitempty"`
-	UserID     Snowflake         `json:"user_id"`
-	ID         Snowflake         `json:"id"`
-	ActionType uint              `json:"action_type"`
-	Options    []*AuditLogOption `json:"options,omitempty"`
-	Reason     string            `json:"reason,omitempty"`
-}
+import "sync"
 
 const (
 	AuditLogEvtGuildUpdate      = 1
@@ -44,22 +30,6 @@ const (
 	AuditLogEvtEmojiDelete      = 62
 	AuditLogEvtMessageDelete    = 72
 )
-
-type AuditLogOption struct {
-	DeleteMemberDays string    `json:"delete_member_days"`
-	MembersRemoved   string    `json:"members_removed"`
-	ChannelID        Snowflake `json:"channel_id"`
-	Count            string    `json:"count"`
-	ID               Snowflake `json:"id"`
-	Type             string    `json:"type"` // type of overwritten entity ("member" or "role")
-	RoleName         string    `json:"role_name"`
-}
-
-type AuditLogChange struct {
-	NewValue interface{} `json:"new_value,omitempty"`
-	OldValue interface{} `json:"old_value,omitempty"`
-	Key      string      `json:"key"`
-}
 
 const (
 	// key name,								          identifier                       changed, type,   description
@@ -106,3 +76,171 @@ const (
 	AuditLogChangeKeyID                          = "id"                            // any	snowflake	the id of the changed entity - sometimes used in conjunction with other keys
 	AuditLogChangeKeyType                        = "type"                          // any	integer (channel type) or string	type of entity created
 )
+
+type AuditLog struct {
+	sync.RWMutex `json:"-"`
+
+	Webhooks        []*Webhook       `json:"webhooks"`
+	Users           []*User          `json:"users"`
+	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
+}
+
+func (l *AuditLog) DeepCopy() (copy interface{}) {
+	copy = &AuditLog{}
+	l.CopyOverTo(copy)
+
+	return
+}
+
+func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var log *AuditLog
+	if log, ok = other.(*AuditLog); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLog")
+		return
+	}
+
+	l.RLock()
+	log.Lock()
+
+	for _, webhook := range l.Webhooks {
+		log.Webhooks = append(log.Webhooks, webhook.DeepCopy().(*Webhook))
+	}
+	for _, user := range l.Users {
+		log.Users = append(log.Users, user.DeepCopy().(*User))
+	}
+	for _, entry := range l.AuditLogEntries {
+		log.AuditLogEntries = append(log.AuditLogEntries, entry.DeepCopy().(*AuditLogEntry))
+	}
+
+	l.RUnlock()
+	log.Unlock()
+	return
+}
+
+type AuditLogEntry struct {
+	sync.RWMutex `json:"-"`
+
+	TargetID   Snowflake         `json:"target_id"`
+	Changes    []*AuditLogChange `json:"changes,omitempty"`
+	UserID     Snowflake         `json:"user_id"`
+	ID         Snowflake         `json:"id"`
+	ActionType uint              `json:"action_type"`
+	Options    []*AuditLogOption `json:"options,omitempty"`
+	Reason     string            `json:"reason,omitempty"`
+}
+
+func (l *AuditLogEntry) DeepCopy() (copy interface{}) {
+	copy = &AuditLogEntry{}
+	l.CopyOverTo(copy)
+
+	return
+}
+
+func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var log *AuditLogEntry
+	if log, ok = other.(*AuditLogEntry); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogEntry")
+		return
+	}
+
+	l.RLock()
+	log.Lock()
+
+	log.TargetID = l.TargetID
+	log.UserID = l.UserID
+	log.ID = l.ID
+	log.ActionType = l.ActionType
+	log.Reason = l.Reason
+
+	for _, change := range l.Changes {
+		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChange))
+	}
+
+	for _, option := range l.Options {
+		log.Options = append(log.Options, option.DeepCopy().(*AuditLogOption))
+	}
+
+	l.RUnlock()
+	log.Unlock()
+	return
+}
+
+type AuditLogOption struct {
+	sync.RWMutex `json:"-"`
+
+	DeleteMemberDays string    `json:"delete_member_days"`
+	MembersRemoved   string    `json:"members_removed"`
+	ChannelID        Snowflake `json:"channel_id"`
+	Count            string    `json:"count"`
+	ID               Snowflake `json:"id"`
+	Type             string    `json:"type"` // type of overwritten entity ("member" or "role")
+	RoleName         string    `json:"role_name"`
+}
+
+func (l *AuditLogOption) DeepCopy() (copy interface{}) {
+	copy = &AuditLogOption{}
+	l.CopyOverTo(copy)
+
+	return
+}
+
+func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var log *AuditLogOption
+	if log, ok = other.(*AuditLogOption); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogOption")
+		return
+	}
+
+	l.RLock()
+	log.Lock()
+
+	log.DeleteMemberDays = l.DeleteMemberDays
+	log.MembersRemoved = l.MembersRemoved
+	log.ChannelID = l.ChannelID
+	log.Count = l.Count
+	log.ID = l.ID
+	log.Type = l.Type
+	log.RoleName = l.RoleName
+
+	l.RUnlock()
+	log.Unlock()
+	return
+}
+
+type AuditLogChange struct {
+	sync.RWMutex `json:"-"`
+
+	NewValue interface{} `json:"new_value,omitempty"`
+	OldValue interface{} `json:"old_value,omitempty"`
+	Key      string      `json:"key"`
+}
+
+func (l *AuditLogChange) DeepCopy() (copy interface{}) {
+	copy = &AuditLogChange{}
+	l.CopyOverTo(copy)
+
+	return
+}
+
+func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var log *AuditLogChange
+	if log, ok = other.(*AuditLogChange); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogChange")
+		return
+	}
+
+	l.RLock()
+	log.Lock()
+
+	log.NewValue = l.NewValue
+	log.OldValue = l.OldValue
+	log.Key = l.Key
+
+	l.RUnlock()
+	log.Unlock()
+	return
+}
