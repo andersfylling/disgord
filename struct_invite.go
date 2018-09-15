@@ -1,9 +1,19 @@
 package disgord
 
+import "sync"
+
+// PartialInvite ...
+// {
+//    "code": "abc"
+// }
+type PartialInvite = Invite
+
 // Invite Represents a code that when used, adds a user to a guild.
 // https://discordapp.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
+	sync.RWMutex `json:"-"`
+
 	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
 
@@ -20,10 +30,47 @@ type Invite struct {
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
+func (i *Invite) DeepCopy() (copy interface{}) {
+	copy = &Invite{}
+	i.CopyOverTo(copy)
+
+	return
+}
+
+func (i *Invite) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var invite *Invite
+	if invite, ok = other.(*Invite); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *Invite")
+		return
+	}
+
+	i.RLock()
+	invite.Lock()
+
+	invite.Code = i.Code
+	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
+	invite.ApproximateMemberCount = i.ApproximateMemberCount
+
+	if i.Guild != nil {
+		invite.Guild = NewPartialGuild(i.Guild.ID)
+	}
+	if i.Channel != nil {
+		c := i.Channel
+		invite.Channel = NewPartialChannel(c.ID, c.Name, c.Type)
+	}
+
+	i.RUnlock()
+	invite.Unlock()
+	return
+}
+
 // InviteMetadata Object
 // https://discordapp.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
 type InviteMetadata struct {
+	sync.RWMutex `json:"-"`
+
 	// Inviter user who created the invite
 	Inviter *User `json:"inviter"`
 
@@ -46,8 +93,36 @@ type InviteMetadata struct {
 	Revoked bool `json:"revoked"`
 }
 
-// PartialInvite
-// {
-//    "code": "abc"
-// }
-type PartialInvite = Invite
+func (i *InviteMetadata) DeepCopy() (copy interface{}) {
+	copy = &InviteMetadata{}
+	i.CopyOverTo(copy)
+
+	return
+}
+
+func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var invite *InviteMetadata
+	if invite, ok = other.(*InviteMetadata); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *InviteMetadata")
+		return
+	}
+
+	i.RLock()
+	invite.Lock()
+
+	invite.Uses = i.Uses
+	invite.MaxUses = i.MaxUses
+	invite.MaxAge = i.MaxAge
+	invite.Temporary = i.Temporary
+	invite.CreatedAt = i.CreatedAt
+	invite.Revoked = i.Revoked
+
+	if i.Inviter != nil {
+		invite.Inviter = i.Inviter.DeepCopy().(*User)
+	}
+
+	i.RUnlock()
+	invite.Unlock()
+	return
+}

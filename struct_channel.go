@@ -42,6 +42,14 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
+func NewPartialChannel(id Snowflake, name string, t uint) *PartialChannel {
+	return &PartialChannel{
+		ID:   id,
+		Name: name,
+		Type: t,
+	}
+}
+
 // ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
 type ChannelMessager interface {
 	CreateMessage(*Message) error
@@ -55,7 +63,10 @@ type ChannelDeleter interface {
 type ChannelUpdater interface {
 }
 
-// Channel
+// PartialChannel ...
+type PartialChannel = Channel
+
+// Channel ...
 type Channel struct {
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
@@ -77,7 +88,6 @@ type Channel struct {
 
 	sync.RWMutex
 }
-type PartialChannel = Channel
 
 func (c *Channel) Mention() string {
 	return "<#" + c.ID.String() + ">"
