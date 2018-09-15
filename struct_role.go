@@ -129,5 +129,5 @@ func (r *Role) deleteFromDiscord(session Session) (err error) {
 	return
 }
 
-func (r *Role) Clear() {
-}
+//func (r *Role) Clear() {
+//}
