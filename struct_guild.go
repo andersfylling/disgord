@@ -186,6 +186,26 @@ type Guild struct {
 	Members     []*Member       `json:"members,omitempty"`      // ?*|
 	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
 	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
+
+	//highestSnowflakeAmoungMembers Snowflake
+}
+
+func (g *Guild) GetMemberWithHighestSnowflake() *Member {
+	g.RLock()
+	defer g.RUnlock()
+
+	if len(g.Members) == 0 {
+		return nil
+	}
+
+	highest := g.Members[0]
+	for _, member := range g.Members {
+		if member.User.ID > highest.User.ID {
+			highest = member
+		}
+	}
+
+	return highest
 }
 
 //func (g *Guild) EverythingInMemory() bool {

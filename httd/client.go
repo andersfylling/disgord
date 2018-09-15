@@ -205,6 +205,26 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return
 }
 
+func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
+	deadtime := c.RateLimiter().WaitTime(r)
+	if deadtime.Nanoseconds() > 0 {
+		if c.cancelRequestWhenRateLimited {
+			err = errors.New("rate limited")
+			return
+		}
+		waitTimeLongerThanHTTPTimeout := (c.httpClient.Timeout.Nanoseconds() <= deadtime.Nanoseconds())
+		if waitTimeLongerThanHTTPTimeout {
+			err = errors.New("rate limit timeout is higher than http.Client.Timeout, cannot wait")
+			return
+		}
+
+		<-time.After(deadtime)
+	}
+
+	waited = true
+	return
+}
+
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
 	var jsonParamsReader io.Reader
 	if r.JSONParams != nil {
@@ -215,15 +235,9 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	}
 
 	// check the rate limiter for how long we must wait before sending the request
-	deadtime := c.RateLimiter().WaitTime(r)
-	if deadtime.Nanoseconds() > 0 {
-		if c.cancelRequestWhenRateLimited || (c.httpClient.Timeout <= deadtime) {
-			err = errors.New("rate limited")
-			// TODO: add the timeout to the return?
-			return
-		}
-
-		time.Sleep(deadtime)
+	_, err = WaitIfRateLimited(c, r)
+	if err != nil {
+		return
 	}
 
 	// create request

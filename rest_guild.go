@@ -285,6 +285,7 @@ func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member,
 }
 
 // GetGuildMembers [GET]    Returns a list of guild member objects that are members of the guild.
+//													The `after` param refers to the highest snowflake.
 // Endpoint                 /guilds/{guild.id}/members
 // Rate limiter             /guilds/{guild.id}/members
 // Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-members
@@ -293,6 +294,11 @@ func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member,
 // Comment#2                "List Guild Members"
 // Comment#3                https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
 func GetGuildMembers(client httd.Getter, guildID, after Snowflake, limit int) (ret []*Member, err error) {
+	if limit > 1000 || limit < 0 {
+		err = errors.New("limit value should be less than or equal to 1000, and non-negative")
+		return
+	}
+
 	// TODO: convert after and limit to a query struct
 	// omg i hate myself. use reflection to convert a query struct to string(?). it's at least better.
 	query := ""
