@@ -452,9 +452,45 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 
 // UserConnection ...
 type UserConnection struct {
+	sync.RWMutex `json:"-"`
+
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account
 	Type         string                `json:"type"`         // the service of the connection (twitch, youtube)
 	Revoked      bool                  `json:"revoked"`      // whether the connection is revoked
 	Integrations []*IntegrationAccount `json:"integrations"` // an array of partial server integrations
+}
+
+func (c *UserConnection) DeepCopy() (copy interface{}) {
+	copy = &UserConnection{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var con *UserConnection
+	if con, ok = other.(*UserConnection); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *UserConnection")
+		return
+	}
+
+	c.RLock()
+	con.Lock()
+
+	con.ID = c.ID
+	con.Name = c.Name
+	con.Type = c.Type
+	con.Revoked = c.Revoked
+
+	con.Integrations = make([]*IntegrationAccount, len(c.Integrations))
+	for i, account := range c.Integrations {
+		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
+	}
+
+	c.RUnlock()
+	con.Unlock()
+
+	return
 }
