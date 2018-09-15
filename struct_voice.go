@@ -76,6 +76,8 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 // VoiceRegion voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
+	sync.RWMutex `json:"-"`
+
 	// Snowflake unique Snowflake for the region
 	ID string `json:"id"`
 
@@ -99,4 +101,37 @@ type VoiceRegion struct {
 
 	// Custom whether this is a custom voice region (used for events/etc)
 	Custom bool `json:"custom"`
+}
+
+func (v *VoiceRegion) DeepCopy() (copy interface{}) {
+	copy = &VoiceRegion{}
+	v.CopyOverTo(copy)
+
+	return
+}
+
+func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var voice *VoiceRegion
+	if voice, ok = other.(*VoiceRegion); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
+		return
+	}
+
+	v.RLock()
+	voice.Lock()
+
+	voice.ID = v.ID
+	voice.Name = v.Name
+	voice.SampleHostname = v.SampleHostname
+	voice.SamplePort = v.SamplePort
+	voice.VIP = v.VIP
+	voice.Optimal = v.Optimal
+	voice.Deprecated = v.Deprecated
+	voice.Custom = v.Custom
+
+	v.RUnlock()
+	voice.Unlock()
+
+	return
 }
