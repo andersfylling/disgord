@@ -1,6 +1,7 @@
 package httd
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -110,10 +111,64 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 	return
 }
 
+// HeaderToTime takes the response header from Discord and extracts the
+// timestamp. Useful for detecting time desync between discord and client
+func HeaderToTime(header *http.Header) (t time.Time, err error) {
+	// date: Fri, 14 Sep 2018 19:04:24 GMT
+	dateStr := header.Get("date")
+	if dateStr == "" {
+		err = errors.New("missing header field 'date'")
+		return
+	}
+
+	t, err = time.Parse(time.RFC1123, dateStr)
+	return
+}
+
+func NewDiscordTimeDiff() *DiscordTimeDiff {
+	return &DiscordTimeDiff{
+		Local:   time.Now(),
+		Discord: time.Now(),
+	}
+}
+
+type DiscordTimeDiff struct {
+	sync.RWMutex
+	Local   time.Time
+	Discord time.Time
+	offset  time.Duration
+}
+
+func (d *DiscordTimeDiff) Update(now time.Time, discord time.Time) {
+	d.Lock()
+	defer d.Unlock()
+
+	d.Local = now
+	d.Discord = discord
+	d.calculateOffset()
+}
+
+func (d *DiscordTimeDiff) calculateOffset() {
+	if d.Local.After(d.Discord) {
+		d.offset = d.Local.Sub(d.Discord) * -1
+	} else {
+		d.offset = d.Discord.Sub(d.Local)
+	}
+}
+
+func (d *DiscordTimeDiff) Now() (t time.Time) {
+	d.RLock()
+	defer d.RUnlock()
+
+	t = time.Now().Add(d.offset)
+	return
+}
+
 func NewRateLimit() *RateLimit {
 	return &RateLimit{
-		buckets: make(map[string]*Bucket),
-		global:  &Bucket{},
+		buckets:  make(map[string]*Bucket),
+		global:   &Bucket{},
+		TimeDiff: NewDiscordTimeDiff(),
 	}
 }
 
@@ -122,9 +177,11 @@ func NewRateLimit() *RateLimit {
 // `/users/1` has the same ratelimiter as `/users/2`
 // but any major endpoint prefix does not: `/channels/1` != `/channels/2`
 type RateLimit struct {
-	buckets map[string]*Bucket
-	global  *Bucket
-	mu      sync.RWMutex
+	buckets  map[string]*Bucket
+	global   *Bucket
+	TimeDiff *DiscordTimeDiff
+
+	mu sync.RWMutex
 }
 
 func (r *RateLimit) Bucket(key string) *Bucket {
@@ -155,7 +212,7 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 	if bucket, exists = r.buckets[key]; !exists {
 		r.buckets[key] = &Bucket{
 			endpoint: key,
-			reset:    time.Now().UnixNano() / 1000,
+			reset:    r.TimeDiff.Now().UnixNano() / 1000,
 		}
 		bucket = r.buckets[key]
 	}
@@ -165,28 +222,28 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 }
 
 func (r *RateLimit) RateLimitTimeout(key string) int64 {
-	if r.global.limited() {
-		return r.global.timeout()
+	if r.global.limited(r.TimeDiff.Now()) {
+		return r.global.timeout(r.TimeDiff.Now())
 	}
 
 	bucket := r.Bucket(key)
-	return bucket.timeout()
+	return bucket.timeout(r.TimeDiff.Now())
 }
 
 func (r *RateLimit) RateLimited(key string) bool {
-	if r.global.limited() {
+	if r.global.limited(r.TimeDiff.Now()) {
 		return true
 	}
 
 	bucket := r.Bucket(key)
-	return bucket.limited()
+	return bucket.limited(r.TimeDiff.Now())
 }
 
 // WaitTime check both the global and route specific rate limiter bucket before sending any REST requests
 func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	timeout := int64(0)
 	if r.global.remaining > 0 {
-		timeout = r.global.timeout()
+		timeout = r.global.timeout(r.TimeDiff.Now())
 	}
 
 	if req.Ratelimiter != "" {
@@ -249,21 +306,20 @@ func (b *Bucket) update(info *RateLimitInfo) {
 	}
 }
 
-func (b *Bucket) limited() bool {
+func (b *Bucket) limited(now time.Time) bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	now := time.Now().UnixNano() / 1000
-	return b.reset > now
+	return b.reset > (now.UnixNano() / 1000)
 }
 
-func (b *Bucket) timeout() int64 {
+func (b *Bucket) timeout(now time.Time) int64 {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	now := time.Now().UnixNano() / 1000
-	if b.reset > now {
-		return b.reset - now
+	nowMilli := now.UnixNano() / 1000
+	if b.reset > nowMilli {
+		return b.reset - nowMilli
 	}
 	return 0
 }

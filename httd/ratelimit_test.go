@@ -24,6 +24,50 @@ func verifyRateLimitInfo(t *testing.T, info *RateLimitInfo, limit, remaining int
 	}
 }
 
+func TestDiscordTimeDiff(t *testing.T) {
+	t.Run("calculating 0 offset", func(t *testing.T) {
+		diff := NewDiscordTimeDiff()
+		now := time.Now()
+		diff.Update(now, now)
+
+		if diff.offset.Nanoseconds()/1000 != 0 {
+			t.Errorf("offset incorrect. Wants 0, got %s", diff.offset.String())
+		}
+	})
+
+	t.Run("offset, discord behind", func(t *testing.T) {
+		diff := NewDiscordTimeDiff()
+		var behind int64
+		var discord time.Time
+		var now time.Time
+
+		now = time.Now()
+		behind = now.Unix() - 200
+		discord = time.Unix(behind, 0)
+		diff.Update(now, discord)
+
+		if diff.offset.Seconds() > -200 || diff.offset.Seconds() < -205 {
+			t.Errorf("offset incorrect. Wants [-200s, -205s), got %s", diff.offset.String())
+		}
+	})
+
+	t.Run("offset, local behind", func(t *testing.T) {
+		diff := NewDiscordTimeDiff()
+		var behind int64
+		var local time.Time
+		var now time.Time
+
+		now = time.Now()
+		behind = now.Unix() - 200
+		local = time.Unix(behind, 0)
+		diff.Update(local, now)
+
+		if diff.offset.Seconds() < 200 || diff.offset.Seconds() > 205 {
+			t.Errorf("offset incorrect. Wants [200s, 205s), got %s", diff.offset.String())
+		}
+	})
+}
+
 func TestExtractRateLimitInfo(t *testing.T) {
 	limit := 2
 	remaining := 4
