@@ -119,7 +119,7 @@ func TestExtractRateLimitInfoGlobal(t *testing.T) {
 
 func TestExtractRateLimitGlobal(t *testing.T) {
 	limit := 2
-	remaining := 4
+	remaining := 0
 	reset := int64(time.Now().UnixNano()) // just a large epoch ms
 
 	resp := &http.Response{

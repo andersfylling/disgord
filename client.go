@@ -195,7 +195,7 @@ type Config struct {
 	LoadAllRoles     bool
 	LoadAllPresences bool
 
-	Debug bool
+	//Logger logger.Logrus
 }
 
 // NewClient creates a new default disgord instance
@@ -237,7 +237,7 @@ func NewClient(conf *Config) (*Client, error) {
 		// user settings
 		Token:      conf.Token,
 		HTTPClient: conf.HTTPClient,
-		Debug:      conf.Debug,
+		Debug:      false,
 
 		// identity
 		Browser: "Disgord",

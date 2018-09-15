@@ -307,7 +307,7 @@ func (b *Bucket) limited(now time.Time) bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	return b.reset > (now.UnixNano()/int64(time.Millisecond)) || b.remaining == 0
+	return b.reset > (now.UnixNano()/int64(time.Millisecond)) && b.remaining == 0
 }
 
 func (b *Bucket) timeout(now time.Time) int64 {
