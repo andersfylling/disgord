@@ -326,9 +326,9 @@ func (u *User) MarshalJSON() ([]byte, error) {
 // 	return json.Unmarshal(data, &u.userJSON)
 // }
 
-func (u *User) Clear() {
-	//u.d.Avatar = nil
-}
+//func (u *User) Clear() {
+//	//u.d.Avatar = nil
+//}
 
 func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg *Message, err error) {
 	channel, err = session.CreateDM(u.ID)
