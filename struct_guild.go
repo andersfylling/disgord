@@ -588,20 +588,83 @@ func (g *Guild) deleteFromDiscord(session Session) (err error) {
 // --------------
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
+	sync.RWMutex `json:"-"`
+
 	Reason string `json:"reason"`
 	User   *User  `json:"user"`
+}
+
+func (b *Ban) DeepCopy() (copy interface{}) {
+	copy = &Ban{}
+	b.CopyOverTo(copy)
+
+	return
+}
+
+func (b *Ban) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var ban *Ban
+	if ban, ok = other.(*Ban); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *Ban")
+		return
+	}
+
+	b.RLock()
+	ban.Lock()
+
+	ban.Reason = b.Reason
+
+	if b.User != nil {
+		ban.User = b.User.DeepCopy().(*User)
+	}
+
+	b.RUnlock()
+	ban.Unlock()
+
+	return
 }
 
 // ------------
 // GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
+	sync.RWMutex `json:"-"`
+
 	Enabled   bool      `json:"enabled"`
 	ChannelID Snowflake `json:"channel_id"`
+}
+
+func (e *GuildEmbed) DeepCopy() (copy interface{}) {
+	copy = &GuildEmbed{}
+	e.CopyOverTo(copy)
+
+	return
+}
+
+func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var embed *GuildEmbed
+	if embed, ok = other.(*GuildEmbed); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *GuildEmbed")
+		return
+	}
+
+	e.RLock()
+	embed.Lock()
+
+	embed.Enabled = e.Enabled
+	embed.ChannelID = e.ChannelID
+
+	e.RUnlock()
+	embed.Unlock()
+
+	return
 }
 
 // -------
 // Integration https://discordapp.com/developers/docs/resources/guild#integration-object
 type Integration struct {
+	sync.RWMutex `json:"-"`
+
 	ID                Snowflake           `json:"id"`
 	Name              string              `json:"name"`
 	Type              string              `json:"type"`
@@ -614,10 +677,78 @@ type Integration struct {
 	Account           *IntegrationAccount `json:"account"`
 }
 
+func (i *Integration) DeepCopy() (copy interface{}) {
+	copy = &Integration{}
+	i.CopyOverTo(copy)
+
+	return
+}
+
+func (i *Integration) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var integration *Integration
+	if integration, ok = other.(*Integration); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *Integration")
+		return
+	}
+
+	i.RLock()
+	integration.Lock()
+
+	integration.ID = i.ID
+	integration.Name = i.Name
+	integration.Type = i.Type
+	integration.Enabled = i.Enabled
+	integration.Syncing = i.Syncing
+	integration.RoleID = i.RoleID
+	integration.ExpireBehavior = i.ExpireBehavior
+	integration.ExpireGracePeriod = i.ExpireGracePeriod
+
+	if i.User != nil {
+		integration.User = i.User.DeepCopy().(*User)
+	}
+	if i.Account != nil {
+		integration.Account = i.Account.DeepCopy().(*IntegrationAccount)
+	}
+
+	i.RUnlock()
+	integration.Unlock()
+
+	return
+}
+
 // IntegrationAccount https://discordapp.com/developers/docs/resources/guild#integration-account-object
 type IntegrationAccount struct {
+	sync.RWMutex `json:"-"`
+
 	ID   string `json:"id"`   // id of the account
 	Name string `json:"name"` // name of the account
+}
+
+func (i *IntegrationAccount) DeepCopy() (copy interface{}) {
+	copy = &IntegrationAccount{}
+	i.CopyOverTo(copy)
+
+	return
+}
+
+func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
+	var ok bool
+	var account *IntegrationAccount
+	if account, ok = other.(*IntegrationAccount); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *IntegrationAccount")
+		return
+	}
+
+	i.RLock()
+	account.Lock()
+
+	account.ID = i.ID
+	account.Name = i.Name
+
+	i.RUnlock()
+	account.Unlock()
+	return
 }
 
 // -------
