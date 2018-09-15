@@ -50,9 +50,17 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	e.mu.RLock()
 	emoji.mu.Lock()
 
-	*emoji = *e
-	emoji.User = e.User.DeepCopy().(*User)
+	emoji.ID = e.ID
+	emoji.Name = e.Name
+	emoji.Roles = e.Roles
+	emoji.RequireColons = e.RequireColons
+	emoji.Managed = e.Managed
+	emoji.Animated = e.Animated
 	emoji.mu = sync.RWMutex{}
+
+	if e.User != nil {
+		emoji.User = e.User.DeepCopy().(*User)
+	}
 
 	e.mu.RUnlock()
 	emoji.mu.Unlock()
@@ -91,6 +99,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 //	}
 //}
 
-func (e *Emoji) Clear() {
-	// obviously don't delete the user ...
-}
+// func (e *Emoji) Clear() {
+// 	// obviously don't delete the user ...
+// }
