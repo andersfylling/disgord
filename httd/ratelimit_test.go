@@ -79,6 +79,7 @@ func TestExtractRateLimitInfo(t *testing.T) {
 	resp.Header.Set(XRateLimitLimit, strconv.Itoa(limit))
 	resp.Header.Set(XRateLimitRemaining, strconv.Itoa(remaining))
 	resp.Header.Set(XRateLimitReset, strconv.FormatInt(reset, 10))
+	resp.Header.Set("date", time.Now().Format(time.RFC1123))
 
 	info, err := ExtractRateLimitInfo(resp, []byte(""))
 	if err != nil {
@@ -103,6 +104,7 @@ func TestExtractRateLimitInfoGlobal(t *testing.T) {
 	resp.Header.Set(XRateLimitRemaining, strconv.Itoa(remaining))
 	resp.Header.Set(XRateLimitReset, strconv.FormatInt(reset, 10))
 	resp.Header.Set(XRateLimitGlobal, "true")
+	resp.Header.Set("date", time.Now().Format(time.RFC1123))
 
 	info, err := ExtractRateLimitInfo(resp, []byte(""))
 	if err != nil {
@@ -128,6 +130,7 @@ func TestExtractRateLimitGlobal(t *testing.T) {
 	resp.Header.Set(XRateLimitRemaining, strconv.Itoa(remaining))
 	resp.Header.Set(XRateLimitReset, strconv.FormatInt(reset, 10))
 	resp.Header.Set(XRateLimitGlobal, "true")
+	resp.Header.Set("date", time.Now().Format(time.RFC1123))
 
 	rl := NewRateLimit()
 	rl.UpdateRegisters("something", resp, []byte(""))

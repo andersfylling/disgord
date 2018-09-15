@@ -262,6 +262,13 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 
 // TODO: rewrite
 func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []byte) {
+	// update time difference
+
+	if discordTime, err := HeaderToTime(&resp.Header); err == nil {
+		r.TimeDiff.Update(time.Now(), discordTime)
+	}
+
+	// update bucket
 	info, err := ExtractRateLimitInfo(resp, content)
 	if err != nil {
 		return // TODO: logging
