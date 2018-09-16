@@ -28,7 +28,7 @@ type HelloCallback = func(session Session, h *Hello)
 // EventPresencesReplace Holds and array of presence update objects
 const EventPresencesReplace = "PRESENCES_REPLACE"
 
-// PresencesReplace holds teh event content
+// PresencesReplace holds the event content
 type PresencesReplace struct {
 	Presnces []*PresenceUpdate // TODO: json tag
 }
