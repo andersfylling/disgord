@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -172,10 +171,7 @@ func NewRateLimit() *RateLimit {
 	}
 }
 
-// RateLimit
-// TODO: a bucket is created for every request. Might want to delete them after a while. seriously.
-// `/users/1` has the same ratelimiter as `/users/2`
-// but any major endpoint prefix does not: `/channels/1` != `/channels/2`
+// RateLimit ...
 type RateLimit struct {
 	buckets  map[string]*Bucket
 	global   *Bucket
@@ -184,29 +180,11 @@ type RateLimit struct {
 	mu sync.RWMutex
 }
 
+// Bucket returns a bucket given the key (or ID) for a rate limit bucket. If
+// no bucket exists for the key, one will be created.
 func (r *RateLimit) Bucket(key string) *Bucket {
 	var bucket *Bucket
 	var exists bool
-
-	// check for major endpoints
-	// TODO: this feels frail
-	var endpoint string
-	for _, major := range majorEndpointPrefixes {
-		if !strings.HasPrefix(key, major) {
-			continue
-		}
-		pathAfterMajor := strings.TrimPrefix(key, major)
-		endpoint = major
-		for _, r := range pathAfterMajor {
-			if r == '/' {
-				break
-			}
-			endpoint += string(r)
-		}
-	}
-	if endpoint == "" {
-		endpoint = key
-	}
 
 	r.mu.Lock()
 	if bucket, exists = r.buckets[key]; !exists {
@@ -221,6 +199,8 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 	return bucket
 }
 
+// RateLimitTimeout returns the time left before the rate limit for a given key
+// is reset. This takes the global rate limit into account.
 func (r *RateLimit) RateLimitTimeout(key string) int64 {
 	global := r.global.timeout(r.TimeDiff.Now())
 
@@ -233,6 +213,8 @@ func (r *RateLimit) RateLimitTimeout(key string) int64 {
 	return unique
 }
 
+// RateLimited checks if the given key is rate limited. This takes the global
+// rate limiter into account.
 func (r *RateLimit) RateLimited(key string) bool {
 	if r.global.limited(r.TimeDiff.Now()) {
 		return true
@@ -242,7 +224,8 @@ func (r *RateLimit) RateLimited(key string) bool {
 	return bucket.limited(r.TimeDiff.Now())
 }
 
-// WaitTime check both the global and route specific rate limiter bucket before sending any REST requests
+// WaitTime get's the remaining time before another request can be made.
+// returns a time.Duration of milliseconds.
 func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	timeout := int64(0)
 	if r.RateLimited(req.Ratelimiter) {
@@ -253,7 +236,8 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	return time.Duration(timeout) * time.Millisecond
 }
 
-// TODO: rewrite
+// UpdateRegisters updates the relevant buckets and time desync between the
+// client and the Discord servers.
 func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []byte) {
 	// update time difference
 	if discordTime, err := HeaderToTime(&resp.Header); err == nil {
@@ -283,6 +267,7 @@ func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []b
 
 // ---------------------
 
+// Bucket holds the rate limit info for a given key or endpoint
 type Bucket struct {
 	endpoint  string // endpoint where rate limit is applied. endpoint = key
 	limit     uint64 // total allowed requests before rate limit
