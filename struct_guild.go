@@ -292,12 +292,66 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	return nil
 }
 
+func (g *Guild) addMember(member *Member) error {
+	if member == nil {
+		return errors.New("member was nil")
+	}
+	// TODO: implement sorting for faster searching later
+	g.Members = append(g.Members, member)
+
+	return nil
+}
+
+func (g *Guild) AddMembers(members []*Member) {
+	g.Lock()
+	defer g.Unlock()
+
+	for _, member := range members {
+		g.addMember(member)
+	}
+}
+
 func (g *Guild) AddMember(member *Member) error {
 	g.Lock()
 	defer g.Unlock()
 
-	// TODO: implement sorting for faster searching later
-	g.Members = append(g.Members, member)
+	return g.addMember(member)
+}
+
+func (g *Guild) LoadAllMembers(session Session) (err error) {
+	g.Lock()
+	defer g.Unlock()
+
+	// TODO-1: check cache
+	// TODO-2: what if members have already been loaded? use Guild.MembersCount?
+
+	var lastCount = 1000
+	var failsafe bool
+	// TODO-3: failsafe is set when the number of users returned is less
+	// than 1,000 two times
+	highestSnowflake := NewSnowflake(0)
+
+	for {
+		if lastCount == 0 || failsafe {
+			break
+		}
+		var members []*Member
+		members, err = session.GetGuildMembers(g.ID, highestSnowflake, 1000)
+		if err != nil {
+			return
+		}
+
+		for _, member := range members {
+			g.addMember(member)
+
+			s := member.User.ID
+			if s > highestSnowflake {
+				highestSnowflake = s
+			}
+		}
+
+		lastCount = len(members)
+	}
 
 	return nil
 }
@@ -366,6 +420,7 @@ func (g *Guild) Role(id Snowflake) (role *Role, err error) {
 //	}
 //}
 
+// DeleteRoleByID remove a role from the guild struct
 func (g *Guild) DeleteRoleByID(ID Snowflake) {
 	g.Lock()
 	defer g.Unlock()
@@ -506,20 +561,19 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	g.RLock()
 	guild.Lock()
 
-	// TODO-guild: handle string pointers
 	guild.ID = g.ID
 	guild.Name = g.Name
 	guild.Owner = g.Owner
 	guild.OwnerID = g.OwnerID
 	guild.Permissions = g.Permissions
 	guild.Region = g.Region
-	guild.AfkChannelID = g.AfkChannelID
 	guild.AfkTimeout = g.AfkTimeout
 	guild.EmbedEnabled = g.EmbedEnabled
 	guild.EmbedChannelID = g.EmbedChannelID
 	guild.VerificationLevel = g.VerificationLevel
 	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
 	guild.ExplicitContentFilter = g.ExplicitContentFilter
+	guild.Features = g.Features
 	guild.MFALevel = g.MFALevel
 	guild.WidgetEnabled = g.WidgetEnabled
 	guild.WidgetChannelID = g.WidgetChannelID
@@ -533,17 +587,21 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		id := *g.ApplicationID
 		guild.ApplicationID = &id
 	}
-	if g.Icon != nil {
-		icon := *g.Icon
-		guild.Icon = &icon
-	}
 	if g.Splash != nil {
 		splash := *g.Splash
 		guild.Splash = &splash
 	}
+	if g.Icon != nil {
+		icon := *g.Icon
+		guild.Icon = &icon
+	}
 	if g.AfkChannelID != nil {
 		channel := *g.AfkChannelID
 		guild.AfkChannelID = &channel
+	}
+	if g.SystemChannelID != nil {
+		channel := *g.SystemChannelID
+		guild.SystemChannelID = &channel
 	}
 	if g.JoinedAt != nil {
 		joined := *g.JoinedAt
@@ -551,23 +609,40 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	}
 
 	for _, roleP := range g.Roles {
+		if roleP == nil {
+			continue
+		}
 		guild.Roles = append(guild.Roles, roleP.DeepCopy().(*Role))
 	}
 	for _, emojiP := range g.Emojis {
+		if emojiP == nil {
+			continue
+		}
 		guild.Emojis = append(guild.Emojis, emojiP.DeepCopy().(*Emoji))
 	}
-	guild.Features = g.Features
 
 	for _, vsP := range g.VoiceStates {
+		if vsP == nil {
+			continue
+		}
 		guild.VoiceStates = append(guild.VoiceStates, vsP.DeepCopy().(*VoiceState))
 	}
 	for _, memberP := range g.Members {
+		if memberP == nil {
+			continue
+		}
 		guild.Members = append(guild.Members, memberP.DeepCopy().(*Member))
 	}
 	for _, channelP := range g.Channels {
+		if channelP == nil {
+			continue
+		}
 		guild.Channels = append(guild.Channels, channelP.DeepCopy().(*Channel))
 	}
 	for _, presenceP := range g.Presences {
+		if presenceP == nil {
+			continue
+		}
 		guild.Presences = append(guild.Presences, presenceP.DeepCopy().(*UserPresence))
 	}
 
