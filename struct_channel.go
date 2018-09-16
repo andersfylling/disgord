@@ -189,9 +189,9 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (c *Channel) Clear() {
-	// TODO
-}
+//func (c *Channel) Clear() {
+//	// TODO
+//}
 
 // Fetch check if there are any updates to the channel values
 //func (c *Channel) Fetch(client ChannelFetcher) (err error) {
@@ -416,9 +416,41 @@ func (m *Message) RemoveReaction(id Snowflake)    {}
 
 // https://discordapp.com/developers/docs/resources/channel#reaction-object
 type Reaction struct {
+	sync.RWMutex `json:"-"`
+
 	Count uint          `json:"count"`
 	Me    bool          `json:"me"`
 	Emoji *PartialEmoji `json:"Emoji"`
+}
+
+func (r *Reaction) DeepCopy() (copy interface{}) {
+	copy = &Reaction{}
+	r.CopyOverTo(copy)
+
+	return
+}
+
+func (r *Reaction) CopyOverTo(other interface{}) (err error) {
+	var reaction *Reaction
+	var valid bool
+	if reaction, valid = other.(*Reaction); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *Reaction")
+		return
+	}
+
+	r.RLock()
+	reaction.Lock()
+
+	reaction.Count = r.Count
+	reaction.Me = r.Me
+
+	if r.Emoji != nil {
+		reaction.Emoji = r.Emoji.DeepCopy().(*Emoji)
+	}
+
+	r.RUnlock()
+	reaction.Unlock()
+	return
 }
 
 // -----------------
@@ -429,6 +461,8 @@ type Reaction struct {
 
 // ChannelEmbed https://discordapp.com/developers/docs/resources/channel#embed-object
 type ChannelEmbed struct {
+	sync.RWMutex `json:"-"`
+
 	Title       string                 `json:"title"`       // title of embed
 	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
 	Description string                 `json:"description"` // description of embed
@@ -444,53 +478,312 @@ type ChannelEmbed struct {
 	Fields      []*ChannelEmbedField   `json:"fields"`      //	array of embed field objects	fields information
 }
 
+func (c *ChannelEmbed) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbed{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbed) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbed
+	var valid bool
+	if embed, valid = other.(*ChannelEmbed); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbed")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.Title = c.Title
+	embed.Type = c.Type
+	embed.Description = c.Description
+	embed.URL = c.URL
+	embed.Timestamp = c.Timestamp
+	embed.Color = c.Color
+
+	if c.Footer != nil {
+		embed.Footer = c.Footer.DeepCopy().(*ChannelEmbedFooter)
+	}
+	if c.Image != nil {
+		embed.Image = c.Image.DeepCopy().(*ChannelEmbedImage)
+	}
+	if c.Thumbnail != nil {
+		embed.Thumbnail = c.Thumbnail.DeepCopy().(*ChannelEmbedThumbnail)
+	}
+	if c.Video != nil {
+		embed.Video = c.Video.DeepCopy().(*ChannelEmbedVideo)
+	}
+	if c.Provider != nil {
+		embed.Provider = c.Provider.DeepCopy().(*ChannelEmbedProvider)
+	}
+	if c.Author != nil {
+		embed.Author = c.Author.DeepCopy().(*ChannelEmbedAuthor)
+	}
+
+	embed.Fields = make([]*ChannelEmbedField, len(c.Fields))
+	for i, field := range c.Fields {
+		embed.Fields[i] = field.DeepCopy().(*ChannelEmbedField)
+	}
+
+	c.RUnlock()
+	embed.Unlock()
+	return
+}
+
 // ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
 type ChannelEmbedThumbnail struct {
-	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
-	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	sync.RWMutex `json:"-"`
+
+	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
 	Height   int    `json:"height,omitempty"`    // ?| , height of image
 	Width    int    `json:"width,omitempty"`     // ?| , width of image
+}
+
+func (c *ChannelEmbedThumbnail) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedThumbnail{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedThumbnail) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedThumbnail
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedThumbnail); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedThumbnail")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.URL = c.URL
+	embed.ProxyURL = c.ProxyURL
+	embed.Height = c.Height
+	embed.Width = c.Width
+
+	c.RUnlock()
+	embed.Unlock()
+	return
 }
 
 // ChannelEmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
 type ChannelEmbedVideo struct {
-	Url    string `json:"url,omitempty"`    // ?| , source url of video
+	sync.RWMutex `json:"-"`
+
+	URL    string `json:"url,omitempty"`    // ?| , source url of video
 	Height int    `json:"height,omitempty"` // ?| , height of video
 	Width  int    `json:"width,omitempty"`  // ?| , width of video
 }
 
+func (c *ChannelEmbedVideo) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedVideo{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedVideo) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedVideo
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedVideo); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedVideo")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.URL = c.URL
+	embed.Height = c.Height
+	embed.Width = c.Width
+
+	c.RUnlock()
+	embed.Unlock()
+	return
+}
+
 // ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
 type ChannelEmbedImage struct {
-	Url      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
-	ProxyUrl string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
+	sync.RWMutex `json:"-"`
+
+	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
+	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
 	Height   int    `json:"height,omitempty"`    // ?| , height of image
 	Width    int    `json:"width,omitempty"`     // ?| , width of image
 }
 
+func (c *ChannelEmbedImage) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedImage{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedImage) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedImage
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedImage); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedImage")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.URL = c.URL
+	embed.ProxyURL = c.ProxyURL
+	embed.Height = c.Height
+	embed.Width = c.Width
+
+	c.RUnlock()
+	embed.Unlock()
+	return
+}
+
 // ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
 type ChannelEmbedProvider struct {
+	sync.RWMutex `json:"-"`
+
 	Name string `json:"name,omitempty"` // ?| , name of provider
-	Url  string `json:"url,omitempty"`  // ?| , url of provider
+	URL  string `json:"url,omitempty"`  // ?| , url of provider
+}
+
+func (c *ChannelEmbedProvider) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedProvider{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedProvider) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedProvider
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedProvider); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedProvider")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.URL = c.URL
+	embed.Name = c.Name
+
+	c.RUnlock()
+	embed.Unlock()
+	return
 }
 
 // ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
 type ChannelEmbedAuthor struct {
+	sync.RWMutex `json:"-"`
+
 	Name         string `json:"name,omitempty"`           // ?| , name of author
-	Url          string `json:"url,omitempty"`            // ?| , url of author
-	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
-	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
+	URL          string `json:"url,omitempty"`            // ?| , url of author
+	IconURL      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
+	ProxyIconURL string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
+}
+
+func (c *ChannelEmbedAuthor) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedAuthor{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedAuthor) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedAuthor
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedAuthor); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedAuthor")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.Name = c.Name
+	embed.URL = c.URL
+	embed.IconURL = c.IconURL
+	embed.ProxyIconURL = c.ProxyIconURL
+
+	c.RUnlock()
+	embed.Unlock()
+	return
 }
 
 // ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
 type ChannelEmbedFooter struct {
+	sync.RWMutex `json:"-"`
+
 	Text         string `json:"text"`                     //  | , url of author
-	IconUrl      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
-	ProxyIconUrl string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
+	IconURL      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
+	ProxyIconURL string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
+}
+
+func (c *ChannelEmbedFooter) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedFooter{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedFooter) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedFooter
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedFooter); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedFooter")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.Text = c.Text
+	embed.IconURL = c.IconURL
+	embed.ProxyIconURL = c.ProxyIconURL
+
+	c.RUnlock()
+	embed.Unlock()
+	return
 }
 
 // ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
 type ChannelEmbedField struct {
+	sync.RWMutex `json:"-"`
+
 	Name   string `json:"name"`           //  | , name of the field
 	Value  string `json:"value"`          //  | , value of the field
 	Inline bool   `json:"bool,omitempty"` // ?| , whether or not this field should display inline
+}
+
+func (c *ChannelEmbedField) DeepCopy() (copy interface{}) {
+	copy = &ChannelEmbedField{}
+	c.CopyOverTo(copy)
+
+	return
+}
+
+func (c *ChannelEmbedField) CopyOverTo(other interface{}) (err error) {
+	var embed *ChannelEmbedField
+	var valid bool
+	if embed, valid = other.(*ChannelEmbedField); !valid {
+		err = NewErrorUnsupportedType("given interface{} is not of type *ChannelEmbedField")
+		return
+	}
+
+	c.RLock()
+	embed.Lock()
+
+	embed.Name = c.Name
+	embed.Value = c.Value
+	embed.Inline = c.Inline
+
+	c.RUnlock()
+	embed.Unlock()
+	return
 }
