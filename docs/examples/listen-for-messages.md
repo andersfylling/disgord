@@ -10,7 +10,10 @@ if err != nil {
 }
 
 // create a handler and bind it to new message events
-session.AddListener(disgord.EventMessageCreate, func(session Session, data *disgord.MessageCreate) {
+// handlers/listener are run in sequence if you register more than one
+// so you should not need to worry about locking your objects unless you do any
+// parallel computing with said objects
+session.AddListener(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
 })
 
@@ -21,8 +24,7 @@ if err != nil {
 }
 
 // Keep the socket connection alive, until you terminate the application
-<-termSignal
-session.Disconnect()
+session.DisconnectOnInterrupt()
 ```
 
 In addition, Disgord also supports the use of channels for handling events.
@@ -44,13 +46,16 @@ go func() {
         case data, alive := <- session.Evt().MessageCreateChan():
             if !alive {
                 fmt.Println("channel is dead")
-                break
+                return
             }
             msg = data.Message
         }
 
         // print the message
+        // locking in case you are using the same channel somewhere else as well
+        msg.RLock()
         fmt.Println(msg.Content)
+        msg.RUnlock()
     }
 }()
 
@@ -61,8 +66,7 @@ if err != nil {
 }
 
 // Keep the socket connection alive, until you terminate the application
-<-termSignal
-session.Disconnect()
+session.DisconnectOnInterrupt()
 ```
 
-> **Note:** That the use of the "termSignal" is a variable you must create yourself. It is highly recommended to handle terminal signals within your own system to do graceful shutdowns. Disgord does not have an internal mechanic for graceful shutdown so you must call the Disconnect function as shown above.
+> **Note:** That you might experience parallel handling of event objects if you choose to use channels. However, this will only happen if you use the same channel in two or more of your own goroutines.

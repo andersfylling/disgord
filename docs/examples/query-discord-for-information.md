@@ -37,6 +37,8 @@ if err != nil {
 ### Query Discord using the session interface
 > **Note:** It is assumed you understand how to create a session. You do not need to use Session.Connect and Session.Disconnect for _most_ REST queries.
 
+> **Note#2:** This is currently not a part of the Session interface, but will be added in a later version of Disgord.
+
 Channel methods - these are however commented out as of now.
 ```GoLang
 // The user id of this repository's owner

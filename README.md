@@ -10,13 +10,13 @@
 Missing caching. It's under development, but in the current state it does not exist.
 
 ## About
-GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Channel.SendMsg(session, &Message{...})` for simplicity/readability.
+GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
-Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the disgord REST implementations. The socketing is not complete, but does support all event types (using both channels and callbacks).
+Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the Disgord REST implementations. The socketing is not complete, but does support all event types that are documented (using both channels and callbacks).
 
 Note that caching is yet to be implemented. Versions from v0.5.1 and below, had caching to some degree, but was scrapped once a complete rework of the project structure was done.
 
-Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON.
+Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON. But does return custom error messages for some functions which can be type checked in a switch for a more readable error handling as well potentially giving access to more information.
 
 To get started see the examples in [docs](docs/examples)
 
@@ -45,7 +45,7 @@ github.com/andersfylling/disgord
 ```
 
 ## Contributing
-Please see the [CONTRIBUTING.md file](CONTRIBUTING.md)
+Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be useful to read this regardless if you have the time)
 
 ## Git branching model
 The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest branch" except the git tags (or releases).
@@ -67,12 +67,9 @@ Incoming events from the discord servers are parsed into respective structs and 
 ## Quick example
 > **NOTE:** To see more examples go visit the docs/examples folder.
 
-The following example is used as a prerequisite for the coming examples later on in this README file.
+The following example is used as a prerequisite for the coming examples later on in this README file. You can also call `NewSessionMustCompile` which will panic upon an error.
 ```go
 var err error
-termSignal := make(chan os.Signal, 1)
-signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
 sess, err := disgord.NewSession(&disgord.Config{
   Token: os.Getenv("DISGORD_TOKEN"),
 })
@@ -81,10 +78,10 @@ if err != nil {
 }
 ```
 
-Listening for events can be done in two ways. Firstly, the reactor pattern and secondly, a GoLang channel:
+Listening for events can be done in two ways. Firstly, the reactor pattern using handlers/listeners and secondly, GoLang channels:
 ```GoLang
 // add a event listener
-sess.AddListener(event.KeyGuildCreate, func(session Session, data *event.GuildCreate) {
+sess.AddListener(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreate) {
   guild := data.Guild
   // do something with guild
 })
@@ -112,11 +109,9 @@ if err != nil {
 }
 ```
 
-Remember that when you call Session.Connect() it is recommended to call Session.Disconnect for a graceful shutdown and closing channels and Goroutines.
+Remember that when you call Session.Connect() it is recommended to call Session.Disconnect for a graceful shutdown and closing channels and Goroutines. You can also use the `DisconnectOnInterrupt()` which listens for interupt signals:
 ```GoLang
-// keep the app alive until terminated
-<-termSignal
-sess.Disconnect()
+sess.DisconnectOnInterrupt()
 ```
 
 To retrieve information from the Discord REST API you utilize the Session interface as it will in the future implement features such as caching, control checks, etc
@@ -131,14 +126,17 @@ if err != nil {
 ```
 However, if you think the Session interface is incorrect (outdated cache, or another issue) you can bypass the interface and call the REST method directly while you wait for a patch:
 ```GoLang
-// bypassing the cache
-user, err = rest.GetUser(session.Req(), userID)
+// bypassing the session implementation of GetUser(userID)
+user, err = disgord.GetUser(session.Req(), userID)
 if err != nil {
    panic(err)
 }
 ```
 
 There's also another way to retrieve content: channels. These methods will return a GoLang channel to help with concurrency. However, their implementation is down prioritized and I recommend using the normal REST methods for now. (Currently only the Session.User method is working, and might be temporary deprecated).
+
+> Note! this has been removed from the Session interface. It will be added again in a later version of Disgord.
+
 ```GoLang
 // eg. retrieve a specific user from the Discord API using GoLang channels
 userResponse := <- sess.UserChan(userID) // sends a request to discord
@@ -165,12 +163,3 @@ user := userResponse.User
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```
-
-
-
-
-
-
-
-## Thanks to
-* [github.com/s1kx](https://github.com/s1kx) for different design suggestions.

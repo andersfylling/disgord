@@ -23,6 +23,9 @@ type Session interface {
 	// main modules
 	//
 
+	// give information about the bot/connected user
+	Myself() *User
+
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested. Note that this only holds http
@@ -313,6 +316,8 @@ type Client struct {
 	ws            websocket.DiscordWebsocket
 	socketEvtChan <-chan websocket.DiscordWSEvent
 
+	myself *User
+
 	// register listeners for events
 	evtDispatch *Dispatch
 
@@ -328,6 +333,19 @@ type Client struct {
 
 	// cache
 	state *Cache
+}
+
+func (c *Client) Myself() *User {
+	if c.myself == nil {
+		var err error
+		c.myself, err = c.GetCurrentUser()
+		if err != nil {
+			c.myself = nil
+			return nil // should this ever happen?
+		}
+	}
+
+	return c.myself
 }
 
 func (c *Client) logInfo(msg string) {
