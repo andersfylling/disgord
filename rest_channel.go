@@ -155,6 +155,7 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelPermissions(chanID),
 		Endpoint:    endpoint.ChannelPermission(chanID, overwriteID),
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -223,6 +224,7 @@ func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChanne
 		Ratelimiter: ratelimitChannelInvites(id),
 		Endpoint:    endpoint.ChannelInvites(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -389,6 +391,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 		Ratelimiter: ratelimitChannelRecipients(channelID),
 		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -580,6 +583,7 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages",
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -616,6 +620,7 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 		Ratelimiter: ratelimitChannelMessages(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -733,11 +738,11 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 		return
 	}
 
-	details := &httd.Request{
+	resp, _, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelMessagesDelete(chanID),
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(chanID),
-	}
-	resp, _, err := client.Post(details)
+		ContentType: httd.ContentTypeJSON,
+	})
 	if err != nil {
 		return
 	}

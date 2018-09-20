@@ -80,6 +80,7 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 		Ratelimiter: endpoint.Guilds(),
 		Endpoint:    endpoint.Guilds(),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -144,6 +145,7 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -227,6 +229,7 @@ func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildCha
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -256,6 +259,7 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params *Modi
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -353,6 +357,7 @@ func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGui
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -394,6 +399,7 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -424,6 +430,7 @@ func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurr
 		Ratelimiter: ratelimitGuildMembers(id),
 		Endpoint:    endpoint.GuildMembersMeNick(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -591,6 +598,7 @@ func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *Create
 	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID) + params.GetQueryString(),
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -677,6 +685,7 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 		Ratelimiter: ratelimitGuildRoles(id),
 		Endpoint:    endpoint.GuildRoles(id),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -711,6 +720,7 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRoles(guildID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	}
 	_, body, err := client.Patch(details)
 	if err != nil {
@@ -750,6 +760,7 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *Mod
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -926,6 +937,7 @@ func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *Creat
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrations(guildID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -959,6 +971,7 @@ func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflak
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -1052,6 +1065,7 @@ func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return

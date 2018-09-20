@@ -31,6 +31,7 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -136,6 +137,7 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -164,6 +166,7 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.WebhookToken(id, newWebhook.Token),
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -252,6 +255,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 	_, _, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitWebhook(params.WebhookID),
 		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return

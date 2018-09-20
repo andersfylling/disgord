@@ -165,6 +165,7 @@ type Request struct {
 	Ratelimiter string
 	Endpoint    string
 	JSONParams  interface{}
+	ContentType string
 }
 
 type Client struct {
@@ -246,9 +247,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 		return
 	}
 	req.Header = c.reqHeader
-	if r.JSONParams != nil {
-		req.Header.Set(ContentType, ContentTypeJSON)
-	}
+	req.Header.Set(ContentType, r.ContentType) // unique for each request
 
 	// send request
 	resp, err = c.httpClient.Do(req)

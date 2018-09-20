@@ -70,6 +70,7 @@ func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (re
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMe(),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -215,6 +216,7 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return

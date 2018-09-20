@@ -88,6 +88,7 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake, params *CreateGuild
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -120,6 +121,7 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake, params *M
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 		JSONParams:  params,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
