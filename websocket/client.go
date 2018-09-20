@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	. "github.com/andersfylling/snowflake"
 	"github.com/gorilla/websocket"
@@ -26,8 +27,9 @@ type Config struct {
 	ChannelBuffer uint
 
 	// for identify packets
-	Browser string
-	Device  string
+	Browser             string
+	Device              string
+	GuildLargeThreshold uint
 }
 
 func (c *Config) Validate() (err error) {
@@ -73,6 +75,10 @@ func (c *Config) Validate() (err error) {
 	if c.ChannelBuffer < 1 {
 		err = errors.New("Config.ChannelBuffer must be at least 1 or more")
 		return
+	}
+
+	if c.GuildLargeThreshold == 0 {
+		err = errors.New("Config.GuildLargeThreshold must be a number from 50 to and including 250")
 	}
 
 	return
@@ -137,7 +143,7 @@ type Pulsater interface {
 	LastHeartbeatAck() time.Time
 	HeartbeatWasRecieved(last time.Time) bool
 	GetSocketInfo() (time.Time, uint, uint)
-	PingServer(snr uint)
+	SendHeartbeat(snr uint)
 	HeartbeatAckMissingFix()
 }
 
@@ -148,6 +154,23 @@ type DiscordWebsocket interface {
 	Connect() (err error)
 	Disconnect() (err error)
 	MockEventChanReciever()
+	Emit(command string, data interface{}) error
+	RegisterEvent(event string)
+	RemoveEvent(event string)
+}
+
+func NewErrorUnsupportedEventName(event string) *ErrorUnsupportedEventName {
+	return &ErrorUnsupportedEventName{
+		info: "unsupported event name '" + event + "' was given",
+	}
+}
+
+type ErrorUnsupportedEventName struct {
+	info string
+}
+
+func (e *ErrorUnsupportedEventName) Error() string {
+	return e.info
 }
 
 // Client holds the web socket state and can be used directly in marshal/unmarshal to work with intance data
@@ -174,6 +197,11 @@ type Client struct {
 	sendChan           chan *gatewayPayload
 	discordWSEventChan chan DiscordWSEvent
 
+	// keep a list over event types that users are listening for
+	// anything else, we simply ignore and don't send any further
+	events      []string
+	eventsMutex sync.RWMutex
+
 	//Myself         *user.User  `json:"user"`
 	//MyselfSettings interface{} `json:"user_settings"`
 
@@ -184,6 +212,69 @@ type Client struct {
 	// heartbeat mutex keeps us from creating another pulser
 	pulseMutex sync.RWMutex
 	pulsating  int
+}
+
+func (c *Client) ListensForEvent(event string) int {
+	c.eventsMutex.RLock()
+	defer c.eventsMutex.RUnlock()
+	var i int
+	for i = range c.events {
+		if event == c.events[i] {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (c *Client) RegisterEvent(event string) {
+	if c.ListensForEvent(event) != -1 {
+		return
+	}
+
+	c.eventsMutex.Lock()
+	c.events = append(c.events, event)
+	c.eventsMutex.Unlock()
+}
+
+func (c *Client) RemoveEvent(event string) {
+	var i int
+	if i = c.ListensForEvent(event); i == -1 {
+		return
+	}
+
+	c.eventsMutex.Lock()
+	c.events[i] = c.events[len(c.events)-1]
+	c.events = c.events[:len(c.events)-1]
+	c.eventsMutex.Unlock()
+}
+
+// Emit emits a command to the Discord Socket API
+func (c *Client) Emit(command string, data interface{}) (err error) {
+	var op uint
+	switch command {
+	case event.Heartbeat:
+		op = opcode.Heartbeat
+	case event.Identify:
+		op = opcode.Identify
+	case event.Resume:
+		op = opcode.Resume
+	case event.RequestGuildMembers:
+		op = opcode.RequestGuildMembers
+	case event.VoiceStateUpdate:
+		op = opcode.VoiceStateUpdate
+	case event.StatusUpdate:
+		op = opcode.StatusUpdate
+	default:
+		err = NewErrorUnsupportedEventName(command)
+		return
+	}
+
+	c.sendChan <- &gatewayPayload{
+		Op:   op,
+		Data: data,
+	}
+	return
 }
 
 // MockEventChanReciever removes events from the channel such that the next
@@ -226,8 +317,8 @@ func (client *Client) GetSocketInfo() (time.Time, uint, uint) {
 
 }
 
-func (client *Client) PingServer(snr uint) {
-	client.sendChan <- &gatewayPayload{Op: opcode.Ping, Data: snr}
+func (client *Client) SendHeartbeat(snr uint) {
+	client.sendChan <- &gatewayPayload{Op: opcode.Heartbeat, Data: snr}
 }
 
 func (client *Client) HeartbeatAckMissingFix() {

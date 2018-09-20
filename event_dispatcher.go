@@ -450,11 +450,14 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 		d.listeners[evtName][index] = d.listeners[evtName][len(d.listeners[evtName])-1]
 		d.listeners[evtName][len(d.listeners[evtName])-1] = nil
 		d.listeners[evtName] = d.listeners[evtName][:len(d.listeners[evtName])-1]
+
+		if len(d.listeners[evtName]) == 0 {
+			// TODO: call removeEvent from socket pkg
+		}
 	}
 
 	// remove the once only register
-	_, exists := d.listenOnceOnly[evtName]
-	if exists {
+	if _, exists := d.listenOnceOnly[evtName]; exists {
 		delete(d.listenOnceOnly, evtName)
 	}
 }

@@ -1,14 +1,18 @@
 package opcode
 
 const (
-	DiscordEvent   = 0
-	Ping           = 1
-	Identity       = 2
-	Resume         = 6
-	Reconnect      = 7
-	InvalidSession = 9
-	Hello          = 10
-	Heartbeat      = 11
+	DiscordEvent uint = iota
+	Heartbeat
+	Identify
+	StatusUpdate
+	VoiceStateUpdate
+	VoiceServerPing
+	Resume
+	Reconnect
+	RequestGuildMembers
+	InvalidSession
+	Hello
+	HeartbeatAck
 )
 
 type OperationCodeHolder interface {

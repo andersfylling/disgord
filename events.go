@@ -593,10 +593,10 @@ const EventPresenceUpdate = "PRESENCE_UPDATE"
 
 // PresenceUpdate	user's presence was updated in a guild
 type PresenceUpdate struct {
-	User    *User         `json:"user"`
-	RoleIDs []Snowflake   `json:"roles"`
-	Game    *UserActivity `json:"game"`
-	GuildID Snowflake     `json:"guild_id"`
+	User    *User       `json:"user"`
+	RoleIDs []Snowflake `json:"roles"`
+	Game    *Activity   `json:"game"`
+	GuildID Snowflake   `json:"guild_id"`
 
 	// Status either "idle", "dnd", "online", or "offline"
 	// TODO: constants somewhere..

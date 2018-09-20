@@ -192,14 +192,14 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func NewUserActivity() (activity *UserActivity) {
-	return &UserActivity{
+func NewActivity() (activity *Activity) {
+	return &Activity{
 		Timestamps: []*ActivityTimestamp{},
 	}
 }
 
-// UserActivity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
-type UserActivity struct {
+// Activity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
+type Activity struct {
 	sync.RWMutex `json:"-"`
 
 	Name          string               `json:"name"`                     // the activity's name
@@ -216,18 +216,18 @@ type UserActivity struct {
 	Flags         int                  `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
-func (a *UserActivity) DeepCopy() (copy interface{}) {
-	copy = &UserActivity{}
+func (a *Activity) DeepCopy() (copy interface{}) {
+	copy = &Activity{}
 	a.CopyOverTo(copy)
 
 	return
 }
 
-func (a *UserActivity) CopyOverTo(other interface{}) (err error) {
+func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	var ok bool
-	var activity *UserActivity
-	if activity, ok = other.(*UserActivity); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *UserActivity")
+	var activity *Activity
+	if activity, ok = other.(*Activity); !ok {
+		err = NewErrorUnsupportedType("given interface{} was not of type *Activity")
 		return
 	}
 
@@ -407,12 +407,12 @@ func NewUserPresence() *UserPresence {
 type UserPresence struct {
 	sync.RWMutex `json:"-"`
 
-	User    *User         `json:"user"`
-	Roles   []Snowflake   `json:"roles"`
-	Game    *UserActivity `json:"activity"`
-	GuildID Snowflake     `json:"guild_id"`
-	Nick    string        `json:"nick"`
-	Status  string        `json:"status"`
+	User    *User       `json:"user"`
+	Roles   []Snowflake `json:"roles"`
+	Game    *Activity   `json:"activity"`
+	GuildID Snowflake   `json:"guild_id"`
+	Nick    string      `json:"nick"`
+	Status  string      `json:"status"`
 }
 
 func (p *UserPresence) String() string {
@@ -439,7 +439,7 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 
 	presence.User = p.User.DeepCopy().(*User)
 	presence.Roles = p.Roles
-	presence.Game = p.Game.DeepCopy().(*UserActivity)
+	presence.Game = p.Game.DeepCopy().(*Activity)
 	presence.GuildID = p.GuildID
 	presence.Nick = p.Nick
 	presence.Status = p.Status

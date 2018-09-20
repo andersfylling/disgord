@@ -5,14 +5,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-)
-
-const (
-	ReadyKey   = "READY"
-	ResumedKey = "RESUMED"
 )
 
 func (c *Client) opHandlerEvt(gp *gatewayEvent) {
@@ -23,10 +19,15 @@ func (c *Client) opHandlerEvt(gp *gatewayEvent) {
 	c.incrementSequenceNumber()
 
 	// always store the session id
-	if gp.EventName == ReadyKey {
+	if gp.EventName == event.Ready {
 		c.updateSession(gp)
-	} else if gp.EventName == ResumedKey {
+	} else if gp.EventName == event.Resume {
 		// eh? debugging.
+	} else if gp.Op == opcode.DiscordEvent {
+		// make sure we care about the event type
+		if c.ListensForEvent(gp.EventName) == -1 {
+			return
+		}
 	}
 
 	// dispatch events
@@ -49,10 +50,6 @@ func (c *Client) operationHandlers() {
 			switch opcode.ExtractFrom(gp) {
 			case opcode.DiscordEvent:
 				c.opHandlerEvt(gp)
-			case opcode.Ping:
-				// ping
-				snr := c.SequenceNumber()
-				c.sendChan <- &gatewayPayload{Op: opcode.Ping, Data: &snr}
 			case opcode.Reconnect:
 				// reconnect
 				c.Disconnect()
@@ -67,6 +64,10 @@ func (c *Client) operationHandlers() {
 						logrus.Error(err)
 					}
 				}()
+			case opcode.Heartbeat:
+				// https://discordapp.com/developers/docs/topics/gateway#heartbeating
+				_, _, snr := c.GetSocketInfo()
+				c.Emit(event.Heartbeat, snr)
 			case opcode.Hello:
 				// hello
 				helloPk := &helloPacket{}
@@ -79,7 +80,7 @@ func (c *Client) operationHandlers() {
 				c.Unlock()
 
 				sendHelloPacket(c, gp, helloPk.HeartbeatInterval)
-			case opcode.Heartbeat:
+			case opcode.HeartbeatAck:
 				// heartbeat received
 				c.Lock()
 				c.lastHeartbeatAck = time.Now()
@@ -106,24 +107,20 @@ func sendHelloPacket(client *Client, gp *gatewayEvent, heartbeatInterval uint) {
 		if err != nil {
 			logrus.Error(err)
 		}
-	} else {
-		client.RLock()
-		token := client.conf.Token
-		session := client.SessionID
-		sequence := client.sequenceNumber
-		client.RUnlock()
-
-		resume := &gatewayPayload{
-			Op: opcode.Resume,
-			Data: struct {
-				Token      string `json:"token"`
-				SessionID  string `json:"session_id"`
-				SequenceNr *uint  `json:"seq"`
-			}{token, session, &sequence},
-		}
-
-		client.sendChan <- resume
+		return
 	}
+
+	client.RLock()
+	token := client.conf.Token
+	session := client.SessionID
+	sequence := client.sequenceNumber
+	client.RUnlock()
+
+	client.Emit(event.Resume, struct {
+		Token      string `json:"token"`
+		SessionID  string `json:"session_id"`
+		SequenceNr *uint  `json:"seq"`
+	}{token, session, &sequence})
 }
 
 func pulsate(client Pulsater, ws *websocket.Conn, disconnected chan struct{}) {
@@ -141,10 +138,11 @@ func pulsate(client Pulsater, ws *websocket.Conn, disconnected chan struct{}) {
 	var snr uint
 	for {
 		last, interval, snr = client.GetSocketInfo()
-		client.PingServer(snr)
+		client.SendHeartbeat(snr)
 
 		// verify the heartbeat ACK
 		go func(client Pulsater, last time.Time) {
+			// TODO
 			heartbeatResponseDeadline := (3 * time.Second) % (time.Duration(interval) * time.Millisecond)
 			<-time.After(heartbeatResponseDeadline)
 			if !client.HeartbeatWasRecieved(last) {
@@ -179,7 +177,7 @@ func sendIdentityPacket(client *Client) (err error) {
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
 		}{runtime.GOOS, client.conf.Browser, client.conf.Device},
-		LargeThreshold: 250,
+		LargeThreshold: client.conf.GuildLargeThreshold,
 		// Presence: struct {
 		// 	Since  *uint       `json:"since"`
 		// 	Game   interface{} `json:"game"`
@@ -192,11 +190,6 @@ func sendIdentityPacket(client *Client) (err error) {
 		identityPayload.Shard = &[2]uint{uint(client.ShardID), client.ShardCount}
 	}
 
-	identity := &gatewayPayload{
-		Op:   opcode.Identity,
-		Data: identityPayload,
-	}
-
-	client.sendChan <- identity
-	return nil
+	err = client.Emit(event.Identify, identityPayload)
+	return
 }

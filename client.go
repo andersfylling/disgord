@@ -55,7 +55,12 @@ type Session interface {
 	// module wrappers
 	//
 
-	// event callbacks
+	// event handlers
+	On(event string, handler ...interface{})
+	Emit(command SocketCommand, dataPointer interface{})
+	//Use(middleware ...interface{}) // TODO: is this useful?
+
+	// event callbacks (deprecated)
 	AddListener(evtName string, callback interface{})
 	AddListenerOnce(evtName string, callback interface{})
 
@@ -198,6 +203,11 @@ type Config struct {
 	LoadAllRoles     bool
 	LoadAllPresences bool
 
+	Debug bool
+
+	// your project name, name of bot, or whatever
+	ProjectName string
+
 	//Logger logger.Logrus
 }
 
@@ -236,15 +246,19 @@ func NewClient(conf *Config) (*Client, error) {
 	if conf.APIEncoding == "" {
 		conf.APIEncoding = JSONEncoding
 	}
+	if conf.ProjectName == "" {
+		conf.ProjectName = LibraryInfo()
+	}
 	dws, err := websocket.NewClient(&websocket.Config{
 		// user settings
 		Token:      conf.Token,
 		HTTPClient: conf.HTTPClient,
-		Debug:      false,
+		Debug:      conf.Debug,
 
 		// identity
-		Browser: "Disgord",
-		Device:  "Disgord",
+		Browser:             LibraryInfo(),
+		Device:              conf.ProjectName,
+		GuildLargeThreshold: 250, // TODO: config
 
 		// lib specific
 		DAPIVersion:   conf.APIVersion,
@@ -428,15 +442,37 @@ func (c *Client) State() Cacher {
 	return c.state
 }
 
+func (c *Client) On(event string, handlers ...interface{}) {
+	c.ws.RegisterEvent(event)
+	for _, handler := range handlers {
+		c.evtDispatch.AddHandler(event, handler)
+	}
+}
+
+func (c *Client) Once(event string, handlers ...interface{}) {
+	c.ws.RegisterEvent(event)
+	for _, handler := range handlers {
+		c.evtDispatch.AddHandlerOnce(event, handler)
+	}
+}
+func (c *Client) Emit(command SocketCommand, data interface{}) {
+	switch command {
+	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
+	default:
+		return
+	}
+	c.ws.Emit(command, data)
+}
+
 // AddListener register a listener for a specific event key/type
 // (see Key...)
 func (c *Client) AddListener(evtName string, listener interface{}) {
-	c.evtDispatch.AddHandler(evtName, listener)
+	c.On(evtName, listener)
 }
 
 // AddListenerOnce not implemented. Do not use.
 func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
-	c.evtDispatch.AddHandlerOnce(evtName, listener)
+	c.Once(evtName, listener)
 }
 
 // Generic CRUDS
