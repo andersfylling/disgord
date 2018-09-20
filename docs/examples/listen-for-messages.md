@@ -13,7 +13,7 @@ if err != nil {
 // handlers/listener are run in sequence if you register more than one
 // so you should not need to worry about locking your objects unless you do any
 // parallel computing with said objects
-session.AddListener(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
 })
 

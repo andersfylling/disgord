@@ -35,7 +35,7 @@ func main() {
     panic(err)
   }
 
-  session.AddListener(disgord.EventMessageCreate, autoDeleteNewMessages)
+  session.On(disgord.EventMessageCreate, autoDeleteNewMessages)
 
   // connect to the discord gateway to receive events
   err = session.Connect()

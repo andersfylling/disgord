@@ -81,7 +81,7 @@ if err != nil {
 Listening for events can be done in two ways. Firstly, the reactor pattern using handlers/listeners and secondly, GoLang channels:
 ```GoLang
 // add a event listener
-sess.AddListener(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreate) {
+sess.On(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreate) {
   guild := data.Guild
   // do something with guild
 })

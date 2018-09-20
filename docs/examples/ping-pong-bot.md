@@ -12,7 +12,7 @@ if err != nil {
 }
 
 // create a handler and bind it to new message events
-session.AddListener(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     msg := data.Message
 
     fmt.Printf("user{%s} said: `%s`\n", msg.Author.Username, msg.Content) // noob logging

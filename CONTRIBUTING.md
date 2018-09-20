@@ -69,7 +69,7 @@ I won't accept pull requests where the author has created a singleton structure.
 
 > **Note:** While you are free to ask questions, given that you add the [help] prefix. You'll get faster results by using the resources below.
 
-This repository has it's own discord guild/server: https://discord.gg/KjbVrak
+This repository has it's own discord guild/server: https://discord.gg/qBVmnq9
 Using the live chat application will most likely give you a faster result.
 
 ## What Should I Know Before I Get Started?
@@ -82,6 +82,12 @@ Using the live chat application will most likely give you a faster result.
 > Also known as listeners/callbacks. The event driven architecture of Disgord is uses the react pattern and as such the listeners can be referred to as handlers.
 
 Disgord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence and that will not change.
+
+```GoLang
+Session.On(disgord.EventMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+    // ...
+})
+```
 
 #### Channels
 > An alternative way to listen for events
