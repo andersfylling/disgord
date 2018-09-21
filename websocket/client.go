@@ -409,112 +409,6 @@ func (c *Client) DiscordWSEventChan() <-chan DiscordWSEvent {
 	return c.discordWSEventChan
 }
 
-
-func discordSocketUnmarshaller(data []byte) (evt *gatewayEvent, err error, optimized bool) {
-	var i int
-	evt = &gatewayEvent{} // todo: is stack allocation faster?
-	//var b = string(data[i])
-
-	// t
-	t := []byte{
-		'{', '"', 't', '"', ':',
-	}
-	for i = range t {
-		if t[i] != data[i] {
-			err = unmarshal(data, evt)
-			return
-		}
-	}
-	i += 1 // jump to next char
-	//b = string(data[i])
-	if data[i] == 'n' { // null
-		i += 4 // skip `null`
-	} else {
-		// extract the t value
-		var val strings.Builder
-		i += 1 // skip `"`
-		for ; data[i] != '"'; i++ {
-			val.WriteByte(data[i])
-			//		b = string(data[i])
-		}
-		i += 1 // skip `"`
-		evt.EventName = val.String()
-	}
-
-	// s
-	i += 2 // skip `,"`
-	//b = string(data[i])
-	if data[i] != 's' {
-		err = unmarshal(data, evt)
-		return
-	}
-	i += 3 // skip `s":`
-	//b = string(data[i])
-	if data[i] == 'n' { // null value
-		i += 4 // skip `null`
-	} else {
-		// extract the s value
-		var val strings.Builder
-		for ; data[i] != ','; i++ {
-			//		b = string(data[i])
-			val.WriteByte(data[i])
-		}
-		var tmp uint64
-		tmp, err = strconv.ParseUint(val.String(), 10, 64)
-		if err != nil {
-			err = unmarshal(data, evt)
-			return
-		}
-		evt.SequenceNumber = uint(tmp)
-	}
-
-	// op
-	i += 2 // skip `,"`
-	//b = string(data[i])
-	if data[i] != 'o' { // o as in op
-		err = unmarshal(data, evt)
-		return
-	}
-	i += 4 // skip `op":`
-	//b = string(data[i])
-	if data[i] == 'n' { // null value
-		i += 4 // skip `null`
-	} else if data[i] == '0' {
-		evt.Op = 0
-		i += 1 // skip 0
-	} else {
-		// extract the op value
-		var val strings.Builder
-		for ; data[i] != ','; i++ {
-			//		b = string(data[i])
-			val.WriteByte(data[i])
-		}
-		var tmp uint64
-		tmp, err = strconv.ParseUint(val.String(), 10, 64)
-		if err != nil {
-			err = unmarshal(data, evt)
-			return
-		}
-		evt.Op = uint(tmp)
-	}
-
-	// data
-	i += 2 // skip `,"`
-	//b = string(data[i])
-	if data[i] != 'd' {
-		err = unmarshal(data, evt)
-		return
-	}
-	i += 3 // skip `d":`
-	//b = string(data[i])
-	evt.Data = data[i:len(data) - 1]
-	//b = string(evt.Data)
-
-	optimized = true
-	//if b == string('.') {}
-	return
-}
-
 func (c *Client) readPump() {
 	logrus.Debug("Listening for packets...")
 
@@ -555,16 +449,14 @@ func (c *Client) readPump() {
 		}
 
 		// parse to gateway payload object
-		evt, err, optimized := discordSocketUnmarshaller(packet)
+		evt := gatewayEvent{}
+		err = unmarshal(packet, &evt)
 		if err != nil {
 			logrus.Error(err)
 		}
-		if !optimized {
-			logrus.Warnf("could not optimize input %s", string(packet))
-		}
 
 		// notify operation listeners
-		c.operationChan <- evt
+		c.operationChan <- &evt
 	}
 }
 

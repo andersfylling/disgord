@@ -7,7 +7,7 @@ import (
 )
 
 func getAllJSONFiles(t *testing.T) (files [][]byte) {
-	for _, i := range []int{1,2,3,4} {
+	for _, i := range []int{1, 2, 3, 4} {
 		data, err := ioutil.ReadFile("testdata/" + strconv.Itoa(i) + ".json")
 		if err != nil {
 			t.Error(err)
@@ -15,7 +15,6 @@ func getAllJSONFiles(t *testing.T) (files [][]byte) {
 		}
 		files = append(files, data)
 	}
-
 
 	data, err := ioutil.ReadFile("testdata/large.json")
 	if err != nil {
@@ -27,17 +26,13 @@ func getAllJSONFiles(t *testing.T) (files [][]byte) {
 	return
 }
 
-
-
 func TestDiscordEvent_CustomUnmarshaller(t *testing.T) {
 	files := getAllJSONFiles(t)
 	for _, file := range files {
-		_, err, optimized := discordSocketUnmarshaller(file)
+		evt := gatewayEvent{}
+		err := unmarshal(file, &evt)
 		if err != nil {
 			t.Error(err)
-		}
-		if !optimized {
-			t.Error("not opimized")
 		}
 	}
 
@@ -48,15 +43,10 @@ func TestDiscordEvent_CustomUnmarshaller(t *testing.T) {
 			return
 		}
 
-		evt, err, optimized := discordSocketUnmarshaller(data)
+		evt := gatewayEvent{}
+		err = unmarshal(data, &evt)
 		if err != nil {
 			t.Error(err)
-		}
-		if optimized || evt == nil {
-			t.Error("was optimized")
-			if evt == nil {
-				t.Error("evt was nil")
-			}
 		}
 	})
 }
@@ -67,7 +57,8 @@ func BenchmarkEvent_CustomUnmarshal_smallJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		discordSocketUnmarshaller(data)
+		evt := gatewayEvent{}
+		evt.UnmarshalJSON(data)
 	}
 }
 
@@ -77,8 +68,8 @@ func BenchmarkEvent_Unmarshal_smallJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := &gatewayEvent{}
-		unmarshal(data, evt)
+		evt := gatewayEventJSON{}
+		unmarshal(data, &evt)
 	}
 }
 
@@ -88,7 +79,8 @@ func BenchmarkEvent_CustomUnmarshal_largeJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		discordSocketUnmarshaller(data)
+		evt := gatewayEvent{}
+		evt.UnmarshalJSON(data)
 	}
 }
 
@@ -98,7 +90,7 @@ func BenchmarkEvent_Unmarshal_largeJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := &gatewayEvent{}
-		unmarshal(data, evt)
+		evt := gatewayEventJSON{}
+		unmarshal(data, &evt)
 	}
 }

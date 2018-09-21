@@ -48,5 +48,8 @@ func unmarshalSTD(data []byte, v interface{}) (err error) {
 }
 
 func unmarshal(data []byte, v interface{}) error {
+	if j, has := v.(json.Unmarshaler); has { // 112ns/op => 125ns/op
+		return j.UnmarshalJSON(data)
+	}
 	return unmarshalJSONIterator(data, v)
 }
