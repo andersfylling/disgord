@@ -449,14 +449,14 @@ func (c *Client) readPump() {
 		}
 
 		// parse to gateway payload object
-		evt := gatewayEvent{}
-		err = unmarshal(packet, &evt)
+		evt := &gatewayEvent{}
+		err = evt.UnmarshalJSON(packet)
 		if err != nil {
 			logrus.Error(err)
 		}
 
 		// notify operation listeners
-		c.operationChan <- &evt
+		c.operationChan <- evt
 	}
 }
 
