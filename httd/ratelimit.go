@@ -19,13 +19,6 @@ const (
 	GlobalRateLimiterKey = ""
 )
 
-// const
-var majorEndpointPrefixes = []string{
-	"/channels/",
-	"/guilds/",
-	"/webhooks/",
-}
-
 type RateLimiter interface {
 	Bucket(key string) *Bucket
 	RateLimitTimeout(key string) int64
