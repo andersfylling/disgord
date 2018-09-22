@@ -25,10 +25,10 @@ type gatewayEventJSON struct {
 
 func (ge *gatewayEventJSON) gatewayEvent() *gatewayEvent {
 	return &gatewayEvent{
-		Op: ge.Op,
-		Data: ge.Data,
+		Op:             ge.Op,
+		Data:           ge.Data,
 		SequenceNumber: ge.SequenceNumber,
-		EventName: ge.EventName,
+		EventName:      ge.EventName,
 	}
 }
 
@@ -58,7 +58,7 @@ func (ge *gatewayEvent) UnmarshalJSON(data []byte) (err error) {
 			return
 		}
 	}
-	i += 1 // jump to next char
+	i += 1              // jump to next char
 	if data[i] == 'n' { // null
 		i += 4 // skip `null`
 	} else {
@@ -80,7 +80,7 @@ func (ge *gatewayEvent) UnmarshalJSON(data []byte) (err error) {
 		*ge = *evt.gatewayEvent()
 		return
 	}
-	i += 3 // skip `s":`
+	i += 3              // skip `s":`
 	if data[i] == 'n' { // null value
 		i += 4 // skip `null`
 	} else {
@@ -101,14 +101,14 @@ func (ge *gatewayEvent) UnmarshalJSON(data []byte) (err error) {
 	}
 
 	// op
-	i += 2 // skip `,"`
+	i += 2              // skip `,"`
 	if data[i] != 'o' { // o as in op
 		evt := gatewayEventJSON{}
 		err = unmarshal(data, &evt)
 		*ge = *evt.gatewayEvent()
 		return
 	}
-	i += 4 // skip `op":`
+	i += 4              // skip `op":`
 	if data[i] == 'n' { // null value
 		i += 4 // skip `null`
 	} else if data[i] == '0' {

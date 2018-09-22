@@ -5,6 +5,10 @@ import (
 	"sync"
 )
 
+type eventBox interface {
+	registerContext(ctx context.Context)
+}
+
 // EventAllEvents keys that does not fit within one of the existing files goes here
 const EventAllEvents = "GOD_DAMN_EVERYTHING"
 
@@ -20,6 +24,8 @@ type Hello struct {
 	Ctx               context.Context `json:"-"`
 }
 
+func (h *Hello) registerContext(ctx context.Context) { h.Ctx = ctx }
+
 // HelloCallback triggered in hello events
 type HelloCallback = func(session Session, h *Hello)
 
@@ -30,8 +36,11 @@ const EventPresencesReplace = "PRESENCES_REPLACE"
 
 // PresencesReplace holds the event content
 type PresencesReplace struct {
-	Presnces []*PresenceUpdate // TODO: json tag
+	Presnces []*PresenceUpdate `json:"presences_replace"` // TODO: verify json tag
+	Ctx      context.Context   `json:"-"`
 }
+
+func (p *PresencesReplace) registerContext(ctx context.Context) { p.Ctx = ctx }
 
 // PresencesReplaceCallback callback for EventPresencesReplace
 type PresencesReplaceCallback = func(session Session, pr *PresencesReplace)
@@ -79,6 +88,8 @@ type Ready struct {
 	Ctx          context.Context `json:"-"`
 }
 
+func (obj *Ready) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // ReadyCallback triggered on READY events
 type ReadyCallback = func(session Session, r *Ready)
 
@@ -96,6 +107,8 @@ type Resumed struct {
 	Ctx   context.Context `json:"-"`
 }
 
+func (obj *Resumed) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // ResumedCallback triggered on RESUME events
 type ResumedCallback = func(session Session, r *Resumed)
 
@@ -105,6 +118,8 @@ type ResumedCallback = func(session Session, r *Resumed)
 type InvalidSession struct {
 	Ctx context.Context `json:"-"`
 }
+
+func (obj *InvalidSession) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // InvalidSessionCallback triggered on INVALID_SESSION events
 type InvalidSessionCallback = func(session Session, is *InvalidSession)
@@ -122,6 +137,12 @@ type ChannelCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *ChannelCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
+	obj.Channel = &Channel{}
+	return unmarshal(data, obj.Channel)
+}
+
 // ChannelCreateCallback triggered on CHANNEL_CREATE events
 type ChannelCreateCallback = func(session Session, cc *ChannelCreate)
 
@@ -137,6 +158,12 @@ type ChannelUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *ChannelUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
+	obj.Channel = &Channel{}
+	return unmarshal(data, obj.Channel)
+}
+
 // ChannelUpdateCallback triggered on CHANNEL_UPDATE events
 type ChannelUpdateCallback = func(session Session, cu *ChannelUpdate)
 
@@ -150,6 +177,12 @@ const EventChannelDelete = "CHANNEL_DELETE"
 type ChannelDelete struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
+}
+
+func (obj *ChannelDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
+	obj.Channel = &Channel{}
+	return unmarshal(data, obj.Channel)
 }
 
 // ChannelDeleteCallback triggered on CHANNEL_DELETE events
@@ -176,6 +209,8 @@ type ChannelPinsUpdate struct {
 	Ctx              context.Context `json:"-"`
 }
 
+func (obj *ChannelPinsUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // ChannelPinsUpdateCallback triggered on CHANNEL_PINS_UPDATE events
 type ChannelPinsUpdateCallback = func(session Session, cpu *ChannelPinsUpdate)
 
@@ -193,6 +228,8 @@ type TypingStart struct {
 	Ctx           context.Context `json:"-"`
 }
 
+func (obj *TypingStart) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // TypingStartCallback triggered on TYPING_START events
 type TypingStartCallback = func(session Session, ts *TypingStart)
 
@@ -206,6 +243,12 @@ const EventMessageCreate = "MESSAGE_CREATE"
 type MessageCreate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
+}
+
+func (obj *MessageCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
+	obj.Message = &Message{}
+	return unmarshal(data, obj.Message)
 }
 
 // MessageCreateCallback triggered on MESSAGE_CREATE events
@@ -222,6 +265,12 @@ const EventMessageUpdate = "MESSAGE_UPDATE"
 type MessageUpdate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
+}
+
+func (obj *MessageUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
+	obj.Message = &Message{}
+	return unmarshal(data, obj.Message)
 }
 
 // MessageUpdateCallback triggered on MESSAGE_UPDATE events
@@ -242,6 +291,19 @@ type MessageDelete struct {
 	Ctx       context.Context `json:"-"`
 }
 
+func (obj *MessageDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *MessageDelete) UnmarshalJSON(data []byte) (err error) {
+	msg := &Message{}
+	err = unmarshal(data, msg)
+	if err != nil {
+		return
+	}
+
+	obj.MessageID = msg.ID
+	obj.ChannelID = msg.ChannelID
+	return
+}
+
 // MessageDeleteCallback triggered on MESSAGE_DELETE events
 type MessageDeleteCallback = func(session Session, md *MessageDelete)
 
@@ -259,6 +321,8 @@ type MessageDeleteBulk struct {
 	ChannelID  Snowflake       `json:"channel_id"`
 	Ctx        context.Context `json:"-"`
 }
+
+func (obj *MessageDeleteBulk) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // MessageDeleteBulkCallback triggered on MESSAGE_DELETE_BULK events
 type MessageDeleteBulkCallback = func(session Session, mdb *MessageDeleteBulk)
@@ -283,6 +347,8 @@ type MessageReactionAdd struct {
 	Ctx          context.Context `json:"-"`
 }
 
+func (obj *MessageReactionAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // MessageReactionAddCallback triggered on MESSAGE_REACTION_ADD events
 type MessageReactionAddCallback = func(session Session, mra *MessageReactionAdd)
 
@@ -306,6 +372,8 @@ type MessageReactionRemove struct {
 	Ctx          context.Context `json:"-"`
 }
 
+func (obj *MessageReactionRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // MessageReactionRemoveCallback triggered on MESSAGE_REACTION_REMOVE events
 type MessageReactionRemoveCallback = func(session Session, mrr *MessageReactionRemove)
 
@@ -325,6 +393,8 @@ type MessageReactionRemoveAll struct {
 	Ctx       context.Context `json:"-"`
 }
 
+func (obj *MessageReactionRemoveAll) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // MessageReactionRemoveAllCallback triggered on MESSAGE_REACTION_REMOVE_ALL events
 type MessageReactionRemoveAllCallback = func(session Session, mrra *MessageReactionRemoveAll)
 
@@ -341,6 +411,8 @@ type GuildEmojisUpdate struct {
 	Emojis  []*Emoji        `json:"emojis"`
 	Ctx     context.Context `json:"-"`
 }
+
+func (obj *GuildEmojisUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildEmojisUpdateCallback triggered on GUILD_EMOJIS_UPDATE events
 type GuildEmojisUpdateCallback = func(session Session, geu *GuildEmojisUpdate)
@@ -367,6 +439,12 @@ type GuildCreate struct {
 	Ctx   context.Context `json:"-"`
 }
 
+func (obj *GuildCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
+	obj.Guild = &Guild{}
+	return unmarshal(data, obj.Guild)
+}
+
 // GuildCreateCallback triggered on GUILD_CREATE events
 type GuildCreateCallback = func(session Session, gc *GuildCreate)
 
@@ -380,6 +458,12 @@ const EventGuildUpdate = "GUILD_UPDATE"
 type GuildUpdate struct {
 	Guild *Guild          `json:"guild"`
 	Ctx   context.Context `json:"-"`
+}
+
+func (obj *GuildUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
+	obj.Guild = &Guild{}
+	return unmarshal(data, obj.Guild)
 }
 
 // GuildUpdateCallback triggered on GUILD_UPDATE events
@@ -399,6 +483,12 @@ type GuildDelete struct {
 	Ctx              context.Context   `json:"-"`
 }
 
+func (obj *GuildDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
+	obj.UnavailableGuild = &GuildUnavailable{}
+	return unmarshal(data, obj.UnavailableGuild)
+}
+
 // GuildDeleteCallback triggered on GUILD_DELETE events
 type GuildDeleteCallback = func(session Session, gd *GuildDelete)
 
@@ -414,6 +504,8 @@ type GuildBanAdd struct {
 	Ctx  context.Context `json:"-"`
 }
 
+func (obj *GuildBanAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // GuildBanAddCallback triggered on GUILD_BAN_ADD events
 type GuildBanAddCallback = func(session Session, gba *GuildBanAdd)
 
@@ -428,6 +520,8 @@ type GuildBanRemove struct {
 	User *User           `json:"user"`
 	Ctx  context.Context `json:"-"`
 }
+
+func (obj *GuildBanRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildBanRemoveCallback triggered on GUILD_BAN_REMOVE events
 type GuildBanRemoveCallback = func(session Session, gbr *GuildBanRemove)
@@ -446,6 +540,8 @@ type GuildIntegrationsUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *GuildIntegrationsUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // GuildIntegrationsUpdateCallback triggered on GUILD_INTEGRATIONS_UPDATE events
 type GuildIntegrationsUpdateCallback = func(session Session, giu *GuildIntegrationsUpdate)
 
@@ -461,6 +557,8 @@ type GuildMemberAdd struct {
 	Member *Member         `json:"member"`
 	Ctx    context.Context `json:"-"`
 }
+
+func (obj *GuildMemberAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildMemberAddCallback triggered on GUILD_MEMBER_ADD events
 type GuildMemberAddCallback = func(session Session, gma *GuildMemberAdd)
@@ -480,6 +578,8 @@ type GuildMemberRemove struct {
 	User    *User           `json:"user"`
 	Ctx     context.Context `json:"-"`
 }
+
+func (obj *GuildMemberRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildMemberRemoveCallback triggered on GUILD_MEMBER_REMOVE events
 type GuildMemberRemoveCallback = func(session Session, gmr *GuildMemberRemove)
@@ -503,6 +603,8 @@ type GuildMemberUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *GuildMemberUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // GuildMemberUpdateCallback triggered on GUILD_MEMBER_UPDATE events
 type GuildMemberUpdateCallback = func(session Session, gmu *GuildMemberUpdate)
 
@@ -520,6 +622,8 @@ type GuildMembersChunk struct {
 	Members []*Member       `json:"members"`
 	Ctx     context.Context `json:"-"`
 }
+
+func (obj *GuildMembersChunk) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildMembersChunkCallback triggered on GUILD_MEMBERS_CHUNK events
 type GuildMembersChunkCallback = func(session Session, gmc *GuildMembersChunk)
@@ -539,6 +643,8 @@ type GuildRoleCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *GuildRoleCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // GuildRoleCreateCallback triggered on GUILD_ROLE_CREATE events
 type GuildRoleCreateCallback = func(session Session, grc *GuildRoleCreate)
 
@@ -557,6 +663,8 @@ type GuildRoleUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *GuildRoleUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // GuildRoleUpdateCallback triggered on GUILD_ROLE_UPDATE events
 type GuildRoleUpdateCallback = func(session Session, gru *GuildRoleUpdate)
 
@@ -574,6 +682,8 @@ type GuildRoleDelete struct {
 	RoleID  Snowflake       `json:"role_id"`
 	Ctx     context.Context `json:"-"`
 }
+
+func (obj *GuildRoleDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // GuildRoleDeleteCallback triggered on GUILD_ROLE_DELETE events
 type GuildRoleDeleteCallback = func(session Session, grd *GuildRoleDelete)
@@ -604,6 +714,8 @@ type PresenceUpdate struct {
 	Ctx    context.Context `json:"-"`
 }
 
+func (obj *PresenceUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // PresenceUpdateCallback triggered on PRESENCE_UPDATE events
 type PresenceUpdateCallback = func(session Session, pu *PresenceUpdate)
 
@@ -619,6 +731,8 @@ type UserUpdate struct {
 	Ctx  context.Context `json:"-"`
 }
 
+func (obj *UserUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // UserUpdateCallback triggerd on USER_UPDATE events
 type UserUpdateCallback = func(session Session, uu *UserUpdate)
 
@@ -633,6 +747,8 @@ type VoiceStateUpdate struct {
 	VoiceState *VoiceState     `json:"voice_state"`
 	Ctx        context.Context `json:"-"`
 }
+
+func (obj *VoiceStateUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // VoiceStateUpdateCallback triggered on VOICE_STATE_UPDATE events
 type VoiceStateUpdateCallback = func(session Session, vsu *VoiceStateUpdate)
@@ -659,6 +775,8 @@ type VoiceServerUpdate struct {
 	Ctx      context.Context `json:"-"`
 }
 
+func (obj *VoiceServerUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+
 // VoiceServerUpdateCallback triggered on VOICE_SERVER_UPDATE events
 type VoiceServerUpdateCallback = func(session Session, vsu *VoiceServerUpdate)
 
@@ -677,6 +795,8 @@ type WebhooksUpdate struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 }
+
+func (obj *WebhooksUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
 // WebhooksUpdateCallback triggered on WEBHOOK_UPDATE events
 type WebhooksUpdateCallback = func(session Session, wu *WebhooksUpdate)

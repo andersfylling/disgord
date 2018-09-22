@@ -38,6 +38,7 @@ type Config struct {
 	//Logger logger.Logrus
 }
 
+
 // Client is the main disgord client to hold your state and data
 type Client struct {
 	sync.RWMutex
@@ -811,117 +812,514 @@ func (c *Client) UpdateChannel(channel *Channel) (err error) {
 	return errors.New("not implemented")
 }
 
-func waitForEvent(eventEmitter <-chan websocket.DiscordWSEvent) (event websocket.DiscordWSEvent, err error) {
-	var alive bool
-	event, alive = <-eventEmitter
-	if !alive {
-		err = errors.New("event emitter (channel) is dead")
-	}
+// ---------------------------------
+// REST with GoLang channels
+// TODO: these will be implemented in the future, but for now focus on the basic
+// implementation for the Discord API, socket, caching, etc.
 
-	return
-}
+// ChannelChan .
+// func (c *Client) ChannelChan(channelID Snowflake) <-chan *Channel {
+// 	ch := make(chan *Channel)
+//
+// 	go func(receiver chan<- *Channel, storage *state.Cache) {
+// 		result := &Channel{}
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
+//
+// func (c *Client) ChannelsChan(GuildID Snowflake) <-chan map[Snowflake]*Channel {
+// 	ch := make(chan map[Snowflake]*Channel)
+//
+// 	go func(receiver chan<- map[Snowflake]*Channel, storage *state.Cache) {
+// 		result := make(map[Snowflake]*Channel)
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
+//
+// // state/caching module
+// func (c *Client) GuildChan(guildID Snowflake) <-chan *Guild {
+// 	ch := make(chan *Guild)
+//
+// 	go func(receiver chan<- *Guild, storage *state.Cache) {
+// 		result := &Guild{}
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
+// func (c *Client) MsgChan(msgID Snowflake) <-chan *Message {
+// 	ch := make(chan *Message)
+//
+// 	go func(receiver chan<- *Message, storage *state.Cache) {
+// 		result := &Message{}
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
+//
+// type UserChan struct {
+// 	User  *User
+// 	Err   error
+// 	Cache bool
+// }
+//
+// func (c *Client) UserChan(userID Snowflake) <-chan *UserChan {
+// 	ch := make(chan *UserChan)
+//
+// 	go func(userID Snowflake, receiver chan<- *UserChan, storage *state.Cache) {
+// 		response := &UserChan{
+// 			Cache: true,
+// 		}
+//
+// 		// check cache
+// 		response.User, response.Err = storage.User(userID)
+// 		if response.Err != nil {
+// 			response.Cache = false
+// 			response.Err = nil
+// 			response.User, response.Err = GetUser(c.req, userID)
+// 		}
+//
+// 		// TODO: cache dead objects, to avoid http requesting the same none existent object?
+// 		// will this ever be a problem
+//
+// 		// return result
+// 		receiver <- response
+//
+// 		// update cache with new result, if not found
+// 		if !response.Cache && response.User != nil {
+// 			storage.ProcessUser(&state.UserDetail{
+// 				User:  response.User,
+// 				Dirty: false,
+// 			})
+// 		}
+//
+// 		// kill the channel
+// 		close(receiver)
+// 	}(userID, ch, c.state)
+//
+// 	return ch
+// }
+// func (c *Client) MemberChan(guildID, userID Snowflake) <-chan *Member {
+// 	ch := make(chan *Member)
+//
+// 	go func(receiver chan<- *Member, storage *state.Cache) {
+// 		result := &Member{}
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
+// func (c *Client) MembersChan(guildID Snowflake) <-chan map[Snowflake]*Member {
+// 	ch := make(chan map[Snowflake]*Member)
+//
+// 	go func(receiver chan<- map[Snowflake]*Member, storage *state.Cache) {
+// 		result := make(map[Snowflake]*Member)
+// 		cached := true
+//
+// 		// check cache
+//
+// 		// do http request if none found
+// 		if result == nil {
+// 			cached = false
+// 		}
+//
+// 		// return result
+// 		receiver <- result
+//
+// 		// update cache with new result, if not found
+// 		if !cached {
+// 			//storage.MemberChan <- result
+// 		}
+//
+// 		// kill the channel
+// 		close(ch)
+// 	}(ch, c.state)
+//
+// 	return ch
+// }
 
-// eventHandler Takes a incoming event from the websocket package, parses it, and sends
+// eventHandler Takes a incoming event from the discordws package, parses it, and sends
 // trigger requests to the event dispatcher and state cacher.
 func (c *Client) eventHandler() {
 	for {
-		var err error
-		var evt websocket.DiscordWSEvent
+		select {
+		case evt, alive := <-c.socketEvtChan:
+			if !alive {
+				logrus.Error("Event channel is dead!")
+				break
+			}
 
-		evt, err = waitForEvent(c.socketEvtChan)
-		if err != nil {
-			return
+			ctx := context.Background()
+			evtName := evt.Name()
+			session := c
+			data := evt.Data()
+
+			switch evtName {
+			case EventReady:
+				box := &Ready{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+
+				// cache
+				// for _, partialGuild := range box.Guilds {
+				// 	c.state.ProcessGuild(&state.GuildDetail{
+				// 		Guild:  NewGuildFromUnavailable(partialGuild),
+				// 		Dirty:  true,
+				// 		Action: evtName,
+				// 	})
+				// }
+				// TODO-caching: c.state.Myself()
+			case EventResumed:
+				box := &Resumed{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventChannelCreate, EventChannelUpdate, EventChannelDelete:
+				chanContent := &Channel{}
+				unmarshal(data, chanContent)
+
+				switch evtName { // internal switch statement for ChannelEvt
+				case EventChannelCreate:
+					box := &ChannelCreate{Channel: chanContent, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventChannelUpdate:
+					box := &ChannelUpdate{Channel: chanContent, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventChannelDelete:
+					box := &ChannelDelete{Channel: chanContent, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				} // END internal switch statement for ChannelEvt
+
+				// cache channel
+				// c.state.ProcessChannel(&state.ChannelDetail{
+				// 	Channel: chanContent,
+				// 	Dirty:   true,
+				// 	Action:  evtName,
+				// })
+			case EventChannelPinsUpdate:
+				box := &ChannelPinsUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+
+				// cache what?
+			case EventGuildCreate, EventGuildUpdate, EventGuildDelete:
+				g := &Guild{}
+				unmarshal(data, g)
+
+				switch evtName { // internal switch statement for guild events
+				case EventGuildCreate:
+					box := &GuildCreate{Guild: g, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventGuildUpdate:
+					box := &GuildUpdate{Guild: g, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventGuildDelete:
+					unavailGuild := NewGuildUnavailable(g.ID)
+					box := &GuildDelete{UnavailableGuild: unavailGuild, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				} // END internal switch statement for guild events
+
+				// cache
+				// TODO-caching: channels, users on guild create / update
+				// c.state.ProcessGuild(&state.GuildDetail{
+				// 	Guild:  g,
+				// 	Dirty:  true,
+				// 	Action: evtName,
+				// })
+			case EventGuildBanAdd:
+				box := &GuildBanAdd{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+
+				// cache
+				// c.state.ProcessUser(&state.UserDetail{
+				// 	User:  box.User,
+				// 	Dirty: true,
+				// })
+			case EventGuildBanRemove:
+				box := &GuildBanRemove{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventGuildEmojisUpdate:
+				box := &GuildEmojisUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+
+				// TODO-caching: emoji
+			case EventGuildIntegrationsUpdate:
+				box := &GuildIntegrationsUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventGuildMemberAdd:
+				box := &GuildMemberAdd{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+
+				// TODO-caching: caching members
+			case EventGuildMemberRemove:
+				box := &GuildMemberRemove{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				// TODO-caching: remove cached members
+			case EventGuildMemberUpdate:
+				box := &GuildMemberUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				// TODO-caching: update a member
+			case EventGuildMembersChunk:
+				box := &GuildMembersChunk{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				// TODO-caching: member chunk.. ?
+			case EventGuildRoleCreate:
+				box := &GuildRoleCreate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				//TODO-caching: guild role add
+			case EventGuildRoleUpdate:
+				box := &GuildRoleUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				//TODO-caching: guild role change
+			case EventGuildRoleDelete:
+				box := &GuildRoleDelete{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				//TODO-caching: remove guild role
+			case EventMessageCreate, EventMessageUpdate, EventMessageDelete:
+				msg := NewMessage()
+				unmarshal(data, msg)
+
+				switch evtName { // internal switch statement for MessageEvt
+				case EventMessageCreate:
+					box := &MessageCreate{Message: msg, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventMessageUpdate:
+					box := &MessageUpdate{Message: msg, Ctx: ctx}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				case EventMessageDelete:
+					box := &MessageDelete{MessageID: msg.ID, ChannelID: msg.ChannelID}
+					c.evtDispatch.triggerChan(ctx, evtName, session, box)
+					c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				} // END internal switch statement for MessageEvt
+			case EventMessageDeleteBulk:
+				box := &MessageDeleteBulk{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventMessageReactionAdd:
+				box := &MessageReactionAdd{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventMessageReactionRemove:
+				box := &MessageReactionRemove{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventMessageReactionRemoveAll:
+				box := &MessageReactionRemoveAll{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventPresenceUpdate:
+				box := &PresenceUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventTypingStart:
+				box := &TypingStart{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventUserUpdate:
+				box := &UserUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+				//TODO-caching: user update, is this @me?
+			case EventVoiceStateUpdate:
+				box := &VoiceStateUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventVoiceServerUpdate:
+				box := &VoiceServerUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			case EventWebhooksUpdate:
+				box := &WebhooksUpdate{}
+				box.Ctx = ctx
+				unmarshal(data, box)
+
+				c.evtDispatch.triggerChan(ctx, evtName, session, box)
+				c.evtDispatch.triggerCallbacks(ctx, evtName, session, box)
+			default:
+				fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evtName, string(data))
+			}
 		}
-
-		evtName := evt.Name()
-		var box eventBox
-
-		switch evtName {
-		case EventReady:
-			box = &Ready{}
-		case EventResumed:
-			box = &Resumed{}
-		case EventChannelCreate:
-			box = &ChannelCreate{}
-		case EventChannelUpdate:
-			box = &ChannelUpdate{}
-		case EventChannelDelete:
-			box = &ChannelDelete{}
-		case EventChannelPinsUpdate:
-			box = &ChannelPinsUpdate{}
-		case EventGuildCreate:
-			box = &GuildCreate{}
-		case EventGuildUpdate:
-			box = &GuildUpdate{}
-		case EventGuildDelete:
-			box = &GuildDelete{}
-		case EventGuildBanAdd:
-			box = &GuildBanAdd{}
-		case EventGuildBanRemove:
-			box = &GuildBanRemove{}
-		case EventGuildEmojisUpdate:
-			box = &GuildEmojisUpdate{}
-		case EventGuildIntegrationsUpdate:
-			box = &GuildIntegrationsUpdate{}
-		case EventGuildMemberAdd:
-			box = &GuildMemberAdd{}
-		case EventGuildMemberRemove:
-			box = &GuildMemberRemove{}
-		case EventGuildMemberUpdate:
-			box = &GuildMemberUpdate{}
-		case EventGuildMembersChunk:
-			box = &GuildMembersChunk{}
-		case EventGuildRoleCreate:
-			box = &GuildRoleCreate{}
-		case EventGuildRoleUpdate:
-			box = &GuildRoleUpdate{}
-		case EventGuildRoleDelete:
-			box = &GuildRoleDelete{}
-		case EventMessageCreate:
-			box = &MessageCreate{}
-		case EventMessageUpdate:
-			box = &MessageUpdate{}
-		case EventMessageDelete:
-			box = &MessageDelete{}
-		case EventMessageDeleteBulk:
-			box = &MessageDeleteBulk{}
-		case EventMessageReactionAdd:
-			box = &MessageReactionAdd{}
-		case EventMessageReactionRemove:
-			box = &MessageReactionRemove{}
-		case EventMessageReactionRemoveAll:
-			box = &MessageReactionRemoveAll{}
-		case EventPresenceUpdate:
-			box = &PresenceUpdate{}
-		case EventTypingStart:
-			box = &TypingStart{}
-		case EventUserUpdate:
-			box = &UserUpdate{}
-		case EventVoiceStateUpdate:
-			box = &VoiceStateUpdate{}
-		case EventVoiceServerUpdate:
-			box = &VoiceServerUpdate{}
-		case EventWebhooksUpdate:
-			box = &WebhooksUpdate{}
-		default:
-			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evtName, string(evt.Data()))
-			continue // move on to next event
-		}
-
-		// populate box
-		ctx := context.Background()
-		data := evt.Data()
-
-		box.registerContext(ctx)
-		err = unmarshal(data, box)
-		if err != nil {
-			logrus.Error(err)
-			continue // ignore event
-			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
-		}
-
-		// trigger listeners
-		c.evtDispatch.triggerChan(ctx, evtName, c, box)
-		c.evtDispatch.triggerCallbacks(ctx, evtName, c, box)
 	}
 }

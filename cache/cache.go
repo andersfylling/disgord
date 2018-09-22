@@ -1,8 +1,8 @@
 package cahce
 
 import (
-	. "github.com/andersfylling/snowflake"
 	"errors"
+	. "github.com/andersfylling/snowflake"
 	"sync"
 )
 
@@ -29,8 +29,8 @@ type Config struct {
 
 type Client struct {
 	config *Config
-	Items map[Snowflake]interface{}
-	mu sync.RWMutex
+	Items  map[Snowflake]interface{}
+	mu     sync.RWMutex
 }
 
 func (c *Client) Set(id Snowflake, new interface{}) (err error) {
