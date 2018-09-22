@@ -3,6 +3,8 @@ package disgord
 import (
 	"context"
 	"sync"
+
+	"github.com/andersfylling/disgord/event"
 )
 
 type eventBox interface {
@@ -10,7 +12,7 @@ type eventBox interface {
 }
 
 // EventAllEvents keys that does not fit within one of the existing files goes here
-const EventAllEvents = "GOD_DAMN_EVERYTHING"
+const EventAllEvents = "disgord_all_discord_events"
 
 // EventCallback is triggered on every event type
 type EventCallback = func(session Session, box interface{})
@@ -32,7 +34,7 @@ type HelloCallback = func(session Session, h *Hello)
 // ---------------------------
 
 // EventPresencesReplace Holds and array of presence update objects
-const EventPresencesReplace = "PRESENCES_REPLACE"
+const EventPresencesReplace = event.PresencesReplace
 
 // PresencesReplace holds the event content
 type PresencesReplace struct {
@@ -59,7 +61,7 @@ type PresencesReplaceCallback = func(session Session, pr *PresencesReplace)
 //       * Guilds []*discord.guild.Unavailable
 //       * SessionID string
 //       * Trace []string
-const EventReady = "READY"
+const EventReady = event.Ready
 
 // Ready	contains the initial state information
 type Ready struct {
@@ -99,7 +101,7 @@ type ReadyCallback = func(session Session, r *Ready)
 //         payload to the gateway (for resuming existing sessions).
 //         Fields:
 //         * Trace []string
-const EventResumed = "RESUMED"
+const EventResumed = event.Resumed
 
 // Resumed	response to Resume
 type Resumed struct {
@@ -129,7 +131,7 @@ type InvalidSessionCallback = func(session Session, is *InvalidSession)
 // EventChannelCreate Sent when a new channel is created, relevant to the current
 //               user. The inner payload is a DM channel or guild channel
 //               object.
-const EventChannelCreate = "CHANNEL_CREATE"
+const EventChannelCreate = event.ChannelCreate
 
 // ChannelCreateBox	new channel created
 type ChannelCreate struct {
@@ -150,7 +152,7 @@ type ChannelCreateCallback = func(session Session, cc *ChannelCreate)
 
 // EventChannelUpdate Sent when a channel is updated. The inner payload is a guild
 //               channel object.
-const EventChannelUpdate = "CHANNEL_UPDATE"
+const EventChannelUpdate = event.ChannelUpdate
 
 // ChannelUpdateBox	channel was updated
 type ChannelUpdate struct {
@@ -171,7 +173,7 @@ type ChannelUpdateCallback = func(session Session, cu *ChannelUpdate)
 
 // EventChannelDelete Sent when a channel relevant to the current user is deleted.
 //               The inner payload is a DM or Guild channel object.
-const EventChannelDelete = "CHANNEL_DELETE"
+const EventChannelDelete = event.ChannelDelete
 
 // ChannelDelete	channel was deleted
 type ChannelDelete struct {
@@ -197,7 +199,7 @@ type ChannelDeleteCallback = func(session Session, cd *ChannelDelete)
 //                   * ChannelID int64 or discord.Snowflake
 //                   * LastPinTimestamp time.Now().UTC().Format(time.RFC3339)
 // TODO fix.
-const EventChannelPinsUpdate = "CHANNEL_PINS_UPDATE"
+const EventChannelPinsUpdate = event.ChannelPinsUpdate
 
 // ChannelPinsUpdate	message was pinned or unpinned
 type ChannelPinsUpdate struct {
@@ -218,7 +220,7 @@ type ChannelPinsUpdateCallback = func(session Session, cpu *ChannelPinsUpdate)
 
 // EventTypingStart Sent when a user starts typing in a channel.
 //             Fields: TODO
-const EventTypingStart = "TYPING_START"
+const EventTypingStart = event.TypingStart
 
 // TypingStart user started typing in a channel
 type TypingStart struct {
@@ -237,7 +239,7 @@ type TypingStartCallback = func(session Session, ts *TypingStart)
 
 // EventMessageCreate Sent when a message is created. The inner payload is a
 //               message object.
-const EventMessageCreate = "MESSAGE_CREATE"
+const EventMessageCreate = event.MessageCreate
 
 // MessageCreate	message was created
 type MessageCreate struct {
@@ -259,7 +261,7 @@ type MessageCreateCallback = func(session Session, mc *MessageCreate)
 // EventMessageUpdate Sent when a message is updated. The inner payload is a
 //               message object.
 //               NOTE! Has _at_least_ the GuildID and ChannelID fields.
-const EventMessageUpdate = "MESSAGE_UPDATE"
+const EventMessageUpdate = event.MessageUpdate
 
 // MessageUpdate	message was edited
 type MessageUpdate struct {
@@ -282,7 +284,7 @@ type MessageUpdateCallback = func(session Session, mu *MessageUpdate)
 //               Fields:
 //               * ID        int64 or discord.Snowflake
 //               * ChannelID int64 or discord.Snowflake
-const EventMessageDelete = "MESSAGE_DELETE"
+const EventMessageDelete = event.MessageDelete
 
 // MessageDelete	message was deleted
 type MessageDelete struct {
@@ -313,7 +315,7 @@ type MessageDeleteCallback = func(session Session, md *MessageDelete)
 //                   Fields:
 //                   * IDs       []int64 or []discord.Snowflake
 //                   * ChannelID int64 or discord.Snowflake
-const EventMessageDeleteBulk = "MESSAGE_DELETE_BULK"
+const EventMessageDeleteBulk = event.MessageDeleteBulk
 
 // MessageDeleteBulk	multiple messages were deleted at once
 type MessageDeleteBulk struct {
@@ -335,7 +337,7 @@ type MessageDeleteBulkCallback = func(session Session, mdb *MessageDeleteBulk)
 //                    * ChannelID  int64 or discord.Snowflake
 //                    * MessageID  int64 or discord.Snowflake
 //                    * Emoji      *discord.emoji.Emoji
-const EventMessageReactionAdd = "MESSAGE_REACTION_ADD"
+const EventMessageReactionAdd = event.MessageReactionAdd
 
 // MessageReactionAdd	user reacted to a message
 type MessageReactionAdd struct {
@@ -360,7 +362,7 @@ type MessageReactionAddCallback = func(session Session, mra *MessageReactionAdd)
 //                       * ChannelID  int64 or discord.Snowflake
 //                       * MessageID  int64 or discord.Snowflake
 //                       * Emoji      *discord.emoji.Emoji
-const EventMessageReactionRemove = "MESSAGE_REACTION_REMOVE"
+const EventMessageReactionRemove = event.MessageReactionRemove
 
 // MessageReactionRemove	user removed a reaction from a message
 type MessageReactionRemove struct {
@@ -384,7 +386,7 @@ type MessageReactionRemoveCallback = func(session Session, mrr *MessageReactionR
 //                          Fields:
 //                          * ChannelID  int64 or discord.Snowflake
 //                          * MessageID  int64 or discord.Snowflake
-const EventMessageReactionRemoveAll = "MESSAGE_REACTION_REMOVE_ALL"
+const EventMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 // MessageReactionRemoveAll	all reactions were explicitly removed from a message
 type MessageReactionRemoveAll struct {
@@ -403,7 +405,7 @@ type MessageReactionRemoveAllCallback = func(session Session, mrra *MessageReact
 // EventGuildEmojisUpdate Sent when a guild's emojis have been updated.
 //                   Fields:
 //                   * GuildID int64 or discord.Snowflake
-const EventGuildEmojisUpdate = "GUILD_EMOJI_UPDATE"
+const EventGuildEmojisUpdate = event.GuildEmojisUpdate
 
 // GuildEmojisUpdate	guild emojis were updated
 type GuildEmojisUpdate struct {
@@ -427,7 +429,7 @@ type GuildEmojisUpdateCallback = func(session Session, geu *GuildEmojisUpdate)
 //             3. When the current user joins a new Guild.
 //             The inner payload is a guild object, with all the extra fields
 //             specified.
-const EventGuildCreate = "GUILD_CREATE"
+const EventGuildCreate = event.GuildCreate
 
 // GuildCreate	This event can be sent in three different scenarios:
 //								1. When a user is initially connecting, to lazily load and backfill information for
@@ -452,7 +454,7 @@ type GuildCreateCallback = func(session Session, gc *GuildCreate)
 
 // EventGuildUpdate Sent when a guild is updated. The inner payload is a guild
 //             object.
-const EventGuildUpdate = "GUILD_UPDATE"
+const EventGuildUpdate = event.GuildUpdate
 
 // GuildUpdate	guild was updated
 type GuildUpdate struct {
@@ -475,7 +477,7 @@ type GuildUpdateCallback = func(session Session, gu *GuildUpdate)
 //             or when the user leaves or is removed from a guild. The inner
 //             payload is an unavailable guild object. If the unavailable
 //             field is not set, the user was removed from the guild.
-const EventGuildDelete = "GUILD_DELETE"
+const EventGuildDelete = event.GuildDelete
 
 // GuildDelete	guild became unavailable, or user left/was removed from a guild
 type GuildDelete struct {
@@ -496,7 +498,7 @@ type GuildDeleteCallback = func(session Session, gd *GuildDelete)
 
 // EventGuildBanAdd Sent when a user is banned from a guild. The inner payload is
 //             a user object, with an extra guild_id key.
-const EventGuildBanAdd = "GUILD_BAN_ADD"
+const EventGuildBanAdd = event.GuildBanAdd
 
 // GuildBanAdd	user was banned from a guild
 type GuildBanAdd struct {
@@ -513,7 +515,7 @@ type GuildBanAddCallback = func(session Session, gba *GuildBanAdd)
 
 // EventGuildBanRemove Sent when a user is unbanned from a guild. The inner
 //                payload is a user object, with an extra guild_id key.
-const EventGuildBanRemove = "GUILD_BAN_REMOVE"
+const EventGuildBanRemove = event.GuildBanRemove
 
 // GuildBanRemove	user was unbanned from a guild
 type GuildBanRemove struct {
@@ -532,7 +534,7 @@ type GuildBanRemoveCallback = func(session Session, gbr *GuildBanRemove)
 //                        Fields:
 //                        * GuildID int64 or discord.Snowflake
 //                        * Emojis []*discord.emoji.Emoji
-const EventGuildIntegrationsUpdate = "GUILD_INTEGRATIONS_UPDATE"
+const EventGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 // GuildIntegrationsUpdate	guild integration was updated
 type GuildIntegrationsUpdate struct {
@@ -550,7 +552,7 @@ type GuildIntegrationsUpdateCallback = func(session Session, giu *GuildIntegrati
 // EventGuildMemberAdd Sent when a new user joins a guild. The inner payload is a
 //                guild member object with these extra fields:
 //                * GuildID int64 or discord.Snowflake
-const EventGuildMemberAdd = "GUILD_MEMBER_ADD"
+const EventGuildMemberAdd = event.GuildMemberAdd
 
 // GuildMemberAdd	new user joined a guild
 type GuildMemberAdd struct {
@@ -570,7 +572,7 @@ type GuildMemberAddCallback = func(session Session, gma *GuildMemberAdd)
 //                   Fields:
 //                   * GuildID int64 or discord.Snowflake
 //                   * User *discord.user.User
-const EventGuildMemberRemove = "GUILD_MEMBER_REMOVE"
+const EventGuildMemberRemove = event.GuildMemberRemove
 
 // GuildMemberRemove	user was removed from a guild
 type GuildMemberRemove struct {
@@ -592,7 +594,7 @@ type GuildMemberRemoveCallback = func(session Session, gmr *GuildMemberRemove)
 //                   * Roles []int64 or []discord.Snowflake
 //                   * User *discord.user.User
 //                   * Nick string
-const EventGuildMemberUpdate = "GUILD_MEMBER_UPDATE"
+const EventGuildMemberUpdate = event.GuildMemberUpdate
 
 // GuildMemberUpdate	guild member was updated
 type GuildMemberUpdate struct {
@@ -614,7 +616,7 @@ type GuildMemberUpdateCallback = func(session Session, gmu *GuildMemberUpdate)
 //                  Fields:
 //                  * GuildID int64 or discord.Snowflake
 //                  * Members []*discord.member.Member
-const EventGuildMembersChunk = "GUILD_MEMBER_CHUNK"
+const EventGuildMembersChunk = event.GuildMembersChunk
 
 // GuildMembersChunk	response to Request Guild Members
 type GuildMembersChunk struct {
@@ -634,7 +636,7 @@ type GuildMembersChunkCallback = func(session Session, gmc *GuildMembersChunk)
 //                 Fields:
 //                 * GuildID int64 or discord.Snowflake
 //                 * Role *discord.role.Role
-const EventGuildRoleCreate = "GUILD_ROLE_CREATE"
+const EventGuildRoleCreate = event.GuildRoleCreate
 
 // GuildRoleCreate	guild role was created
 type GuildRoleCreate struct {
@@ -654,7 +656,7 @@ type GuildRoleCreateCallback = func(session Session, grc *GuildRoleCreate)
 //                 Fields:
 //                 * GuildID int64 or discord.Snowflake
 //                 * Role    *discord.role.Role
-const EventGuildRoleUpdate = "GUILD_ROLE_UPDATE"
+const EventGuildRoleUpdate = event.GuildRoleUpdate
 
 // GuildRoleUpdate	guild role was updated
 type GuildRoleUpdate struct {
@@ -674,7 +676,7 @@ type GuildRoleUpdateCallback = func(session Session, gru *GuildRoleUpdate)
 //                 Fields:
 //                 * GuildID int64 or discord.Snowflake
 //                 * RoleID  int64 or discord.Snowflake
-const EventGuildRoleDelete = "GUILD_ROLE_DELETE"
+const EventGuildRoleDelete = event.GuildRoleDelete
 
 // GuildRoleDelete	guild role was deleted
 type GuildRoleDelete struct {
@@ -699,7 +701,7 @@ type GuildRoleDeleteCallback = func(session Session, grd *GuildRoleDelete)
 //                Game    *discord.game.Game
 //                GuildID int64 or discord.Snowflake
 //                Status  *string or *discord.presence.Status
-const EventPresenceUpdate = "PRESENCE_UPDATE"
+const EventPresenceUpdate = event.PresenceUpdate
 
 // PresenceUpdate	user's presence was updated in a guild
 type PresenceUpdate struct {
@@ -723,7 +725,7 @@ type PresenceUpdateCallback = func(session Session, pu *PresenceUpdate)
 
 // EventUserUpdate Sent when properties about the user change. Inner payload is a
 //            user object.
-const EventUserUpdate = "USER_UPDATE"
+const EventUserUpdate = event.UserUpdate
 
 // UserUpdate	properties about a user changed
 type UserUpdate struct {
@@ -740,7 +742,7 @@ type UserUpdateCallback = func(session Session, uu *UserUpdate)
 
 // EventVoiceStateUpdate Sent when someone joins/leaves/moves voice channels.
 //                  Inner payload is a voice state object.
-const EventVoiceStateUpdate = "VOICE_STATE_UPDATE"
+const EventVoiceStateUpdate = event.VoiceStateUpdate
 
 // VoiceStateUpdate	someone joined, left, or moved a voice channel
 type VoiceStateUpdate struct {
@@ -762,7 +764,7 @@ type VoiceStateUpdateCallback = func(session Session, vsu *VoiceStateUpdate)
 //                   * Token     string or discord.Token
 //                   * ChannelID int64 or discord.Snowflake
 //                   * Endpoint  string or discord.Endpoint
-const EventVoiceServerUpdate = "VOICE_SERVER_UPDATE"
+const EventVoiceServerUpdate = event.VoiceServerUpdate
 
 // VoiceServerUpdate	guild's voice server was updated
 // Sent when a guild's voice server is updated.
@@ -787,7 +789,7 @@ type VoiceServerUpdateCallback = func(session Session, vsu *VoiceServerUpdate)
 //                Fields:
 //                * GuildID   int64 or discord.Snowflake
 //                * ChannelID int64 or discord.Snowflake
-const EventWebhooksUpdate = "WEBHOOK_UPDATE"
+const EventWebhooksUpdate = event.WebhooksUpdate
 
 // WebhooksUpdate guild channel webhook was created, update, or deleted
 type WebhooksUpdate struct {
