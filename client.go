@@ -150,29 +150,17 @@ func (c *Client) Req() httd.Requester {
 	return c.req
 }
 
-// Evt gives access to the event dispatcher for registering handlers and
-// utilising event channels
-func (c *Client) Evt() EvtDispatcher {
-	return c.evtDispatch
-}
-
 // State is the cache....
 func (c *Client) State() Cacher {
 	return c.state
 }
 
 func (c *Client) On(event string, handlers ...interface{}) {
-	c.ws.RegisterEvent(event)
-	for _, handler := range handlers {
-		c.evtDispatch.AddHandler(event, handler)
-	}
+	c.evtDispatch.On(event, handlers...)
 }
 
 func (c *Client) Once(event string, handlers ...interface{}) {
-	c.ws.RegisterEvent(event)
-	for _, handler := range handlers {
-		c.evtDispatch.AddHandlerOnce(event, handler)
-	}
+	c.evtDispatch.Once(event, handlers...)
 }
 func (c *Client) Emit(command SocketCommand, data interface{}) {
 	switch command {
@@ -181,6 +169,14 @@ func (c *Client) Emit(command SocketCommand, data interface{}) {
 		return
 	}
 	c.ws.Emit(command, data)
+}
+
+func (c *Client) EventChan(event string) (channel interface{}, err error) {
+	return c.evtDispatch.EventChan(event)
+}
+
+func (c *Client) EventChannels() (channels EventChannels) {
+	return c.evtDispatch
 }
 
 // AddListener register a listener for a specific event key/type
@@ -925,3 +921,4 @@ func (c *Client) eventHandler() {
 		c.evtDispatch.triggerCallbacks(ctx, evtName, c, box)
 	}
 }
+

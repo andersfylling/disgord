@@ -12,7 +12,7 @@ type eventBox interface {
 }
 
 // EventAllEvents keys that does not fit within one of the existing files goes here
-const EventAllEvents = "disgord_all_discord_events"
+const EventAllEvents = "*"
 
 // EventCallback is triggered on every event type
 type EventCallback = func(session Session, box interface{})

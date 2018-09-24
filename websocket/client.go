@@ -219,7 +219,9 @@ func (c *Client) ListensForEvent(event string) int {
 	defer c.eventsMutex.RUnlock()
 	var i int
 	for i = range c.events {
-		if event == c.events[i] {
+		if event != "*" && "*" == c.events[i] {
+			return -2  // TODO
+		} else if event == c.events[i] {
 			return i
 		}
 	}
@@ -239,7 +241,7 @@ func (c *Client) RegisterEvent(event string) {
 
 func (c *Client) RemoveEvent(event string) {
 	var i int
-	if i = c.ListensForEvent(event); i == -1 {
+	if i = c.ListensForEvent(event); i < 0 {
 		return
 	}
 

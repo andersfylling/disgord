@@ -1,7 +1,7 @@
 ## Listen for messages
 
 In Disgord it is required that you specify the event you are listening to using an event key (see package event). Unlike discordgo this library does not use reflection to understand which event type your function reacts to.
-```GoLang
+```go
 session, err := disgord.NewSession(&disgord.Config{
     Token: os.Getenv("DISGORD_TOKEN"),
 })
@@ -27,8 +27,15 @@ if err != nil {
 session.DisconnectOnInterrupt()
 ```
 
-In addition, Disgord also supports the use of channels for handling events.
-```GoLang
+Note that if you dislike the long `disgord.EventMessageCreate` name. You can use the sub package `event`. However, the `event` package will only hold valid Discord events.
+```go 
+session.On(event.MessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+    fmt.Println(data.Message.Content)
+})
+```
+
+In addition, Disgord also supports the use of channels for handling events. It is recommended that you do store the channels to a local variable, as each time you call the channel function; you notify the socket layer that you want to register to a certain type of event, which is redundant (in short: it improves performance when you save the chan to a local var).
+```go
 session, err := disgord.NewSession(&disgord.Config{
     Token: os.Getenv("DISGORD_TOKEN"),
 })
@@ -38,12 +45,13 @@ if err != nil {
 
 // or use a channel to listen for events
 go func() {
+	var messageCreateChan = session.EventChannels().MessageCreate()
     for {
         var msg *disgord.Message
 
         // wait for a new message
         select {
-        case data, alive := <- session.Evt().MessageCreateChan():
+        case data, alive := <- messageCreateChan:
             if !alive {
                 fmt.Println("channel is dead")
                 return

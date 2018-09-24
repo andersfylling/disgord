@@ -80,7 +80,7 @@ func NewSession(conf *Config) (Session, error) {
 	reqClient := httd.NewClient(reqConf)
 
 	// event dispatcher
-	evtDispatcher := NewDispatch()
+	evtDispatcher := NewDispatch(dws)
 
 	// create a disgord client/instance/session
 	c := &Client{
@@ -109,6 +109,44 @@ func NewSessionMustCompile(conf *Config) (session Session) {
 	return
 }
 
+type EventChannels interface {
+	All() <-chan interface{} // any event
+	Ready() <-chan *Ready
+	Resumed() <-chan *Resumed
+	ChannelCreate() <-chan *ChannelCreate
+	ChannelUpdate() <-chan *ChannelUpdate
+	ChannelDelete() <-chan *ChannelDelete
+	ChannelPinsUpdate() <-chan *ChannelPinsUpdate
+	GuildCreate() <-chan *GuildCreate
+	GuildUpdate() <-chan *GuildUpdate
+	GuildDelete() <-chan *GuildDelete
+	GuildBanAdd() <-chan *GuildBanAdd
+	GuildBanRemove() <-chan *GuildBanRemove
+	GuildEmojisUpdate() <-chan *GuildEmojisUpdate
+	GuildIntegrationsUpdate() <-chan *GuildIntegrationsUpdate
+	GuildMemberAdd() <-chan *GuildMemberAdd
+	GuildMemberRemove() <-chan *GuildMemberRemove
+	GuildMemberUpdate() <-chan *GuildMemberUpdate
+	GuildMembersChunk() <-chan *GuildMembersChunk
+	GuildRoleUpdate() <-chan *GuildRoleUpdate
+	GuildRoleCreate() <-chan *GuildRoleCreate
+	GuildRoleDelete() <-chan *GuildRoleDelete
+	MessageCreate() <-chan *MessageCreate
+	MessageUpdate() <-chan *MessageUpdate
+	MessageDelete() <-chan *MessageDelete
+	MessageDeleteBulk() <-chan *MessageDeleteBulk
+	MessageReactionAdd() <-chan *MessageReactionAdd
+	MessageReactionRemove() <-chan *MessageReactionRemove
+	MessageReactionRemoveAll() <-chan *MessageReactionRemoveAll
+	PresenceUpdate() <-chan *PresenceUpdate
+	PresencesReplace() <-chan *PresencesReplace
+	TypingStart() <-chan *TypingStart
+	UserUpdate() <-chan *UserUpdate
+	VoiceStateUpdate() <-chan *VoiceStateUpdate
+	VoiceServerUpdate() <-chan *VoiceServerUpdate
+	WebhooksUpdate() <-chan *WebhooksUpdate
+}
+
 type SocketHandler interface {
 	Connect() error
 	Disconnect() error
@@ -118,6 +156,10 @@ type SocketHandler interface {
 	On(event string, handler ...interface{})
 	Emit(command SocketCommand, dataPointer interface{})
 	//Use(middleware ...interface{}) // TODO: is this useful?
+
+	// event channels
+	EventChan(event string) (channel interface{}, err error)
+	EventChannels() EventChannels
 }
 
 type AuditLogsRESTer interface {
@@ -246,9 +288,6 @@ type RESTer interface {
 
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
 type Session interface {
-	// main modules
-	//
-
 	// give information about the bot/connected user
 	Myself() *User
 
@@ -258,18 +297,11 @@ type Session interface {
 	// CRUD operation and not the actual rest endpoints for discord (See Rest()).
 	Req() httd.Requester
 
-	// todo
-	//Rest()
-
-	// Event let's developers listen for specific events, event groups, or every event as one listener.
-	// Supports both channels and callbacks
-	Evt() EvtDispatcher
-
 	// State reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
 	State() Cacher
 
-	// RateLimiter the ratelimiter for the discord REST API
+	// RateLimiter the rate limiter for the discord REST API
 	RateLimiter() httd.RateLimiter
 
 	// Discord Gateway, web socket
