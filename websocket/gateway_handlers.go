@@ -52,7 +52,7 @@ func (c *Client) operationHandlers() {
 				c.opHandlerEvt(gp)
 			case opcode.Reconnect:
 				// reconnect
-				c.Disconnect()
+				_ = c.Disconnect()
 				go c.reconnect()
 			case opcode.InvalidSession:
 				// invalid session. Must respond with a identify packet
@@ -67,7 +67,7 @@ func (c *Client) operationHandlers() {
 			case opcode.Heartbeat:
 				// https://discordapp.com/developers/docs/topics/gateway#heartbeating
 				_, _, snr := c.GetSocketInfo()
-				c.Emit(event.Heartbeat, snr)
+				_ = c.Emit(event.Heartbeat, snr)
 			case opcode.Hello:
 				// hello
 				helloPk := &helloPacket{}

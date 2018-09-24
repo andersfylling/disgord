@@ -110,7 +110,6 @@ type Dispatch struct {
 	listenersLock sync.RWMutex
 }
 
-
 func (c *Dispatch) On(event string, handlers ...interface{}) {
 	c.listenersLock.Lock()
 	defer c.listenersLock.Unlock()

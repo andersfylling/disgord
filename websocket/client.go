@@ -5,6 +5,7 @@ import (
 	"compress/zlib"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Config configure the websocket connection to Discord
 type Config struct {
 	Token         string
 	HTTPClient    *http.Client
@@ -136,6 +138,7 @@ func NewClient(conf *Config) (DiscordWebsocket, error) {
 	}, nil
 }
 
+// Pulsater holds methods for dealing with connection longevity.
 type Pulsater interface {
 	AllowedToStartPulsating(serviceID uint8) bool
 	StopPulsating(serviceID uint8)
@@ -159,12 +162,14 @@ type DiscordWebsocket interface {
 	RemoveEvent(event string)
 }
 
+// NewErrorUnsupportedEventName ...
 func NewErrorUnsupportedEventName(event string) *ErrorUnsupportedEventName {
 	return &ErrorUnsupportedEventName{
 		info: "unsupported event name '" + event + "' was given",
 	}
 }
 
+// ErrorUnsupportedEventName is an error to identity unsupported event types request by the user
 type ErrorUnsupportedEventName struct {
 	info string
 }
@@ -184,7 +189,7 @@ type Client struct {
 	url            string
 	sequenceNumber uint
 
-	heartbeatInterval uint `json:"heartbeat_interval"`
+	heartbeatInterval uint //`json:"heartbeat_interval"`
 	lastHeartbeatAck  time.Time
 	Trace             []string  `json:"_trace"`
 	SessionID         string    `json:"session_id"`
@@ -214,13 +219,14 @@ type Client struct {
 	pulsating  int
 }
 
+// ListensForEvent checks if a given event type has been registered for further processing.
 func (c *Client) ListensForEvent(event string) int {
 	c.eventsMutex.RLock()
 	defer c.eventsMutex.RUnlock()
 	var i int
 	for i = range c.events {
 		if event != "*" && "*" == c.events[i] {
-			return -2  // TODO
+			return -2 // TODO
 		} else if event == c.events[i] {
 			return i
 		}
@@ -229,6 +235,8 @@ func (c *Client) ListensForEvent(event string) int {
 	return -1
 }
 
+// RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
+// will be discarded once the socket info is extracted from the event.
 func (c *Client) RegisterEvent(event string) {
 	if c.ListensForEvent(event) != -1 {
 		return
@@ -239,6 +247,8 @@ func (c *Client) RegisterEvent(event string) {
 	c.eventsMutex.Unlock()
 }
 
+// RemoveEvent removes an event type from the registry. This will cause the event type to be discarded
+// by the socket layer.
 func (c *Client) RemoveEvent(event string) {
 	var i int
 	if i = c.ListensForEvent(event); i < 0 {
@@ -297,75 +307,84 @@ func (c *Client) MockEventChanReciever() {
 	}(c)
 }
 
-func (client *Client) HeartbeatInterval() uint {
-	client.RLock()
-	defer client.RUnlock()
+// HeartbeatInterval The heartbeat interval decided by Discord. 0 if not set/decided yet.
+func (c *Client) HeartbeatInterval() uint {
+	c.RLock()
+	defer c.RUnlock()
 
-	return client.heartbeatInterval
+	return c.heartbeatInterval
 }
 
-func (client *Client) LastHeartbeatAck() time.Time {
-	client.RLock()
-	defer client.RUnlock()
+// LastHeartbeatAck timestamp of last received heartbeat. Set by Discord.
+func (c *Client) LastHeartbeatAck() time.Time {
+	c.RLock()
+	defer c.RUnlock()
 
-	return client.lastHeartbeatAck
+	return c.lastHeartbeatAck
 }
 
-func (client *Client) GetSocketInfo() (time.Time, uint, uint) {
-	client.RLock()
-	defer client.RUnlock()
+// GetSocketInfo TODO: remove / rewrite
+func (c *Client) GetSocketInfo() (time.Time, uint, uint) {
+	c.RLock()
+	defer c.RUnlock()
 
-	return client.lastHeartbeatAck, client.heartbeatInterval, client.sequenceNumber
+	return c.lastHeartbeatAck, c.heartbeatInterval, c.sequenceNumber
 
 }
 
-func (client *Client) SendHeartbeat(snr uint) {
-	client.sendChan <- &gatewayPayload{Op: opcode.Heartbeat, Data: snr}
+// SendHeartbeat sends a heartbeat packet to Discord to show the client is still connected
+func (c *Client) SendHeartbeat(snr uint) {
+	c.sendChan <- &gatewayPayload{Op: opcode.Heartbeat, Data: snr}
 }
 
-func (client *Client) HeartbeatAckMissingFix() {
-	client.Disconnect()
-	go client.reconnect()
+func (c *Client) HeartbeatAckMissingFix() {
+	err := c.Disconnect()
+	if err != nil {
+		logrus.Panic("could not disconnect: ", err)
+	}
+	go c.reconnect()
 }
 
-func (client *Client) HeartbeatWasRecieved(last time.Time) bool {
-	client.RLock()
-	defer client.RUnlock()
+// HeartbeatWasRecieved checks if a heartbeat was received given after a certain timestamp
+func (c *Client) HeartbeatWasRecieved(last time.Time) bool {
+	c.RLock()
+	defer c.RUnlock()
 
-	return client.lastHeartbeatAck.After(last)
+	return c.lastHeartbeatAck.After(last)
 }
 
 // AllowedToStartPulsating you must notify when you are done pulsating!
-func (client *Client) AllowedToStartPulsating(serviceID uint8) bool {
-	client.pulseMutex.RLock()
-	pulsating := client.pulsating > 0
-	client.pulseMutex.RUnlock()
+func (c *Client) AllowedToStartPulsating(serviceID uint8) bool {
+	c.pulseMutex.RLock()
+	pulsating := c.pulsating > 0
+	c.pulseMutex.RUnlock()
 
-	client.pulseMutex.Lock()
+	c.pulseMutex.Lock()
 	if pulsating {
-		client.pulseMutex.Unlock()
+		c.pulseMutex.Unlock()
 		return false
 	}
 
-	client.pulsating = int(serviceID)
-	client.pulseMutex.Unlock()
+	c.pulsating = int(serviceID)
+	c.pulseMutex.Unlock()
 
 	return true
 }
 
-func (client *Client) StopPulsating(serviceID uint8) {
-	client.pulseMutex.RLock()
-	pulsating := client.pulsating > 0 && client.pulsating == int(serviceID)
-	client.pulseMutex.RUnlock()
+// StopPulsating stops sending heartbeats to Discord
+func (c *Client) StopPulsating(serviceID uint8) {
+	c.pulseMutex.RLock()
+	pulsating := c.pulsating > 0 && c.pulsating == int(serviceID)
+	c.pulseMutex.RUnlock()
 
-	client.pulseMutex.Lock()
+	c.pulseMutex.Lock()
 	if pulsating {
-		client.pulseMutex.Unlock()
+		c.pulseMutex.Unlock()
 		return
 	}
 
-	client.pulsating = -1
-	client.pulseMutex.Unlock()
+	c.pulsating = -1
+	c.pulseMutex.Unlock()
 }
 
 // todo: remove or rewrite
@@ -407,6 +426,7 @@ func (c *Client) RemoveRoute() {
 	c.url = ""
 }
 
+// DiscordWSEventChan returns a channel for receiving events from Discord
 func (c *Client) DiscordWSEventChan() <-chan DiscordWSEvent {
 	return c.discordWSEventChan
 }
@@ -437,14 +457,20 @@ func (c *Client) readPump() {
 		// TODO: Improve zlib performance
 		if messageType == websocket.BinaryMessage {
 			b := bytes.NewReader(packet)
+			var r io.ReadCloser
 
-			r, err := zlib.NewReader(b)
+			r, err = zlib.NewReader(b)
 			if err != nil {
-				panic(err)
+				logrus.Panic(err)
+				continue
 			}
 
 			buf := new(bytes.Buffer)
-			buf.ReadFrom(r)
+			_, err = buf.ReadFrom(r)
+			if err != nil {
+				logrus.Panic(err)
+				continue
+			}
 			packet = buf.Bytes()
 
 			r.Close()

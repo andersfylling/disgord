@@ -7,13 +7,13 @@ import (
 	"fmt"
 )
 
-const DISCORD_TOKEN = "DISCORD_DISGORDWS_TOKEN_TEST"
-const DISCORD_TEST_MANUALLY = "DISCORD_DISGORDWS_MANUAL_TEST"
+const DiscordToken = "DISCORD_DISGORDWS_TOKEN_TEST"
+const DiscordTestManually = "DISCORD_DISGORDWS_MANUAL_TEST"
 
 func createClient(t *testing.T) (DiscordWebsocket, error) {
 	id := "DisgordWS v2.0.0"
 	conf := &Config{
-		Token:         os.Getenv(DISCORD_TOKEN),
+		Token:         os.Getenv(DiscordToken),
 		HTTPClient:    &http.Client{},
 		DAPIVersion:   6,
 		DAPIEncoding:  "json",
@@ -23,7 +23,7 @@ func createClient(t *testing.T) (DiscordWebsocket, error) {
 		Debug:         true,
 	}
 	if conf.Token == "" {
-		fmt.Printf("missing environment token '%s', skipping real connection tests.\n", DISCORD_TOKEN)
+		fmt.Printf("missing environment token '%s', skipping real connection tests.\n", DiscordToken)
 		t.Skip()
 	}
 
@@ -31,8 +31,8 @@ func createClient(t *testing.T) (DiscordWebsocket, error) {
 }
 
 func TestClientConnection(t *testing.T) {
-	if os.Getenv(DISCORD_TEST_MANUALLY) != "true" {
-		fmt.Printf("missing environment token '%s', skipping manual connection test.\n", DISCORD_TEST_MANUALLY)
+	if os.Getenv(DiscordTestManually) != "true" {
+		fmt.Printf("missing environment token '%s', skipping manual connection test.\n", DiscordTestManually)
 		t.Skip()
 	}
 	var err error

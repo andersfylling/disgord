@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"sync"
 
 	"time"
@@ -26,6 +25,20 @@ type Attachment struct {
 	ProxyURL string    `json:"proxy_url"`
 	Height   uint      `json:"height"`
 	Width    uint      `json:"width"`
+}
+
+func (a *Attachment) DeepCopy() (copy interface{}) {
+	copy = &Attachment{
+		ID:       a.ID,
+		Filename: a.Filename,
+		Size:     a.Size,
+		URL:      a.URL,
+		ProxyURL: a.ProxyURL,
+		Height:   a.Height,
+		Width:    a.Width,
+	}
+
+	return
 }
 
 // Overwrite: https://discordapp.com/developers/docs/resources/channel#overwrite-object
@@ -312,14 +325,15 @@ type Message struct {
 	sync.RWMutex `json:"-"`
 }
 
-func (m *Message) MarshalJSON() ([]byte, error) {
-	if m.ID.Empty() {
-		return []byte("{}"), nil
-	}
-
-	//TODO: remove copying of mutex
-	return json.Marshal(Message(*m))
-}
+// TODO: why is this method needed?
+//func (m *Message) MarshalJSON() ([]byte, error) {
+//	if m.ID.Empty() {
+//		return []byte("{}"), nil
+//	}
+//
+//	//TODO: remove copying of mutex
+//	return json.Marshal(Message(*m))
+//}
 
 // TODO: await for caching
 //func (m *Message) DirectMessage(session Session) bool {
@@ -328,6 +342,62 @@ func (m *Message) MarshalJSON() ([]byte, error) {
 
 type messageDeleter interface {
 	DeleteMessage(channelID, msgID Snowflake) (err error)
+}
+
+func (m *Message) CopyOverTo(other interface{}) (err error) {
+	var message *Message
+	var valid bool
+	if message, valid = other.(*Message); !valid {
+		err = NewErrorUnsupportedType("argument given is not a *Message type")
+		return
+	}
+
+	m.RLock()
+	message.Lock()
+
+	message.ID = m.ID
+	message.ChannelID = m.ChannelID
+	message.Content = m.Content
+	message.Timestamp = m.Timestamp
+	message.EditedTimestamp = m.EditedTimestamp
+	message.Tts = m.Tts
+	message.MentionEveryone = m.MentionEveryone
+	message.MentionRoles = m.MentionRoles
+	message.Pinned = m.Pinned
+	message.WebhookID = m.WebhookID
+	message.Type = m.Type
+	message.Activity = m.Activity
+	message.Application = m.Application
+
+	if m.Author != nil {
+		message.Author = m.Author.DeepCopy().(*User)
+	}
+
+	if m.Nonce != nil {
+		s := *m.Nonce
+		message.Nonce = &s
+	}
+
+	for _, mention := range m.Mentions {
+		message.Mentions = append(message.Mentions, mention.DeepCopy().(*User))
+	}
+
+	for _, attachment := range m.Attachments {
+		message.Attachments = append(message.Attachments, attachment.DeepCopy().(*Attachment))
+	}
+
+	for _, embed := range m.Embeds {
+		message.Embeds = append(message.Embeds, embed.DeepCopy().(*ChannelEmbed))
+	}
+
+	for _, reaction := range m.Reactions {
+		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
+	}
+
+	m.RUnlock()
+	message.Unlock()
+
+	return
 }
 
 func (m *Message) deleteFromDiscord(session Session) (err error) {
@@ -347,9 +417,7 @@ func (m *Message) saveToDiscord(session Session) (err error) {
 		message, err = m.update(session)
 	}
 
-	(*m) = (*message)
-	m.RWMutex = sync.RWMutex{}
-
+	message.CopyOverTo(m)
 	return
 }
 

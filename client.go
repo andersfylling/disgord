@@ -921,4 +921,3 @@ func (c *Client) eventHandler() {
 		c.evtDispatch.triggerCallbacks(ctx, evtName, c, box)
 	}
 }
-
