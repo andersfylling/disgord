@@ -47,36 +47,37 @@ func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) erro
 }
 
 func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentType string, err error) {
-	if len(p.Files) > 0 {
-		// Set up a new multipart writer, as we'll be using this for the POST body instead
-		buf := new(bytes.Buffer)
-		mp := multipart.NewWriter(buf)
-
-		// Write the existing JSON payload
-		var payload []byte
-		payload, err = json.Marshal(p)
-		if err != nil {
-			return
-		}
-		if err = mp.WriteField("payload_json", string(payload)); err != nil {
-			return
-		}
-
-		// Iterate through all the files and write them to the multipart blob
-		for i, file := range p.Files {
-			if err = file.write(i, mp); err != nil {
-				return
-			}
-		}
-
-		mp.Close()
-
-		postBody = buf
-		contentType = mp.FormDataContentType()
-	} else {
+	if len(p.Files) == 0 {
 		postBody = p
 		contentType = httd.ContentTypeJSON
+		return
 	}
+
+	// Set up a new multipart writer, as we'll be using this for the POST body instead
+	buf := new(bytes.Buffer)
+	mp := multipart.NewWriter(buf)
+
+	// Write the existing JSON payload
+	var payload []byte
+	payload, err = json.Marshal(p)
+	if err != nil {
+		return
+	}
+	if err = mp.WriteField("payload_json", string(payload)); err != nil {
+		return
+	}
+
+	// Iterate through all the files and write them to the multipart blob
+	for i, file := range p.Files {
+		if err = file.write(i, mp); err != nil {
+			return
+		}
+	}
+
+	mp.Close()
+
+	postBody = buf
+	contentType = mp.FormDataContentType()
 
 	return
 }
