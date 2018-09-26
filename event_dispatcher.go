@@ -111,20 +111,20 @@ type Dispatch struct {
 }
 
 func (c *Dispatch) On(event string, handlers ...interface{}) {
+	c.ws.RegisterEvent(event)
+
 	c.listenersLock.Lock()
 	defer c.listenersLock.Unlock()
-
-	c.ws.RegisterEvent(event)
 	for _, handler := range handlers {
 		c.listeners[event] = append(c.listeners[event], handler)
 	}
 }
 
 func (c *Dispatch) Once(event string, handlers ...interface{}) {
+	c.ws.RegisterEvent(event) // TODO: remove event after firing. unless there are more handlers
+
 	c.listenersLock.Lock()
 	defer c.listenersLock.Unlock()
-
-	c.ws.RegisterEvent(event) // TODO: remove event after firing. unless there are more handlers
 	for _, handler := range handlers {
 		index := len(c.listeners[event])
 		c.listeners[event] = append(c.listeners[event], handler)
