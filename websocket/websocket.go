@@ -1,9 +1,8 @@
 package websocket
 
 import (
-	"encoding/json"
-
-	"github.com/json-iterator/go"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/snowflake"
 )
 
 const (
@@ -35,21 +34,8 @@ var Encodings = []string{
 	EncodingETF,
 }
 
-// unmarshalJSONIterator https://github.com/json-iterator/go
-func unmarshalJSONIterator(data []byte, v interface{}) (err error) {
-	err = jsoniter.Unmarshal(data, v)
-	return
-}
-
-// unmarshalSTD standard GoLang implementation
-func unmarshalSTD(data []byte, v interface{}) (err error) {
-	err = json.Unmarshal(data, v)
-	return
-}
+type Snowflake = snowflake.Snowflake
 
 func unmarshal(data []byte, v interface{}) error {
-	if j, has := v.(json.Unmarshaler); has { // 112ns/op => 125ns/op
-		return j.UnmarshalJSON(data)
-	}
-	return unmarshalJSONIterator(data, v)
+	return httd.Unmarshal(data, v)
 }

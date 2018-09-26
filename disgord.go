@@ -3,6 +3,7 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/websocket"
 	"github.com/andersfylling/snowflake"
 )
 
@@ -23,6 +24,9 @@ const (
 func LibraryInfo() string {
 	return "Disgord " + constant.Version
 }
+
+type DiscordWSEvent = websocket.DiscordWSEvent
+type DiscordWebsocket = websocket.DiscordWebsocket
 
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------

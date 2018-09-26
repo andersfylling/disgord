@@ -86,7 +86,7 @@ func TestGuildEmbed(t *testing.T) {
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
-	err := json.Unmarshal(res, &guildEmbed)
+	err := unmarshal(res, &guildEmbed)
 	if err != nil {
 		t.Error(err)
 	}

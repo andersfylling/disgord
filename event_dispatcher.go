@@ -7,12 +7,11 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/websocket"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws websocket.DiscordWebsocket) *Dispatch {
+func NewDispatch(ws DiscordWebsocket) *Dispatch {
 	dispatcher := &Dispatch{
 		allChan:                      make(chan interface{}),
 		readyChan:                    make(chan *Ready),
@@ -100,7 +99,7 @@ type Dispatch struct {
 	voiceServerUpdateChan        chan *VoiceServerUpdate
 	webhooksUpdateChan           chan *WebhooksUpdate
 
-	ws websocket.DiscordWebsocket
+	ws DiscordWebsocket
 
 	listeners      map[string][]interface{}
 	listenOnceOnly map[string][]int
@@ -499,8 +498,8 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 		for _, listener := range d.listeners[EventWebhooksUpdate] {
 			(listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
 		}
-	default:
-		fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
+		//default:
+		//	fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
 	}
 
 	// remove the run only once listeners

@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (c *Client) opHandlerEvt(gp *gatewayEvent) {
+func (c *Client) eventHandler(gp *gatewayEvent) {
 	// discord events
 	// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
 
@@ -33,7 +33,7 @@ func (c *Client) opHandlerEvt(gp *gatewayEvent) {
 	// dispatch events
 	eventPkt := &Event{gp}
 	c.discordWSEventChan <- eventPkt
-} // end opHandlerEvt()
+} // end eventHandler()
 
 // operation handler demultiplexer
 func (c *Client) operationHandlers() {
@@ -49,7 +49,7 @@ func (c *Client) operationHandlers() {
 
 			switch opcode.ExtractFrom(gp) {
 			case opcode.DiscordEvent:
-				c.opHandlerEvt(gp)
+				c.eventHandler(gp)
 			case opcode.Reconnect:
 				// reconnect
 				_ = c.Disconnect()

@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"encoding/json"
 )
 
 const (
@@ -95,7 +93,7 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 
 	// the body only contains information when a rate limit is exceeded
 	if RateLimited(resp) && len(body) > 0 {
-		err = json.Unmarshal(body, &info)
+		err = Unmarshal(body, &info)
 	}
 	if !info.Global && GlobalRateLimit(resp) {
 		info.Global = true

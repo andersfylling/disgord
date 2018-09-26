@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -92,7 +91,7 @@ func (t Timestamp) MarshalJSON() ([]byte, error) {
 
 func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	var ts time.Time
-	err := json.Unmarshal(data, &ts)
+	err := unmarshal(data, &ts)
 	if err != nil {
 		return err
 	}

@@ -1,20 +1,17 @@
 package websocket
 
 import (
-	"bytes"
-	"compress/zlib"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
-	. "github.com/andersfylling/snowflake"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -86,16 +83,6 @@ func (c *Config) Validate() (err error) {
 	return
 }
 
-// NewRequiredClient same as NewClient(...), but program exits on failure.
-func NewRequiredClient(conf *Config) DiscordWebsocket {
-	c, err := NewClient(conf)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	return c
-}
-
 // NewClient Creates a new discord websocket client
 func NewClient(conf *Config) (DiscordWebsocket, error) {
 	if conf == nil {
@@ -150,6 +137,10 @@ type Pulsater interface {
 	HeartbeatAckMissingFix()
 }
 
+type Emitter interface {
+	Emit(command string, data interface{}) error
+}
+
 // DiscordWebsocket interface for interacting with the websocket module
 // TODO: add channels / listener for failed reconnections
 type DiscordWebsocket interface {
@@ -157,25 +148,9 @@ type DiscordWebsocket interface {
 	Connect() (err error)
 	Disconnect() (err error)
 	MockEventChanReciever()
-	Emit(command string, data interface{}) error
 	RegisterEvent(event string)
 	RemoveEvent(event string)
-}
-
-// NewErrorUnsupportedEventName ...
-func NewErrorUnsupportedEventName(event string) *ErrorUnsupportedEventName {
-	return &ErrorUnsupportedEventName{
-		info: "unsupported event name '" + event + "' was given",
-	}
-}
-
-// ErrorUnsupportedEventName is an error to identity unsupported event types request by the user
-type ErrorUnsupportedEventName struct {
-	info string
-}
-
-func (e *ErrorUnsupportedEventName) Error() string {
-	return e.info
+	Emitter
 }
 
 // Client holds the web socket state and can be used directly in marshal/unmarshal to work with intance data
@@ -436,44 +411,19 @@ func (c *Client) readPump() {
 
 	for {
 		messageType, packet, err := c.conn.ReadMessage()
-		if err != nil {
-			var die bool
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				// logrus.Errorf("error(%d): %v", messageType, err)
-				die = true
-			} else if c.disconnected == nil {
-				// connection was closed
-				die = true
-			}
-
-			if die {
-				logrus.Debug("closing readPump")
-				return
-			}
+		if err != nil && (websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) || c.disconnected == nil) {
+			logrus.Debug("closing readPump")
+			return
 		}
 
 		logrus.Debugf("<-: %+v\n", string(packet))
 
-		// TODO: Improve zlib performance
 		if messageType == websocket.BinaryMessage {
-			b := bytes.NewReader(packet)
-			var r io.ReadCloser
-
-			r, err = zlib.NewReader(b)
+			packet, err = httd.BinaryToText(packet)
 			if err != nil {
 				logrus.Panic(err)
 				continue
 			}
-
-			buf := new(bytes.Buffer)
-			_, err = buf.ReadFrom(r)
-			if err != nil {
-				logrus.Panic(err)
-				continue
-			}
-			packet = buf.Bytes()
-
-			r.Close()
 		}
 
 		// parse to gateway payload object
@@ -481,6 +431,7 @@ func (c *Client) readPump() {
 		err = evt.UnmarshalJSON(packet)
 		if err != nil {
 			logrus.Error(err)
+			continue
 		}
 
 		// notify operation listeners

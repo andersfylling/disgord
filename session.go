@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -12,27 +11,6 @@ import (
 
 // NewSession create a client and return the Session interface
 func NewSession(conf *Config) (Session, error) {
-
-	// ensure valid api version
-	if conf.APIVersion == 0 {
-		conf.APIVersion = 6 // the current discord API, for now v6
-	}
-	switch conf.APIVersion { // todo: simplify
-	case 1:
-		fallthrough
-	case 2:
-		fallthrough
-	case 3:
-		fallthrough
-	case 4:
-		fallthrough
-	case 5:
-		return nil, errors.New("outdated API version")
-	case 6: // supported
-	default:
-		return nil, errors.New("Discord API version is not yet supported")
-	}
-
 	if conf.HTTPClient == nil {
 		// http client configuration
 		conf.HTTPClient = &http.Client{
@@ -40,11 +18,6 @@ func NewSession(conf *Config) (Session, error) {
 		}
 	}
 
-	// Use websocket to keep the socket connection going
-	// default communication encoding to json
-	if conf.APIEncoding == "" {
-		conf.APIEncoding = JSONEncoding
-	}
 	if conf.ProjectName == "" {
 		conf.ProjectName = LibraryInfo()
 	}
@@ -60,8 +33,8 @@ func NewSession(conf *Config) (Session, error) {
 		GuildLargeThreshold: 250, // TODO: config
 
 		// lib specific
-		DAPIVersion:   conf.APIVersion,
-		DAPIEncoding:  conf.APIEncoding,
+		DAPIVersion:   constant.DiscordVersion,
+		DAPIEncoding:  JSONEncoding,
 		ChannelBuffer: 1,
 	})
 	if err != nil {
@@ -70,7 +43,7 @@ func NewSession(conf *Config) (Session, error) {
 
 	// request client
 	reqConf := &httd.Config{
-		APIVersion:                   conf.APIVersion,
+		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.Token,
 		UserAgentSourceURL:           GitHubURL,
 		UserAgentVersion:             constant.Version,

@@ -94,7 +94,7 @@ func NewGuild() *Guild {
 
 func NewGuildFromJSON(data []byte) (guild *Guild) {
 	guild = NewGuild()
-	err := json.Unmarshal(data, guild)
+	err := unmarshal(data, guild)
 	if err != nil {
 		panic(err)
 	}

@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,9 +18,6 @@ import (
 type Config struct {
 	Token      string
 	HTTPClient *http.Client
-
-	APIVersion  int    // eg. version 6. 0 defaults to lowest supported api version
-	APIEncoding string // eg. json, use const. defaults to json
 
 	CancelRequestWhenRateLimited bool
 
@@ -46,8 +42,8 @@ type Client struct {
 	token  string
 
 	connected     sync.Mutex
-	ws            websocket.DiscordWebsocket
-	socketEvtChan <-chan websocket.DiscordWSEvent
+	ws            DiscordWebsocket
+	socketEvtChan <-chan DiscordWSEvent
 
 	myself *User
 
@@ -807,7 +803,7 @@ func (c *Client) UpdateChannel(channel *Channel) (err error) {
 	return errors.New("not implemented")
 }
 
-func waitForEvent(eventEmitter <-chan websocket.DiscordWSEvent) (event websocket.DiscordWSEvent, err error) {
+func waitForEvent(eventEmitter <-chan DiscordWSEvent) (event DiscordWSEvent, err error) {
 	var alive bool
 	event, alive = <-eventEmitter
 	if !alive {
@@ -822,7 +818,7 @@ func waitForEvent(eventEmitter <-chan websocket.DiscordWSEvent) (event websocket
 func (c *Client) eventHandler() {
 	for {
 		var err error
-		var evt websocket.DiscordWSEvent
+		var evt DiscordWSEvent
 
 		evt, err = waitForEvent(c.socketEvtChan)
 		if err != nil {
