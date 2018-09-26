@@ -529,9 +529,21 @@ func (c *Client) Connect() (err error) {
 		return nil
 	}(err)
 
+	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
+	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
+	dialer := websocket.DefaultDialer
+	if t, ok := c.conf.HTTPClient.Transport.(*http.Transport); ok {
+		dialer = &websocket.Dialer{
+			HandshakeTimeout: dialer.HandshakeTimeout,
+			Proxy:            t.Proxy,
+			NetDialContext:   t.DialContext,
+			NetDial:          t.Dial, // even though Dial is deprecated in http.Transport, it isn't in websocket
+		}
+	}
+
 	// establish ws connection
 	logrus.Debug("Connecting to url: " + c.url)
-	c.conn, _, err = websocket.DefaultDialer.Dial(c.url, nil)
+	c.conn, _, err = dialer.Dial(c.url, nil)
 	if err != nil {
 		return
 	}
