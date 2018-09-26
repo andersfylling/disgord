@@ -2,7 +2,7 @@
 So the time has come where you want to be a bot engineer huh? In this article you are introduced to creating the most basic bot. This snippet will contain the main function's body.
 
 
-```GoLang
+```go
 // create a Disgord session
 session, err := disgord.NewSession(&disgord.Config{
     Token: os.Getenv("DISGORD_TOKEN"),
