@@ -141,15 +141,20 @@ func pulsate(client Pulsater, ws *websocket.Conn, disconnected chan struct{}) {
 		client.SendHeartbeat(snr)
 
 		// verify the heartbeat ACK
-		go func(client Pulsater, last time.Time) {
+		go func(client Pulsater, last time.Time, sent time.Time) {
 			// TODO
 			heartbeatResponseDeadline := (3 * time.Second) % (time.Duration(interval) * time.Millisecond)
 			<-time.After(heartbeatResponseDeadline)
 			if !client.HeartbeatWasRecieved(last) {
 				logrus.Debug("heartbeat ACK was not received")
 				client.HeartbeatAckMissingFix()
+			} else {
+				// update latency
+				if c, ok := client.(*Client); ok {
+					c.heartbeatLatency = c.lastHeartbeatAck.Sub(sent)
+				}
 			}
-		}(client, last)
+		}(client, last, time.Now())
 
 		select {
 		case <-ticker.C:

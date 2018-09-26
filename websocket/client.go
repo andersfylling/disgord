@@ -140,6 +140,9 @@ type Pulsater interface {
 type Emitter interface {
 	Emit(command string, data interface{}) error
 }
+type HeartbeatLatencer interface {
+	HeartbeatLatency() (duration time.Duration, err error)
+}
 
 // DiscordWebsocket interface for interacting with the websocket module
 // TODO: add channels / listener for failed reconnections
@@ -151,6 +154,7 @@ type DiscordWebsocket interface {
 	RegisterEvent(event string)
 	RemoveEvent(event string)
 	Emitter
+	HeartbeatLatencer
 }
 
 // Client holds the web socket state and can be used directly in marshal/unmarshal to work with intance data
@@ -165,6 +169,7 @@ type Client struct {
 	sequenceNumber uint
 
 	heartbeatInterval uint //`json:"heartbeat_interval"`
+	heartbeatLatency  time.Duration
 	lastHeartbeatAck  time.Time
 	Trace             []string  `json:"_trace"`
 	SessionID         string    `json:"session_id"`
@@ -192,6 +197,15 @@ type Client struct {
 	// heartbeat mutex keeps us from creating another pulser
 	pulseMutex sync.RWMutex
 	pulsating  int
+}
+
+func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
+	duration = c.heartbeatLatency
+	if duration == 0 {
+		err = errors.New("latency not determined yet")
+	}
+
+	return
 }
 
 // ListensForEvent checks if a given event type has been registered for further processing.

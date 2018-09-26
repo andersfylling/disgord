@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/sirupsen/logrus"
@@ -62,6 +63,13 @@ type Client struct {
 
 	// cache
 	state *Cache
+}
+
+// HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
+// heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
+// way to measure delay between the client and Discord server
+func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
+	return c.ws.HeartbeatLatency()
 }
 
 func (c *Client) Myself() *User {

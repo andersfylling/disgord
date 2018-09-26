@@ -279,6 +279,7 @@ type Session interface {
 
 	// Discord Gateway, web socket
 	SocketHandler
+	HeartbeatLatency() (duration time.Duration, err error)
 
 	// Generic CRUD operations for Discord interaction
 	DeleteFromDiscord(obj discordDeleter) error
