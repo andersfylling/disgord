@@ -15,7 +15,7 @@ The Session interface is the recommended way to query objects from the Discord A
 
 ### Query Discord using the REST functions
 > **Note:** It is assumed you understand how to create a session. You do not need to use Session.Connect and Session.Disconnect for _most_ REST queries.
-```GoLang
+```go
 // The user id of this repository's owner
 userID := disgord.NewSnowflake(228846961774559232)
 
@@ -40,7 +40,7 @@ if err != nil {
 > **Note#2:** This is currently not a part of the Session interface, but will be added in a later version of Disgord.
 
 Channel methods - these are however commented out as of now.
-```GoLang
+```go
 // The user id of this repository's owner
 userID := disgord.NewSnowflake(228846961774559232)
 
