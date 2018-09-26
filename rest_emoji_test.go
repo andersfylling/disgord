@@ -215,7 +215,7 @@ func TestValidEmojiName(t *testing.T) {
 		_, body, err := client.Post(&httd.Request{
 			Ratelimiter: ratelimitGuild(guildID),
 			Endpoint:    endpoint.GuildEmojis(guildID),
-			JSONParams:  params,
+			Body:        params,
 		})
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")

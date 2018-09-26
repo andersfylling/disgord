@@ -164,7 +164,7 @@ type Request struct {
 	Method      string
 	Ratelimiter string
 	Endpoint    string
-	JSONParams  interface{}
+	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType string
 }
 
@@ -227,11 +227,21 @@ func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 }
 
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
-	var jsonParamsReader io.Reader
-	if r.JSONParams != nil {
-		jsonParamsReader, err = convertStructToIOReader(r.JSONParams)
-		if err != nil {
-			return
+	var bodyReader io.Reader
+	if r.Body != nil {
+		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
+		case io.Reader:
+			bodyReader = b
+		default:
+			// If the type is unknown, possibly Marshal it as JSON
+			if r.ContentType != ContentTypeJSON {
+				return nil, nil, errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
+			}
+
+			bodyReader, err = convertStructToIOReader(r.Body)
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -242,7 +252,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	}
 
 	// create request
-	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, jsonParamsReader)
+	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, bodyReader)
 	if err != nil {
 		return
 	}

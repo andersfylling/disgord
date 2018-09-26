@@ -1,7 +1,11 @@
 package disgord
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"sync"
@@ -223,7 +227,7 @@ func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChanne
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelInvites(id),
 		Endpoint:    endpoint.ChannelInvites(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -390,7 +394,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelRecipients(channelID),
 		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -544,12 +548,19 @@ func NewMessageByString(content string) *CreateChannelMessageParams {
 
 // CreateChannelMessageParams JSON params for CreateChannelMessage
 type CreateChannelMessageParams struct {
-	Content     string        `json:"content"`
-	Nonce       Snowflake     `json:"nonce,omitempty"`
-	Tts         bool          `json:"tts,omitempty"`
-	File        interface{}   `json:"file,omitempty"`  // TODO: what is this supposed to be?
-	Embed       *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
-	PayloadJSON string        `json:"payload_json,omitempty"`
+	Content string        `json:"content"`
+	Nonce   Snowflake     `json:"nonce,omitempty"`
+	Tts     bool          `json:"tts,omitempty"`
+	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
+
+	Files []CreateChannelMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+}
+
+// CreateChannelMessageFileParams contains the information needed to upload a file to Discord, it is part of the
+// CreateChannelMessageParams struct.
+type CreateChannelMessageFileParams struct {
+	Reader   io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
+	FileName string    `json:"-"`
 }
 
 // CreateChannelMessage [POST] Post a message to a guild text or DM channel. If operating on a guild channel,
@@ -564,11 +575,7 @@ type CreateChannelMessageParams struct {
 // Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-message
 // Reviewed                    2018-06-10
 // Comment                     Before using this endpoint, you must connect to and identify with a gateway
-//                             at least once. This endpoint supports both JSON and form data bodies. It does
-//                             require multipart/form-data requests instead of the normal JSON request type
-//                             when uploading files. Make sure you set your Content-Type to multipart/form-data
-//                             if you're doing that. Note that in that case, the embed field cannot be used,
-//                             but you can pass an url-encoded JSON body as a form value for payload_json.
+//                             at least once.
 func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -579,12 +586,51 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 		return
 	}
 
+	var (
+		postBody    interface{} = params
+		contentType             = httd.ContentTypeJSON
+	)
+
+	if len(params.Files) > 0 {
+		// Set up a new multipart writer, as we'll be using this for the POST body instead
+		buf := new(bytes.Buffer)
+		mp := multipart.NewWriter(buf)
+
+		// Write the existing JSON payload
+		var payload []byte
+		payload, err = json.Marshal(params)
+		if err != nil {
+			return
+		}
+		if err = mp.WriteField("payload_json", string(payload)); err != nil {
+			return
+		}
+
+		for i, file := range params.Files {
+			var w io.Writer
+			w, err = mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), file.FileName)
+			if err != nil {
+				return
+			}
+
+			if _, err = io.Copy(w, file.Reader); err != nil {
+				return
+			}
+		}
+
+		mp.Close()
+
+		postBody = buf
+		contentType = mp.FormDataContentType()
+	}
+
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages",
-		JSONParams:  params,
-		ContentType: httd.ContentTypeJSON,
+		Body:        postBody,
+		ContentType: contentType,
 	})
+
 	if err != nil {
 		return
 	}
@@ -619,7 +665,7 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
