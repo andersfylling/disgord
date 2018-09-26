@@ -1,11 +1,8 @@
 package disgord
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"strconv"
 	"sync"
@@ -587,41 +584,13 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 	}
 
 	var (
-		postBody    interface{} = params
-		contentType             = httd.ContentTypeJSON
+		postBody    interface{}
+		contentType string
 	)
 
-	if len(params.Files) > 0 {
-		// Set up a new multipart writer, as we'll be using this for the POST body instead
-		buf := new(bytes.Buffer)
-		mp := multipart.NewWriter(buf)
-
-		// Write the existing JSON payload
-		var payload []byte
-		payload, err = json.Marshal(params)
-		if err != nil {
-			return
-		}
-		if err = mp.WriteField("payload_json", string(payload)); err != nil {
-			return
-		}
-
-		for i, file := range params.Files {
-			var w io.Writer
-			w, err = mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), file.FileName)
-			if err != nil {
-				return
-			}
-
-			if _, err = io.Copy(w, file.Reader); err != nil {
-				return
-			}
-		}
-
-		mp.Close()
-
-		postBody = buf
-		contentType = mp.FormDataContentType()
+	postBody, contentType, err = params.prepare()
+	if err != nil {
+		return
 	}
 
 	_, body, err := client.Post(&httd.Request{
