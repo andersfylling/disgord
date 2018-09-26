@@ -30,7 +30,7 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {

@@ -69,7 +69,7 @@ func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (re
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMe(),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -188,7 +188,7 @@ func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err erro
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
-		JSONParams:  &BodyUserCreateDM{recipientID},
+		Body:        &BodyUserCreateDM{recipientID},
 	})
 	if err != nil {
 		return
@@ -215,7 +215,7 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {

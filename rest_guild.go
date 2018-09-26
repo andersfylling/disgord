@@ -79,7 +79,7 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: endpoint.Guilds(),
 		Endpoint:    endpoint.Guilds(),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -144,7 +144,7 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -228,7 +228,7 @@ func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildCha
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.GuildChannels(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -258,7 +258,7 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params *Modi
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -356,7 +356,7 @@ func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGui
 	resp, body, err := client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -398,7 +398,7 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 	resp, _, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -429,7 +429,7 @@ func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurr
 	resp, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(id),
 		Endpoint:    endpoint.GuildMembersMeNick(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -684,7 +684,7 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 	_, body, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(id),
 		Endpoint:    endpoint.GuildRoles(id),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -719,7 +719,7 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 	details := &httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRoles(guildID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}
 	_, body, err := client.Patch(details)
@@ -759,7 +759,7 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *Mod
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -936,7 +936,7 @@ func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *Creat
 	resp, _, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrations(guildID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -970,7 +970,7 @@ func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflak
 	resp, _, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -1064,7 +1064,7 @@ func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
-		JSONParams:  params,
+		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
