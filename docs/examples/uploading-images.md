@@ -1,0 +1,31 @@
+Uploading images as attachments or even to supply them in Embeds is quite easy,
+images not used in the same post will be added as attachments
+and images accessed using the `attachment://` scheme will be used on their respective locations.  
+See the following example:
+
+```go
+f1, err := os.Open("myfavouriteimage.jpg")
+if err != nil {
+	panic(err)
+}
+defer f1.Close()
+f2, err := os.Open("another.jpg")
+if err != nil {
+	panic(err)
+}
+defer f2.Close()
+
+discord.CreateChannelMessage(channelID, &disgord.CreateChannelMessageParams{
+	Content: "This is my favourite image, and another in an embed!",
+	Files: []disgord.CreateChannelMessageFileParams{
+		{f1, "myfavouriteimage.jpg"},
+		{f2, "another.jpg"},
+	},
+	Embed: &disgord.ChannelEmbed{
+		Description: "Look here!",
+		Image: &disgord.ChannelEmbedImage{
+			URL: "attachment://another.jpg",
+		},
+	},
+})
+```
