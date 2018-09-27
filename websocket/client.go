@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	"github.com/gorilla/websocket"
@@ -433,7 +432,7 @@ func (c *Client) readPump() {
 		logrus.Debugf("<-: %+v\n", string(packet))
 
 		if messageType == websocket.BinaryMessage {
-			packet, err = httd.BinaryToText(packet)
+			packet, err = decompressBytes(packet)
 			if err != nil {
 				logrus.Panic(err)
 				continue
