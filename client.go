@@ -22,10 +22,12 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
-	LoadAllMembers   bool
-	LoadAllChannels  bool
-	LoadAllRoles     bool
-	LoadAllPresences bool
+	ImmutableCache bool
+
+	//LoadAllMembers   bool
+	//LoadAllChannels  bool
+	//LoadAllRoles     bool
+	//LoadAllPresences bool
 
 	Debug bool
 
@@ -62,7 +64,7 @@ type Client struct {
 	httpClient *http.Client
 
 	// cache
-	state *Cache
+	cache *Cache
 }
 
 // HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
@@ -73,6 +75,7 @@ func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 }
 
 func (c *Client) Myself() *User {
+	// TODO: caching
 	if c.myself == nil {
 		var err error
 		c.myself, err = c.GetCurrentUser()
@@ -154,9 +157,9 @@ func (c *Client) Req() httd.Requester {
 	return c.req
 }
 
-// State is the cache....
-func (c *Client) State() Cacher {
-	return c.state
+// Cache
+func (c *Client) Cache() Cacher {
+	return c.cache
 }
 
 func (c *Client) On(event string, handlers ...interface{}) {
@@ -432,6 +435,10 @@ func (c *Client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelPara
 // GetGuildMember .
 func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
 	ret, err = GetGuildMember(c.req, guildID, userID)
+	if err == nil {
+		// when a fresh request was made
+		c.cache.Update(UserCache, ret.User)
+	}
 	return
 }
 
@@ -627,7 +634,16 @@ func (c *Client) GetCurrentUser() (ret *User, err error) {
 
 // GetUser .
 func (c *Client) GetUser(id Snowflake) (ret *User, err error) {
-	ret, err = GetUser(c.req, id)
+	var result interface{}
+	result, err = c.cache.Get(UserCache, id)
+	switch err.(type) {
+	case nil:
+		ret = result.(*User)
+	case *ErrorCacheItemNotFound:
+		ret, err = GetUser(c.req, id)
+		c.cache.Update(UserCache, ret)
+	}
+
 	return
 }
 
@@ -920,8 +936,66 @@ func (c *Client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
+		// cache
+		c.cacheEvent(evtName, box)
+
 		// trigger listeners
 		c.evtDispatch.triggerChan(ctx, evtName, c, box)
 		c.evtDispatch.triggerCallbacks(ctx, evtName, c, box)
 	}
+}
+
+func (c *Client) cacheEvent(event string, v interface{}) (err error) {
+	// content holds key and object to be cached
+	content := map[int]([]interface{}){}
+
+	switch event {
+	case EventReady:
+		ready := v.(*Ready)
+		content[UserCache] = append(content[UserCache], ready.User)
+
+		for _, guild := range ready.Guilds {
+			content[GuildCache] = append(content[GuildCache], guild)
+		}
+	default:
+		err = errors.New("unsupported event for caching")
+		//case EventResumed:
+		//case EventChannelCreate:
+		//case EventChannelUpdate:
+		//case EventChannelDelete:
+		//case EventChannelPinsUpdate:
+		//case EventGuildCreate:
+		//case EventGuildUpdate:
+		//case EventGuildDelete:
+		//case EventGuildBanAdd:
+		//case EventGuildBanRemove:
+		//case EventGuildEmojisUpdate:
+		//case EventGuildIntegrationsUpdate:
+		//case EventGuildMemberAdd:
+		//case EventGuildMemberRemove:
+		//case EventGuildMemberUpdate:
+		//case EventGuildMembersChunk:
+		//case EventGuildRoleCreate:
+		//case EventGuildRoleUpdate:
+		//case EventGuildRoleDelete:
+		//case EventMessageCreate:
+		//case EventMessageUpdate:
+		//case EventMessageDelete:
+		//case EventMessageDeleteBulk:
+		//case EventMessageReactionAdd:
+		//case EventMessageReactionRemove:
+		//case EventMessageReactionRemoveAll:
+		//case EventPresenceUpdate:
+		//case EventTypingStart:
+		//case EventUserUpdate:
+		//case EventVoiceStateUpdate:
+		//case EventVoiceServerUpdate:
+		//case EventWebhooksUpdate:
+	}
+
+	for key, structs := range content {
+		err = c.cache.Updates(key, structs)
+	}
+
+	return
 }

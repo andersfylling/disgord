@@ -55,6 +55,11 @@ func NewSession(conf *Config) (Session, error) {
 	// event dispatcher
 	evtDispatcher := NewDispatch(dws)
 
+	// caching
+	cacheConfig := &CacheConfig{
+		Immutable: conf.ImmutableCache,
+	}
+
 	// create a disgord client/instance/session
 	c := &Client{
 		config:        conf,
@@ -63,7 +68,7 @@ func NewSession(conf *Config) (Session, error) {
 		socketEvtChan: dws.DiscordWSEventChan(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
-		state:         NewCache(),
+		cache:         NewCache(cacheConfig),
 		req:           reqClient,
 	}
 
@@ -270,9 +275,9 @@ type Session interface {
 	// CRUD operation and not the actual rest endpoints for discord (See Rest()).
 	Req() httd.Requester
 
-	// State reflects the latest changes received from Discord gateway.
+	// Cache reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
-	State() Cacher
+	Cache() Cacher
 
 	// RateLimiter the rate limiter for the discord REST API
 	RateLimiter() httd.RateLimiter
