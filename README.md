@@ -44,6 +44,9 @@ github.com/andersfylling/disgord
 └──github.com/sirupsen/logrus          :Logging (will be replaced with a simplified interface for DI)
 ```
 
+If you do not wish to use json-iterator, you can pass `-tags=json-std` to switch to `"encoding/json"`.
+However, json-iterator is the recommended default for this library.
+
 ## Contributing
 Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be useful to read this regardless if you have the time)
 
