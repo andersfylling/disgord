@@ -58,6 +58,7 @@ func (c *Cache) Updates(key int, vs []interface{}) (err error) {
 
 	return
 }
+
 func (c *Cache) Update(key int, v interface{}) (err error) {
 	if v == nil {
 		err = errors.New("object was nil")

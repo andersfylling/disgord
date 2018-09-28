@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/sirupsen/logrus"
 )
@@ -48,7 +49,7 @@ type Client struct {
 	ws            DiscordWebsocket
 	socketEvtChan <-chan DiscordWSEvent
 
-	myself *User
+	myID Snowflake
 
 	// register listeners for events
 	evtDispatch *Dispatch
@@ -74,18 +75,21 @@ func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 	return c.ws.HeartbeatLatency()
 }
 
-func (c *Client) Myself() *User {
-	// TODO: caching
-	if c.myself == nil {
-		var err error
-		c.myself, err = c.GetCurrentUser()
-		if err != nil {
-			c.myself = nil
-			return nil // should this ever happen?
+func (c *Client) Myself() (user *User, err error) {
+	if c.myID.Empty() {
+		user, err = c.GetCurrentUser()
+		if err == nil {
+			c.myID = user.ID
 		}
+		return
 	}
 
-	return c.myself
+	var usr interface{}
+	usr, err = c.cache.Get(UserCache, c.myID)
+	if err == nil {
+		user = usr.(*User)
+	}
+	return
 }
 
 func (c *Client) logInfo(msg string) {
@@ -111,6 +115,15 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
+	// set the user ID upon connection
+	// only works for socketing
+	c.Once(event.Ready, func(session Session, rdy *Ready) {
+		c.myID = rdy.User.ID
+	})
+	c.On(event.UserUpdate, func(session Session, update *UserUpdate) {
+		session.Cache().Update(UserCache, update.User)
+	})
+
 	c.logInfo("Connecting to discord Gateway")
 	c.evtDispatch.start()
 	err = c.ws.Connect()

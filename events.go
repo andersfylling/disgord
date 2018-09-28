@@ -735,7 +735,7 @@ type UserUpdate struct {
 
 func (obj *UserUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
 
-// UserUpdateCallback triggerd on USER_UPDATE events
+// UserUpdateCallback triggered on USER_UPDATE events
 type UserUpdateCallback = func(session Session, uu *UserUpdate)
 
 // ---------------------------
