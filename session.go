@@ -267,7 +267,7 @@ type RESTer interface {
 // Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
 type Session interface {
 	// give information about the bot/connected user
-	Myself() *User
+	Myself() (*User, error)
 
 	// Request For interacting with Discord. Sending messages, creating channels, guilds, etc.
 	// To read object state such as guilds, State() should be used in stead. However some data
