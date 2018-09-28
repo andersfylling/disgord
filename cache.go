@@ -2,7 +2,9 @@ package disgord
 
 import (
 	"errors"
-	"sync"
+	"time"
+
+	"github.com/andersfylling/disgord/cache/lru"
 )
 
 // cache keys
@@ -32,20 +34,25 @@ func (e *ErrorCacheItemNotFound) Error() string {
 }
 
 func NewCache(conf *CacheConfig) *Cache {
+	const userWeight = 1 // MiB. TODO: what is the actual max size?
+
 	return &Cache{
 		conf:  conf,
-		users: make(map[Snowflake]*User),
+		users: lru.NewCacheList(conf.UserCacheLimitMiB/userWeight, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage),
 	}
 }
 
 type CacheConfig struct {
 	Immutable bool
+
+	UserCacheLimitMiB              uint
+	UserCacheLifetime              time.Duration
+	UserCacheUpdateLifetimeOnUsage bool
 }
 
 type Cache struct {
-	conf       *CacheConfig
-	users      map[Snowflake]*User
-	usersMutex sync.RWMutex
+	conf  *CacheConfig
+	users *lru.CacheList
 }
 
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
@@ -65,20 +72,16 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 		return
 	}
 
-	var obj interface{}
-	if c.conf.Immutable {
-		if copyable, ok := v.(DeepCopier); ok {
-			obj = copyable.DeepCopy()
-		} else {
-			err = errors.New("object does not implement DeepCopier and must do so when config.Immutable is set")
-		}
-	} else {
-		obj = v
+	_, implementsDeepCopier := v.(DeepCopier)
+	_, implementsCacheCopier := v.(cacheCopier)
+	if !implementsCacheCopier && !implementsDeepCopier && c.conf.Immutable {
+		err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Immutable is set")
+		return
 	}
 
 	switch key {
 	case UserCache:
-		if user, isUser := obj.(*User); isUser {
+		if user, isUser := v.(*User); isUser {
 			c.SetUser(user)
 		} else {
 			err = errors.New("can only save *User structures to user cache")
@@ -106,31 +109,41 @@ func (c *Cache) SetUser(new *User) {
 		return
 	}
 
-	c.usersMutex.Lock()
-	defer c.usersMutex.Unlock()
-
-	if user, exists := c.users[new.ID]; exists {
-		new.CopyOverTo(user)
+	c.users.Lock()
+	defer c.users.Unlock()
+	if item, exists := c.users.Get(new.ID); exists {
+		if c.conf.Immutable {
+			new.copyOverToCache(item.Object())
+		} else {
+			item.Set(new)
+		}
+		c.users.Set(new.ID, item)
 	} else {
-		c.users[new.ID] = new
+		var content interface{}
+		if c.conf.Immutable {
+			content = new.DeepCopy()
+		} else {
+			content = new
+		}
+		c.users.Set(new.ID, lru.NewCacheItem(content))
 	}
 }
 
 func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
-	c.usersMutex.RLock()
-	defer c.usersMutex.RUnlock()
+	c.users.RLock()
+	defer c.users.RUnlock()
 
 	var exists bool
-	var result *User
-	if result, exists = c.users[id]; !exists {
+	var result *lru.CacheItem
+	if result, exists = c.users.Get(id); !exists {
 		err = NewErrorCacheItemNotFound(id)
 		return
 	}
 
 	if c.conf.Immutable {
-		user = result.DeepCopy().(*User)
+		user = result.Object().(*User).DeepCopy().(*User)
 	} else {
-		user = result
+		user = result.Object().(*User)
 	}
 
 	return
