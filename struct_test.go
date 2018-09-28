@@ -124,7 +124,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Username = v.(string)
 			}
 			if v, ok = m["discriminator"]; ok {
-				user.Discriminator = v.(string)
+				user.Discriminator = v.(Discriminator)
 			}
 			if v, ok = m["email"]; ok {
 				user.Email = v.(string)
@@ -164,7 +164,8 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Username = v
 			}
 			if v, ok = m["discriminator"]; ok {
-				user.Discriminator = v
+				d, _ := NewDiscriminator(v)
+				user.Discriminator = d
 			}
 			if v, ok = m["email"]; ok {
 				user.Email = v
@@ -185,6 +186,113 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Bot = v == "true"
 			}
 
+		}
+	})
+}
+
+func TestDiscriminator(t *testing.T) {
+	t.Run("String()", func(t *testing.T) {
+		var d Discriminator
+		d = Discriminator(0)
+		if d.String() != "" {
+			t.Errorf("got %s, wants \"\"", d.String())
+		}
+
+		d = Discriminator(1)
+		if d.String() != "0001" {
+			t.Errorf("got %s, wants \"0001\"", d.String())
+		}
+
+		d = Discriminator(4)
+		if d.String() != "0004" {
+			t.Errorf("got %s, wants \"0004\"", d.String())
+		}
+
+		d = Discriminator(12)
+		if d.String() != "0012" {
+			t.Errorf("got %s, wants \"0012\"", d.String())
+		}
+
+		d = Discriminator(120)
+		if d.String() != "0120" {
+			t.Errorf("got %s, wants \"0120\"", d.String())
+		}
+
+		d = Discriminator(1201)
+		if d.String() != "1201" {
+			t.Errorf("got %s, wants \"1201\"", d.String())
+		}
+	})
+	t.Run("UnmarshalJSON(...)", func(t *testing.T) {
+		var data []byte
+		var d Discriminator
+		var err error
+
+		data = []byte{
+			'"', '0', '0', '0', '1', '"',
+		}
+		err = unmarshal(data, &d)
+		if err != nil {
+			t.Error(err)
+		}
+		if d.String() != "0001" {
+			t.Errorf("got %s, wants \"0001\"", d.String())
+		}
+
+		data = []byte{
+			'"', '0', '2', '0', '1', '"',
+		}
+		err = unmarshal(data, &d)
+		if err != nil {
+			t.Error(err)
+		}
+		if d.String() != "0201" {
+			t.Errorf("got %s, wants \"0201\"", d.String())
+		}
+
+		data = []byte{
+			'"', '"',
+		}
+		err = unmarshal(data, &d)
+		if err != nil {
+			t.Error(err)
+		}
+		if d.String() != "" {
+			t.Errorf("got %s, wants \"\"", d.String())
+		}
+		if !d.NotSet() {
+			t.Error("expected Discriminator to be NotSet")
+		}
+
+	})
+	t.Run("MarshalJSON()", func(t *testing.T) {
+		d := Discriminator(34)
+		data, err := json.Marshal(&d)
+		if err != nil {
+			t.Error(err)
+		}
+		if string(data) != string([]byte("\"0034\"")) {
+			t.Errorf("wrong. got %s, expects \"0034\"", string(data))
+		}
+
+		d = Discriminator(0)
+		data, err = json.Marshal(&d)
+		if err != nil {
+			t.Error(err)
+		}
+		if string(data) != string([]byte("\"\"")) {
+			t.Errorf("wrong. got %s, expects \"\"", string(data))
+		}
+	})
+	t.Run("NotSet()", func(t *testing.T) {
+		d := Discriminator(34)
+		if d.NotSet() {
+			t.Error("expected Discriminator.NotSet to be false, got true")
+		}
+
+		d = Discriminator(0)
+		if !d.NotSet() {
+			t.Error("expected Discriminator.NotSet to be true, got false")
 		}
 	})
 }

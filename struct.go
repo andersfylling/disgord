@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +13,16 @@ import (
 // useful when overwriting already existing content in the cache to reduce GC.
 type Copier interface {
 	CopyOverTo(other interface{}) error
+}
+
+// cacheCopier is similar to Copier interface. Except that it only copies over fields which has a value, unlike Copier
+// that creates an exact copy of everything. This will also ignore arrays that can be simplified to a snowflake array.
+// An example of said simplification is Guild.Channels, as there will already exist a channel cache.
+//
+// It is important to know that this should only be called by the cache. The cache must also make sure that the type
+// given as an argument for `other` is correct. Failure to do so results in a panic.
+type cacheCopier interface {
+	copyOverToCache(other interface{}) error
 }
 
 func NewErrorUnsupportedType(message string) *ErrorUnsupportedType {
@@ -179,4 +190,60 @@ func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
 }
 func (dmnl *DefaultMessageNotificationLvl) Equals(v uint) bool {
 	return uint(*dmnl) == v
+}
+
+func NewDiscriminator(d string) (discriminator Discriminator, err error) {
+	var tmp uint64
+	tmp, err = strconv.ParseUint(d, 10, 16)
+	if err == nil {
+		discriminator = Discriminator(tmp)
+	}
+
+	return
+}
+
+type Discriminator uint16
+
+func (d Discriminator) String() (str string) {
+	if d == 0 {
+		str = ""
+		return
+	}
+	if d == 1 {
+		str = "0001"
+		return
+	}
+
+	str = strconv.Itoa(int(d))
+	if d < 1000 {
+		shift := 4 - len(str)
+		for i := 0; i < shift; i++ {
+			str = "0" + str
+		}
+	}
+
+	return
+}
+
+func (d Discriminator) NotSet() bool {
+	return d == 0
+}
+
+func (d *Discriminator) UnmarshalJSON(data []byte) (err error) {
+	if len(data) == 2 { // []byte{'"','"'}
+		*d = 0
+		return nil
+	}
+	var tmp uint64
+	tmp, err = strconv.ParseUint(string(data[1:len(data)-1]), 10, 16)
+	if err != nil {
+		return
+	}
+
+	*d = Discriminator(tmp)
+	return
+}
+
+func (d Discriminator) MarshalJSON() (data []byte, err error) {
+	return []byte("\"" + d.String() + "\""), nil
 }

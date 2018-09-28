@@ -285,15 +285,15 @@ func NewUser() *User {
 type User struct {
 	sync.RWMutex `json:"-"`
 
-	ID            Snowflake `json:"id,omitempty"`
-	Username      string    `json:"username,omitempty"`
-	Discriminator string    `json:"discriminator,omitempty"`
-	Email         string    `json:"email,omitempty"`
-	Avatar        *string   `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
-	Token         string    `json:"token,omitempty"`
-	Verified      bool      `json:"verified,omitempty"`
-	MFAEnabled    bool      `json:"mfa_enabled,omitempty"`
-	Bot           bool      `json:"bot,omitempty"`
+	ID            Snowflake     `json:"id,omitempty"`
+	Username      string        `json:"username,omitempty"`
+	Discriminator Discriminator `json:"discriminator,omitempty"`
+	Email         string        `json:"email,omitempty"`
+	Avatar        *string       `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
+	Token         string        `json:"token,omitempty"`
+	Verified      bool          `json:"verified,omitempty"`
+	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
+	Bot           bool          `json:"bot,omitempty"`
 }
 
 func (u *User) Mention() string {
@@ -305,13 +305,13 @@ func (u *User) MentionNickname() string {
 }
 
 func (u *User) String() string {
-	return u.Username + "#" + u.Discriminator + "{" + u.ID.String() + "}"
+	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
 }
 
 // Partial check if this is not a complete user object
 // Assumption: has a snowflake.
 func (u *User) Partial() bool {
-	return (u.Username + u.Discriminator) == ""
+	return u.Username == "" && u.Discriminator.NotSet()
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
@@ -374,6 +374,47 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
 
+	if u.Avatar != nil {
+		avatar := *u.Avatar
+		user.Avatar = &avatar
+	}
+
+	u.RUnlock()
+	user.Unlock()
+
+	return
+}
+
+func (u *User) copyOverToCache(other interface{}) (err error) {
+	user := other.(*User)
+
+	u.RLock()
+	user.Lock()
+
+	if !u.ID.Empty() {
+		user.ID = u.ID
+	}
+	if u.Username != "" {
+		user.Username = u.Username
+	}
+	if !u.Discriminator.NotSet() {
+		user.Discriminator = u.Discriminator
+	}
+	if u.Email != "" {
+		user.Email = u.Email
+	}
+	if u.Token != "" {
+		user.Token = u.Token
+	}
+	if u.Verified && !user.Verified {
+		user.Verified = true
+	}
+	if !user.MFAEnabled && u.MFAEnabled {
+		user.MFAEnabled = true
+	}
+	if !user.Bot && u.Bot {
+		user.Bot = true
+	}
 	if u.Avatar != nil {
 		avatar := *u.Avatar
 		user.Avatar = &avatar
