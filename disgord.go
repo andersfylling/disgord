@@ -4,7 +4,7 @@ package disgord
 import (
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket"
-	"github.com/andersfylling/snowflake"
+	"github.com/andersfylling/snowflake/v2"
 )
 
 const (

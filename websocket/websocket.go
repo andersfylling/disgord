@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake"
+	"github.com/andersfylling/snowflake/v2"
 )
 
 const (
