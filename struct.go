@@ -230,17 +230,11 @@ func (d Discriminator) NotSet() bool {
 }
 
 func (d *Discriminator) UnmarshalJSON(data []byte) (err error) {
-	if len(data) == 2 { // []byte{'"','"'}
-		*d = 0
-		return nil
+	*d = 0
+	length := len(data) - 1
+	for i := 1; i < length; i++ {
+		*d = *d*10 + Discriminator(data[i]-'0')
 	}
-	var tmp uint64
-	tmp, err = strconv.ParseUint(string(data[1:len(data)-1]), 10, 16)
-	if err != nil {
-		return
-	}
-
-	*d = Discriminator(tmp)
 	return
 }
 

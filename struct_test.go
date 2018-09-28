@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -294,5 +295,128 @@ func TestDiscriminator(t *testing.T) {
 		if !d.NotSet() {
 			t.Error("expected Discriminator.NotSet to be true, got false")
 		}
+	})
+}
+
+func BenchmarkDiscriminator(b *testing.B) {
+	b.Run("comparison", func(b *testing.B) {
+		b.Run("string", func(b *testing.B) {
+			val := "0401"
+			vals := []string{
+				"0401", "0001", "0400", "0011", "0101", "5435", "0010",
+			}
+			var i int
+			var match bool
+			for n := 0; n < b.N; n++ {
+				for i = range vals {
+					match = val == vals[i]
+				}
+			}
+			if match {
+			}
+		})
+		b.Run("uint16", func(b *testing.B) {
+			val := Discriminator(0401)
+			vals := []Discriminator{
+				0401, 0001, 0400, 0011, 0101, 5435, 0010,
+			}
+			var i int
+			var match bool
+			for n := 0; n < b.N; n++ {
+				for i = range vals {
+					match = val == vals[i]
+				}
+			}
+			if match {
+			}
+		})
+	})
+	b.Run("Unmarshal", func(b *testing.B) {
+		dataSets := [][]byte{
+			[]byte("\"0001\""),
+			[]byte("\"0452\""),
+			[]byte("\"4342\""),
+			[]byte("\"0100\""),
+			[]byte("\"5100\""),
+			[]byte("\"1000\""),
+			[]byte("\"5129\""),
+			[]byte("\"3020\""),
+			[]byte("\"0010\""),
+		}
+		b.Run("string", func(b *testing.B) {
+			var result string
+			var i int
+			length := len(dataSets)
+			for n := 0; n < b.N; n++ {
+				result = string(dataSets[i])
+				if i == length {
+					i = 0
+				}
+			}
+			if result == "" {
+			}
+		})
+		b.Run("uint16-a", func(b *testing.B) {
+			var result uint16
+			var i int
+			lengthi := len(dataSets)
+			for n := 0; n < b.N; n++ {
+				data := dataSets[i]
+				result = 0
+				length := len(data) - 1
+				for j := 1; j < length; j++ {
+					result = result*10 + uint16(data[j]-'0')
+				}
+				if i == lengthi {
+					i = 0
+				}
+			}
+			if result == 0 {
+			}
+		})
+		b.Run("uint16-b", func(b *testing.B) {
+			var result uint16
+			var i int
+			length := len(dataSets)
+			for n := 0; n < b.N; n++ {
+				data := dataSets[i]
+				var tmp uint64
+				tmp, _ = strconv.ParseUint(string(data), 10, 16)
+				result = uint16(tmp)
+				if i == length {
+					i = 0
+				}
+			}
+			if result == 0 {
+			}
+		})
+		type fooOld struct {
+			Foo string `json:"discriminator,omitempty"`
+		}
+		type fooNew struct {
+			Foo Discriminator `json:"discriminator,omitempty"`
+		}
+		b.Run("string-struct", func(b *testing.B) {
+			foo := &fooOld{}
+			var i int
+			length := len(dataSets)
+			for n := 0; n < b.N; n++ {
+				_ = json.Unmarshal(dataSets[i], foo)
+				if i == length {
+					i = 0
+				}
+			}
+		})
+		b.Run("uint16-struct", func(b *testing.B) {
+			foo := &fooNew{}
+			var i int
+			length := len(dataSets)
+			for n := 0; n < b.N; n++ {
+				_ = json.Unmarshal(dataSets[i], foo)
+				if i == length {
+					i = 0
+				}
+			}
+		})
 	})
 }
