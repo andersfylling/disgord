@@ -58,6 +58,11 @@ func NewSession(conf *Config) (Session, error) {
 	// caching
 	cacheConfig := &CacheConfig{
 		Immutable: conf.ImmutableCache,
+
+		UserCacheAlgorithm:             CacheAlg_LRU,
+		UserCacheLifetime:              time.Duration(9) * time.Hour,
+		UserCacheLimitMiB:              500,
+		UserCacheUpdateLifetimeOnUsage: false,
 	}
 
 	// create a disgord client/instance/session

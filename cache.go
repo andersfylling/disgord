@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lru"
 )
 
@@ -12,6 +13,8 @@ const (
 	UserCache = iota
 	ChannelCache
 	GuildCache
+
+	CacheAlg_LRU = "lru"
 )
 
 type Cacher interface {
@@ -35,10 +38,19 @@ func (e *ErrorCacheItemNotFound) Error() string {
 
 func NewCache(conf *CacheConfig) *Cache {
 	const userWeight = 1 // MiB. TODO: what is the actual max size?
+	limit := conf.UserCacheLimitMiB / userWeight
+
+	var userCacheAlg interfaces.CacheAlger
+	switch conf.UserCacheAlgorithm {
+	case CacheAlg_LRU:
+		fallthrough
+	default:
+		userCacheAlg = lru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
+	}
 
 	return &Cache{
 		conf:  conf,
-		users: lru.NewCacheList(conf.UserCacheLimitMiB/userWeight, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage),
+		users: userCacheAlg,
 	}
 }
 
@@ -48,11 +60,12 @@ type CacheConfig struct {
 	UserCacheLimitMiB              uint
 	UserCacheLifetime              time.Duration
 	UserCacheUpdateLifetimeOnUsage bool
+	UserCacheAlgorithm             string
 }
 
 type Cache struct {
 	conf  *CacheConfig
-	users *lru.CacheList
+	users interfaces.CacheAlger
 }
 
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
@@ -134,7 +147,7 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	defer c.users.RUnlock()
 
 	var exists bool
-	var result *lru.CacheItem
+	var result interfaces.CacheableItem
 	if result, exists = c.users.Get(id); !exists {
 		err = NewErrorCacheItemNotFound(id)
 		return
