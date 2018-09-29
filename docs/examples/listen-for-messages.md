@@ -34,7 +34,7 @@ session.On(event.MessageCreate, func(session disgord.Session, data *disgord.Mess
 })
 ```
 
-In addition, Disgord also supports the use of channels for handling events. It is recommended that you do store the channels to a local variable, as each time you call the channel function; you notify the socket layer that you want to register to a certain type of event, which is redundant (in short: it improves performance when you save the chan to a local var).
+In addition, Disgord also supports the use of channels for handling events. It is extremely important that you remember to tell disgord which events you want, before you start using channels. Failure to do so may result in the desired events being discarded at the socket layer, as you did not notify you wanted them. See the code example below.
 ```go
 session, err := disgord.NewSession(&disgord.Config{
     Token: os.Getenv("DISGORD_TOKEN"),
@@ -45,7 +45,11 @@ if err != nil {
 
 // or use a channel to listen for events
 go func() {
-	var messageCreateChan = session.EventChannels().MessageCreate()
+    // channels are more advanced and requires you to register which event-channels
+    // you will be using, in advanced. Otherwise you may not receive an event on the given channel.
+    // See disgord.Session.AcceptEvent
+    sess.AcceptEvent(disgord.EventGuildCreate) // IMPORTANT!
+    var messageCreateChan = session.EventChannels().MessageCreate()
     for {
         var msg *disgord.Message
 

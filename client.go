@@ -199,6 +199,12 @@ func (c *Client) EventChannels() (channels EventChannels) {
 	return c.evtDispatch
 }
 
+func (c *Client) AcceptEvent(events ...string) {
+	for _, evt := range events {
+		c.ws.RegisterEvent(evt)
+	}
+}
+
 // AddListener register a listener for a specific event key/type
 // (see Key...)
 func (c *Client) AddListener(evtName string, listener interface{}) {
@@ -970,6 +976,9 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		for _, guild := range ready.Guilds {
 			content[GuildCache] = append(content[GuildCache], guild)
 		}
+	case EventVoiceStateUpdate:
+		update := v.(*VoiceStateUpdate)
+		content[VoiceStateCache] = append(content[VoiceStateCache], update.VoiceState)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:
@@ -1001,7 +1010,6 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		//case EventPresenceUpdate:
 		//case EventTypingStart:
 		//case EventUserUpdate:
-		//case EventVoiceStateUpdate:
 		//case EventVoiceServerUpdate:
 		//case EventWebhooksUpdate:
 	}

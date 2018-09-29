@@ -13,13 +13,14 @@ const (
 	UserCache = iota
 	ChannelCache
 	GuildCache
+	VoiceStateCache
 
 	CacheAlg_LRU = "lru"
 )
 
 type Cacher interface {
 	Update(key int, v interface{}) (err error)
-	Get(key int, id Snowflake) (v interface{}, err error)
+	Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error)
 }
 
 func NewErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
@@ -36,36 +37,92 @@ func (e *ErrorCacheItemNotFound) Error() string {
 	return e.info
 }
 
-func NewCache(conf *CacheConfig) *Cache {
+func NewErrorUsingDeactivatedCache(cacheName string) *ErrorUsingDeactivatedCache {
+	return &ErrorUsingDeactivatedCache{
+		info: "cannot use deactivated cache: " + cacheName,
+	}
+}
+
+type ErrorUsingDeactivatedCache struct {
+	info string
+}
+
+func (e *ErrorUsingDeactivatedCache) Error() string {
+	return e.info
+}
+
+func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+	if !conf.UserCaching {
+		return nil, nil
+	}
+
 	const userWeight = 1 // MiB. TODO: what is the actual max size?
 	limit := conf.UserCacheLimitMiB / userWeight
 
-	var userCacheAlg interfaces.CacheAlger
 	switch conf.UserCacheAlgorithm {
 	case CacheAlg_LRU:
-		fallthrough
+		cacher = lru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
 	default:
-		userCacheAlg = lru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
+		err = errors.New("unsupported caching algorithm")
+	}
+
+	return
+}
+
+func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+	if !conf.VoiceStateCaching {
+		return nil, nil
+	}
+
+	switch conf.UserCacheAlgorithm {
+	case CacheAlg_LRU:
+		cacher = lru.NewCacheList(0, conf.VoiceStateCacheLifetime, conf.VoiceStateCacheUpdateLifetimeOnUsage)
+	default:
+		err = errors.New("unsupported caching algorithm")
+	}
+
+	return
+}
+
+func NewCache(conf *CacheConfig) (*Cache, error) {
+
+	userCacher, err := createUserCacher(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	voiceStateCacher, err := createVoiceStateCacher(conf)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Cache{
-		conf:  conf,
-		users: userCacheAlg,
-	}
+		conf:        conf,
+		users:       userCacher,
+		voiceStates: voiceStateCacher,
+	}, nil
 }
 
 type CacheConfig struct {
 	Immutable bool
 
+	UserCaching                    bool
 	UserCacheLimitMiB              uint
 	UserCacheLifetime              time.Duration
 	UserCacheUpdateLifetimeOnUsage bool
 	UserCacheAlgorithm             string
+
+	VoiceStateCaching bool
+	//VoiceStateCacheLimitMiB              uint
+	VoiceStateCacheLifetime              time.Duration
+	VoiceStateCacheUpdateLifetimeOnUsage bool
+	VoiceStateCacheAlgorithm             string
 }
 
 type Cache struct {
-	conf  *CacheConfig
-	users interfaces.CacheAlger
+	conf        *CacheConfig
+	users       interfaces.CacheAlger
+	voiceStates interfaces.CacheAlger
 }
 
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
@@ -99,6 +156,12 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 		} else {
 			err = errors.New("can only save *User structures to user cache")
 		}
+	case VoiceStateCache:
+		if state, isVS := v.(*VoiceState); isVS {
+			c.SetVoiceState(state)
+		} else {
+			err = errors.New("can only save *VoiceState structures to voice state cache")
+		}
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
@@ -106,57 +169,22 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 	return
 }
 
-func (c *Cache) Get(key int, id Snowflake) (v interface{}, err error) {
+func (c *Cache) Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error) {
 	switch key {
 	case UserCache:
 		v, err = c.GetUser(id)
+	case VoiceStateCache:
+		if len(args) > 0 {
+			if params, ok := args[0].(*guildVoiceStateCacheParams); ok {
+				v, err = c.GetVoiceState(id, params)
+			} else {
+				err = errors.New("voice state cache extraction requires an addition argument of type *guildVoiceStateCacheParams")
+			}
+		} else {
+			err = errors.New("voice state cache extraction requires an addition argument for filtering")
+		}
 	default:
 		err = errors.New("caching for given type is not yet implemented")
-	}
-
-	return
-}
-
-func (c *Cache) SetUser(new *User) {
-	if new == nil {
-		return
-	}
-
-	c.users.Lock()
-	defer c.users.Unlock()
-	if item, exists := c.users.Get(new.ID); exists {
-		if c.conf.Immutable {
-			new.copyOverToCache(item.Object())
-		} else {
-			item.Set(new)
-		}
-		c.users.UpdateLifetime(item)
-	} else {
-		var content interface{}
-		if c.conf.Immutable {
-			content = new.DeepCopy()
-		} else {
-			content = new
-		}
-		c.users.Set(new.ID, lru.NewCacheItem(content))
-	}
-}
-
-func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
-	c.users.RLock()
-	defer c.users.RUnlock()
-
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.users.Get(id); !exists {
-		err = NewErrorCacheItemNotFound(id)
-		return
-	}
-
-	if c.conf.Immutable {
-		user = result.Object().(*User).DeepCopy().(*User)
-	} else {
-		user = result.Object().(*User)
 	}
 
 	return

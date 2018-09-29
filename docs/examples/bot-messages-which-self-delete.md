@@ -1,7 +1,7 @@
 Ever wanted a bot that delete their own messages after N seconds? Well here you go.
 With this approach you register a listener for bot messages which you then call delete on.
 
-You can also do a goroutine to delete a message right after you send it, but this can be tedious. So instead we add a listener to delete your own messages.
+You can also do a goroutine to delete a message right after you send it, this example allows you to handle multiple bots if desired. So instead we add a listener to delete your own messages.
 
 
 ```go
@@ -32,8 +32,9 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 	}
 
 	// ignore other bots
-	// you don't have to do this though
-	if evt.Message.Author.ID != session.Myself().ID {
+	// remove this check if you want to delete all bot messages after N seconds
+	myself, err := session.Myself()
+	if err != nil || evt.Message.Author.ID != myself.ID {
 		return
 	}
 

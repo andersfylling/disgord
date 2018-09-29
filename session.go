@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
 )
@@ -64,6 +65,19 @@ func NewSession(conf *Config) (Session, error) {
 		UserCacheLimitMiB:              500,
 		UserCacheUpdateLifetimeOnUsage: false,
 	}
+	cacher, err := NewCache(cacheConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// register for events for activated caches
+	if cacheConfig.UserCaching {
+		dws.RegisterEvent(event.Ready)
+		dws.RegisterEvent(event.UserUpdate)
+	}
+	if cacheConfig.VoiceStateCaching {
+		dws.RegisterEvent(event.VoiceStateUpdate)
+	}
 
 	// create a disgord client/instance/session
 	c := &Client{
@@ -73,7 +87,7 @@ func NewSession(conf *Config) (Session, error) {
 		socketEvtChan: dws.DiscordWSEventChan(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
-		cache:         NewCache(cacheConfig),
+		cache:         cacher,
 		req:           reqClient,
 	}
 
@@ -143,6 +157,11 @@ type SocketHandler interface {
 	// event channels
 	EventChan(event string) (channel interface{}, err error)
 	EventChannels() EventChannels
+
+	// event register (which events to accept)
+	// events which are not registered are discarded at socket level
+	// to increase performance
+	AcceptEvent(events ...string)
 }
 
 type AuditLogsRESTer interface {

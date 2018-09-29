@@ -82,7 +82,7 @@ if err != nil {
 ```
 
 Listening for events can be done in two ways. Firstly, the reactor pattern using handlers/listeners and secondly, GoLang channels:
-```GoLang
+```go
 // add a event listener
 sess.On(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreate) {
   guild := data.Guild
@@ -90,6 +90,10 @@ sess.On(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreat
 })
 
 // or use a channel to listen for events
+// channels are more advanced and requires you to register which event-channels
+// you will be using, in advanced. Otherwise you may not receive an event on the given channel.
+// See disgord.Session.AcceptEvent
+sess.AcceptEvent(disgord.EventGuildCreate)
 go func() {
     for {
         select {
@@ -113,12 +117,12 @@ if err != nil {
 ```
 
 Remember that when you call Session.Connect() it is recommended to call Session.Disconnect for a graceful shutdown and closing channels and Goroutines. You can also use the `DisconnectOnInterrupt()` which listens for interupt signals:
-```GoLang
+```go
 sess.DisconnectOnInterrupt()
 ```
 
 To retrieve information from the Discord REST API you utilize the Session interface as it will in the future implement features such as caching, control checks, etc
-```GoLang
+```go
 // retrieve a specific user from the Discord API
 var user *resource.User
 userID := NewSnowflake(228846961774559232)
@@ -128,7 +132,7 @@ if err != nil {
 }
 ```
 However, if you think the Session interface is incorrect (outdated cache, or another issue) you can bypass the interface and call the REST method directly while you wait for a patch:
-```GoLang
+```go
 // bypassing the session implementation of GetUser(userID)
 user, err = disgord.GetUser(session.Req(), userID)
 if err != nil {
@@ -140,7 +144,7 @@ There's also another way to retrieve content: channels. These methods will retur
 
 > Note! this has been removed from the Session interface. It will be added again in a later version of Disgord.
 
-```GoLang
+```go
 // eg. retrieve a specific user from the Discord API using GoLang channels
 userResponse := <- sess.UserChan(userID) // sends a request to discord
 userResponse2 := <- sess.UserChan(userID) // does a cache look up, to prevent rate limiting/banning

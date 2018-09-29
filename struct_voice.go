@@ -4,6 +4,7 @@ import "sync"
 
 // VoiceState Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
+// reviewed 2018-09-29
 type VoiceState struct {
 	sync.RWMutex `json:"-"`
 
@@ -11,10 +12,13 @@ type VoiceState struct {
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
 	// ChannelID the channel id this user is connected to
-	ChannelID Snowflake `json:"channel_id"` // |
+	ChannelID *Snowflake `json:"channel_id"` // | ?
 
 	// UserID the user id this voice state is for
 	UserID Snowflake `json:"user_id"` // |
+
+	// the guild member this voice state is for
+	Member *Member `json:"member,omitempty"`
 
 	// SessionID the session id for this voice state
 	SessionID string `json:"session_id"` // |
