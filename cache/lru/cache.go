@@ -88,7 +88,7 @@ func (list *CacheList) Set(id Snowflake, new *CacheItem) {
 	}
 
 	// if limit is reached, replace the content of the least recently used (lru)
-	if list.size() == list.limit {
+	if list.limit != 0 && list.size() == list.limit {
 		lru, lruKey := list.First()
 		now := time.Now()
 		for key, item := range list.items {
