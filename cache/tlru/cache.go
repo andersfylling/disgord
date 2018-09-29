@@ -1,8 +1,10 @@
-// lru (least recently used) will overwrite cached items that have been used the least when the cache limit is reached.
-package lru
+// tlru (timed least recently used) has the same overwriting strategy as LRU, but adds a lifetime to objects
+// on creation. Objects whose lifetime is outdated, are considered dead and can be removed.
+package tlru
 
 import (
 	"sync"
+	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/snowflake/v2"
@@ -18,6 +20,10 @@ func NewCacheItem(content interface{}) *CacheItem {
 
 type CacheItem struct {
 	item interface{}
+
+	// unix timestamp when item is considered outdated/dead.
+	// update on creation/changes
+	death int64
 
 	// allows for least recently used monitoring
 	used uint64
@@ -35,17 +41,34 @@ func (i *CacheItem) increment() {
 	i.used++
 }
 
-func NewCacheList(size uint) *CacheList {
+func (i *CacheItem) update(lifetime time.Duration) {
+	i.death = time.Now().Add(lifetime).UnixNano()
+}
+
+func (i *CacheItem) dead(now time.Time) bool {
+	return i.death <= now.UnixNano()
+}
+
+// olderActivityThan checks if the last time `other` was used/updated is a more recent point in time then `i`
+func (i *CacheItem) olderActivityThan(other *CacheItem) bool {
+	return i.death < other.death
+}
+
+func NewCacheList(size uint, lifetime time.Duration, updateLifetime bool) *CacheList {
 	return &CacheList{
-		items: make(map[Snowflake]*CacheItem, size),
-		limit: size,
+		items:                 make(map[Snowflake]*CacheItem, size),
+		limit:                 size,
+		lifetime:              lifetime,
+		updateLifetimeOnUsage: updateLifetime,
 	}
 }
 
 type CacheList struct {
 	sync.RWMutex
-	items map[Snowflake]*CacheItem
-	limit uint // 0 == unlimited
+	items                 map[Snowflake]*CacheItem
+	limit                 uint          // 0 == unlimited
+	lifetime              time.Duration // 0 == unlimited
+	updateLifetimeOnUsage bool
 
 	misses uint64 // opposite of cache hits
 	hits   uint64
@@ -66,7 +89,8 @@ func (list *CacheList) First() (item *CacheItem, key Snowflake) {
 // set adds a new item to the list or returns false if the item already exists
 func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	newItem := newItemI.(*CacheItem)
-	if newItem.used == 0 {
+	if newItem.death == 0 || list.updateLifetimeOnUsage {
+		newItem.update(list.lifetime)
 		newItem.used++
 	}
 	if item, exists := list.items[id]; exists { // check if it points to a diff item
@@ -85,7 +109,9 @@ func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	list.removeLRU(id)
 }
 
-func (list *CacheList) UpdateLifetime(item interfaces.CacheableItem) {}
+func (list *CacheList) UpdateLifetime(item interfaces.CacheableItem) {
+	(item.(*CacheItem)).update(list.lifetime)
+}
 
 func (list *CacheList) removeLRU(exception Snowflake) {
 	lru, lruKey := list.First()
@@ -106,6 +132,9 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 	if item, exists = list.items[id]; exists {
 		ret = item
 		item.used++
+		if list.updateLifetimeOnUsage {
+			item.update(list.lifetime)
+		}
 		list.hits++
 	} else {
 		list.misses++

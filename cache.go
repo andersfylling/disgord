@@ -6,6 +6,7 @@ import (
 
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lru"
+	"github.com/andersfylling/disgord/cache/tlru"
 )
 
 // cache keys
@@ -15,7 +16,8 @@ const (
 	GuildCache
 	VoiceStateCache
 
-	CacheAlg_LRU = "lru"
+	CacheAlg_LRU  = "lru"
+	CacheAlg_TLRU = "tlru"
 )
 
 type Cacher interface {
@@ -60,8 +62,10 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 	limit := conf.UserCacheLimitMiB / userWeight
 
 	switch conf.UserCacheAlgorithm {
+	case CacheAlg_TLRU:
+		cacher = tlru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
 	case CacheAlg_LRU:
-		cacher = lru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
+		cacher = lru.NewCacheList(limit)
 	default:
 		err = errors.New("unsupported caching algorithm")
 	}
@@ -75,8 +79,10 @@ func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, er
 	}
 
 	switch conf.UserCacheAlgorithm {
+	case CacheAlg_TLRU:
+		cacher = tlru.NewCacheList(0, conf.VoiceStateCacheLifetime, conf.VoiceStateCacheUpdateLifetimeOnUsage)
 	case CacheAlg_LRU:
-		cacher = lru.NewCacheList(0, conf.VoiceStateCacheLifetime, conf.VoiceStateCacheUpdateLifetimeOnUsage)
+		cacher = lru.NewCacheList(0)
 	default:
 		err = errors.New("unsupported caching algorithm")
 	}
