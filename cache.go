@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
+	"github.com/andersfylling/disgord/cache/lfu"
 	"github.com/andersfylling/disgord/cache/lru"
 	"github.com/andersfylling/disgord/cache/tlru"
 )
@@ -54,6 +55,21 @@ func (e *ErrorUsingDeactivatedCache) Error() string {
 	return e.info
 }
 
+func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (cacher interfaces.CacheAlger, err error) {
+	switch alg {
+	case CacheAlg_TLRU:
+		cacher = tlru.NewCacheList(limit, lifetime)
+	case CacheAlg_LRU:
+		cacher = lru.NewCacheList(limit)
+	case CacheAlg_LFU:
+		cacher = lfu.NewCacheList(limit)
+	default:
+		err = errors.New("unsupported caching algorithm")
+	}
+
+	return
+}
+
 func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
 	if !conf.UserCaching {
 		return nil, nil
@@ -62,15 +78,7 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 	const userWeight = 1 // MiB. TODO: what is the actual max size?
 	limit := conf.UserCacheLimitMiB / userWeight
 
-	switch conf.UserCacheAlgorithm {
-	case CacheAlg_TLRU:
-		cacher = tlru.NewCacheList(limit, conf.UserCacheLifetime)
-	case CacheAlg_LRU:
-		cacher = lru.NewCacheList(limit)
-	default:
-		err = errors.New("unsupported caching algorithm")
-	}
-
+	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
 	return
 }
 
@@ -79,15 +87,7 @@ func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, er
 		return nil, nil
 	}
 
-	switch conf.UserCacheAlgorithm {
-	case CacheAlg_TLRU:
-		cacher = tlru.NewCacheList(0, conf.VoiceStateCacheLifetime)
-	case CacheAlg_LRU:
-		cacher = lru.NewCacheList(0)
-	default:
-		err = errors.New("unsupported caching algorithm")
-	}
-
+	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, 0, conf.VoiceStateCacheLifetime)
 	return
 }
 
