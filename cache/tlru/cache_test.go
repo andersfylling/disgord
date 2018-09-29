@@ -16,18 +16,13 @@ func TestCacheItem(t *testing.T) {
 	lifetime := time.Duration(1) * time.Hour
 
 	i := smth{"test"}
-	item := NewCacheItem(&i)
-
-	old := item.death
-	item.update(lifetime)
-	if old == item.death {
-		t.Error("update method does not change death timestamp")
-	}
+	item := NewCacheItem(&i, lifetime)
+	item.death = time.Now().Add(lifetime).UnixNano()
 
 	if item.dead(time.Now()) {
 		t.Error("item is considered dead an hour before it's time")
 	}
-	item.update(lifetime * -1)
+	item.death = time.Now().Add(lifetime * -1).UnixNano()
 	if !item.dead(time.Now()) {
 		t.Error("item was expected to be dead an hour ago")
 	}
@@ -36,7 +31,7 @@ func TestCacheItem(t *testing.T) {
 func TestCacheList(t *testing.T) {
 	t.Run("size limit", func(t *testing.T) {
 		limit := uint(10)
-		list := NewCacheList(limit, time.Duration(1)*time.Hour, false)
+		list := NewCacheList(limit, time.Duration(1)*time.Hour)
 		if list.size() != 0 {
 			t.Error("size if not 0")
 		}
@@ -44,7 +39,7 @@ func TestCacheList(t *testing.T) {
 			usr := &randomStruct{}
 			usr.ID = Snowflake(i)
 
-			item := NewCacheItem(usr)
+			item := NewCacheItem(usr, list.lifetime)
 			list.Set(usr.ID, item)
 		}
 
@@ -54,15 +49,15 @@ func TestCacheList(t *testing.T) {
 	})
 	t.Run("replaces only LRU", func(t *testing.T) {
 		ids := []Snowflake{4, 7, 12, 46, 74, 89}
-		list := NewCacheList(uint(len(ids)), time.Duration(1)*time.Hour, false)
+		list := NewCacheList(uint(len(ids)), time.Duration(1)*time.Hour)
 		for i := 1; i < 256; i++ {
 			usr := &randomStruct{}
 			usr.ID = Snowflake(i)
-			item := NewCacheItem(usr)
+			item := NewCacheItem(usr, list.lifetime)
 
 			for _, id := range ids {
 				if usr.ID == id {
-					item.used += 4
+					item.lastUsed += 4
 				}
 			}
 
@@ -70,9 +65,9 @@ func TestCacheList(t *testing.T) {
 		}
 
 		for _, item := range list.items {
-			if item.used < 4 {
+			if item.lastUsed < 4 {
 				if item.item.(*randomStruct).ID != Snowflake(255) {
-					t.Errorf("expected lru counter to be higher. Got %d, wants above %d", item.used, 4)
+					t.Errorf("expected lru counter to be higher. Got %d, wants above %d", item.lastUsed, 4)
 				}
 			}
 		}

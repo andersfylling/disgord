@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/disgord/cache/lru"
 )
 
 type guildVoiceStatesCache struct {
@@ -80,11 +79,11 @@ func (c *Cache) SetVoiceState(state *VoiceState) {
 	if item, exists := c.voiceStates.Get(id); exists {
 		states := item.Object().(*guildVoiceStatesCache)
 		states.update(state, c.conf.Immutable)
-		c.voiceStates.UpdateLifetime(item)
+		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
 		states := &guildVoiceStatesCache{}
 		states.update(state, c.conf.Immutable)
-		c.voiceStates.Set(id, lru.NewCacheItem(states))
+		c.voiceStates.Set(id, c.voiceStates.CreateCacheableItem(states))
 	}
 }
 

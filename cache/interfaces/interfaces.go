@@ -19,7 +19,7 @@ type CacheAlger interface {
 
 	Get(id Snowflake) (item CacheableItem, exists bool)
 	Set(id Snowflake, new CacheableItem)
-	UpdateLifetime(item CacheableItem)
 	CreateCacheableItem(content interface{}) CacheableItem
+	RefreshAfterDiscordUpdate(item CacheableItem)
 	Efficiency() float64
 }

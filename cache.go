@@ -17,6 +17,7 @@ const (
 	VoiceStateCache
 
 	CacheAlg_LRU  = "lru"
+	CacheAlg_LFU  = "lfu"
 	CacheAlg_TLRU = "tlru"
 )
 
@@ -63,7 +64,7 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 
 	switch conf.UserCacheAlgorithm {
 	case CacheAlg_TLRU:
-		cacher = tlru.NewCacheList(limit, conf.UserCacheLifetime, conf.UserCacheUpdateLifetimeOnUsage)
+		cacher = tlru.NewCacheList(limit, conf.UserCacheLifetime)
 	case CacheAlg_LRU:
 		cacher = lru.NewCacheList(limit)
 	default:
@@ -80,7 +81,7 @@ func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, er
 
 	switch conf.UserCacheAlgorithm {
 	case CacheAlg_TLRU:
-		cacher = tlru.NewCacheList(0, conf.VoiceStateCacheLifetime, conf.VoiceStateCacheUpdateLifetimeOnUsage)
+		cacher = tlru.NewCacheList(0, conf.VoiceStateCacheLifetime)
 	case CacheAlg_LRU:
 		cacher = lru.NewCacheList(0)
 	default:
@@ -112,17 +113,15 @@ func NewCache(conf *CacheConfig) (*Cache, error) {
 type CacheConfig struct {
 	Immutable bool
 
-	UserCaching                    bool
-	UserCacheLimitMiB              uint
-	UserCacheLifetime              time.Duration
-	UserCacheUpdateLifetimeOnUsage bool
-	UserCacheAlgorithm             string
+	UserCaching        bool
+	UserCacheLimitMiB  uint
+	UserCacheLifetime  time.Duration
+	UserCacheAlgorithm string
 
 	VoiceStateCaching bool
 	//VoiceStateCacheLimitMiB              uint
-	VoiceStateCacheLifetime              time.Duration
-	VoiceStateCacheUpdateLifetimeOnUsage bool
-	VoiceStateCacheAlgorithm             string
+	VoiceStateCacheLifetime  time.Duration
+	VoiceStateCacheAlgorithm string
 }
 
 type Cache struct {

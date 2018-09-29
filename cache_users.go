@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/disgord/cache/lru"
 )
 
 func (c *Cache) SetUser(new *User) {
@@ -18,7 +17,7 @@ func (c *Cache) SetUser(new *User) {
 		} else {
 			item.Set(new)
 		}
-		c.users.UpdateLifetime(item)
+		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
 		var content interface{}
 		if c.conf.Immutable {
@@ -26,7 +25,7 @@ func (c *Cache) SetUser(new *User) {
 		} else {
 			content = new
 		}
-		c.users.Set(new.ID, lru.NewCacheItem(content))
+		c.users.Set(new.ID, c.users.CreateCacheableItem(content))
 	}
 }
 

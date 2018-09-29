@@ -1,4 +1,4 @@
-package lru
+package lfu
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ func TestCacheList(t *testing.T) {
 			t.Errorf("list has a greater size than expected limit. Got %d, wants %d", list.size(), limit)
 		}
 	})
-	t.Run("replaces only LRU", func(t *testing.T) {
+	t.Run("replaces only LFU", func(t *testing.T) {
 		ids := []Snowflake{4, 7, 12, 46, 74, 89}
 		list := NewCacheList(uint(len(ids)))
 		for i := 1; i < 256; i++ {
@@ -37,7 +37,7 @@ func TestCacheList(t *testing.T) {
 
 			for _, id := range ids {
 				if usr.ID == id {
-					item.lastUsed += 4
+					item.counter += 4
 				}
 			}
 
@@ -45,9 +45,9 @@ func TestCacheList(t *testing.T) {
 		}
 
 		for _, item := range list.items {
-			if item.lastUsed < 4 {
+			if item.counter < 4 {
 				if item.item.(*randomStruct).ID != Snowflake(255) {
-					t.Errorf("expected lru counter to be higher. Got %d, wants above %d", item.lastUsed, 4)
+					t.Errorf("expected lfu counter to be higher. Got %d, wants above %d", item.counter, 4)
 				}
 			}
 		}

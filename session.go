@@ -60,13 +60,11 @@ func NewSession(conf *Config) (Session, error) {
 	cacheConfig := &CacheConfig{
 		Immutable: conf.ImmutableCache,
 
-		UserCacheAlgorithm:             CacheAlg_TLRU,
-		UserCacheLifetime:              time.Duration(9) * time.Hour,
-		UserCacheLimitMiB:              500,
-		UserCacheUpdateLifetimeOnUsage: false,
+		UserCacheAlgorithm: CacheAlg_TLRU,
+		UserCacheLifetime:  time.Duration(9) * time.Hour,
+		UserCacheLimitMiB:  500,
 
-		VoiceStateCacheAlgorithm:             CacheAlg_LRU,
-		VoiceStateCacheUpdateLifetimeOnUsage: false,
+		VoiceStateCacheAlgorithm: CacheAlg_LRU,
 	}
 	cacher, err := NewCache(cacheConfig)
 	if err != nil {
