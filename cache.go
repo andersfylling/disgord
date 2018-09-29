@@ -130,7 +130,7 @@ func (c *Cache) SetUser(new *User) {
 		} else {
 			item.Set(new)
 		}
-		c.users.Set(new.ID, item)
+		c.users.UpdateLifetime(item)
 	} else {
 		var content interface{}
 		if c.conf.Immutable {

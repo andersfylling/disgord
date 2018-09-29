@@ -107,6 +107,10 @@ func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	list.removeLRU(id)
 }
 
+func (list *CacheList) UpdateLifetime(item interfaces.CacheableItem) {
+	(item.(*CacheItem)).update(list.lifetime)
+}
+
 func (list *CacheList) removeLRU(exception Snowflake) {
 	lru, lruKey := list.First()
 	for key, item := range list.items {
