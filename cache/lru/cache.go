@@ -113,6 +113,12 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 	return
 }
 
+func (list *CacheList) Delete(id Snowflake) {
+	if _, exists := list.items[id]; exists {
+		delete(list.items, id)
+	}
+}
+
 func (list *CacheList) CreateCacheableItem(content interface{}) interfaces.CacheableItem {
 	return NewCacheItem(content)
 }
