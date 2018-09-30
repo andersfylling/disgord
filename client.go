@@ -979,13 +979,31 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 	case EventVoiceStateUpdate:
 		update := v.(*VoiceStateUpdate)
 		content[VoiceStateCache] = append(content[VoiceStateCache], update.VoiceState)
+	case EventChannelCreate, EventChannelUpdate:
+		var channel *Channel
+		if event == EventChannelCreate {
+			channel = (v.(*ChannelCreate)).Channel
+		} else if event == EventChannelUpdate {
+			channel = (v.(*ChannelUpdate)).Channel
+		}
+		if len(channel.Recipients) > 0 {
+			for i := range channel.Recipients {
+				content[UserCache] = append(content[UserCache], channel.Recipients[i])
+			}
+		}
+
+		content[ChannelCache] = append(content[ChannelCache], channel)
+	case EventChannelDelete:
+		channel := (v.(*ChannelDelete)).Channel
+		c.cache.DeleteChannel(channel.ID)
+		// c.cache.DeleteChannelFromGuild(channel.ID)
+		// TODO: channel deletion
+	case EventChannelPinsUpdate:
+		evt := v.(*ChannelPinsUpdate)
+		c.cache.UpdateChannelPin(evt.ChannelID, evt.LastPinTimestamp)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:
-		//case EventChannelCreate:
-		//case EventChannelUpdate:
-		//case EventChannelDelete:
-		//case EventChannelPinsUpdate:
 		//case EventGuildCreate:
 		//case EventGuildUpdate:
 		//case EventGuildDelete:

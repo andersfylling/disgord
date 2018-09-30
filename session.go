@@ -79,6 +79,12 @@ func NewSession(conf *Config) (Session, error) {
 	if cacheConfig.VoiceStateCaching {
 		dws.RegisterEvent(event.VoiceStateUpdate)
 	}
+	if cacheConfig.ChannelCaching {
+		dws.RegisterEvent(event.ChannelCreate)
+		dws.RegisterEvent(event.ChannelUpdate)
+		dws.RegisterEvent(event.ChannelPinsUpdate)
+		dws.RegisterEvent(event.ChannelDelete)
+	}
 
 	// create a disgord client/instance/session
 	c := &Client{

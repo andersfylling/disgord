@@ -70,27 +70,6 @@ func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (ca
 	return
 }
 
-func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
-	if !conf.UserCaching {
-		return nil, nil
-	}
-
-	const userWeight = 1 // MiB. TODO: what is the actual max size?
-	limit := conf.UserCacheLimitMiB / userWeight
-
-	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
-	return
-}
-
-func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
-	if !conf.VoiceStateCaching {
-		return nil, nil
-	}
-
-	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, 0, conf.VoiceStateCacheLifetime)
-	return
-}
-
 func NewCache(conf *CacheConfig) (*Cache, error) {
 
 	userCacher, err := createUserCacher(conf)
@@ -103,10 +82,16 @@ func NewCache(conf *CacheConfig) (*Cache, error) {
 		return nil, err
 	}
 
+	channelCacher, err := createChannelCacher(conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Cache{
 		conf:        conf,
 		users:       userCacher,
 		voiceStates: voiceStateCacher,
+		channels:    channelCacher,
 	}, nil
 }
 
@@ -122,12 +107,18 @@ type CacheConfig struct {
 	//VoiceStateCacheLimitMiB              uint
 	VoiceStateCacheLifetime  time.Duration
 	VoiceStateCacheAlgorithm string
+
+	ChannelCaching        bool
+	ChannelCacheLimitMiB  uint
+	ChannelCacheLifetime  time.Duration
+	ChannelCacheAlgorithm string
 }
 
 type Cache struct {
 	conf        *CacheConfig
 	users       interfaces.CacheAlger
 	voiceStates interfaces.CacheAlger
+	channels    interfaces.CacheAlger
 }
 
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
@@ -167,6 +158,12 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 		} else {
 			err = errors.New("can only save *VoiceState structures to voice state cache")
 		}
+	case ChannelCache:
+		if channel, isChannel := v.(*Channel); isChannel {
+			c.SetChannel(channel)
+		} else {
+			err = errors.New("can only save *Channel structures to channel cache")
+		}
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
@@ -188,6 +185,8 @@ func (c *Cache) Get(key int, id Snowflake, args ...interface{}) (v interface{}, 
 		} else {
 			err = errors.New("voice state cache extraction requires an addition argument for filtering")
 		}
+	case ChannelCache:
+		v, err = c.GetChannel(id)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}

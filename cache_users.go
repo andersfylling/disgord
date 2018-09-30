@@ -4,6 +4,18 @@ import (
 	"github.com/andersfylling/disgord/cache/interfaces"
 )
 
+func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+	if !conf.UserCaching {
+		return nil, nil
+	}
+
+	const userWeight = 1 // MiB. TODO: what is the actual max size?
+	limit := conf.UserCacheLimitMiB / userWeight
+
+	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
+	return
+}
+
 func (c *Cache) SetUser(new *User) {
 	if c.users == nil || new == nil {
 		return

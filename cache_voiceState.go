@@ -6,6 +6,15 @@ import (
 	"github.com/andersfylling/disgord/cache/interfaces"
 )
 
+func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+	if !conf.VoiceStateCaching {
+		return nil, nil
+	}
+
+	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, 0, conf.VoiceStateCacheLifetime)
+	return
+}
+
 type guildVoiceStatesCache struct {
 	sessions []*VoiceState
 }

@@ -97,7 +97,7 @@ type Channel struct {
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPingTimestamp    Timestamp             `json:"last_ping_timestamp,omitempty"`   // ?|
+	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
 
 	sync.RWMutex
 }
@@ -182,7 +182,7 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	channel.OwnerID = c.OwnerID
 	channel.ApplicationID = c.ApplicationID
 	channel.ParentID = c.ParentID
-	channel.LastPingTimestamp = c.LastPingTimestamp
+	channel.LastPinTimestamp = c.LastPinTimestamp
 
 	if c.LastMessageID != nil {
 		lastMsgID := *c.LastMessageID
