@@ -2,6 +2,7 @@ package disgord
 
 import "sync"
 
+// Audit-log events
 const (
 	AuditLogEvtGuildUpdate      = 1
 	AuditLogEvtChannelCreate    = 10

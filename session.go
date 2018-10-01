@@ -295,7 +295,7 @@ type RESTer interface {
 	WebhookRESTer
 }
 
-// Session the discord api is split in two. socket for keeping the client up to date, and http api for requests.
+// The main interface for Disgord
 type Session interface {
 	// give information about the bot/connected user
 	Myself() (*User, error)

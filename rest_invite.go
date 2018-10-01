@@ -8,14 +8,13 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-// GetInvite [GET]          Returns an invite object for the given code.
-// Endpoint                 /invites/{invite.code}
-// Rate limiter             /invites
-// Discord documentation    https://discordapp.com/developers/docs/resources/invite#get-invite
-// Reviewed                 2018-06-10
-// Comment                  -
-//
-// withCounts whether the invite should contain approximate member counts
+// [REST] Returns an invite object for the given code.
+//  Method                  GET
+//  Endpoint                /invites/{invite.code}
+//  Rate limiter            /invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
+//  Reviewed                2018-06-10
+//  Comment                 withCounts whether the invite should contain approximate member counts
 func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *Invite, err error) {
 	query := ""
 	if withCounts {
@@ -38,13 +37,13 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 	return
 }
 
-// DeleteInvite [DELETE]    Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite
-//                          object on success.
-// Endpoint                 /invites/{invite.code}
-// Rate limiter             /invites
-// Discord documentation    https://discordapp.com/developers/docs/resources/invite#delete-invite
-// Reviewed                 2018-06-10
-// Comment                  -
+// [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
+//  Method                  DELETE
+//  Endpoint                /invites/{invite.code}
+//  Rate limiter            /invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
+//  Reviewed                2018-06-10
+//  Comment                 -
 func DeleteInvite(client httd.Deleter, inviteCode string) (invite *Invite, err error) {
 	_, body, err := client.Delete(&httd.Request{
 		Ratelimiter: endpoint.Invites(),

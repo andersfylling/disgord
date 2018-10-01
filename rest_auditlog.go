@@ -44,15 +44,14 @@ func (params *GuildAuditLogsParams) GetQueryString() string {
 	return query
 }
 
-// GuildAuditLogs [GET]     Returns an audit log object for the guild.
-//                          Requires the 'VIEW_AUDIT_LOG' permission.
-// Endpoint                 /guilds/{guild.id}/audit-logs
-// Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs
-// Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
-// Reviewed                 2018-06-05
-// Comment                  -
-// Note 										Check the last entry in the cache, to avoid
-//                          fetching data we already go
+// [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
+//  Method                   GET
+//  Endpoint                 /guilds/{guild.id}/audit-logs
+//  Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs
+//  Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
+//  Reviewed                 2018-06-05
+//  Comment                  -
+//  Note                     Check the last entry in the cache, to avoid fetching data we already got
 func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error) {
 	details := &httd.Request{
 		Ratelimiter: ratelimitGuildAuditLogs(guildID),

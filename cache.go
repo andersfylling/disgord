@@ -10,13 +10,16 @@ import (
 	"github.com/andersfylling/disgord/cache/tlru"
 )
 
-// cache keys
+// cache keys to redirect to the related cache system
 const (
 	UserCache = iota
 	ChannelCache
 	GuildCache
 	VoiceStateCache
+)
 
+// the different cache replacement algorithms
+const (
 	CacheAlg_LRU  = "lru"
 	CacheAlg_LFU  = "lfu"
 	CacheAlg_TLRU = "tlru"

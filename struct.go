@@ -121,6 +121,10 @@ func (t Timestamp) Time() time.Time {
 	return time.Time(t)
 }
 
+func (t Timestamp) Empty() bool {
+	return time.Time(t).UnixNano() == 0
+}
+
 // -----------
 // levels
 

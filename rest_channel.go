@@ -42,12 +42,13 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 	return ratelimitChannel(id) + ":w"
 }
 
-// GetChannel [GET]         Get a channel by Snowflake. Returns a channel object.
-// Endpoint                 /channels/{channel.id}
-// Rate limiter [MAJOR]     /channels/{channel.id}
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel
-// Reviewed                 2018-06-07
-// Comment                  -
+// [REST] Get a channel by Snowflake. Returns a channel object.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
+//  Reviewed                2018-06-07
+//  Comment                 -
 func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 	if id.Empty() {
 		return nil, errors.New("not a valid snowflake")
@@ -68,16 +69,16 @@ func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
 type ModifyChannelParams = Channel
 
-// ModifyChannel [PUT/PATCH]    Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild.
-//                              Returns a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a
-//                              Channel Update Gateway event. If modifying a category, individual Channel Update
-//                              events will fire for each child channel that also changes. For the PATCH method,
-//                              all the JSON Params are optional.
-// Endpoint                     /channels/{channel.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#modify-channel
-// Reviewed                     2018-06-07
-// Comment                      andersfylling: only implemented the patch method, as its parameters are optional.
+// [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns a channel on success,
+// and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If modifying a category,
+// individual Channel Update events will fire for each child channel that also changes. For the PATCH method, all the
+// JSON Params are optional.
+//  Method                  PUT/PATCH
+//  Endpoint                /channels/{channel.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
+//  Reviewed                2018-06-07
+//  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
 func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Channel, err error) {
 	id := changes.ID
 	if id.Empty() {
@@ -97,16 +98,16 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 	return
 }
 
-// DeleteChannel [DELETE]   Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS'
-//                          permission for the guild. Deleting a category does not delete its child
-//                          channels; they will have their parent_id removed and a Channel Update Gateway
-//                          event will fire for each of them. Returns a channel object on success. Fires a
-//                          Channel Delete Gateway event.
-// Endpoint                 /channels/{channel.id}
-// Rate limiter [MAJOR]     /channels/{channel.id}
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
-// Reviewed                 2018-06-07
-// Comment                  Deleting a guild channel cannot be undone. Use this with caution, as it
+// [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for the guild.
+// Deleting a category does not delete its child channels; they will have their parent_id removed and a Channel
+// Update Gateway event will fire for each of them. Returns a channel object on success.
+// Fires a Channel Delete Gateway event.
+//  Method                  Delete
+//  Endpoint                /channels/{channel.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
+//  Reviewed                2018-06-07
+//  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
@@ -139,15 +140,15 @@ type EditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
-// EditChannelPermissions [PUT] Edit the channel permission overwrites for a user or role in a channel.
-//                              Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                              Returns a 204 empty response on success. For more information about
-//                              permissions, see permissions.
-// Endpoint                     /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}/permissions
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
-// Reviewed                     2018-06-07
-// Comment                      -
+// [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable for guild channels.
+// Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more information about
+// permissions, see permissions.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
+//  Reviewed                2018-06-07
+//  Comment                 -
 func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
 	if chanID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -172,13 +173,14 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	return
 }
 
-// GetChannelInvites [GET]  Returns a list of invite objects (with invite metadata) for the channel.
-//                          Only usable for guild channels. Requires the 'MANAGE_CHANNELS' permission.
-// Endpoint                 /channels/{channel.id}/invites
-// Rate limiter [MAJOR]     /channels/{channel.id}/invites
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel-invites
-// Reviewed                 2018-06-07
-// Comment                  -
+// [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for guild channels.
+// Requires the 'MANAGE_CHANNELS' permission.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/invites
+//  Rate limiter [MAJOR]    /channels/{channel.id}/invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-invites
+//  Reviewed                2018-06-07
+//  Comment                 -
 func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error) {
 	if id.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -205,16 +207,15 @@ type CreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// CreateChannelInvites [POST] Create a new invite object for the channel. Only usable for guild channels.
-//                             Requires the CREATE_INSTANT_INVITE permission. All JSON parameters for this
-//                             route are optional, however the request body is not. If you are not sending
-//                             any fields, you still have to send an empty JSON object ({}).
-//                             Returns an invite object.
-// Endpoint                    /channels/{channel.id}/invites
-// Rate limiter [MAJOR]        /channels/{channel.id}/invites
-// Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-channel-invite
-// Reviewed                    2018-06-07
-// Comment                     -
+// [REST] Create a new invite object for the channel. Only usable for guild channels. Requires the CREATE_INSTANT_INVITE
+// permission. All JSON parameters for this route are optional, however the request body is not. If you are not
+// sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/invites
+//  Rate limiter [MAJOR]    /channels/{channel.id}/invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-channel-invite
+//  Reviewed                2018-06-07
+//  Comment                 -
 func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
 	if id.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -238,16 +239,15 @@ func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChanne
 	return
 }
 
-// DeleteChannelPermission [DELETE]  Delete a channel permission overwrite for a user or role in a channel.
-//                                   Only usable for guild channels. Requires the 'MANAGE_ROLES' permission.
-//                                   Returns a 204 empty response on success. For more information about
-//                                   permissions, see permissions:
-//                                   https://discordapp.com/developers/docs/topics/permissions#permissions
-// Endpoint                          /channels/{channel.id}/permissions/{overwrite.id}
-// Rate limiter [MAJOR]              /channels/{channel.id}/permissions
-// Discord documentation             https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
-// Reviewed                          2018-06-07
-// Comment                           -
+// [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable for guild channels.
+// Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more information about
+// permissions, see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
+//  Reviewed                2018-06-07
+//  Comment                 -
 func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -271,16 +271,16 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 	return
 }
 
-// TriggerTypingIndicator [POST]    Post a typing indicator for the specified channel. Generally bots should
-//                                  not implement this route. However, if a bot is responding to a command and
-//                                  expects the computation to take a few seconds, this endpoint may be called
-//                                  to let the user know that the bot is processing their message. Returns a 204
-//                                  empty response on success. Fires a Typing Start Gateway event.
-// Endpoint                         /channels/{channel.id}/typing
-// Rate limiter [MAJOR]             /channels/{channel.id}/typing
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
-// Reviewed                         2018-06-10
-// Comment                          -
+// [REST] Post a typing indicator for the specified channel. Generally bots should not implement this route.
+// However, if a bot is responding to a command and expects the computation to take a few seconds, this endpoint
+// may be called to let the user know that the bot is processing their message. Returns a 204 empty response on
+// success. Fires a Typing Start Gateway event.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/typing
+//  Rate limiter [MAJOR]    /channels/{channel.id}/typing
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
+//  Reviewed                2018-06-10
+//  Comment                 -
 func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error) {
 	resp, _, err := client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelTyping(channelID),
@@ -297,12 +297,13 @@ func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error)
 	return
 }
 
-// GetPinnedMessages [GET]  Returns all pinned messages in the channel as an array of message objects.
-// Endpoint                 /channels/{channel.id}/pins
-// Rate limiter [MAJOR]     /channels/{channel.id}/pins
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
-// Reviewed                 2018-06-10
-// Comment                  -
+// [REST] Returns all pinned messages in the channel as an array of message objects.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/pins
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
+//  Reviewed                2018-06-10
+//  Comment                 -
 func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message, err error) {
 	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelPins(channelID),
@@ -316,13 +317,14 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 	return
 }
 
-// AddPinnedChannelMessage [GET]    Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-//                                  Returns a 204 empty response on success.
-// Endpoint                         /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}/pins
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
-// Reviewed                         2018-06-10
-// Comment                          -
+// [REST] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on
+// success.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 -
 func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err error) {
 	resp, _, err := client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelPins(channelID),
@@ -339,14 +341,14 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err
 	return
 }
 
-// DeletePinnedChannelMessage [DELETE]  Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES'
-//                                      permission. Returns a 204 empty response on success.
-//                                      Returns a 204 empty response on success.
-// Endpoint                             /channels/{channel.id}/pins/{message.id}
-// Rate limiter [MAJOR]                 /channels/{channel.id}/pins
-// Discord documentation                https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
-// Reviewed                             2018-06-10
-// Comment                              -
+// [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
+// on success. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 -
 func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -376,13 +378,13 @@ type GroupDMAddRecipientParams struct {
 	Nickname    string `json:"nick"`         // nickname of the user being added
 }
 
-// GroupDMAddRecipient [PUT]    Adds a recipient to a Group DM using their access token.
-//                              Returns a 204 empty response on success.
-// Endpoint                     /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]         /channels/{channel.id}/recipients
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
-// Reviewed                     2018-06-10
-// Comment                      -
+// [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response on success.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/recipients/{user.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+//  Reviewed                2018-06-10
+//  Comment                 -
 func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -408,12 +410,13 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 	return
 }
 
-// GroupDMRemoveRecipient [DELETE]  Removes a recipient from a Group DM. Returns a 204 empty response on success.
-// Endpoint                         /channels/{channel.id}/recipients/{user.id}
-// Rate limiter [MAJOR]             /channels/{channel.id}/recipients
-// Discord documentation            https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
-// Reviewed                         2018-06-10
-// Comment                          -
+// [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/recipients/{user.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
+//  Reviewed                2018-06-10
+//  Comment                 -
 func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -476,16 +479,16 @@ func (params *GetChannelMessagesParams) GetQueryString() string {
 	return query
 }
 
-// GetChannelMessages [GET] Returns the messages for a channel. If operating on a guild channel, this
-//                          endpoint requires the 'VIEW_CHANNEL' permission to be present on the current
-//                          user. If the current user is missing the 'READ_MESSAGE_HISTORY' permission
-//                          in the channel then this will return no messages (since they cannot read
-//                          the message history). Returns an array of message objects on success.
-// Endpoint                 /channels/{channel.id}/messages
-// Rate limiter [MAJOR]     /channels/{channel.id}/messages
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#get-channel-messages
-// Reviewed                 2018-06-10
-// Comment                  The before, after, and around keys are mutually exclusive, only one may
+// [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
+// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
+// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
+// (since they cannot read the message history). Returns an array of message objects on success.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/messages
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-messages
+//  Reviewed                2018-06-10
+//  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
 func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
 	if channelID.Empty() {
@@ -509,14 +512,14 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 	return
 }
 
-// GetChannelMessage [GET] Returns a specific message in the channel. If operating on a guild channel,
-//                         this endpoints requires the 'READ_MESSAGE_HISTORY' permission to be present
-//                         on the current user. Returns a message object on success.
-// Endpoint                /channels/{channel.id}/messages/{message.id}
-// Rate limiter [MAJOR]    /channels/{channel.id}/messages
-// Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
-// Reviewed                2018-06-10
-// Comment                 -
+// [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints requires the
+// 'READ_MESSAGE_HISTORY' permission to be present on the current user. Returns a message object on success.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 -
 func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -613,19 +616,17 @@ type CreateChannelMessageFileParams struct {
 	FileName string    `json:"-"`
 }
 
-// CreateChannelMessage [POST] Post a message to a guild text or DM channel. If operating on a guild channel,
-//                             this endpoint requires the 'SEND_MESSAGES' permission to be present on the
-//                             current user. If the tts field is set to true, the SEND_TTS_MESSAGES permission
-//                             is required for the message to be spoken. Returns a message object. Fires a
-//                             Message Create Gateway event. See message formatting for more information on
-//                             how to properly format messages.
-//                             The maximum request size when sending a message is 8MB.
-// Endpoint                    /channels/{channel.id}/messages
-// Rate limiter [MAJOR]        /channels/{channel.id}/messages
-// Discord documentation       https://discordapp.com/developers/docs/resources/channel#create-message
-// Reviewed                    2018-06-10
-// Comment                     Before using this endpoint, you must connect to and identify with a gateway
-//                             at least once.
+// [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this endpoint requires
+// the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
+// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
+// Message Create Gateway event. See message formatting for more information on how to properly format messages.
+// The maximum request size when sending a message is 8MB.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/messages
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-message
+//  Reviewed                2018-06-10
+//  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -667,13 +668,14 @@ type EditMessageParams struct {
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 }
 
-// EditMessage [PATCH]      Edit a previously sent message. You can only edit messages that have been sent by
-//                          the current user. Returns a message object. Fires a Message Update Gateway event.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}
-// Rate limiter [MAJOR]     /channels/{channel.id}/messages
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#edit-message
-// Reviewed                 2018-06-10
-// Comment                  All parameters to this endpoint are optional.
+// [REST] Edit a previously sent message. You can only edit messages that have been sent by the current user.
+// Returns a message object. Fires a Message Update Gateway event.
+//  Method                  PATCH
+//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-message
+//  Reviewed                2018-06-10
+//  Comment                 All parameters to this endpoint are optional.
 func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -698,15 +700,15 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 	return
 }
 
-// DeleteMessage [DELETE]   Delete a message. If operating on a guild channel and trying to delete a
-//                          message that was not sent by the current user, this endpoint requires the
-//                          'MANAGE_MESSAGES' permission. Returns a 204 empty response on success.
-//                          Fires a Message Delete Gateway event.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}
-// Rate limiter [MAJOR]     /channels/{channel.id}/messages [DELETE]
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#delete-message
-// Reviewed                 2018-06-10
-// Comment                  -
+// [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not sent by the
+// current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success.
+// Fires a Message Delete Gateway event.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE]
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
+//  Reviewed                2018-06-10
+//  Comment                 -
 func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -784,18 +786,18 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	return
 }
 
-// BulkDeleteMessages [POST]    Delete multiple messages in a single request. This endpoint can only be used
-//                              on guild channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204
-//                              empty response on success. Fires multiple Message Delete Gateway events.Any message
-//                              IDs given that do not exist or are invalid will count towards the minimum and
-//                              maximum message count (currently 2 and 100 respectively). Additionally,
-//                              duplicated IDs will only be counted once.
-// Endpoint                     /channels/{channel.id}/messages/bulk-delete
-// Rate limiter [MAJOR]         /channels/{channel.id}/messages [DELETE] TODO: is this limiter key incorrect?
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-message
-// Reviewed                     2018-06-10
-// Comment                      This endpoint will not delete messages older than 2 weeks, and will fail if
-//                              any message provided is older than that.
+// [REST] Delete multiple messages in a single request. This endpoint can only be used on guild channels and
+// requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
+// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
+// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
+// will only be counted once.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/messages/bulk-delete
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: is this limiter key incorrect?
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
+//  Reviewed                2018-06-10
+//  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
+//                          provided is older than that.
 func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
@@ -825,17 +827,16 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 // ------------------------------------------
 // Reaction
 
-// CreateReaction [PUT]     Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
-//                          permission to be present on the current user. Additionally, if nobody else has
-//                          reacted to the message using this emoji, this endpoint requires the 'ADD_REACTIONS'
-//                          permission to be present on the current user. Returns a 204 empty response on success.
-//                          The maximum request size when sending a message is 8MB.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]     /channels/{channel.id}/messages TODO: I have no idea what the key is
-// Discord documentation    https://discordapp.com/developers/docs/resources/channel#create-reaction
-// Reviewed                 2018-06-07
-// Comment                  -
-// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY' permission to
+// be present on the current user. Additionally, if nobody else has reacted to the message using this emoji,
+// this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
+// response on success. The maximum request size when sending a message is 8MB.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages TODO: I have no idea what the key is
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
+//  Reviewed                2018-06-07
+//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -872,13 +873,13 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 	return
 }
 
-// DeleteOwnReaction [DELETE]   Delete a reaction the current user has made for the message. Returns a 204
-//                              empty response on success.
-// Endpoint                     /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]         /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
-// Discord documentation        https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
-// Reviewed                     2018-06-07
-// Comment                      emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// [REST] Delete a reaction the current user has made for the message. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
+//  Reviewed                2018-06-07
+//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -917,13 +918,14 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	return
 }
 
-// DeleteUserReaction [DELETE]	Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES'
-//                          		permission to be present on the current user. Returns a 204 empty response on success.
-// Endpoint                 		/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-// Rate limiter [MAJOR]     		/channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
-// Discord documentation    		https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
-// Reviewed                 		2018-06-07
-// Comment                  		emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission to be present
+// on the current user. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+//  Reviewed                2018-06-07
+//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
@@ -991,13 +993,13 @@ func (params *GetReactionURLParams) GetQueryString() string {
 	return query
 }
 
-// GetReaction [GET]   		Get a list of users that reacted with this emoji. Returns an array of user objects on success.
-// Endpoint               /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
-// Rate limiter [MAJOR]   /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
-// Discord documentation  https://discordapp.com/developers/docs/resources/channel#get-reactions
-// Reviewed               2018-06-07
-// Comment                -
-// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
+//  Reviewed                2018-06-07
+//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
@@ -1038,14 +1040,14 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	return
 }
 
-// DeleteAllReactions [DELETE]	Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
-//                            	permission to be present on the current user.
-// Endpoint                   	/channels/{channel.id}/messages/{message.id}/reactions
-// Rate limiter [MAJOR]       	/channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
-// Discord documentation      	https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
-// Reviewed                   	2018-06-07
-// Comment                    	-
-// emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+// [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES' permission to be
+// present on the current user.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
+//  Reviewed                2018-06-07
+//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")

@@ -311,9 +311,6 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 	case EventGuildMemberRemove:
 		d.guildMemberRemoveChan <- box.(*GuildMemberRemove)
 	case EventGuildMemberUpdate:
-		for _, role := range (box.(*GuildMemberUpdate)).Roles {
-			role.guildID = (box.(*GuildMemberUpdate)).GuildID
-		}
 		d.guildMemberUpdateChan <- box.(*GuildMemberUpdate)
 	case EventGuildMembersChunk:
 		d.guildMembersChunkChan <- box.(*GuildMembersChunk)

@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
+// Channel types
+// https://discordapp.com/developers/docs/resources/channel#channel-object-channel-types
 const (
-	// Channel types
-	// https://discordapp.com/developers/docs/resources/channel#channel-object-channel-types
 	ChannelTypeGuildText uint = iota
 	ChannelTypeDM
 	ChannelTypeGuildVoice
@@ -57,9 +57,10 @@ func NewChannel() *Channel {
 
 func NewPartialChannel(id Snowflake, name string, t uint) *PartialChannel {
 	return &PartialChannel{
-		ID:   id,
-		Name: name,
-		Type: t,
+		ID:      id,
+		Name:    name,
+		Type:    t,
+		partial: true,
 	}
 }
 
@@ -77,10 +78,17 @@ type ChannelUpdater interface {
 }
 
 // PartialChannel ...
+// example of partial channel
+// // "channel": {
+// //   "id": "165176875973476352",
+// //   "name": "illuminati",
+// //   "type": 0
+// // }
 type PartialChannel = Channel
 
 // Channel ...
 type Channel struct {
+	sync.RWMutex         `json:"-"`
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
 	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
@@ -99,7 +107,15 @@ type Channel struct {
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?, pointer
 	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
 
-	sync.RWMutex
+	// set to true when the object is incomplete. Used in situations
+	// like cache to avoid overwriting correct information.
+	// A partial channel is assumed to be
+	//  "channel": {
+	//    "id": "165176875973476352",
+	//    "name": "illuminati",
+	//    "type": 0
+	//  }
+	partial bool
 }
 
 func (c *Channel) Mention() string {
@@ -199,6 +215,50 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	c.RWMutex.RUnlock()
 	channel.RWMutex.Unlock()
 
+	return
+}
+
+func (c *Channel) copyOverToCache(other interface{}) (err error) {
+	channel := other.(*Channel)
+
+	channel.Lock()
+	c.RLock()
+
+	if !c.ID.Empty() {
+		channel.ID = c.ID
+	}
+	if channel.Type == 0 && c.Type > 0 {
+		// if channel type is not set(?) then it can be overwritten
+		channel.Type = c.Type
+	}
+	if !c.GuildID.Empty() {
+		channel.GuildID = c.GuildID
+	}
+	channel.Position = c.Position // TODO: how to avoid an partial channel to overwrite this?
+	channel.PermissionOverwrites = c.PermissionOverwrites
+	channel.Name = c.Name
+	channel.Topic = c.Topic
+	channel.NSFW = c.NSFW
+	channel.LastMessageID = c.LastMessageID
+	channel.Bitrate = c.Bitrate
+	channel.UserLimit = c.UserLimit
+	channel.Icon = c.Icon
+	channel.OwnerID = c.OwnerID
+	if !c.ApplicationID.Empty() {
+		channel.ApplicationID = c.ApplicationID
+	}
+	if !c.ParentID.Empty() {
+		channel.ParentID = c.ParentID
+	}
+	if !c.LastPinTimestamp.Empty() {
+		channel.LastPinTimestamp = c.LastPinTimestamp
+	}
+	if c.LastMessageID != nil {
+		*channel.LastMessageID = *c.LastMessageID
+	}
+
+	channel.Unlock()
+	c.RUnlock()
 	return
 }
 
