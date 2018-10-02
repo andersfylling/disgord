@@ -36,7 +36,7 @@ func NewDispatch(ws DiscordWebsocket) *Dispatch {
 type Dispatch struct {
 	allChan chan interface{} // any event
 	{{range .}} {{if .IsDiscordEvent}}
-    {{.LowerCaseFirst}}Chan chan *{{.}} {{end}} {{end}}
+	{{.LowerCaseFirst}}Chan chan *{{.}} {{end}} {{end}}
 
 	ws DiscordWebsocket
 
@@ -51,9 +51,9 @@ type Dispatch struct {
 // EventChan ... TODO
 func (d *Dispatch) EventChan(event string) (channel interface{}, err error) {
 	switch event {
-    {{range .}} {{if .IsDiscordEvent}}
-    case Event{{.}}:
-    		channel = d.{{.}}() {{end}} {{end}}
+	{{range .}} {{if .IsDiscordEvent}}
+	case Event{{.}}:
+			channel = d.{{.}}() {{end}} {{end}}
 	default:
 		err = errors.New("no event channel exists for given event: " + event)
 	}
@@ -69,7 +69,7 @@ func (d *Dispatch) alwaysListenToChans() {
 			select {
 			case <-d.allChan:
 			{{range .}} {{if .IsDiscordEvent}}
-            case <-d.{{.LowerCaseFirst}}Chan: {{end}} {{end}}
+			case <-d.{{.LowerCaseFirst}}Chan: {{end}} {{end}}
 			case <-d.shutdown:
 				stop = true
 			}
