@@ -1,10 +1,10 @@
 package disgord
 
+//go:generate go run generate/events/main.go
+
 import (
 	"context"
 	"sync"
-
-	"github.com/andersfylling/disgord/event"
 )
 
 type eventBox interface {
@@ -19,33 +19,13 @@ type EventCallback = func(session Session, box interface{})
 
 // ---------------------------
 
-// Holds and array of presence update objects
-const EventPresencesReplace = event.PresencesReplace
-
 // holds the event content
 type PresencesReplace struct {
 	Presnces []*PresenceUpdate `json:"presences_replace"` // TODO: verify json tag
 	Ctx      context.Context   `json:"-"`
 }
 
-func (p *PresencesReplace) registerContext(ctx context.Context) { p.Ctx = ctx }
-
-// callback for EventPresencesReplace
-type PresencesReplaceCallback = func(session Session, pr *PresencesReplace)
-
 // ---------------------------
-
-// The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
-// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
-// required for a client to begin interacting with the rest of the platform.
-//  Fields:
-//  - V int
-//  - User *User
-//  - PrivateChannels []*Channel
-//  - Guilds []*GuildUnavailable
-//  - SessionID string
-//  - Trace []string
-const EventReady = event.Ready
 
 // contains the initial state information
 type Ready struct {
@@ -74,18 +54,7 @@ type Ready struct {
 	Ctx          context.Context `json:"-"`
 }
 
-func (obj *Ready) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on READY events
-type ReadyCallback = func(session Session, r *Ready)
-
 // ---------------------------
-
-// The resumed event is dispatched when a client has sent a resume payload to the gateway
-// (for resuming existing sessions).
-//  Fields:
-//  - Trace []string
-const EventResumed = event.Resumed
 
 // response to Resume
 type Resumed struct {
@@ -93,28 +62,7 @@ type Resumed struct {
 	Ctx   context.Context `json:"-"`
 }
 
-func (obj *Resumed) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on RESUME events
-type ResumedCallback = func(session Session, r *Resumed)
-
 // ---------------------------
-
-// failure response to Identify or Resume or invalid active session
-type InvalidSession struct {
-	Ctx context.Context `json:"-"`
-}
-
-func (obj *InvalidSession) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on INVALID_SESSION events
-type InvalidSessionCallback = func(session Session, is *InvalidSession)
-
-// ---------------------------
-
-// Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
-// guild channel object.
-const EventChannelCreate = event.ChannelCreate
 
 // new channel created
 type ChannelCreate struct {
@@ -122,19 +70,13 @@ type ChannelCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *ChannelCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
 	return unmarshal(data, obj.Channel)
 }
 
-// triggered on CHANNEL_CREATE events
-type ChannelCreateCallback = func(session Session, cc *ChannelCreate)
-
 // ---------------------------
-
-// Sent when a channel is updated. The inner payload is a guild channel object.
-const EventChannelUpdate = event.ChannelUpdate
 
 // channel was updated
 type ChannelUpdate struct {
@@ -142,19 +84,13 @@ type ChannelUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *ChannelUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
 	return unmarshal(data, obj.Channel)
 }
 
-// triggered on CHANNEL_UPDATE events
-type ChannelUpdateCallback = func(session Session, cu *ChannelUpdate)
-
 // ---------------------------
-
-// Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
-const EventChannelDelete = event.ChannelDelete
 
 // channel was deleted
 type ChannelDelete struct {
@@ -162,23 +98,13 @@ type ChannelDelete struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *ChannelDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
 	return unmarshal(data, obj.Channel)
 }
 
-// triggered on CHANNEL_DELETE events
-type ChannelDeleteCallback = func(session Session, cd *ChannelDelete)
-
 // ---------------------------
-
-// Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
-//  Fields:
-//  - ChannelID int64 or Snowflake
-//  - LastPinTimestamp time.Now().UTC().Format(time.RFC3339)
-// TODO fix.
-const EventChannelPinsUpdate = event.ChannelPinsUpdate
 
 // message was pinned or unpinned
 type ChannelPinsUpdate struct {
@@ -190,19 +116,7 @@ type ChannelPinsUpdate struct {
 	Ctx              context.Context `json:"-"`
 }
 
-func (obj *ChannelPinsUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on CHANNEL_PINS_UPDATE events
-type ChannelPinsUpdateCallback = func(session Session, cpu *ChannelPinsUpdate)
-
 // ---------------------------
-
-// Sent when a user starts typing in a channel.
-//  Fields:
-//  - ChannelID     Snowflake
-//  - UserID        Snowflake
-//  - TimestampUnix int
-const EventTypingStart = event.TypingStart
 
 // user started typing in a channel
 type TypingStart struct {
@@ -212,15 +126,7 @@ type TypingStart struct {
 	Ctx           context.Context `json:"-"`
 }
 
-func (obj *TypingStart) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on TYPING_START events
-type TypingStartCallback = func(session Session, ts *TypingStart)
-
 // ---------------------------
-
-// Sent when a message is created. The inner payload is a message object.
-const EventMessageCreate = event.MessageCreate
 
 // message was created
 type MessageCreate struct {
@@ -228,21 +134,13 @@ type MessageCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *MessageCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
 	return unmarshal(data, obj.Message)
 }
 
-// triggered on MESSAGE_CREATE events
-type MessageCreateCallback = func(session Session, mc *MessageCreate)
-
 // ---------------------------
-
-// Sent when a message is updated. The inner payload is a message object.
-//
-// NOTE! Has _at_least_ the GuildID and ChannelID fields.
-const EventMessageUpdate = event.MessageUpdate
 
 // message was edited
 type MessageUpdate struct {
@@ -250,22 +148,13 @@ type MessageUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *MessageUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
 	return unmarshal(data, obj.Message)
 }
 
-// triggered on MESSAGE_UPDATE events
-type MessageUpdateCallback = func(session Session, mu *MessageUpdate)
-
 // ---------------------------
-
-// Sent when a message is deleted.
-//  Fields:
-//  - ID        Snowflake
-//  - ChannelID Snowflake
-const EventMessageDelete = event.MessageDelete
 
 // message was deleted
 type MessageDelete struct {
@@ -274,7 +163,7 @@ type MessageDelete struct {
 	Ctx       context.Context `json:"-"`
 }
 
-func (obj *MessageDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *MessageDelete) UnmarshalJSON(data []byte) (err error) {
 	msg := &Message{}
 	err = unmarshal(data, msg)
@@ -287,16 +176,7 @@ func (obj *MessageDelete) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
-// triggered on MESSAGE_DELETE events
-type MessageDeleteCallback = func(session Session, md *MessageDelete)
-
 // ---------------------------
-
-// Sent when multiple messages are deleted at once.
-//  Fields:
-//  - IDs       []Snowflake
-//  - ChannelID Snowflake
-const EventMessageDeleteBulk = event.MessageDeleteBulk
 
 // multiple messages were deleted at once
 type MessageDeleteBulk struct {
@@ -305,20 +185,7 @@ type MessageDeleteBulk struct {
 	Ctx        context.Context `json:"-"`
 }
 
-func (obj *MessageDeleteBulk) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on MESSAGE_DELETE_BULK events
-type MessageDeleteBulkCallback = func(session Session, mdb *MessageDeleteBulk)
-
 // ---------------------------
-
-// Sent when a user adds a reaction to a message.
-//  Fields:
-//  - UserID     Snowflake
-//  - ChannelID  Snowflake
-//  - MessageID  Snowflake
-//  - Emoji      *Emoji
-const EventMessageReactionAdd = event.MessageReactionAdd
 
 // MessageReactionAdd	user reacted to a message
 type MessageReactionAdd struct {
@@ -330,20 +197,7 @@ type MessageReactionAdd struct {
 	Ctx          context.Context `json:"-"`
 }
 
-func (obj *MessageReactionAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on MESSAGE_REACTION_ADD events
-type MessageReactionAddCallback = func(session Session, mra *MessageReactionAdd)
-
 // ---------------------------
-
-// Sent when a user removes a reaction from a message.
-//  Fields:
-//  - UserID     Snowflake
-//  - ChannelID  Snowflake
-//  - MessageID  Snowflake
-//  - Emoji      *Emoji
-const EventMessageReactionRemove = event.MessageReactionRemove
 
 // user removed a reaction from a message
 type MessageReactionRemove struct {
@@ -355,18 +209,7 @@ type MessageReactionRemove struct {
 	Ctx          context.Context `json:"-"`
 }
 
-func (obj *MessageReactionRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on MESSAGE_REACTION_REMOVE events
-type MessageReactionRemoveCallback = func(session Session, mrr *MessageReactionRemove)
-
 // ---------------------------
-
-// Sent when a user explicitly removes all reactions from a message.
-//  Fields:
-//  - ChannelID Snowflake
-//  - MessageID Snowflake
-const EventMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 // all reactions were explicitly removed from a message
 type MessageReactionRemoveAll struct {
@@ -375,18 +218,7 @@ type MessageReactionRemoveAll struct {
 	Ctx       context.Context `json:"-"`
 }
 
-func (obj *MessageReactionRemoveAll) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on MESSAGE_REACTION_REMOVE_ALL events
-type MessageReactionRemoveAllCallback = func(session Session, mrra *MessageReactionRemoveAll)
-
 // ---------------------------
-
-// Sent when a guild's emojis have been updated.
-//  Fields:
-//  - GuildID Snowflake
-//  - Emojis []*Emoji
-const EventGuildEmojisUpdate = event.GuildEmojisUpdate
 
 // guild emojis were updated
 type GuildEmojisUpdate struct {
@@ -395,19 +227,7 @@ type GuildEmojisUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildEmojisUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_EMOJIS_UPDATE events
-type GuildEmojisUpdateCallback = func(session Session, geu *GuildEmojisUpdate)
-
 // ---------------------------
-
-// This event can be sent in three different scenarios:
-//  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
-//     sent in the Ready event.
-//	2. When a Guild becomes available again to the client.
-// 	3. When the current user joins a new Guild.
-const EventGuildCreate = event.GuildCreate
 
 // This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
@@ -419,19 +239,13 @@ type GuildCreate struct {
 	Ctx   context.Context `json:"-"`
 }
 
-func (obj *GuildCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
 	return unmarshal(data, obj.Guild)
 }
 
-// triggered on GUILD_CREATE events
-type GuildCreateCallback = func(session Session, gc *GuildCreate)
-
 // ---------------------------
-
-// Sent when a guild is updated. The inner payload is a guild object.
-const EventGuildUpdate = event.GuildUpdate
 
 // guild was updated
 type GuildUpdate struct {
@@ -439,21 +253,13 @@ type GuildUpdate struct {
 	Ctx   context.Context `json:"-"`
 }
 
-func (obj *GuildUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
 	return unmarshal(data, obj.Guild)
 }
 
-// triggered on GUILD_UPDATE events
-type GuildUpdateCallback = func(session Session, gu *GuildUpdate)
-
 // ---------------------------
-
-// Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
-// The inner payload is an unavailable guild object. If the unavailable field is not set, the user was removed
-// from the guild.
-const EventGuildDelete = event.GuildDelete
 
 // guild became unavailable, or user left/was removed from a guild
 type GuildDelete struct {
@@ -461,23 +267,18 @@ type GuildDelete struct {
 	Ctx              context.Context   `json:"-"`
 }
 
+// UserWasRemoved ... TODO
 func (obj *GuildDelete) UserWasRemoved() bool {
 	return obj.UnavailableGuild.Unavailable == false
 }
 
-func (obj *GuildDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
+// UnmarshalJSON ...
 func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
 	obj.UnavailableGuild = &GuildUnavailable{}
 	return unmarshal(data, obj.UnavailableGuild)
 }
 
-// triggered on GUILD_DELETE events
-type GuildDeleteCallback = func(session Session, gd *GuildDelete)
-
 // ---------------------------
-
-// Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
-const EventGuildBanAdd = event.GuildBanAdd
 
 // user was banned from a guild
 type GuildBanAdd struct {
@@ -486,15 +287,7 @@ type GuildBanAdd struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildBanAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_BAN_ADD events
-type GuildBanAddCallback = func(session Session, gba *GuildBanAdd)
-
 // ---------------------------
-
-// Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
-const EventGuildBanRemove = event.GuildBanRemove
 
 // user was unbanned from a guild
 type GuildBanRemove struct {
@@ -503,17 +296,7 @@ type GuildBanRemove struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildBanRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_BAN_REMOVE events
-type GuildBanRemoveCallback = func(session Session, gbr *GuildBanRemove)
-
 // ---------------------------
-
-// Sent when a guild integration is updated.
-//  Fields:
-//  - GuildID Snowflake
-const EventGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 // guild integration was updated
 type GuildIntegrationsUpdate struct {
@@ -521,19 +304,7 @@ type GuildIntegrationsUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildIntegrationsUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_INTEGRATIONS_UPDATE events
-type GuildIntegrationsUpdateCallback = func(session Session, giu *GuildIntegrationsUpdate)
-
 // ---------------------------
-
-// Sent when a new user joins a guild. The inner payload is a guild member object with these extra fields:
-//  - GuildID Snowflake
-//
-//  Fields:
-//  - Member *Member
-const EventGuildMemberAdd = event.GuildMemberAdd
 
 // new user joined a guild
 type GuildMemberAdd struct {
@@ -541,18 +312,7 @@ type GuildMemberAdd struct {
 	Ctx    context.Context `json:"-"`
 }
 
-func (obj *GuildMemberAdd) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_MEMBER_ADD events
-type GuildMemberAddCallback = func(session Session, gma *GuildMemberAdd)
-
 // ---------------------------
-
-// Sent when a user is removed from a guild (leave/kick/ban).
-//  Fields:
-//  - GuildID   Snowflake
-//  - User      *User
-const EventGuildMemberRemove = event.GuildMemberRemove
 
 // user was removed from a guild
 type GuildMemberRemove struct {
@@ -561,20 +321,7 @@ type GuildMemberRemove struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildMemberRemove) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_MEMBER_REMOVE events
-type GuildMemberRemoveCallback = func(session Session, gmr *GuildMemberRemove)
-
 // ---------------------------
-
-// Sent when a guild member is updated.
-//  Fields:
-//  - GuildID   Snowflake
-//  - Roles     []Snowflake
-//  - User      *User
-//  - Nick      string
-const EventGuildMemberUpdate = event.GuildMemberUpdate
 
 // guild member was updated
 type GuildMemberUpdate struct {
@@ -585,18 +332,7 @@ type GuildMemberUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildMemberUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_MEMBER_UPDATE events
-type GuildMemberUpdateCallback = func(session Session, gmu *GuildMemberUpdate)
-
 // ---------------------------
-
-// Sent in response to Gateway Request Guild Members.
-//  Fields:
-//  - GuildID Snowflake
-//  - Members []*Member
-const EventGuildMembersChunk = event.GuildMembersChunk
 
 // response to Request Guild Members
 type GuildMembersChunk struct {
@@ -605,18 +341,7 @@ type GuildMembersChunk struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildMembersChunk) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_MEMBERS_CHUNK events
-type GuildMembersChunkCallback = func(session Session, gmc *GuildMembersChunk)
-
 // ---------------------------
-
-// Sent when a guild role is created.
-//  Fields:
-//  - GuildID   Snowflake
-//  - Role      *Role
-const EventGuildRoleCreate = event.GuildRoleCreate
 
 // guild role was created
 type GuildRoleCreate struct {
@@ -625,18 +350,7 @@ type GuildRoleCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildRoleCreate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_ROLE_CREATE events
-type GuildRoleCreateCallback = func(session Session, grc *GuildRoleCreate)
-
 // ---------------------------
-
-// Sent when a guild role is created.
-//  Fields:
-//  - GuildID Snowflake
-//  - Role    *Role
-const EventGuildRoleUpdate = event.GuildRoleUpdate
 
 // guild role was updated
 type GuildRoleUpdate struct {
@@ -645,18 +359,7 @@ type GuildRoleUpdate struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildRoleUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_ROLE_UPDATE events
-type GuildRoleUpdateCallback = func(session Session, gru *GuildRoleUpdate)
-
 // ---------------------------
-
-// Sent when a guild role is created.
-//  Fields:
-//  - GuildID Snowflake
-//  - RoleID  Snowflake
-const EventGuildRoleDelete = event.GuildRoleDelete
 
 // guild role was deleted
 type GuildRoleDelete struct {
@@ -665,21 +368,7 @@ type GuildRoleDelete struct {
 	Ctx     context.Context `json:"-"`
 }
 
-func (obj *GuildRoleDelete) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on GUILD_ROLE_DELETE events
-type GuildRoleDeleteCallback = func(session Session, grd *GuildRoleDelete)
-
 // ---------------------------
-
-// A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
-//  Fields:
-//  - User    *User
-//  - Roles   []Snowflake
-//  - Game    *Activity
-//  - GuildID Snowflake
-//  - Status  string
-const EventPresenceUpdate = event.PresenceUpdate
 
 // user's presence was updated in a guild
 type PresenceUpdate struct {
@@ -694,15 +383,7 @@ type PresenceUpdate struct {
 	Ctx    context.Context `json:"-"`
 }
 
-func (obj *PresenceUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on PRESENCE_UPDATE events
-type PresenceUpdateCallback = func(session Session, pu *PresenceUpdate)
-
 // ---------------------------
-
-// Sent when properties about the user change. Inner payload is a user object.
-const EventUserUpdate = event.UserUpdate
 
 // properties about a user changed
 type UserUpdate struct {
@@ -710,15 +391,7 @@ type UserUpdate struct {
 	Ctx  context.Context `json:"-"`
 }
 
-func (obj *UserUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on USER_UPDATE events
-type UserUpdateCallback = func(session Session, uu *UserUpdate)
-
 // ---------------------------
-
-// Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
-const EventVoiceStateUpdate = event.VoiceStateUpdate
 
 // someone joined, left, or moved a voice channel
 type VoiceStateUpdate struct {
@@ -726,20 +399,7 @@ type VoiceStateUpdate struct {
 	Ctx        context.Context `json:"-"`
 }
 
-func (obj *VoiceStateUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on VOICE_STATE_UPDATE events
-type VoiceStateUpdateCallback = func(session Session, vsu *VoiceStateUpdate)
-
 // ---------------------------
-
-// Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
-// voice instance fails over to a new server.
-//  Fields:
-//  - Token     string
-//  - ChannelID Snowflake
-//  - Endpoint  string
-const EventVoiceServerUpdate = event.VoiceServerUpdate
 
 // guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
 // connecting to voice, and when the current voice instance fails over to a new server.
@@ -750,18 +410,7 @@ type VoiceServerUpdate struct {
 	Ctx      context.Context `json:"-"`
 }
 
-func (obj *VoiceServerUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on VOICE_SERVER_UPDATE events
-type VoiceServerUpdateCallback = func(session Session, vsu *VoiceServerUpdate)
-
 // ---------------------------
-
-// Sent when a guild channel's webhook is created, updated, or deleted.
-//  Fields:
-//  - GuildID   Snowflake
-//  - ChannelID Snowflake
-const EventWebhooksUpdate = event.WebhooksUpdate
 
 // guild channel webhook was created, update, or deleted
 type WebhooksUpdate struct {
@@ -769,8 +418,3 @@ type WebhooksUpdate struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 }
-
-func (obj *WebhooksUpdate) registerContext(ctx context.Context) { obj.Ctx = ctx }
-
-// triggered on WEBHOOK_UPDATE events
-type WebhooksUpdateCallback = func(session Session, wu *WebhooksUpdate)
