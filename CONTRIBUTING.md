@@ -100,7 +100,14 @@ Every Discord object will hold a read/write mutex. The logic behind this is that
 
 Also, all the public methods of Discord objects that directly cause a change or a read, will handle locking on their own. But for private method locking is not done(!), such that public methods can reuse private methods without causing deadlocks.
 
+#### Go Generate
 
+If you during your contribution have changed either `events.go` or `event/events.go`, you must run `go generate` in the root folder of the project before pushing.  
+This command will ensure that all generated files have been updated accordingly.  
+If this command gives you warnings, you must correct them before pushing.
+
+All files written by Go Generate will be suffixed with `_gen.go`, they should **NOT** be edited manually as they will be overwritten by Go Generate.  
+Instead, edit the templates in `generate/` or the files they're based on (see previous paragraph). 
 
 ### Running Unit Tests
 > WARNING! Please do not run the unit tests for the endpoints as these are verified to work before being pushed, and rechecking every time is just spamming the Discord API for useless information.
