@@ -68,13 +68,13 @@ func main() {
 		name := valSpec.Names[0].Name
 		event, ok := index[name]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "WARNING: event.%s is defined in event/events.go, but we couldn't the struct\n", name)
+			fmt.Fprintf(os.Stderr, "WARNING: event.%s is defined in event/events.go, but we couldn't the struct!\n", name)
 			continue
 		}
 
 		doc := genDecl.Doc.Text()
 		if doc == "" {
-			fmt.Fprintf(os.Stderr, "WARNING: events.%s has no docs! Please write some!", name)
+			fmt.Fprintf(os.Stderr, "WARNING: events.%s has no docs! Please write some!\n", name)
 		}
 
 		event.Docs = &doc
@@ -82,7 +82,7 @@ func main() {
 
 	for _, event := range events {
 		if event.Docs == nil {
-			fmt.Fprintf(os.Stderr, "WARNING: %s is defined in events.go, but has no docs in event/events.go\n", event.varName)
+			fmt.Fprintf(os.Stderr, "WARNING: %s is defined in events.go, but has no docs in event/events.go!\n", event.varName)
 		}
 	}
 
