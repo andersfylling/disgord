@@ -128,6 +128,5 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 {{range .}} {{if .IsDiscordEvent}}
 // {{.}} gives access to {{.LowerCaseFirst}}Chan for {{.}} events
 func (d *Dispatch) {{.}}() <-chan *{{.}} {
-	d.ws.RegisterEvent(event.{{.}})
 	return d.{{.LowerCaseFirst}}Chan
 } {{end}} {{end}}
