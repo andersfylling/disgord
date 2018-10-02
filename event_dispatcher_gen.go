@@ -490,204 +490,170 @@ func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session
 
 // ChannelCreate gives access to channelCreateChan for ChannelCreate events
 func (d *Dispatch) ChannelCreate() <-chan *ChannelCreate {
-	d.ws.RegisterEvent(event.ChannelCreate)
 	return d.channelCreateChan
 }
 
 // ChannelDelete gives access to channelDeleteChan for ChannelDelete events
 func (d *Dispatch) ChannelDelete() <-chan *ChannelDelete {
-	d.ws.RegisterEvent(event.ChannelDelete)
 	return d.channelDeleteChan
 }
 
 // ChannelPinsUpdate gives access to channelPinsUpdateChan for ChannelPinsUpdate events
 func (d *Dispatch) ChannelPinsUpdate() <-chan *ChannelPinsUpdate {
-	d.ws.RegisterEvent(event.ChannelPinsUpdate)
 	return d.channelPinsUpdateChan
 }
 
 // ChannelUpdate gives access to channelUpdateChan for ChannelUpdate events
 func (d *Dispatch) ChannelUpdate() <-chan *ChannelUpdate {
-	d.ws.RegisterEvent(event.ChannelUpdate)
 	return d.channelUpdateChan
 }
 
 // GuildBanAdd gives access to guildBanAddChan for GuildBanAdd events
 func (d *Dispatch) GuildBanAdd() <-chan *GuildBanAdd {
-	d.ws.RegisterEvent(event.GuildBanAdd)
 	return d.guildBanAddChan
 }
 
 // GuildBanRemove gives access to guildBanRemoveChan for GuildBanRemove events
 func (d *Dispatch) GuildBanRemove() <-chan *GuildBanRemove {
-	d.ws.RegisterEvent(event.GuildBanRemove)
 	return d.guildBanRemoveChan
 }
 
 // GuildCreate gives access to guildCreateChan for GuildCreate events
 func (d *Dispatch) GuildCreate() <-chan *GuildCreate {
-	d.ws.RegisterEvent(event.GuildCreate)
 	return d.guildCreateChan
 }
 
 // GuildDelete gives access to guildDeleteChan for GuildDelete events
 func (d *Dispatch) GuildDelete() <-chan *GuildDelete {
-	d.ws.RegisterEvent(event.GuildDelete)
 	return d.guildDeleteChan
 }
 
 // GuildEmojisUpdate gives access to guildEmojisUpdateChan for GuildEmojisUpdate events
 func (d *Dispatch) GuildEmojisUpdate() <-chan *GuildEmojisUpdate {
-	d.ws.RegisterEvent(event.GuildEmojisUpdate)
 	return d.guildEmojisUpdateChan
 }
 
 // GuildIntegrationsUpdate gives access to guildIntegrationsUpdateChan for GuildIntegrationsUpdate events
 func (d *Dispatch) GuildIntegrationsUpdate() <-chan *GuildIntegrationsUpdate {
-	d.ws.RegisterEvent(event.GuildIntegrationsUpdate)
 	return d.guildIntegrationsUpdateChan
 }
 
 // GuildMemberAdd gives access to guildMemberAddChan for GuildMemberAdd events
 func (d *Dispatch) GuildMemberAdd() <-chan *GuildMemberAdd {
-	d.ws.RegisterEvent(event.GuildMemberAdd)
 	return d.guildMemberAddChan
 }
 
 // GuildMemberRemove gives access to guildMemberRemoveChan for GuildMemberRemove events
 func (d *Dispatch) GuildMemberRemove() <-chan *GuildMemberRemove {
-	d.ws.RegisterEvent(event.GuildMemberRemove)
 	return d.guildMemberRemoveChan
 }
 
 // GuildMemberUpdate gives access to guildMemberUpdateChan for GuildMemberUpdate events
 func (d *Dispatch) GuildMemberUpdate() <-chan *GuildMemberUpdate {
-	d.ws.RegisterEvent(event.GuildMemberUpdate)
 	return d.guildMemberUpdateChan
 }
 
 // GuildMembersChunk gives access to guildMembersChunkChan for GuildMembersChunk events
 func (d *Dispatch) GuildMembersChunk() <-chan *GuildMembersChunk {
-	d.ws.RegisterEvent(event.GuildMembersChunk)
 	return d.guildMembersChunkChan
 }
 
 // GuildRoleCreate gives access to guildRoleCreateChan for GuildRoleCreate events
 func (d *Dispatch) GuildRoleCreate() <-chan *GuildRoleCreate {
-	d.ws.RegisterEvent(event.GuildRoleCreate)
 	return d.guildRoleCreateChan
 }
 
 // GuildRoleDelete gives access to guildRoleDeleteChan for GuildRoleDelete events
 func (d *Dispatch) GuildRoleDelete() <-chan *GuildRoleDelete {
-	d.ws.RegisterEvent(event.GuildRoleDelete)
 	return d.guildRoleDeleteChan
 }
 
 // GuildRoleUpdate gives access to guildRoleUpdateChan for GuildRoleUpdate events
 func (d *Dispatch) GuildRoleUpdate() <-chan *GuildRoleUpdate {
-	d.ws.RegisterEvent(event.GuildRoleUpdate)
 	return d.guildRoleUpdateChan
 }
 
 // GuildUpdate gives access to guildUpdateChan for GuildUpdate events
 func (d *Dispatch) GuildUpdate() <-chan *GuildUpdate {
-	d.ws.RegisterEvent(event.GuildUpdate)
 	return d.guildUpdateChan
 }
 
 // MessageCreate gives access to messageCreateChan for MessageCreate events
 func (d *Dispatch) MessageCreate() <-chan *MessageCreate {
-	d.ws.RegisterEvent(event.MessageCreate)
 	return d.messageCreateChan
 }
 
 // MessageDelete gives access to messageDeleteChan for MessageDelete events
 func (d *Dispatch) MessageDelete() <-chan *MessageDelete {
-	d.ws.RegisterEvent(event.MessageDelete)
 	return d.messageDeleteChan
 }
 
 // MessageDeleteBulk gives access to messageDeleteBulkChan for MessageDeleteBulk events
 func (d *Dispatch) MessageDeleteBulk() <-chan *MessageDeleteBulk {
-	d.ws.RegisterEvent(event.MessageDeleteBulk)
 	return d.messageDeleteBulkChan
 }
 
 // MessageReactionAdd gives access to messageReactionAddChan for MessageReactionAdd events
 func (d *Dispatch) MessageReactionAdd() <-chan *MessageReactionAdd {
-	d.ws.RegisterEvent(event.MessageReactionAdd)
 	return d.messageReactionAddChan
 }
 
 // MessageReactionRemove gives access to messageReactionRemoveChan for MessageReactionRemove events
 func (d *Dispatch) MessageReactionRemove() <-chan *MessageReactionRemove {
-	d.ws.RegisterEvent(event.MessageReactionRemove)
 	return d.messageReactionRemoveChan
 }
 
 // MessageReactionRemoveAll gives access to messageReactionRemoveAllChan for MessageReactionRemoveAll events
 func (d *Dispatch) MessageReactionRemoveAll() <-chan *MessageReactionRemoveAll {
-	d.ws.RegisterEvent(event.MessageReactionRemoveAll)
 	return d.messageReactionRemoveAllChan
 }
 
 // MessageUpdate gives access to messageUpdateChan for MessageUpdate events
 func (d *Dispatch) MessageUpdate() <-chan *MessageUpdate {
-	d.ws.RegisterEvent(event.MessageUpdate)
 	return d.messageUpdateChan
 }
 
 // PresenceUpdate gives access to presenceUpdateChan for PresenceUpdate events
 func (d *Dispatch) PresenceUpdate() <-chan *PresenceUpdate {
-	d.ws.RegisterEvent(event.PresenceUpdate)
 	return d.presenceUpdateChan
 }
 
 // PresencesReplace gives access to presencesReplaceChan for PresencesReplace events
 func (d *Dispatch) PresencesReplace() <-chan *PresencesReplace {
-	d.ws.RegisterEvent(event.PresencesReplace)
 	return d.presencesReplaceChan
 }
 
 // Ready gives access to readyChan for Ready events
 func (d *Dispatch) Ready() <-chan *Ready {
-	d.ws.RegisterEvent(event.Ready)
 	return d.readyChan
 }
 
 // Resumed gives access to resumedChan for Resumed events
 func (d *Dispatch) Resumed() <-chan *Resumed {
-	d.ws.RegisterEvent(event.Resumed)
 	return d.resumedChan
 }
 
 // TypingStart gives access to typingStartChan for TypingStart events
 func (d *Dispatch) TypingStart() <-chan *TypingStart {
-	d.ws.RegisterEvent(event.TypingStart)
 	return d.typingStartChan
 }
 
 // UserUpdate gives access to userUpdateChan for UserUpdate events
 func (d *Dispatch) UserUpdate() <-chan *UserUpdate {
-	d.ws.RegisterEvent(event.UserUpdate)
 	return d.userUpdateChan
 }
 
 // VoiceServerUpdate gives access to voiceServerUpdateChan for VoiceServerUpdate events
 func (d *Dispatch) VoiceServerUpdate() <-chan *VoiceServerUpdate {
-	d.ws.RegisterEvent(event.VoiceServerUpdate)
 	return d.voiceServerUpdateChan
 }
 
 // VoiceStateUpdate gives access to voiceStateUpdateChan for VoiceStateUpdate events
 func (d *Dispatch) VoiceStateUpdate() <-chan *VoiceStateUpdate {
-	d.ws.RegisterEvent(event.VoiceStateUpdate)
 	return d.voiceStateUpdateChan
 }
 
 // WebhooksUpdate gives access to webhooksUpdateChan for WebhooksUpdate events
 func (d *Dispatch) WebhooksUpdate() <-chan *WebhooksUpdate {
-	d.ws.RegisterEvent(event.WebhooksUpdate)
 	return d.webhooksUpdateChan
 }
