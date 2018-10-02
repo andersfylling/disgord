@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-
-	"github.com/andersfylling/disgord/event"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
