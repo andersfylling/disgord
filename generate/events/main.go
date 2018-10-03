@@ -68,7 +68,7 @@ func main() {
 		name := valSpec.Names[0].Name
 		event, ok := index[name]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "WARNING: event.%s is defined in event/events.go, but we couldn't the struct!\n", name)
+			fmt.Fprintf(os.Stderr, "WARNING: event.%s is defined in event/events.go, but we couldn't find the struct!\n", name)
 			continue
 		}
 
