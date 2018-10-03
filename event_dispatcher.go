@@ -40,7 +40,7 @@ func (d *Dispatch) stop() {
 // 	d.listeners[evtName] = append(d.listeners[evtName], listener)
 // }
 
-// AllChan sends all event types
+// All sends all event types
 func (d *Dispatch) All() <-chan interface{} {
 	return d.allChan
 }
