@@ -42,7 +42,6 @@ func (d *Dispatch) stop() {
 
 // AllChan sends all event types
 func (d *Dispatch) All() <-chan interface{} {
-	d.ws.RegisterEvent("*")
 	return d.allChan
 }
 
