@@ -22,48 +22,55 @@ type channelCacheItem struct {
 }
 
 func (c *channelCacheItem) process(channel *Channel, immutable bool) {
-	if immutable {
-		c.channel = channel.DeepCopy().(*Channel)
-	} else {
+	if !immutable {
 		c.channel = channel
 	}
-	if channel.Type == ChannelTypeDM || channel.Type == ChannelTypeGroupDM {
-		for i := range channel.Recipients {
-			c.recipients = append(c.recipients, channel.Recipients[i].ID)
-		}
-		channel.Recipients = []*User{} // clear
+
+
+	c.channel = channel.DeepCopy().(*Channel)
+	for i := range channel.Recipients {
+		c.recipients = append(c.recipients, channel.Recipients[i].ID)
 	}
+	c.channel.Recipients = []*User{} // clear
 }
 
 func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
-	if cache.conf.Immutable {
-		channel = c.channel.DeepCopy().(*Channel)
-	} else {
+	if !cache.conf.Immutable {
 		channel = c.channel
+		return
 	}
-	if channel.Type == ChannelTypeDM || channel.Type == ChannelTypeGroupDM {
-		for i := range c.recipients {
-			usr, err := cache.GetUser(c.recipients[i]) // handles immutability on it's own
-			if err != nil {
-				usr = NewUser()
-				usr.ID = c.recipients[i]
-				// TODO: should this be loaded by REST request?...
-			}
-			channel.Recipients = append(channel.Recipients, usr)
+
+	channel = c.channel.DeepCopy().(*Channel)
+	for i := range c.recipients {
+		usr, err := cache.GetUser(c.recipients[i]) // handles immutability on it's own
+		if err != nil || usr == nil {
+			usr = NewUser()
+			usr.ID = c.recipients[i]
+			// TODO: should this be loaded by REST request?...
+			// TODO-2: maybe it can be a cache option to load dead members on read?
 		}
+		channel.Recipients = append(channel.Recipients, usr)
 	}
 
 	return
 }
 
-func (c *channelCacheItem) update(fresh *Channel) {
-	if fresh.Type == ChannelTypeDM || fresh.Type == ChannelTypeGroupDM {
-		for i := range fresh.Recipients {
-			c.recipients = append(c.recipients, fresh.Recipients[i].ID)
-		}
-		fresh.Recipients = []*User{} // clear
+func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
+	if !immutable {
+		c.channel = fresh
+		return
 	}
-	fresh.CopyOverTo(c.channel)
+
+	fresh.copyOverToCache(c.channel)
+	if len(fresh.Recipients) == 0 {
+		return
+	}
+
+	c.recipients = []Snowflake{}
+	for i := range fresh.Recipients {
+		// TODO: compare user ID/hash and delete/append accordingly.
+		c.recipients = append(c.recipients, fresh.Recipients[i].ID)
+	}
 }
 
 func (c *Cache) SetChannel(new *Channel) {
@@ -74,7 +81,7 @@ func (c *Cache) SetChannel(new *Channel) {
 	c.channels.Lock()
 	defer c.channels.Unlock()
 	if item, exists := c.channels.Get(new.ID); exists {
-		item.Object().(*channelCacheItem).update(new)
+		item.Object().(*channelCacheItem).update(new, c.conf.Immutable)
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		content := &channelCacheItem{}
