@@ -74,7 +74,6 @@ func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (ca
 }
 
 func NewCache(conf *CacheConfig) (*Cache, error) {
-
 	userCacher, err := createUserCacher(conf)
 	if err != nil {
 		return nil, err
@@ -91,6 +90,7 @@ func NewCache(conf *CacheConfig) (*Cache, error) {
 	}
 
 	return &Cache{
+		immutable:   conf.Immutable,
 		conf:        conf,
 		users:       userCacher,
 		voiceStates: voiceStateCacher,
@@ -99,29 +99,36 @@ func NewCache(conf *CacheConfig) (*Cache, error) {
 }
 
 type CacheConfig struct {
-	Immutable bool
+	Immutable bool // Must be immutable to support concurrent access and long-running tasks(!)
 
-	UserCaching        bool
+	DisableUserCaching bool
 	UserCacheLimitMiB  uint
 	UserCacheLifetime  time.Duration
 	UserCacheAlgorithm string
 
-	VoiceStateCaching bool
+	DisableVoiceStateCaching bool
 	//VoiceStateCacheLimitMiB              uint
 	VoiceStateCacheLifetime  time.Duration
 	VoiceStateCacheAlgorithm string
 
-	ChannelCaching        bool
+	DisableChannelCaching bool
 	ChannelCacheLimitMiB  uint
 	ChannelCacheLifetime  time.Duration
 	ChannelCacheAlgorithm string
+
+	DisableGuildCaching bool
+	GuildCacheLimitMiB  uint
+	GuildCacheLifetime  time.Duration
+	GuildCacheAlgorithm string
 }
 
 type Cache struct {
 	conf        *CacheConfig
+	immutable   bool
 	users       interfaces.CacheAlger
 	voiceStates interfaces.CacheAlger
 	channels    interfaces.CacheAlger
+	guilds      interfaces.CacheAlger
 }
 
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
@@ -143,7 +150,7 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 
 	_, implementsDeepCopier := v.(DeepCopier)
 	_, implementsCacheCopier := v.(cacheCopier)
-	if !implementsCacheCopier && !implementsDeepCopier && c.conf.Immutable {
+	if !implementsCacheCopier && !implementsDeepCopier && c.immutable {
 		err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Immutable is set")
 		return
 	}

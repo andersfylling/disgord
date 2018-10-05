@@ -7,7 +7,7 @@ import (
 )
 
 func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
-	if !conf.VoiceStateCaching {
+	if conf.DisableVoiceStateCaching {
 		return nil, nil
 	}
 
@@ -87,11 +87,11 @@ func (c *Cache) SetVoiceState(state *VoiceState) {
 	id := state.GuildID
 	if item, exists := c.voiceStates.Get(id); exists {
 		states := item.Object().(*guildVoiceStatesCache)
-		states.update(state, c.conf.Immutable)
+		states.update(state, c.immutable)
 		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
 		states := &guildVoiceStatesCache{}
-		states.update(state, c.conf.Immutable)
+		states.update(state, c.immutable)
 		c.voiceStates.Set(id, c.voiceStates.CreateCacheableItem(states))
 	}
 }
@@ -131,7 +131,7 @@ func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCachePar
 	}
 
 	match := states.sessions[pos]
-	if c.conf.Immutable {
+	if c.immutable {
 		state = match.DeepCopy().(*VoiceState)
 	} else {
 		state = match

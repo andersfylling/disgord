@@ -5,7 +5,7 @@ import (
 )
 
 func createChannelCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
-	if !conf.ChannelCaching {
+	if conf.DisableChannelCaching {
 		return nil, nil
 	}
 
@@ -22,25 +22,31 @@ type channelCacheItem struct {
 }
 
 func (c *channelCacheItem) process(channel *Channel, immutable bool) {
-	if !immutable {
+	if immutable {
+		c.channel = channel.DeepCopy().(*Channel)
+		c.channel.Recipients = []*User{} // clear
+	} else {
 		c.channel = channel
 	}
 
-
-	c.channel = channel.DeepCopy().(*Channel)
+	c.recipients = make([]Snowflake, len(channel.Recipients))
 	for i := range channel.Recipients {
 		c.recipients = append(c.recipients, channel.Recipients[i].ID)
 	}
-	c.channel.Recipients = []*User{} // clear
 }
 
 func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
-	if !cache.conf.Immutable {
+	if cache.immutable {
+		channel = c.channel.DeepCopy().(*Channel)
+	} else {
 		channel = c.channel
+	}
+
+	if channel.Type != ChannelTypeDM && channel.Type != ChannelTypeGroupDM {
 		return
 	}
 
-	channel = c.channel.DeepCopy().(*Channel)
+	recipients := make([]*User, len(channel.Recipients))
 	for i := range c.recipients {
 		usr, err := cache.GetUser(c.recipients[i]) // handles immutability on it's own
 		if err != nil || usr == nil {
@@ -49,28 +55,29 @@ func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
 			// TODO: should this be loaded by REST request?...
 			// TODO-2: maybe it can be a cache option to load dead members on read?
 		}
-		channel.Recipients = append(channel.Recipients, usr)
+		recipients[i] = usr
 	}
 
+	// TODO-racecondition: when !immutable
+	channel.Recipients = recipients
 	return
 }
 
 func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
+	if len(fresh.Recipients) > 0 {
+		c.recipients = make([]Snowflake, len(fresh.Recipients))
+		for i := range fresh.Recipients {
+			// TODO: compare user ID/hash and delete/append accordingly.
+			c.recipients[i] = fresh.Recipients[i].ID
+		}
+	}
+
 	if !immutable {
 		c.channel = fresh
 		return
 	}
 
 	fresh.copyOverToCache(c.channel)
-	if len(fresh.Recipients) == 0 {
-		return
-	}
-
-	c.recipients = []Snowflake{}
-	for i := range fresh.Recipients {
-		// TODO: compare user ID/hash and delete/append accordingly.
-		c.recipients = append(c.recipients, fresh.Recipients[i].ID)
-	}
 }
 
 func (c *Cache) SetChannel(new *Channel) {
@@ -81,11 +88,11 @@ func (c *Cache) SetChannel(new *Channel) {
 	c.channels.Lock()
 	defer c.channels.Unlock()
 	if item, exists := c.channels.Get(new.ID); exists {
-		item.Object().(*channelCacheItem).update(new, c.conf.Immutable)
+		item.Object().(*channelCacheItem).update(new, c.immutable)
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		content := &channelCacheItem{}
-		content.process(new, c.conf.Immutable)
+		content.process(new, c.immutable)
 		c.channels.Set(new.ID, c.channels.CreateCacheableItem(content))
 	}
 }
@@ -104,7 +111,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 		// channel does not exist in cache, create a partial channel
 		partial := &PartialChannel{ID: id, LastPinTimestamp: timestamp}
 		content := &channelCacheItem{}
-		content.process(partial, c.conf.Immutable)
+		content.process(partial, c.immutable)
 		c.channels.Set(id, c.channels.CreateCacheableItem(content))
 	}
 }

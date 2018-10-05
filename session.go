@@ -57,33 +57,51 @@ func NewSession(conf *Config) (Session, error) {
 	evtDispatcher := NewDispatch(dws)
 
 	// caching
-	cacheConfig := &CacheConfig{
-		Immutable: conf.ImmutableCache,
+	if conf.CacheConfig == nil {
+		conf.CacheConfig = &CacheConfig{
+			Immutable: true,
 
-		UserCacheAlgorithm: CacheAlg_TLRU,
-		UserCacheLifetime:  time.Duration(9) * time.Hour,
-		UserCacheLimitMiB:  500,
+			UserCacheAlgorithm: CacheAlg_TLRU,
+			UserCacheLifetime:  time.Duration(18) * time.Hour,
+			UserCacheLimitMiB:  500,
 
-		VoiceStateCacheAlgorithm: CacheAlg_LRU,
+			VoiceStateCacheAlgorithm: CacheAlg_LRU,
+
+			ChannelCacheAlgorithm: CacheAlg_LFU,
+		}
 	}
-	cacher, err := NewCache(cacheConfig)
+	cacher, err := NewCache(conf.CacheConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	// register for events for activated caches
-	if cacheConfig.UserCaching {
+	// register for events for activate caches
+	if !conf.CacheConfig.DisableUserCaching {
 		dws.RegisterEvent(event.Ready)
 		dws.RegisterEvent(event.UserUpdate)
 	}
-	if cacheConfig.VoiceStateCaching {
+	if !conf.CacheConfig.DisableVoiceStateCaching {
 		dws.RegisterEvent(event.VoiceStateUpdate)
 	}
-	if cacheConfig.ChannelCaching {
+	if !conf.CacheConfig.DisableChannelCaching {
 		dws.RegisterEvent(event.ChannelCreate)
 		dws.RegisterEvent(event.ChannelUpdate)
 		dws.RegisterEvent(event.ChannelPinsUpdate)
 		dws.RegisterEvent(event.ChannelDelete)
+	}
+	if !conf.CacheConfig.DisableGuildCaching {
+		dws.RegisterEvent(event.GuildCreate)
+		dws.RegisterEvent(event.GuildDelete)
+		dws.RegisterEvent(event.GuildUpdate)
+		dws.RegisterEvent(event.GuildEmojisUpdate)
+		dws.RegisterEvent(event.GuildMemberAdd)
+		dws.RegisterEvent(event.GuildMemberRemove)
+		dws.RegisterEvent(event.GuildMembersChunk)
+		dws.RegisterEvent(event.GuildMemberUpdate)
+		dws.RegisterEvent(event.GuildRoleCreate)
+		dws.RegisterEvent(event.GuildRoleDelete)
+		dws.RegisterEvent(event.GuildRoleUpdate)
+		dws.RegisterEvent(event.GuildIntegrationsUpdate)
 	}
 
 	// create a disgord client/instance/session

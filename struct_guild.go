@@ -190,6 +190,68 @@ type Guild struct {
 	//highestSnowflakeAmoungMembers Snowflake
 }
 
+func (g *Guild) copyOverToCache(other interface{}) (err error) {
+	guild := other.(*Guild)
+
+	g.RLock()
+	guild.Lock()
+
+	//guild.ID = g.ID
+	if g.Name != "" {
+		guild.Name = g.Name
+	}
+	guild.Owner = g.Owner
+	// Use ownerID to check if you are the owner of the guild(!)
+	guild.OwnerID = g.OwnerID
+	guild.Permissions = g.Permissions
+	guild.Region = g.Region
+	guild.AfkTimeout = g.AfkTimeout
+	guild.EmbedEnabled = g.EmbedEnabled
+	guild.EmbedChannelID = g.EmbedChannelID
+	guild.VerificationLevel = g.VerificationLevel
+	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
+	guild.ExplicitContentFilter = g.ExplicitContentFilter
+	guild.Features = g.Features
+	guild.MFALevel = g.MFALevel
+	guild.WidgetEnabled = g.WidgetEnabled
+	guild.WidgetChannelID = g.WidgetChannelID
+	guild.SystemChannelID = g.SystemChannelID
+	guild.Large = g.Large
+	guild.Unavailable = g.Unavailable
+	guild.MemberCount = g.MemberCount
+
+	// pointers
+	if g.ApplicationID != nil {
+		id := *g.ApplicationID
+		guild.ApplicationID = &id
+	}
+	if g.Splash != nil {
+		splash := *g.Splash
+		guild.Splash = &splash
+	}
+	if g.Icon != nil {
+		icon := *g.Icon
+		guild.Icon = &icon
+	}
+	if g.AfkChannelID != nil {
+		channel := *g.AfkChannelID
+		guild.AfkChannelID = &channel
+	}
+	if g.SystemChannelID != nil {
+		channel := *g.SystemChannelID
+		guild.SystemChannelID = &channel
+	}
+	if g.JoinedAt != nil {
+		joined := *g.JoinedAt
+		guild.JoinedAt = &joined
+	}
+
+	g.RUnlock()
+	guild.Unlock()
+
+	return
+}
+
 func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	g.RLock()
 	defer g.RUnlock()
@@ -283,11 +345,9 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	}
 
 	// delete the entry
-	g.Channels[index] = g.Channels[len(g.Channels)-1]
-	g.Channels[len(g.Channels)-1] = nil
+	copy(g.Channels[index:], g.Channels[index+1:])
+	g.Channels[len(g.Channels)-1] = nil // or the zero value of T
 	g.Channels = g.Channels[:len(g.Channels)-1]
-
-	g.sortChannels()
 
 	return nil
 }
@@ -839,6 +899,9 @@ type Member struct {
 	JoinedAt Timestamp   `json:"joined_at,omitempty"`
 	Deaf     bool        `json:"deaf"`
 	Mute     bool        `json:"mute"`
+
+	// used for caching
+	userID Snowflake
 }
 
 func (m *Member) String() string {

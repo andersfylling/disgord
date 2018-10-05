@@ -23,7 +23,9 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
-	ImmutableCache bool
+	CacheConfig *CacheConfig
+
+	//ImmutableCache bool
 
 	//LoadAllMembers   bool
 	//LoadAllChannels  bool
@@ -965,20 +967,20 @@ func (c *Client) eventHandler() {
 }
 
 func (c *Client) cacheEvent(event string, v interface{}) (err error) {
-	// content holds key and object to be cached
-	content := map[int]([]interface{}){}
+	// updates holds key and object to be cached
+	updates := map[int]([]interface{}){}
 
 	switch event {
 	case EventReady:
 		ready := v.(*Ready)
-		content[UserCache] = append(content[UserCache], ready.User)
+		updates[UserCache] = append(updates[UserCache], ready.User)
 
 		for _, guild := range ready.Guilds {
-			content[GuildCache] = append(content[GuildCache], guild)
+			updates[GuildCache] = append(updates[GuildCache], guild)
 		}
 	case EventVoiceStateUpdate:
 		update := v.(*VoiceStateUpdate)
-		content[VoiceStateCache] = append(content[VoiceStateCache], update.VoiceState)
+		updates[VoiceStateCache] = append(updates[VoiceStateCache], update.VoiceState)
 	case EventChannelCreate, EventChannelUpdate:
 		var channel *Channel
 		if event == EventChannelCreate {
@@ -988,28 +990,51 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		}
 		if len(channel.Recipients) > 0 {
 			for i := range channel.Recipients {
-				content[UserCache] = append(content[UserCache], channel.Recipients[i])
+				updates[UserCache] = append(updates[UserCache], channel.Recipients[i])
 			}
 		}
 
-		content[ChannelCache] = append(content[ChannelCache], channel)
+		updates[ChannelCache] = append(updates[ChannelCache], channel)
 	case EventChannelDelete:
 		channel := (v.(*ChannelDelete)).Channel
 		c.cache.DeleteChannel(channel.ID)
-		// c.cache.DeleteChannelFromGuild(channel.ID)
-		// TODO: channel deletion
+		c.cache.DeleteGuildChannel(channel.GuildID, channel.ID)
 	case EventChannelPinsUpdate:
 		evt := v.(*ChannelPinsUpdate)
 		c.cache.UpdateChannelPin(evt.ChannelID, evt.LastPinTimestamp)
+	case EventGuildCreate, EventGuildUpdate:
+		var guild *Guild
+		if event == EventGuildCreate {
+			guild = (v.(*GuildCreate)).Guild
+		} else if event == EventGuildUpdate {
+			guild = (v.(*GuildUpdate)).Guild
+		}
+		updates[GuildCache] = append(updates[GuildCache], guild)
+
+		// update all users
+		if len(guild.Members) > 0 {
+			updates[UserCache] = make([]interface{}, len(guild.Members))
+			for i := range guild.Members {
+				updates[UserCache][i] = guild.Members[i].User
+			}
+		}
+	case EventGuildDelete:
+		uguild := (v.(*GuildDelete)).UnavailableGuild
+		c.cache.DeleteGuild(uguild.ID)
+	case EventGuildRoleDelete:
+		evt := v.(*GuildRoleDelete)
+		c.cache.DeleteGuildRole(evt.GuildID, evt.RoleID)
+	case EventGuildEmojisUpdate:
+		evt := v.(*GuildEmojisUpdate)
+		c.cache.SetGuildEmojis(evt.GuildID, evt.Emojis)
+	case EventUserUpdate:
+		usr := v.(*UserUpdate).User
+		updates[UserCache] = append(updates[UserCache], usr)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:
-		//case EventGuildCreate:
-		//case EventGuildUpdate:
-		//case EventGuildDelete:
 		//case EventGuildBanAdd:
 		//case EventGuildBanRemove:
-		//case EventGuildEmojisUpdate:
 		//case EventGuildIntegrationsUpdate:
 		//case EventGuildMemberAdd:
 		//case EventGuildMemberRemove:
@@ -1017,7 +1042,6 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		//case EventGuildMembersChunk:
 		//case EventGuildRoleCreate:
 		//case EventGuildRoleUpdate:
-		//case EventGuildRoleDelete:
 		//case EventMessageCreate:
 		//case EventMessageUpdate:
 		//case EventMessageDelete:
@@ -1027,14 +1051,12 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		//case EventMessageReactionRemoveAll:
 		//case EventPresenceUpdate:
 		//case EventTypingStart:
-		//case EventUserUpdate:
 		//case EventVoiceServerUpdate:
 		//case EventWebhooksUpdate:
 	}
 
-	for key, structs := range content {
+	for key, structs := range updates {
 		err = c.cache.Updates(key, structs)
 	}
-
 	return
 }

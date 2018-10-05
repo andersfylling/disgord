@@ -54,6 +54,8 @@
 //
 // Optimizing your cache logic
 //
+// > **Note*: if you create a CacheConfig you must set the cache replacement algorithm for each cache (user, guild, etc.).*
+//
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Here we pass the cache config when creating the session to access to the different cache replacement algorithms, lifetime settings, and the option to disable different cache systems.
 //  discord, err := disgord.NewSession(&disgord.Config{
@@ -61,16 +63,16 @@
 //    Cache: &disgord.CacheConfig{
 //              Immutable: true, // everything going in and out of the cache is deep copied
 //
-//              UserCaching: true, // activates caching for users
+//              DisableUserCaching: false, // activates caching for users
 //              UserCacheLimitMiB: 500, // don't use more than ~500MiB of memory space for caching of users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
 //              UserCacheAlgorithm: disgord.CacheAlg_TLRU, // uses TLRU (Time aware Least Recently Used) for caching of users
 //
-//              VoiceStateCaching: false, // don't cache voice states
+//              DisableVoiceStateCaching: true, // don't cache voice states
 //              // VoiceStateCacheLifetime  time.Duration
 //              // VoiceStateCacheAlgorithm string
 //
-//              ChannelCaching: true,
+//              DisableChannelCaching: false,
 //              ChannelCacheLimitMiB: 300,
 //              ChannelCacheLifetime: 0, // lives forever
 //              ChannelCacheAlgorithm: disgord.CacheAlg_LFU, // lfu (Least Frequently Used)
@@ -80,6 +82,13 @@
 // Note! Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //
 // Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
+//
+//
+// Immutable / concurrent accessible cache
+//
+// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cache), it increases reliability that the cache always reflects the last known Discord state.
+// If you are uncertain, just set it to `true`. The default setting is `true` if `disgord.Cache.CacheConfig` is `nil`.
+//
 //
 // Bypass the built-in REST cache
 //

@@ -5,7 +5,7 @@ import (
 )
 
 func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
-	if !conf.UserCaching {
+	if conf.DisableUserCaching {
 		return nil, nil
 	}
 
@@ -24,7 +24,7 @@ func (c *Cache) SetUser(new *User) {
 	c.users.Lock()
 	defer c.users.Unlock()
 	if item, exists := c.users.Get(new.ID); exists {
-		if c.conf.Immutable {
+		if c.immutable {
 			new.copyOverToCache(item.Object())
 		} else {
 			item.Set(new)
@@ -32,7 +32,7 @@ func (c *Cache) SetUser(new *User) {
 		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
 		var content interface{}
-		if c.conf.Immutable {
+		if c.immutable {
 			content = new.DeepCopy()
 		} else {
 			content = new
@@ -57,7 +57,7 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 		return
 	}
 
-	if c.conf.Immutable {
+	if c.immutable {
 		user = result.Object().(*User).DeepCopy().(*User)
 	} else {
 		user = result.Object().(*User)
