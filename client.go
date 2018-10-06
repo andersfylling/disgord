@@ -207,17 +207,6 @@ func (c *Client) AcceptEvent(events ...string) {
 	}
 }
 
-// AddListener register a listener for a specific event key/type
-// (see Key...)
-func (c *Client) AddListener(evtName string, listener interface{}) {
-	c.On(evtName, listener)
-}
-
-// AddListenerOnce not implemented. Do not use.
-func (c *Client) AddListenerOnce(evtName string, listener interface{}) {
-	c.Once(evtName, listener)
-}
-
 // Generic CRUDS
 func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
 	err = obj.deleteFromDiscord(c)
