@@ -6,9 +6,6 @@
 | ------------ |:-------------:|:---------------:|:-------------:|:----------------:|
 | develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
 
-## WARNING
-Missing caching for guild. And the caching in development is not considered stable/reliable, review the godocs for bypassing the caching. Please create an issue or Pull-Request if you spot any issues!
-
 ## About
 GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
@@ -20,16 +17,21 @@ Disgord does not utilize reflection, except in unit tests and unmarshalling/mars
 
 To get started see the examples in [docs](docs/examples)
 
-Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmartin/discordgo)
+Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmarrin/discordgo)
+
+Discord channel/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
 
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
 github.com/andersfylling/disgord
 └──.circleci    :CircleCI configuration
+└──cache        :Different cache replacement algorithms
 └──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
 └──endpoint     :All the REST endpoints of Discord
+└──event        :All the Discord event identifiers
+└──generate     :All go generate scripts for "generic" code
 └──httd         :Deals with rate limits and http calls
 └──testdata     :Holds all test data for unit tests (typically JSON files)
 └──websocket    :Discord Websocket logic (reconnect, resume, etc.)
@@ -55,112 +57,44 @@ The branch:develop holds the most recent changes, as it name implies. There is n
 
 ## Mental model
 #### Caching
-The cache, of discord objects, aims to reflect the same state as of the discord servers. Therefore incoming data is deep copied, as well as return values from the cache. This lib handles caching for you, so whenever you send a request to the REST API or receive a discord event. The contents are cached auto-magically to a separate memory space.
-
-As a structure is sent into the cache module, everything is deep copied as mentioned, however if the object hold discord objects consistent of a snowflake, it does not do a deep copy. It converts given field to a nil, and stores only the snowflake in a separate struct/map. This makes sure that there will only exist one version of an object. Making updating fairly easy.
-When the object goes out of cache, a copy is created and every sub object containing a snowflake is deep copied from the cache as well, to return a wholesome object.
+The cache can be either immutable (recommended) or mutable. When the cache is mutable you will share the memory space with the cache, such that if you change your data structure you might also change the cache directly. However, by using the immutable option all incoming data is deep copied to the cache and you will not be able to directly access the memory space, this should keep your code less error-prone and allow for concurrent cache access in case you want to use channels or other long-running tasks/processes.
 
 #### Requests
-For every REST API request the request is rate limited auto-magically by disgord. The functions in `resource` pkg are blocking, and should be used with care. In the future there might be implementations of channel methods if requested.
+For every REST API request the request is rate limited and cached auto-magically by Disgord. This means that when you utilize the Session interface you won't have to worry about rate limits and data is cached to improve performance. See the GoDoc for how to bypass the caching.
 
 #### Events
-The reactor pattern with goroutines, or a pro-actor pattern is used. This will always be the default behavior, synchronous triggering of listeners might be implemented in the future as an option.
-Incoming events from the discord servers are parsed into respective structs and dispatched to either a) callbacks, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. So it doesn't matter which one you pick, chose your preference.
+The reactor pattern is used. This will always be the default behavior, however channels will ofcourse work more as a pro-actor system as you deal with the data parallel to other functions.
+Incoming events from the discord servers are parsed into respective structs and dispatched to either a) handlers, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. Pick handlers (register them using Session.On method) simplicity as they run in sequence, while channels are executed in a parallel setting (it's expected you understand how channels work so I won't go in-depth here).
 
 ## Quick example
 > **NOTE:** To see more examples go visit the docs/examples folder.
-
-The following example is used as a prerequisite for the coming examples later on in this README file. You can also call `NewSessionMustCompile` which will panic upon an error.
+See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot.
 ```go
-var err error
-sess, err := disgord.NewSession(&disgord.Config{
-  Token: os.Getenv("DISGORD_TOKEN"),
+// create a Disgord session
+session, err := disgord.NewSession(&disgord.Config{
+    Token: os.Getenv("DISGORD_TOKEN"),
 })
 if err != nil {
     panic(err)
 }
-```
 
-Listening for events can be done in two ways. Firstly, the reactor pattern using handlers/listeners and secondly, GoLang channels:
-```go
-// add a event listener
-sess.On(disgord.EventGuildCreate, func(session Session, data *disgord.GuildCreate) {
-  guild := data.Guild
-  // do something with guild
-})
+// create a handler and bind it to new message events
+session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+    msg := data.Message
 
-// or use a channel to listen for events
-// channels are more advanced and requires you to register which event-channels
-// you will be using, in advanced. Otherwise you may not receive an event on the given channel.
-// See disgord.Session.AcceptEvent
-sess.AcceptEvent(disgord.EventGuildCreate)
-go func() {
-    for {
-        select {
-        case data, alive := <- sess.Evt().GuildCreateChan():
-            if !alive {
-                fmt.Println("channel is dead")
-                break
-            }
-
-            guild := data.Guild
-            // do something with guild
-        }
+    if msg.Content == "ping" {
+        msg.RespondString(session, "pong")
     }
-}()
+})
 
 // connect to the discord gateway to receive events
-err = sess.Connect()
+err = session.Connect()
 if err != nil {
     panic(err)
 }
-```
 
-Remember that when you call Session.Connect() it is recommended to call Session.Disconnect for a graceful shutdown and closing channels and Goroutines. You can also use the `DisconnectOnInterrupt()` which listens for interupt signals:
-```go
-sess.DisconnectOnInterrupt()
-```
-
-To retrieve information from the Discord REST API you utilize the Session interface as it will in the future implement features such as caching, control checks, etc
-```go
-// retrieve a specific user from the Discord API
-var user *resource.User
-userID := NewSnowflake(228846961774559232)
-user, err = session.GetUser(userID) // will do a cache lookup in the future
-if err != nil {
-   panic(err)
-}
-```
-However, if you think the Session interface is incorrect (outdated cache, or another issue) you can bypass the interface and call the REST method directly while you wait for a patch:
-```go
-// bypassing the session implementation of GetUser(userID)
-user, err = disgord.GetUser(session.Req(), userID)
-if err != nil {
-   panic(err)
-}
-```
-
-There's also another way to retrieve content: channels. These methods will return a GoLang channel to help with concurrency. However, their implementation is down prioritized and I recommend using the normal REST methods for now. (Currently only the Session.User method is working, and might be temporary deprecated).
-
-> Note! this has been removed from the Session interface. It will be added again in a later version of Disgord.
-
-```go
-// eg. retrieve a specific user from the Discord API using GoLang channels
-userResponse := <- sess.UserChan(userID) // sends a request to discord
-userResponse2 := <- sess.UserChan(userID) // does a cache look up, to prevent rate limiting/banning
-
-// check if there was an issue (eg. rate limited or not found)
-if userResponse.Err != nil {
-    panic(userResponse.Err)
-}
-
-// check if this is retrieved from the cache
-if userResponse.Cache {
-    // ...
-}
-
-// get the user info
-user := userResponse.User
+// Keep the socket connection alive, until you terminate the application
+session.DisconnectOnInterrupt()
 ```
 
 ## Q&A

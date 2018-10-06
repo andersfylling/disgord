@@ -69,7 +69,7 @@ I won't accept pull requests where the author has created a singleton structure.
 
 > **Note:** While you are free to ask questions, given that you add the [help] prefix. You'll get faster results by using the resources below.
 
-This repository has it's own discord guild/server: https://discord.gg/qBVmnq9
+This repository has it's own discord guild/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
 Using the live chat application will most likely give you a faster result.
 
 ## What Should I Know Before I Get Started?
@@ -169,3 +169,4 @@ We don't currently have a template for this. Provide benchmarks or demonstration
 
 Add the following prefixes to your issues to help categorize them better:
 * [help] when asking a question about functionality.
+* [discussion] when starting a discussion about wanted or existing functionality
