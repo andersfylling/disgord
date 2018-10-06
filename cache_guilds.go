@@ -160,6 +160,38 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 	}
 }
 
+func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
+	newMembers := []*Member{}
+
+	g.guild.Lock()
+	defer g.guild.Unlock()
+
+	var userID Snowflake
+	for i := range members {
+		userID = members[i].User.ID
+		for j := range g.guild.Members {
+			if g.guild.Members[j].userID == userID {
+				userID = 0
+				*g.guild.Members[j] = *members[i]
+				g.guild.Members[j].User = nil
+				break
+			}
+		}
+
+		if !userID.Empty() {
+			newMembers = append(newMembers, members[i])
+		}
+	}
+
+	var member *Member
+	for i := range newMembers {
+		member = newMembers[i]
+		member.userID = member.User.ID
+		member.User = nil
+		g.guild.Members = append(g.guild.Members, member)
+	}
+}
+
 func (g *guildCacheItem) deleteChannel(id Snowflake) {
 	for i := range g.channels {
 		if g.channels[i] != id {
@@ -221,6 +253,64 @@ func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 	}
 }
 
+func (c *Cache) SetGuildMember(guildID Snowflake, member *Member) {
+	if c.guilds == nil || member == nil {
+		return
+	}
+
+	c.SetGuildMembers(guildID, []*Member{member})
+}
+
+func (c *Cache) SetGuildMembers(guildID Snowflake, members []*Member) {
+	if c.guilds == nil || members == nil {
+		return
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		item.Object().(*guildCacheItem).updateMembers(members, c.immutable)
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	} else {
+		content := &guildCacheItem{}
+		content.process(&Guild{
+			ID:      guildID,
+			Members: members,
+		}, c.immutable)
+		c.guilds.Set(guildID, c.guilds.CreateCacheableItem(content))
+	}
+}
+
+func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
+	if c.guilds == nil || roles == nil {
+		return
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		guild := item.Object().(*guildCacheItem).guild
+		var newRoles []*Role
+		if c.immutable {
+			newRoles = make([]*Role, len(roles))
+			for i := range roles {
+				newRoles[i] = roles[i].DeepCopy().(*Role)
+			}
+		} else {
+			newRoles = roles
+		}
+		guild.Roles = newRoles
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	} else {
+		content := &guildCacheItem{}
+		content.process(&Guild{
+			ID:    guildID,
+			Roles: roles,
+		}, c.immutable)
+		c.guilds.Set(guildID, c.guilds.CreateCacheableItem(content))
+	}
+}
+
 func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	if c.guilds == nil {
 		err = NewErrorUsingDeactivatedCache("guilds")
@@ -238,6 +328,118 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	}
 
 	guild = result.Object().(*guildCacheItem).build(c)
+	return
+}
+
+func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
+	if c.guilds == nil {
+		err = NewErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+	defer c.guilds.RUnlock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.guilds.Get(id); !exists {
+		err = NewErrorCacheItemNotFound(id)
+		return
+	}
+
+	rolePs := result.Object().(*guildCacheItem).guild.Roles
+	if c.immutable {
+		roles = make([]*Role, len(rolePs))
+		for i := range rolePs {
+			roles[i] = rolePs[i].DeepCopy().(*Role)
+		}
+	} else {
+		roles = rolePs
+	}
+
+	return
+}
+
+func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err error) {
+	if c.guilds == nil {
+		err = NewErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.guilds.Get(guildID); !exists {
+		err = NewErrorCacheItemNotFound(guildID)
+		return
+	}
+
+	guild := result.Object().(*guildCacheItem).guild
+	for i := range guild.Members {
+		if guild.Members[i].userID == userID {
+			member = guild.Members[i]
+			if c.immutable {
+				member = member.DeepCopy().(*Member)
+			}
+			break
+		}
+	}
+	c.guilds.RUnlock()
+
+	if member == nil {
+		err = NewErrorCacheItemNotFound(userID)
+		return
+	}
+
+	// add user object
+	member.User, err = c.GetUser(userID)
+	if err != nil {
+		member.User = &User{
+			ID: userID,
+		}
+	}
+	return
+}
+
+func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (members []*Member, err error) {
+	if c.guilds == nil {
+		err = NewErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.guilds.Get(guildID); !exists {
+		err = NewErrorCacheItemNotFound(guildID)
+		return
+	}
+
+	guild := result.Object().(*guildCacheItem).guild
+	for i := range guild.Members {
+		if guild.Members[i].userID > after && len(members) <= limit {
+			member := guild.Members[i]
+			if c.immutable {
+				member = member.DeepCopy().(*Member)
+			}
+			members = append(members, member)
+		} else if len(members) > limit {
+			break
+		}
+	}
+	c.guilds.RUnlock()
+
+	for i := range members {
+		// add user object
+		members[i].User, err = c.GetUser(members[i].userID)
+		if err != nil {
+			members[i].User = &User{
+				ID: members[i].userID,
+			}
+		}
+	}
 	return
 }
 

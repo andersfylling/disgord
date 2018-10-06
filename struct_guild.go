@@ -533,6 +533,20 @@ func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 	return nil, errors.New("channel not found in guild")
 }
 
+func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
+	g.RLock()
+	defer g.RUnlock()
+
+	for _, emoji = range g.Emojis {
+		if emoji.ID == id {
+			return
+		}
+	}
+
+	err = errors.New("emoji not found in guild")
+	return
+}
+
 // TODO
 // func (g *Guild) UpdatePresence(p *UserPresence) {
 // 	g.RLock()

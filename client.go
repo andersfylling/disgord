@@ -230,19 +230,25 @@ func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsPara
 
 // GetChannel ...
 func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
-	ret, err = GetChannel(c.req, id)
+	if ret, err = c.cache.GetChannel(id); err != nil {
+		ret, err = GetChannel(c.req, id)
+		if err != nil {
+			return
+		}
+		_ = c.cache.Update(ChannelCache, ret)
+	}
 	return
 }
 
 // ModifyChannel ...
 func (c *Client) ModifyChannel(changes *ModifyChannelParams) (ret *Channel, err error) {
-	ret, err = ModifyChannel(c.req, changes)
+	ret, err = ModifyChannel(c.req, changes) // should trigger a socket event, no need to update cache
 	return
 }
 
 // DeleteChannel ...
 func (c *Client) DeleteChannel(id Snowflake) (err error) {
-	err = DeleteChannel(c.req, id)
+	err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cache
 	return
 }
 
@@ -376,13 +382,35 @@ func (c *Client) DeleteAllReactions(channelID, messageID Snowflake) (err error) 
 
 // GetGuildEmojis .
 func (c *Client) GetGuildEmojis(id Snowflake) (ret []*Emoji, err error) {
-	ret, err = ListGuildEmojis(c.req, id)
+	var guild *Guild
+	guild, err = c.cache.GetGuild(id)
+	if err != nil {
+		ret, err = ListGuildEmojis(c.req, id)
+		if err == nil {
+			c.cache.SetGuildEmojis(id, ret)
+		}
+		return
+	}
+
+	ret = guild.Emojis
 	return
 }
 
 // GetGuildEmoji .
 func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	ret, err = GetGuildEmoji(c.req, guildID, emojiID)
+	var guild *Guild
+	guild, err = c.cache.GetGuild(guildID)
+	if err != nil {
+		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
+		// TODO: cache
+		return
+	}
+	ret, err = guild.Emoji(emojiID)
+	if err != nil {
+		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
+		// TODO: cache
+		return
+	}
 	return
 }
 
@@ -414,7 +442,14 @@ func (c *Client) CreateGuild(params *CreateGuildParams) (ret *Guild, err error) 
 
 // GetGuild .
 func (c *Client) GetGuild(id Snowflake) (ret *Guild, err error) {
-	ret, err = GetGuild(c.req, id)
+	ret, err = c.cache.GetGuild(id)
+	if err != nil {
+		ret, err = GetGuild(c.req, id)
+		if err != nil {
+			return
+		}
+		c.cache.SetGuild(ret)
+	}
 	return
 }
 
@@ -432,7 +467,20 @@ func (c *Client) DeleteGuild(id Snowflake) (err error) {
 
 // GetGuildChannels .
 func (c *Client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
-	ret, err = GetGuildChannels(c.req, id)
+	var guild *Guild
+	guild, err = c.cache.GetGuild(id)
+	if err != nil {
+		ret, err = GetGuildChannels(c.req, id)
+		if err != nil {
+			return
+		}
+		c.cache.SetGuild(&Guild{
+			ID:       id,
+			Channels: ret,
+		})
+	} else {
+		ret = guild.Channels
+	}
 	return
 }
 
@@ -444,9 +492,13 @@ func (c *Client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelPara
 
 // GetGuildMember .
 func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
-	ret, err = GetGuildMember(c.req, guildID, userID)
-	if err == nil {
-		// when a fresh request was made
+	ret, err = c.cache.GetGuildMember(guildID, userID)
+	if err != nil {
+		ret, err = GetGuildMember(c.req, guildID, userID)
+		if err != nil {
+			return
+		}
+		c.cache.SetGuildMember(guildID, ret)
 		c.cache.Update(UserCache, ret.User)
 	}
 	return
@@ -454,7 +506,16 @@ func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err err
 
 // GetGuildMembers .
 func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error) {
-	ret, err = GetGuildMembers(c.req, guildID, after, limit)
+	ret, err = c.cache.GetGuildMembersAfter(guildID, after, limit)
+	if err != nil {
+		ret, err = GetGuildMembers(c.req, guildID, after, limit)
+		if err != nil {
+			return
+		}
+		c.cache.SetGuildMembers(guildID, ret)
+		//c.cache.Update(UserCache, ret.User)
+		// TODO: update users
+	}
 	return
 }
 
@@ -520,7 +581,15 @@ func (c *Client) RemoveGuildBan(guildID, userID Snowflake) (err error) {
 
 // GetGuildRoles .
 func (c *Client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
-	ret, err = GetGuildRoles(c.req, guildID)
+	ret, err = c.cache.GetGuildRoles(guildID)
+	if err != nil {
+		ret, err = GetGuildRoles(c.req, guildID)
+		if err != nil {
+			return
+		}
+		c.cache.SetGuildRoles(guildID, ret)
+	}
+
 	return
 }
 
@@ -644,16 +713,14 @@ func (c *Client) GetCurrentUser() (ret *User, err error) {
 
 // GetUser .
 func (c *Client) GetUser(id Snowflake) (ret *User, err error) {
-	var result interface{}
-	result, err = c.cache.Get(UserCache, id)
-	switch err.(type) {
-	case nil:
-		ret = result.(*User)
-	case *ErrorCacheItemNotFound:
+	ret, err = c.cache.GetUser(id)
+	if err != nil {
 		ret, err = GetUser(c.req, id)
+		if err != nil {
+			return
+		}
 		c.cache.Update(UserCache, ret)
 	}
-
 	return
 }
 
