@@ -10,6 +10,21 @@ import (
 	"github.com/andersfylling/disgord/websocket"
 )
 
+// NewRESTClient creates a client for sending and handling Discord protocols such as rate limiting
+func NewRESTClient(conf *Config) (client *httd.Client) {
+	// request client
+	reqConf := &httd.Config{
+		APIVersion:                   constant.DiscordVersion,
+		BotToken:                     conf.Token,
+		UserAgentSourceURL:           GitHubURL,
+		UserAgentVersion:             constant.Version,
+		HTTPClient:                   conf.HTTPClient,
+		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
+	}
+	client = httd.NewClient(reqConf)
+	return
+}
+
 // NewSession create a client and return the Session interface
 func NewSession(conf *Config) (Session, error) {
 	if conf.HTTPClient == nil {
@@ -32,6 +47,9 @@ func NewSession(conf *Config) (Session, error) {
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,
 		GuildLargeThreshold: 250, // TODO: config
+		ShardID: conf.ShardID,
+		TotalShards: conf.TotalShards,
+		URL: conf.WebsocketURL,
 
 		// lib specific
 		DAPIVersion:   constant.DiscordVersion,
@@ -43,15 +61,7 @@ func NewSession(conf *Config) (Session, error) {
 	}
 
 	// request client
-	reqConf := &httd.Config{
-		APIVersion:                   constant.DiscordVersion,
-		BotToken:                     conf.Token,
-		UserAgentSourceURL:           GitHubURL,
-		UserAgentVersion:             constant.Version,
-		HTTPClient:                   conf.HTTPClient,
-		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
-	}
-	reqClient := httd.NewClient(reqConf)
+	reqClient := NewRESTClient(conf)
 
 	// event dispatcher
 	evtDispatcher := NewDispatch(dws)
@@ -187,6 +197,9 @@ type SocketHandler interface {
 	// events which are not registered are discarded at socket level
 	// to increase performance
 	AcceptEvent(events ...string)
+
+	ShardID() uint
+	ShardIDString() string
 }
 
 type AuditLogsRESTer interface {

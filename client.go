@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -24,6 +25,10 @@ type Config struct {
 	CancelRequestWhenRateLimited bool
 
 	CacheConfig *CacheConfig
+
+	ShardID uint
+	TotalShards uint
+	WebsocketURL string
 
 	//ImmutableCache bool
 
@@ -75,6 +80,14 @@ type Client struct {
 // way to measure delay between the client and Discord server
 func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 	return c.ws.HeartbeatLatency()
+}
+
+func (c *Client) ShardID() uint {
+	return c.config.ShardID
+}
+
+func (c *Client) ShardIDString() string {
+	return strconv.Itoa(int(c.ShardID()))
 }
 
 func (c *Client) Myself() (user *User, err error) {

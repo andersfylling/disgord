@@ -28,6 +28,10 @@ type Config struct {
 	Browser             string
 	Device              string
 	GuildLargeThreshold uint
+
+	ShardID uint
+	TotalShards uint
+	URL string
 }
 
 func (c *Config) Validate() (err error) {
@@ -120,6 +124,9 @@ func NewClient(conf *Config) (DiscordWebsocket, error) {
 		operationChan:      make(chan *gatewayEvent),
 		eventChans:         make(map[string]chan []byte),
 		sendChan:           make(chan *gatewayPayload),
+		url: conf.URL,
+		ShardID: conf.ShardID,
+		ShardCount: conf.TotalShards,
 		//Myself:            &user.User{},
 	}, nil
 }
@@ -173,7 +180,7 @@ type Client struct {
 	Trace             []string  `json:"_trace"`
 	SessionID         string    `json:"session_id"`
 	ShardCount        uint      `json:"shard_count"`
-	ShardID           Snowflake `json:"shard_id"`
+	ShardID           uint `json:"shard_id"`
 
 	disconnected       chan struct{}
 	operationChan      chan *gatewayEvent

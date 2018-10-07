@@ -192,7 +192,7 @@ func sendIdentityPacket(client *Client) (err error) {
 	}
 
 	if client.ShardCount > 1 {
-		identityPayload.Shard = &[2]uint{uint(client.ShardID), client.ShardCount}
+		identityPayload.Shard = &[2]uint{client.ShardID, client.ShardCount}
 	}
 
 	err = client.Emit(event.Identify, identityPayload)

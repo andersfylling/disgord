@@ -207,3 +207,7 @@ type ErrorEmptyValue struct {
 func (e *ErrorEmptyValue) Error() string {
 	return e.info
 }
+
+func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
+	return uint(guildID >> 22) % shardCount
+}
