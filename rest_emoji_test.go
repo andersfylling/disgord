@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -52,9 +53,10 @@ func TestGetGuildEmoji(t *testing.T) {
 		return
 	}
 	emojiIDStr := os.Getenv(constant.DisgordTestGuildDefaultEmojiSnowflake)
+	fmt.Println(emojiIDStr)
 	emojiID, err := GetSnowflake(emojiIDStr)
 	if err != nil {
-		t.Skip()
+		t.Skip("snowflake makes no sense")
 		return
 	}
 
@@ -72,7 +74,12 @@ func TestGetGuildEmoji(t *testing.T) {
 		t.Error(err)
 	}
 
-	if emoji.ID != emojiID && notARateLimitIssue(err) {
+	if emoji == nil {
+		t.Error("emoji was nil...")
+		t.Skip("emoji was nil...")
+	}
+
+	if emoji != nil && emoji.ID != emojiID && notARateLimitIssue(err) {
 		t.Error("emoji ID missmatch")
 	}
 }

@@ -116,6 +116,26 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 	}
 }
 
+func (c *Cache) UpdateChannelLastMessageID(channelID, messageID Snowflake) {
+	if c.channels == nil || channelID.Empty() || messageID.Empty() {
+		return
+	}
+
+	c.channels.Lock()
+	defer c.channels.Unlock()
+	if item, exists := c.channels.Get(channelID); exists {
+		item.Object().(*channelCacheItem).channel.LastMessageID = messageID
+		c.channels.RefreshAfterDiscordUpdate(item)
+	} else {
+		// channel does not exist in cache, create a partial channel
+		// this is an indirect channel update..
+		//partial := &PartialChannel{ID: channelID, LastMessageID: messageID}
+		//content := &channelCacheItem{}
+		//content.process(partial, c.immutable)
+		//c.channels.Set(channelID, c.channels.CreateCacheableItem(content))
+	}
+}
+
 func (c *Cache) GetChannel(id Snowflake) (channel *Channel, err error) {
 	if c.channels == nil {
 		err = NewErrorUsingDeactivatedCache("channels")

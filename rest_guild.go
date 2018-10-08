@@ -217,6 +217,7 @@ type CreateGuildChannelParams struct {
 	Topic                string                `json:"topic,omitempty"`                 // ?|
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
+	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|

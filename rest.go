@@ -13,6 +13,10 @@ func unmarshal(data []byte, v interface{}) error {
 	return httd.Unmarshal(data, v)
 }
 
+func marshal(v interface{}) ([]byte, error) {
+	return httd.Marshal(v)
+}
+
 func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
 	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: "/gateway",

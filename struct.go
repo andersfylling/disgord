@@ -246,16 +246,15 @@ func (d Discriminator) MarshalJSON() (data []byte, err error) {
 	return []byte("\"" + d.String() + "\""), nil
 }
 
-
 type Gateway struct {
 	URL string `json:"url"`
 }
 type GatewayBot struct {
 	Gateway
-	Shards uint `json:"shards"`
+	Shards            uint `json:"shards"`
 	SessionStartLimit struct {
-		Total uint `json:"total"`
-		Remaining uint `json:"remaining"`
+		Total      uint `json:"total"`
+		Remaining  uint `json:"remaining"`
 		ResetAfter uint `json:"reset_after"`
 	} `json:"session_start_limit"`
 }

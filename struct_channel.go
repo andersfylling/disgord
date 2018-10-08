@@ -86,6 +86,27 @@ type ChannelUpdater interface {
 // // }
 type PartialChannel = Channel
 
+type channelJSON struct {
+	ID                   Snowflake             `json:"id"`
+	Type                 uint                  `json:"type"`
+	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
+	Position             uint                  `json:"position,omitempty"`              // ?|
+	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
+	Name                 string                `json:"name,omitempty"`                  // ?|
+	Topic                *string               `json:"topic,omitempty"`                 // ?|?, pointer
+	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
+	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?, pointer
+	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
+	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
+	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
+	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
+	Icon                 *string               `json:"icon,omitempty"`                  // ?|?, pointer
+	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
+	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
+	ParentID             *Snowflake            `json:"parent_id,omitempty"`             // ?|?, pointer
+	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
+}
+
 // Channel ...
 type Channel struct {
 	sync.RWMutex         `json:"-"`
@@ -95,11 +116,12 @@ type Channel struct {
 	Position             uint                  `json:"position,omitempty"`              // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	Name                 string                `json:"name,omitempty"`                  // ?|
-	Topic                string                `json:"topic,omitempty"`                 // ?|
+	Topic                string                `json:"topic,omitempty"`                 // ?|?, pointer
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?, pointer
+	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?, pointer
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
+	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
 	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
 	Icon                 string                `json:"icon,omitempty"`                  // ?|?, pointer
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
@@ -116,6 +138,103 @@ type Channel struct {
 	//    "type": 0
 	//  }
 	partial bool
+}
+
+func (c *Channel) UnmarshalJSON(data []byte) (err error) {
+	channel := channelJSON{}
+	err = unmarshal(data, &channel)
+	if err != nil {
+		return
+	}
+
+	// copy over to c
+	c.Lock()
+
+	c.ID = channel.ID
+	c.Type = channel.Type
+	c.GuildID = channel.GuildID
+	c.Position = channel.Position
+	c.PermissionOverwrites = channel.PermissionOverwrites // TODO: check for pointer
+	c.Name = channel.Name
+	c.NSFW = channel.NSFW
+	c.Bitrate = channel.Bitrate
+	c.UserLimit = channel.UserLimit
+	c.RateLimitPerUser = channel.RateLimitPerUser
+	c.Recipients = channel.Recipients
+	c.OwnerID = channel.OwnerID
+	c.ApplicationID = channel.ApplicationID
+	c.LastPinTimestamp = channel.LastPinTimestamp
+
+	if channel.Topic != nil {
+		c.Topic = *channel.Topic
+	}
+	if channel.Icon != nil {
+		c.Icon = *channel.Icon
+	}
+	if channel.ParentID != nil {
+		c.ParentID = *channel.ParentID
+	}
+	if channel.LastMessageID != nil {
+		c.LastMessageID = *channel.LastMessageID
+	}
+
+	c.Unlock()
+	return
+}
+
+func (c *Channel) MarshalJSON() (data []byte, err error) {
+	// copy over to channel
+	channel := channelJSON{}
+	c.RLock()
+
+	channel.ID = c.ID
+	channel.Type = c.Type
+	channel.GuildID = c.GuildID
+	channel.Position = c.Position
+	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
+	channel.Name = c.Name
+	channel.NSFW = c.NSFW
+	channel.Bitrate = c.Bitrate
+	channel.UserLimit = c.UserLimit
+	channel.RateLimitPerUser = c.RateLimitPerUser
+	channel.Recipients = c.Recipients
+	channel.OwnerID = c.OwnerID
+	channel.ApplicationID = c.ApplicationID
+	channel.LastPinTimestamp = c.LastPinTimestamp
+
+	if c.Topic != "" {
+		channel.Topic = &c.Topic
+	}
+	if c.Icon != "" {
+		channel.Icon = &c.Icon
+	}
+	if !c.ParentID.Empty() {
+		channel.ParentID = &c.ParentID
+	}
+	if !c.LastMessageID.Empty() {
+		channel.LastMessageID = &c.LastMessageID
+	}
+
+	c.RUnlock()
+
+	data, err = marshal(&channel)
+	return
+}
+
+func (c *Channel) valid() bool {
+	if c.RateLimitPerUser > 120 {
+		return false
+	}
+
+	if len(c.Topic) > 1024 {
+		return false
+	}
+
+	if len(c.Name) > 100 || len(c.Name) < 2 {
+		return false
+	}
+
+	return true
 }
 
 func (c *Channel) Mention() string {
@@ -142,6 +261,7 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 		Bitrate:              c.Bitrate,
 		UserLimit:            c.UserLimit,
 		PermissionOverwrites: c.PermissionOverwrites,
+		RateLimitPerUser:     c.RateLimitPerUser,
 		ParentID:             c.ParentID,
 		NSFW:                 c.NSFW,
 	}
@@ -194,22 +314,17 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	channel.LastMessageID = c.LastMessageID
 	channel.Bitrate = c.Bitrate
 	channel.UserLimit = c.UserLimit
+	channel.RateLimitPerUser = c.RateLimitPerUser
 	channel.Icon = c.Icon
 	channel.OwnerID = c.OwnerID
 	channel.ApplicationID = c.ApplicationID
 	channel.ParentID = c.ParentID
 	channel.LastPinTimestamp = c.LastPinTimestamp
-
-	if c.LastMessageID != nil {
-		lastMsgID := *c.LastMessageID
-		channel.LastMessageID = &lastMsgID
-	}
+	channel.LastMessageID = c.LastMessageID
 
 	// add recipients if it's a DM
-	if c.Type == ChannelTypeDM || c.Type == ChannelTypeGroupDM {
-		for _, recipient := range c.Recipients {
-			channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
-		}
+	for _, recipient := range c.Recipients {
+		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
 	}
 
 	c.RWMutex.RUnlock()
@@ -242,6 +357,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 	channel.LastMessageID = c.LastMessageID
 	channel.Bitrate = c.Bitrate
 	channel.UserLimit = c.UserLimit
+	channel.RateLimitPerUser = c.RateLimitPerUser
 	channel.Icon = c.Icon
 	channel.OwnerID = c.OwnerID
 	if !c.ApplicationID.Empty() {
@@ -253,8 +369,8 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 	if !c.LastPinTimestamp.Empty() {
 		channel.LastPinTimestamp = c.LastPinTimestamp
 	}
-	if c.LastMessageID != nil {
-		*channel.LastMessageID = *c.LastMessageID
+	if !c.LastMessageID.Empty() {
+		channel.LastMessageID = c.LastMessageID
 	}
 
 	channel.Unlock()

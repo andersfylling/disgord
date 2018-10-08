@@ -47,9 +47,9 @@ func NewSession(conf *Config) (Session, error) {
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,
 		GuildLargeThreshold: 250, // TODO: config
-		ShardID: conf.ShardID,
-		TotalShards: conf.TotalShards,
-		URL: conf.WebsocketURL,
+		ShardID:             conf.ShardID,
+		TotalShards:         conf.TotalShards,
+		URL:                 conf.WebsocketURL,
 
 		// lib specific
 		DAPIVersion:   constant.DiscordVersion,

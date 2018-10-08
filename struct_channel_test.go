@@ -1,6 +1,9 @@
 package disgord
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestChannel_InterfaceImplementations(t *testing.T) {
 	var c interface{} = &Channel{}
@@ -49,5 +52,47 @@ func TestChannel_InterfaceImplementations(t *testing.T) {
 		if _, ok := c.(discordDeleter); !ok {
 			t.Error("Channel does not implement discordDeleter")
 		}
+	})
+}
+
+func verifyChannelUnmarshal(t *testing.T, data []byte) {
+	v := Channel{}
+	err := validateJSONMarshalling(data, &v)
+	check(err, t)
+}
+
+func checkForChannelUnmarshalErr(t *testing.T, data []byte) {
+	v := Channel{}
+	if err := unmarshal(data, &v); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestChannel_UnmarshalJSON(t *testing.T) {
+	t.Run("create", func(t *testing.T) {
+		data, err := ioutil.ReadFile("testdata/channel/channel_create.json")
+		check(err, t)
+		checkForChannelUnmarshalErr(t, data)
+	})
+	t.Run("update", func(t *testing.T) {
+		files := []string{
+			"testdata/channel/update_name.json",
+			"testdata/channel/update_nsfw1.json",
+			"testdata/channel/update_nsfw2.json",
+			"testdata/channel/update_ratelimit.json",
+			"testdata/channel/update_ratelimit_removed.json",
+			"testdata/channel/update_topic.json",
+			"testdata/channel/update_topic_removed.json",
+		}
+		for _, file := range files {
+			data, err := ioutil.ReadFile(file)
+			check(err, t)
+			checkForChannelUnmarshalErr(t, data)
+		}
+	})
+	t.Run("delete", func(t *testing.T) {
+		data, err := ioutil.ReadFile("testdata/channel/delete.json")
+		check(err, t)
+		checkForChannelUnmarshalErr(t, data)
 	})
 }

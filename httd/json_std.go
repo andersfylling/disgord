@@ -11,3 +11,10 @@ func Unmarshal(data []byte, v interface{}) error {
 	}
 	return json.Unmarshal(data, v)
 }
+
+func Marshal(v interface{}) (data []byte, err error) {
+	if j, has := v.(json.Marshaler); has {
+		return j.MarshalJSON()
+	}
+	return json.Marshal(v)
+}

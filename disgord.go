@@ -209,5 +209,5 @@ func (e *ErrorEmptyValue) Error() string {
 }
 
 func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
-	return uint(guildID >> 22) % shardCount
+	return uint(guildID>>22) % shardCount
 }

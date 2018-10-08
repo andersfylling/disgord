@@ -26,8 +26,8 @@ type Config struct {
 
 	CacheConfig *CacheConfig
 
-	ShardID uint
-	TotalShards uint
+	ShardID      uint
+	TotalShards  uint
 	WebsocketURL string
 
 	//ImmutableCache bool
@@ -1099,6 +1099,10 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 	case EventUserUpdate:
 		usr := v.(*UserUpdate).User
 		updates[UserCache] = append(updates[UserCache], usr)
+	case EventMessageCreate:
+		// TODO: performance issues?
+		msg := (v.(*MessageCreate)).Message
+		c.cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:
@@ -1111,7 +1115,6 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		//case EventGuildMembersChunk:
 		//case EventGuildRoleCreate:
 		//case EventGuildRoleUpdate:
-		//case EventMessageCreate:
 		//case EventMessageUpdate:
 		//case EventMessageDelete:
 		//case EventMessageDeleteBulk:
