@@ -208,8 +208,8 @@ type AuditLogsRESTer interface {
 
 type ChannelRESTer interface {
 	GetChannel(id Snowflake) (ret *Channel, err error)
-	ModifyChannel(changes *ModifyChannelParams) (ret *Channel, err error)
-	DeleteChannel(id Snowflake) (err error)
+	ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error)
+	DeleteChannel(id Snowflake) (channel *Channel, err error)
 	EditChannelPermissions(chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error)
 	GetChannelInvites(id Snowflake) (ret []*Invite, err error)
 	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error)

@@ -57,7 +57,11 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 	}
 	if i.Channel != nil {
 		c := i.Channel
-		invite.Channel = NewPartialChannel(c.ID, c.Name, c.Type)
+		invite.Channel = &PartialChannel{
+			ID:   c.ID,
+			Name: c.Name,
+			Type: c.Type,
+		}
 	}
 
 	i.RUnlock()

@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetInvite(t *testing.T) {
-	_, err := createTestRequester()
+	_, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -27,7 +27,7 @@ func TestGetInvite(t *testing.T) {
 }
 
 func TestDeleteInvite(t *testing.T) {
-	_, err := createTestRequester()
+	_, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return

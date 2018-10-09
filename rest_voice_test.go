@@ -5,7 +5,7 @@ import (
 )
 
 func TestListVoiceRegions(t *testing.T) {
-	client, err := createTestRequester()
+	client, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return

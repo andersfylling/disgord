@@ -34,11 +34,15 @@ func TestCache_ChannelCreate(t *testing.T) {
 
 		c1 := NewChannel()
 		c1.ID = Snowflake(1234123)
-		c1.Icon = "test"
-		cache.SetChannel(c1)
-		c1.Icon = "changed"
 
-		if c1_r, _ := cache.GetChannel(c1.ID); c1_r.Icon != "changed" {
+		test := "test"
+		c1.Icon = &test
+		cache.SetChannel(c1)
+
+		changed := "changed"
+		c1.Icon = &changed
+
+		if c1_r, _ := cache.GetChannel(c1.ID); *c1_r.Icon != "changed" {
 			t.Error("channel was not affected by external changes")
 		}
 	})

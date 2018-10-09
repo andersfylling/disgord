@@ -254,14 +254,14 @@ func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
 }
 
 // ModifyChannel ...
-func (c *Client) ModifyChannel(changes *ModifyChannelParams) (ret *Channel, err error) {
-	ret, err = ModifyChannel(c.req, changes) // should trigger a socket event, no need to update cache
+func (c *Client) ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
+	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cache
 	return
 }
 
 // DeleteChannel ...
-func (c *Client) DeleteChannel(id Snowflake) (err error) {
-	err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cache
+func (c *Client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
+	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cache
 	return
 }
 
@@ -1016,9 +1016,15 @@ func (c *Client) eventHandler() {
 
 		// populate box
 		ctx := context.Background()
+		box.registerContext(ctx)
 		data := evt.Data()
 
-		box.registerContext(ctx)
+		// first unmarshal to get identifiers
+		//tmp := *box
+
+		// unmarshal into cache
+		//err := c.cacheEvent2(evtName, box)
+
 		err = unmarshal(data, box)
 		if err != nil {
 			logrus.Error(err)
@@ -1102,7 +1108,7 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 	case EventMessageCreate:
 		// TODO: performance issues?
 		msg := (v.(*MessageCreate)).Message
-		c.cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
+		c.cache.UpdateChannelLastMessageID(msg.ChannelID, &msg.ID)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:

@@ -14,7 +14,8 @@ func TestChannel_InterfaceImplementations(t *testing.T) {
 		}
 
 		test := NewChannel()
-		test.Icon = "sdljfdsjf"
+		icon1 := "sdljfdsjf"
+		test.Icon = &icon1
 		test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
 			Type: "first",
 		})
@@ -23,8 +24,9 @@ func TestChannel_InterfaceImplementations(t *testing.T) {
 		})
 
 		copy := test.DeepCopy().(*Channel)
-		test.Icon = "sfkjdsf"
-		if copy.Icon != "sdljfdsjf" {
+		icon2 := "sfkjdsf"
+		test.Icon = &icon2
+		if *copy.Icon != icon1 {
 			t.Error("deep copy failed")
 		}
 
@@ -95,4 +97,8 @@ func TestChannel_UnmarshalJSON(t *testing.T) {
 		check(err, t)
 		checkForChannelUnmarshalErr(t, data)
 	})
+}
+
+func TestChannel_saveToDiscord(t *testing.T) {
+
 }

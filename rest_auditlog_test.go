@@ -1,10 +1,7 @@
 package disgord
 
 import (
-	"os"
 	"testing"
-
-	"github.com/andersfylling/disgord/constant"
 )
 
 func TestAuditLogParams(t *testing.T) {
@@ -29,20 +26,14 @@ func TestAuditLogParams(t *testing.T) {
 }
 
 func TestGuildAuditLogs(t *testing.T) {
-	client, err := createTestRequester()
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	s, err := GetSnowflake(os.Getenv(constant.DisgordTestGuildAdmin))
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
 	}
 
 	params := &GuildAuditLogsParams{}
-	log, err := GuildAuditLogs(client, s, params)
+	log, err := GuildAuditLogs(client, keys.GuildAdmin, params)
 	if err != nil {
 		t.Error(err)
 	}

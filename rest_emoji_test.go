@@ -19,20 +19,13 @@ func notARateLimitIssue(err error) bool {
 }
 
 func TestListGuildEmojis(t *testing.T) {
-	client, err := createTestRequester()
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
 	}
 
-	guildIDStr := os.Getenv(constant.DisgordTestGuildDefault)
-	guildID, err := GetSnowflake(guildIDStr)
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	emojis, err := ListGuildEmojis(client, guildID)
+	emojis, err := ListGuildEmojis(client, keys.GuildDefault)
 	if err != nil && !notARateLimitIssue(err) {
 		t.Skip("rate limited")
 	}
@@ -46,12 +39,6 @@ func TestListGuildEmojis(t *testing.T) {
 }
 
 func TestGetGuildEmoji(t *testing.T) {
-	guildIDStr := os.Getenv(constant.DisgordTestGuildDefault)
-	guildID, err := GetSnowflake(guildIDStr)
-	if err != nil {
-		t.Skip()
-		return
-	}
 	emojiIDStr := os.Getenv(constant.DisgordTestGuildDefaultEmojiSnowflake)
 	fmt.Println(emojiIDStr)
 	emojiID, err := GetSnowflake(emojiIDStr)
@@ -60,13 +47,13 @@ func TestGetGuildEmoji(t *testing.T) {
 		return
 	}
 
-	client, err := createTestRequester()
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
 	}
 
-	emoji, err := GetGuildEmoji(client, guildID, emojiID)
+	emoji, err := GetGuildEmoji(client, keys.GuildDefault, emojiID)
 	if err != nil && !notARateLimitIssue(err) {
 		t.Skip("rate limited")
 	}
@@ -88,14 +75,7 @@ func TestCreateAndDeleteGuildEmoji(t *testing.T) {
 	var emoji *Emoji
 	var err error
 
-	guildIDStr := os.Getenv(constant.DisgordTestGuildAdmin)
-	guildID, err := GetSnowflake(guildIDStr)
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	client, err := createTestRequester()
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -106,7 +86,7 @@ func TestCreateAndDeleteGuildEmoji(t *testing.T) {
 			Name:  "testing4324",
 			Image: randomBase64Emoji,
 		}
-		emoji, err = CreateGuildEmoji(client, guildID, params)
+		emoji, err = CreateGuildEmoji(client, keys.GuildAdmin, params)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}
@@ -120,7 +100,7 @@ func TestCreateAndDeleteGuildEmoji(t *testing.T) {
 	})
 
 	t.Run("delete created emoji", func(t *testing.T) {
-		err = DeleteGuildEmoji(client, Snowflake(guildID), emoji.ID)
+		err = DeleteGuildEmoji(client, Snowflake(keys.GuildAdmin), emoji.ID)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}
@@ -135,14 +115,7 @@ func TestModifyGuildEmoji(t *testing.T) {
 	var err error
 	newName := "asldjjkasd" // "super-emoji-ok" <- causes regex issue
 
-	guildIDStr := os.Getenv(constant.DisgordTestGuildAdmin)
-	guildID, err := GetSnowflake(guildIDStr)
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	client, err := createTestRequester()
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -153,7 +126,7 @@ func TestModifyGuildEmoji(t *testing.T) {
 			Name:  "test6547465",
 			Image: randomBase64Emoji,
 		}
-		emoji, err = CreateGuildEmoji(client, guildID, params)
+		emoji, err = CreateGuildEmoji(client, keys.GuildAdmin, params)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}
@@ -170,7 +143,7 @@ func TestModifyGuildEmoji(t *testing.T) {
 		params := &ModifyGuildEmojiParams{
 			Name: newName,
 		}
-		_, err = ModifyGuildEmoji(client, guildID, emoji.ID, params)
+		_, err = ModifyGuildEmoji(client, keys.GuildAdmin, emoji.ID, params)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}
@@ -181,7 +154,7 @@ func TestModifyGuildEmoji(t *testing.T) {
 
 	t.Run("delete created emoji", func(t *testing.T) {
 		time.Sleep(1 * time.Second) // just ensure that this get's run
-		err = DeleteGuildEmoji(client, guildID, emoji.ID)
+		err = DeleteGuildEmoji(client, keys.GuildAdmin, emoji.ID)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}
@@ -199,14 +172,7 @@ func TestValidEmojiName(t *testing.T) {
 		"testing-this-thing-here",
 	}
 
-	guildIDStr := os.Getenv(constant.DisgordTestGuildAdmin)
-	guildID, err := GetSnowflake(guildIDStr)
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	client, err := createTestRequester()
+	client, keys, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -220,8 +186,8 @@ func TestValidEmojiName(t *testing.T) {
 		}
 
 		_, body, err := client.Post(&httd.Request{
-			Ratelimiter: ratelimitGuild(guildID),
-			Endpoint:    endpoint.GuildEmojis(guildID),
+			Ratelimiter: ratelimitGuild(keys.GuildAdmin),
+			Endpoint:    endpoint.GuildEmojis(keys.GuildAdmin),
 			Body:        params,
 		})
 		if err != nil && !notARateLimitIssue(err) {
@@ -245,7 +211,7 @@ func TestValidEmojiName(t *testing.T) {
 			t.Skip("no new emoji created")
 			return
 		}
-		err = DeleteGuildEmoji(client, guildID, emoji.ID)
+		err = DeleteGuildEmoji(client, keys.GuildAdmin, emoji.ID)
 		if err != nil && !notARateLimitIssue(err) {
 			t.Skip("rate limited")
 		}

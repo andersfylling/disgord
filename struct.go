@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -257,4 +258,70 @@ type GatewayBot struct {
 		Remaining  uint `json:"remaining"`
 		ResetAfter uint `json:"reset_after"`
 	} `json:"session_start_limit"`
+}
+
+// extractAttribute extracts the snowflake value from a JSON string given a attribute filter. For extracting the root ID of an JSON byte array,
+// set filter to `"id":"` and scope to `0`. Note that the filter holds the last character before the value starts.
+func extractAttribute(filter []byte, scope int, data []byte) (id Snowflake, err error) {
+	//filter := []byte(`"id":"`)
+	filterLen := len(filter) - 1
+	//scope := 0
+
+	var start uint
+	lastPos := len(data) - 1
+	for i := 1; i <= lastPos-filterLen; i++ {
+		if data[i] == '{' {
+			scope++
+		} else if data[i] == '}' {
+			scope--
+		}
+
+		if scope != 0 {
+			continue
+		}
+
+		for j := filterLen; j >= 0; j-- {
+			if filter[j] != data[i+j] {
+				break
+			}
+
+			if j == 0 {
+				start = uint(i + len(filter))
+			}
+		}
+
+		if start != 0 {
+			break
+		}
+	}
+
+	if start == 0 {
+		err = errors.New("unable to locate ID")
+		return
+	}
+
+	i := start
+	//E:
+	for {
+		if data[i] >= '0' && data[i] <= '9' {
+			i++
+		} else {
+			break
+		}
+		//
+		//switch data[i] {
+		//case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		//	i++
+		//default:
+		//	break E
+		//}
+	}
+
+	if i > start {
+		id = Snowflake(0)
+		err = id.UnmarshalJSON(data[start-1 : i+1])
+	} else {
+		err = errors.New("id was empty")
+	}
+	return
 }

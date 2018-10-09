@@ -194,6 +194,7 @@ func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err erro
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
@@ -206,7 +207,7 @@ func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err erro
 // JSON params for func CreateGroupDM https://discordapp.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
 	AccessTokens []string             `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
-	Nicks        map[Snowflake]string `json:"nicks"`         // userID => nickname
+	Nicks        map[Snowflake]string `json:"nicks"`         // map[userID] = nickname
 }
 
 // [REST] Create a new group DM channel with multiple users. Returns a DM channel object.

@@ -212,15 +212,15 @@ func GetGuildChannels(client httd.Getter, id Snowflake) (ret []*Channel, err err
 
 // https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
 type CreateGuildChannelParams struct {
-	Name                 string                `json:"name"`                            //  |
-	Type                 uint                  `json:"type,omitempty"`                  // ?|
-	Topic                string                `json:"topic,omitempty"`                 // ?|
-	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
-	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
-	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
-	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
-	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|
-	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
+	Name                 string                `json:"name"` // required
+	Type                 *uint                 `json:"type,omitempty"`
+	Topic                *string               `json:"topic,omitempty"`
+	Bitrate              *uint                 `json:"bitrate,omitempty"`
+	UserLimit            *uint                 `json:"user_limit,omitempty"`
+	RateLimitPerUser     *uint                 `json:"rate_limit_per_user,omitempty"`
+	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	ParentID             *Snowflake            `json:"parent_id,omitempty"`
+	NSFW                 *bool                 `json:"nsfw,omitempty"`
 }
 
 // [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission. Returns the

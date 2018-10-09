@@ -17,8 +17,7 @@ func createChannelCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err e
 }
 
 type channelCacheItem struct {
-	channel    *Channel
-	recipients []Snowflake
+	channel *Channel
 }
 
 func (c *channelCacheItem) process(channel *Channel, immutable bool) {
@@ -29,9 +28,9 @@ func (c *channelCacheItem) process(channel *Channel, immutable bool) {
 		c.channel = channel
 	}
 
-	c.recipients = make([]Snowflake, len(channel.Recipients))
+	c.channel.recipientsIDs = make([]Snowflake, len(channel.Recipients))
 	for i := range channel.Recipients {
-		c.recipients = append(c.recipients, channel.Recipients[i].ID)
+		c.channel.recipientsIDs = append(c.channel.recipientsIDs, channel.Recipients[i].ID)
 	}
 }
 
@@ -46,12 +45,12 @@ func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
 		return
 	}
 
-	recipients := make([]*User, len(channel.Recipients))
-	for i := range c.recipients {
-		usr, err := cache.GetUser(c.recipients[i]) // handles immutability on it's own
+	recipients := make([]*User, len(channel.recipientsIDs))
+	for i := range c.channel.recipientsIDs {
+		usr, err := cache.GetUser(c.channel.recipientsIDs[i]) // handles immutability on it's own
 		if err != nil || usr == nil {
 			usr = NewUser()
-			usr.ID = c.recipients[i]
+			usr.ID = c.channel.recipientsIDs[i]
 			// TODO: should this be loaded by REST request?...
 			// TODO-2: maybe it can be a cache option to load dead members on read?
 		}
@@ -64,14 +63,6 @@ func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
 }
 
 func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
-	if len(fresh.Recipients) > 0 {
-		c.recipients = make([]Snowflake, len(fresh.Recipients))
-		for i := range fresh.Recipients {
-			// TODO: compare user ID/hash and delete/append accordingly.
-			c.recipients[i] = fresh.Recipients[i].ID
-		}
-	}
-
 	if !immutable {
 		c.channel = fresh
 		return
@@ -109,14 +100,14 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		// channel does not exist in cache, create a partial channel
-		partial := &PartialChannel{ID: id, LastPinTimestamp: timestamp}
+		partial := &Channel{ID: id, LastPinTimestamp: timestamp}
 		content := &channelCacheItem{}
 		content.process(partial, c.immutable)
 		c.channels.Set(id, c.channels.CreateCacheableItem(content))
 	}
 }
 
-func (c *Cache) UpdateChannelLastMessageID(channelID, messageID Snowflake) {
+func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID *Snowflake) {
 	if c.channels == nil || channelID.Empty() || messageID.Empty() {
 		return
 	}

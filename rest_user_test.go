@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetCurrentUser(t *testing.T) {
-	client, err := createTestRequester()
+	client, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -17,7 +17,7 @@ func TestGetCurrentUser(t *testing.T) {
 	}
 }
 func TestGetUser(t *testing.T) {
-	client, err := createTestRequester()
+	client, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -34,7 +34,7 @@ func TestGetUser(t *testing.T) {
 	}
 }
 func TestModifyCurrentUser(t *testing.T) {
-	client, err := createTestRequester()
+	client, _, err := createTestRequester()
 	if err != nil {
 		t.Skip()
 		return
@@ -109,8 +109,22 @@ func TestLeaveGuild(t *testing.T) {
 func TestUserDMs(t *testing.T) {
 	// TODO
 }
+
 func TestCreateDM(t *testing.T) {
-	// TODO
+	client, _, err := createTestRequester()
+	if err != nil {
+		t.Skip()
+		return
+	}
+
+	channel, err := CreateDM(client, 228846961774559232)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if channel == nil {
+		t.Error("channel was nil")
+	}
 }
 func TestCreateGroupDM(t *testing.T) {
 	// TODO

@@ -62,12 +62,23 @@ func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Channel{}
+	err = unmarshal(body, ret)
 	return
 }
 
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-type ModifyChannelParams = Channel
+type ModifyChannelParams struct {
+	Name                 *string               `json:"name,omitempty"`
+	Position             *uint                 `json:"position,omitempty"`
+	Topic                *string               `json:"topic,omitempty"`
+	NSFW                 *bool                 `json:"nsfw,omitempty"`
+	RateLimitPerUser     *uint                 `json:"rate_limit_per_user,omitempty"`
+	Bitrate              *uint                 `json:"bitrate,omitempty"`
+	UserLimit            *uint                 `json:"user_limit,omitempty"`
+	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	ParentID             *Snowflake            `json:"parent_id,omitempty"`
+}
 
 // [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns a channel on success,
 // and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If modifying a category,
@@ -79,8 +90,7 @@ type ModifyChannelParams = Channel
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Channel, err error) {
-	id := changes.ID
+func ModifyChannel(client httd.Patcher, id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -89,12 +99,15 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitChannel(id),
 		Endpoint:    endpoint.Channel(id),
+		Body:        changes,
+		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Channel{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -106,18 +119,18 @@ func ModifyChannel(client httd.Patcher, changes *ModifyChannelParams) (ret *Chan
 //  Endpoint                /channels/{channel.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
-//  Reviewed                2018-06-07
+//  Reviewed                2018-10-09
 //  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func DeleteChannel(client httd.Deleter, id Snowflake) (err error) {
+func DeleteChannel(client httd.Deleter, id Snowflake) (channel *Channel, err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	resp, body, err := client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannel(id),
 		Endpoint:    endpoint.Channel(id),
 	})
@@ -125,11 +138,13 @@ func DeleteChannel(client httd.Deleter, id Snowflake) (err error) {
 		return
 	}
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+	if resp.StatusCode != http.StatusOK {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusOK)
 		err = errors.New(msg)
 	}
 
+	channel = &Channel{}
+	err = unmarshal(body, channel)
 	return
 }
 
@@ -195,7 +210,8 @@ func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err err
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = []*Invite{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -235,7 +251,8 @@ func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChanne
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Invite{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -313,7 +330,8 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = []*Message{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -508,7 +526,8 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = []*Message{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -538,7 +557,8 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Message{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -658,7 +678,8 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Message{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -696,7 +717,8 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Message{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -869,7 +891,8 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = &Reaction{}
+	err = unmarshal(body, ret)
 	return
 }
 
@@ -1036,7 +1059,8 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	ret = []*User{}
+	err = unmarshal(body, ret)
 	return
 }
 

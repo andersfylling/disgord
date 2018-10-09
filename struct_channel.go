@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"errors"
+	"strconv"
 	"sync"
 
 	"time"
@@ -55,15 +57,6 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
-func NewPartialChannel(id Snowflake, name string, t uint) *PartialChannel {
-	return &PartialChannel{
-		ID:      id,
-		Name:    name,
-		Type:    t,
-		partial: true,
-	}
-}
-
 // ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
 type ChannelMessager interface {
 	CreateMessage(*Message) error
@@ -84,27 +77,11 @@ type ChannelUpdater interface {
 // //   "name": "illuminati",
 // //   "type": 0
 // // }
-type PartialChannel = Channel
-
-type channelJSON struct {
-	ID                   Snowflake             `json:"id"`
-	Type                 uint                  `json:"type"`
-	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
-	Position             uint                  `json:"position,omitempty"`              // ?|
-	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
-	Name                 string                `json:"name,omitempty"`                  // ?|
-	Topic                *string               `json:"topic,omitempty"`                 // ?|?, pointer
-	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?, pointer
-	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
-	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
-	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
-	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
-	Icon                 *string               `json:"icon,omitempty"`                  // ?|?, pointer
-	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
-	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
-	ParentID             *Snowflake            `json:"parent_id,omitempty"`             // ?|?, pointer
-	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
+type PartialChannel struct {
+	sync.RWMutex `json:"-"`
+	ID           Snowflake `json:"id"`
+	Name         string    `json:"name"`
+	Type         uint      `json:"type"`
 }
 
 // Channel ...
@@ -116,109 +93,29 @@ type Channel struct {
 	Position             uint                  `json:"position,omitempty"`              // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	Name                 string                `json:"name,omitempty"`                  // ?|
-	Topic                string                `json:"topic,omitempty"`                 // ?|?, pointer
+	Topic                *string               `json:"topic,omitempty"`                 // ?|?
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?, pointer
+	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
-	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM
-	Icon                 string                `json:"icon,omitempty"`                  // ?|?, pointer
+	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM/GroupDM
+	Icon                 *string               `json:"icon,omitempty"`                  // ?|?
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
-	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?, pointer
+	ParentID             *Snowflake            `json:"parent_id,omitempty"`             // ?|?
 	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
 
-	// set to true when the object is incomplete. Used in situations
+	// set to true when the object is not incomplete. Used in situations
 	// like cache to avoid overwriting correct information.
-	// A partial channel is assumed to be
+	// A partial or incomplete channel can be
 	//  "channel": {
 	//    "id": "165176875973476352",
 	//    "name": "illuminati",
 	//    "type": 0
 	//  }
-	partial bool
-}
-
-func (c *Channel) UnmarshalJSON(data []byte) (err error) {
-	channel := channelJSON{}
-	err = unmarshal(data, &channel)
-	if err != nil {
-		return
-	}
-
-	// copy over to c
-	c.Lock()
-
-	c.ID = channel.ID
-	c.Type = channel.Type
-	c.GuildID = channel.GuildID
-	c.Position = channel.Position
-	c.PermissionOverwrites = channel.PermissionOverwrites // TODO: check for pointer
-	c.Name = channel.Name
-	c.NSFW = channel.NSFW
-	c.Bitrate = channel.Bitrate
-	c.UserLimit = channel.UserLimit
-	c.RateLimitPerUser = channel.RateLimitPerUser
-	c.Recipients = channel.Recipients
-	c.OwnerID = channel.OwnerID
-	c.ApplicationID = channel.ApplicationID
-	c.LastPinTimestamp = channel.LastPinTimestamp
-
-	if channel.Topic != nil {
-		c.Topic = *channel.Topic
-	}
-	if channel.Icon != nil {
-		c.Icon = *channel.Icon
-	}
-	if channel.ParentID != nil {
-		c.ParentID = *channel.ParentID
-	}
-	if channel.LastMessageID != nil {
-		c.LastMessageID = *channel.LastMessageID
-	}
-
-	c.Unlock()
-	return
-}
-
-func (c *Channel) MarshalJSON() (data []byte, err error) {
-	// copy over to channel
-	channel := channelJSON{}
-	c.RLock()
-
-	channel.ID = c.ID
-	channel.Type = c.Type
-	channel.GuildID = c.GuildID
-	channel.Position = c.Position
-	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
-	channel.Name = c.Name
-	channel.NSFW = c.NSFW
-	channel.Bitrate = c.Bitrate
-	channel.UserLimit = c.UserLimit
-	channel.RateLimitPerUser = c.RateLimitPerUser
-	channel.Recipients = c.Recipients
-	channel.OwnerID = c.OwnerID
-	channel.ApplicationID = c.ApplicationID
-	channel.LastPinTimestamp = c.LastPinTimestamp
-
-	if c.Topic != "" {
-		channel.Topic = &c.Topic
-	}
-	if c.Icon != "" {
-		channel.Icon = &c.Icon
-	}
-	if !c.ParentID.Empty() {
-		channel.ParentID = &c.ParentID
-	}
-	if !c.LastMessageID.Empty() {
-		channel.LastMessageID = &c.LastMessageID
-	}
-
-	c.RUnlock()
-
-	data, err = marshal(&channel)
-	return
+	complete      bool
+	recipientsIDs []Snowflake
 }
 
 func (c *Channel) valid() bool {
@@ -226,11 +123,11 @@ func (c *Channel) valid() bool {
 		return false
 	}
 
-	if len(c.Topic) > 1024 {
+	if c.Topic != nil && len(*c.Topic) > 1024 {
 		return false
 	}
 
-	if len(c.Name) > 100 || len(c.Name) < 2 {
+	if c.Name != "" && (len(c.Name) > 100 || len(c.Name) < 2) {
 		return false
 	}
 
@@ -247,32 +144,98 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 func (c *Channel) saveToDiscord(session Session) (err error) {
-	if c.GuildID.Empty() {
-		err = NewErrorMissingSnowflake("guild id/snowflake is empty or missing")
-		return
+	var updated *Channel
+	if c.ID.Empty() {
+		if c.Type != ChannelTypeDM && c.Type != ChannelTypeGroupDM {
+			// create
+			if c.Name == "" {
+				err = NewErrorEmptyValue("must have a channel name before creating channel")
+			}
+			params := CreateGuildChannelParams{
+				Name:                 c.Name,
+				PermissionOverwrites: c.PermissionOverwrites,
+			}
+
+			// specific
+			if c.Type == ChannelTypeGuildText {
+				params.NSFW = &c.NSFW
+				params.Topic = c.Topic
+				params.RateLimitPerUser = &c.RateLimitPerUser
+			} else if c.Type == ChannelTypeGuildVoice {
+				params.Bitrate = &c.Bitrate
+				params.UserLimit = &c.UserLimit
+			}
+
+			// shared
+			if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
+				params.ParentID = c.ParentID
+			}
+
+			updated, err = session.CreateGuildChannel(c.GuildID, &params)
+		} else if c.Type == ChannelTypeDM {
+			if len(c.Recipients) != 1 {
+				err = errors.New("must have only one recipient in Channel.Recipient (with ID) for creating a DM. Got " + strconv.Itoa(len(c.Recipients)))
+				return
+			}
+			updated, err = session.CreateDM(c.Recipients[0].ID)
+		} else if c.Type == ChannelTypeGroupDM {
+			err = errors.New("creating group DM using SaveToDiscord has not been implemented")
+			//if len(c.Recipients) == 0 {
+			//	err = errors.New("must have at least one recipient in Channel.Recipient (with access token) for creating a group DM. Got 0")
+			//	return
+			//}
+			//total := len(c.Recipients)
+			//params := CreateGroupDMParams{}
+			//params.AccessTokens = make([]string, total)
+			//params.Nicks = make(map[Snowflake]string, total)
+			//
+			//for i := 0; i < total; i++ {
+			//	params.AccessTokens[i] = c.Recipients[i].
+			//}
+			//
+			//updated, err = session.CreateGroupDM()
+		} else {
+			err = errors.New("cannot save to discord. Does not recognise what needs to be saved")
+		}
+	} else {
+		// modify / update channel
+		changes := ModifyChannelParams{}
+
+		// specific
+		if c.Type == ChannelTypeDM {
+			// nothing to change
+		} else if c.Type == ChannelTypeGroupDM {
+			// nothing to change
+		} else if c.Type == ChannelTypeGuildText {
+			changes.NSFW = &c.NSFW
+			changes.Topic = c.Topic
+			changes.RateLimitPerUser = &c.RateLimitPerUser
+		} else if c.Type == ChannelTypeGuildVoice {
+			changes.Bitrate = &c.Bitrate
+			changes.UserLimit = &c.UserLimit
+		}
+
+		// shared
+		if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
+			changes.ParentID = c.ParentID
+		}
+
+		// for all
+		if c.Name != "" {
+			changes.Name = &c.Name
+		}
+		changes.Position = &c.Position
+		changes.PermissionOverwrites = c.PermissionOverwrites
+
+		updated, err = session.ModifyChannel(c.ID, &changes)
 	}
-	if c.Name == "" {
-		err = NewErrorEmptyValue("must have a channel name before creating channel")
-	}
-	params := &CreateGuildChannelParams{
-		Name:                 c.Name,
-		Type:                 c.Type,
-		Topic:                c.Topic,
-		Bitrate:              c.Bitrate,
-		UserLimit:            c.UserLimit,
-		PermissionOverwrites: c.PermissionOverwrites,
-		RateLimitPerUser:     c.RateLimitPerUser,
-		ParentID:             c.ParentID,
-		NSFW:                 c.NSFW,
-	}
-	var creation *Channel
-	creation, err = session.CreateGuildChannel(c.GuildID, params)
+
+	// verify discord request
 	if err != nil {
 		return
 	}
 
-	// update current channel object
-	creation.CopyOverTo(c)
+	*c = *updated
 	return
 }
 
@@ -281,7 +244,13 @@ func (c *Channel) deleteFromDiscord(session Session) (err error) {
 		err = NewErrorMissingSnowflake("channel id/snowflake is empty or missing")
 		return
 	}
-	err = session.DeleteChannel(c.ID)
+	var deleted *Channel
+	deleted, err = session.DeleteChannel(c.ID)
+	if err != nil {
+		return
+	}
+
+	*c = *deleted
 	return
 }
 
@@ -339,39 +308,49 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 	channel.Lock()
 	c.RLock()
 
-	if !c.ID.Empty() {
-		channel.ID = c.ID
-	}
-	if channel.Type == 0 && c.Type > 0 {
-		// if channel type is not set(?) then it can be overwritten
-		channel.Type = c.Type
-	}
-	if !c.GuildID.Empty() {
+	channel.ID = c.ID
+	channel.Type = c.Type
+
+	if c.Type == ChannelTypeGroupDM || c.Type == ChannelTypeDM {
+		if c.Type == ChannelTypeGroupDM {
+			channel.Icon = c.Icon
+			channel.OwnerID = c.OwnerID
+			channel.Name = c.Name
+			channel.LastPinTimestamp = c.LastPinTimestamp
+		}
+		channel.LastMessageID = c.LastMessageID
+
+		if len(c.recipientsIDs) == len(c.Recipients) {
+			channel.recipientsIDs = c.recipientsIDs
+		} else {
+			channel.recipientsIDs = make([]Snowflake, len(c.Recipients))
+			for i := range c.Recipients {
+				channel.recipientsIDs[i] = c.Recipients[i].ID
+			}
+		}
+	} else if c.Type == ChannelTypeGuildText {
+		channel.NSFW = c.NSFW
+		channel.Name = c.Name
+		channel.Position = c.Position
+		channel.PermissionOverwrites = c.PermissionOverwrites
+		channel.Topic = c.Topic
+		channel.LastMessageID = c.LastMessageID
+		channel.RateLimitPerUser = c.RateLimitPerUser
+		channel.LastPinTimestamp = c.LastPinTimestamp
+		channel.ParentID = c.ParentID
+		channel.GuildID = c.GuildID
+	} else if c.Type == ChannelTypeGuildVoice {
+		channel.Name = c.Name
+		channel.Position = c.Position
+		channel.PermissionOverwrites = c.PermissionOverwrites
+		channel.ParentID = c.ParentID
+		channel.Bitrate = c.Bitrate
+		channel.UserLimit = c.UserLimit
 		channel.GuildID = c.GuildID
 	}
-	channel.Position = c.Position // TODO: how to avoid an partial channel to overwrite this?
-	channel.PermissionOverwrites = c.PermissionOverwrites
-	channel.Name = c.Name
-	channel.Topic = c.Topic
-	channel.NSFW = c.NSFW
-	channel.LastMessageID = c.LastMessageID
-	channel.Bitrate = c.Bitrate
-	channel.UserLimit = c.UserLimit
-	channel.RateLimitPerUser = c.RateLimitPerUser
-	channel.Icon = c.Icon
-	channel.OwnerID = c.OwnerID
-	if !c.ApplicationID.Empty() {
-		channel.ApplicationID = c.ApplicationID
-	}
-	if !c.ParentID.Empty() {
-		channel.ParentID = c.ParentID
-	}
-	if !c.LastPinTimestamp.Empty() {
-		channel.LastPinTimestamp = c.LastPinTimestamp
-	}
-	if !c.LastMessageID.Empty() {
-		channel.LastMessageID = c.LastMessageID
-	}
+
+	// TODO: evaluate
+	channel.ApplicationID = c.ApplicationID
 
 	channel.Unlock()
 	c.RUnlock()
