@@ -61,7 +61,7 @@ func TestModifyCurrentUser(t *testing.T) {
 		}
 		randomName := "sldfhksghs"
 		params := &ModifyCurrentUserParams{
-			Username: randomName,
+			Username: &randomName,
 		}
 		_, err := ModifyCurrentUser(client, params)
 		if err != nil {
@@ -75,7 +75,7 @@ func TestModifyCurrentUser(t *testing.T) {
 			return
 		}
 		params := &ModifyCurrentUserParams{
-			Username: originalUsername,
+			Username: &originalUsername,
 		}
 		_, err := ModifyCurrentUser(client, params)
 		if err != nil {

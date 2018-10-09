@@ -56,8 +56,8 @@ func GetUser(client httd.Getter, id Snowflake) (ret *User, err error) {
 
 // JSON params for func ModifyCurrentUser
 type ModifyCurrentUserParams struct {
-	Username string `json:"username,omitempty"`
-	Avatar   string `json:"avatar,omitempty"`
+	Username *string `json:"username,omitempty"`
+	Avatar   *string `json:"avatar,omitempty"`
 }
 
 // [REST] Modify the requester's user account settings. Returns a user object on success.

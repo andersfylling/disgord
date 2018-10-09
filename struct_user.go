@@ -278,8 +278,60 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 
 // ---------
 
+const (
+	userOEmail      = 0x1 << iota
+	userOAvatar     = 0x1 << iota
+	userOToken      = 0x1 << iota
+	userOVerified   = 0x1 << iota
+	userOMFAEnabled = 0x1 << iota
+	userOBot        = 0x1 << iota
+)
+
 func NewUser() *User {
 	return &User{}
+}
+
+func newUserJSON() *userJSON {
+	d := "-"
+	return &userJSON{
+		Avatar: &d,
+	}
+}
+
+type userJSON struct {
+	/*-*/ ID Snowflake `json:"id,omitempty"`
+	/*-*/ Username string `json:"username,omitempty"`
+	/*-*/ Discriminator Discriminator `json:"discriminator,omitempty"`
+	/*1*/ Email *string `json:"email"`
+	/*2*/ Avatar *string `json:"avatar"`
+	/*3*/ Token *string `json:"token"`
+	/*4*/ Verified *bool `json:"verified"`
+	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
+	/*6*/ Bot *bool `json:"bot"`
+}
+
+func (u *userJSON) extractMap() uint8 {
+	var overwritten uint8
+	if u.Email != nil {
+		overwritten |= userOEmail
+	}
+	if u.Avatar == nil || *u.Avatar != "-" {
+		overwritten |= userOAvatar
+	}
+	if u.Token != nil {
+		overwritten |= userOToken
+	}
+	if u.Verified != nil {
+		overwritten |= userOVerified
+	}
+	if u.MFAEnabled != nil {
+		overwritten |= userOMFAEnabled
+	}
+	if u.Bot != nil {
+		overwritten |= userOBot
+	}
+
+	return overwritten
 }
 
 type User struct {
@@ -294,6 +346,9 @@ type User struct {
 	Verified      bool          `json:"verified,omitempty"`
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
+
+	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
+	overwritten uint8 // map. see number left of field in userJSON struct.
 }
 
 func (u *User) Mention() string {
@@ -308,12 +363,6 @@ func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
 }
 
-// Partial check if this is not a complete user object
-// Assumption: has a snowflake.
-func (u *User) Partial() bool {
-	return u.Username == "" && u.Discriminator.NotSet()
-}
-
 func (u *User) MarshalJSON() ([]byte, error) {
 	if u.ID.Empty() {
 		return []byte("{}"), nil
@@ -322,13 +371,43 @@ func (u *User) MarshalJSON() ([]byte, error) {
 	return json.Marshal(User(*u))
 }
 
-// func (u *User) UnmarshalJSON(data []byte) error {
-// 	return json.Unmarshal(data, &u.userJSON)
-// }
+func (u *User) UnmarshalJSON(data []byte) (err error) {
+	j := userJSON{}
+	err = json.Unmarshal(data, &j)
+	if err != nil {
+		return
+	}
 
-//func (u *User) Clear() {
-//	//u.d.Avatar = nil
-//}
+	changes := j.extractMap()
+	u.ID = j.ID
+	if j.Username != "" {
+		u.Username = j.Username
+	}
+	if j.Discriminator != 0 {
+		u.Discriminator = j.Discriminator
+	}
+	if (changes & userOEmail) > 0 {
+		u.Email = *j.Email
+	}
+	if (changes & userOAvatar) > 0 {
+		u.Avatar = j.Avatar
+	}
+	if (changes & userOToken) > 0 {
+		u.Token = *j.Token
+	}
+	if (changes & userOVerified) > 0 {
+		u.Verified = *j.Verified
+	}
+	if (changes & userOMFAEnabled) > 0 {
+		u.MFAEnabled = *j.MFAEnabled
+	}
+	if (changes & userOBot) > 0 {
+		u.Bot = *j.Bot
+	}
+	u.overwritten |= changes
+
+	return
+}
 
 func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg *Message, err error) {
 	channel, err = session.CreateDM(u.ID)
@@ -389,7 +468,10 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
 
 	u.RLock()
+	defer u.RUnlock()
+
 	user.Lock()
+	defer user.Unlock()
 
 	if !u.ID.Empty() {
 		user.ID = u.ID
@@ -397,39 +479,64 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	if u.Username != "" {
 		user.Username = u.Username
 	}
-	if !u.Discriminator.NotSet() {
+	if u.Discriminator != 0 {
 		user.Discriminator = u.Discriminator
 	}
-	if u.Email != "" {
+	if (u.overwritten & userOEmail) > 0 {
 		user.Email = u.Email
 	}
-	if u.Token != "" {
+	if (u.overwritten & userOAvatar) > 0 {
+		user.Avatar = u.Avatar
+	}
+	if (u.overwritten & userOToken) > 0 {
 		user.Token = u.Token
 	}
-	if u.Verified && !user.Verified {
-		user.Verified = true
+	if (u.overwritten & userOVerified) > 0 {
+		user.Verified = u.Verified
 	}
-	if !user.MFAEnabled && u.MFAEnabled {
-		user.MFAEnabled = true
+	if (u.overwritten & userOMFAEnabled) > 0 {
+		user.MFAEnabled = u.MFAEnabled
 	}
-	if !user.Bot && u.Bot {
-		user.Bot = true
+	if (u.overwritten & userOBot) > 0 {
+		user.Bot = u.Bot
 	}
-	if u.Avatar != nil {
-		avatar := *u.Avatar
-		user.Avatar = &avatar
-	}
-
-	u.RUnlock()
-	user.Unlock()
+	user.overwritten = u.overwritten
 
 	return
 }
 
 func (u *User) saveToDiscord(session Session) (err error) {
-	// TODO: check snowflake if ID is current user
-	// call both modify methods
-	return errors.New("not implemented")
+	var myself *User
+	myself, err = session.Myself()
+	if err != nil {
+		return
+	}
+	if myself == nil {
+		err = errors.New("can't get information about current user")
+		return
+	}
+
+	if myself.ID != u.ID {
+		err = errors.New("can only update current user")
+		return
+	}
+
+	params := &ModifyCurrentUserParams{}
+	if u.Username != "" {
+		params.Username = &u.Username
+	}
+	if u.Avatar != nil && u.Avatar != myself.Avatar {
+		params.Avatar = u.Avatar
+	}
+
+	var updated *User
+	updated, err = session.ModifyCurrentUser(params)
+	if err != nil {
+		return
+	}
+
+	*u = *updated
+	return
 }
 
 func (u *User) Valid() bool {
