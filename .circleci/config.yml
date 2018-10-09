@@ -29,4 +29,4 @@ jobs:
             echo "mode: set" > c.out
             grep -h -v "^mode:" ./*.cover >> c.out
             rm -f *.cover
-            ./cc-test-reporter after-build --debug --exit-code $? --prefix /home/circleci/project/github.com/andersfylling/disgord
+            ./cc-test-reporter after-build --debug --exit-code $? --prefix github.com/andersfylling/disgord/
