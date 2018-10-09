@@ -452,6 +452,7 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Verified = u.Verified
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
+	user.overwritten = u.overwritten
 
 	if u.Avatar != nil {
 		avatar := *u.Avatar
