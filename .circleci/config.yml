@@ -24,10 +24,10 @@ jobs:
       - run:
           name: Run tests
           command: |
-          for pkg in $(go list ./...); do
-            go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
-          done
-          echo "mode: set" > c.out
-          grep -h -v "^mode:" ./*.cover >> c.out
-          rm -f *.cover
-          ./cc-test-reporter after-build
+            for pkg in $(go list ./...); do
+              go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
+            done
+            echo "mode: set" > c.out
+            grep -h -v "^mode:" ./*.cover >> c.out
+            rm -f *.cover
+            ./cc-test-reporter after-build
