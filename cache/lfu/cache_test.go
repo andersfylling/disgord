@@ -38,6 +38,7 @@ func TestCacheList(t *testing.T) {
 			for _, id := range ids {
 				if usr.ID == id {
 					item.counter += 4
+					break
 				}
 			}
 
@@ -45,10 +46,8 @@ func TestCacheList(t *testing.T) {
 		}
 
 		for _, item := range list.items {
-			if item.counter < 4 {
-				if item.item.(*randomStruct).ID != Snowflake(255) {
-					t.Errorf("expected lfu counter to be higher. Got %d, wants above %d", item.counter, 4)
-				}
+			if item.counter < 4 && item.item.(*randomStruct).ID < Snowflake(89+1) {
+				t.Errorf("expected lfu counter to be higher. Got %d, wants above %d", item.counter, 4)
 			}
 		}
 	})
