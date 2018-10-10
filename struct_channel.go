@@ -457,6 +457,7 @@ type MessageApplication struct {
 
 // Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
+	sync.RWMutex    `json:"-"`
 	ID              Snowflake          `json:"id"`
 	ChannelID       Snowflake          `json:"channel_id"`
 	Author          *User              `json:"author"`
@@ -476,8 +477,6 @@ type Message struct {
 	Type            uint               `json:"type"`
 	Activity        MessageActivity    `json:"activity"`
 	Application     MessageApplication `json:"application"`
-
-	sync.RWMutex `json:"-"`
 }
 
 // TODO: why is this method needed?

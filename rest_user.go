@@ -13,8 +13,9 @@ func ratelimitUsers() string {
 	return "u"
 }
 
-// [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify scope, which
-// will return the object without an email, and optionally the email scope, which returns the object with an email.
+// GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
+// scope, which will return the object without an email, and optionally the email scope, which returns the object
+// with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
 //  Rate limiter            /users
@@ -34,7 +35,7 @@ func GetCurrentUser(client httd.Getter) (ret *User, err error) {
 	return
 }
 
-// [REST] Returns a user object for a given user Snowflake.
+// GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
 //  Rate limiter            /users
@@ -54,13 +55,13 @@ func GetUser(client httd.Getter, id Snowflake) (ret *User, err error) {
 	return
 }
 
-// JSON params for func ModifyCurrentUser
+// ModifyCurrentUserParams JSON params for func ModifyCurrentUser
 type ModifyCurrentUserParams struct {
 	Username *string `json:"username,omitempty"`
 	Avatar   *string `json:"avatar,omitempty"`
 }
 
-// [REST] Modify the requester's user account settings. Returns a user object on success.
+// ModifyCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
 //  Rate limiter            /users
@@ -82,7 +83,7 @@ func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (re
 	return
 }
 
-// JSON params for func GetCurrentUserGuilds
+// GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
 type GetCurrentUserGuildsParams struct {
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
@@ -111,7 +112,8 @@ func (params *GetCurrentUserGuildsParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Returns a list of partial guild objects the current user is a member of. Requires the guilds OAuth2 scope.
+// GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
+// Requires the guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
 //  Rate limiter            /users TODO: is this correct?
@@ -133,7 +135,7 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 	return
 }
 
-// [REST] Leave a guild. Returns a 204 empty response on success.
+// LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
 //  Rate limiter            /users TODO: is this correct?
@@ -156,7 +158,7 @@ func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
 	return
 }
 
-// [REST] Returns a list of DM channel objects.
+// GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users TODO: is this correct?
@@ -176,12 +178,12 @@ func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
 	return
 }
 
-// JSON param for func CreateDM
+// BodyUserCreateDM JSON param for func CreateDM
 type BodyUserCreateDM struct {
 	RecipientID Snowflake `json:"recipient_id"`
 }
 
-// [REST] Create a new DM channel with a user. Returns a DM channel object.
+// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users TODO: is this correct?
@@ -204,13 +206,14 @@ func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err erro
 	return
 }
 
-// JSON params for func CreateGroupDM https://discordapp.com/developers/docs/resources/user#create-group-dm
+// CreateGroupDMParams JSON params for func CreateGroupDM
+// https://discordapp.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
 	AccessTokens []string             `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
 	Nicks        map[Snowflake]string `json:"nicks"`         // map[userID] = nickname
 }
 
-// [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
+// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users TODO: is this correct?
@@ -232,7 +235,7 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 	return
 }
 
-// [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
+// GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/connections
 //  Rate limiter            /users TODO: is this correct?

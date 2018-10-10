@@ -17,7 +17,7 @@ import (
 // This means that the quota returned by our APIs may be inaccurate,
 // and you may encounter 429s.
 
-// [REST] Returns a list of emoji objects for the given guild.
+// ListGuildEmojis [REST] Returns a list of emoji objects for the given guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis
 //  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
@@ -37,7 +37,7 @@ func ListGuildEmojis(client httd.Getter, id Snowflake) (ret []*Emoji, err error)
 	return
 }
 
-// [REST] Returns an emoji object for the given guild and emoji IDs.
+// GetGuildEmoji [REST] Returns an emoji object for the given guild and emoji IDs.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
 //  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
@@ -70,8 +70,8 @@ type CreateGuildEmojiParams struct {
 	Roles []Snowflake `json:"roles"`
 }
 
-// [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission. Returns the new emoji object
-// on success. Fires a Guild Emojis Update Gateway event.
+// CreateGuildEmoji [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
+// Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/emojis
 //  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
@@ -105,8 +105,8 @@ type ModifyGuildEmojiParams struct {
 	Roles []Snowflake `json:"roles"`
 }
 
-// [REST] Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns the updated emoji object on success.
-// Fires a Guild Emojis Update Gateway event.
+// ModifyGuildEmoji [REST] Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
+// Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
 //  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
@@ -132,8 +132,8 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake, params *M
 	return
 }
 
-// [REST] Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on success.
-// Fires a Guild Emojis Update Gateway event.
+// DeleteGuildEmoji [REST] Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
+// success. Fires a Guild Emojis Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
 //  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct

@@ -8,7 +8,7 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-// [REST] Returns an invite object for the given code.
+// GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
 //  Rate limiter            /invites
@@ -37,7 +37,7 @@ func GetInvite(client httd.Getter, inviteCode string, withCounts bool) (invite *
 	return
 }
 
-// [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
+// DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
 //  Rate limiter            /invites

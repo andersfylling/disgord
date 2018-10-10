@@ -5,7 +5,7 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-// [REST]   Returns an array of voice region objects that can be used when creating servers.
+// ListVoiceRegions [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
 //  Rate limiter            /voice/regions

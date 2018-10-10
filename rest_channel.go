@@ -42,7 +42,7 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 	return ratelimitChannel(id) + ":w"
 }
 
-// [REST] Get a channel by Snowflake. Returns a channel object.
+// GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}
@@ -80,10 +80,10 @@ type ModifyChannelParams struct {
 	ParentID             *Snowflake            `json:"parent_id,omitempty"`
 }
 
-// [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns a channel on success,
-// and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If modifying a category,
-// individual Channel Update events will fire for each child channel that also changes. For the PATCH method, all the
-// JSON Params are optional.
+// ModifyChannel [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
+// modifying a category, individual Channel Update events will fire for each child channel that also changes.
+// For the PATCH method, all the JSON Params are optional.
 //  Method                  PUT/PATCH
 //  Endpoint                /channels/{channel.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}
@@ -111,9 +111,9 @@ func ModifyChannel(client httd.Patcher, id Snowflake, changes *ModifyChannelPara
 	return
 }
 
-// [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for the guild.
-// Deleting a category does not delete its child channels; they will have their parent_id removed and a Channel
-// Update Gateway event will fire for each of them. Returns a channel object on success.
+// DeleteChannel [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
+// the guild. Deleting a category does not delete its child channels; they will have their parent_id removed and a
+// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 // Fires a Channel Delete Gateway event.
 //  Method                  Delete
 //  Endpoint                /channels/{channel.id}
@@ -155,9 +155,9 @@ type EditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
-// [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable for guild channels.
-// Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more information about
-// permissions, see permissions.
+// EditChannelPermissions[REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
+// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
+// For more information about permissions, see permissions.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
@@ -188,8 +188,8 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	return
 }
 
-// [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for guild channels.
-// Requires the 'MANAGE_CHANNELS' permission.
+// GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
+// guild channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/invites
 //  Rate limiter [MAJOR]    /channels/{channel.id}/invites
@@ -223,9 +223,9 @@ type CreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// [REST] Create a new invite object for the channel. Only usable for guild channels. Requires the CREATE_INSTANT_INVITE
-// permission. All JSON parameters for this route are optional, however the request body is not. If you are not
-// sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
+// CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild channels. Requires
+// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
+// not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/invites
 //  Rate limiter [MAJOR]    /channels/{channel.id}/invites
@@ -256,9 +256,9 @@ func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChanne
 	return
 }
 
-// [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable for guild channels.
-// Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more information about
-// permissions, see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
+// DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
+// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
+// information about permissions, see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
@@ -288,10 +288,10 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 	return
 }
 
-// [REST] Post a typing indicator for the specified channel. Generally bots should not implement this route.
-// However, if a bot is responding to a command and expects the computation to take a few seconds, this endpoint
-// may be called to let the user know that the bot is processing their message. Returns a 204 empty response on
-// success. Fires a Typing Start Gateway event.
+// TriggerTypingIndicator [REST] Post a typing indicator for the specified channel. Generally bots should not implement
+// this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
+// endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
+// on success. Fires a Typing Start Gateway event.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/typing
 //  Rate limiter [MAJOR]    /channels/{channel.id}/typing
@@ -314,7 +314,7 @@ func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error)
 	return
 }
 
-// [REST] Returns all pinned messages in the channel as an array of message objects.
+// GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/pins
 //  Rate limiter [MAJOR]    /channels/{channel.id}/pins
@@ -335,8 +335,8 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 	return
 }
 
-// [REST] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on
-// success.
+// AddPinnedChannelMessage [REST] Pin a message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// Returns a 204 empty response on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/pins
@@ -359,8 +359,8 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err
 	return
 }
 
-// [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
-// on success. Returns a 204 empty response on success.
+// DeletePinnedChannelMessage [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/pins
@@ -396,7 +396,8 @@ type GroupDMAddRecipientParams struct {
 	Nickname    string `json:"nick"`         // nickname of the user being added
 }
 
-// [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response on success.
+// GroupDMAddRecipient [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
+// on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
@@ -428,7 +429,7 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 	return
 }
 
-// [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
+// GroupDMRemoveRecipient [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
@@ -497,7 +498,7 @@ func (params *GetChannelMessagesParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
+// GetChannelMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
@@ -531,8 +532,9 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 	return
 }
 
-// [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints requires the
-// 'READ_MESSAGE_HISTORY' permission to be present on the current user. Returns a message object on success.
+// GetChannelMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints
+// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
+// Returns a message object on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages
@@ -579,20 +581,6 @@ type CreateChannelMessageParams struct {
 	Files []CreateChannelMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 }
 
-// Helpers for file uploading in messages
-func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) error {
-	w, err := mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), f.FileName)
-	if err != nil {
-		return err
-	}
-
-	if _, err = io.Copy(w, f.Reader); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentType string, err error) {
 	if len(p.Files) == 0 {
 		postBody = p
@@ -636,8 +624,22 @@ type CreateChannelMessageFileParams struct {
 	FileName string    `json:"-"`
 }
 
-// [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this endpoint requires
-// the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
+// write helper for file uploading in messages
+func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) error {
+	w, err := mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), f.FileName)
+	if err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(w, f.Reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateChannelMessage [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this
+// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 // the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 // Message Create Gateway event. See message formatting for more information on how to properly format messages.
 // The maximum request size when sending a message is 8MB.
@@ -689,8 +691,8 @@ type EditMessageParams struct {
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 }
 
-// [REST] Edit a previously sent message. You can only edit messages that have been sent by the current user.
-// Returns a message object. Fires a Message Update Gateway event.
+// EditMessage [REST] Edit a previously sent message. You can only edit messages that have been sent by the
+// current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages
@@ -722,9 +724,9 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 	return
 }
 
-// [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not sent by the
-// current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success.
-// Fires a Message Delete Gateway event.
+// DeleteMessage[REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
+// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
+// on success. Fires a Message Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE]
@@ -808,8 +810,8 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	return
 }
 
-// [REST] Delete multiple messages in a single request. This endpoint can only be used on guild channels and
-// requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
+// BulkDeleteMessages [REST] Delete multiple messages in a single request. This endpoint can only be used on guild
+// channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 // Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.
@@ -849,9 +851,9 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 // ------------------------------------------
 // Reaction
 
-// [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY' permission to
-// be present on the current user. Additionally, if nobody else has reacted to the message using this emoji,
-// this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
+// CreateReaction [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+// permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
+// emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
 // response on success. The maximum request size when sending a message is 8MB.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
@@ -896,7 +898,8 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 	return
 }
 
-// [REST] Delete a reaction the current user has made for the message. Returns a 204 empty response on success.
+// DeleteOwnReaction [REST] Delete a reaction the current user has made for the message.
+// Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
@@ -941,8 +944,8 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	return
 }
 
-// [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission to be present
-// on the current user. Returns a 204 empty response on success.
+// DeleteUserReaction[REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
+// to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
@@ -1016,7 +1019,7 @@ func (params *GetReactionURLParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+// GetReaction [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
@@ -1064,8 +1067,8 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	return
 }
 
-// [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES' permission to be
-// present on the current user.
+// DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+// permission to be present on the current user.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
 //  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key

@@ -44,7 +44,7 @@ func (params *GuildAuditLogsParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
+// GuildAuditLogs [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 //  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/audit-logs
 //  Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs

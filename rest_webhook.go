@@ -12,14 +12,15 @@ func ratelimitWebhook(id Snowflake) string {
 	return "wh:" + id.String()
 }
 
-// json params for the create webhook rest request avatar string
+// CreateWebhookParams json params for the create webhook rest request avatar string
 // https://discordapp.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 }
 
-// [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission. Returns a webhook object on success.
+// CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// Returns a webhook object on success.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
 //  Rate limiter            /channels/{channel.id}/webhooks
@@ -41,7 +42,7 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 	return
 }
 
-// [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+// GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
 //  Rate limiter            /channels/{channel.id}/webhooks
@@ -61,7 +62,7 @@ func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook
 	return
 }
 
-// [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+// GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/webhooks
 //  Rate limiter            /guilds/{guild.id}/webhooks
@@ -81,7 +82,7 @@ func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, er
 	return
 }
 
-// [REST] Returns the new webhook object for the given id.
+// GetWebhook [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -102,8 +103,8 @@ func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
 	return
 }
 
-// [REST] Same as GetWebhook, except this call does not require authentication and returns no user in the
-// webhook object.
+// GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
+// returns no user in the webhook object.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -123,7 +124,8 @@ func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *W
 	return
 }
 
-// [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission. Returns the updated webhook object on success.
+// ModifyWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -151,8 +153,8 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 	return
 }
 
-// [REST] Same as ModifyWebhook, except this call does not require authentication, does not accept a channel_id
-// parameter in the body, and does not return a user in the webhook object.
+// ModifyWebhookWithToken[REST] Same as ModifyWebhook, except this call does not require authentication,
+// does not accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -180,7 +182,7 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 	return
 }
 
-// [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
+// DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -191,7 +193,7 @@ func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
 	return DeleteWebhookWithToken(client, webhookID, "")
 }
 
-// [REST] Same as DeleteWebhook, except this call does not require authentication.
+// DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -221,7 +223,7 @@ func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (er
 	return
 }
 
-// creates params for func ExecuteWebhook
+// NewExecuteWebhookParams creates params for func ExecuteWebhook
 func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookParams, err error) {
 	return &ExecuteWebhookParams{
 		WebhookID: id,
@@ -229,7 +231,7 @@ func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookPar
 	}, nil
 }
 
-// JSON params for func ExecuteWebhook
+// ExecuteWebhookParams JSON params for func ExecuteWebhook
 type ExecuteWebhookParams struct {
 	WebhookID Snowflake `json:"-"`
 	Token     string    `json:"-"`
@@ -242,7 +244,7 @@ type ExecuteWebhookParams struct {
 	Embeds    []*ChannelEmbed `json:"embeds"`
 }
 
-// [REST] Trigger a webhook in Discord.
+// ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks/{webhook.id}
@@ -271,7 +273,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 	return
 }
 
-// [REST] Trigger a webhook in Discord from the Slack app.
+// ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks
@@ -283,7 +285,7 @@ func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait 
 	return ExecuteWebhook(client, params, wait, endpoint.Slack())
 }
 
-// [REST] Trigger a webhook in Discord from the GitHub app.
+// ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks

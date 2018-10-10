@@ -49,6 +49,7 @@ func ratelimitGuildWebhooks(id Snowflake) string {
 	return ratelimitGuild(id) + ":w"
 }
 
+// CreateGuildParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-json-params
 // example partial channel object:
 // {
@@ -66,7 +67,7 @@ type CreateGuildParams struct {
 	Channels                []*PartialChannel             `json:"channels"`
 }
 
-// [REST] Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
+// CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
 //  Rate limiter            /guilds
@@ -91,7 +92,7 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 	return
 }
 
-// [REST] Returns the guild object for the given id.
+// GetGuild [REST] Returns the guild object for the given id.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}
 //  Rate limiter            /guilds/{guild.id}
@@ -135,8 +136,8 @@ type ModifyGuildParams struct {
 	SystemChannelID         Snowflake                     `json:"system_channel_id,omitempty"`
 }
 
-// [REST] Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated guild object on
-// success. Fires a Guild Update Gateway event.
+// ModifyGuild [REST] Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated guild
+// object on success. Fires a Guild Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}
 //  Rate limiter            /guilds/{guild.id}
@@ -166,7 +167,7 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (
 	return
 }
 
-// [REST] Delete a guild permanently. User must be owner. Returns 204 No Content on success.
+// DeleteGuild [REST] Delete a guild permanently. User must be owner. Returns 204 No Content on success.
 // Fires a Guild Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}
@@ -190,7 +191,7 @@ func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
 	return
 }
 
-// [REST] Returns a list of guild channel objects.
+// GetGuildChannels [REST] Returns a list of guild channel objects.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/channels
 //  Rate limiter            /guilds/{guild.id}/channels
@@ -223,8 +224,8 @@ type CreateGuildChannelParams struct {
 	NSFW                 *bool                 `json:"nsfw,omitempty"`
 }
 
-// [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission. Returns the
-// new channel object on success. Fires a Channel Create Gateway event.
+// CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
+// Returns the new channel object on success. Fires a Channel Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels
 //  Rate limiter            /guilds/{guild.id}/channels
@@ -246,14 +247,16 @@ func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildCha
 	return
 }
 
+// ModifyGuildChannelPositionsParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
 type ModifyGuildChannelPositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 }
 
-// [REST] Modify the positions of a set of channel objects for the guild. Requires 'MANAGE_CHANNELS' permission.
-// Returns a 204 empty response on success. Fires multiple Channel Update Gateway events.
+// ModifyGuildChannelPositions [REST] Modify the positions of a set of channel objects for the guild.
+// Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
+// Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/channels
 //  Rate limiter            /guilds/{guild.id}/channels
@@ -276,7 +279,7 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params *Modi
 	return
 }
 
-// [REST] Returns a guild member object for the specified user.
+// GetGuildMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
 //  Rate limiter            /guilds/{guild.id}/members
@@ -296,7 +299,7 @@ func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member,
 	return
 }
 
-// [REST] Returns a list of guild member objects that are members of the guild. The `after` param
+// GetGuildMembers [REST] Returns a list of guild member objects that are members of the guild. The `after` param
 // refers to the highest snowflake.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members
@@ -343,6 +346,7 @@ func GetGuildMembers(client httd.Getter, guildID, after Snowflake, limit int) (r
 	return
 }
 
+// AddGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
 	AccessToken string      `json:"access_token"`
@@ -352,9 +356,9 @@ type AddGuildMemberParams struct {
 	Deaf        bool        `json:"deaf"`
 }
 
-// [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with the guilds.join
-// scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is already a
-// member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
+// AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with
+// the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
+// already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
@@ -386,6 +390,7 @@ func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGui
 	return
 }
 
+// ModifyGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyGuildMemberParams struct {
 	Nick      string      `json:"nick,omitempty"`       // :MANAGE_NICKNAMES
@@ -395,8 +400,8 @@ type ModifyGuildMemberParams struct {
 	ChannelID Snowflake   `json:"channel_id,omitempty"` // :MOVE_MEMBERS
 }
 
-// [REST] Modify attributes of a guild member. Returns a 204 empty response on success. Fires a Guild Member
-// Update Gateway event.
+// ModifyGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
+// Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
 //  Rate limiter            /guilds/{guild.id}/members
@@ -424,13 +429,14 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 	return
 }
 
+// ModifyCurrentUserNickParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyCurrentUserNickParams struct {
 	Nick string `json:"nick"` // :CHANGE_NICKNAME
 }
 
-// [REST] Modifies the nickname of the current user in a guild. Returns a 200 with the nickname on success.
-// Fires a Guild Member Update Gateway event.
+// ModifyCurrentUserNick [REST] Modifies the nickname of the current user in a guild.
+// Returns a 200 with the nickname on success. Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/@me/nick
 //  Rate limiter            /guilds/{guild.id}/members TODO: I don't know if this is correct
@@ -458,8 +464,8 @@ func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurr
 	return
 }
 
-// [REST] Adds a role to a guild member. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on
-// success. Fires a Guild Member Update Gateway event.
+// AddGuildMemberRole [REST] Adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
+// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
 //  Rate limiter            /guilds/{guild.id}/members TODO: I don't know if this is correct
@@ -483,8 +489,8 @@ func AddGuildMemberRole(client httd.Puter, guildID, userID, roleID Snowflake) (e
 	return
 }
 
-// [REST] Removes a role from a guild member. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty
-// response on success. Fires a Guild Member Update Gateway event.
+// RemoveGuildMemberRole [REST] Removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
+// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
 //  Rate limiter            /guilds/{guild.id}/members
@@ -508,8 +514,8 @@ func RemoveGuildMemberRole(client httd.Deleter, guildID, userID, roleID Snowflak
 	return
 }
 
-// [REST] Remove a member from a guild. Requires 'KICK_MEMBERS' permission. Returns a 204 empty response on success.
-// Fires a Guild Member Remove Gateway event.
+// RemoveGuildMember [REST] Remove a member from a guild. Requires 'KICK_MEMBERS' permission.
+// Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
 //  Rate limiter            /guilds/{guild.id}/members
@@ -533,7 +539,7 @@ func RemoveGuildMember(client httd.Deleter, guildID, userID Snowflake) (err erro
 	return
 }
 
-// [REST] Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
+// GetGuildBans [REST] Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans
 //  Rate limiter            /guilds/{guild.id}/bans
@@ -553,7 +559,7 @@ func GetGuildBans(client httd.Getter, id Snowflake) (ret []*Ban, err error) {
 	return
 }
 
-// [REST] Returns a ban object for the given user or a 404 not found if the ban cannot be found.
+// GetGuildBan [REST] Returns a ban object for the given user or a 404 not found if the ban cannot be found.
 // Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
@@ -579,6 +585,7 @@ func GetGuildBan(client httd.Getter, guildID, userID Snowflake) (ret *Ban, err e
 	return
 }
 
+// CreateGuildBanParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-ban-query-string-params
 type CreateGuildBanParams struct {
 	DeleteMessageDays int    `urlparam:"delete_message_days"` // number of days to delete messages for (0-7)
@@ -602,8 +609,8 @@ func (params *CreateGuildBanParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires the
-// 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
+// CreateGuildBan [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
 //  Rate limiter            /guilds/{guild.id}/bans
@@ -628,8 +635,8 @@ func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *Create
 	return
 }
 
-// [REST] Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions. Returns a 204 empty response on success.
-// Fires a Guild Ban Remove Gateway event.
+// RemoveGuildBan [REST] Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
+// Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
 //  Rate limiter            /guilds/{guild.id}/bans
@@ -653,7 +660,7 @@ func RemoveGuildBan(client httd.Deleter, guildID, userID Snowflake) (err error) 
 	return
 }
 
-// [REST] Returns a list of role objects for the guild.
+// GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/roles
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -682,6 +689,7 @@ func GetGuildRoles(client httd.Getter, guildID Snowflake) (ret []*Role, err erro
 	return
 }
 
+// CreateGuildRoleParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
@@ -691,8 +699,8 @@ type CreateGuildRoleParams struct {
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
-// [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission. Returns the new role object
-// on success. Fires a Guild Role Create Gateway event.
+// CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
+// Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -720,14 +728,16 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 	return
 }
 
+// ModifyGuildRolePositionsParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type ModifyGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position uint      `json:"position"`
 }
 
-// [REST] Modify the positions of a set of role objects for the guild. Requires the 'MANAGE_ROLES' permission.
-// Returns a list of all of the guild's role objects on success. Fires multiple Guild Role Update Gateway events.
+// ModifyGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
+// Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
+// Fires multiple Guild Role Update Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -758,7 +768,7 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *Mo
 	return
 }
 
-// JSON params for func ModifyGuildRole
+// ModifyGuildRoleParams JSON params for func ModifyGuildRole
 type ModifyGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
 	Permissions uint64 `json:"permissions,omitempty"`
@@ -767,8 +777,8 @@ type ModifyGuildRoleParams struct {
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
-// [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the updated role on success.
-// Fires a Guild Role Update Gateway event.
+// ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
+// Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -796,8 +806,8 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *Mod
 	return
 }
 
-// [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
-// Fires a Guild Role Delete Gateway event.
+// DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.
+// Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -821,6 +831,7 @@ func DeleteGuildRole(client httd.Deleter, guildID, roleID Snowflake) (err error)
 	return
 }
 
+// GuildPruneParams ...
 // https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
 type GuildPruneParams struct {
 	Days int `urlparam:"days"` // number of days to count prune for (1 or more)
@@ -838,8 +849,8 @@ func (params *GuildPruneParams) GetQueryString() string {
 	return query
 }
 
-// [REST] Returns an object with one 'pruned' key indicating the number of members that would be removed in a
-// prune operation. Requires the 'KICK_MEMBERS' permission.
+// GetGuildPruneCount [REST] Returns an object with one 'pruned' key indicating the number of members that would be
+// removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/prune
 //  Rate limiter            /guilds/{guild.id}/prune
@@ -859,8 +870,8 @@ func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPrunePara
 	return
 }
 
-// [REST] Begin a prune operation. Requires the 'KICK_MEMBERS' permission. Returns an object with one 'pruned'
-// key indicating the number of members that were removed in the prune operation.
+// BeginGuildPrune [REST] Begin a prune operation. Requires the 'KICK_MEMBERS' permission.
+// Returns an object with one 'pruned' key indicating the number of members that were removed in the prune operation.
 // Fires multiple Guild Member Remove Gateway events.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/prune
@@ -881,7 +892,7 @@ func BeginGuildPrune(client httd.Poster, id Snowflake, params *GuildPruneParams)
 	return
 }
 
-// [REST] Returns a list of voice region objects for the guild. Unlike the similar /voice route,
+// GetGuildVoiceRegions [REST] Returns a list of voice region objects for the guild. Unlike the similar /voice route,
 // this returns VIP servers when the guild is VIP-enabled.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/regions
@@ -902,7 +913,8 @@ func GetGuildVoiceRegions(client httd.Getter, id Snowflake) (ret []*VoiceRegion,
 	return
 }
 
-// [REST] Returns a list of invite objects (with invite metadata) for the guild. Requires the 'MANAGE_GUILD' permission.
+// GetGuildInvites [REST] Returns a list of invite objects (with invite metadata) for the guild.
+// Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/invites
 //  Rate limiter            /guilds/{guild.id}/invites
@@ -922,7 +934,8 @@ func GetGuildInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error
 	return
 }
 
-// [REST] Returns a list of integration objects for the guild. Requires the 'MANAGE_GUILD' permission.
+// GetGuildIntegrations [REST] Returns a list of integration objects for the guild.
+// Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                 /guilds/{guild.id}/integrations
 //  Rate limiter             /guilds/{guild.id}/integrations
@@ -942,14 +955,16 @@ func GetGuildIntegrations(client httd.Getter, id Snowflake) (ret []*Integration,
 	return
 }
 
+// CreateGuildIntegrationParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-integration-json-params
 type CreateGuildIntegrationParams struct {
 	Type string    `json:"type"`
 	ID   Snowflake `json:"id"`
 }
 
-// [REST] Attach an integration object from the current user to the guild. Requires the 'MANAGE_GUILD' permission.
-// Returns a 204 empty response on success. Fires a Guild Integrations Update Gateway event.
+// CreateGuildIntegration [REST] Attach an integration object from the current user to the guild.
+// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+// Fires a Guild Integrations Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations
 //  Rate limiter            /guilds/{guild.id}/integrations
@@ -975,6 +990,7 @@ func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *Creat
 	return
 }
 
+// ModifyGuildIntegrationParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
 type ModifyGuildIntegrationParams struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
@@ -982,8 +998,9 @@ type ModifyGuildIntegrationParams struct {
 	EnableEmoticons   bool `json:"enable_emoticons"`
 }
 
-// [REST] Modify the behavior and settings of a integration object for the guild. Requires the 'MANAGE_GUILD'
-// permission. Returns a 204 empty response on success. Fires a Guild Integrations Update Gateway event.
+// ModifyGuildIntegration [REST] Modify the behavior and settings of a integration object for the guild.
+// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+// Fires a Guild Integrations Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
 //  Rate limiter            /guilds/{guild.id}/integrations
@@ -1009,8 +1026,9 @@ func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflak
 	return
 }
 
-// [REST] Delete the attached integration object for the guild. Requires the 'MANAGE_GUILD' permission.
-// Returns a 204 empty response on success. Fires a Guild Integrations Update Gateway event.
+// DeleteGuildIntegration [REST] Delete the attached integration object for the guild.
+// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+// Fires a Guild Integrations Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
 //  Rate limiter            /guilds/{guild.id}/integrations
@@ -1034,7 +1052,8 @@ func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflak
 	return
 }
 
-// [REST] Sync an integration. Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
+// SyncGuildIntegration [REST] Sync an integration. Requires the 'MANAGE_GUILD' permission.
+// Returns a 204 empty response on success.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}/sync
 //  Rate limiter            /guilds/{guild.id}/integrations TODO: is this correct?
@@ -1057,7 +1076,7 @@ func SyncGuildIntegration(client httd.Poster, guildID, integrationID Snowflake) 
 	return
 }
 
-// [REST] Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
+// GetGuildEmbed [REST] Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/embed
 //  Rate limiter            /guilds/{guild.id}/embed
@@ -1077,8 +1096,8 @@ func GetGuildEmbed(client httd.Getter, guildID Snowflake) (ret *GuildEmbed, err 
 	return
 }
 
-// [REST] Modify a guild embed object for the guild. All attributes may be passed in with JSON and modified.
-// Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
+// ModifyGuildEmbed [REST] Modify a guild embed object for the guild. All attributes may be passed in with JSON and
+// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/embed
 //  Rate limiter            /guilds/{guild.id}/embed
@@ -1100,7 +1119,8 @@ func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed
 	return
 }
 
-// [REST] Returns a partial invite object for guilds with that feature enabled. Requires the 'MANAGE_GUILD' permission.
+// GetGuildVanityURL [REST] Returns a partial invite object for guilds with that feature enabled.
+// Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/vanity-url
 //  Rate limiter            /guilds/{guild.id}/vanity-url
