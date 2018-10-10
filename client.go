@@ -873,8 +873,8 @@ func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 		// File: ...
 		// Embed: ...
 	}
-	if message.Nonce != nil {
-		params.Nonce = *message.Nonce
+	if !message.Nonce.Empty() {
+		params.Nonce = message.Nonce
 	}
 	if len(message.Embeds) > 0 {
 		params.Embed = message.Embeds[0]
@@ -1025,6 +1025,8 @@ func (c *Client) eventHandler() {
 		// unmarshal into cache
 		//err := c.cacheEvent2(evtName, box)
 
+		fmt.Println(evt.Name() + "#: " + string(data))
+
 		err = unmarshal(data, box)
 		if err != nil {
 			logrus.Error(err)
@@ -1108,7 +1110,7 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 	case EventMessageCreate:
 		// TODO: performance issues?
 		msg := (v.(*MessageCreate)).Message
-		c.cache.UpdateChannelLastMessageID(msg.ChannelID, &msg.ID)
+		c.cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
 	default:
 		err = errors.New("unsupported event for caching")
 		//case EventResumed:

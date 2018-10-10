@@ -160,20 +160,8 @@ func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 type MessageDelete struct {
 	MessageID Snowflake       `json:"id"`
 	ChannelID Snowflake       `json:"channel_id"`
+	GuildID   Snowflake       `json:"guild_id,omitempty"`
 	Ctx       context.Context `json:"-"`
-}
-
-// UnmarshalJSON ...
-func (obj *MessageDelete) UnmarshalJSON(data []byte) (err error) {
-	msg := &Message{}
-	err = unmarshal(data, msg)
-	if err != nil {
-		return
-	}
-
-	obj.MessageID = msg.ID
-	obj.ChannelID = msg.ChannelID
-	return
 }
 
 // ---------------------------

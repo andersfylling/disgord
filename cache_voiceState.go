@@ -44,7 +44,7 @@ func (g *guildVoiceStatesCache) sessionPosition(state *VoiceState) int {
 
 func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 	pos := g.sessionPosition(state)
-	if state.ChannelID == nil {
+	if state.ChannelID.Empty() {
 		// someone left
 		if pos > -1 {
 			g.sessions[pos] = g.sessions[len(g.sessions)-1]
@@ -69,7 +69,7 @@ func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 
 	// someone moved an existing channel
 	if g.sessions[pos].ChannelID != state.ChannelID {
-		*g.sessions[pos].ChannelID = *state.ChannelID
+		g.sessions[pos].ChannelID = state.ChannelID
 		return
 	}
 
@@ -98,7 +98,7 @@ func (c *Cache) SetVoiceState(state *VoiceState) {
 
 type guildVoiceStateCacheParams struct {
 	userID    Snowflake
-	channelID *Snowflake
+	channelID Snowflake
 	sessionID string
 }
 

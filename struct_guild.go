@@ -154,7 +154,7 @@ type Guild struct {
 	sync.RWMutex `json:"-"`
 
 	ID                          Snowflake                     `json:"id"`
-	ApplicationID               *Snowflake                    `json:"application_id"` //   |?
+	ApplicationID               Snowflake                     `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
 	Icon                        *string                       `json:"icon"`            //  |?, icon hash
 	Splash                      *string                       `json:"splash"`          //  |?, image hash
@@ -162,7 +162,7 @@ type Guild struct {
 	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
-	AfkChannelID                *Snowflake                    `json:"afk_channel_id"` // |?
+	AfkChannelID                Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
 	EmbedEnabled                bool                          `json:"embed_enabled,omit_empty"`
 	EmbedChannelID              Snowflake                     `json:"embed_channel_id,omit_empty"`
@@ -174,8 +174,8 @@ type Guild struct {
 	Features                    []string                      `json:"features"`
 	MFALevel                    MFALvl                        `json:"mfa_level"`
 	WidgetEnabled               bool                          `json:"widget_enabled,omit_empty"`    //   |
-	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |
-	SystemChannelID             *Snowflake                    `json:"system_channel_id,omitempty"`  //   |?
+	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |?
+	SystemChannelID             Snowflake                     `json:"system_channel_id,omitempty"`  //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
 	JoinedAt    *Timestamp      `json:"joined_at,omitempty"`    // ?*|
@@ -221,9 +221,8 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild.MemberCount = g.MemberCount
 
 	// pointers
-	if g.ApplicationID != nil {
-		id := *g.ApplicationID
-		guild.ApplicationID = &id
+	if !g.ApplicationID.Empty() {
+		guild.ApplicationID = g.ApplicationID
 	}
 	if g.Splash != nil {
 		splash := *g.Splash
@@ -233,13 +232,11 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 		icon := *g.Icon
 		guild.Icon = &icon
 	}
-	if g.AfkChannelID != nil {
-		channel := *g.AfkChannelID
-		guild.AfkChannelID = &channel
+	if !g.AfkChannelID.Empty() {
+		guild.AfkChannelID = g.AfkChannelID
 	}
-	if g.SystemChannelID != nil {
-		channel := *g.SystemChannelID
-		guild.SystemChannelID = &channel
+	if !g.SystemChannelID.Empty() {
+		guild.SystemChannelID = g.SystemChannelID
 	}
 	if g.JoinedAt != nil {
 		joined := *g.JoinedAt
@@ -657,9 +654,8 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.MemberCount = g.MemberCount
 
 	// pointers
-	if g.ApplicationID != nil {
-		id := *g.ApplicationID
-		guild.ApplicationID = &id
+	if !g.ApplicationID.Empty() {
+		guild.ApplicationID = g.ApplicationID
 	}
 	if g.Splash != nil {
 		splash := *g.Splash
@@ -669,13 +665,11 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		icon := *g.Icon
 		guild.Icon = &icon
 	}
-	if g.AfkChannelID != nil {
-		channel := *g.AfkChannelID
-		guild.AfkChannelID = &channel
+	if !g.AfkChannelID.Empty() {
+		guild.AfkChannelID = g.AfkChannelID
 	}
-	if g.SystemChannelID != nil {
-		channel := *g.SystemChannelID
-		guild.SystemChannelID = &channel
+	if !g.SystemChannelID.Empty() {
+		guild.SystemChannelID = g.SystemChannelID
 	}
 	if g.JoinedAt != nil {
 		joined := *g.JoinedAt

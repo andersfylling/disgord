@@ -52,11 +52,11 @@ func prepareBox(evtName string, box interface{}) {
 			role.guildID = (box.(*GuildCreate)).Guild.ID
 		}
 	case EventGuildUpdate:
-		for _, role := range (box.(*GuildCreate)).Guild.Roles {
-			role.guildID = (box.(*GuildCreate)).Guild.ID
+		for _, role := range (box.(*GuildUpdate)).Guild.Roles {
+			role.guildID = (box.(*GuildUpdate)).Guild.ID
 		}
 	case EventGuildRoleCreate:
-		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildCreate)).Guild.ID
+		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildRoleCreate)).GuildID
 	case EventGuildRoleUpdate:
 		(box.(*GuildRoleUpdate)).Role.guildID = (box.(*GuildRoleUpdate)).GuildID
 	}

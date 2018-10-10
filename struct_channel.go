@@ -95,7 +95,7 @@ type Channel struct {
 	Name                 string                `json:"name,omitempty"`                  // ?|
 	Topic                *string               `json:"topic,omitempty"`                 // ?|?
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        *Snowflake            `json:"last_message_id,omitempty"`       // ?|?
+	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
@@ -103,7 +103,7 @@ type Channel struct {
 	Icon                 *string               `json:"icon,omitempty"`                  // ?|?
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
-	ParentID             *Snowflake            `json:"parent_id,omitempty"`             // ?|?
+	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?
 	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
 
 	// set to true when the object is not incomplete. Used in situations
@@ -217,7 +217,7 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 
 		// shared
 		if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
-			changes.ParentID = c.ParentID
+			changes.ParentID = &c.ParentID
 		}
 
 		// for all
@@ -392,7 +392,7 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 	message.RLock()
 	params := &CreateChannelMessageParams{
 		Content: message.Content,
-		Nonce:   *message.Nonce,
+		Nonce:   message.Nonce,
 		Tts:     message.Tts,
 		// File: ...
 		// Embed: ...
@@ -470,7 +470,7 @@ type Message struct {
 	Attachments     []*Attachment      `json:"attachments"`
 	Embeds          []*ChannelEmbed    `json:"embeds"`
 	Reactions       []*Reaction        `json:"reactions"`       // ?
-	Nonce           *Snowflake         `json:"nonce,omitempty"` // ?, used for validating a message was sent
+	Nonce           Snowflake          `json:"nonce,omitempty"` // ?, used for validating a message was sent
 	Pinned          bool               `json:"pinned"`
 	WebhookID       Snowflake          `json:"webhook_id"` // ?
 	Type            uint               `json:"type"`
@@ -528,9 +528,8 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		message.Author = m.Author.DeepCopy().(*User)
 	}
 
-	if m.Nonce != nil {
-		s := *m.Nonce
-		message.Nonce = &s
+	if !m.Nonce.Empty() {
+		message.Nonce = m.Nonce
 	}
 
 	for _, mention := range m.Mentions {
@@ -596,11 +595,9 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 	params := &CreateChannelMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
+		Nonce:   m.Nonce,
 		// File: ...
 		// Embed: ...
-	}
-	if m.Nonce != nil {
-		params.Nonce = *m.Nonce
 	}
 	if len(m.Embeds) > 0 {
 		params.Embed = m.Embeds[0]

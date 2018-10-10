@@ -12,7 +12,7 @@ type VoiceState struct {
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
 	// ChannelID the channel id this user is connected to
-	ChannelID *Snowflake `json:"channel_id"` // | ?
+	ChannelID Snowflake `json:"channel_id"` // | ?
 
 	// UserID the user id this voice state is for
 	UserID Snowflake `json:"user_id"` // |

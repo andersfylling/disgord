@@ -107,7 +107,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 	}
 }
 
-func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID *Snowflake) {
+func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {
 	if c.channels == nil || channelID.Empty() || messageID.Empty() {
 		return
 	}

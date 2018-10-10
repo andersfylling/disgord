@@ -116,6 +116,8 @@
 //
 // Saving and Deleting Discord data
 //
+// > Note: when using SaveToDiscord(...) make sure the object reflects the Discord state. Calling Save on default values might overwrite or reset the object at Discord, causing literally.. Hell.
+//
 // You might have seen the two methods in the session interface: SaveToDiscord(...) and DeleteFromDiscord(...).
 // This are as straight forward as they sound. Passing a discord data structure into one of them executes their obvious behavior; to either save it to Discord, or delete it.
 //  // create a new role and give it certain permissions
