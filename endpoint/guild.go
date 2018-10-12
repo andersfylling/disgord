@@ -12,27 +12,27 @@ func Guild(id fmt.Stringer) string {
 	return guilds + "/" + id.String()
 }
 
-// Guild /guilds/{guild.id}/channels
+// GuildChannels /guilds/{guild.id}/channels
 func GuildChannels(id fmt.Stringer) string {
 	return Guild(id) + channels
 }
 
-// Guild /guilds/{guild.id}/channels/{channel.id}
+// GuildChannel /guilds/{guild.id}/channels/{channel.id}
 func GuildChannel(guildID, channelID fmt.Stringer) string {
 	return Guild(guildID) + Channel(channelID)
 }
 
-// Guild /guilds/{guild.id}/members
+// GuildMembers /guilds/{guild.id}/members
 func GuildMembers(id fmt.Stringer) string {
 	return Guild(id) + members
 }
 
-// Guild /guilds/{guild.id}/members/{user.id}
+// GuildMember /guilds/{guild.id}/members/{user.id}
 func GuildMember(guildID, userID fmt.Stringer) string {
 	return GuildMembers(guildID) + "/" + userID.String()
 }
 
-// GuildMemberMeNick /guilds/{guild.id}/members/@me/nick
+// GuildMembersMeNick /guilds/{guild.id}/members/@me/nick
 func GuildMembersMeNick(guildID fmt.Stringer) string {
 	return GuildMembers(guildID) + me + nick
 }
@@ -47,7 +47,7 @@ func GuildBans(id fmt.Stringer) string {
 	return Guild(id) + bans
 }
 
-// GuildBans /builds/{guild.id}/bans/{user.id}
+// GuildBan /builds/{guild.id}/bans/{user.id}
 func GuildBan(guildID, userID fmt.Stringer) string {
 	return Guild(guildID) + bans + "/" + userID.String()
 }
@@ -87,7 +87,7 @@ func GuildIntegration(guildID, integrationID fmt.Stringer) string {
 	return GuildIntegrations(guildID) + "/" + integrationID.String()
 }
 
-// GuildIntegration /guilds/{guild.id}/integrations/{integration.id}/sync
+// GuildIntegrationSync /guilds/{guild.id}/integrations/{integration.id}/sync
 func GuildIntegrationSync(guildID, integrationID fmt.Stringer) string {
 	return GuildIntegration(guildID, integrationID) + sync
 }

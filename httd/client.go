@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// defaults and string format's for Discord interaction
 const (
 	BaseURL = "https://discordapp.com/api"
 
@@ -28,6 +29,7 @@ const (
 	GZIPCompression = "gzip"
 )
 
+// Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
 	Request(req *Request) (resp *http.Response, body []byte, err error)
 	Get(req *Request) (resp *http.Response, body []byte, err error)
@@ -37,46 +39,56 @@ type Requester interface {
 	Delete(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Getter interface which holds the Get method for sending get requests to Discord
 type Getter interface {
 	Get(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Poster interface which holds the Post method for sending post requests to Discord
 type Poster interface {
 	Post(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Puter interface which holds the Put method for sending put requests to Discord
 type Puter interface {
 	Put(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Patcher interface which holds the Patch method for sending patch requests to Discord
 type Patcher interface {
 	Patch(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Deleter interface which holds the Delete method for sending delete requests to Discord
 type Deleter interface {
 	Delete(req *Request) (resp *http.Response, body []byte, err error)
 }
 
+// Get handles Discord get requests
 func (c *Client) Get(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodGet
 	return c.Request(req)
 }
 
+// Post handles Discord post requests
 func (c *Client) Post(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPost
 	return c.Request(req)
 }
 
+// Put handles Discord put requests
 func (c *Client) Put(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPut
 	return c.Request(req)
 }
 
+// Patch handles Discord patch requests
 func (c *Client) Patch(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPatch
 	return c.Request(req)
 }
 
+// Delete handles Discord delete requests
 func (c *Client) Delete(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodDelete
 	return c.Request(req)
@@ -99,6 +111,7 @@ func SupportsDiscordAPIVersion(version int) bool {
 	return supported
 }
 
+// NewClient ...
 func NewClient(conf *Config) *Client {
 	if !SupportsDiscordAPIVersion(conf.APIVersion) {
 		panic(fmt.Sprintf("Discord API version %d is not supported", conf.APIVersion))
@@ -139,6 +152,8 @@ func NewClient(conf *Config) *Client {
 	}
 }
 
+// Config is the configuration options for the httd.Client structure. Essentially the behaviour of all requests
+// sent to Discord.
 type Config struct {
 	APIVersion int
 	BotToken   string
@@ -153,13 +168,15 @@ type Config struct {
 	UserAgentExtra     string
 }
 
+// Details ...
 type Details struct {
 	Ratelimiter     string
 	Endpoint        string // always as a suffix to Ratelimiter(!)
 	ResponseStruct  interface{}
-	SuccessHttpCode int
+	SuccessHTTPCode int
 }
 
+// Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
 	Method      string
 	Ratelimiter string
@@ -168,6 +185,7 @@ type Request struct {
 	ContentType string
 }
 
+// Client is the httd client for handling Discord requests
 type Client struct {
 	url                          string // base url with API version
 	rateLimit                    *RateLimit
@@ -206,6 +224,13 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return
 }
 
+// WaitIfRateLimited if the deadtime set by the encountered rate limit does not overstep the http.Client.Timeout and
+// the client.config.CancelRequestWhenRateLimited is set to false, then we simply run a time.After to wait until the
+// rate limits has been reset by Discord. If the dead time is higher than the http.Client.Timeout,
+// we return a rate limit error.
+//
+// The client.config.CancelRequestWhenRateLimited forces an error if a rate limit is encountered, regardless of the
+// Client.Timeout value.
 func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 	deadtime := c.RateLimiter().WaitTime(r)
 	if deadtime.Nanoseconds() > 0 {
@@ -213,7 +238,7 @@ func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 			err = errors.New("rate limited")
 			return
 		}
-		waitTimeLongerThanHTTPTimeout := (c.httpClient.Timeout.Nanoseconds() <= deadtime.Nanoseconds())
+		waitTimeLongerThanHTTPTimeout := c.httpClient.Timeout.Nanoseconds() <= deadtime.Nanoseconds()
 		if waitTimeLongerThanHTTPTimeout {
 			err = errors.New("rate limit timeout is higher than http.Client.Timeout, cannot wait")
 			return
@@ -226,6 +251,7 @@ func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 	return
 }
 
+// Request execute a Discord request
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
 	var bodyReader io.Reader
 	if r.Body != nil {
@@ -285,6 +311,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	return
 }
 
+// RateLimiter get the rate limit manager
 func (c *Client) RateLimiter() RateLimiter {
 	return c.rateLimit
 }

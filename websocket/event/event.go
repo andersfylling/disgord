@@ -1,5 +1,6 @@
 package event
 
+// Different socket commands that can be sent to Discord
 const (
 	Heartbeat           = "HEARTBEAT"
 	Ready               = "READY"

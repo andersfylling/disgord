@@ -123,6 +123,7 @@ func (list *CacheList) CreateCacheableItem(content interface{}) interfaces.Cache
 	return NewCacheItem(content)
 }
 
+// Efficiency ...
 func (list *CacheList) Efficiency() float64 {
 	return float64(list.hits) / float64(list.misses+list.hits)
 }

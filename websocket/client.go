@@ -34,6 +34,7 @@ type Config struct {
 	URL         string
 }
 
+// Validate validates the cache to check if it contains issues
 func (c *Config) Validate() (err error) {
 	if c.Token == "" {
 		err = errors.New("missing Config.Token for discord authentication")
@@ -143,9 +144,13 @@ type Pulsater interface {
 	HeartbeatAckMissingFix()
 }
 
+// Emitter holds the emit command for sending data to Discord over the socket connection
 type Emitter interface {
 	Emit(command string, data interface{}) error
 }
+
+// HeartbeatLatencer holds the HeartbeatLatency method for measuring time diff between sending a hearbeat and
+// receiving a Discord heartbeat ack
 type HeartbeatLatencer interface {
 	HeartbeatLatency() (duration time.Duration, err error)
 }
@@ -205,6 +210,7 @@ type Client struct {
 	pulsating  int
 }
 
+// HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
 func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 	duration = c.heartbeatLatency
 	if duration == 0 {
@@ -332,6 +338,7 @@ func (c *Client) SendHeartbeat(snr uint) {
 	c.sendChan <- &gatewayPayload{Op: opcode.Heartbeat, Data: snr}
 }
 
+// HeartbeatAckMissingFix ran when the heartbeat ack was not received.
 func (c *Client) HeartbeatAckMissingFix() {
 	err := c.Disconnect()
 	if err != nil {
@@ -459,6 +466,7 @@ func (c *Client) readPump() {
 	}
 }
 
+// SequenceNumber get the socket sequence number. Used to notify Discord about missing values.
 func (c *Client) SequenceNumber() uint {
 	c.RLock()
 	defer c.RUnlock()

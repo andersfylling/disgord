@@ -1,4 +1,4 @@
-// event is a universal discord package that holds all the event types one can receive (currently only bot events).
+// Package event is a universal discord package that holds all the event types one can receive (currently only bot events).
 package event
 
 // PresencesReplace Holds and array of presence update objects

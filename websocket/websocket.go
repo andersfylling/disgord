@@ -9,6 +9,7 @@ import (
 	"github.com/andersfylling/snowflake/v2"
 )
 
+// Defaults
 const (
 	// MaxReconnectTries restrict the number of reconnect attempt to the discord websocket service
 	MaxReconnectTries = 5
@@ -38,6 +39,7 @@ var Encodings = []string{
 	EncodingETF,
 }
 
+// Snowflake wrapper for snowflake.Snowflake
 type Snowflake = snowflake.Snowflake
 
 func unmarshal(data []byte, v interface{}) error {

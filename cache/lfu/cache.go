@@ -10,21 +10,25 @@ import (
 
 type Snowflake = snowflake.Snowflake
 
+// NewCacheItem ...
 func NewCacheItem(content interface{}) *CacheItem {
 	return &CacheItem{
 		item: content,
 	}
 }
 
+// CacheItem ...
 type CacheItem struct {
 	item    interface{}
 	counter uint64
 }
 
+// Object ...
 func (i *CacheItem) Object() interface{} {
 	return i.item
 }
 
+// Set ...
 func (i *CacheItem) Set(v interface{}) {
 	i.item = v
 }
@@ -33,6 +37,7 @@ func (i *CacheItem) increment() {
 	i.counter++
 }
 
+// NewCacheList ...
 func NewCacheList(size uint) *CacheList {
 	return &CacheList{
 		items: make(map[Snowflake]*CacheItem, size),
@@ -53,6 +58,7 @@ func (list *CacheList) size() uint {
 	return uint(len(list.items))
 }
 
+// First ...
 func (list *CacheList) First() (item *CacheItem, key Snowflake) {
 	for key, item = range list.items {
 		return
@@ -61,7 +67,7 @@ func (list *CacheList) First() (item *CacheItem, key Snowflake) {
 	return
 }
 
-// set adds a new item to the list or returns false if the item already exists
+// Set set adds a new item to the list or returns false if the item already exists
 func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	newItem := newItemI.(*CacheItem)
 	if item, exists := list.items[id]; exists { // check if it points to a diff item
@@ -93,12 +99,13 @@ func (list *CacheList) removeLFU(exception Snowflake) {
 	delete(list.items, lfuKey)
 }
 
+// RefreshAfterDiscordUpdate ...
 func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem) {
 	item := itemI.(*CacheItem)
 	item.increment()
 }
 
-// get an item from the list.
+// Get get an item from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
 	var item *CacheItem
 	if item, exists = list.items[id]; exists {
@@ -111,16 +118,19 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 	return
 }
 
+// Delete ...
 func (list *CacheList) Delete(id Snowflake) {
 	if _, exists := list.items[id]; exists {
 		delete(list.items, id)
 	}
 }
 
+// CreateCacheableItem ...
 func (list *CacheList) CreateCacheableItem(content interface{}) interfaces.CacheableItem {
 	return NewCacheItem(content)
 }
 
+// Efficiency ...
 func (list *CacheList) Efficiency() float64 {
 	return float64(list.hits) / float64(list.misses+list.hits)
 }

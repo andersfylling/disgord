@@ -379,7 +379,7 @@ func (g *Guild) AddMember(member *Member) error {
 	return g.addMember(member)
 }
 
-// LoadAllMembers fetches all teh members for this guild from the Discord REST API
+// LoadAllMembers fetches all the members for this guild from the Discord REST API
 func (g *Guild) LoadAllMembers(session Session) (err error) {
 	g.Lock()
 	defer g.Unlock()

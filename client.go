@@ -242,7 +242,7 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
 }
 
 // SaveToDiscord saves an object to the Discord servers. This supports creation of new objects or udpating/modifying
-// existing objects. It really depends on how the object has implemented the private interace discordSaver.
+// existing objects. It really depends on how the object has implemented the private interface discordSaver.
 func (c *Client) SaveToDiscord(obj discordSaver) (err error) {
 	err = obj.saveToDiscord(c)
 	return

@@ -1,6 +1,7 @@
-// endpoint holds all discord urls for the REST endpoints
+// Package endpoint holds all discord urls for the REST endpoints
 package endpoint
 
+// endpoints/paths
 const (
 	discordAPI   = "https://discordapp.com/api"
 	auditlogs    = "/audit-logs"

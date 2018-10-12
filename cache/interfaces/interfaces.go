@@ -4,13 +4,16 @@ import (
 	"github.com/andersfylling/snowflake/v2"
 )
 
+// Snowflake ...
 type Snowflake = snowflake.Snowflake
 
+// CacheableItem an item that can be cached
 type CacheableItem interface {
 	Object() interface{}
 	Set(v interface{})
 }
 
+// CacheAlger a cache replacement algorithm interface
 type CacheAlger interface {
 	Lock()
 	Unlock()

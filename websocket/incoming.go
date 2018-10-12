@@ -5,13 +5,17 @@ import (
 	"strings"
 )
 
+// payloadData ...
+// Deprecated: just use a byte slice or json.RawMessage instead
 type payloadData []byte
 
+// UnmarshalJSON ...
 func (pd *payloadData) UnmarshalJSON(data []byte) error {
 	*pd = payloadData(data)
 	return nil
 }
 
+// ByteArr get the byte slice
 func (pd *payloadData) ByteArr() []byte {
 	return []byte(*pd)
 }
@@ -39,10 +43,12 @@ type gatewayEvent struct {
 	EventName      string      `json:"t"`
 }
 
+// GetOperationCode ...
 func (ge *gatewayEvent) GetOperationCode() uint {
 	return ge.Op
 }
 
+// UnmarshalJSON see interface json.Unmarshaler
 func (ge *gatewayEvent) UnmarshalJSON(data []byte) (err error) {
 	var i int
 
@@ -184,6 +190,7 @@ func (evt *Event) Data() []byte {
 	return evt.content.Data.ByteArr()
 }
 
+// Unmarshal unmarshal the content of the Discord event into a given data structure
 func (evt *Event) Unmarshal(v interface{}) error {
 	return unmarshal(evt.Data(), v)
 }

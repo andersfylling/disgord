@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// http rate limit identifiers
 const (
 	XRateLimitLimit      = "X-RateLimit-Limit"
 	XRateLimitRemaining  = "X-RateLimit-Remaining"
@@ -17,6 +18,7 @@ const (
 	GlobalRateLimiterKey = ""
 )
 
+// RateLimiter is the interface for the ratelimit manager
 type RateLimiter interface {
 	Bucket(key string) *Bucket
 	RateLimitTimeout(key string) int64
@@ -32,6 +34,7 @@ type ratelimitBody struct {
 	Empty      bool   `json:"-"`
 }
 
+// RateLimitInfo is populated by Discord http responses in order to obtain rate limits
 type RateLimitInfo struct {
 	Message    string `json:"message"`
 	RetryAfter int64  `json:"retry_after"`
@@ -42,6 +45,7 @@ type RateLimitInfo struct {
 	Empty      bool   `json:"-"`
 }
 
+// RateLimited check if a response was rate limited
 func RateLimited(resp *http.Response) bool {
 	return resp.StatusCode == http.StatusTooManyRequests
 }
@@ -51,10 +55,7 @@ func GlobalRateLimit(resp *http.Response) bool {
 	return resp.Header.Get(XRateLimitGlobal) == "true"
 }
 
-func GlobalRateLimitSafe(resp *http.Response, body *ratelimitBody) bool {
-	return GlobalRateLimit(resp) && !body.Empty && body.Global
-}
-
+// ExtractRateLimitInfo uses the RateLimitInfo struct to obtain rate limits from the Discord response
 func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo, err error) {
 	info = &RateLimitInfo{}
 
@@ -115,6 +116,7 @@ func HeaderToTime(header *http.Header) (t time.Time, err error) {
 	return
 }
 
+// NewDiscordTimeDiff constructor
 func NewDiscordTimeDiff() *DiscordTimeDiff {
 	return &DiscordTimeDiff{
 		Local:   time.Now(),
@@ -122,6 +124,8 @@ func NewDiscordTimeDiff() *DiscordTimeDiff {
 	}
 }
 
+// DiscordTimeDiff allows for synchronizing the timestamp found in http responses with out local timestamp to avoid
+// desyncs
 type DiscordTimeDiff struct {
 	sync.RWMutex
 	Local   time.Time
@@ -129,6 +133,7 @@ type DiscordTimeDiff struct {
 	offset  time.Duration
 }
 
+// Update updates the current time difference on a new response
 func (d *DiscordTimeDiff) Update(now time.Time, discord time.Time) {
 	d.Lock()
 	defer d.Unlock()
@@ -146,6 +151,7 @@ func (d *DiscordTimeDiff) calculateOffset() {
 	}
 }
 
+// Now calculates the current timestamp with the http response timestamp in mind
 func (d *DiscordTimeDiff) Now() (t time.Time) {
 	d.RLock()
 	defer d.RUnlock()
@@ -154,6 +160,7 @@ func (d *DiscordTimeDiff) Now() (t time.Time) {
 	return
 }
 
+// NewRateLimit creates a new rate limit manager
 func NewRateLimit() *RateLimit {
 	return &RateLimit{
 		buckets:  make(map[string]*Bucket),
