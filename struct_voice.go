@@ -43,6 +43,7 @@ type VoiceState struct {
 //
 //}
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (v *VoiceState) DeepCopy() (copy interface{}) {
 	copy = &VoiceState{}
 	v.CopyOverTo(copy)
@@ -50,11 +51,12 @@ func (v *VoiceState) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var voiceState *VoiceState
 	if voiceState, ok = other.(*VoiceState); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *VoiceState")
+		err = newErrorUnsupportedType("given interface{} was not of type *VoiceState")
 		return
 	}
 
@@ -107,6 +109,7 @@ type VoiceRegion struct {
 	Custom bool `json:"custom"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (v *VoiceRegion) DeepCopy() (copy interface{}) {
 	copy = &VoiceRegion{}
 	v.CopyOverTo(copy)
@@ -114,11 +117,12 @@ func (v *VoiceRegion) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var voice *VoiceRegion
 	if voice, ok = other.(*VoiceRegion); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
+		err = newErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
 		return
 	}
 

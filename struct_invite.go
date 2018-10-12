@@ -30,6 +30,7 @@ type Invite struct {
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (i *Invite) DeepCopy() (copy interface{}) {
 	copy = &Invite{}
 	i.CopyOverTo(copy)
@@ -37,11 +38,12 @@ func (i *Invite) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (i *Invite) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var invite *Invite
 	if invite, ok = other.(*Invite); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *Invite")
+		err = newErrorUnsupportedType("given interface{} was not of type *Invite")
 		return
 	}
 
@@ -97,6 +99,7 @@ type InviteMetadata struct {
 	Revoked bool `json:"revoked"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (i *InviteMetadata) DeepCopy() (copy interface{}) {
 	copy = &InviteMetadata{}
 	i.CopyOverTo(copy)
@@ -104,11 +107,12 @@ func (i *InviteMetadata) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var invite *InviteMetadata
 	if invite, ok = other.(*InviteMetadata); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *InviteMetadata")
+		err = newErrorUnsupportedType("given interface{} was not of type *InviteMetadata")
 		return
 	}
 

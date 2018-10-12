@@ -153,7 +153,7 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 	return
 }
 
-// ModifyWebhookWithToken[REST] Same as ModifyWebhook, except this call does not require authentication,
+// ModifyWebhookWithToken [REST] Same as ModifyWebhook, except this call does not require authentication,
 // does not accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}

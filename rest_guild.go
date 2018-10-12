@@ -121,7 +121,7 @@ func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
 	return
 }
 
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
+// ModifyGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
 type ModifyGuildParams struct {
 	Name                    string                        `json:"name,omitempty"`
 	Region                  string                        `json:"region,omitempty"`
@@ -211,7 +211,7 @@ func GetGuildChannels(client httd.Getter, id Snowflake) (ret []*Channel, err err
 	return
 }
 
-// https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
+// CreateGuildChannelParams https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
 type CreateGuildChannelParams struct {
 	Name                 string                `json:"name"` // required
 	Type                 *uint                 `json:"type,omitempty"`

@@ -4,9 +4,9 @@ import "testing"
 
 func TestCache_ChannelCreate(t *testing.T) {
 	t.Run("immutable", func(t *testing.T) {
-		cache, _ := NewCache(&CacheConfig{
+		cache, _ := newCache(&CacheConfig{
 			Immutable:                true,
-			ChannelCacheAlgorithm:    CacheAlg_LRU,
+			ChannelCacheAlgorithm:    CacheAlgLRU,
 			DisableGuildCaching:      true,
 			DisableUserCaching:       true,
 			DisableVoiceStateCaching: true,
@@ -18,15 +18,15 @@ func TestCache_ChannelCreate(t *testing.T) {
 
 		c1.ID = Snowflake(4537345435)
 
-		if c1_r, err := cache.GetChannel(Snowflake(1234123)); c1_r.ID != Snowflake(1234123) || err != nil {
+		if r, err := cache.GetChannel(Snowflake(1234123)); r.ID != Snowflake(1234123) || err != nil {
 			t.Error(err)
 			t.Error("error with retrieving channel")
 		}
 	})
 
 	t.Run("mutable", func(t *testing.T) {
-		cache, _ := NewCache(&CacheConfig{
-			ChannelCacheAlgorithm:    CacheAlg_LRU,
+		cache, _ := newCache(&CacheConfig{
+			ChannelCacheAlgorithm:    CacheAlgLRU,
 			DisableGuildCaching:      true,
 			DisableUserCaching:       true,
 			DisableVoiceStateCaching: true,
@@ -42,7 +42,7 @@ func TestCache_ChannelCreate(t *testing.T) {
 		changed := "changed"
 		c1.Icon = &changed
 
-		if c1_r, _ := cache.GetChannel(c1.ID); *c1_r.Icon != "changed" {
+		if r, _ := cache.GetChannel(c1.ID); *r.Icon != "changed" {
 			t.Error("channel was not affected by external changes")
 		}
 	})

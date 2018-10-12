@@ -2,7 +2,7 @@ package disgord
 
 import "sync"
 
-// Audit-log events
+// Audit-log event types
 const (
 	AuditLogEvtGuildUpdate      = 1
 	AuditLogEvtChannelCreate    = 10
@@ -32,6 +32,7 @@ const (
 	AuditLogEvtMessageDelete    = 72
 )
 
+// all the different keys for an audit log change
 const (
 	// key name,								          identifier                       changed, type,   description
 	AuditLogChangeKeyName                        = "name"                          // guild	string	name changed
@@ -78,6 +79,7 @@ const (
 	AuditLogChangeKeyType                        = "type"                          // any	integer (channel type) or string	type of entity created
 )
 
+// AuditLog ...
 type AuditLog struct {
 	sync.RWMutex `json:"-"`
 
@@ -86,6 +88,7 @@ type AuditLog struct {
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (l *AuditLog) DeepCopy() (copy interface{}) {
 	copy = &AuditLog{}
 	l.CopyOverTo(copy)
@@ -93,11 +96,12 @@ func (l *AuditLog) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLog
 	if log, ok = other.(*AuditLog); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLog")
+		err = newErrorUnsupportedType("given interface{} was not of type *AuditLog")
 		return
 	}
 
@@ -119,6 +123,7 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// AuditLogEntry ...
 type AuditLogEntry struct {
 	sync.RWMutex `json:"-"`
 
@@ -131,6 +136,7 @@ type AuditLogEntry struct {
 	Reason     string            `json:"reason,omitempty"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (l *AuditLogEntry) DeepCopy() (copy interface{}) {
 	copy = &AuditLogEntry{}
 	l.CopyOverTo(copy)
@@ -138,11 +144,12 @@ func (l *AuditLogEntry) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogEntry
 	if log, ok = other.(*AuditLogEntry); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogEntry")
+		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogEntry")
 		return
 	}
 
@@ -168,6 +175,7 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// AuditLogOption ...
 type AuditLogOption struct {
 	sync.RWMutex `json:"-"`
 
@@ -180,6 +188,7 @@ type AuditLogOption struct {
 	RoleName         string    `json:"role_name"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (l *AuditLogOption) DeepCopy() (copy interface{}) {
 	copy = &AuditLogOption{}
 	l.CopyOverTo(copy)
@@ -187,11 +196,12 @@ func (l *AuditLogOption) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogOption
 	if log, ok = other.(*AuditLogOption); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogOption")
+		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogOption")
 		return
 	}
 
@@ -211,6 +221,7 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// AuditLogChange ...
 type AuditLogChange struct {
 	sync.RWMutex `json:"-"`
 
@@ -219,6 +230,7 @@ type AuditLogChange struct {
 	Key      string      `json:"key"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (l *AuditLogChange) DeepCopy() (copy interface{}) {
 	copy = &AuditLogChange{}
 	l.CopyOverTo(copy)
@@ -226,11 +238,12 @@ func (l *AuditLogChange) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogChange
 	if log, ok = other.(*AuditLogChange); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *AuditLogChange")
+		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogChange")
 		return
 	}
 

@@ -205,6 +205,7 @@ func (g *guildCacheItem) deleteChannel(id Snowflake) {
 	}
 }
 
+// SetGuild adds a new guild to cache or updates an existing one
 func (c *Cache) SetGuild(guild *Guild) {
 	if c.guilds == nil || guild == nil {
 		return
@@ -222,6 +223,7 @@ func (c *Cache) SetGuild(guild *Guild) {
 	}
 }
 
+// SetGuildEmojis adds a new guild to cache if no guild exist for the emojis or updates an existing guild with the new emojis
 func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 	if c.guilds == nil {
 		return
@@ -253,6 +255,7 @@ func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 	}
 }
 
+// SetGuildMember calls SetGuildMembers
 func (c *Cache) SetGuildMember(guildID Snowflake, member *Member) {
 	if c.guilds == nil || member == nil {
 		return
@@ -261,6 +264,7 @@ func (c *Cache) SetGuildMember(guildID Snowflake, member *Member) {
 	c.SetGuildMembers(guildID, []*Member{member})
 }
 
+// SetGuildMembers adds the members to a guild or updates an existing guild
 func (c *Cache) SetGuildMembers(guildID Snowflake, members []*Member) {
 	if c.guilds == nil || members == nil {
 		return
@@ -281,6 +285,7 @@ func (c *Cache) SetGuildMembers(guildID Snowflake, members []*Member) {
 	}
 }
 
+// SetGuildRoles creates a new guild if none is found and updates the roles for a given guild
 func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 	if c.guilds == nil || roles == nil {
 		return
@@ -311,9 +316,10 @@ func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 	}
 }
 
+// GetGuild ...
 func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	if c.guilds == nil {
-		err = NewErrorUsingDeactivatedCache("guilds")
+		err = newErrorUsingDeactivatedCache("guilds")
 		return
 	}
 
@@ -323,7 +329,7 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.guilds.Get(id); !exists {
-		err = NewErrorCacheItemNotFound(id)
+		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
@@ -331,9 +337,10 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	return
 }
 
+// GetGuildRoles ...
 func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 	if c.guilds == nil {
-		err = NewErrorUsingDeactivatedCache("guilds")
+		err = newErrorUsingDeactivatedCache("guilds")
 		return
 	}
 
@@ -343,7 +350,7 @@ func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.guilds.Get(id); !exists {
-		err = NewErrorCacheItemNotFound(id)
+		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
@@ -360,9 +367,10 @@ func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 	return
 }
 
+// GetGuildMember ...
 func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err error) {
 	if c.guilds == nil {
-		err = NewErrorUsingDeactivatedCache("guilds")
+		err = newErrorUsingDeactivatedCache("guilds")
 		return
 	}
 
@@ -371,7 +379,7 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.guilds.Get(guildID); !exists {
-		err = NewErrorCacheItemNotFound(guildID)
+		err = newErrorCacheItemNotFound(guildID)
 		return
 	}
 
@@ -388,7 +396,7 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 	c.guilds.RUnlock()
 
 	if member == nil {
-		err = NewErrorCacheItemNotFound(userID)
+		err = newErrorCacheItemNotFound(userID)
 		return
 	}
 
@@ -402,9 +410,10 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 	return
 }
 
+// GetGuildMembersAfter ...
 func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (members []*Member, err error) {
 	if c.guilds == nil {
-		err = NewErrorUsingDeactivatedCache("guilds")
+		err = newErrorUsingDeactivatedCache("guilds")
 		return
 	}
 
@@ -413,7 +422,7 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.guilds.Get(guildID); !exists {
-		err = NewErrorCacheItemNotFound(guildID)
+		err = newErrorCacheItemNotFound(guildID)
 		return
 	}
 
@@ -443,6 +452,7 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 	return
 }
 
+// DeleteGuild ...
 func (c *Cache) DeleteGuild(id Snowflake) {
 	if c.guilds == nil {
 		return
@@ -454,6 +464,7 @@ func (c *Cache) DeleteGuild(id Snowflake) {
 	c.guilds.Delete(id)
 }
 
+// DeleteGuildChannel removes a channel from a cached guild object without removing the guild
 func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 	if c.guilds == nil {
 		return
@@ -467,6 +478,7 @@ func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 	}
 }
 
+// DeleteGuildRole removes a role from a cached guild object without removing the guild
 func (c *Cache) DeleteGuildRole(guildID, roleID Snowflake) {
 	if c.guilds == nil {
 		return

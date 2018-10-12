@@ -11,15 +11,15 @@ type eventBox interface {
 	registerContext(ctx context.Context)
 }
 
-// keys that does not fit within one of the existing files goes here
+// EventAllEvents keys that does not fit within one of the existing files goes here
 const EventAllEvents = "*"
 
-// is triggered on every event type
+// EventCallback is triggered on every event type
 type EventCallback = func(session Session, box interface{})
 
 // ---------------------------
 
-// holds the event content
+// PresencesReplace holds the event content
 type PresencesReplace struct {
 	Presnces []*PresenceUpdate `json:"presences_replace"` // TODO: verify json tag
 	Ctx      context.Context   `json:"-"`
@@ -27,7 +27,7 @@ type PresencesReplace struct {
 
 // ---------------------------
 
-// contains the initial state information
+// Ready contains the initial state information
 type Ready struct {
 	APIVersion int                 `json:"v"`
 	User       *User               `json:"user"`
@@ -56,7 +56,7 @@ type Ready struct {
 
 // ---------------------------
 
-// response to Resume
+// Resumed response to Resume
 type Resumed struct {
 	Trace []string        `json:"_trace"`
 	Ctx   context.Context `json:"-"`
@@ -64,7 +64,7 @@ type Resumed struct {
 
 // ---------------------------
 
-// new channel created
+// ChannelCreate new channel created
 type ChannelCreate struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
@@ -78,7 +78,7 @@ func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// channel was updated
+// ChannelUpdate channel was updated
 type ChannelUpdate struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
@@ -92,7 +92,7 @@ func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// channel was deleted
+// ChannelDelete channel was deleted
 type ChannelDelete struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
@@ -106,7 +106,7 @@ func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// message was pinned or unpinned
+// ChannelPinsUpdate message was pinned or unpinned
 type ChannelPinsUpdate struct {
 	// ChannelID snowflake	the id of the channel
 	ChannelID Snowflake `json:"channel_id"`
@@ -118,7 +118,7 @@ type ChannelPinsUpdate struct {
 
 // ---------------------------
 
-// user started typing in a channel
+// TypingStart user started typing in a channel
 type TypingStart struct {
 	ChannelID     Snowflake       `json:"channel_id"`
 	UserID        Snowflake       `json:"user_id"`
@@ -128,7 +128,7 @@ type TypingStart struct {
 
 // ---------------------------
 
-// message was created
+// MessageCreate message was created
 type MessageCreate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
@@ -142,7 +142,7 @@ func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// message was edited
+// MessageUpdate message was edited
 type MessageUpdate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
@@ -156,7 +156,7 @@ func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// message was deleted
+// MessageDelete message was deleted
 type MessageDelete struct {
 	MessageID Snowflake       `json:"id"`
 	ChannelID Snowflake       `json:"channel_id"`
@@ -166,7 +166,7 @@ type MessageDelete struct {
 
 // ---------------------------
 
-// multiple messages were deleted at once
+// MessageDeleteBulk multiple messages were deleted at once
 type MessageDeleteBulk struct {
 	MessageIDs []Snowflake     `json:"ids"`
 	ChannelID  Snowflake       `json:"channel_id"`
@@ -175,7 +175,7 @@ type MessageDeleteBulk struct {
 
 // ---------------------------
 
-// MessageReactionAdd	user reacted to a message
+// MessageReactionAdd user reacted to a message
 type MessageReactionAdd struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -187,7 +187,7 @@ type MessageReactionAdd struct {
 
 // ---------------------------
 
-// user removed a reaction from a message
+// MessageReactionRemove user removed a reaction from a message
 type MessageReactionRemove struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -199,7 +199,7 @@ type MessageReactionRemove struct {
 
 // ---------------------------
 
-// all reactions were explicitly removed from a message
+// MessageReactionRemoveAll all reactions were explicitly removed from a message
 type MessageReactionRemoveAll struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	MessageID Snowflake       `json:"id"`
@@ -208,7 +208,7 @@ type MessageReactionRemoveAll struct {
 
 // ---------------------------
 
-// guild emojis were updated
+// GuildEmojisUpdate guild emojis were updated
 type GuildEmojisUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Emojis  []*Emoji        `json:"emojis"`
@@ -217,7 +217,7 @@ type GuildEmojisUpdate struct {
 
 // ---------------------------
 
-// This event can be sent in three different scenarios:
+// GuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
 //	2. When a Guild becomes available again to the client.
@@ -235,7 +235,7 @@ func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// guild was updated
+// GuildUpdate guild was updated
 type GuildUpdate struct {
 	Guild *Guild          `json:"guild"`
 	Ctx   context.Context `json:"-"`
@@ -249,7 +249,7 @@ func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// guild became unavailable, or user left/was removed from a guild
+// GuildDelete guild became unavailable, or user left/was removed from a guild
 type GuildDelete struct {
 	UnavailableGuild *GuildUnavailable `json:"guild_unavailable"`
 	Ctx              context.Context   `json:"-"`
@@ -268,7 +268,7 @@ func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// user was banned from a guild
+// GuildBanAdd user was banned from a guild
 type GuildBanAdd struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
@@ -277,7 +277,7 @@ type GuildBanAdd struct {
 
 // ---------------------------
 
-// user was unbanned from a guild
+// GuildBanRemove user was unbanned from a guild
 type GuildBanRemove struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
@@ -286,7 +286,7 @@ type GuildBanRemove struct {
 
 // ---------------------------
 
-// guild integration was updated
+// GuildIntegrationsUpdate guild integration was updated
 type GuildIntegrationsUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Ctx     context.Context `json:"-"`
@@ -294,7 +294,7 @@ type GuildIntegrationsUpdate struct {
 
 // ---------------------------
 
-// new user joined a guild
+// GuildMemberAdd new user joined a guild
 type GuildMemberAdd struct {
 	Member *Member         `json:"member"`
 	Ctx    context.Context `json:"-"`
@@ -302,7 +302,7 @@ type GuildMemberAdd struct {
 
 // ---------------------------
 
-// user was removed from a guild
+// GuildMemberRemove user was removed from a guild
 type GuildMemberRemove struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
@@ -311,7 +311,7 @@ type GuildMemberRemove struct {
 
 // ---------------------------
 
-// guild member was updated
+// GuildMemberUpdate guild member was updated
 type GuildMemberUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Roles   []Snowflake     `json:"roles"`
@@ -322,7 +322,7 @@ type GuildMemberUpdate struct {
 
 // ---------------------------
 
-// response to Request Guild Members
+// GuildMembersChunk response to Request Guild Members
 type GuildMembersChunk struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Members []*Member       `json:"members"`
@@ -331,7 +331,7 @@ type GuildMembersChunk struct {
 
 // ---------------------------
 
-// guild role was created
+// GuildRoleCreate guild role was created
 type GuildRoleCreate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Role    *Role           `json:"role"`
@@ -340,7 +340,7 @@ type GuildRoleCreate struct {
 
 // ---------------------------
 
-// guild role was updated
+// GuildRoleUpdate guild role was updated
 type GuildRoleUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Role    *Role           `json:"role"`
@@ -349,7 +349,7 @@ type GuildRoleUpdate struct {
 
 // ---------------------------
 
-// guild role was deleted
+// GuildRoleDelete a guild role was deleted
 type GuildRoleDelete struct {
 	GuildID Snowflake       `json:"guild_id"`
 	RoleID  Snowflake       `json:"role_id"`
@@ -358,7 +358,7 @@ type GuildRoleDelete struct {
 
 // ---------------------------
 
-// user's presence was updated in a guild
+// PresenceUpdate user's presence was updated in a guild
 type PresenceUpdate struct {
 	User    *User       `json:"user"`
 	RoleIDs []Snowflake `json:"roles"`
@@ -373,7 +373,7 @@ type PresenceUpdate struct {
 
 // ---------------------------
 
-// properties about a user changed
+// UserUpdate properties about a user changed
 type UserUpdate struct {
 	User *User           `json:"user"`
 	Ctx  context.Context `json:"-"`
@@ -381,7 +381,7 @@ type UserUpdate struct {
 
 // ---------------------------
 
-// someone joined, left, or moved a voice channel
+// VoiceStateUpdate someone joined, left, or moved a voice channel
 type VoiceStateUpdate struct {
 	VoiceState *VoiceState     `json:"voice_state"`
 	Ctx        context.Context `json:"-"`
@@ -389,7 +389,7 @@ type VoiceStateUpdate struct {
 
 // ---------------------------
 
-// guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
+// VoiceServerUpdate guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
 // connecting to voice, and when the current voice instance fails over to a new server.
 type VoiceServerUpdate struct {
 	Token    string          `json:"token"`
@@ -400,7 +400,7 @@ type VoiceServerUpdate struct {
 
 // ---------------------------
 
-// guild channel webhook was created, update, or deleted
+// WebhooksUpdate guild channel webhook was created, update, or deleted
 type WebhooksUpdate struct {
 	GuildID   Snowflake       `json:"guild_id"`
 	ChannelID Snowflake       `json:"channel_id"`

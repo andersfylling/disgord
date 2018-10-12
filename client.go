@@ -82,14 +82,17 @@ func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 	return c.ws.HeartbeatLatency()
 }
 
+// ShardID ...
 func (c *Client) ShardID() uint {
 	return c.config.ShardID
 }
 
+// ShardIDString convert the shard ID to a string
 func (c *Client) ShardIDString() string {
 	return strconv.Itoa(int(c.ShardID()))
 }
 
+// Myself get the current user / connected user
 func (c *Client) Myself() (user *User, err error) {
 	if c.myID.Empty() {
 		user, err = c.GetCurrentUser()
@@ -185,18 +188,23 @@ func (c *Client) Req() httd.Requester {
 	return c.req
 }
 
-// Cache
+// Cache returns the cache manager for the session
 func (c *Client) Cache() Cacher {
 	return c.cache
 }
 
+// On adds a event handler on the given event.
+// On => event => handle the content like this
 func (c *Client) On(event string, handlers ...interface{}) {
 	c.evtDispatch.On(event, handlers...)
 }
 
+// Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
 func (c *Client) Once(event string, handlers ...interface{}) {
 	c.evtDispatch.Once(event, handlers...)
 }
+
+// Emit sends a socket command directly to Discord.
 func (c *Client) Emit(command SocketCommand, data interface{}) {
 	switch command {
 	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
@@ -206,14 +214,18 @@ func (c *Client) Emit(command SocketCommand, data interface{}) {
 	c.ws.Emit(command, data)
 }
 
+// EventChan get a event channel using the event name
 func (c *Client) EventChan(event string) (channel interface{}, err error) {
 	return c.evtDispatch.EventChan(event)
 }
 
+// EventChannels get access to all the event channels
 func (c *Client) EventChannels() (channels EventChannels) {
 	return c.evtDispatch
 }
 
+// AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
+// to improve performance.
 func (c *Client) AcceptEvent(events ...string) {
 	for _, evt := range events {
 		c.ws.RegisterEvent(evt)
@@ -221,10 +233,16 @@ func (c *Client) AcceptEvent(events ...string) {
 }
 
 // Generic CRUDS
+
+// DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
+// be used to delete said object.
 func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
 	err = obj.deleteFromDiscord(c)
 	return
 }
+
+// SaveToDiscord saves an object to the Discord servers. This supports creation of new objects or udpating/modifying
+// existing objects. It really depends on how the object has implemented the private interace discordSaver.
 func (c *Client) SaveToDiscord(obj discordSaver) (err error) {
 	err = obj.saveToDiscord(c)
 	return

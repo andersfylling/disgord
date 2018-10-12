@@ -155,7 +155,7 @@ type EditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
-// EditChannelPermissions[REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
+// EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
 // for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.
 //  Method                  PUT
@@ -724,7 +724,7 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 	return
 }
 
-// DeleteMessage[REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
+// DeleteMessage [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
 // sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
 // on success. Fires a Message Delete Gateway event.
 //  Method                  DELETE
@@ -944,7 +944,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	return
 }
 
-// DeleteUserReaction[REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
+// DeleteUserReaction [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
 // to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me

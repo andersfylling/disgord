@@ -76,6 +76,7 @@ func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 	// TODO: this point should not be reached, unless the above checks are incomplete
 }
 
+// SetVoiceState adds a new voice state to cache or updates an existing one
 func (c *Cache) SetVoiceState(state *VoiceState) {
 	if c.voiceStates == nil || state == nil {
 		return
@@ -102,9 +103,10 @@ type guildVoiceStateCacheParams struct {
 	sessionID string
 }
 
+// GetVoiceState ...
 func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCacheParams) (state *VoiceState, err error) {
 	if c.voiceStates == nil {
-		err = NewErrorUsingDeactivatedCache("voice-states")
+		err = newErrorUsingDeactivatedCache("voice-states")
 		return
 	}
 
@@ -114,7 +116,7 @@ func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCachePar
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.voiceStates.Get(guildID); !exists {
-		err = NewErrorCacheItemNotFound(guildID)
+		err = newErrorCacheItemNotFound(guildID)
 		return
 	}
 

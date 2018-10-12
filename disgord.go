@@ -1,4 +1,4 @@
-// Disgord provides Go bindings for the documented Discord API. And allows for a stateful client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
+// Package disgord provides Go bindings for the documented Discord API. And allows for a stateful client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
 //
 // Getting started
 //
@@ -66,7 +66,7 @@
 //              DisableUserCaching: false, // activates caching for users
 //              UserCacheLimitMiB: 500, // don't use more than ~500MiB of memory space for caching of users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
-//              UserCacheAlgorithm: disgord.CacheAlg_TLRU, // uses TLRU (Time aware Least Recently Used) for caching of users
+//              UserCacheAlgorithm: disgord.CacheAlgTLRU, // uses TLRU (Time aware Least Recently Used) for caching of users
 //
 //              DisableVoiceStateCaching: true, // don't cache voice states
 //              // VoiceStateCacheLifetime  time.Duration
@@ -75,7 +75,7 @@
 //              DisableChannelCaching: false,
 //              ChannelCacheLimitMiB: 300,
 //              ChannelCacheLifetime: 0, // lives forever
-//              ChannelCacheAlgorithm: disgord.CacheAlg_LFU, // lfu (Least Frequently Used)
+//              ChannelCacheAlgorithm: disgord.CacheAlgLFU, // lfu (Least Frequently Used)
 //           },
 //  })
 //
@@ -142,25 +142,15 @@ import (
 	"github.com/andersfylling/snowflake/v2"
 )
 
-const (
-	// JSONEncoding const for JSON encoding type
-	JSONEncoding = "json"
-
-	// APIVersion desired API version to use
-	APIVersion = 6 // February 5, 2018
-	// DefaultAPIVersion the default Discord API version
-	DefaultAPIVersion = 6
-
-	// GitHubURL complete url for this project
-	GitHubURL = "https://github.com/andersfylling/disgord"
-)
-
 // LibraryInfo returns name + version
 func LibraryInfo() string {
 	return "Disgord " + constant.Version
 }
 
+// DiscordWSEvent see websocket.DiscordWSEvent
 type DiscordWSEvent = websocket.DiscordWSEvent
+
+// DiscordWebsocket see websocket.DiscordWebsocket
 type DiscordWebsocket = websocket.DiscordWebsocket
 
 // Wrapper for github.com/andersfylling/snowflake
@@ -169,25 +159,30 @@ type DiscordWebsocket = websocket.DiscordWebsocket
 // Snowflake twitter snowflake identification for Discord
 type Snowflake = snowflake.Snowflake
 
+// GetSnowflake see snowflake.GetSnowflake
 func GetSnowflake(v interface{}) (Snowflake, error) {
 	s, err := snowflake.GetSnowflake(v)
 	return Snowflake(s), err
 }
 
+// NewSnowflake see snowflake.NewSnowflake
 func NewSnowflake(id uint64) Snowflake {
 	return Snowflake(snowflake.NewSnowflake(id))
 }
 
+// ParseSnowflakeString see snowflake.ParseSnowflakeString
 func ParseSnowflakeString(v string) Snowflake {
 	return Snowflake(snowflake.ParseSnowflakeString(v))
 }
 
-func NewErrorMissingSnowflake(message string) *ErrorMissingSnowflake {
+func newErrorMissingSnowflake(message string) *ErrorMissingSnowflake {
 	return &ErrorMissingSnowflake{
 		info: message,
 	}
 }
 
+// ErrorMissingSnowflake used by methods about to communicate with the Discord API. If a snowflake value is required
+// this is used to identify that you must set the value before being able to interact with the Discord API
 type ErrorMissingSnowflake struct {
 	info string
 }
@@ -196,12 +191,13 @@ func (e *ErrorMissingSnowflake) Error() string {
 	return e.info
 }
 
-func NewErrorEmptyValue(message string) *ErrorEmptyValue {
+func newErrorEmptyValue(message string) *ErrorEmptyValue {
 	return &ErrorEmptyValue{
 		info: message,
 	}
 }
 
+// ErrorEmptyValue when a required value was set as empty
 type ErrorEmptyValue struct {
 	info string
 }
@@ -210,6 +206,7 @@ func (e *ErrorEmptyValue) Error() string {
 	return e.info
 }
 
+// GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
 func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 	return uint(guildID>>22) % shardCount
 }

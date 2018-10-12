@@ -20,36 +20,40 @@ const (
 
 // the different cache replacement algorithms
 const (
-	CacheAlg_LRU  = "lru"
-	CacheAlg_LFU  = "lfu"
-	CacheAlg_TLRU = "tlru"
+	CacheAlgLRU  = "lru"
+	CacheAlgLFU  = "lfu"
+	CacheAlgTLRU = "tlru"
 )
 
+// Cacher gives basic cache interaction options, and won't require changes when adding more cache systems
 type Cacher interface {
 	Update(key int, v interface{}) (err error)
 	Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error)
 }
 
-func NewErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
+func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
 	return &ErrorCacheItemNotFound{
 		info: "item with id{" + id.String() + "} was not found in cache",
 	}
 }
 
+// ErrorCacheItemNotFound requested item was not found in cache
 type ErrorCacheItemNotFound struct {
 	info string
 }
 
+// Error ...
 func (e *ErrorCacheItemNotFound) Error() string {
 	return e.info
 }
 
-func NewErrorUsingDeactivatedCache(cacheName string) *ErrorUsingDeactivatedCache {
+func newErrorUsingDeactivatedCache(cacheName string) *ErrorUsingDeactivatedCache {
 	return &ErrorUsingDeactivatedCache{
 		info: "cannot use deactivated cache: " + cacheName,
 	}
 }
 
+// ErrorUsingDeactivatedCache the cache system you are trying to access has been disabled in the CacheConfig
 type ErrorUsingDeactivatedCache struct {
 	info string
 }
@@ -60,11 +64,11 @@ func (e *ErrorUsingDeactivatedCache) Error() string {
 
 func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (cacher interfaces.CacheAlger, err error) {
 	switch alg {
-	case CacheAlg_TLRU:
+	case CacheAlgTLRU:
 		cacher = tlru.NewCacheList(limit, lifetime)
-	case CacheAlg_LRU:
+	case CacheAlgLRU:
 		cacher = lru.NewCacheList(limit)
-	case CacheAlg_LFU:
+	case CacheAlgLFU:
 		cacher = lfu.NewCacheList(limit)
 	default:
 		err = errors.New("unsupported caching algorithm")
@@ -73,7 +77,7 @@ func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (ca
 	return
 }
 
-func NewCache(conf *CacheConfig) (*Cache, error) {
+func newCache(conf *CacheConfig) (*Cache, error) {
 	userCacher, err := createUserCacher(conf)
 	if err != nil {
 		return nil, err
@@ -98,6 +102,7 @@ func NewCache(conf *CacheConfig) (*Cache, error) {
 	}, nil
 }
 
+// CacheConfig allows for tweaking the cache system on a personal need
 type CacheConfig struct {
 	Immutable bool // Must be immutable to support concurrent access and long-running tasks(!)
 
@@ -122,6 +127,7 @@ type CacheConfig struct {
 	GuildCacheAlgorithm string
 }
 
+// Cache is the actual cache. It holds the different systems which can be tweaked using the CacheConfig.
 type Cache struct {
 	conf        *CacheConfig
 	immutable   bool
@@ -131,6 +137,7 @@ type Cache struct {
 	guilds      interfaces.CacheAlger
 }
 
+// Updates does the same as Update. But allows for a slice of entries instead.
 func (c *Cache) Updates(key int, vs []interface{}) (err error) {
 	for _, v := range vs {
 		err = c.Update(key, v)
@@ -142,6 +149,8 @@ func (c *Cache) Updates(key int, vs []interface{}) (err error) {
 	return
 }
 
+// Update updates a item in the cache given the key identifier and the new content.
+// It also checks if the given structs implements the required interfaces (See below).
 func (c *Cache) Update(key int, v interface{}) (err error) {
 	if v == nil {
 		err = errors.New("object was nil")
@@ -181,6 +190,8 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 	return
 }
 
+// Get retrieve a item in the cache, or get an error when not found or if the cache system is disabled
+// in your CacheConfig configuration.
 func (c *Cache) Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error) {
 	switch key {
 	case UserCache:

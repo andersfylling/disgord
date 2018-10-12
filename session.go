@@ -16,7 +16,7 @@ func NewRESTClient(conf *Config) (client *httd.Client) {
 	reqConf := &httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.Token,
-		UserAgentSourceURL:           GitHubURL,
+		UserAgentSourceURL:           constant.GitHubURL,
 		UserAgentVersion:             constant.Version,
 		HTTPClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
@@ -53,7 +53,7 @@ func NewSession(conf *Config) (Session, error) {
 
 		// lib specific
 		DAPIVersion:   constant.DiscordVersion,
-		DAPIEncoding:  JSONEncoding,
+		DAPIEncoding:  constant.JSONEncoding,
 		ChannelBuffer: 1,
 	})
 	if err != nil {
@@ -71,16 +71,16 @@ func NewSession(conf *Config) (Session, error) {
 		conf.CacheConfig = &CacheConfig{
 			Immutable: true,
 
-			UserCacheAlgorithm: CacheAlg_TLRU,
+			UserCacheAlgorithm: CacheAlgTLRU,
 			UserCacheLifetime:  time.Duration(18) * time.Hour,
 			UserCacheLimitMiB:  500,
 
-			VoiceStateCacheAlgorithm: CacheAlg_LRU,
+			VoiceStateCacheAlgorithm: CacheAlgLRU,
 
-			ChannelCacheAlgorithm: CacheAlg_LFU,
+			ChannelCacheAlgorithm: CacheAlgLFU,
 		}
 	}
-	cacher, err := NewCache(conf.CacheConfig)
+	cacher, err := newCache(conf.CacheConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +141,7 @@ func NewSessionMustCompile(conf *Config) (session Session) {
 	return
 }
 
+// EventChannels all methods for retrieving event channels
 type EventChannels interface {
 	All() <-chan interface{} // any event
 	Ready() <-chan *Ready
@@ -179,6 +180,7 @@ type EventChannels interface {
 	WebhooksUpdate() <-chan *WebhooksUpdate
 }
 
+// SocketHandler all socket related
 type SocketHandler interface {
 	Connect() error
 	Disconnect() error
@@ -202,10 +204,12 @@ type SocketHandler interface {
 	ShardIDString() string
 }
 
+// AuditLogsRESTer REST interface for all audit-logs endpoints
 type AuditLogsRESTer interface {
 	GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error)
 }
 
+// ChannelRESTer REST interface for all Channel endpoints
 type ChannelRESTer interface {
 	GetChannel(id Snowflake) (ret *Channel, err error)
 	ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error)
@@ -233,6 +237,7 @@ type ChannelRESTer interface {
 	DeleteAllReactions(channelID, messageID Snowflake) (err error)
 }
 
+// EmojiRESTer REST interface for all emoji endpoints
 type EmojiRESTer interface {
 	GetGuildEmojis(id Snowflake) (ret []*Emoji, err error)
 	GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error)
@@ -241,6 +246,7 @@ type EmojiRESTer interface {
 	DeleteGuildEmoji(guildID, emojiID Snowflake) (err error)
 }
 
+// GuildRESTer REST interface for all guild endpoints
 type GuildRESTer interface {
 	CreateGuild(params *CreateGuildParams) (ret *Guild, err error)
 	GetGuild(id Snowflake) (ret *Guild, err error)
@@ -279,11 +285,13 @@ type GuildRESTer interface {
 	GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error)
 }
 
+// InviteRESTer REST interface for all invite endpoints
 type InviteRESTer interface {
 	GetInvite(inviteCode string, withCounts bool) (invite *Invite, err error)
 	DeleteInvite(inviteCode string) (invite *Invite, err error)
 }
 
+// UserRESTer REST interface for all user endpoints
 type UserRESTer interface {
 	GetCurrentUser() (ret *User, err error)
 	GetUser(id Snowflake) (ret *User, err error)
@@ -296,10 +304,12 @@ type UserRESTer interface {
 	GetUserConnections() (ret []*UserConnection, err error)
 }
 
+// VoiceRESTer REST interface for all voice endpoints
 type VoiceRESTer interface {
 	GetVoiceRegions() (ret []*VoiceRegion, err error)
 }
 
+// WebhookRESTer REST interface for all Webhook endpoints
 type WebhookRESTer interface {
 	CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error)
 	GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error)
@@ -315,6 +325,7 @@ type WebhookRESTer interface {
 	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error)
 }
 
+// RESTer holds all the sub REST interfaces
 type RESTer interface {
 	AuditLogsRESTer
 	ChannelRESTer
@@ -326,7 +337,7 @@ type RESTer interface {
 	WebhookRESTer
 }
 
-// The main interface for Disgord
+// Session The main interface for Disgord
 type Session interface {
 	// give information about the bot/connected user
 	Myself() (*User, error)

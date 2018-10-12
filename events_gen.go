@@ -9,7 +9,7 @@ import (
 	"github.com/andersfylling/disgord/event"
 )
 
-// Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
+// EventChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
 // guild channel object.
 //
 const EventChannelCreate = event.ChannelCreate
@@ -21,7 +21,7 @@ type ChannelCreateCallback = func(session Session, h *ChannelCreate)
 
 // ---------------------------
 
-// Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
+// EventChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
 //
 const EventChannelDelete = event.ChannelDelete
 
@@ -32,7 +32,7 @@ type ChannelDeleteCallback = func(session Session, h *ChannelDelete)
 
 // ---------------------------
 
-// Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
+// EventChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
 //  Fields:
 //  - ChannelID int64 or Snowflake
 //  - LastPinTimestamp time.Now().UTC().Format(time.RFC3339)
@@ -47,7 +47,7 @@ type ChannelPinsUpdateCallback = func(session Session, h *ChannelPinsUpdate)
 
 // ---------------------------
 
-// Sent when a channel is updated. The inner payload is a guild channel object.
+// EventChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
 //
 const EventChannelUpdate = event.ChannelUpdate
 
@@ -58,7 +58,7 @@ type ChannelUpdateCallback = func(session Session, h *ChannelUpdate)
 
 // ---------------------------
 
-// Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
+// EventGuildBanAdd Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
 //
 const EventGuildBanAdd = event.GuildBanAdd
 
@@ -69,7 +69,7 @@ type GuildBanAddCallback = func(session Session, h *GuildBanAdd)
 
 // ---------------------------
 
-// Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
+// EventGuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
 //
 const EventGuildBanRemove = event.GuildBanRemove
 
@@ -80,7 +80,7 @@ type GuildBanRemoveCallback = func(session Session, h *GuildBanRemove)
 
 // ---------------------------
 
-// This event can be sent in three different scenarios:
+// EventGuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
 // 	2. When a Guild becomes available again to the client.
@@ -95,7 +95,7 @@ type GuildCreateCallback = func(session Session, h *GuildCreate)
 
 // ---------------------------
 
-// Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
+// EventGuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
 // The inner payload is an unavailable guild object. If the unavailable field is not set, the user was removed
 // from the guild.
 //
@@ -108,7 +108,7 @@ type GuildDeleteCallback = func(session Session, h *GuildDelete)
 
 // ---------------------------
 
-// Sent when a guild's emojis have been updated.
+// EventGuildEmojisUpdate Sent when a guild's emojis have been updated.
 //  Fields:
 //  - GuildID Snowflake
 //  - Emojis []*Emoji
@@ -122,7 +122,7 @@ type GuildEmojisUpdateCallback = func(session Session, h *GuildEmojisUpdate)
 
 // ---------------------------
 
-// Sent when a guild integration is updated.
+// EventGuildIntegrationsUpdate Sent when a guild integration is updated.
 //  Fields:
 //  - GuildID Snowflake
 //
@@ -135,7 +135,7 @@ type GuildIntegrationsUpdateCallback = func(session Session, h *GuildIntegration
 
 // ---------------------------
 
-// Sent when a new user joins a guild. The inner payload is a guild member object with these extra fields:
+// EventGuildMemberAdd Sent when a new user joins a guild. The inner payload is a guild member object with these extra fields:
 //  - GuildID Snowflake
 //
 //  Fields:
@@ -150,7 +150,7 @@ type GuildMemberAddCallback = func(session Session, h *GuildMemberAdd)
 
 // ---------------------------
 
-// Sent when a user is removed from a guild (leave/kick/ban).
+// EventGuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
 //  Fields:
 //  - GuildID   Snowflake
 //  - User      *User
@@ -164,7 +164,7 @@ type GuildMemberRemoveCallback = func(session Session, h *GuildMemberRemove)
 
 // ---------------------------
 
-// Sent when a guild member is updated.
+// EventGuildMemberUpdate Sent when a guild member is updated.
 //  Fields:
 //  - GuildID   Snowflake
 //  - Roles     []Snowflake
@@ -180,7 +180,7 @@ type GuildMemberUpdateCallback = func(session Session, h *GuildMemberUpdate)
 
 // ---------------------------
 
-// Sent in response to Gateway Request Guild Members.
+// EventGuildMembersChunk Sent in response to Gateway Request Guild Members.
 //  Fields:
 //  - GuildID Snowflake
 //  - Members []*Member
@@ -194,7 +194,7 @@ type GuildMembersChunkCallback = func(session Session, h *GuildMembersChunk)
 
 // ---------------------------
 
-// Sent when a guild role is created.
+// EventGuildRoleCreate Sent when a guild role is created.
 //  Fields:
 //  - GuildID   Snowflake
 //  - Role      *Role
@@ -208,7 +208,7 @@ type GuildRoleCreateCallback = func(session Session, h *GuildRoleCreate)
 
 // ---------------------------
 
-// Sent when a guild role is created.
+// EventGuildRoleDelete Sent when a guild role is created.
 //  Fields:
 //  - GuildID Snowflake
 //  - RoleID  Snowflake
@@ -222,7 +222,7 @@ type GuildRoleDeleteCallback = func(session Session, h *GuildRoleDelete)
 
 // ---------------------------
 
-// Sent when a guild role is created.
+// EventGuildRoleUpdate Sent when a guild role is created.
 //  Fields:
 //  - GuildID Snowflake
 //  - Role    *Role
@@ -236,7 +236,7 @@ type GuildRoleUpdateCallback = func(session Session, h *GuildRoleUpdate)
 
 // ---------------------------
 
-// Sent when a guild is updated. The inner payload is a guild object.
+// EventGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
 //
 const EventGuildUpdate = event.GuildUpdate
 
@@ -247,7 +247,7 @@ type GuildUpdateCallback = func(session Session, h *GuildUpdate)
 
 // ---------------------------
 
-// Sent when a message is created. The inner payload is a message object.
+// EventMessageCreate Sent when a message is created. The inner payload is a message object.
 //
 const EventMessageCreate = event.MessageCreate
 
@@ -258,7 +258,7 @@ type MessageCreateCallback = func(session Session, h *MessageCreate)
 
 // ---------------------------
 
-// Sent when a message is deleted.
+// EventMessageDelete Sent when a message is deleted.
 //  Fields:
 //  - ID        Snowflake
 //  - ChannelID Snowflake
@@ -272,7 +272,7 @@ type MessageDeleteCallback = func(session Session, h *MessageDelete)
 
 // ---------------------------
 
-// Sent when multiple messages are deleted at once.
+// EventMessageDeleteBulk Sent when multiple messages are deleted at once.
 //  Fields:
 //  - IDs       []Snowflake
 //  - ChannelID Snowflake
@@ -286,7 +286,7 @@ type MessageDeleteBulkCallback = func(session Session, h *MessageDeleteBulk)
 
 // ---------------------------
 
-// Sent when a user adds a reaction to a message.
+// EventMessageReactionAdd Sent when a user adds a reaction to a message.
 //  Fields:
 //  - UserID     Snowflake
 //  - ChannelID  Snowflake
@@ -302,7 +302,7 @@ type MessageReactionAddCallback = func(session Session, h *MessageReactionAdd)
 
 // ---------------------------
 
-// Sent when a user removes a reaction from a message.
+// EventMessageReactionRemove Sent when a user removes a reaction from a message.
 //  Fields:
 //  - UserID     Snowflake
 //  - ChannelID  Snowflake
@@ -318,7 +318,7 @@ type MessageReactionRemoveCallback = func(session Session, h *MessageReactionRem
 
 // ---------------------------
 
-// Sent when a user explicitly removes all reactions from a message.
+// EventMessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
 //  Fields:
 //  - ChannelID Snowflake
 //  - MessageID Snowflake
@@ -332,7 +332,7 @@ type MessageReactionRemoveAllCallback = func(session Session, h *MessageReaction
 
 // ---------------------------
 
-// Sent when a message is updated. The inner payload is a message object.
+// EventMessageUpdate Sent when a message is updated. The inner payload is a message object.
 //
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
 //
@@ -345,7 +345,7 @@ type MessageUpdateCallback = func(session Session, h *MessageUpdate)
 
 // ---------------------------
 
-// A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
+// EventPresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
 //  Fields:
 //  - User    *User
 //  - Roles   []Snowflake
@@ -362,7 +362,7 @@ type PresenceUpdateCallback = func(session Session, h *PresenceUpdate)
 
 // ---------------------------
 
-// Holds and array of presence update objects
+// EventPresencesReplace Holds and array of presence update objects
 //
 const EventPresencesReplace = event.PresencesReplace
 
@@ -373,7 +373,7 @@ type PresencesReplaceCallback = func(session Session, h *PresencesReplace)
 
 // ---------------------------
 
-// The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
+// EventReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.
 // //  Fields:
@@ -393,7 +393,7 @@ type ReadyCallback = func(session Session, h *Ready)
 
 // ---------------------------
 
-// The resumed event is dispatched when a client has sent a resume payload to the gateway
+// EventResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
 //  Fields:
 //  - Trace []string
@@ -407,7 +407,7 @@ type ResumedCallback = func(session Session, h *Resumed)
 
 // ---------------------------
 
-// Sent when a user starts typing in a channel.
+// EventTypingStart Sent when a user starts typing in a channel.
 //  Fields:
 //  - ChannelID     Snowflake
 //  - UserID        Snowflake
@@ -422,7 +422,7 @@ type TypingStartCallback = func(session Session, h *TypingStart)
 
 // ---------------------------
 
-// Sent when properties about the user change. Inner payload is a user object.
+// EventUserUpdate Sent when properties about the user change. Inner payload is a user object.
 //
 const EventUserUpdate = event.UserUpdate
 
@@ -433,7 +433,7 @@ type UserUpdateCallback = func(session Session, h *UserUpdate)
 
 // ---------------------------
 
-// Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
+// EventVoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
 //  Fields:
 //  - Token     string
@@ -449,7 +449,7 @@ type VoiceServerUpdateCallback = func(session Session, h *VoiceServerUpdate)
 
 // ---------------------------
 
-// Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
+// EventVoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
 //
 const EventVoiceStateUpdate = event.VoiceStateUpdate
 
@@ -460,7 +460,7 @@ type VoiceStateUpdateCallback = func(session Session, h *VoiceStateUpdate)
 
 // ---------------------------
 
-// Sent when a guild channel's webhook is created, updated, or deleted.
+// EventWebhooksUpdate Sent when a guild channel's webhook is created, updated, or deleted.
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake

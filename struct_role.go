@@ -2,6 +2,7 @@ package disgord
 
 import "sync"
 
+// NewRole ...
 func NewRole() *Role {
 	return &Role{}
 }
@@ -22,6 +23,7 @@ type Role struct {
 	guildID Snowflake
 }
 
+// Mention gives a formatted version of the role such that it can be parsed by Discord clients
 func (r *Role) Mention() string {
 	return "<@&" + r.ID.String() + ">"
 }
@@ -31,6 +33,7 @@ func (r *Role) SetGuildID(id Snowflake) {
 	r.ID = id
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (r *Role) DeepCopy() (copy interface{}) {
 	copy = NewRole()
 	r.CopyOverTo(copy)
@@ -38,11 +41,12 @@ func (r *Role) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (r *Role) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var role *Role
 	if role, ok = other.(*Role); !ok {
-		return NewErrorUnsupportedType("given interface{} was not a *Role")
+		return newErrorUnsupportedType("given interface{} was not a *Role")
 	}
 
 	r.RLock()
@@ -66,7 +70,7 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 
 func (r *Role) saveToDiscord(session Session) (err error) {
 	if r.guildID.Empty() {
-		err = NewErrorMissingSnowflake("role has no guildID")
+		err = newErrorMissingSnowflake("role has no guildID")
 		return
 	}
 
@@ -117,11 +121,11 @@ func (r *Role) saveToDiscord(session Session) (err error) {
 
 func (r *Role) deleteFromDiscord(session Session) (err error) {
 	if r.ID.Empty() {
-		err = NewErrorMissingSnowflake("role has no ID")
+		err = newErrorMissingSnowflake("role has no ID")
 		return
 	}
 	if r.guildID.Empty() {
-		err = NewErrorMissingSnowflake("role has no guildID")
+		err = newErrorMissingSnowflake("role has no guildID")
 		return
 	}
 

@@ -2,7 +2,7 @@ package disgord
 
 import "sync"
 
-// Emoji
+// Emoji ...
 type Emoji struct {
 	ID            Snowflake   `json:"id"`
 	Name          string      `json:"name"`
@@ -15,6 +15,8 @@ type Emoji struct {
 	//	image string // base 64 string, with prefix and everything
 	mu sync.RWMutex
 }
+
+// PartialEmoji see Emoji
 type PartialEmoji = Emoji
 
 // SetBase64Image use this before creating the emoji for the first time
@@ -32,6 +34,7 @@ func (e *Emoji) Mention() string {
 	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (e *Emoji) DeepCopy() (copy interface{}) {
 	copy = &Emoji{}
 	e.CopyOverTo(copy)
@@ -39,11 +42,12 @@ func (e *Emoji) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	var emoji *Emoji
 	var ok bool
 	if emoji, ok = other.(*Emoji); !ok {
-		err = NewErrorUnsupportedType("given type is not *Emoji")
+		err = newErrorUnsupportedType("given type is not *Emoji")
 		return
 	}
 

@@ -16,6 +16,7 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 	return
 }
 
+// SetUser updates an existing user or adds a new one to the cache
 func (c *Cache) SetUser(new *User) {
 	if c.users == nil || new == nil {
 		return
@@ -41,9 +42,10 @@ func (c *Cache) SetUser(new *User) {
 	}
 }
 
+// GetUser ...
 func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	if c.users == nil {
-		err = NewErrorUsingDeactivatedCache("users")
+		err = newErrorUsingDeactivatedCache("users")
 		return
 	}
 
@@ -53,7 +55,7 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.users.Get(id); !exists {
-		err = NewErrorCacheItemNotFound(id)
+		err = newErrorCacheItemNotFound(id)
 		return
 	}
 

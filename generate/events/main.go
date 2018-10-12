@@ -135,5 +135,5 @@ func (e eventName) RenderDocs() string {
 		return ""
 	}
 
-	return "// " + strings.Replace(*e.Docs, "\n", "\n// ", -1)
+	return "// Event" + strings.Replace(*e.Docs, "\n", "\n// ", -1)
 }

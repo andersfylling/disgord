@@ -71,6 +71,7 @@ func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
 	fresh.copyOverToCache(c.channel)
 }
 
+// SetChannel adds a new channel to cache or updates an existing one
 func (c *Cache) SetChannel(new *Channel) {
 	if c.channels == nil || new == nil {
 		return
@@ -88,6 +89,7 @@ func (c *Cache) SetChannel(new *Channel) {
 	}
 }
 
+// UpdateChannelPin ...
 func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 	if c.channels == nil || id.Empty() {
 		return
@@ -107,6 +109,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 	}
 }
 
+// UpdateChannelLastMessageID ...
 func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {
 	if c.channels == nil || channelID.Empty() || messageID.Empty() {
 		return
@@ -127,9 +130,10 @@ func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowfl
 	}
 }
 
+// GetChannel ...
 func (c *Cache) GetChannel(id Snowflake) (channel *Channel, err error) {
 	if c.channels == nil {
-		err = NewErrorUsingDeactivatedCache("channels")
+		err = newErrorUsingDeactivatedCache("channels")
 		return
 	}
 
@@ -139,7 +143,7 @@ func (c *Cache) GetChannel(id Snowflake) (channel *Channel, err error) {
 	var exists bool
 	var result interfaces.CacheableItem
 	if result, exists = c.channels.Get(id); !exists {
-		err = NewErrorCacheItemNotFound(id)
+		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
@@ -147,6 +151,7 @@ func (c *Cache) GetChannel(id Snowflake) (channel *Channel, err error) {
 	return
 }
 
+// DeleteChannel ...
 func (c *Cache) DeleteChannel(id Snowflake) {
 	c.channels.Lock()
 	defer c.channels.Unlock()

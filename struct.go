@@ -26,18 +26,19 @@ type cacheCopier interface {
 	copyOverToCache(other interface{}) error
 }
 
-func NewErrorUnsupportedType(message string) *ErrorUnsupportedType {
+func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
 	return &ErrorUnsupportedType{
 		info: message,
 	}
 }
 
+// ErrorUnsupportedType used when the given param type is not supported
 type ErrorUnsupportedType struct {
 	info string
 }
 
-func (eut *ErrorUnsupportedType) Error() string {
-	return eut.info
+func (e *ErrorUnsupportedType) Error() string {
+	return e.info
 }
 
 // DiscordUpdater holds the Update method for updating any given Discord struct
@@ -83,16 +84,10 @@ type DeepCopier interface {
 // time.RFC3331 does not yield an output similar to the discord timestamp input, the date is however correct.
 const timestampFormat = "2006-01-02T15:04:05.000000+00:00"
 
-type Marshaler interface {
-	MarshalJSON() ([]byte, error)
-}
-
-type Unmarshaler interface {
-	UnmarshalJSON(data []byte) error
-}
-
+// Timestamp handles Discord timestamps
 type Timestamp time.Time
 
+// MarshalJSON see json.Marshaler
 // error: https://stackoverflow.com/questions/28464711/go-strange-json-hyphen-unmarshall-error
 func (t Timestamp) MarshalJSON() ([]byte, error) {
 	// wrap in double qoutes for valid json parsing
@@ -101,6 +96,7 @@ func (t Timestamp) MarshalJSON() ([]byte, error) {
 	return []byte(jsonReady), nil
 }
 
+// UnmarshalJSON see json.Unmarshaler
 func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	var ts time.Time
 	err := unmarshal(data, &ts)
@@ -122,6 +118,7 @@ func (t Timestamp) Time() time.Time {
 	return time.Time(t)
 }
 
+// Empty check if the timestamp holds no value / not set
 func (t Timestamp) Empty() bool {
 	return time.Time(t).UnixNano() == 0
 }
@@ -133,70 +130,107 @@ func (t Timestamp) Empty() bool {
 // https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
 type ExplicitContentFilterLvl uint
 
+// Explicit content filter levels
+const (
+	ExplicitContentFilterLvlDisabled ExplicitContentFilterLvl = iota
+	ExplicitContentFilterLvlMembersWithoutRoles
+	ExplicitContentFilterLvlAllMembers
+)
+
+// Disabled if the content filter is disabled
 func (ecfl *ExplicitContentFilterLvl) Disabled() bool {
-	return *ecfl == 0
-}
-func (ecfl *ExplicitContentFilterLvl) MembersWithoutRoles() bool {
-	return *ecfl == 1
-}
-func (ecfl *ExplicitContentFilterLvl) AllMembers() bool {
-	return *ecfl == 2
+	return *ecfl == ExplicitContentFilterLvlDisabled
 }
 
-// MFA ...
+// MembersWithoutRoles if the filter only applies for members without a role
+func (ecfl *ExplicitContentFilterLvl) MembersWithoutRoles() bool {
+	return *ecfl == ExplicitContentFilterLvlMembersWithoutRoles
+}
+
+// AllMembers if the filter applies for all members regardles of them having a role or not
+func (ecfl *ExplicitContentFilterLvl) AllMembers() bool {
+	return *ecfl == ExplicitContentFilterLvlAllMembers
+}
+
+// MFALvl ...
 // https://discordapp.com/developers/docs/resources/guild#guild-object-mfa-level
 type MFALvl uint
 
+// Different MFA levels
+const (
+	MFALvlNone MFALvl = iota
+	MFALvlElevated
+)
+
+// None ...
 func (mfal *MFALvl) None() bool {
-	return *mfal == 0
-}
-func (mfal *MFALvl) Elevated() bool {
-	return *mfal == 1
+	return *mfal == MFALvlNone
 }
 
-// Verification ...
+// Elevated ...
+func (mfal *MFALvl) Elevated() bool {
+	return *mfal == MFALvlElevated
+}
+
+// VerificationLvl ...
 // https://discordapp.com/developers/docs/resources/guild#guild-object-verification-level
 type VerificationLvl uint
 
+// the different verification levels
+const (
+	VerificationLvlNone VerificationLvl = iota
+	VerificationLvlLow
+	VerificationLvlMedium
+	VerificationLvlHigh
+	VerificationLvlVeryHigh
+)
+
 // None unrestricted
 func (vl *VerificationLvl) None() bool {
-	return *vl == 0
+	return *vl == VerificationLvlNone
 }
 
 // Low must have verified email on account
 func (vl *VerificationLvl) Low() bool {
-	return *vl == 1
+	return *vl == VerificationLvlLow
 }
 
 // Medium must be registered on Discord for longer than 5 minutes
 func (vl *VerificationLvl) Medium() bool {
-	return *vl == 2
+	return *vl == VerificationLvlMedium
 }
 
 // High (╯°□°）╯︵ ┻━┻ - must be a member of the server for longer than 10 minutes
 func (vl *VerificationLvl) High() bool {
-	return *vl == 3
+	return *vl == VerificationLvlHigh
 }
 
 // VeryHigh ┻━┻ミヽ(ಠ益ಠ)ﾉ彡┻━┻ - must have a verified phone number
 func (vl *VerificationLvl) VeryHigh() bool {
-	return *vl == 4
+	return *vl == VerificationLvlVeryHigh
 }
 
-// DefaultMessageNotification ...
+// DefaultMessageNotificationLvl ...
 // https://discordapp.com/developers/docs/resources/guild#guild-object-default-message-notification-level
 type DefaultMessageNotificationLvl uint
 
+// different notification levels on new messages
+const (
+	DefaultMessageNotificationLvlAllMessages DefaultMessageNotificationLvl = iota
+	DefaultMessageNotificationLvlOnlyMentions
+)
+
+// AllMessages ...
 func (dmnl *DefaultMessageNotificationLvl) AllMessages() bool {
-	return *dmnl == 0
-}
-func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
-	return *dmnl == 1
-}
-func (dmnl *DefaultMessageNotificationLvl) Equals(v uint) bool {
-	return uint(*dmnl) == v
+	return *dmnl == DefaultMessageNotificationLvlAllMessages
 }
 
+// OnlyMentions ...
+func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
+	return *dmnl == DefaultMessageNotificationLvlOnlyMentions
+}
+
+// NewDiscriminator Discord user discriminator hashtag
 func NewDiscriminator(d string) (discriminator Discriminator, err error) {
 	var tmp uint64
 	tmp, err = strconv.ParseUint(d, 10, 16)
@@ -207,6 +241,7 @@ func NewDiscriminator(d string) (discriminator Discriminator, err error) {
 	return
 }
 
+// Discriminator value
 type Discriminator uint16
 
 func (d Discriminator) String() (str string) {
@@ -230,10 +265,12 @@ func (d Discriminator) String() (str string) {
 	return
 }
 
+// NotSet checks if the discriminator is not set
 func (d Discriminator) NotSet() bool {
 	return d == 0
 }
 
+// UnmarshalJSON see interface json.Unmarshaler
 func (d *Discriminator) UnmarshalJSON(data []byte) (err error) {
 	*d = 0
 	length := len(data) - 1
@@ -243,13 +280,17 @@ func (d *Discriminator) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// MarshalJSON see interface json.Marshaler
 func (d Discriminator) MarshalJSON() (data []byte, err error) {
 	return []byte("\"" + d.String() + "\""), nil
 }
 
+// Gateway is for parsing the Gateway endpoint response
 type Gateway struct {
 	URL string `json:"url"`
 }
+
+// GatewayBot is for parsing the Gateway Bot endpoint response
 type GatewayBot struct {
 	Gateway
 	Shards            uint `json:"shards"`

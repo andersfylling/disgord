@@ -80,6 +80,7 @@ const (
 		AdministratorPermission
 )
 
+// NewGuild ...
 func NewGuild() *Guild {
 	return &Guild{
 		Roles:       []*Role{},
@@ -92,6 +93,7 @@ func NewGuild() *Guild {
 	}
 }
 
+// NewGuildFromJSON ...
 func NewGuildFromJSON(data []byte) (guild *Guild) {
 	guild = NewGuild()
 	err := unmarshal(data, guild)
@@ -102,6 +104,7 @@ func NewGuildFromJSON(data []byte) (guild *Guild) {
 	return guild
 }
 
+// NewPartialGuild ...
 func NewPartialGuild(ID Snowflake) (guild *Guild) {
 	guild = NewGuild()
 	guild.ID = ID
@@ -110,10 +113,12 @@ func NewPartialGuild(ID Snowflake) (guild *Guild) {
 	return
 }
 
+// NewGuildFromUnavailable converts a unavailable guild object into a normal Guild object
 func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
 	return NewPartialGuild(gu.ID)
 }
 
+// NewGuildUnavailable ...
 func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
 	gu := &GuildUnavailable{
 		ID:          ID,
@@ -123,15 +128,16 @@ func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
 	return gu
 }
 
+// GuildUnavailable is a partial Guild object.
 type GuildUnavailable struct {
 	ID           Snowflake `json:"id"`
 	Unavailable  bool      `json:"unavailable"` // ?*|
 	sync.RWMutex `json:"-"`
 }
 
-type GuildInterface interface {
-	Channel(ID Snowflake)
-}
+//type GuildInterface interface {
+//	Channel(ID Snowflake)
+//}
 
 // if loading is deactivated, then check state, then do a request.
 // if loading is activated, check state only.
@@ -143,13 +149,14 @@ type GuildInterface interface {
 // 	EverythingInMemory() bool
 // }
 
+// PartialGuild see Guild
+type PartialGuild = Guild
+
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
 // https://discordapp.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
-// TODO: lazyload everything
 // reviewed: 2018-08-25
-type PartialGuild = Guild
 type Guild struct {
 	sync.RWMutex `json:"-"`
 
@@ -249,6 +256,7 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	return
 }
 
+// GetMemberWithHighestSnowflake finds the member with the highest snowflake value.
 func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	g.RLock()
 	defer g.RUnlock()
@@ -267,21 +275,11 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	return highest
 }
 
-//func (g *Guild) EverythingInMemory() bool {
-//	return false
-//}
-
-// Compare two guild objects
-// TODO: remove?
-//func (g *Guild) Compare(other *Guild) bool {
-//	// TODO: this is shit..
-//	return (g == nil && other == nil) || (other != nil && g.ID == other.ID)
-//}
-
 // func (g *Guild) UnmarshalJSON(data []byte) (err error) {
 // 	return json.Unmarshal(data, &g.guildJSON)
 // }
 
+// MarshalJSON see interface json.Marshaler
 // TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
 	g.Lock()
@@ -313,6 +311,7 @@ func (g *Guild) sortChannels() {
 	})
 }
 
+// AddChannel adds a channel to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddChannel(c *Channel) error {
 	g.Lock()
 	defer g.Unlock()
@@ -323,9 +322,12 @@ func (g *Guild) AddChannel(c *Channel) error {
 	return nil
 }
 
+// DeleteChannel removes a channel from the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) DeleteChannel(c *Channel) error {
 	return g.DeleteChannelByID(c.ID)
 }
+
+// DeleteChannelByID removes a channel from the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	g.Lock()
 	defer g.Unlock()
@@ -359,6 +361,7 @@ func (g *Guild) addMember(member *Member) error {
 	return nil
 }
 
+// AddMembers adds multiple members to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMembers(members []*Member) {
 	g.Lock()
 	defer g.Unlock()
@@ -368,6 +371,7 @@ func (g *Guild) AddMembers(members []*Member) {
 	}
 }
 
+// AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMember(member *Member) error {
 	g.Lock()
 	defer g.Unlock()
@@ -375,6 +379,7 @@ func (g *Guild) AddMember(member *Member) error {
 	return g.addMember(member)
 }
 
+// LoadAllMembers fetches all teh members for this guild from the Discord REST API
 func (g *Guild) LoadAllMembers(session Session) (err error) {
 	g.Lock()
 	defer g.Unlock()
@@ -413,6 +418,7 @@ func (g *Guild) LoadAllMembers(session Session) (err error) {
 	return nil
 }
 
+// AddRole adds a role to the Guild object. Note that this does not interact with Discord.
 func (g *Guild) AddRole(role *Role) error {
 	g.Lock()
 	defer g.Unlock()
@@ -498,7 +504,7 @@ func (g *Guild) DeleteRoleByID(ID Snowflake) {
 	}
 }
 
-// RoleByTitle retrieves a slice of roles with same name
+// RoleByName retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*Role, error) {
 	g.RLock()
 	defer g.RUnlock()
@@ -517,6 +523,7 @@ func (g *Guild) RoleByName(name string) ([]*Role, error) {
 	return roles, nil
 }
 
+// Channel get a guild channel given it's ID
 func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 	g.RLock()
 	defer g.RUnlock()
@@ -530,6 +537,7 @@ func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 	return nil, errors.New("channel not found in guild")
 }
 
+// Emoji get a guild emoji by it's ID
 func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 	g.RLock()
 	defer g.RUnlock()
@@ -614,6 +622,7 @@ func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 //
 // }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (g *Guild) DeepCopy() (copy interface{}) {
 	copy = NewGuild()
 	g.CopyOverTo(copy)
@@ -621,11 +630,12 @@ func (g *Guild) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	var guild *Guild
 	var valid bool
 	if guild, valid = other.(*Guild); !valid {
-		err = NewErrorUnsupportedType("argument given is not a *Guild type")
+		err = newErrorUnsupportedType("argument given is not a *Guild type")
 		return
 	}
 
@@ -729,6 +739,7 @@ func (g *Guild) deleteFromDiscord(session Session) (err error) {
 }
 
 // --------------
+
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
 	sync.RWMutex `json:"-"`
@@ -737,6 +748,7 @@ type Ban struct {
 	User   *User  `json:"user"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (b *Ban) DeepCopy() (copy interface{}) {
 	copy = &Ban{}
 	b.CopyOverTo(copy)
@@ -744,11 +756,12 @@ func (b *Ban) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (b *Ban) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var ban *Ban
 	if ban, ok = other.(*Ban); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *Ban")
+		err = newErrorUnsupportedType("given interface{} was not of type *Ban")
 		return
 	}
 
@@ -768,6 +781,7 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 }
 
 // ------------
+
 // GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
 	sync.RWMutex `json:"-"`
@@ -776,6 +790,7 @@ type GuildEmbed struct {
 	ChannelID Snowflake `json:"channel_id"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (e *GuildEmbed) DeepCopy() (copy interface{}) {
 	copy = &GuildEmbed{}
 	e.CopyOverTo(copy)
@@ -783,11 +798,12 @@ func (e *GuildEmbed) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var embed *GuildEmbed
 	if embed, ok = other.(*GuildEmbed); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *GuildEmbed")
+		err = newErrorUnsupportedType("given interface{} was not of type *GuildEmbed")
 		return
 	}
 
@@ -804,6 +820,7 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 }
 
 // -------
+
 // Integration https://discordapp.com/developers/docs/resources/guild#integration-object
 type Integration struct {
 	sync.RWMutex `json:"-"`
@@ -820,6 +837,7 @@ type Integration struct {
 	Account           *IntegrationAccount `json:"account"`
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (i *Integration) DeepCopy() (copy interface{}) {
 	copy = &Integration{}
 	i.CopyOverTo(copy)
@@ -827,11 +845,12 @@ func (i *Integration) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (i *Integration) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var integration *Integration
 	if integration, ok = other.(*Integration); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *Integration")
+		err = newErrorUnsupportedType("given interface{} was not of type *Integration")
 		return
 	}
 
@@ -868,6 +887,7 @@ type IntegrationAccount struct {
 	Name string `json:"name"` // name of the account
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (i *IntegrationAccount) DeepCopy() (copy interface{}) {
 	copy = &IntegrationAccount{}
 	i.CopyOverTo(copy)
@@ -875,11 +895,12 @@ func (i *IntegrationAccount) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var account *IntegrationAccount
 	if account, ok = other.(*IntegrationAccount); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *IntegrationAccount")
+		err = newErrorUnsupportedType("given interface{} was not of type *IntegrationAccount")
 		return
 	}
 
@@ -915,20 +936,26 @@ type Member struct {
 func (m *Member) String() string {
 	return "member{user:" + m.User.Username + ", nick:" + m.Nick + ", ID:" + m.User.ID.String() + "}"
 }
+
+// Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
-	return m.User.Mention()
+	return m.User.MentionNickname()
 }
+
+// DeepCopy see interface at struct.go#DeepCopier
 func (m *Member) DeepCopy() (copy interface{}) {
 	copy = &Member{}
 	m.CopyOverTo(copy)
 
 	return
 }
+
+// CopyOverTo see interface at struct.go#Copier
 func (m *Member) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var member *Member
 	if member, ok = other.(*Member); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *Member")
+		err = newErrorUnsupportedType("given interface{} was not of type *Member")
 		return
 	}
 
@@ -988,6 +1015,7 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 // 	return
 // }
 
+// GuildPruneCount ...
 type GuildPruneCount struct {
 	Pruned int `json:"pruned"`
 }

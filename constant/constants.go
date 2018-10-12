@@ -24,6 +24,9 @@ const GitHubURL = "https://github.com/andersfylling/disgord"
 // DiscordVersion API version
 const DiscordVersion = 6
 
+// JSONEncoding the json encoding identifier
+const JSONEncoding = "json"
+
 // Version project version
 // TODO: git hook which creates a new git tag after a commit, given that
 //        the version here has changed or does not exist as a git tag yet.

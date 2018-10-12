@@ -17,6 +17,7 @@ const (
 	StatusOffline = "offline"
 )
 
+// flags for the Activity object to signify the type of action taken place
 const (
 	ActivityFlagInstance    = 1 << 0
 	ActivityFlagJoin        = 1 << 1
@@ -26,12 +27,13 @@ const (
 	ActivityFlagPlay        = 1 << 5
 )
 
-type UserInterface interface {
-	Mention() string
-	MentionNickname() string
-	String() string
-}
+//type UserInterface interface {
+//	Mention() string
+//	MentionNickname() string
+//	String() string
+//}
 
+// ActivityParty ...
 type ActivityParty struct {
 	sync.RWMutex `json:"-"`
 
@@ -57,33 +59,36 @@ func (ap *ActivityParty) NumberOfPeople() int {
 	return ap.Size[0]
 }
 
-func (a *ActivityParty) DeepCopy() (copy interface{}) {
+// DeepCopy see interface at struct.go#DeepCopier
+func (ap *ActivityParty) DeepCopy() (copy interface{}) {
 	copy = &ActivityParty{}
-	a.CopyOverTo(copy)
+	ap.CopyOverTo(copy)
 
 	return
 }
 
-func (a *ActivityParty) CopyOverTo(other interface{}) (err error) {
+// CopyOverTo see interface at struct.go#Copier
+func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityParty
 	if activity, ok = other.(*ActivityParty); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityParty")
+		err = newErrorUnsupportedType("given interface{} was not of type *ActivityParty")
 		return
 	}
 
-	a.RLock()
+	ap.RLock()
 	activity.Lock()
 
-	activity.ID = a.ID
-	activity.Size = a.Size
+	activity.ID = ap.ID
+	activity.Size = ap.Size
 
-	a.RUnlock()
+	ap.RUnlock()
 	activity.Unlock()
 
 	return
 }
 
+// ActivityAssets ...
 type ActivityAssets struct {
 	sync.RWMutex `json:"-"`
 
@@ -93,6 +98,7 @@ type ActivityAssets struct {
 	SmallText  string `json:"small_text,omitempty"`  //	text displayed when hovering over the small image of the activity
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (a *ActivityAssets) DeepCopy() (copy interface{}) {
 	copy = &ActivityAssets{}
 	a.CopyOverTo(copy)
@@ -100,11 +106,12 @@ func (a *ActivityAssets) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityAssets
 	if activity, ok = other.(*ActivityAssets); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityAssets")
+		err = newErrorUnsupportedType("given interface{} was not of type *ActivityAssets")
 		return
 	}
 
@@ -122,6 +129,7 @@ func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ActivitySecrets ...
 type ActivitySecrets struct {
 	sync.RWMutex `json:"-"`
 
@@ -130,6 +138,7 @@ type ActivitySecrets struct {
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (a *ActivitySecrets) DeepCopy() (copy interface{}) {
 	copy = &ActivitySecrets{}
 	a.CopyOverTo(copy)
@@ -137,11 +146,12 @@ func (a *ActivitySecrets) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivitySecrets
 	if activity, ok = other.(*ActivitySecrets); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *ActivitySecrets")
+		err = newErrorUnsupportedType("given interface{} was not of type *ActivitySecrets")
 		return
 	}
 
@@ -158,6 +168,7 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ActivityTimestamp ...
 type ActivityTimestamp struct {
 	sync.RWMutex `json:"-"`
 
@@ -165,6 +176,7 @@ type ActivityTimestamp struct {
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (a *ActivityTimestamp) DeepCopy() (copy interface{}) {
 	copy = &ActivityTimestamp{}
 	a.CopyOverTo(copy)
@@ -172,11 +184,12 @@ func (a *ActivityTimestamp) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityTimestamp
 	if activity, ok = other.(*ActivityTimestamp); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *ActivityTimestamp")
+		err = newErrorUnsupportedType("given interface{} was not of type *ActivityTimestamp")
 		return
 	}
 
@@ -192,6 +205,7 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// NewActivity ...
 func NewActivity() (activity *Activity) {
 	return &Activity{
 		Timestamps: []*ActivityTimestamp{},
@@ -216,6 +230,7 @@ type Activity struct {
 	Flags         int                  `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (a *Activity) DeepCopy() (copy interface{}) {
 	copy = &Activity{}
 	a.CopyOverTo(copy)
@@ -223,11 +238,12 @@ func (a *Activity) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *Activity
 	if activity, ok = other.(*Activity); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *Activity")
+		err = newErrorUnsupportedType("given interface{} was not of type *Activity")
 		return
 	}
 
@@ -287,6 +303,7 @@ const (
 	userOBot        = 0x1 << iota
 )
 
+// NewUser creates a new, empty user object
 func NewUser() *User {
 	return &User{}
 }
@@ -334,6 +351,7 @@ func (u *userJSON) extractMap() uint8 {
 	return overwritten
 }
 
+// User the Discord user object which is reused in most other data structures.
 type User struct {
 	sync.RWMutex `json:"-"`
 
@@ -351,10 +369,13 @@ type User struct {
 	overwritten uint8 // map. see number left of field in userJSON struct.
 }
 
+// Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
 	return "<@" + u.ID.String() + ">"
 }
 
+// MentionNickname same as Mention, but shows nicknames
+// TODO: move to member object(?)
 func (u *User) MentionNickname() string {
 	return "<@!" + u.ID.String() + ">"
 }
@@ -363,6 +384,7 @@ func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
 }
 
+// MarshalJSON see interface json.Marshaler
 func (u *User) MarshalJSON() ([]byte, error) {
 	if u.ID.Empty() {
 		return []byte("{}"), nil
@@ -371,6 +393,7 @@ func (u *User) MarshalJSON() ([]byte, error) {
 	return json.Marshal(User(*u))
 }
 
+// UnmarshalJSON see interface json.Unmarshaler
 func (u *User) UnmarshalJSON(data []byte) (err error) {
 	j := userJSON{}
 	err = json.Unmarshal(data, &j)
@@ -409,6 +432,7 @@ func (u *User) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// SendMsg send a message to a user where you utilize a Message object instead of a string
 func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg *Message, err error) {
 	channel, err = session.CreateDM(u.ID)
 	if err != nil {
@@ -419,6 +443,7 @@ func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg
 	return
 }
 
+// SendMsgString send a message to given user where the message is in the form of a string.
 func (u *User) SendMsgString(session Session, content string) (channel *Channel, msg *Message, err error) {
 	channel, msg, err = u.SendMsg(session, &Message{
 		Content: content,
@@ -426,6 +451,8 @@ func (u *User) SendMsgString(session Session, content string) (channel *Channel,
 	return
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
+// CopyOverTo see interface at struct.go#Copier
 func (u *User) DeepCopy() (copy interface{}) {
 	copy = NewUser()
 	u.CopyOverTo(copy)
@@ -433,11 +460,12 @@ func (u *User) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (u *User) CopyOverTo(other interface{}) (err error) {
 	var user *User
 	var valid bool
 	if user, valid = other.(*User); !valid {
-		err = NewErrorUnsupportedType("argument given is not a *User type")
+		err = newErrorUnsupportedType("argument given is not a *User type")
 		return
 	}
 
@@ -465,6 +493,7 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// copyOverToCache see interface at struct.go#CacheCopier
 func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
 
@@ -540,12 +569,14 @@ func (u *User) saveToDiscord(session Session) (err error) {
 	return
 }
 
+// Valid ensure the user object has enough required information to be used in Discord interactions
 func (u *User) Valid() bool {
 	return u.ID > 0
 }
 
 // -------
 
+// NewUserPresence creates a new user presence instance
 func NewUserPresence() *UserPresence {
 	return &UserPresence{
 		Roles: []Snowflake{},
@@ -568,6 +599,7 @@ func (p *UserPresence) String() string {
 	return p.Status
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (p *UserPresence) DeepCopy() (copy interface{}) {
 	copy = NewUserPresence()
 	p.CopyOverTo(copy)
@@ -575,11 +607,12 @@ func (p *UserPresence) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var presence *UserPresence
 	if presence, ok = other.(*UserPresence); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *UserPresence")
+		err = newErrorUnsupportedType("given interface{} was not of type *UserPresence")
 		return
 	}
 
@@ -610,6 +643,7 @@ type UserConnection struct {
 	Integrations []*IntegrationAccount `json:"integrations"` // an array of partial server integrations
 }
 
+// DeepCopy see interface at struct.go#DeepCopier
 func (c *UserConnection) DeepCopy() (copy interface{}) {
 	copy = &UserConnection{}
 	c.CopyOverTo(copy)
@@ -617,11 +651,12 @@ func (c *UserConnection) DeepCopy() (copy interface{}) {
 	return
 }
 
+// CopyOverTo see interface at struct.go#Copier
 func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 	var ok bool
 	var con *UserConnection
 	if con, ok = other.(*UserConnection); !ok {
-		err = NewErrorUnsupportedType("given interface{} was not of type *UserConnection")
+		err = newErrorUnsupportedType("given interface{} was not of type *UserConnection")
 		return
 	}
 
