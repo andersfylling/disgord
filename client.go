@@ -1043,8 +1043,6 @@ func (c *Client) eventHandler() {
 		// unmarshal into cache
 		//err := c.cacheEvent2(evtName, box)
 
-		fmt.Println(evt.Name() + "#: " + string(data))
-
 		err = unmarshal(data, box)
 		if err != nil {
 			logrus.Error(err)
