@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/websocket"
 	"net/http"
 	"os"
 	"os/signal"
@@ -53,8 +54,8 @@ type Client struct {
 	token  string
 
 	connected     sync.Mutex
-	ws            DiscordWebsocket
-	socketEvtChan <-chan DiscordWSEvent
+	ws            *websocket.Manager
+	socketEvtChan <-chan *websocket.Event
 
 	myID Snowflake
 
@@ -935,7 +936,7 @@ func (c *Client) UpdateChannel(channel *Channel) (err error) {
 	return errors.New("not implemented")
 }
 
-func waitForEvent(eventEmitter <-chan DiscordWSEvent) (event DiscordWSEvent, err error) {
+func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event, err error) {
 	var alive bool
 	event, alive = <-eventEmitter
 	if !alive {
@@ -950,17 +951,16 @@ func waitForEvent(eventEmitter <-chan DiscordWSEvent) (event DiscordWSEvent, err
 func (c *Client) eventHandler() {
 	for {
 		var err error
-		var evt DiscordWSEvent
+		var evt *websocket.Event
 
 		evt, err = waitForEvent(c.socketEvtChan)
 		if err != nil {
 			return
 		}
 
-		evtName := evt.Name()
 		var box eventBox
 
-		switch evtName {
+		switch evt.Name {
 		case EventReady:
 			box = &Ready{}
 		case EventResumed:
@@ -1028,14 +1028,13 @@ func (c *Client) eventHandler() {
 		case EventWebhooksUpdate:
 			box = &WebhooksUpdate{}
 		default:
-			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evtName, string(evt.Data()))
+			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name, string(evt.Data))
 			continue // move on to next event
 		}
 
 		// populate box
 		ctx := context.Background()
 		box.registerContext(ctx)
-		data := evt.Data()
 
 		// first unmarshal to get identifiers
 		//tmp := *box
@@ -1043,7 +1042,7 @@ func (c *Client) eventHandler() {
 		// unmarshal into cache
 		//err := c.cacheEvent2(evtName, box)
 
-		err = unmarshal(data, box)
+		err = unmarshal(evt.Data, box)
 		if err != nil {
 			logrus.Error(err)
 			continue // ignore event
@@ -1051,11 +1050,11 @@ func (c *Client) eventHandler() {
 		}
 
 		// cache
-		c.cacheEvent(evtName, box)
+		c.cacheEvent(evt.Name, box)
 
 		// trigger listeners
-		c.evtDispatch.triggerChan(ctx, evtName, c, box)
-		c.evtDispatch.triggerCallbacks(ctx, evtName, c, box)
+		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
+		c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
 	}
 }
 

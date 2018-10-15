@@ -37,24 +37,25 @@ func NewSession(conf *Config) (Session, error) {
 	if conf.ProjectName == "" {
 		conf.ProjectName = LibraryInfo()
 	}
-	dws, err := websocket.NewClient(&websocket.Config{
-		// user settings
-		Token:      conf.Token,
-		HTTPClient: conf.HTTPClient,
-		Debug:      conf.Debug,
-
+	dws, err := websocket.NewManager(&websocket.ManagerConfig{
 		// identity
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,
 		GuildLargeThreshold: 250, // TODO: config
 		ShardID:             conf.ShardID,
-		TotalShards:         conf.TotalShards,
-		URL:                 conf.WebsocketURL,
+		ShardCount:          conf.TotalShards,
 
-		// lib specific
-		DAPIVersion:   constant.DiscordVersion,
-		DAPIEncoding:  constant.JSONEncoding,
-		ChannelBuffer: 1,
+		DefaultClientConfig: websocket.DefaultClientConfig{
+			// lib specific
+			Version:       constant.DiscordVersion,
+			Encoding:      constant.JSONEncoding,
+			ChannelBuffer: 1,
+			Endpoint:      conf.WebsocketURL,
+
+			// user settings
+			Token:      conf.Token,
+			HTTPClient: conf.HTTPClient,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func NewSession(conf *Config) (Session, error) {
 		config:        conf,
 		httpClient:    conf.HTTPClient,
 		ws:            dws,
-		socketEvtChan: dws.DiscordWSEventChan(),
+		socketEvtChan: dws.EventChan(),
 		token:         conf.Token,
 		evtDispatch:   evtDispatcher,
 		cache:         cacher,

@@ -138,7 +138,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/websocket"
 	"github.com/andersfylling/snowflake/v2"
 )
 
@@ -146,12 +145,6 @@ import (
 func LibraryInfo() string {
 	return "Disgord " + constant.Version
 }
-
-// DiscordWSEvent see websocket.DiscordWSEvent
-type DiscordWSEvent = websocket.DiscordWSEvent
-
-// DiscordWebsocket see websocket.DiscordWebsocket
-type DiscordWebsocket = websocket.DiscordWebsocket
 
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------

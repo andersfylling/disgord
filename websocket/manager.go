@@ -1,4 +1,4 @@
-package ws2
+package websocket
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ const (
 // function initiates a go routine.
 func NewManager(config *ManagerConfig) (manager *Manager, err error) {
 	var client Client
-	client, err = NewDefaultClient(config.DefaultClientConfig)
+	client, err = NewDefaultClient(&config.DefaultClientConfig)
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ type Event struct {
 }
 
 type ManagerConfig struct {
-	*DefaultClientConfig
+	DefaultClientConfig
 
 	// for identify packets
 	Browser             string
@@ -78,6 +78,47 @@ type Manager struct {
 
 	pulsating  uint8
 	pulseMutex sync.Mutex
+}
+
+// HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
+func (m *Manager) HeartbeatLatency() (duration time.Duration, err error) {
+	duration = m.heartbeatLatency
+	if duration == 0 {
+		err = errors.New("latency not determined yet")
+	}
+
+	return
+}
+
+// RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
+// will be discarded once the socket info is extracted from the event.
+func (m *Manager) RegisterEvent(event string) {
+	m.evtMutex.Lock()
+	defer m.evtMutex.Unlock()
+
+	for i := range m.trackedEvents {
+		if event == m.trackedEvents[i] {
+			return
+		}
+	}
+
+	m.trackedEvents = append(m.trackedEvents, event)
+}
+
+// RemoveEvent removes an event type from the registry. This will cause the event type to be discarded
+// by the socket layer.
+func (m *Manager) RemoveEvent(event string) {
+	m.evtMutex.Lock()
+	defer m.evtMutex.Unlock()
+
+	for i := range m.trackedEvents {
+		if event == m.trackedEvents[i] {
+			m.trackedEvents[i] = m.trackedEvents[len(m.trackedEvents)-1]
+			m.trackedEvents = m.trackedEvents[:len(m.trackedEvents)-1]
+			break
+		}
+	}
+	return
 }
 
 func (m *Manager) EventChan() <-chan *Event {
