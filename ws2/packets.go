@@ -142,6 +142,20 @@ type clientPacket struct {
 	Data interface{} `json:"d"`
 }
 
+type traceData struct {
+	Trace []string `json:"_trace"`
+}
+
+type helloPacket struct {
+	HeartbeatInterval uint `json:"heartbeat_interval"`
+	traceData
+}
+
+type readyPacket struct {
+	SessionID string `json:"session_id"`
+	traceData
+}
+
 // decompressBytes decompresses a binary message
 func decompressBytes(input []byte) (output []byte, err error) {
 	b := bytes.NewReader(input)

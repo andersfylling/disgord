@@ -55,6 +55,15 @@ type DefaultClientConfig struct {
 	Version int
 }
 
+func NewDefaultClient(config *DefaultClientConfig) (*DefaultClient, error) {
+	return &DefaultClient{
+		conf:        config,
+		receiveChan: make(chan *discordPacket),
+		emitChan:    make(chan *clientPacket),
+		connection:  make(chan int8),
+	}, nil
+}
+
 // DefaultClient is the default implementation for handling external communication with the Discord API. The client is
 // only aware of connecting, disconnecting, sending and receiving data. It does not understand that there exist
 // different Discord operation codes, nor that they each expect reaction or way to be handling. That is the role of the
