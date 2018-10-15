@@ -1,4 +1,4 @@
-package ws2
+package websocket
 
 import (
 	"bytes"
