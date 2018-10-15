@@ -148,7 +148,11 @@ func (m *Manager) reconnect() (err error) {
 
 		// wait N seconds
 		logrus.Info("reconnect failed, trying again in N seconds; N = " + strconv.Itoa((try+3)*2))
-		<-time.After(time.Duration((try+3)*2) * time.Second)
+		select {
+		case <-time.After(time.Duration((try+3)*2) * time.Second):
+		case <-m.shutdown:
+			return
+		}
 	}
 
 	return
