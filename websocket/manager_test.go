@@ -290,8 +290,11 @@ func TestManager_reconnect(t *testing.T) {
 	}
 
 	<-time.After(2 * time.Millisecond) // TODO: don't use timeouts
-	if m.sequenceNumber != seq {
-		t.Errorf("incorrect sequence number. Got %d, wants %d\n", m.sequenceNumber, seq)
+	m.RLock()
+	sequence := m.sequenceNumber
+	m.RUnlock()
+	if sequence != seq {
+		t.Errorf("incorrect sequence number. Got %d, wants %d\n", sequence, seq)
 		return
 	}
 	seq++
