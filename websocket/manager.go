@@ -58,9 +58,11 @@ type ManagerConfig struct {
 
 type Manager struct {
 	sync.RWMutex
-	conf     *ManagerConfig
-	shutdown chan interface{}
-	restart  chan interface{}
+	conf         *ManagerConfig
+	shutdown     chan interface{}
+	restart      chan interface{}
+	lastRestart  int64 //unix
+	restartMutex sync.Mutex
 
 	Client // interface
 
@@ -131,8 +133,30 @@ func (m *Manager) Shutdown() (err error) {
 	return
 }
 
+func (m *Manager) lockRestart() bool {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	now := time.Now().UnixNano()
+	locked := (now - m.lastRestart) > (time.Second.Nanoseconds() / 2)
+
+	if locked {
+		m.lastRestart = now
+	}
+
+	return locked
+}
+
 func (m *Manager) reconnect() (err error) {
+	// can we lock the restart process?
+	// if we cannot lock it, exit
+	if !m.lockRestart() {
+		return
+	}
+
 	close(m.restart)
+	m.restart = make(chan interface{})
+
 	_ = m.Disconnect()
 	for try := 0; try <= maxReconnectTries; try++ {
 		logrus.Debugf("Reconnect attempt #%d\n", try)
@@ -168,7 +192,8 @@ func (m *Manager) eventHandler(p *discordPacket) {
 	// validate the sequence numbers
 	if p.SequenceNumber != m.sequenceNumber {
 		m.sequenceNumber--
-		m.reconnect()
+		go m.reconnect()
+		return
 	}
 
 	if p.EventName == event.Ready {
@@ -217,7 +242,7 @@ func (m *Manager) operationHandlers() {
 		var p *discordPacket
 		var open bool
 		select {
-		case p, open = <-m.Receive():
+		case p, open = <-m.Client.Receive():
 			if !open {
 				logrus.Debug("operationChan is dead..")
 				return
@@ -343,7 +368,14 @@ func (m *Manager) pulsate() {
 
 		// verify the heartbeat ACK
 		go func(m *Manager, last time.Time, sent time.Time) {
-			<-time.After(3 * time.Second) // deadline for Discord to respond
+			select {
+			case <-m.restart:
+				return
+			case <-m.shutdown:
+				return
+			case <-time.After(3 * time.Second): // deadline for Discord to respond
+			}
+
 			m.RLock()
 			receivedHeartbeatAck := m.lastHeartbeatAck.After(last)
 			m.RUnlock()
@@ -403,6 +435,6 @@ func sendIdentityPacket(m *Manager) (err error) {
 		identityPayload.Shard = &[2]uint{m.conf.ShardID, m.conf.ShardCount}
 	}
 
-	err = m.Emit(event.Identify, identityPayload)
+	err = m.Emit(event.Identify, &identityPayload)
 	return
 }

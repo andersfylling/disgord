@@ -5,6 +5,7 @@ const (
 	Heartbeat           = "HEARTBEAT"
 	Ready               = "READY"
 	Resume              = "RESUME"
+	Resumed             = "RESUMED"
 	Identify            = "IDENTIFY"
 	StatusUpdate        = "STATUS_UPDATE"
 	VoiceStateUpdate    = "VOICE_STATE_UPDATE"
