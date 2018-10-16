@@ -154,10 +154,9 @@ func (m *Manager) reconnect() (err error) {
 		return
 	}
 
-	close(m.restart)
-	m.restart = make(chan interface{})
-
 	_ = m.Disconnect()
+	m.restart <- 1
+
 	for try := 0; try <= maxReconnectTries; try++ {
 		logrus.Debugf("Reconnect attempt #%d\n", try)
 		err = m.Connect()
@@ -187,14 +186,17 @@ func (m *Manager) eventHandler(p *discordPacket) {
 	// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
 
 	// increment the sequence number for each event to make sure everything is synced with discord
+	m.Lock()
 	m.sequenceNumber++
 
 	// validate the sequence numbers
 	if p.SequenceNumber != m.sequenceNumber {
 		m.sequenceNumber--
+		m.Unlock()
 		go m.reconnect()
 		return
 	}
+	m.Unlock()
 
 	if p.EventName == event.Ready {
 		// always store the session id & update the trace content
@@ -368,12 +370,12 @@ func (m *Manager) pulsate() {
 
 		m.Emit(event.Heartbeat, snr)
 
+		stopChan := make(chan interface{})
+
 		// verify the heartbeat ACK
-		go func(m *Manager, last time.Time, sent time.Time) {
+		go func(m *Manager, last time.Time, sent time.Time, cancel chan interface{}) {
 			select {
-			case <-m.restart:
-				return
-			case <-m.shutdown:
+			case <-cancel:
 				return
 			case <-time.After(3 * time.Second): // deadline for Discord to respond
 			}
@@ -389,14 +391,16 @@ func (m *Manager) pulsate() {
 				// update "latency"
 				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
 			}
-		}(m, last, time.Now())
+		}(m, last, time.Now(), stopChan)
 
 		var shutdown bool
 		select {
 		case <-ticker.C:
 		case <-m.shutdown:
+			close(stopChan)
 			shutdown = true
 		case <-m.restart:
+			close(stopChan)
 			shutdown = true
 		}
 		if !shutdown {
