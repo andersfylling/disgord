@@ -275,13 +275,12 @@ func (m *Manager) sendHelloPacket() {
 	// TODO, this might create several idle goroutines..
 	go m.pulsate()
 
-	err := sendIdentityPacket(m)
-	if err != nil {
-		logrus.Error(err)
-	}
-
 	// if this is a new connection we can drop the resume packet
 	if m.sessionID == "" && m.sequenceNumber == 0 {
+		err := sendIdentityPacket(m)
+		if err != nil {
+			logrus.Error(err)
+		}
 		return
 	}
 
