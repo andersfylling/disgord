@@ -137,6 +137,13 @@ func TestManager_reconnect(t *testing.T) {
 	shutdown := make(chan interface{})
 	done := make(chan interface{})
 
+	defer func() {
+		m.Shutdown()
+		close(done)
+	}()
+
+	var wgID sync.WaitGroup
+
 	var wg sync.WaitGroup
 	go func() {
 		for {
@@ -158,15 +165,15 @@ func TestManager_reconnect(t *testing.T) {
 	}
 
 	go m.operationHandlers()
-	go func() {
+	go func(t *testing.T) {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(6 * time.Second):
 		case <-done:
 			return
 		}
 		close(shutdown)
 		t.Error("timeout")
-	}()
+	}(t)
 
 	go func() {
 		for {
@@ -188,47 +195,54 @@ func TestManager_reconnect(t *testing.T) {
 			case data = <-client.emitChan:
 			case <-shutdown:
 				return
+			case <-done:
+				return
 			}
 			if data.Op != opcode.Heartbeat {
 				client.emitChan <- data // pass it along
 				continue
 			}
 
-			break
+			client.receiveChan <- &discordPacket{
+				Op: opcode.HeartbeatAck,
+			}
 		}
-		client.receiveChan <- &discordPacket{
-			Op: opcode.HeartbeatAck,
+	}()
+
+	// identify
+	go func() {
+		for {
+			var data *clientPacket
+			select {
+			case data = <-client.emitChan:
+			case <-shutdown:
+				return
+			case <-done:
+				return
+			}
+			if data.Op != opcode.Identify {
+				client.emitChan <- data
+				continue
+			}
+			wgID.Done()
+
+			client.receiveChan <- &discordPacket{
+				Op:             opcode.DiscordEvent,
+				SequenceNumber: seq,
+				EventName:      event.Ready,
+				Data:           []byte(`{}`),
+			}
+			seq++
 		}
 	}()
 
 	// send hello packet
+	wgID.Add(1)
 	client.receiveChan <- &discordPacket{
 		Op:   opcode.Hello,
 		Data: []byte(`{"heartbeat_interval":45000,"_trace":["discord-gateway-prd-1-99"]}`),
 	}
-
-	// wait for identify
-	for {
-		var data *clientPacket
-		select {
-		case data = <-client.emitChan:
-		case <-shutdown:
-			return
-		}
-		if data.Op != opcode.Identify {
-			client.emitChan <- data
-			continue
-		}
-
-		break
-	}
-	client.receiveChan <- &discordPacket{
-		Op:             opcode.DiscordEvent,
-		SequenceNumber: seq,
-		EventName:      event.Ready,
-		Data:           []byte(`{}`),
-	}
-	seq++
+	wgID.Wait()
 
 	// connection is established, now force a reconnect
 	wg.Add(1) // only one, cause we only want one reconnect when 2 reconnect commands are received
@@ -278,8 +292,17 @@ func TestManager_reconnect(t *testing.T) {
 	<-time.After(2 * time.Millisecond) // TODO: don't use timeouts
 	if m.sequenceNumber != seq {
 		t.Errorf("incorrect sequence number. Got %d, wants %d\n", m.sequenceNumber, seq)
+		return
+	}
+	seq++
+
+	// what if there is a session invalidate event
+	wgID.Add(1)
+	client.receiveChan <- &discordPacket{
+		Op:   opcode.InvalidSession,
+		Data: []byte(`false`),
 	}
 
-	m.Shutdown()
-	close(done)
+	// wait for identify
+	wgID.Wait()
 }

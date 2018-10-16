@@ -262,7 +262,9 @@ func (m *Manager) operationHandlers() {
 		case opcode.InvalidSession:
 			// invalid session. Must respond with a identify packet
 			go func() {
-				randomDelay := time.Second * time.Duration(rand.Intn(4)+1)
+				rand.Seed(time.Now().UnixNano())
+				delay := rand.Intn(4) + 1
+				randomDelay := time.Second * time.Duration(delay)
 				<-time.After(randomDelay)
 				err := sendIdentityPacket(m)
 				if err != nil {
