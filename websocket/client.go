@@ -2,9 +2,9 @@ package websocket
 
 import (
 	"errors"
+	"fmt"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
-	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
@@ -56,11 +56,16 @@ type DefaultClientConfig struct {
 }
 
 func NewDefaultClient(config *DefaultClientConfig) (*DefaultClient, error) {
+	ws, err := newConn(config.HTTPClient)
+	if err != nil {
+		return nil, err
+	}
 	return &DefaultClient{
 		conf:        config,
 		receiveChan: make(chan *discordPacket),
 		emitChan:    make(chan *clientPacket),
 		connection:  make(chan int8),
+		conn:        ws,
 	}, nil
 }
 
@@ -75,7 +80,7 @@ type DefaultClient struct {
 
 	receiveChan chan *discordPacket
 	emitChan    chan *clientPacket
-	conn        *websocket.Conn
+	conn        Conn
 	connection  chan int8
 }
 
@@ -84,7 +89,9 @@ func (c *DefaultClient) Connect() (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if c.conn != nil {
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// certainty say if we are connected
+	if !c.conn.Disconnected() {
 		err = errors.New("cannot connect while a connection already exist")
 		return
 	}
@@ -96,24 +103,11 @@ func (c *DefaultClient) Connect() (err error) {
 		}
 	}
 
-	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
-	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
-	dialer := websocket.DefaultDialer
-	if t, ok := c.conf.HTTPClient.Transport.(*http.Transport); ok {
-		dialer = &websocket.Dialer{
-			HandshakeTimeout: dialer.HandshakeTimeout,
-			Proxy:            t.Proxy,
-			NetDialContext:   t.DialContext,
-			NetDial:          t.Dial, // even though Dial is deprecated in http.Transport, it isn't in websocket
-		}
-	}
-
 	// ready the error handler
 	defer func(err error) error {
 		if err != nil {
 			if c.conn != nil {
 				c.conn.Close()
-				c.conn = nil
 				if c.connection != nil {
 					close(c.connection)
 					c.connection = nil
@@ -128,7 +122,7 @@ func (c *DefaultClient) Connect() (err error) {
 	c.connection = make(chan int8)
 
 	// establish ws connection
-	c.conn, _, err = dialer.Dial(c.conf.Endpoint, nil)
+	err = c.conn.Open(c.conf.Endpoint, nil)
 	if err != nil {
 		return
 	}
@@ -144,7 +138,7 @@ func (c *DefaultClient) Disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if c.conn == nil {
+	if c.conn.Disconnected() {
 		err = errors.New("already disconnected")
 		return
 	}
@@ -159,8 +153,8 @@ func (c *DefaultClient) Disconnect() (err error) {
 	// wait for other processes to finish
 	<-time.After(time.Second * 1)
 	c.connection = nil
-	err = c.conn.Close()
-	c.conn = nil
+	// c.conn.Close() is done in the emitter when sending c.Emit(event.Shutdown, nil)
+	//err = c.conn.Close()
 	return
 }
 
@@ -211,34 +205,27 @@ func (c *DefaultClient) emitter() {
 		case msg, open = <-c.emitChan:
 		}
 		if !open || (msg.Data == nil && msg.Op == opcode.Shutdown) {
-			c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			c.conn.Close()
 			return
 		}
 
-		err := c.conn.WriteJSON(&msg)
+		err := c.conn.WriteJSON(msg)
 		if err != nil {
 			// TODO-logging
+			fmt.Printf("could not send data to discord: %+v\n", msg)
 		}
 	}
 }
 
 func (c *DefaultClient) receiver() {
 	for {
-		messageType, packet, err := c.conn.ReadMessage()
-		if err != nil && (websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) || c.connection == nil) {
+		packet, err := c.conn.Read()
+		if err != nil || c.connection == nil {
 			logrus.Debug("closing readPump")
 			return
 		}
 
-		logrus.Debugf("<-: %+v\n", string(packet))
-
-		if messageType == websocket.BinaryMessage {
-			packet, err = decompressBytes(packet)
-			if err != nil {
-				logrus.Panic(err)
-				continue
-			}
-		}
+		//fmt.Printf("<-: %+v\n", string(packet))
 
 		// parse to gateway payload object
 		evt := &discordPacket{}

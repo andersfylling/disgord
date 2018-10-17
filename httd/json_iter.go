@@ -4,6 +4,7 @@ package httd
 
 import (
 	"encoding/json"
+	"io"
 
 	"github.com/json-iterator/go"
 )
@@ -14,6 +15,15 @@ func Unmarshal(data []byte, v interface{}) error {
 		return j.UnmarshalJSON(data)
 	}
 	return jsoniter.Unmarshal(data, v)
+}
+
+func JSONEncode(w io.WriteCloser, v interface{}) error {
+	err1 := jsoniter.NewEncoder(w).Encode(v)
+	err2 := w.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 // Marshal is the json marshaler implementation for jsoniter, depending on the build tags.
