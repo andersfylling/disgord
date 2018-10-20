@@ -54,7 +54,7 @@ type Client struct {
 	token  string
 
 	connected     sync.Mutex
-	ws            *websocket.Manager
+	ws            *websocket.Client
 	socketEvtChan <-chan *websocket.Event
 
 	myID Snowflake

@@ -13,7 +13,7 @@ import (
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws *websocket.Manager) *Dispatch {
+func NewDispatch(ws *websocket.Client) *Dispatch {
 	dispatcher := &Dispatch{
 		allChan: make(chan interface{}),
 
@@ -103,7 +103,7 @@ type Dispatch struct {
 	voiceStateUpdateChan         chan *VoiceStateUpdate
 	webhooksUpdateChan           chan *WebhooksUpdate
 
-	ws *websocket.Manager
+	ws *websocket.Client
 
 	listeners      map[string][]interface{}
 	listenOnceOnly map[string][]int

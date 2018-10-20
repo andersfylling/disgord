@@ -15,4 +15,5 @@ const (
 // custom events for Disgord. Don't use these.
 const (
 	Shutdown = "_"
+	Close    = "-"
 )

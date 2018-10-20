@@ -42,6 +42,7 @@ func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
 }
 
 func (g *gorilla) WriteJSON(v interface{}) (err error) {
+	// TODO: move unmarshalling out of here?
 	var w io.WriteCloser
 	w, err = g.c.NextWriter(websocket.TextMessage)
 	if err != nil {
