@@ -49,6 +49,44 @@ github.com/andersfylling/disgord
 If you do not wish to use json-iterator, you can pass `-tags=json-std` to switch to `"encoding/json"`.
 However, json-iterator is the recommended default for this library.
 
+## Setup / installation guide
+As this is a go module, it is expected that your project utilises the module concept (minimum Go version: 1.11). If you do not, then there is no guarantee that using this will work. To get this, simply use go get: `go get github.com/andersfylling/disgord`. I have been using this project in none module projects, so it might function for you as well. But official, this is not supported.
+
+Read more about modules here: [https://github.com/golang/go/wiki/Modules](https://github.com/golang/go/wiki/Modules)
+
+### Creating a fresh project using Disgord
+So if you haven't used modules before and you just want to create a Bot using Disgord, this is how it's done (Linux):
+ 1. Create a folder with your project name: `mkdir my-bot && cd my-bot` (outside the go path!)
+ 2. Create a main.go file, and add the following:
+    ```go
+    package main
+
+    import "github.com/andersfylling/disgord"
+    import "fmt"
+
+    func main() {
+        session, err := disgord.NewSession(&disgord.Config{
+            Token: "DISGORD_TOKEN",
+        })
+        if err != nil {
+            panic(err)
+        }
+
+        myself, err := session.GetCurrentUser()
+        if err != nil {
+            panic(err)
+        }
+
+        fmt.Printf("Hello, %s!\n", myself.String())
+    }
+    ```
+ 3. Make sure you have activated go modules: `export GO111MODULE=auto`
+ 4. Initiate the project as a module: `go mod init my-bot` (you should now see a `go.mod` file)
+ 5. Start building, this will find all your dependencies and store them in the go.mod file: `go build .`
+ 6. You can now start the bot, and see the greeting: `go run .`
+
+If you experience any issues with this guide, please create a issue.
+
 ## Contributing
 Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be useful to read this regardless if you have the time)
 
