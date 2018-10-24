@@ -59,10 +59,8 @@ func TestModifyCurrentUser(t *testing.T) {
 			t.Skip()
 			return
 		}
-		randomName := "sldfhksghs"
-		params := &ModifyCurrentUserParams{
-			Username: &randomName,
-		}
+		params := &ModifyCurrentUserParams{}
+		params.SetUsername("sldfhksghs")
 		_, err := ModifyCurrentUser(client, params)
 		if err != nil {
 			t.Error(err)
@@ -74,9 +72,8 @@ func TestModifyCurrentUser(t *testing.T) {
 			t.Skip()
 			return
 		}
-		params := &ModifyCurrentUserParams{
-			Username: &originalUsername,
-		}
+		params := &ModifyCurrentUserParams{}
+		params.SetUsername(originalUsername)
 		_, err := ModifyCurrentUser(client, params)
 		if err != nil {
 			t.Error(err)

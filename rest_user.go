@@ -57,8 +57,49 @@ func GetUser(client httd.Getter, id Snowflake) (ret *User, err error) {
 
 // ModifyCurrentUserParams JSON params for func ModifyCurrentUser
 type ModifyCurrentUserParams struct {
-	Username *string `json:"username,omitempty"`
-	Avatar   *string `json:"avatar,omitempty"`
+	avatarIsSet bool
+	username    string // `json:"username,omitempty"`
+	avatar      string // `json:"avatar,omitempty"`
+}
+
+var _ AvatarParamHolder = (*ModifyCurrentUserParams)(nil)
+
+func (m *ModifyCurrentUserParams) Empty() bool {
+	return m.username == "" && !m.avatarIsSet
+}
+
+func (m *ModifyCurrentUserParams) SetUsername(name string) {
+	m.username = name
+}
+
+// SetAvatar updates the avatar image. Must be abase64 encoded string.
+// provide a nil to reset the avatar.
+func (m *ModifyCurrentUserParams) SetAvatar(avatar string) {
+	m.avatar = avatar
+	m.avatarIsSet = avatar != ""
+}
+
+// UseDefaultAvatar sets the avatar param to null, and let's Discord assign a default avatar image.
+// Note that the avatar value will never hold content, as default avatars only works on null values.
+//
+// Use this to reset an avatar image.
+func (m *ModifyCurrentUserParams) UseDefaultAvatar() {
+	m.avatar = ""
+	m.avatarIsSet = true
+}
+
+func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
+	var content = map[string]interface{}{}
+	if m.username != "" {
+		content["username"] = m.username
+	}
+	if m.avatarIsSet && m.avatar == "" {
+		content["avatar"] = nil
+	} else if m.avatarIsSet && m.avatar != "" {
+		content["avatar"] = m.avatar
+	}
+
+	return httd.Marshal(content)
 }
 
 // ModifyCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.

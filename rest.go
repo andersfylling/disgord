@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"github.com/andersfylling/disgord/httd"
 )
 
@@ -15,6 +16,16 @@ func unmarshal(data []byte, v interface{}) error {
 
 func marshal(v interface{}) ([]byte, error) {
 	return httd.Marshal(v)
+}
+
+// AvatarParamHolder is used when handling avatar related REST structs.
+// since a Avatar can be reset by using nil, it causes some extra issues as omit empty cannot be used
+// to get around this, the struct requires an internal state and must also handle custom marshalling
+type AvatarParamHolder interface {
+	json.Marshaler
+	Empty() bool
+	SetAvatar(avatar string)
+	UseDefaultAvatar()
 }
 
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the client can use for Connecting.

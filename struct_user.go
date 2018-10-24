@@ -553,10 +553,11 @@ func (u *User) saveToDiscord(session Session) (err error) {
 
 	params := &ModifyCurrentUserParams{}
 	if u.Username != "" {
-		params.Username = &u.Username
+		params.SetUsername(u.Username)
 	}
 	if u.Avatar != nil && u.Avatar != myself.Avatar {
-		params.Avatar = u.Avatar
+		// TODO: allow resetting the avatar, somehow
+		params.SetAvatar(*u.Avatar)
 	}
 
 	var updated *User

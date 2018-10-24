@@ -14,7 +14,7 @@ func ratelimitWebhook(id Snowflake) string {
 
 func NewCreateWebhookParams(name string, avatar *string) *CreateWebhookParams {
 	return &CreateWebhookParams{
-		Name: name,
+		Name:   name,
 		Avatar: avatar,
 	}
 }
@@ -22,7 +22,7 @@ func NewCreateWebhookParams(name string, avatar *string) *CreateWebhookParams {
 // CreateWebhookParams json params for the create webhook rest request avatar string
 // https://discordapp.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
-	Name   string `json:"name"`   // name of the webhook (2-32 characters)
+	Name   string  `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 }
 
@@ -138,10 +138,12 @@ func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *W
 //  params.UseDefaultAvatar() // will reset any image data, if present
 type ModifyWebhookParams struct {
 	avatarIsSet bool
-	name   string
-	avatar string
-	channelID Snowflake
+	name        string
+	avatar      string
+	channelID   Snowflake
 }
+
+var _ AvatarParamHolder = (*ModifyWebhookParams)(nil)
 
 func NewModifyWebhookParams() *ModifyWebhookParams {
 	return &ModifyWebhookParams{}
@@ -154,6 +156,7 @@ func (m *ModifyWebhookParams) Empty() bool {
 func (m *ModifyWebhookParams) SetName(name string) {
 	m.name = name
 }
+
 // SetAvatar updates the avatar image. Must be abase64 encoded string.
 // provide a nil to reset the avatar.
 func (m *ModifyWebhookParams) SetAvatar(avatar string) {
@@ -177,7 +180,7 @@ func (m *ModifyWebhookParams) MarshalJSON() ([]byte, error) {
 	var v interface{}
 	if m.avatarIsSet {
 		p := &modifyWebhookParamsWithAvatar{
-			Name: m.name,
+			Name:      m.name,
 			ChannelID: m.channelID,
 		}
 		if m.avatar != "" {
@@ -187,7 +190,7 @@ func (m *ModifyWebhookParams) MarshalJSON() ([]byte, error) {
 		v = p
 	} else {
 		v = &modifyWebhookParamsWithoutAvatar{
-			Name: m.name,
+			Name:      m.name,
 			ChannelID: m.channelID,
 		}
 	}
@@ -196,13 +199,13 @@ func (m *ModifyWebhookParams) MarshalJSON() ([]byte, error) {
 }
 
 type modifyWebhookParamsWithoutAvatar struct {
-	Name   string `json:"name,omitempty"`   // name of the webhook (2-32 characters)
+	Name      string    `json:"name,omitempty"` // name of the webhook (2-32 characters)
 	ChannelID Snowflake `json:"channel_id,omitempty"`
 }
 
 type modifyWebhookParamsWithAvatar struct {
-	Name   string `json:"name,omitempty"`   // name of the webhook (2-32 characters)
-	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+	Name      string    `json:"name,omitempty"` // name of the webhook (2-32 characters)
+	Avatar    *string   `json:"avatar"`         // avatar data uri scheme, image for the default webhook avatar
 	ChannelID Snowflake `json:"channel_id,omitempty"`
 }
 
@@ -224,7 +227,7 @@ func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParam
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
 		ContentType: httd.ContentTypeJSON,
-		Body: params,
+		Body:        params,
 	})
 	if err != nil {
 		return
