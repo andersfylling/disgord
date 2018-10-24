@@ -315,7 +315,7 @@ type WebhookRESTer interface {
 	GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error)
 	GetWebhook(id Snowflake) (ret *Webhook, err error)
 	GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error)
-	ModifyWebhook(newWebhook *Webhook) (ret *Webhook, err error)
+	ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error)
 	ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error)
 	DeleteWebhook(webhookID Snowflake) (err error)
 	DeleteWebhookWithToken(id Snowflake, token string) (err error)

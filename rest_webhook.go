@@ -12,11 +12,18 @@ func ratelimitWebhook(id Snowflake) string {
 	return "wh:" + id.String()
 }
 
+func NewCreateWebhookParams(name string, avatar *string) *CreateWebhookParams {
+	return &CreateWebhookParams{
+		Name: name,
+		Avatar: avatar,
+	}
+}
+
 // CreateWebhookParams json params for the create webhook rest request avatar string
 // https://discordapp.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
-	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 }
 
 // CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -124,6 +131,81 @@ func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *W
 	return
 }
 
+// ModifyWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
+// Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
+// avatar by providing a nil to SetAvatar.
+//  params = &ModifyWebhookParams{}
+//  params.UseDefaultAvatar() // will reset any image data, if present
+type ModifyWebhookParams struct {
+	avatarIsSet bool
+	name   string
+	avatar string
+	channelID Snowflake
+}
+
+func NewModifyWebhookParams() *ModifyWebhookParams {
+	return &ModifyWebhookParams{}
+}
+
+func (m *ModifyWebhookParams) Empty() bool {
+	return m.name == "" && m.channelID.Empty() && !m.avatarIsSet
+}
+
+func (m *ModifyWebhookParams) SetName(name string) {
+	m.name = name
+}
+// SetAvatar updates the avatar image. Must be abase64 encoded string.
+// provide a nil to reset the avatar.
+func (m *ModifyWebhookParams) SetAvatar(avatar string) {
+	m.avatar = avatar
+	m.avatarIsSet = avatar != ""
+}
+
+// UseDefaultAvatar sets the avatar param to null, and let's Discord assign a default avatar image.
+// Note that the avatar value will never hold content, as default avatars only works on null values.
+//
+// Use this to reset an avatar image.
+func (m *ModifyWebhookParams) UseDefaultAvatar() {
+	m.avatar = ""
+	m.avatarIsSet = true
+}
+func (m *ModifyWebhookParams) SetChannelID(channelID Snowflake) {
+	m.channelID = channelID
+}
+
+func (m *ModifyWebhookParams) MarshalJSON() ([]byte, error) {
+	var v interface{}
+	if m.avatarIsSet {
+		p := &modifyWebhookParamsWithAvatar{
+			Name: m.name,
+			ChannelID: m.channelID,
+		}
+		if m.avatar != "" {
+			p.Avatar = &m.avatar
+		}
+
+		v = p
+	} else {
+		v = &modifyWebhookParamsWithoutAvatar{
+			Name: m.name,
+			ChannelID: m.channelID,
+		}
+	}
+
+	return marshal(v)
+}
+
+type modifyWebhookParamsWithoutAvatar struct {
+	Name   string `json:"name,omitempty"`   // name of the webhook (2-32 characters)
+	ChannelID Snowflake `json:"channel_id,omitempty"`
+}
+
+type modifyWebhookParamsWithAvatar struct {
+	Name   string `json:"name,omitempty"`   // name of the webhook (2-32 characters)
+	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+	ChannelID Snowflake `json:"channel_id,omitempty"`
+}
+
 // ModifyWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
 //  Method                  PATCH
@@ -131,10 +213,8 @@ func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *W
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint. are optional. Not tested:extra json fields might
-//                          cause an issue. Consider writing a json params object.
-func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
-	id := newWebhook.ID
+//  Comment                 All parameters to this endpoint.
+func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -144,6 +224,7 @@ func ModifyWebhook(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err 
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
 		ContentType: httd.ContentTypeJSON,
+		Body: params,
 	})
 	if err != nil {
 		return

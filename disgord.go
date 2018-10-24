@@ -139,6 +139,7 @@ package disgord
 import (
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/snowflake/v2"
+	"strings"
 )
 
 // LibraryInfo returns name + version
@@ -202,4 +203,33 @@ func (e *ErrorEmptyValue) Error() string {
 // GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
 func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 	return uint(guildID>>22) % shardCount
+}
+
+
+// https://discordapp.com/developers/docs/resources/user#avatar-data
+func validAvatarPrefix(avatar string) (valid bool) {
+	if avatar == "" {
+		return
+	}
+
+	construct := func(encoding string) string {
+		return "data:image/" + encoding + ";base64,"
+	}
+
+	if len(avatar) < len(construct("X")) {
+		return
+	}
+
+	encodings := []string{
+		"jpeg", "png", "gif",
+	}
+	for _, encoding := range encodings {
+		prefix := construct(encoding)
+		if strings.HasPrefix(avatar, prefix) {
+			valid = len(avatar) - len(prefix) > 0 // it has content
+			break
+		}
+	}
+
+	return
 }

@@ -839,8 +839,28 @@ func (c *Client) GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, 
 }
 
 // ModifyWebhook .
-func (c *Client) ModifyWebhook(newWebhook *Webhook) (ret *Webhook, err error) {
-	ret, err = ModifyWebhook(c.req, newWebhook)
+func (c *Client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
+	if id.Empty() {
+		err = errors.New("given webhook ID was not set, there is nothing to modify")
+		return
+	}
+	if params == nil {
+		err = errors.New("given param object was nil, there is nothing to modify")
+		return
+	}
+	if params.Empty() {
+		err = errors.New("given param object was empty, there is nothing to modify")
+		return
+	}
+
+	// verify avatar string prefix
+	if params.avatarIsSet && params.avatar != "" && !validAvatarPrefix(params.avatar) {
+		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. data:image/jpeg;base64,")
+		return
+	}
+
+	// TODO: check if user has permission to modify webhook
+	ret, err = ModifyWebhook(c.req, id, params)
 	return
 }
 
