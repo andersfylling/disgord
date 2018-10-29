@@ -70,8 +70,7 @@ func NewSession(conf *Config) (Session, error) {
 		conf.CacheConfig = &CacheConfig{
 			Immutable: true,
 
-			UserCacheAlgorithm: CacheAlgTLRU,
-			UserCacheLifetime:  time.Duration(18) * time.Hour,
+			UserCacheAlgorithm: CacheAlgLRU,
 			UserCacheLimitMiB:  500,
 
 			VoiceStateCacheAlgorithm: CacheAlgLRU,
