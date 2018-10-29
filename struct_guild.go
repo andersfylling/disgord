@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/andersfylling/disgord/constant"
 	"sort"
-	"sync"
 )
 
 // consts inspired by: https://github.com/bwmarrin/discordgo/blob/master/structs.go
@@ -131,9 +130,9 @@ func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
 
 // GuildUnavailable is a partial Guild object.
 type GuildUnavailable struct {
-	ID           Snowflake `json:"id"`
-	Unavailable  bool      `json:"unavailable"` // ?*|
-	sync.RWMutex `json:"-"`
+	ID          Snowflake `json:"id"`
+	Unavailable bool      `json:"unavailable"` // ?*|
+	Lockable    `json:"-"`
 }
 
 //type GuildInterface interface {
@@ -159,7 +158,7 @@ type PartialGuild = Guild
 // Fields with `*` are only sent within the GUILD_CREATE event
 // reviewed: 2018-08-25
 type Guild struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID                          Snowflake                     `json:"id"`
 	ApplicationID               Snowflake                     `json:"application_id"` //   |?
@@ -778,7 +777,7 @@ func (g *Guild) deleteFromDiscord(session Session) (err error) {
 
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Reason string `json:"reason"`
 	User   *User  `json:"user"`
@@ -824,7 +823,7 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 
 // GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Enabled   bool      `json:"enabled"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -867,7 +866,7 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 
 // Integration https://discordapp.com/developers/docs/resources/guild#integration-object
 type Integration struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID                Snowflake           `json:"id"`
 	Name              string              `json:"name"`
@@ -929,7 +928,7 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 
 // IntegrationAccount https://discordapp.com/developers/docs/resources/guild#integration-account-object
 type IntegrationAccount struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID   string `json:"id"`   // id of the account
 	Name string `json:"name"` // name of the account
@@ -972,7 +971,7 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 
 // Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	GuildID  Snowflake   `json:"guild_id,omitempty"`
 	User     *User       `json:"user"`

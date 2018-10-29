@@ -11,8 +11,6 @@ GoLang module for interacting with the Discord API. Supports socketing and REST 
 
 Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the Disgord REST implementations. The socketing is not complete, but does support all event types that are documented (using both channels and callbacks).
 
-Note that caching is yet to be implemented. Versions from v0.5.1 and below, had caching to some degree, but was scrapped once a complete rework of the project structure was done.
-
 Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON. But does return custom error messages for some functions which can be type checked in a switch for a more readable error handling as well potentially giving access to more information.
 
 To get started see the examples in [docs](docs/examples)
@@ -20,6 +18,14 @@ To get started see the examples in [docs](docs/examples)
 Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmarrin/discordgo)
 
 Discord channel/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
+
+## Issues and behavior you must be aware of
+Channels are not correctly implemented (see [issue #78](https://github.com/andersfylling/disgord/issues/78)). So information is lost at random. For now, only use handlers.
+
+The cache is not complete (see [issue #65](https://github.com/andersfylling/disgord/issues/65)). It might also have bugs, and require more unit tests and stress testing would be great.
+The idea behind it is to make it as configurable as possible such that you as a developer can experiment and tweak your cache setup to greater performance.
+
+Once we have enough insight/discussion on what works best, we will use build constraints to let people choose between the very configurable cache (current), and then a more performance focused cache (future default).
 
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
@@ -46,8 +52,21 @@ github.com/andersfylling/disgord
 └──github.com/sirupsen/logrus          :Logging (will be replaced with a simplified interface for DI)
 ```
 
+### Build constraints
+> For **advanced users only**.
+
 If you do not wish to use json-iterator, you can pass `-tags=json-std` to switch to `"encoding/json"`.
 However, json-iterator is the recommended default for this library.
+
+Disgord has the option to use mutexes (sync.RWMutex) on Discord objects. By default, methods of Discord objects are not locked as this is
+not needed in our event driven architecture unless you create a parallel computing environment.
+If you want the internal methods to deal with read-write locks on their own, you can pass `-tags=parallelism`, which will activate built-in locking.
+Making all methods thread safe.
+
+If you want to remove the extra memory used by mutexes, or you just want to completely avoid potential deadlocks by disabling
+mutexes you can pass `-tags=removeDiscordMutex` which will replace the RWMutex with an empty struct, causing mutexes (in Discord objects only) to be removed at compile time.
+This cannot be the default behaviour, as it creates confusion whether or not a mutex exists and leads to more error prone code. The developer has to be aware themselves whether or not
+their code can be run without the need of mutexes. This option is not affected by the `parallelism` tag.
 
 ## Setup / installation guide
 As this is a go module, it is expected that your project utilises the module concept (minimum Go version: 1.11). If you do not, then there is no guarantee that using this will work. To get this, simply use go get: `go get github.com/andersfylling/disgord`. I have been using this project in none module projects, so it might function for you as well. But official, this is not supported.

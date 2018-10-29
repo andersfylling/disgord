@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // Emoji ...
@@ -16,7 +15,7 @@ type Emoji struct {
 	Animated      bool        `json:"animated,omitempty"`
 
 	//	image string // base 64 string, with prefix and everything
-	mu sync.RWMutex
+	mu Lockable
 }
 
 // PartialEmoji see Emoji
@@ -65,7 +64,7 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	emoji.RequireColons = e.RequireColons
 	emoji.Managed = e.Managed
 	emoji.Animated = e.Animated
-	emoji.mu = sync.RWMutex{}
+	emoji.mu = Lockable{}
 
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)

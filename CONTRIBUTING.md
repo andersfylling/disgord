@@ -73,18 +73,27 @@ This repository has it's own discord guild/server: [Discord Gophers#Disgord](htt
 Using the live chat application will most likely give you a faster result.
 
 ## What Should I Know Before I Get Started?
+Technologies:
+ * Event driven architecture
+ * Reactor pattern
+ * build constraints
+ * golang modules
+ * layout of discord docs
+ * concurrency and channels
 
 ### Introduction
+Compared to DiscordGo, Disgord does not focus on having the minimal implementation. Disgord hopes to simplify development and create a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, cache replacement algorithms, event channels, etc.
 
 ### Design Decisions
+Utilises the Reactor pattern for handling incoming events.
 
 #### Handlers
-> Also known as listeners/callbacks. The event driven architecture of Disgord is uses the react pattern and as such the listeners can be referred to as handlers.
+> Also known as listeners/callbacks. The event driven architecture of Disgord is uses the react pattern and as such the handlers are triggered in sequence.
 
 Disgord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence and that will not change.
 
 ```GoLang
-Session.On(disgord.EventMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+Session.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
     // ...
 })
 ```
@@ -92,13 +101,12 @@ Session.On(disgord.EventMessageCreate, func(session disgord.Session, evt *disgor
 #### Channels
 > An alternative way to listen for events
 
-While handlers are the common approach to handle events, Disgord also support channels. It is important to mark that having multiple observers on one event type channel will cause them to run in parallel (in contrast to handlers). As such it's important to enforce the use of mutexes to avoid issues.
+While handlers are the common approach to handle events, Disgord also support channels. It is important to mark that having multiple observers on one event type channel will cause only one of them to receive the event (this is just how channels work).
 
 #### Mutex
 
-Every Discord object will hold a read/write mutex. The logic behind this is that Disgord supports the use of channels for handling events, and as such it creates a parallel environment if more than one observers listens to a channel event. Note that the handlers/listeners or callbacks are run in sequential and will never run in parallel, so you should be able to avoid the use of mutexes in handlers.
+Every Discord object will hold a read/write mutex. This might be removed in the future. You can also disabled the mutexes by build constraints. See the main README file.
 
-Also, all the public methods of Discord objects that directly cause a change or a read, will handle locking on their own. But for private method locking is not done(!), such that public methods can reuse private methods without causing deadlocks.
 
 #### Go Generate
 

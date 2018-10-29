@@ -2,14 +2,13 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // VoiceState Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
 // reviewed 2018-09-29
 type VoiceState struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	// GuildID the guild id this voice state is for
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
@@ -89,7 +88,7 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 // VoiceRegion voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	// Snowflake unique Snowflake for the region
 	ID string `json:"id"`

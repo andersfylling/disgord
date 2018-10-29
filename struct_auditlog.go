@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // Audit-log event types
@@ -84,7 +83,7 @@ const (
 
 // AuditLog ...
 type AuditLog struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Webhooks        []*Webhook       `json:"webhooks"`
 	Users           []*User          `json:"users"`
@@ -132,7 +131,7 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 
 // AuditLogEntry ...
 type AuditLogEntry struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	TargetID   Snowflake         `json:"target_id"`
 	Changes    []*AuditLogChange `json:"changes,omitempty"`
@@ -188,7 +187,7 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 
 // AuditLogOption ...
 type AuditLogOption struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	DeleteMemberDays string    `json:"delete_member_days"`
 	MembersRemoved   string    `json:"members_removed"`
@@ -238,7 +237,7 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 
 // AuditLogChange ...
 type AuditLogChange struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	NewValue interface{} `json:"new_value,omitempty"`
 	OldValue interface{} `json:"old_value,omitempty"`

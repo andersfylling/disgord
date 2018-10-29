@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 const (
@@ -36,7 +35,7 @@ const (
 
 // ActivityParty ...
 type ActivityParty struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID   string `json:"id,omitempty"`   // the id of the party
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
@@ -95,7 +94,7 @@ func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
 
 // ActivityAssets ...
 type ActivityAssets struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
 	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
@@ -140,7 +139,7 @@ func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 
 // ActivitySecrets ...
 type ActivitySecrets struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Join     string `json:"join,omitempty"`     // the secret for joining a party
 	Spectate string `json:"spectate,omitempty"` // the secret for spectating a game
@@ -183,7 +182,7 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
@@ -231,7 +230,7 @@ func NewActivity() (activity *Activity) {
 
 // Activity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Name          string               `json:"name"`                     // the activity's name
 	Type          int                  `json:"type"`                     // activity type
@@ -377,7 +376,7 @@ func (u *userJSON) extractMap() uint8 {
 
 // User the Discord user object which is reused in most other data structures.
 type User struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID            Snowflake     `json:"id,omitempty"`
 	Username      string        `json:"username,omitempty"`
@@ -618,7 +617,7 @@ func NewUserPresence() *UserPresence {
 
 // UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	User    *User       `json:"user"`
 	Roles   []Snowflake `json:"roles"`
@@ -671,7 +670,7 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 
 // UserConnection ...
 type UserConnection struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account

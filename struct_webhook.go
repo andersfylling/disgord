@@ -2,13 +2,12 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // Webhook Used to represent a webhook
 // https://discordapp.com/developers/docs/resources/webhook#webhook-object
 type Webhook struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID        Snowflake `json:"id"`                 //  |
 	GuildID   Snowflake `json:"guild_id,omitempty"` //  |?

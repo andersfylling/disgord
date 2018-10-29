@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // PartialInvite ...
@@ -15,7 +14,7 @@ type PartialInvite = Invite
 // https://discordapp.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
@@ -83,7 +82,7 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 // https://discordapp.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
 type InviteMetadata struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	// Inviter user who created the invite
 	Inviter *User `json:"inviter"`

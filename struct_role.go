@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
-	"sync"
 )
 
 // NewRole ...
@@ -12,7 +11,7 @@ func NewRole() *Role {
 
 // Role https://discordapp.com/developers/docs/topics/permissions#role-object
 type Role struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	ID          Snowflake `json:"id"`
 	Name        string    `json:"name"`

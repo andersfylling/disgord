@@ -4,8 +4,6 @@ import (
 	"errors"
 	"github.com/andersfylling/disgord/constant"
 	"strconv"
-	"sync"
-
 	"time"
 )
 
@@ -77,15 +75,15 @@ type ChannelFetcher interface {
 // //   "type": 0
 // // }
 type PartialChannel struct {
-	sync.RWMutex `json:"-"`
-	ID           Snowflake `json:"id"`
-	Name         string    `json:"name"`
-	Type         uint      `json:"type"`
+	Lockable `json:"-"`
+	ID       Snowflake `json:"id"`
+	Name     string    `json:"name"`
+	Type     uint      `json:"type"`
 }
 
 // Channel ...
 type Channel struct {
-	sync.RWMutex         `json:"-"`
+	Lockable             `json:"-"`
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
 	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
@@ -474,7 +472,7 @@ type MessageApplication struct {
 
 // Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
-	sync.RWMutex    `json:"-"`
+	Lockable        `json:"-"`
 	ID              Snowflake          `json:"id"`
 	ChannelID       Snowflake          `json:"channel_id"`
 	Author          *User              `json:"author"`
@@ -694,7 +692,7 @@ func (m *Message) RespondString(client MessageSender, content string) (msg *Mess
 // Reaction ...
 // https://discordapp.com/developers/docs/resources/channel#reaction-object
 type Reaction struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Count uint          `json:"count"`
 	Me    bool          `json:"me"`
@@ -745,7 +743,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbed https://discordapp.com/developers/docs/resources/channel#embed-object
 type ChannelEmbed struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Title       string                 `json:"title"`       // title of embed
 	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
@@ -824,7 +822,7 @@ func (c *ChannelEmbed) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
 type ChannelEmbedThumbnail struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
 	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
@@ -868,7 +866,7 @@ func (c *ChannelEmbedThumbnail) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
 type ChannelEmbedVideo struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	URL    string `json:"url,omitempty"`    // ?| , source url of video
 	Height int    `json:"height,omitempty"` // ?| , height of video
@@ -910,7 +908,7 @@ func (c *ChannelEmbedVideo) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
 type ChannelEmbedImage struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
 	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
@@ -954,7 +952,7 @@ func (c *ChannelEmbedImage) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
 type ChannelEmbedProvider struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Name string `json:"name,omitempty"` // ?| , name of provider
 	URL  string `json:"url,omitempty"`  // ?| , url of provider
@@ -994,7 +992,7 @@ func (c *ChannelEmbedProvider) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
 type ChannelEmbedAuthor struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Name         string `json:"name,omitempty"`           // ?| , name of author
 	URL          string `json:"url,omitempty"`            // ?| , url of author
@@ -1038,7 +1036,7 @@ func (c *ChannelEmbedAuthor) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
 type ChannelEmbedFooter struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Text         string `json:"text"`                     //  | , url of author
 	IconURL      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
@@ -1080,7 +1078,7 @@ func (c *ChannelEmbedFooter) CopyOverTo(other interface{}) (err error) {
 
 // ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
 type ChannelEmbedField struct {
-	sync.RWMutex `json:"-"`
+	Lockable `json:"-"`
 
 	Name   string `json:"name"`           //  | , name of the field
 	Value  string `json:"value"`          //  | , value of the field
