@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // Webhook Used to represent a webhook
 // https://discordapp.com/developers/docs/resources/webhook#webhook-object
@@ -33,8 +36,10 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	w.RLock()
-	hook.Lock()
+	if constant.LockedMethods {
+		w.RLock()
+		hook.Lock()
+	}
 
 	hook.ID = w.ID
 	hook.GuildID = w.GuildID
@@ -44,7 +49,9 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 	hook.Avatar = w.Avatar
 	hook.Token = w.Token
 
-	w.RUnlock()
-	hook.Unlock()
+	if constant.LockedMethods {
+		w.RUnlock()
+		hook.Unlock()
+	}
 	return
 }

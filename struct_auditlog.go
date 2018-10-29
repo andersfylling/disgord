@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // Audit-log event types
 const (
@@ -105,8 +108,10 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	l.RLock()
-	log.Lock()
+	if constant.LockedMethods {
+		l.RLock()
+		log.Lock()
+	}
 
 	for _, webhook := range l.Webhooks {
 		log.Webhooks = append(log.Webhooks, webhook.DeepCopy().(*Webhook))
@@ -118,8 +123,10 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 		log.AuditLogEntries = append(log.AuditLogEntries, entry.DeepCopy().(*AuditLogEntry))
 	}
 
-	l.RUnlock()
-	log.Unlock()
+	if constant.LockedMethods {
+		l.RUnlock()
+		log.Unlock()
+	}
 	return
 }
 
@@ -153,8 +160,10 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	l.RLock()
-	log.Lock()
+	if constant.LockedMethods {
+		l.RLock()
+		log.Lock()
+	}
 
 	log.TargetID = l.TargetID
 	log.UserID = l.UserID
@@ -170,8 +179,10 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 		log.Options = append(log.Options, option.DeepCopy().(*AuditLogOption))
 	}
 
-	l.RUnlock()
-	log.Unlock()
+	if constant.LockedMethods {
+		l.RUnlock()
+		log.Unlock()
+	}
 	return
 }
 
@@ -205,8 +216,10 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	l.RLock()
-	log.Lock()
+	if constant.LockedMethods {
+		l.RLock()
+		log.Lock()
+	}
 
 	log.DeleteMemberDays = l.DeleteMemberDays
 	log.MembersRemoved = l.MembersRemoved
@@ -216,8 +229,10 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 	log.Type = l.Type
 	log.RoleName = l.RoleName
 
-	l.RUnlock()
-	log.Unlock()
+	if constant.LockedMethods {
+		l.RUnlock()
+		log.Unlock()
+	}
 	return
 }
 
@@ -247,14 +262,19 @@ func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	l.RLock()
-	log.Lock()
+	if constant.LockedMethods {
+		l.RLock()
+		log.Lock()
+	}
 
 	log.NewValue = l.NewValue
 	log.OldValue = l.OldValue
 	log.Key = l.Key
 
-	l.RUnlock()
-	log.Unlock()
+	if constant.LockedMethods {
+		l.RUnlock()
+		log.Unlock()
+	}
+
 	return
 }

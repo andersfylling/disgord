@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"github.com/andersfylling/disgord/constant"
 	"sync"
 )
 
@@ -76,14 +77,18 @@ func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	ap.RLock()
-	activity.Lock()
+	if constant.LockedMethods {
+		ap.RLock()
+		activity.Lock()
+	}
 
 	activity.ID = ap.ID
 	activity.Size = ap.Size
 
-	ap.RUnlock()
-	activity.Unlock()
+	if constant.LockedMethods {
+		ap.RUnlock()
+		activity.Unlock()
+	}
 
 	return
 }
@@ -115,16 +120,20 @@ func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	a.RLock()
-	activity.Lock()
+	if constant.LockedMethods {
+		a.RLock()
+		activity.Lock()
+	}
 
 	activity.LargeImage = a.LargeImage
 	activity.LargeText = a.LargeText
 	activity.SmallImage = a.SmallImage
 	activity.SmallText = a.SmallText
 
-	a.RUnlock()
-	activity.Unlock()
+	if constant.LockedMethods {
+		a.RUnlock()
+		activity.Unlock()
+	}
 
 	return
 }
@@ -155,15 +164,19 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	a.RLock()
-	activity.Lock()
+	if constant.LockedMethods {
+		a.RLock()
+		activity.Lock()
+	}
 
 	activity.Join = a.Join
 	activity.Spectate = a.Spectate
 	activity.Match = a.Match
 
-	a.RUnlock()
-	activity.Unlock()
+	if constant.LockedMethods {
+		a.RUnlock()
+		activity.Unlock()
+	}
 
 	return
 }
@@ -193,14 +206,18 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	a.RLock()
-	activity.Lock()
+	if constant.LockedMethods {
+		a.RLock()
+		activity.Lock()
+	}
 
 	activity.Start = a.Start
 	activity.End = a.End
 
-	a.RUnlock()
-	activity.Unlock()
+	if constant.LockedMethods {
+		a.RUnlock()
+		activity.Unlock()
+	}
 
 	return
 }
@@ -247,8 +264,10 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	a.RLock()
-	activity.Lock()
+	if constant.LockedMethods {
+		a.RLock()
+		activity.Lock()
+	}
 
 	activity.Name = a.Name
 	activity.Type = a.Type
@@ -287,6 +306,11 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	}
 	if a.Secrets != nil {
 		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
+	}
+
+	if constant.LockedMethods {
+		a.RUnlock()
+		activity.Unlock()
 	}
 
 	return
@@ -469,8 +493,10 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	u.RLock()
-	user.Lock()
+	if constant.LockedMethods {
+		u.RLock()
+		user.Lock()
+	}
 
 	user.ID = u.ID
 	user.Username = u.Username
@@ -487,8 +513,10 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 		user.Avatar = &avatar
 	}
 
-	u.RUnlock()
-	user.Unlock()
+	if constant.LockedMethods {
+		u.RUnlock()
+		user.Unlock()
+	}
 
 	return
 }
@@ -497,11 +525,10 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
 
-	u.RLock()
-	defer u.RUnlock()
-
-	user.Lock()
-	defer user.Unlock()
+	if constant.LockedMethods {
+		u.RLock()
+		user.Lock()
+	}
 
 	if !u.ID.Empty() {
 		user.ID = u.ID
@@ -531,6 +558,11 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 		user.Bot = u.Bot
 	}
 	user.overwritten = u.overwritten
+
+	if constant.LockedMethods {
+		u.RUnlock()
+		user.Unlock()
+	}
 
 	return
 }
@@ -617,8 +649,10 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	p.RLock()
-	presence.Lock()
+	if constant.LockedMethods {
+		p.RLock()
+		presence.Lock()
+	}
 
 	presence.User = p.User.DeepCopy().(*User)
 	presence.Roles = p.Roles
@@ -627,8 +661,10 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 	presence.Nick = p.Nick
 	presence.Status = p.Status
 
-	p.RUnlock()
-	presence.Unlock()
+	if constant.LockedMethods {
+		p.RUnlock()
+		presence.Unlock()
+	}
 
 	return
 }
@@ -661,8 +697,10 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	con.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		con.Lock()
+	}
 
 	con.ID = c.ID
 	con.Name = c.Name
@@ -674,8 +712,10 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
 	}
 
-	c.RUnlock()
-	con.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		con.Unlock()
+	}
 
 	return
 }

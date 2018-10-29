@@ -17,17 +17,3 @@ const DisgordTestGuildDefaultEmojiSnowflake = "DISGORD_TEST_GUILD_DEFAULT_EMOJI_
 // DisgordTestLive set to true to properly test the functionality against
 // Discord before a release is drafted
 const DisgordTestLive = "DISGORD_TEST_LIVE"
-
-// GitHubURL repository url
-const GitHubURL = "https://github.com/andersfylling/disgord"
-
-// DiscordVersion API version
-const DiscordVersion = 6
-
-// JSONEncoding the json encoding identifier
-const JSONEncoding = "json"
-
-// Version project version
-// TODO: git hook which creates a new git tag after a commit, given that
-//        the version here has changed or does not exist as a git tag yet.
-const Version = "v0.8.0"

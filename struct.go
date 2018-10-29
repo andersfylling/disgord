@@ -3,7 +3,9 @@ package disgord
 import (
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/constant"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -365,4 +367,18 @@ func extractAttribute(filter []byte, scope int, data []byte) (id Snowflake, err 
 		err = errors.New("id was empty")
 	}
 	return
+}
+
+func handleRWLocking(read, write *sync.RWMutex) {
+	if constant.LockedMethods {
+		read.RLock()
+		write.Lock()
+	}
+}
+
+func handleRWUnlocking(read, write *sync.RWMutex) {
+	if constant.LockedMethods {
+		read.RUnlock()
+		write.Unlock()
+	}
 }

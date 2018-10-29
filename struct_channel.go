@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"errors"
+	"github.com/andersfylling/disgord/constant"
 	"strconv"
 	"sync"
 
@@ -271,8 +272,10 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RWMutex.RLock()
-	channel.RWMutex.Lock()
+	if constant.LockedMethods {
+		c.RWMutex.RLock()
+		channel.RWMutex.Lock()
+	}
 
 	channel.ID = c.ID
 	channel.Type = c.Type
@@ -298,8 +301,10 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
 	}
 
-	c.RWMutex.RUnlock()
-	channel.RWMutex.Unlock()
+	if constant.LockedMethods {
+		c.RWMutex.RUnlock()
+		channel.RWMutex.Unlock()
+	}
 
 	return
 }
@@ -307,8 +312,10 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 func (c *Channel) copyOverToCache(other interface{}) (err error) {
 	channel := other.(*Channel)
 
-	channel.Lock()
-	c.RLock()
+	if constant.LockedMethods {
+		channel.Lock()
+		c.RLock()
+	}
 
 	channel.ID = c.ID
 	channel.Type = c.Type
@@ -354,8 +361,10 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 	// TODO: evaluate
 	channel.ApplicationID = c.ApplicationID
 
-	channel.Unlock()
-	c.RUnlock()
+	if constant.LockedMethods {
+		channel.Unlock()
+		c.RUnlock()
+	}
 	return
 }
 
@@ -523,8 +532,10 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	m.RLock()
-	message.Lock()
+	if constant.LockedMethods {
+		m.RLock()
+		message.Lock()
+	}
 
 	message.ID = m.ID
 	message.ChannelID = m.ChannelID
@@ -564,8 +575,10 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
 	}
 
-	m.RUnlock()
-	message.Unlock()
+	if constant.LockedMethods {
+		m.RUnlock()
+		message.Unlock()
+	}
 
 	return
 }
@@ -609,7 +622,10 @@ type MessageSender interface {
 
 // Send sends this message to discord.
 func (m *Message) Send(client MessageSender) (msg *Message, err error) {
-	m.RLock()
+
+	if constant.LockedMethods {
+		m.RLock()
+	}
 	params := &CreateChannelMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
@@ -621,7 +637,10 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 		params.Embed = m.Embeds[0]
 	}
 	channelID := m.ChannelID
-	m.RUnlock()
+
+	if constant.LockedMethods {
+		m.RUnlock()
+	}
 
 	msg, err = client.CreateChannelMessage(channelID, params)
 	return
@@ -629,12 +648,22 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 
 // Respond responds to a message using a Message object.
 func (m *Message) Respond(client MessageSender, message *Message) (msg *Message, err error) {
-	m.RLock()
-	message.Lock()
-	message.ChannelID = m.ChannelID
-	m.RUnlock()
+	if constant.LockedMethods {
+		m.RLock()
+	}
+	id := m.ChannelID
+	if constant.LockedMethods {
+		m.RUnlock()
+	}
+
+	if constant.LockedMethods {
+		message.Lock()
+	}
+	message.ChannelID = id
+	if constant.LockedMethods {
+		message.Unlock()
+	}
 	msg, err = message.Send(client)
-	message.Unlock()
 	return
 }
 
@@ -644,9 +673,13 @@ func (m *Message) RespondString(client MessageSender, content string) (msg *Mess
 		Content: content,
 	}
 
-	m.RLock()
-	defer m.RUnlock()
+	if constant.LockedMethods {
+		m.RLock()
+	}
 	msg, err = client.CreateChannelMessage(m.ChannelID, params)
+	if constant.LockedMethods {
+		m.RUnlock()
+	}
 	return
 }
 
@@ -685,8 +718,10 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	r.RLock()
-	reaction.Lock()
+	if constant.LockedMethods {
+		r.RLock()
+		reaction.Lock()
+	}
 
 	reaction.Count = r.Count
 	reaction.Me = r.Me
@@ -695,8 +730,10 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 		reaction.Emoji = r.Emoji.DeepCopy().(*Emoji)
 	}
 
-	r.RUnlock()
-	reaction.Unlock()
+	if constant.LockedMethods {
+		r.RUnlock()
+		reaction.Unlock()
+	}
 	return
 }
 
@@ -742,8 +779,10 @@ func (c *ChannelEmbed) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.Title = c.Title
 	embed.Type = c.Type
@@ -776,8 +815,10 @@ func (c *ChannelEmbed) CopyOverTo(other interface{}) (err error) {
 		embed.Fields[i] = field.DeepCopy().(*ChannelEmbedField)
 	}
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -808,16 +849,20 @@ func (c *ChannelEmbedThumbnail) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.URL = c.URL
 	embed.ProxyURL = c.ProxyURL
 	embed.Height = c.Height
 	embed.Width = c.Width
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -847,15 +892,19 @@ func (c *ChannelEmbedVideo) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.URL = c.URL
 	embed.Height = c.Height
 	embed.Width = c.Width
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -886,16 +935,20 @@ func (c *ChannelEmbedImage) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.URL = c.URL
 	embed.ProxyURL = c.ProxyURL
 	embed.Height = c.Height
 	embed.Width = c.Width
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -924,14 +977,18 @@ func (c *ChannelEmbedProvider) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.URL = c.URL
 	embed.Name = c.Name
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -962,16 +1019,20 @@ func (c *ChannelEmbedAuthor) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.Name = c.Name
 	embed.URL = c.URL
 	embed.IconURL = c.IconURL
 	embed.ProxyIconURL = c.ProxyIconURL
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -1001,15 +1062,19 @@ func (c *ChannelEmbedFooter) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.Text = c.Text
 	embed.IconURL = c.IconURL
 	embed.ProxyIconURL = c.ProxyIconURL
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }
 
@@ -1039,14 +1104,18 @@ func (c *ChannelEmbedField) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	c.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		c.RLock()
+		embed.Lock()
+	}
 
 	embed.Name = c.Name
 	embed.Value = c.Value
 	embed.Inline = c.Inline
 
-	c.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		c.RUnlock()
+		embed.Unlock()
+	}
 	return
 }

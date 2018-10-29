@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket"
 	"net/http"
 	"os"
@@ -905,7 +906,9 @@ func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (
 
 // SendMsg .
 func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
-	message.RLock()
+	if constant.LockedMethods {
+		message.RLock()
+	}
 	params := &CreateChannelMessageParams{
 		Content: message.Content,
 		Tts:     message.Tts,
@@ -918,7 +921,10 @@ func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 	if len(message.Embeds) > 0 {
 		params.Embed = message.Embeds[0]
 	}
-	message.RUnlock()
+
+	if constant.LockedMethods {
+		message.RUnlock()
+	}
 
 	return c.CreateChannelMessage(channelID, params)
 }
@@ -935,8 +941,10 @@ func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *Messag
 
 // UpdateMessage .
 func (c *Client) UpdateMessage(message *Message) (msg *Message, err error) {
-	message.RLock()
-	defer message.RUnlock()
+	if constant.LockedMethods {
+		message.RLock()
+		defer message.RUnlock()
+	}
 
 	params := &EditMessageParams{
 		Content: message.Content,
@@ -1074,7 +1082,7 @@ func (c *Client) eventHandler() {
 
 		// trigger listeners
 		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
-		c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
+		go c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
 	}
 }
 

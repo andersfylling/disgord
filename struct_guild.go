@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"github.com/andersfylling/disgord/constant"
 	"sort"
 	"sync"
 )
@@ -200,8 +201,10 @@ type Guild struct {
 func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild := other.(*Guild)
 
-	g.RLock()
-	guild.Lock()
+	if constant.LockedMethods {
+		g.RLock()
+		guild.Lock()
+	}
 
 	//guild.ID = g.ID
 	if g.Name != "" {
@@ -250,8 +253,10 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 		guild.JoinedAt = &joined
 	}
 
-	g.RUnlock()
-	guild.Unlock()
+	if constant.LockedMethods {
+		g.RUnlock()
+		guild.Unlock()
+	}
 
 	return
 }
@@ -282,9 +287,10 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 // MarshalJSON see interface json.Marshaler
 // TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
-	g.Lock()
-	defer g.Unlock()
-	// TODO: check for dead locks
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	var jsonData []byte
 	var err error
@@ -313,8 +319,10 @@ func (g *Guild) sortChannels() {
 
 // AddChannel adds a channel to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddChannel(c *Channel) error {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	g.Channels = append(g.Channels, c)
 	g.sortChannels()
@@ -329,8 +337,10 @@ func (g *Guild) DeleteChannel(c *Channel) error {
 
 // DeleteChannelByID removes a channel from the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) DeleteChannelByID(ID Snowflake) error {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	index := -1
 	for i, c := range g.Channels {
@@ -363,8 +373,10 @@ func (g *Guild) addMember(member *Member) error {
 
 // AddMembers adds multiple members to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMembers(members []*Member) {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	for _, member := range members {
 		g.addMember(member)
@@ -373,16 +385,20 @@ func (g *Guild) AddMembers(members []*Member) {
 
 // AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMember(member *Member) error {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	return g.addMember(member)
 }
 
 // LoadAllMembers fetches all the members for this guild from the Discord REST API
 func (g *Guild) LoadAllMembers(session Session) (err error) {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	// TODO-1: check cache
 	// TODO-2: what if members have already been loaded? use Guild.MembersCount?
@@ -420,8 +436,10 @@ func (g *Guild) LoadAllMembers(session Session) (err error) {
 
 // AddRole adds a role to the Guild object. Note that this does not interact with Discord.
 func (g *Guild) AddRole(role *Role) error {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	// TODO: implement sorting for faster searching later
 	role.guildID = g.ID
@@ -432,8 +450,10 @@ func (g *Guild) AddRole(role *Role) error {
 
 // Member return a member by his/her userid
 func (g *Guild) Member(id Snowflake) (*Member, error) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	for _, member := range g.Members {
 		if member.User.ID == id {
@@ -446,8 +466,10 @@ func (g *Guild) Member(id Snowflake) (*Member, error) {
 
 // MembersByName retrieve a slice of members with same username or nickname
 func (g *Guild) MembersByName(name string) (members []*Member) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	for _, member := range g.Members {
 		if member.Nick == name || member.User.Username == name {
@@ -460,8 +482,10 @@ func (g *Guild) MembersByName(name string) (members []*Member) {
 
 // Role retrieve a role based on role id
 func (g *Guild) Role(id Snowflake) (role *Role, err error) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	for _, role = range g.Roles {
 		if role.ID == id {
@@ -485,8 +509,10 @@ func (g *Guild) Role(id Snowflake) (role *Role, err error) {
 
 // DeleteRoleByID remove a role from the guild struct
 func (g *Guild) DeleteRoleByID(ID Snowflake) {
-	g.Lock()
-	defer g.Unlock()
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
 
 	index := -1
 	for i, r := range g.Roles {
@@ -506,8 +532,10 @@ func (g *Guild) DeleteRoleByID(ID Snowflake) {
 
 // RoleByName retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*Role, error) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.RLock()
+		defer g.RUnlock()
+	}
 
 	var roles []*Role
 	for _, role := range g.Roles {
@@ -525,8 +553,10 @@ func (g *Guild) RoleByName(name string) ([]*Role, error) {
 
 // Channel get a guild channel given it's ID
 func (g *Guild) Channel(id Snowflake) (*Channel, error) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.RLock()
+		defer g.RUnlock()
+	}
 
 	for _, channel := range g.Channels {
 		if channel.ID == id {
@@ -539,8 +569,10 @@ func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 
 // Emoji get a guild emoji by it's ID
 func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
-	g.RLock()
-	defer g.RUnlock()
+	if constant.LockedMethods {
+		g.RLock()
+		defer g.RUnlock()
+	}
 
 	for _, emoji = range g.Emojis {
 		if emoji.ID == id {
@@ -639,8 +671,10 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	g.RLock()
-	guild.Lock()
+	if constant.LockedMethods {
+		g.RLock()
+		guild.Lock()
+	}
 
 	guild.ID = g.ID
 	guild.Name = g.Name
@@ -724,8 +758,10 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		guild.Presences = append(guild.Presences, presenceP.DeepCopy().(*UserPresence))
 	}
 
-	g.RUnlock()
-	guild.Unlock()
+	if constant.LockedMethods {
+		g.RUnlock()
+		guild.Unlock()
+	}
 
 	return
 }
@@ -765,8 +801,10 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	b.RLock()
-	ban.Lock()
+	if constant.LockedMethods {
+		b.RLock()
+		ban.Lock()
+	}
 
 	ban.Reason = b.Reason
 
@@ -774,8 +812,10 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 		ban.User = b.User.DeepCopy().(*User)
 	}
 
-	b.RUnlock()
-	ban.Unlock()
+	if constant.LockedMethods {
+		b.RUnlock()
+		ban.Unlock()
+	}
 
 	return
 }
@@ -807,14 +847,18 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	e.RLock()
-	embed.Lock()
+	if constant.LockedMethods {
+		e.RLock()
+		embed.Lock()
+	}
 
 	embed.Enabled = e.Enabled
 	embed.ChannelID = e.ChannelID
 
-	e.RUnlock()
-	embed.Unlock()
+	if constant.LockedMethods {
+		e.RUnlock()
+		embed.Unlock()
+	}
 
 	return
 }
@@ -854,8 +898,10 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	i.RLock()
-	integration.Lock()
+	if constant.LockedMethods {
+		i.RLock()
+		integration.Lock()
+	}
 
 	integration.ID = i.ID
 	integration.Name = i.Name
@@ -873,8 +919,10 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 		integration.Account = i.Account.DeepCopy().(*IntegrationAccount)
 	}
 
-	i.RUnlock()
-	integration.Unlock()
+	if constant.LockedMethods {
+		i.RUnlock()
+		integration.Unlock()
+	}
 
 	return
 }
@@ -904,14 +952,19 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	i.RLock()
-	account.Lock()
+	if constant.LockedMethods {
+		i.RLock()
+		account.Lock()
+	}
 
 	account.ID = i.ID
 	account.Name = i.Name
 
-	i.RUnlock()
-	account.Unlock()
+	if constant.LockedMethods {
+		i.RUnlock()
+		account.Unlock()
+	}
+
 	return
 }
 
@@ -959,8 +1012,10 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	m.RLock()
-	member.Lock()
+	if constant.LockedMethods {
+		m.RLock()
+		member.Lock()
+	}
 
 	member.GuildID = m.GuildID
 	member.User = m.User.DeepCopy().(*User)
@@ -970,8 +1025,10 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	member.Deaf = m.Deaf
 	member.Mute = m.Mute
 
-	m.RUnlock()
-	member.Unlock()
+	if constant.LockedMethods {
+		m.RUnlock()
+		member.Unlock()
+	}
 
 	return
 }

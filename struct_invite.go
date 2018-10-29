@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // PartialInvite ...
 // {
@@ -47,8 +50,10 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	i.RLock()
-	invite.Lock()
+	if constant.LockedMethods {
+		i.RLock()
+		invite.Lock()
+	}
 
 	invite.Code = i.Code
 	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
@@ -66,8 +71,11 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		}
 	}
 
-	i.RUnlock()
-	invite.Unlock()
+	if constant.LockedMethods {
+		i.RUnlock()
+		invite.Unlock()
+	}
+
 	return
 }
 
@@ -116,8 +124,10 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	i.RLock()
-	invite.Lock()
+	if constant.LockedMethods {
+		i.RLock()
+		invite.Lock()
+	}
 
 	invite.Uses = i.Uses
 	invite.MaxUses = i.MaxUses
@@ -130,7 +140,10 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		invite.Inviter = i.Inviter.DeepCopy().(*User)
 	}
 
-	i.RUnlock()
-	invite.Unlock()
+	if constant.LockedMethods {
+		i.RUnlock()
+		invite.Unlock()
+	}
+
 	return
 }

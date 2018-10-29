@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // VoiceState Voice State structure
 // https://discordapp.com/developers/docs/resources/voice#voice-state-object
@@ -60,8 +63,10 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	v.RLock()
-	voiceState.Lock()
+	if constant.LockedMethods {
+		v.RLock()
+		voiceState.Lock()
+	}
 
 	voiceState.GuildID = v.GuildID
 	voiceState.ChannelID = v.ChannelID
@@ -73,8 +78,10 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 	voiceState.SelfMute = v.SelfMute
 	voiceState.Suppress = v.Suppress
 
-	v.RUnlock()
-	voiceState.Unlock()
+	if constant.LockedMethods {
+		v.RUnlock()
+		voiceState.Unlock()
+	}
 
 	return
 }
@@ -126,8 +133,10 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	v.RLock()
-	voice.Lock()
+	if constant.LockedMethods {
+		v.RLock()
+		voice.Lock()
+	}
 
 	voice.ID = v.ID
 	voice.Name = v.Name
@@ -138,8 +147,10 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	voice.Deprecated = v.Deprecated
 	voice.Custom = v.Custom
 
-	v.RUnlock()
-	voice.Unlock()
+	if constant.LockedMethods {
+		v.RUnlock()
+		voice.Unlock()
+	}
 
 	return
 }

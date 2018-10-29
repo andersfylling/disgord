@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // Emoji ...
 type Emoji struct {
@@ -51,8 +54,10 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	e.mu.RLock()
-	emoji.mu.Lock()
+	if constant.LockedMethods {
+		e.mu.RLock()
+		emoji.mu.Lock()
+	}
 
 	emoji.ID = e.ID
 	emoji.Name = e.Name
@@ -66,8 +71,10 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 		emoji.User = e.User.DeepCopy().(*User)
 	}
 
-	e.mu.RUnlock()
-	emoji.mu.Unlock()
+	if constant.LockedMethods {
+		e.mu.RUnlock()
+		emoji.mu.Unlock()
+	}
 
 	return
 }

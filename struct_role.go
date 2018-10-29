@@ -1,6 +1,9 @@
 package disgord
 
-import "sync"
+import (
+	"github.com/andersfylling/disgord/constant"
+	"sync"
+)
 
 // NewRole ...
 func NewRole() *Role {
@@ -49,8 +52,10 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 		return newErrorUnsupportedType("given interface{} was not a *Role")
 	}
 
-	r.RLock()
-	role.Lock()
+	if constant.LockedMethods {
+		r.RLock()
+		role.Lock()
+	}
 
 	role.ID = r.ID
 	role.Name = r.Name
@@ -62,8 +67,10 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	role.Mentionable = r.Mentionable
 	role.guildID = r.guildID
 
-	r.RUnlock()
-	role.Unlock()
+	if constant.LockedMethods {
+		r.RUnlock()
+		role.Unlock()
+	}
 
 	return
 }
