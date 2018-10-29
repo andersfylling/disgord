@@ -7,7 +7,6 @@ import (
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lfu"
 	"github.com/andersfylling/disgord/cache/lru"
-	"github.com/andersfylling/disgord/cache/tlru"
 )
 
 // cache keys to redirect to the related cache system
@@ -65,7 +64,8 @@ func (e *ErrorUsingDeactivatedCache) Error() string {
 func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (cacher interfaces.CacheAlger, err error) {
 	switch alg {
 	case CacheAlgTLRU:
-		cacher = tlru.NewCacheList(limit, lifetime)
+		//cacher = tlru.NewCacheList(limit, lifetime)
+		err = errors.New("TLRU is missing schedulerer for clearing dead/timed out objects and is therefore deactivated")
 	case CacheAlgLRU:
 		cacher = lru.NewCacheList(limit)
 	case CacheAlgLFU:
