@@ -62,11 +62,13 @@ func GuildAuditLogs(client httd.Getter, guildID Snowflake, params *GuildAuditLog
 		return
 	}
 
-	if resp.StatusCode != 200 {
+	if !(resp.StatusCode == 200 || resp.StatusCode == 204) {
 		err = errors.New("incorrect status code. Got " + strconv.Itoa(resp.StatusCode) + ", wants 200. Message: " + string(body))
+		// TODO: unmarshal into a ErrREST struct
 		return
 	}
 
-	err = unmarshal(body, &log)
+	log = &AuditLog{}
+	err = unmarshal(body, log)
 	return
 }

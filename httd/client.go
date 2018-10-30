@@ -32,11 +32,11 @@ const (
 // Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
 	Request(req *Request) (resp *http.Response, body []byte, err error)
-	Get(req *Request) (resp *http.Response, body []byte, err error)
-	Post(req *Request) (resp *http.Response, body []byte, err error)
-	Put(req *Request) (resp *http.Response, body []byte, err error)
-	Patch(req *Request) (resp *http.Response, body []byte, err error)
-	Delete(req *Request) (resp *http.Response, body []byte, err error)
+	Getter
+	Poster
+	Puter
+	Patcher
+	Deleter
 }
 
 // Getter interface which holds the Get method for sending get requests to Discord
@@ -62,6 +62,25 @@ type Patcher interface {
 // Deleter interface which holds the Delete method for sending delete requests to Discord
 type Deleter interface {
 	Delete(req *Request) (resp *http.Response, body []byte, err error)
+}
+
+type ErrREST struct {
+	Code       int    `json:"code"`
+	Msg        string `json:"message"`
+	Suggestion string
+}
+
+func (e *ErrREST) Error() string {
+	return e.Msg
+}
+
+// Client is the httd client for handling Discord requests
+type Client struct {
+	url                          string // base url with API version
+	rateLimit                    *RateLimit
+	reqHeader                    http.Header
+	httpClient                   *http.Client
+	cancelRequestWhenRateLimited bool
 }
 
 // Get handles Discord get requests
@@ -183,15 +202,6 @@ type Request struct {
 	Endpoint    string
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType string
-}
-
-// Client is the httd client for handling Discord requests
-type Client struct {
-	url                          string // base url with API version
-	rateLimit                    *RateLimit
-	reqHeader                    http.Header
-	httpClient                   *http.Client
-	cancelRequestWhenRateLimited bool
 }
 
 func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {

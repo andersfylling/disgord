@@ -5,6 +5,8 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
+type ErrRest = httd.ErrREST
+
 // URLParameters converts a struct of values to a valid URL query string
 type URLParameters interface {
 	GetQueryString() string
