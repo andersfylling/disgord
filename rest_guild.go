@@ -123,6 +123,7 @@ func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
 }
 
 // ModifyGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
+// TODO: support nullable Icon, anything else?
 type ModifyGuildParams struct {
 	Name                    string                        `json:"name,omitempty"`
 	Region                  string                        `json:"region,omitempty"`
