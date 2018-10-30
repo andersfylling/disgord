@@ -264,7 +264,7 @@ type ModifyGuildChannelPositionsParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
-func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params *ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
+func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
 	_, body, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
