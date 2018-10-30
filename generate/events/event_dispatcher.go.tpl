@@ -6,19 +6,17 @@ package disgord
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
+
+	"github.com/andersfylling/disgord/websocket"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws DiscordWebsocket) *Dispatch {
+func NewDispatch(ws *websocket.Client, activateEventChannels bool, evtChanSize int) *Dispatch {
 	dispatcher := &Dispatch{
-		allChan: make(chan interface{}),
-		{{range .}} {{if .IsDiscordEvent}}
-		{{.LowerCaseFirst}}Chan: make(chan *{{.}}), {{end}} {{end}}
-
 		ws: ws,
+		activateEventChannels: activateEventChannels,
 
 		listeners:      make(map[string][]interface{}),
 		listenOnceOnly: make(map[string][]int),
@@ -26,17 +24,23 @@ func NewDispatch(ws DiscordWebsocket) *Dispatch {
 		shutdown: make(chan struct{}),
 	}
 
+
+	if activateEventChannels {
+        {{range .}} {{if .IsDiscordEvent}}
+        dispatcher.{{.LowerCaseFirst}}Chan = make(chan *{{.}}, evtChanSize) {{end}} {{end}}
+    }
+
 	return dispatcher
 }
 
 // Dispatch holds all the channels and internal state for all registered
 // observers
 type Dispatch struct {
-	allChan chan interface{} // any event
 	{{range .}} {{if .IsDiscordEvent}}
 	{{.LowerCaseFirst}}Chan chan *{{.}} {{end}} {{end}}
 
-	ws DiscordWebsocket
+	ws *websocket.Client
+	activateEventChannels bool
 
 	listeners      map[string][]interface{}
 	listenOnceOnly map[string][]int
@@ -48,6 +52,10 @@ type Dispatch struct {
 
 // EventChan ... TODO
 func (d *Dispatch) EventChan(event string) (channel interface{}, err error) {
+	if !d.activateEventChannels {
+	    return nil, errors.New("usage of event channels have not been activated. See disgord.Config")
+	}
+
 	switch event {
 	{{range .}} {{if .IsDiscordEvent}}
 	case Event{{.}}:
@@ -59,36 +67,32 @@ func (d *Dispatch) EventChan(event string) (channel interface{}, err error) {
 	return
 }
 
-// alwaysListenToChans makes sure no deadlocks occure
-func (d *Dispatch) alwaysListenToChans() {
-	go func() {
-		stop := false
-		for {
-			select {
-			case <-d.allChan:
-			{{range .}} {{if .IsDiscordEvent}}
-			case <-d.{{.LowerCaseFirst}}Chan: {{end}} {{end}}
-			case <-d.shutdown:
-				stop = true
-			}
-
-			if stop {
-				break
-			}
-		}
-	}()
-}
-
 func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Session, box interface{}) {
-	prepareBox(evtName, box)
+	if !d.activateEventChannels {
+	    return
+	}
 
 	switch evtName {
 	{{range .}} {{if .IsDiscordEvent}}
 	case Event{{.}}:
 		d.{{.LowerCaseFirst}}Chan <- box.(*{{.}}) {{end}} {{end}}
 	default:
-		fmt.Printf("------\nTODO\nImplement channel for `%s`\n------\n\n", evtName)
+		// if we land at this stage, the channel is either full or a unknown event has come through
+		// empty the channel
+		d.emptyChannel(evtName)
 	}
+}
+
+func (d *Dispatch) emptyChannel(evtName string) {
+	if !d.activateEventChannels {
+	    return
+	}
+
+    switch evtName {
+        {{range .}} {{if .IsDiscordEvent}}
+        case Event{{.}}:
+            for _ = range d.{{.LowerCaseFirst}}Chan {} {{end}} {{end}}
+    }
 }
 
 func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session Session, box interface{}) {

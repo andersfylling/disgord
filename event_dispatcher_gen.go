@@ -6,58 +6,60 @@ package disgord
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/andersfylling/disgord/websocket"
 	"sync"
+
+	"github.com/andersfylling/disgord/websocket"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws *websocket.Client) *Dispatch {
+func NewDispatch(ws *websocket.Client, activateEventChannels bool, evtChanSize int) *Dispatch {
 	dispatcher := &Dispatch{
-		allChan: make(chan interface{}),
-
-		channelCreateChan:            make(chan *ChannelCreate),
-		channelDeleteChan:            make(chan *ChannelDelete),
-		channelPinsUpdateChan:        make(chan *ChannelPinsUpdate),
-		channelUpdateChan:            make(chan *ChannelUpdate),
-		guildBanAddChan:              make(chan *GuildBanAdd),
-		guildBanRemoveChan:           make(chan *GuildBanRemove),
-		guildCreateChan:              make(chan *GuildCreate),
-		guildDeleteChan:              make(chan *GuildDelete),
-		guildEmojisUpdateChan:        make(chan *GuildEmojisUpdate),
-		guildIntegrationsUpdateChan:  make(chan *GuildIntegrationsUpdate),
-		guildMemberAddChan:           make(chan *GuildMemberAdd),
-		guildMemberRemoveChan:        make(chan *GuildMemberRemove),
-		guildMemberUpdateChan:        make(chan *GuildMemberUpdate),
-		guildMembersChunkChan:        make(chan *GuildMembersChunk),
-		guildRoleCreateChan:          make(chan *GuildRoleCreate),
-		guildRoleDeleteChan:          make(chan *GuildRoleDelete),
-		guildRoleUpdateChan:          make(chan *GuildRoleUpdate),
-		guildUpdateChan:              make(chan *GuildUpdate),
-		messageCreateChan:            make(chan *MessageCreate),
-		messageDeleteChan:            make(chan *MessageDelete),
-		messageDeleteBulkChan:        make(chan *MessageDeleteBulk),
-		messageReactionAddChan:       make(chan *MessageReactionAdd),
-		messageReactionRemoveChan:    make(chan *MessageReactionRemove),
-		messageReactionRemoveAllChan: make(chan *MessageReactionRemoveAll),
-		messageUpdateChan:            make(chan *MessageUpdate),
-		presenceUpdateChan:           make(chan *PresenceUpdate),
-		presencesReplaceChan:         make(chan *PresencesReplace),
-		readyChan:                    make(chan *Ready),
-		resumedChan:                  make(chan *Resumed),
-		typingStartChan:              make(chan *TypingStart),
-		userUpdateChan:               make(chan *UserUpdate),
-		voiceServerUpdateChan:        make(chan *VoiceServerUpdate),
-		voiceStateUpdateChan:         make(chan *VoiceStateUpdate),
-		webhooksUpdateChan:           make(chan *WebhooksUpdate),
-
-		ws: ws,
+		ws:                    ws,
+		activateEventChannels: activateEventChannels,
 
 		listeners:      make(map[string][]interface{}),
 		listenOnceOnly: make(map[string][]int),
 
 		shutdown: make(chan struct{}),
+	}
+
+	if activateEventChannels {
+
+		dispatcher.channelCreateChan = make(chan *ChannelCreate, evtChanSize)
+		dispatcher.channelDeleteChan = make(chan *ChannelDelete, evtChanSize)
+		dispatcher.channelPinsUpdateChan = make(chan *ChannelPinsUpdate, evtChanSize)
+		dispatcher.channelUpdateChan = make(chan *ChannelUpdate, evtChanSize)
+		dispatcher.guildBanAddChan = make(chan *GuildBanAdd, evtChanSize)
+		dispatcher.guildBanRemoveChan = make(chan *GuildBanRemove, evtChanSize)
+		dispatcher.guildCreateChan = make(chan *GuildCreate, evtChanSize)
+		dispatcher.guildDeleteChan = make(chan *GuildDelete, evtChanSize)
+		dispatcher.guildEmojisUpdateChan = make(chan *GuildEmojisUpdate, evtChanSize)
+		dispatcher.guildIntegrationsUpdateChan = make(chan *GuildIntegrationsUpdate, evtChanSize)
+		dispatcher.guildMemberAddChan = make(chan *GuildMemberAdd, evtChanSize)
+		dispatcher.guildMemberRemoveChan = make(chan *GuildMemberRemove, evtChanSize)
+		dispatcher.guildMemberUpdateChan = make(chan *GuildMemberUpdate, evtChanSize)
+		dispatcher.guildMembersChunkChan = make(chan *GuildMembersChunk, evtChanSize)
+		dispatcher.guildRoleCreateChan = make(chan *GuildRoleCreate, evtChanSize)
+		dispatcher.guildRoleDeleteChan = make(chan *GuildRoleDelete, evtChanSize)
+		dispatcher.guildRoleUpdateChan = make(chan *GuildRoleUpdate, evtChanSize)
+		dispatcher.guildUpdateChan = make(chan *GuildUpdate, evtChanSize)
+		dispatcher.messageCreateChan = make(chan *MessageCreate, evtChanSize)
+		dispatcher.messageDeleteChan = make(chan *MessageDelete, evtChanSize)
+		dispatcher.messageDeleteBulkChan = make(chan *MessageDeleteBulk, evtChanSize)
+		dispatcher.messageReactionAddChan = make(chan *MessageReactionAdd, evtChanSize)
+		dispatcher.messageReactionRemoveChan = make(chan *MessageReactionRemove, evtChanSize)
+		dispatcher.messageReactionRemoveAllChan = make(chan *MessageReactionRemoveAll, evtChanSize)
+		dispatcher.messageUpdateChan = make(chan *MessageUpdate, evtChanSize)
+		dispatcher.presenceUpdateChan = make(chan *PresenceUpdate, evtChanSize)
+		dispatcher.presencesReplaceChan = make(chan *PresencesReplace, evtChanSize)
+		dispatcher.readyChan = make(chan *Ready, evtChanSize)
+		dispatcher.resumedChan = make(chan *Resumed, evtChanSize)
+		dispatcher.typingStartChan = make(chan *TypingStart, evtChanSize)
+		dispatcher.userUpdateChan = make(chan *UserUpdate, evtChanSize)
+		dispatcher.voiceServerUpdateChan = make(chan *VoiceServerUpdate, evtChanSize)
+		dispatcher.voiceStateUpdateChan = make(chan *VoiceStateUpdate, evtChanSize)
+		dispatcher.webhooksUpdateChan = make(chan *WebhooksUpdate, evtChanSize)
 	}
 
 	return dispatcher
@@ -66,8 +68,6 @@ func NewDispatch(ws *websocket.Client) *Dispatch {
 // Dispatch holds all the channels and internal state for all registered
 // observers
 type Dispatch struct {
-	allChan chan interface{} // any event
-
 	channelCreateChan            chan *ChannelCreate
 	channelDeleteChan            chan *ChannelDelete
 	channelPinsUpdateChan        chan *ChannelPinsUpdate
@@ -103,7 +103,8 @@ type Dispatch struct {
 	voiceStateUpdateChan         chan *VoiceStateUpdate
 	webhooksUpdateChan           chan *WebhooksUpdate
 
-	ws *websocket.Client
+	ws                    *websocket.Client
+	activateEventChannels bool
 
 	listeners      map[string][]interface{}
 	listenOnceOnly map[string][]int
@@ -115,6 +116,10 @@ type Dispatch struct {
 
 // EventChan ... TODO
 func (d *Dispatch) EventChan(event string) (channel interface{}, err error) {
+	if !d.activateEventChannels {
+		return nil, errors.New("usage of event channels have not been activated. See disgord.Config")
+	}
+
 	switch event {
 
 	case EventChannelCreate:
@@ -192,61 +197,10 @@ func (d *Dispatch) EventChan(event string) (channel interface{}, err error) {
 	return
 }
 
-// alwaysListenToChans makes sure no deadlocks occure
-func (d *Dispatch) alwaysListenToChans() {
-	go func() {
-		stop := false
-		for {
-			select {
-			case <-d.allChan:
-
-			case <-d.channelCreateChan:
-			case <-d.channelDeleteChan:
-			case <-d.channelPinsUpdateChan:
-			case <-d.channelUpdateChan:
-			case <-d.guildBanAddChan:
-			case <-d.guildBanRemoveChan:
-			case <-d.guildCreateChan:
-			case <-d.guildDeleteChan:
-			case <-d.guildEmojisUpdateChan:
-			case <-d.guildIntegrationsUpdateChan:
-			case <-d.guildMemberAddChan:
-			case <-d.guildMemberRemoveChan:
-			case <-d.guildMemberUpdateChan:
-			case <-d.guildMembersChunkChan:
-			case <-d.guildRoleCreateChan:
-			case <-d.guildRoleDeleteChan:
-			case <-d.guildRoleUpdateChan:
-			case <-d.guildUpdateChan:
-			case <-d.messageCreateChan:
-			case <-d.messageDeleteChan:
-			case <-d.messageDeleteBulkChan:
-			case <-d.messageReactionAddChan:
-			case <-d.messageReactionRemoveChan:
-			case <-d.messageReactionRemoveAllChan:
-			case <-d.messageUpdateChan:
-			case <-d.presenceUpdateChan:
-			case <-d.presencesReplaceChan:
-			case <-d.readyChan:
-			case <-d.resumedChan:
-			case <-d.typingStartChan:
-			case <-d.userUpdateChan:
-			case <-d.voiceServerUpdateChan:
-			case <-d.voiceStateUpdateChan:
-			case <-d.webhooksUpdateChan:
-			case <-d.shutdown:
-				stop = true
-			}
-
-			if stop {
-				break
-			}
-		}
-	}()
-}
-
 func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Session, box interface{}) {
-	prepareBox(evtName, box)
+	if !d.activateEventChannels {
+		return
+	}
 
 	switch evtName {
 
@@ -319,7 +273,121 @@ func (d *Dispatch) triggerChan(ctx context.Context, evtName string, session Sess
 	case EventWebhooksUpdate:
 		d.webhooksUpdateChan <- box.(*WebhooksUpdate)
 	default:
-		fmt.Printf("------\nTODO\nImplement channel for `%s`\n------\n\n", evtName)
+		// if we land at this stage, the channel is either full or a unknown event has come through
+		// empty the channel
+		d.emptyChannel(evtName)
+	}
+}
+
+func (d *Dispatch) emptyChannel(evtName string) {
+	if !d.activateEventChannels {
+		return
+	}
+
+	switch evtName {
+
+	case EventChannelCreate:
+		for _ = range d.channelCreateChan {
+		}
+	case EventChannelDelete:
+		for _ = range d.channelDeleteChan {
+		}
+	case EventChannelPinsUpdate:
+		for _ = range d.channelPinsUpdateChan {
+		}
+	case EventChannelUpdate:
+		for _ = range d.channelUpdateChan {
+		}
+	case EventGuildBanAdd:
+		for _ = range d.guildBanAddChan {
+		}
+	case EventGuildBanRemove:
+		for _ = range d.guildBanRemoveChan {
+		}
+	case EventGuildCreate:
+		for _ = range d.guildCreateChan {
+		}
+	case EventGuildDelete:
+		for _ = range d.guildDeleteChan {
+		}
+	case EventGuildEmojisUpdate:
+		for _ = range d.guildEmojisUpdateChan {
+		}
+	case EventGuildIntegrationsUpdate:
+		for _ = range d.guildIntegrationsUpdateChan {
+		}
+	case EventGuildMemberAdd:
+		for _ = range d.guildMemberAddChan {
+		}
+	case EventGuildMemberRemove:
+		for _ = range d.guildMemberRemoveChan {
+		}
+	case EventGuildMemberUpdate:
+		for _ = range d.guildMemberUpdateChan {
+		}
+	case EventGuildMembersChunk:
+		for _ = range d.guildMembersChunkChan {
+		}
+	case EventGuildRoleCreate:
+		for _ = range d.guildRoleCreateChan {
+		}
+	case EventGuildRoleDelete:
+		for _ = range d.guildRoleDeleteChan {
+		}
+	case EventGuildRoleUpdate:
+		for _ = range d.guildRoleUpdateChan {
+		}
+	case EventGuildUpdate:
+		for _ = range d.guildUpdateChan {
+		}
+	case EventMessageCreate:
+		for _ = range d.messageCreateChan {
+		}
+	case EventMessageDelete:
+		for _ = range d.messageDeleteChan {
+		}
+	case EventMessageDeleteBulk:
+		for _ = range d.messageDeleteBulkChan {
+		}
+	case EventMessageReactionAdd:
+		for _ = range d.messageReactionAddChan {
+		}
+	case EventMessageReactionRemove:
+		for _ = range d.messageReactionRemoveChan {
+		}
+	case EventMessageReactionRemoveAll:
+		for _ = range d.messageReactionRemoveAllChan {
+		}
+	case EventMessageUpdate:
+		for _ = range d.messageUpdateChan {
+		}
+	case EventPresenceUpdate:
+		for _ = range d.presenceUpdateChan {
+		}
+	case EventPresencesReplace:
+		for _ = range d.presencesReplaceChan {
+		}
+	case EventReady:
+		for _ = range d.readyChan {
+		}
+	case EventResumed:
+		for _ = range d.resumedChan {
+		}
+	case EventTypingStart:
+		for _ = range d.typingStartChan {
+		}
+	case EventUserUpdate:
+		for _ = range d.userUpdateChan {
+		}
+	case EventVoiceServerUpdate:
+		for _ = range d.voiceServerUpdateChan {
+		}
+	case EventVoiceStateUpdate:
+		for _ = range d.voiceStateUpdateChan {
+		}
+	case EventWebhooksUpdate:
+		for _ = range d.webhooksUpdateChan {
+		}
 	}
 }
 

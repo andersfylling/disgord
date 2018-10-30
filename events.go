@@ -11,12 +11,6 @@ type eventBox interface {
 	registerContext(ctx context.Context)
 }
 
-// EventAllEvents keys that does not fit within one of the existing files goes here
-const EventAllEvents = "*"
-
-// EventCallback is triggered on every event type
-type EventCallback = func(session Session, box interface{})
-
 // ---------------------------
 
 // PresencesReplace holds the event content

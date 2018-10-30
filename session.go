@@ -63,7 +63,8 @@ func NewSession(conf *Config) (Session, error) {
 	reqClient := NewRESTClient(conf)
 
 	// event dispatcher
-	evtDispatcher := NewDispatch(dws)
+	eventChanSize := 20
+	evtDispatcher := NewDispatch(dws, conf.ActivateEventChannels, eventChanSize)
 
 	// caching
 	if conf.CacheConfig == nil {
@@ -141,7 +142,6 @@ func NewSessionMustCompile(conf *Config) (session Session) {
 
 // EventChannels all methods for retrieving event channels
 type EventChannels interface {
-	All() <-chan interface{} // any event
 	Ready() <-chan *Ready
 	Resumed() <-chan *Resumed
 	ChannelCreate() <-chan *ChannelCreate

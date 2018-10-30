@@ -25,24 +25,10 @@ func (d *Dispatch) Once(event string, handlers ...interface{}) {
 	}
 }
 
-func (d *Dispatch) start() {
-	// make sure every channel has a receiver to avoid deadlock
-	// TODO: review, this feels hacky
-	d.alwaysListenToChans()
-}
+func (d *Dispatch) start() {}
 
 func (d *Dispatch) stop() {
 	close(d.shutdown)
-}
-
-// On places listeners into their respected stacks
-// func (d *Dispatcher) OnEvent(evtName string, listener EventCallback) {
-// 	d.listeners[evtName] = append(d.listeners[evtName], listener)
-// }
-
-// All sends all event types
-func (d *Dispatch) All() <-chan interface{} {
-	return d.allChan
 }
 
 func prepareBox(evtName string, box interface{}) {

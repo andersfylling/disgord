@@ -41,8 +41,14 @@ type Config struct {
 
 	Debug bool
 
-	// your project name, name of bot, or whatever
+	// your project name, name of bot, or application
 	ProjectName string
+
+	// ActivateEventChannels signifies that the developer will use channels to handle incoming events. May it be
+	// in addition to handlers or not. This forces the use of a scheduler to empty the buffered channels when they
+	// reach their capacity. Since it requires extra resources, others who have no interest in utilizing channels
+	// should not experience any performance penalty (even though it might be unnoticeable).
+	ActivateEventChannels bool
 
 	//Logger logger.Logrus
 }
@@ -1081,6 +1087,7 @@ func (c *Client) eventHandler() {
 		c.cacheEvent(evt.Name, box)
 
 		// trigger listeners
+		prepareBox(evt.Name, box)
 		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
 		go c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
 	}
