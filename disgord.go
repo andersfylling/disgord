@@ -303,3 +303,25 @@ func ValidateUsername(name string) (err error) {
 
 	return
 }
+
+func validateChannelName(name string) (err error) {
+	if name == "" {
+		err = errors.New("empty")
+		return
+	}
+
+	// attributes
+	length := len(name)
+
+	// Names must be of length of minimum 2 and maximum 100 characters long.
+	if length < 2 {
+		err = errors.New("name is too short")
+	} else if length > 100 {
+		err = errors.New("name is too long")
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}

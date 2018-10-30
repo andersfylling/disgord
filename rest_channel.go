@@ -67,18 +67,155 @@ func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 	return
 }
 
+// NewModifyVoiceChannelParams create a ModifyChannelParams for a voice channel. Prevents changing attributes that
+// only exists for text channels.
+func NewModifyVoiceChannelParams() *ModifyChannelParams {
+	return &ModifyChannelParams{
+		data:    map[string]interface{}{},
+		isVoice: true,
+	}
+}
+
+// NewModifyTextChannelParams create a ModifyChannelParams for a text channel. Prevents changing attributes that
+// only exists for voice channels.
+func NewModifyTextChannelParams() *ModifyChannelParams {
+	return &ModifyChannelParams{
+		data:   map[string]interface{}{},
+		isText: true,
+	}
+}
+
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
 type ModifyChannelParams struct {
-	Name                 *string               `json:"name,omitempty"`
-	Position             *uint                 `json:"position,omitempty"`
-	Topic                *string               `json:"topic,omitempty"`
-	NSFW                 *bool                 `json:"nsfw,omitempty"`
-	RateLimitPerUser     *uint                 `json:"rate_limit_per_user,omitempty"`
-	Bitrate              *uint                 `json:"bitrate,omitempty"`
-	UserLimit            *uint                 `json:"user_limit,omitempty"`
-	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
-	ParentID             *Snowflake            `json:"parent_id,omitempty"`
+	data    map[string]interface{}
+	isText  bool
+	isVoice bool
 }
+
+func (m *ModifyChannelParams) init() {
+	if m.data != nil {
+		return
+	}
+
+	m.data = map[string]interface{}{}
+}
+
+func (m *ModifyChannelParams) SetName(name string) error {
+	if err := validateChannelName(name); err != nil {
+		return err
+	}
+
+	m.init()
+	m.data["name"] = name
+	return nil
+}
+func (m *ModifyChannelParams) SetPosition(pos uint) {
+	m.init()
+	m.data["position"] = pos
+}
+func (m *ModifyChannelParams) SetTopic(topic string) error {
+	if m.isVoice {
+		return errors.New("cannot set topic for a voice channel. Text channels only")
+	}
+	if len(topic) > 1024 {
+		return errors.New("topic is too long. max is 1024 character")
+	}
+
+	m.init()
+	m.data["topic"] = topic
+	m.isText = true
+	return nil
+}
+func (m *ModifyChannelParams) SetNSFW(yes bool) error {
+	if m.isVoice {
+		return errors.New("cannot set NSFW status for voice channel. Text channels only")
+	}
+	m.init()
+	m.data["nsfw"] = yes
+	m.isText = true
+	return nil
+}
+func (m *ModifyChannelParams) SetRateLimitPerUser(seconds uint) error {
+	if m.isVoice {
+		return errors.New("cannot set rate limit for a voice channel. Text channels only")
+	}
+	if seconds > 120 {
+		return errors.New("limit can be maximum 120 seconds")
+	}
+
+	m.init()
+	m.data["rate_limit_per_user"] = seconds
+	m.isText = true
+	return nil
+}
+func (m *ModifyChannelParams) SetBitrate(bitrate uint) error {
+	if m.isText {
+		return errors.New("cannot set bitrate for text channel. Voice channels only")
+	}
+	m.init()
+	m.data["bitrate"] = bitrate
+	m.isVoice = true
+	return nil
+}
+func (m *ModifyChannelParams) SetUserLimit(limit uint) error {
+	if m.isText {
+		return errors.New("cannot set user limit for text channel. Voice channels only")
+	}
+	m.init()
+	m.data["user_limit"] = limit
+	m.isVoice = true
+	return nil
+}
+func (m *ModifyChannelParams) SetPermissionOverwrites(permissions []PermissionOverwrite) {
+	m.init()
+	m.data["permission_overwrites"] = permissions
+}
+func (m *ModifyChannelParams) AddPermissionOverwrite(permission PermissionOverwrite) {
+	m.init()
+	if _, exists := m.data["permission_overwrites"]; !exists {
+		m.data["permission_overwrites"] = []PermissionOverwrite{permission}
+	} else {
+		s := m.data["permission_overwrites"].([]PermissionOverwrite)
+		s = append(s, permission)
+	}
+}
+func (m *ModifyChannelParams) AddPermissionOverwrites(permissions []PermissionOverwrite) {
+	m.init()
+	if _, exists := m.data["permission_overwrites"]; !exists {
+		m.data["permission_overwrites"] = permissions
+	} else {
+		s := m.data["permission_overwrites"].([]PermissionOverwrite)
+		for i := range permissions {
+			s = append(s, permissions[i])
+		}
+	}
+}
+func (m *ModifyChannelParams) SetParentID(id Snowflake) error {
+	if !m.isVoice && !m.isText {
+		return errors.New("can only set parent id for voice and text channels")
+	}
+	m.init()
+	m.data["parent_id"] = id
+	return nil
+}
+func (m *ModifyChannelParams) RemoveParentID() error {
+	if !m.isVoice && !m.isText {
+		return errors.New("can only set parent id for voice and text channels")
+	}
+	m.init()
+	m.data["parent_id"] = nil
+	return nil
+}
+
+func (m *ModifyChannelParams) MarshalJSON() ([]byte, error) {
+	if len(m.data) == 0 {
+		return []byte(`{}`), nil
+	}
+
+	return httd.Marshal(m.data)
+}
+
+var _ json.Marshaler = (*ModifyChannelParams)(nil)
 
 // ModifyChannel [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 // a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If

@@ -90,7 +90,7 @@ type Channel struct {
 	Position             uint                  `json:"position,omitempty"`              // ?|
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	Name                 string                `json:"name,omitempty"`                  // ?|
-	Topic                *string               `json:"topic,omitempty"`                 // ?|?
+	Topic                string                `json:"topic,omitempty"`                 // ?|?
 	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
 	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?
 	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
@@ -120,7 +120,7 @@ func (c *Channel) valid() bool {
 		return false
 	}
 
-	if c.Topic != nil && len(*c.Topic) > 1024 {
+	if len(c.Topic) > 1024 {
 		return false
 	}
 
@@ -158,7 +158,7 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 			// specific
 			if c.Type == ChannelTypeGuildText {
 				params.NSFW = &c.NSFW
-				params.Topic = c.Topic
+				params.Topic = &c.Topic
 				params.RateLimitPerUser = &c.RateLimitPerUser
 			} else if c.Type == ChannelTypeGuildVoice {
 				params.Bitrate = &c.Bitrate
@@ -206,25 +206,27 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 		} else if c.Type == ChannelTypeGroupDM {
 			// nothing to change
 		} else if c.Type == ChannelTypeGuildText {
-			changes.NSFW = &c.NSFW
-			changes.Topic = c.Topic
-			changes.RateLimitPerUser = &c.RateLimitPerUser
+			changes.SetNSFW(c.NSFW)
+			changes.SetTopic(c.Topic)
+			changes.SetRateLimitPerUser(c.RateLimitPerUser)
 		} else if c.Type == ChannelTypeGuildVoice {
-			changes.Bitrate = &c.Bitrate
-			changes.UserLimit = &c.UserLimit
+			changes.SetBitrate(c.Bitrate)
+			changes.SetUserLimit(c.UserLimit)
 		}
 
 		// shared
 		if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
-			changes.ParentID = &c.ParentID
+			if c.ParentID.Empty() {
+				changes.RemoveParentID()
+			} else {
+				changes.SetParentID(c.ParentID)
+			}
 		}
 
 		// for all
-		if c.Name != "" {
-			changes.Name = &c.Name
-		}
-		changes.Position = &c.Position
-		changes.PermissionOverwrites = c.PermissionOverwrites
+		changes.SetName(c.Name)
+		changes.SetPosition(c.Position)
+		changes.SetPermissionOverwrites(c.PermissionOverwrites)
 
 		updated, err = session.ModifyChannel(c.ID, &changes)
 	}
