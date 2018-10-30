@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -393,12 +394,72 @@ func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGui
 // ModifyGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
 type ModifyGuildMemberParams struct {
-	Nick      string      `json:"nick,omitempty"`       // :MANAGE_NICKNAMES
-	Roles     []Snowflake `json:"roles,omitempty"`      // :MANAGE_ROLES
-	Mute      bool        `json:"mute,omitempty"`       // :MUTE_MEMBERS
-	Deaf      bool        `json:"deaf,omitempty"`       // :DEAFEN_MEMBERS
-	ChannelID Snowflake   `json:"channel_id,omitempty"` // :MOVE_MEMBERS
+	data map[string]interface{}
 }
+
+func (m *ModifyGuildMemberParams) init() {
+	if m.data != nil {
+		return
+	}
+
+	m.data = map[string]interface{}{}
+}
+
+// SetNick set new nickname for user. Requires permission MANAGE_NICKNAMES
+func (m *ModifyGuildMemberParams) SetNick(name string) error {
+	if err := ValidateUsername(name); err != nil {
+		return err
+	}
+
+	m.init()
+	m.data["nick"] = name
+	return nil
+}
+
+// RemoveNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+func (m *ModifyGuildMemberParams) RemoveNick() {
+	m.init()
+	m.data["nick"] = nil
+}
+
+// SetRoles updates the member with new roles. Requires permissions MANAGE_ROLES
+func (m *ModifyGuildMemberParams) SetRoles(roles []Snowflake) {
+	m.init()
+	m.data["roles"] = roles
+}
+
+// SetMute mutes a member. Requires permission MUTE_MEMBERS
+func (m *ModifyGuildMemberParams) SetMute(yes bool) {
+	m.init()
+	m.data["mute"] = yes
+}
+
+// SetDeaf deafens a member. Requires permission DEAFEN_MEMBERS
+func (m *ModifyGuildMemberParams) SetDeaf(yes bool) {
+	m.init()
+	m.data["deaf"] = yes
+}
+
+// SetChannelID moves a member from one channel to another. Requires permission MOVE_MEMBERS
+func (m *ModifyGuildMemberParams) SetChannelID(id Snowflake) error {
+	if id.Empty() {
+		return errors.New("empty snowflake")
+	}
+
+	m.init()
+	m.data["channel_id"] = id
+	return nil
+}
+
+func (m *ModifyGuildMemberParams) MarshalJSON() ([]byte, error) {
+	if len(m.data) == 0 {
+		return []byte(`{}`), nil
+	}
+
+	return httd.Marshal(m.data)
+}
+
+var _ json.Marshaler = (*ModifyGuildMemberParams)(nil)
 
 // ModifyGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
 // Fires a Guild Member Update Gateway event.
