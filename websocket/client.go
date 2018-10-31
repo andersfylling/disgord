@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	"github.com/sirupsen/logrus"
@@ -189,11 +190,11 @@ func (m *Client) Emit(command string, data interface{}) (err error) {
 		op = opcode.Identify
 	case event.Resume:
 		op = opcode.Resume
-	case event.RequestGuildMembers:
+	case cmd.RequestGuildMembers:
 		op = opcode.RequestGuildMembers
-	case event.VoiceStateUpdate:
+	case cmd.UpdateVoiceState:
 		op = opcode.VoiceStateUpdate
-	case event.StatusUpdate:
+	case cmd.UpdateStatus:
 		op = opcode.StatusUpdate
 	default:
 		err = errors.New("unsupported command: " + command)

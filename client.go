@@ -213,13 +213,13 @@ func (c *Client) Once(event string, handlers ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(command SocketCommand, data interface{}) {
+func (c *Client) Emit(command SocketCommand, data interface{}) error {
 	switch command {
 	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
 	default:
-		return
+		return errors.New("command is not supported")
 	}
-	c.ws.Emit(command, data)
+	return c.ws.Emit(command, data)
 }
 
 // EventChan get a event channel using the event name

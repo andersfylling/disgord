@@ -239,7 +239,7 @@ type Activity struct {
 	ApplicationID Snowflake            `json:"application_id,omitempty"` //?	snowflake	application id for the game
 	Details       *string              `json:"details,omitempty"`        //?	?string	what the player is currently doing
 	State         *string              `json:"state,omitempty"`          //state?	?string	the user's current party status
-	Party         *ActivityParty       `json:"party"`                    //party?	party object	information for the current party of the player
+	Party         *ActivityParty       `json:"party,omitempty"`          //party?	party object	information for the current party of the player
 	Assets        *ActivityAssets      `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
 	Secrets       *ActivitySecrets     `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
 	Instance      bool                 `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session

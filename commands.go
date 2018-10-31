@@ -1,5 +1,7 @@
 package disgord
 
+import "github.com/andersfylling/disgord/websocket/cmd"
+
 // SocketCommand represents the type used to emit commands to Discord
 // over the socket connection
 type SocketCommand = string
@@ -11,7 +13,7 @@ type SocketCommand = string
 // members, they need to explicitly request them via this operation. The
 // server will send Guild Members Chunk events in response with up to 1000
 // members per chunk until all members that match the request have been sent.
-const CommandRequestGuildMembers SocketCommand = "REQUEST_GUILD_MEMBERS"
+const CommandRequestGuildMembers SocketCommand = cmd.RequestGuildMembers
 
 // RequestGuildMembersCommand payload for socket command REQUEST_GUILD_MEMBERS.
 // See CommandRequestGuildMembers
@@ -28,7 +30,7 @@ type RequestGuildMembersCommand struct {
 
 // CommandUpdateVoiceState Sent when a client wants to join, move, or
 // disconnect from a voice channel.
-const CommandUpdateVoiceState SocketCommand = "UPDATE_VOICE_STATE"
+const CommandUpdateVoiceState SocketCommand = cmd.UpdateVoiceState
 
 // UpdateVoiceStateCommand payload for socket command UPDATE_VOICE_STATE.
 // see CommandUpdateVoiceState
@@ -49,7 +51,7 @@ type UpdateVoiceStateCommand struct {
 
 // CommandUpdateStatus Sent by the client to indicate a presence or status
 // update.
-const CommandUpdateStatus SocketCommand = "UPDATE_STATUS"
+const CommandUpdateStatus SocketCommand = cmd.UpdateStatus
 
 // UpdateStatusCommand payload for socket command UPDATE_STATUS.
 // see CommandUpdateStatus
@@ -58,7 +60,7 @@ type UpdateStatusCommand struct {
 	Since *uint `json:"since"`
 
 	// Game null, or the user's new activity
-	Game *Activity `json:"activity"`
+	Game *Activity `json:"game"`
 
 	// Status the user's new status
 	Status string `json:"status"`
