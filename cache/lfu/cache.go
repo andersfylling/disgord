@@ -19,12 +19,14 @@ func NewCacheItem(content interface{}) *CacheItem {
 
 // CacheItem ...
 type CacheItem struct {
+	id      Snowflake
 	item    interface{}
 	counter uint64
 }
 
 // Object ...
 func (i *CacheItem) Object() interface{} {
+	i.increment()
 	return i.item
 }
 
@@ -39,64 +41,72 @@ func (i *CacheItem) increment() {
 
 // NewCacheList ...
 func NewCacheList(size uint) *CacheList {
-	return &CacheList{
-		items: make(map[Snowflake]*CacheItem, size),
-		limit: size,
+	list := &CacheList{
+		items:    make([]CacheItem, size),
+		table:    make(map[Snowflake]int, size),
+		nilTable: make([]int, size),
+		limit:    size,
 	}
+
+	for i := 0; i < int(size); i++ {
+		list.nilTable[i] = i
+	}
+
+	return list
 }
 
 type CacheList struct {
 	sync.RWMutex
-	items map[Snowflake]*CacheItem
-	limit uint // 0 == unlimited
+	items    []CacheItem
+	table    map[Snowflake]int
+	nilTable []int
+	limit    uint // 0 == unlimited
+	size     uint
 
 	misses uint64 // opposite of cache hits
 	hits   uint64
 }
 
-func (list *CacheList) size() uint {
-	return uint(len(list.items))
-}
-
-// First ...
-func (list *CacheList) First() (item *CacheItem, key Snowflake) {
-	for key, item = range list.items {
-		return
-	}
-
-	return
-}
-
 // Set set adds a new item to the list or returns false if the item already exists
 func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	newItem := newItemI.(*CacheItem)
-	if item, exists := list.items[id]; exists { // check if it points to a diff item
-		if item.item != newItem.item || item != newItem {
-			*item = *newItem
-		}
+	if key, exists := list.table[id]; exists && key != -1 {
+		list.items[key].item = newItem.item
 		return
-	} else {
-		list.items[id] = newItem
 	}
 
-	if list.limit == 0 || list.size() <= list.limit {
-		return
+	if list.limit > 0 && list.size >= list.limit {
+		// if limit is reached, replace the content of the least recently counter (lru)
+		list.removeLFU()
 	}
-	// if limit is reached, replace the content of the least recently counter (lru)
-	list.removeLFU(id)
+
+	if len(list.nilTable) > 0 {
+		key := list.nilTable[len(list.nilTable)-1]
+		list.nilTable = list.nilTable[:len(list.nilTable)-1]
+		list.items[key] = *newItem
+		list.table[id] = key
+		list.size++
+	} else {
+		key := len(list.items)
+		list.items = append(list.items, *newItem)
+		list.table[id] = key
+		list.size++
+	}
 }
 
-func (list *CacheList) removeLFU(exception Snowflake) {
-	lfu, lfuKey := list.First()
-	for key, item := range list.items {
-		if key != exception && item.counter < lfu.counter {
-			// TODO: create an lru map, for later?
-			lfu = item
-			lfuKey = key
+func (list *CacheList) removeLFU() {
+	lfuKey := 0
+	lfu := list.items[lfuKey]
+	var i int
+	for i = range list.items {
+		if list.items[i].counter < lfu.counter {
+			// TODO: create a link to lowest counter for later?
+			lfu = list.items[i]
+			lfuKey = i
 		}
 	}
 
-	delete(list.items, lfuKey)
+	list.deleteUnsafe(lfuKey, lfu.id)
 }
 
 // RefreshAfterDiscordUpdate ...
@@ -107,10 +117,9 @@ func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem)
 
 // Get get an item from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
-	var item *CacheItem
-	if item, exists = list.items[id]; exists {
-		ret = item
-		item.increment()
+	if key, exists := list.table[id]; exists && key != -1 {
+		ret = &list.items[key]
+		list.items[key].increment()
 		list.hits++
 	} else {
 		list.misses++
@@ -118,10 +127,18 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 	return
 }
 
+func (list *CacheList) deleteUnsafe(key int, id Snowflake) {
+	list.table[id] = -1
+	list.nilTable = append(list.nilTable, key)
+	list.size--
+	//list.items[key] = list.items[len(list.items)-1]
+	//list.items = list.items[:len(list.items)-1]
+}
+
 // Delete ...
 func (list *CacheList) Delete(id Snowflake) {
-	if _, exists := list.items[id]; exists {
-		delete(list.items, id)
+	if key, exists := list.table[id]; exists && key != -1 {
+		list.deleteUnsafe(key, id)
 	}
 }
 
