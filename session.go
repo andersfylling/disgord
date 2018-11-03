@@ -1,11 +1,11 @@
 package disgord
 
 import (
+	"github.com/andersfylling/disgord/event"
 	"net/http"
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
 )
@@ -67,54 +67,58 @@ func NewSession(conf *Config) (Session, error) {
 	evtDispatcher := NewDispatch(dws, conf.ActivateEventChannels, eventChanSize)
 
 	// caching
-	if conf.CacheConfig == nil {
-		conf.CacheConfig = &CacheConfig{
-			Immutable: true,
+	var cacher *Cache
+	if !conf.DisableCache {
+		if conf.CacheConfig == nil {
+			conf.CacheConfig = &CacheConfig{
+				Immutable: true,
 
-			UserCacheAlgorithm: CacheAlgLRU,
-			UserCacheLimitMiB:  500,
+				UserCacheAlgorithm: CacheAlgLRU,
+				UserCacheLimitMiB:  500,
 
-			VoiceStateCacheAlgorithm: CacheAlgLRU,
+				VoiceStateCacheAlgorithm: CacheAlgLRU,
 
-			ChannelCacheAlgorithm: CacheAlgLFU,
+				ChannelCacheAlgorithm: CacheAlgLFU,
+			}
 		}
-	}
-	cacher, err := newCache(conf.CacheConfig)
-	if err != nil {
-		return nil, err
-	}
+		cacher, err = newCache(conf.CacheConfig)
+		if err != nil {
+			return nil, err
+		}
 
-	// register for events for activate caches
-	if !conf.CacheConfig.DisableUserCaching {
-		dws.RegisterEvent(event.Ready)
-		dws.RegisterEvent(event.UserUpdate)
-	}
-	if !conf.CacheConfig.DisableVoiceStateCaching {
-		dws.RegisterEvent(event.VoiceStateUpdate)
-	}
-	if !conf.CacheConfig.DisableChannelCaching {
-		dws.RegisterEvent(event.ChannelCreate)
-		dws.RegisterEvent(event.ChannelUpdate)
-		dws.RegisterEvent(event.ChannelPinsUpdate)
-		dws.RegisterEvent(event.ChannelDelete)
-	}
-	if !conf.CacheConfig.DisableGuildCaching {
-		dws.RegisterEvent(event.GuildCreate)
-		dws.RegisterEvent(event.GuildDelete)
-		dws.RegisterEvent(event.GuildUpdate)
-		dws.RegisterEvent(event.GuildEmojisUpdate)
-		dws.RegisterEvent(event.GuildMemberAdd)
-		dws.RegisterEvent(event.GuildMemberRemove)
-		dws.RegisterEvent(event.GuildMembersChunk)
-		dws.RegisterEvent(event.GuildMemberUpdate)
-		dws.RegisterEvent(event.GuildRoleCreate)
-		dws.RegisterEvent(event.GuildRoleDelete)
-		dws.RegisterEvent(event.GuildRoleUpdate)
-		dws.RegisterEvent(event.GuildIntegrationsUpdate)
+		// register for events for activate caches
+		if !conf.CacheConfig.DisableUserCaching {
+			dws.RegisterEvent(event.Ready)
+			dws.RegisterEvent(event.UserUpdate)
+		}
+		if !conf.CacheConfig.DisableVoiceStateCaching {
+			dws.RegisterEvent(event.VoiceStateUpdate)
+		}
+		if !conf.CacheConfig.DisableChannelCaching {
+			dws.RegisterEvent(event.ChannelCreate)
+			dws.RegisterEvent(event.ChannelUpdate)
+			dws.RegisterEvent(event.ChannelPinsUpdate)
+			dws.RegisterEvent(event.ChannelDelete)
+		}
+		if !conf.CacheConfig.DisableGuildCaching {
+			dws.RegisterEvent(event.GuildCreate)
+			dws.RegisterEvent(event.GuildDelete)
+			dws.RegisterEvent(event.GuildUpdate)
+			dws.RegisterEvent(event.GuildEmojisUpdate)
+			dws.RegisterEvent(event.GuildMemberAdd)
+			dws.RegisterEvent(event.GuildMemberRemove)
+			dws.RegisterEvent(event.GuildMembersChunk)
+			dws.RegisterEvent(event.GuildMemberUpdate)
+			dws.RegisterEvent(event.GuildRoleCreate)
+			dws.RegisterEvent(event.GuildRoleDelete)
+			dws.RegisterEvent(event.GuildRoleUpdate)
+			dws.RegisterEvent(event.GuildIntegrationsUpdate)
+		}
 	}
 
 	// create a disgord client/instance/session
 	c := &Client{
+		shutdownChan:  make(chan interface{}),
 		config:        conf,
 		httpClient:    conf.HTTPClient,
 		ws:            dws,

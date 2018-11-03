@@ -33,6 +33,7 @@ type Config struct {
 	WebsocketURL string
 
 	//ImmutableCache bool
+	DisableCache bool
 
 	//LoadAllMembers   bool
 	//LoadAllChannels  bool
@@ -57,8 +58,9 @@ type Config struct {
 type Client struct {
 	sync.RWMutex
 
-	config *Config
-	token  string
+	shutdownChan chan interface{}
+	config       *Config
+	token        string
 
 	connected     sync.Mutex
 	ws            *websocket.Client
@@ -175,6 +177,7 @@ func (c *Client) Disconnect() (err error) {
 		c.logErr(err.Error())
 		return
 	}
+	close(c.shutdownChan)
 	c.logInfo("Disconnected")
 
 	return nil
@@ -986,9 +989,14 @@ func (c *Client) eventHandler() {
 	for {
 		var err error
 		var evt *websocket.Event
+		var alive bool
 
-		evt, err = waitForEvent(c.socketEvtChan)
-		if err != nil {
+		select {
+		case evt, alive = <-c.socketEvtChan:
+			if !alive {
+				return
+			}
+		case <-c.shutdownChan:
 			return
 		}
 
@@ -1084,7 +1092,9 @@ func (c *Client) eventHandler() {
 		}
 
 		// cache
-		c.cacheEvent(evt.Name, box)
+		if !c.config.DisableCache {
+			c.cacheEvent(evt.Name, box)
+		}
 
 		// trigger listeners
 		prepareBox(evt.Name, box)

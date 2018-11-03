@@ -105,7 +105,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 	b.Run("using reflection", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			var user *User
-			unmarshal(data, user)
+			unmarshal(data, &user)
 		}
 	})
 

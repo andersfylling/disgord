@@ -30,6 +30,90 @@ type AvatarParamHolder interface {
 	UseDefaultAvatar()
 }
 
+//
+//func newRESTBuilder(client httd.Requester, config *httd.Request, middleware RESTRequestMiddleware) *RESTRequestBuilder {
+//	builder := &RESTRequestBuilder{}
+//	builder.setup(client, config, middleware)
+//
+//	return builder
+//}
+//
+//type RESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
+//
+//type RESTRequestBuilder struct {
+//	middleware RESTRequestMiddleware
+//	config     *httd.Request
+//	client     httd.Requester
+//
+//	cacheID uint
+//	cacheActionUpdate bool
+//
+//	params            map[string]interface{}
+//	ignoreCache       bool
+//	cancelOnRatelimit bool
+//}
+//
+//func (b *RESTRequestBuilder) setup(client httd.Requester, config *httd.Request, middleware RESTRequestMiddleware) {
+//	b.client = client
+//	b.config = config
+//	b.middleware = middleware
+//}
+//
+//func (b *RESTRequestBuilder) cache(id uint, update bool) {
+//	b.cacheID = id
+//	b.cacheActionUpdate = update
+//}
+//
+//func (b *RESTRequestBuilder) Param(name string, v interface{}) *RESTRequestBuilder {
+//	b.params[name] = v
+//	return b
+//}
+//
+//func (b *RESTRequestBuilder) IgnoreCache() *RESTRequestBuilder {
+//	b.ignoreCache = true
+//	return b
+//}
+//
+//func (b *RESTRequestBuilder) CancelOnRatelimit() *RESTRequestBuilder {
+//	b.cancelOnRatelimit = true
+//	return b
+//}
+//
+//func (b *RESTRequestBuilder) ExecuteSimple(v interface{}) (err error) {
+//	if !b.ignoreCache && b.config.Method == http.MethodGet {
+//
+//	}
+//
+//	var resp *http.Response
+//	var body []byte
+//	resp, body, err = b.client.Request(b.config)
+//	if err != nil {
+//		return
+//	}
+//
+//	if b.middleware != nil {
+//		err = b.middleware(resp, body, err)
+//		if err != nil {
+//			return
+//		}
+//	}
+//
+//	if !b.ignoreCache {
+//
+//	}
+//
+//	err = httd.Unmarshal(body, v)
+//	return
+//}
+//
+//func (c *Client) GettUser(id Snowflake) *RESTRequestBuilder {
+//	return newRESTBuilder(c.req, &httd.Request{
+//		Method:      http.MethodGet,
+//		Ratelimiter: ratelimitUsers(),
+//		Endpoint:    endpoint.User(id),
+//	}, nil)
+//}
+
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the client can use for Connecting.
 // Clients should cache this value and only call this endpoint to retrieve a new URL if they are unable to
 // properly establish a connection using the cached version of the URL.

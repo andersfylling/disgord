@@ -147,7 +147,7 @@ func TestUser_copyOverToCache(t *testing.T) {
 
 		user.copyOverToCache(&cache)
 
-		fmt.Printf("##: %+v\n", cache)
+		//fmt.Printf("##: %+v\n", cache)
 
 		if !equals(&cache, &expected) {
 			t.Errorf("different users. \nGot \t%+v, \nWants \t%+v", cache, expected)

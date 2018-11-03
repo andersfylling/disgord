@@ -44,6 +44,25 @@ func NewClient(config *Config) (client *Client, err error) {
 	return
 }
 
+func NewTestClient(config *Config, conn Conn) (*Client, chan interface{}) {
+	s := make(chan interface{})
+	c := &Client{
+		conf:              config,
+		shutdown:          s,
+		restart:           make(chan interface{}),
+		eventChan:         make(chan *Event),
+		receiveChan:       make(chan *discordPacket),
+		emitChan:          make(chan *clientPacket),
+		conn:              conn,
+		timeoutMultiplier: 1,
+		disconnected:      true,
+	}
+	c.Start()
+	go c.receiver()
+
+	return c, s
+}
+
 // Event is dispatched by the socket layer after parsing and extracting Discord data from a incoming packet.
 // This is the data structure used by Disgord for triggering handlers and channels with an event.
 type Event struct {
@@ -390,6 +409,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 	m.Unlock()
 
 	if p.EventName == event.Ready {
+
 		// always store the session id & update the trace content
 		ready := readyPacket{}
 		err := httd.Unmarshal(p.Data, &ready)
