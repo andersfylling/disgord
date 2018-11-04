@@ -48,8 +48,8 @@ func TestCacheList(t *testing.T) {
 		}
 
 		for i, item := range list.items {
-			// except index 0. This is because th last item created must be placed in the cache, and then overwrite an
-			// item with a count of 4. Since we always start at index 0 when we look for items with a smaller counter
+			// except index 0. This is because th last content created must be placed in the cache, and then overwrite an
+			// content with a count of 4. Since we always start at index 0 when we look for items with a smaller counter
 			// and every entry has a count of 4, the first entry will be replace as there is no better alternative.
 			if item.counter < 4 && i != 0 {
 				t.Errorf("expected lfu counter for index %d to be higher. Got %d, wants above %d", i, item.counter, 4)

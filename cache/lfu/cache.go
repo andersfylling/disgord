@@ -2,6 +2,7 @@
 package lfu
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
@@ -13,26 +14,25 @@ type Snowflake = snowflake.Snowflake
 // NewCacheItem ...
 func NewCacheItem(content interface{}) *CacheItem {
 	return &CacheItem{
-		item: content,
+		content: content,
 	}
 }
 
 // CacheItem ...
 type CacheItem struct {
 	id      Snowflake
-	item    interface{}
+	content interface{}
 	counter uint64
 }
 
 // Object ...
 func (i *CacheItem) Object() interface{} {
-	i.increment()
-	return i.item
+	return i.content
 }
 
 // Set ...
 func (i *CacheItem) Set(v interface{}) {
-	i.item = v
+	i.content = v
 }
 
 func (i *CacheItem) increment() {
@@ -42,15 +42,10 @@ func (i *CacheItem) increment() {
 // NewCacheList ...
 func NewCacheList(size uint) *CacheList {
 	list := &CacheList{
-		items:    make([]CacheItem, size),
-		table:    make(map[Snowflake]int, size),
-		nilTable: make([]int, size),
-		limit:    size,
+		limit: size,
 	}
 
-	for i := 0; i < int(size); i++ {
-		list.nilTable[i] = i
-	}
+	list.ClearSoft()
 
 	return list
 }
@@ -67,11 +62,59 @@ type CacheList struct {
 	hits   uint64
 }
 
-// Set set adds a new item to the list or returns false if the item already exists
+func (list *CacheList) Size() uint {
+	return list.size
+}
+
+func (list *CacheList) Cap() uint {
+	return list.limit
+}
+
+func (list *CacheList) ClearSoft() {
+	for i := range list.items {
+		// TODO: is this needed?
+		list.items[i].content = nil
+	}
+	list.items = make([]CacheItem, list.limit)
+	list.ClearTables()
+}
+
+func (list *CacheList) ClearHard() {
+	list.ClearSoft()
+	runtime.GC()
+}
+
+func (list *CacheList) ClearTableNils() {
+	size := 0
+	for key := range list.table {
+		if list.table[key] != -1 {
+			size++
+		}
+	}
+	// TODO: create a tmp slice which holds only valid entries, and loop through those instead of re-looping?
+	newTable := make(map[Snowflake]int, list.limit)
+	for key := range list.table {
+		if list.table[key] != -1 {
+			newTable[key] = list.table[key]
+		}
+	}
+	list.table = newTable
+}
+
+func (list *CacheList) ClearTables() {
+	list.table = make(map[Snowflake]int)
+	list.nilTable = make([]int, list.limit)
+
+	for i := 0; i < int(list.limit); i++ {
+		list.nilTable[i] = i
+	}
+}
+
+// Set set adds a new content to the list or returns false if the content already exists
 func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	newItem := newItemI.(*CacheItem)
 	if key, exists := list.table[id]; exists && key != -1 {
-		list.items[key].item = newItem.item
+		list.items[key].content = newItem.content
 		return
 	}
 
@@ -80,18 +123,17 @@ func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 		list.removeLFU()
 	}
 
+	var key int
 	if len(list.nilTable) > 0 {
-		key := list.nilTable[len(list.nilTable)-1]
+		key = list.nilTable[len(list.nilTable)-1]
 		list.nilTable = list.nilTable[:len(list.nilTable)-1]
 		list.items[key] = *newItem
-		list.table[id] = key
-		list.size++
 	} else {
-		key := len(list.items)
+		key = len(list.items)
 		list.items = append(list.items, *newItem)
-		list.table[id] = key
-		list.size++
 	}
+	list.table[id] = key
+	list.size++
 }
 
 func (list *CacheList) removeLFU() {
@@ -115,7 +157,7 @@ func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem)
 	item.increment()
 }
 
-// Get get an item from the list.
+// Get get an content from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
 	if key, exists := list.table[id]; exists && key != -1 {
 		ret = &list.items[key]
@@ -129,10 +171,9 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 
 func (list *CacheList) deleteUnsafe(key int, id Snowflake) {
 	list.table[id] = -1
+	list.items[key].content = nil // prepare for GC
 	list.nilTable = append(list.nilTable, key)
 	list.size--
-	//list.items[key] = list.items[len(list.items)-1]
-	//list.items = list.items[:len(list.items)-1]
 }
 
 // Delete ...
@@ -149,6 +190,9 @@ func (list *CacheList) CreateCacheableItem(content interface{}) interfaces.Cache
 
 // Efficiency ...
 func (list *CacheList) Efficiency() float64 {
+	if list.hits == 0 {
+		return 0.0
+	}
 	return float64(list.hits) / float64(list.misses+list.hits)
 }
 

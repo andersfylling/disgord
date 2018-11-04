@@ -2,6 +2,7 @@
 package lru
 
 import (
+	"runtime"
 	"sync"
 	"time"
 
@@ -49,6 +50,36 @@ type CacheList struct {
 
 	misses uint64 // opposite of cache hits
 	hits   uint64
+}
+
+func (list *CacheList) Cap() uint {
+	return list.limit
+}
+
+func (list *CacheList) Size() uint {
+	var counter uint
+	for i := range list.items {
+		if list.items[i].item != nil {
+			counter++
+		}
+	}
+
+	return counter
+}
+
+func (list *CacheList) ClearSoft() {
+	list.items = make(map[Snowflake]*CacheItem, list.limit)
+}
+
+func (list *CacheList) ClearHard() {
+	list.ClearSoft()
+	runtime.GC()
+}
+
+func (list *CacheList) ClearTableNils() {
+}
+
+func (list *CacheList) ClearTables() {
 }
 
 func (list *CacheList) size() uint {
