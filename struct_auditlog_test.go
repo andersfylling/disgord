@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
 )
@@ -10,7 +11,7 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = validateJSONMarshalling(data, &v)
+	err = httd.Unmarshal(data, &v)
 	check(err, t)
 }
 

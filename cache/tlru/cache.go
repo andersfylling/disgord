@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/snowflake/v2"
+	"github.com/andersfylling/snowflake/v3"
 )
 
 type Snowflake = snowflake.Snowflake

@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"fmt"
+	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
 )
@@ -39,7 +40,7 @@ func verifyUserMashaller(t *testing.T, file string) {
 	check(err, t)
 
 	user := User{}
-	err = validateJSONMarshalling(data, &user)
+	err = httd.Unmarshal(data, &user)
 	check(err, t)
 }
 

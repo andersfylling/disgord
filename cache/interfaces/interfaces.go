@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/andersfylling/snowflake/v2"
+	"github.com/andersfylling/snowflake/v3"
 )
 
 // Snowflake ...

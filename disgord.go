@@ -139,7 +139,7 @@ package disgord
 import (
 	"errors"
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/snowflake/v2"
+	"github.com/andersfylling/snowflake/v3"
 	"strings"
 )
 

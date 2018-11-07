@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
 )
@@ -10,7 +11,7 @@ func TestStateMarshalling(t *testing.T) {
 	check(err, t)
 
 	state := VoiceState{}
-	err = validateJSONMarshalling(data, &state)
+	err = httd.Unmarshal(data, &state)
 	check(err, t)
 }
 

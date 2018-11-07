@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"encoding/json"
+	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
 )
@@ -39,7 +40,7 @@ func TestGuildMarshal(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = validateJSONMarshalling(data, &v)
+	err = httd.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -48,7 +49,7 @@ func TestGuildMarshalUnavailable(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = validateJSONMarshalling(data, &v)
+	err = httd.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -76,13 +77,14 @@ func TestGuildBanObject(t *testing.T) {
 	check(err, t)
 
 	ban := Ban{}
-	err = validateJSONMarshalling(data, &ban)
+	err = httd.Unmarshal(data, &ban)
 	check(err, t)
 }
 
 // --------
 func TestGuildEmbed(t *testing.T) {
 	res := []byte("{\"enabled\":true,\"channel_id\":\"41771983444115456\"}")
+	expects := []byte("{\"enabled\":true,\"channel_id\":41771983444115456}")
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
@@ -98,8 +100,8 @@ func TestGuildEmbed(t *testing.T) {
 	}
 
 	// match
-	if string(res) != string(data) {
-		t.Errorf("json data differs. Got %s, wants %s", string(data), string(res))
+	if string(expects) != string(data) {
+		t.Errorf("json data differs. Got %s, wants %s", string(data), string(expects))
 	}
 }
 
