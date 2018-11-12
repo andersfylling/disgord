@@ -1,8 +1,11 @@
 package disgord
 
 import (
+	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
 	"io/ioutil"
+	"net/http"
 	"testing"
 )
 
@@ -44,4 +47,28 @@ func TestVoice_InterfaceImplementations(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestListVoiceRegions(t *testing.T) {
+	client, _, err := createTestRequester()
+	if err != nil {
+		t.Skip()
+		return
+	}
+
+	builder := &listVoiceRegionsBuilder{}
+	builder.setup(client, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimit.VoiceRegions(),
+		Endpoint:    endpoint.VoiceRegions(),
+	}, nil)
+
+	list, err := builder.Execute()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(list) == 0 {
+		t.Error("expected at least one voice region")
+	}
 }

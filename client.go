@@ -153,7 +153,7 @@ func (c *Client) Connect() (err error) {
 	})
 
 	c.logInfo("Connecting to discord Gateway")
-	c.evtDispatch.start()
+	//c.evtDispatch.start()
 	err = c.ws.Connect()
 	if err != nil {
 		c.logErr(err.Error())
@@ -171,7 +171,7 @@ func (c *Client) Connect() (err error) {
 func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.logInfo("Closing Discord gateway connection")
-	c.evtDispatch.stop()
+	close(c.evtDispatch.shutdown)
 	err = c.ws.Disconnect()
 	if err != nil {
 		c.logErr(err.Error())
@@ -207,12 +207,27 @@ func (c *Client) Cache() Cacher {
 // On adds a event handler on the given event.
 // On => event => handle the content like this
 func (c *Client) On(event string, handlers ...interface{}) {
-	c.evtDispatch.On(event, handlers...)
+	c.evtDispatch.ws.RegisterEvent(event)
+
+	c.evtDispatch.listenersLock.Lock()
+	defer c.evtDispatch.listenersLock.Unlock()
+
+	for _, handler := range handlers {
+		c.evtDispatch.listeners[event] = append(c.evtDispatch.listeners[event], handler)
+	}
 }
 
 // Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
 func (c *Client) Once(event string, handlers ...interface{}) {
-	c.evtDispatch.Once(event, handlers...)
+	c.evtDispatch.ws.RegisterEvent(event) // TODO: remove event after firing. unless there are more handlers
+
+	c.evtDispatch.listenersLock.Lock()
+	defer c.evtDispatch.listenersLock.Unlock()
+	for _, handler := range handlers {
+		index := len(c.evtDispatch.listeners[event])
+		c.evtDispatch.listeners[event] = append(c.evtDispatch.listeners[event], handler)
+		c.evtDispatch.listenOnceOnly[event] = append(c.evtDispatch.listenOnceOnly[event], index)
+	}
 }
 
 // Emit sends a socket command directly to Discord.
@@ -260,13 +275,6 @@ func (c *Client) SaveToDiscord(obj discordSaver) (err error) {
 }
 
 // REST
-// Audit-log
-
-// GetGuildAuditLogs ...
-func (c *Client) GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error) {
-	log, err = GuildAuditLogs(c.req, guildID, params)
-	return
-}
 
 // Channel
 
@@ -417,60 +425,6 @@ func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 // DeleteAllReactions .
 func (c *Client) DeleteAllReactions(channelID, messageID Snowflake) (err error) {
 	err = DeleteAllReactions(c.req, channelID, messageID)
-	return
-}
-
-// Emoji
-
-// GetGuildEmojis .
-func (c *Client) GetGuildEmojis(id Snowflake) (ret []*Emoji, err error) {
-	var guild *Guild
-	guild, err = c.cache.GetGuild(id)
-	if err != nil {
-		ret, err = ListGuildEmojis(c.req, id)
-		if err == nil {
-			c.cache.SetGuildEmojis(id, ret)
-		}
-		return
-	}
-
-	ret = guild.Emojis
-	return
-}
-
-// GetGuildEmoji .
-func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	var guild *Guild
-	guild, err = c.cache.GetGuild(guildID)
-	if err != nil {
-		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
-		// TODO: cache
-		return
-	}
-	ret, err = guild.Emoji(emojiID)
-	if err != nil {
-		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
-		// TODO: cache
-		return
-	}
-	return
-}
-
-// CreateGuildEmoji .
-func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
-	ret, err = CreateGuildEmoji(c.req, guildID, params)
-	return
-}
-
-// ModifyGuildEmoji .
-func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
-	ret, err = ModifyGuildEmoji(c.req, guildID, emojiID, params)
-	return
-}
-
-// DeleteGuildEmoji .
-func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
-	err = DeleteGuildEmoji(c.req, guildID, emojiID)
 	return
 }
 
@@ -731,20 +685,6 @@ func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err e
 	return
 }
 
-// Invite
-
-// GetInvite .
-func (c *Client) GetInvite(inviteCode string, withCounts bool) (invite *Invite, err error) {
-	invite, err = GetInvite(c.req, inviteCode, withCounts)
-	return
-}
-
-// DeleteInvite .
-func (c *Client) DeleteInvite(inviteCode string) (invite *Invite, err error) {
-	invite, err = DeleteInvite(c.req, inviteCode)
-	return
-}
-
 // User
 
 // GetCurrentUser .
@@ -805,14 +745,6 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err e
 // GetUserConnections .
 func (c *Client) GetUserConnections() (ret []*UserConnection, err error) {
 	ret, err = GetUserConnections(c.req)
-	return
-}
-
-// Voice
-
-// GetVoiceRegions .
-func (c *Client) GetVoiceRegions() (ret []*VoiceRegion, err error) {
-	ret, err = ListVoiceRegions(c.req)
 	return
 }
 

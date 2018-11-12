@@ -2,12 +2,193 @@ package disgord
 
 import (
 	"errors"
-	"net/http"
-	"strings"
-
+	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/snowflake/v3"
+	"net/http"
+	"strings"
 )
+
+// Emoji ...
+type Emoji struct {
+	ID            Snowflake   `json:"id"`
+	Name          string      `json:"name"`
+	Roles         []Snowflake `json:"roles,omitempty"`
+	User          *User       `json:"user,omitempty"` // the user who created the emoji
+	RequireColons bool        `json:"require_colons,omitempty"`
+	Managed       bool        `json:"managed,omitempty"`
+	Animated      bool        `json:"animated,omitempty"`
+
+	//	image string // base 64 string, with prefix and everything
+	mu Lockable
+}
+
+// PartialEmoji see Emoji
+type PartialEmoji = Emoji
+
+// SetBase64Image use this before creating the emoji for the first time
+//func (e *Emoji) SetBase64Image(img string) {
+//	e.image = img
+//}
+
+// Mention mentions an emoji. Adds the animation prefix, if animated
+func (e *Emoji) Mention() string {
+	prefix := ""
+	if e.Animated {
+		prefix = "a:"
+	}
+
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
+}
+
+// DeepCopy see interface at struct.go#DeepCopier
+func (e *Emoji) DeepCopy() (copy interface{}) {
+	copy = &Emoji{}
+	e.CopyOverTo(copy)
+
+	return
+}
+
+// CopyOverTo see interface at struct.go#Copier
+func (e *Emoji) CopyOverTo(other interface{}) (err error) {
+	var emoji *Emoji
+	var ok bool
+	if emoji, ok = other.(*Emoji); !ok {
+		err = newErrorUnsupportedType("given type is not *Emoji")
+		return
+	}
+
+	if constant.LockedMethods {
+		e.mu.RLock()
+		emoji.mu.Lock()
+	}
+
+	emoji.ID = e.ID
+	emoji.Name = e.Name
+	emoji.Roles = e.Roles
+	emoji.RequireColons = e.RequireColons
+	emoji.Managed = e.Managed
+	emoji.Animated = e.Animated
+	emoji.mu = Lockable{}
+
+	if e.User != nil {
+		emoji.User = e.User.DeepCopy().(*User)
+	}
+
+	if constant.LockedMethods {
+		e.mu.RUnlock()
+		emoji.mu.Unlock()
+	}
+
+	return
+}
+
+// Missing GuildID...
+//func (e *Emoji) saveToDiscord(session Session) (err error) {
+//	session.Emoji
+//}
+//func (e *Emoji) deleteFromDiscord(session Session) (err error) {
+//	session.DeleteGuildEmoji(guildID, emojiID)
+//}
+
+//func (e *Emoji) createGuildEmoji(session Session) (err error) {
+//	params := &CreateGuildEmojiParams{
+//		Name:  e.Name,
+//		Image: e.image,
+//		Roles: e.Roles,
+//	}
+//
+//	var creation *Emoji
+//	creation, err = session.CreateGuildEmoji(, params)
+//	if err != nil {
+//		return
+//	}
+//
+//	creation.CopyOverTo(e)
+//	return
+//}
+//func (e *Emoji) modifyGuildEmoji(session Session) (err error) {
+//	params := &ModifyGuildEmojiParams{
+//		Name:  e.Name,
+//		Roles: e.Roles,
+//	}
+//}
+
+// func (e *Emoji) Clear() {
+// 	// obviously don't delete the user ...
+// }
+
+// GetGuildEmojis [REST] Returns a list of emoji objects for the given guild.
+//  Method                  GET
+//  Endpoint                /guilds/{guild.id}/emojis
+//  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
+//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisBuilder) {
+	builder = &listGuildEmojisBuilder{}
+	builder.setup(c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimit.Guild(guildID),
+		Endpoint:    endpoint.GuildEmojis(guildID),
+	}, nil)
+	// TODO: link cache
+
+	return builder
+}
+
+type listGuildEmojisBuilder struct {
+	RESTRequestBuilder
+}
+
+func (b *listGuildEmojisBuilder) Execute() ([]*Emoji, error) {
+	var emojis []*Emoji
+	err := b.execute(&emojis)
+	if err != nil {
+		return nil, err
+	}
+
+	return emojis, nil
+}
+
+// GetGuildEmoji .
+func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
+	// TODO place emojis in their own cache system
+	var guild *Guild
+	guild, err = c.cache.GetGuild(guildID)
+	if err != nil {
+		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
+		// TODO: cache
+		return
+	}
+	ret, err = guild.Emoji(emojiID)
+	if err != nil {
+		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
+		// TODO: cache
+		return
+	}
+	return
+}
+
+// CreateGuildEmoji .
+func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
+	ret, err = CreateGuildEmoji(c.req, guildID, params)
+	return
+}
+
+// ModifyGuildEmoji .
+func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
+	ret, err = ModifyGuildEmoji(c.req, guildID, emojiID, params)
+	return
+}
+
+// DeleteGuildEmoji .
+func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
+	err = DeleteGuildEmoji(c.req, guildID, emojiID)
+	return
+}
 
 // endpoints
 //
@@ -16,26 +197,6 @@ import (
 // These routes are specifically limited on a per-guild basis to prevent abuse.
 // This means that the quota returned by our APIs may be inaccurate,
 // and you may encounter 429s.
-
-// ListGuildEmojis [REST] Returns a list of emoji objects for the given guild.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/emojis
-//  Rate limiter [MAJOR]    /guilds/{guild.id} // TODO: no idea if this is correct
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
-//  Reviewed                2018-06-10
-//  Comment                 -
-func ListGuildEmojis(client httd.Getter, id Snowflake) (ret []*Emoji, err error) {
-	_, body, err := client.Get(&httd.Request{
-		Ratelimiter: ratelimitGuild(id),
-		Endpoint:    endpoint.GuildEmojis(id),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
 
 // GetGuildEmoji [REST] Returns an emoji object for the given guild and emoji IDs.
 //  Method                  GET

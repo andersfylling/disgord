@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"errors"
 	"github.com/andersfylling/disgord/event"
 	"net/http"
 	"time"
@@ -23,6 +24,14 @@ func NewRESTClient(conf *Config) (client *httd.Client) {
 	}
 	client = httd.NewClient(reqConf)
 	return
+}
+
+// NewSessionMock returns a session interface that triggers random events allows for fake rest requests.
+// Ideal to test the behaviour of your new bot.
+// Not implemented!
+// TODO: what about a terminal interface for triggering specific events?
+func NewSessionMock(conf *Config) (SessionMock, error) {
+	return nil, errors.New("not implemented")
 }
 
 // NewSession create a client and return the Session interface
@@ -208,7 +217,7 @@ type SocketHandler interface {
 
 // AuditLogsRESTer REST interface for all audit-logs endpoints
 type AuditLogsRESTer interface {
-	GetGuildAuditLogs(guildID Snowflake, params *GuildAuditLogsParams) (log *AuditLog, err error)
+	GetGuildAuditLogs(guildID Snowflake) *guildAuditLogsBuilder
 }
 
 // ChannelRESTer REST interface for all Channel endpoints
@@ -241,7 +250,7 @@ type ChannelRESTer interface {
 
 // EmojiRESTer REST interface for all emoji endpoints
 type EmojiRESTer interface {
-	GetGuildEmojis(id Snowflake) (ret []*Emoji, err error)
+	GetGuildEmojis(id Snowflake) *listGuildEmojisBuilder
 	GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error)
 	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error)
 	ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error)
@@ -289,8 +298,8 @@ type GuildRESTer interface {
 
 // InviteRESTer REST interface for all invite endpoints
 type InviteRESTer interface {
-	GetInvite(inviteCode string, withCounts bool) (invite *Invite, err error)
-	DeleteInvite(inviteCode string) (invite *Invite, err error)
+	GetInvite(inviteCode string) *getInviteBuilder
+	DeleteInvite(inviteCode string) *deleteInviteBuilder
 }
 
 // UserRESTer REST interface for all user endpoints
@@ -308,7 +317,7 @@ type UserRESTer interface {
 
 // VoiceRESTer REST interface for all voice endpoints
 type VoiceRESTer interface {
-	GetVoiceRegions() (ret []*VoiceRegion, err error)
+	GetVoiceRegions() *listVoiceRegionsBuilder
 }
 
 // WebhookRESTer REST interface for all Webhook endpoints
@@ -385,4 +394,9 @@ type Session interface {
 	//UserChan(userID Snowflake) <-chan *UserChan
 	//MemberChan(guildID, userID Snowflake) <-chan *Member
 	//MembersChan(guildID Snowflake) <-chan map[Snowflake]*Member
+}
+
+type SessionMock interface {
+	Session
+	// TODO: methods for triggering certain events and controlling states/tracking
 }

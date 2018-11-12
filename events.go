@@ -7,6 +7,27 @@ import (
 	"sync"
 )
 
+func prepareBox(evtName string, box interface{}) {
+	switch evtName {
+	case EventGuildCreate:
+		guild := (box.(*GuildUpdate)).Guild
+		for _, role := range guild.Roles {
+			role.guildID = guild.ID
+		}
+	case EventGuildUpdate:
+		guild := (box.(*GuildUpdate)).Guild
+		for _, role := range guild.Roles {
+			role.guildID = guild.ID
+		}
+	case EventGuildRoleCreate:
+		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildRoleCreate)).GuildID
+	case EventGuildRoleUpdate:
+		(box.(*GuildRoleUpdate)).Role.guildID = (box.(*GuildRoleUpdate)).GuildID
+	}
+}
+
+// ---------------------------
+
 type eventBox interface {
 	registerContext(ctx context.Context)
 }

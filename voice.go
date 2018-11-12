@@ -2,6 +2,10 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
+	"net/http"
 )
 
 // VoiceState Voice State structure
@@ -152,4 +156,38 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	}
 
 	return
+}
+
+// listVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
+//  Method                  GET
+//  Endpoint                /voice/regions
+//  Rate limiter            /voice/regions
+//  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
+//  Reviewed                2018-08-21
+//  Comment                 -
+func (c *Client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
+	builder = &listVoiceRegionsBuilder{}
+	builder.setup(c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimit.VoiceRegions(),
+		Endpoint:    endpoint.VoiceRegions(),
+	}, nil)
+
+	return builder
+}
+
+// listVoiceRegionsBuilder for building the REST request to the endpoint: List Voice Regions
+type listVoiceRegionsBuilder struct {
+	RESTRequestBuilder
+}
+
+// Execute execute get request to Discord
+func (b *listVoiceRegionsBuilder) Execute() ([]*VoiceRegion, error) {
+	var list []*VoiceRegion
+	err := b.execute(&list)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }

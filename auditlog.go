@@ -2,6 +2,11 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/snowflake/v3"
+	"net/http"
 )
 
 // Audit-log event types
@@ -276,4 +281,64 @@ func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
 	}
 
 	return
+}
+
+// GetGuildAuditLogs [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
+// Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
+//  Method                   GET
+//  Endpoint                 /guilds/{guild.id}/audit-logs
+//  Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs
+//  Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
+//  Reviewed                 2018-06-05
+//  Comment                  -
+//  Note                     Check the last entry in the cache, to avoid fetching data we already got
+func (c *Client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLogsBuilder) {
+	builder = &guildAuditLogsBuilder{}
+	builder.setup(c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
+		Endpoint:    endpoint.GuildAuditLogs(guildID), // body are added automatically
+	}, nil)
+
+	return builder
+}
+
+// guildAuditLogsBuilder for building the GetGuildAuditLogs request
+type guildAuditLogsBuilder struct {
+	RESTRequestBuilder
+}
+
+// UserID filter the log for a user id
+func (b *guildAuditLogsBuilder) UserID(id snowflake.ID) *guildAuditLogsBuilder {
+	b.urlParams["user_id"] = id
+	return b
+}
+
+// ActionType the type of audit log event
+func (b *guildAuditLogsBuilder) ActionType(action uint) *guildAuditLogsBuilder {
+	b.urlParams["action_type"] = action
+	return b
+}
+
+// Before filter the log before a certain entry id
+func (b *guildAuditLogsBuilder) Before(id snowflake.ID) *guildAuditLogsBuilder {
+	b.urlParams["before"] = id
+	return b
+}
+
+// Before filter the log before a certain entry id
+func (b *guildAuditLogsBuilder) Limit(limit int) *guildAuditLogsBuilder {
+	b.urlParams["limit"] = limit
+	return b
+}
+
+func (b *guildAuditLogsBuilder) Execute() (*AuditLog, error) {
+	b.IgnoreCache() // TODO: support caching of audit log entries. So we only fetch those we don't have.
+	var log AuditLog
+	err := b.execute(&log)
+	if err != nil {
+		return nil, err
+	}
+
+	return &log, nil
 }

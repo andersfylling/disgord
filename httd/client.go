@@ -79,7 +79,7 @@ type Client struct {
 	url                          string // base url with API version
 	rateLimit                    *RateLimit
 	reqHeader                    http.Header
-	httpClient                   *http.Client
+	httpClient                   *http.Client // TODO: decouple to allow better unit testing of REST requests
 	cancelRequestWhenRateLimited bool
 }
 

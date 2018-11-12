@@ -2,6 +2,10 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
+	"net/http"
 )
 
 // PartialInvite ...
@@ -144,5 +148,64 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		invite.Unlock()
 	}
 
+	return
+}
+
+// GetInvite [REST] Returns an invite object for the given code.
+//  Method                  GET
+//  Endpoint                /invites/{invite.code}
+//  Rate limiter            /invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
+//  Reviewed                2018-06-10
+//  Comment                 withCounts whether the invite should contain approximate member counts
+func (c *Client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
+	builder = &getInviteBuilder{}
+	builder.setup(c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimit.Invites(),
+		Endpoint:    endpoint.Invite(inviteCode),
+	}, nil)
+
+	return builder
+}
+
+type getInviteBuilder struct {
+	RESTRequestBuilder
+}
+
+func (b *getInviteBuilder) AsInviteCode() *getInviteBuilder {
+	b.urlParams["with_counts"] = true
+	return b
+}
+
+func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
+	err = b.execute(invite)
+	return
+}
+
+// DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
+//  Method                  DELETE
+//  Endpoint                /invites/{invite.code}
+//  Rate limiter            /invites
+//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *Client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) {
+	builder = &deleteInviteBuilder{}
+	builder.setup(c.req, &httd.Request{
+		Method:      http.MethodDelete,
+		Ratelimiter: ratelimit.Invites(),
+		Endpoint:    endpoint.Invite(inviteCode),
+	}, nil)
+
+	return builder
+}
+
+type deleteInviteBuilder struct {
+	RESTRequestBuilder
+}
+
+func (b *deleteInviteBuilder) Execute() (invite *Invite, err error) {
+	err = b.execute(invite)
 	return
 }
