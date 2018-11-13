@@ -92,7 +92,7 @@ const MessageReactionRemoveAll = "MESSAGE_REACTION_REMOVE_ALL"
 //  Fields:
 //  - GuildID Snowflake
 //  - Emojis []*Emoji
-const GuildEmojisUpdate = "GUILD_EMOJI_UPDATE"
+const GuildEmojisUpdate = "GUILD_EMOJIS_UPDATE"
 
 // GuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
