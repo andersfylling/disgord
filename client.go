@@ -81,7 +81,7 @@ type Client struct {
 
 	httpClient *http.Client
 
-	// cache
+	// cacheLink
 	cache *Cache
 }
 
@@ -199,7 +199,7 @@ func (c *Client) Req() httd.Requester {
 	return c.req
 }
 
-// Cache returns the cache manager for the session
+// Cache returns the cacheLink manager for the session
 func (c *Client) Cache() Cacher {
 	return c.cache
 }
@@ -292,13 +292,13 @@ func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
 
 // ModifyChannel ...
 func (c *Client) ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
-	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cache
+	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
 // DeleteChannel ...
 func (c *Client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
-	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cache
+	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
@@ -509,7 +509,7 @@ func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Me
 			return
 		}
 		c.cache.SetGuildMembers(guildID, ret)
-		//c.cache.Update(UserCache, ret.User)
+		//c.cacheLink.Update(UserCache, ret.User)
 		// TODO: update users
 	}
 	return
@@ -1013,7 +1013,7 @@ func (c *Client) eventHandler() {
 		// first unmarshal to get identifiers
 		//tmp := *box
 
-		// unmarshal into cache
+		// unmarshal into cacheLink
 		//err := c.cacheEvent2(evtName, box)
 
 		err = unmarshal(evt.Data, box)
@@ -1023,7 +1023,7 @@ func (c *Client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
-		// cache
+		// cacheLink
 		if !c.config.DisableCache {
 			c.cacheEvent(evt.Name, box)
 		}
@@ -1037,7 +1037,7 @@ func (c *Client) eventHandler() {
 
 func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 	// updates holds key and object to be cached
-	updates := map[int]([]interface{}){}
+	updates := map[cacheRegistry]([]interface{}){}
 
 	switch event {
 	case EventReady:
@@ -1094,8 +1094,7 @@ func (c *Client) cacheEvent(event string, v interface{}) (err error) {
 		evt := v.(*GuildRoleDelete)
 		c.cache.DeleteGuildRole(evt.GuildID, evt.RoleID)
 	case EventGuildEmojisUpdate:
-		evt := v.(*GuildEmojisUpdate)
-		c.cache.SetGuildEmojis(evt.GuildID, evt.Emojis)
+		err = cacheEmoji_EventGuildEmojisUpdate(c.cache, v.(*GuildEmojisUpdate))
 	case EventUserUpdate:
 		usr := v.(*UserUpdate).User
 		updates[UserCache] = append(updates[UserCache], usr)

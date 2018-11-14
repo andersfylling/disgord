@@ -151,6 +151,11 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// voiceRegionsFactory temporary until flyweight is implemented
+func inviteFactory() interface{} {
+	return &Invite{}
+}
+
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
@@ -160,7 +165,8 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 //  Comment                 withCounts whether the invite should contain approximate member counts
 func (c *Client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
 	builder = &getInviteBuilder{}
-	builder.setup(c.req, &httd.Request{
+	builder.itemFactory = inviteFactory
+	builder.IgnoreCache().setup(nil, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode),
@@ -179,7 +185,13 @@ func (b *getInviteBuilder) AsInviteCode() *getInviteBuilder {
 }
 
 func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
-	err = b.execute(invite)
+	var v interface{}
+	v, err = b.execute()
+	if err != nil {
+		return
+	}
+
+	invite = v.(*Invite)
 	return
 }
 
@@ -192,7 +204,8 @@ func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 //  Comment                 -
 func (c *Client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) {
 	builder = &deleteInviteBuilder{}
-	builder.setup(c.req, &httd.Request{
+	builder.itemFactory = inviteFactory
+	builder.IgnoreCache().setup(nil, c.req, &httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimit.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode),
@@ -206,6 +219,12 @@ type deleteInviteBuilder struct {
 }
 
 func (b *deleteInviteBuilder) Execute() (invite *Invite, err error) {
-	err = b.execute(invite)
+	var v interface{}
+	v, err = b.execute()
+	if err != nil {
+		return
+	}
+
+	invite = v.(*Invite)
 	return
 }

@@ -52,23 +52,23 @@
 //      // output example: "A message from @Anders was created"
 //  }
 //
-// Optimizing your cache logic
+// Optimizing your cacheLink logic
 //
-// > Note: if you create a CacheConfig you must set the cache replacement algorithm for each cache (user, guild, etc.).
+// > Note: if you create a CacheConfig you must set the cacheLink replacement algorithm for each cacheLink (user, guild, etc.).
 //
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
-// Here we pass the cache config when creating the session to access to the different cache replacement algorithms, lifetime settings, and the option to disable different cache systems.
+// Here we pass the cacheLink config when creating the session to access to the different cacheLink replacement algorithms, lifetime settings, and the option to disable different cacheLink systems.
 //  discord, err := disgord.NewSession(&disgord.Config{
 //    Token: "my-secret-bot-token",
 //    Cache: &disgord.CacheConfig{
-//              Immutable: true, // everything going in and out of the cache is deep copied
+//              Immutable: true, // everything going in and out of the cacheLink is deep copied
 //
 //              DisableUserCaching: false, // activates caching for users
 //              UserCacheLimitMiB: 500, // don't use more than ~500MiB of memory space for caching of users
-//              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
+//              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cacheLink after 9 hours, unless updated
 //              UserCacheAlgorithm: disgord.CacheAlgTLRU, // uses TLRU (Time aware Least Recently Used) for caching of users
 //
-//              DisableVoiceStateCaching: true, // don't cache voice states
+//              DisableVoiceStateCaching: true, // don't cacheLink voice states
 //              // VoiceStateCacheLifetime  time.Duration
 //              // VoiceStateCacheAlgorithm string
 //
@@ -79,37 +79,37 @@
 //           },
 //  })
 //
-// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
+// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cacheLink to not reflect the true discord state.
 //
-// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
+// Example, activated guild but disabled channel caching: The guild is stored to the cacheLink, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cacheLink to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
 //
 //
-// Immutable and concurrent accessible cache
+// Immutable and concurrent accessible cacheLink
 //
-// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cache), it increases reliability that the cache always reflects the last known Discord state.
+// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cacheLink), it increases reliability that the cacheLink always reflects the last known Discord state.
 // If you are uncertain, just set it to `true`. The default setting is `true` if `disgord.Cache.CacheConfig` is `nil`.
 //
 //
-// Bypass the built-in REST cache
+// Bypass the built-in REST cacheLink
 //
-// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using the REST functions directly. Remember that this will not update the cache for you, and this needs to be done manually if you depend on the cache.
-//  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
+// Whenever you call a REST method from the Session interface; the cacheLink is always checked first. Upon a cacheLink hit, no REST request is executed and you get the data from the cacheLink in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using the REST functions directly. Remember that this will not update the cacheLink for you, and this needs to be done manually if you depend on the cacheLink.
+//  // get a user using the Session implementation (checks cacheLink, and updates the cacheLink on cacheLink miss)
 //  user, err := session.GetUser(userID)
 //
-//  // bypass the cache checking. Same function name, but is found in the disgord package, not the session interface.
+//  // bypass the cacheLink checking. Same function name, but is found in the disgord package, not the session interface.
 //  user, err := disgord.GetUser(userID)
 //
-// Manually updating the cache
+// Manually updating the cacheLink
 //
-// If required, you can access the cache and update it by hand. Note that this should not be required when you use the Session interface.
+// If required, you can access the cacheLink and update it by hand. Note that this should not be required when you use the Session interface.
 //  user, err := disgord.GetUser(userID)
 //  if err != nil {
 //      return err
 //  }
 //
-//  // update the cache
-//  cache := session.Cache()
-//  err = cache.Update(disgord.UserCache, user)
+//  // update the cacheLink
+//  cacheLink := session.Cache()
+//  err = cacheLink.Update(disgord.UserCache, user)
 //  if err != nil {
 //      return err
 //  }

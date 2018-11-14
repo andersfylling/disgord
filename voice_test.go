@@ -57,7 +57,7 @@ func TestListVoiceRegions(t *testing.T) {
 	}
 
 	builder := &listVoiceRegionsBuilder{}
-	builder.setup(client, &httd.Request{
+	builder.IgnoreCache().setup(nil, client, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.VoiceRegions(),
 		Endpoint:    endpoint.VoiceRegions(),

@@ -23,6 +23,11 @@ func prepareBox(evtName string, box interface{}) {
 		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildRoleCreate)).GuildID
 	case EventGuildRoleUpdate:
 		(box.(*GuildRoleUpdate)).Role.guildID = (box.(*GuildRoleUpdate)).GuildID
+	case EventGuildEmojisUpdate:
+		evt := box.(*GuildEmojisUpdate)
+		for i := range evt.Emojis {
+			evt.Emojis[i].guildID = evt.GuildID
+		}
 	}
 }
 

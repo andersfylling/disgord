@@ -13,6 +13,8 @@ import (
 
 // Emoji ...
 type Emoji struct {
+	mu Lockable
+
 	ID            Snowflake   `json:"id"`
 	Name          string      `json:"name"`
 	Roles         []Snowflake `json:"roles,omitempty"`
@@ -22,7 +24,7 @@ type Emoji struct {
 	Animated      bool        `json:"animated,omitempty"`
 
 	//	image string // base 64 string, with prefix and everything
-	mu Lockable
+	guildID snowflake.ID
 }
 
 // PartialEmoji see Emoji
@@ -41,6 +43,10 @@ func (e *Emoji) Mention() string {
 	}
 
 	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
+}
+
+func (e *Emoji) LinkToGuild(guildID snowflake.ID) {
+	e.guildID = guildID
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -85,13 +91,41 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+func (e *Emoji) zeroInitialize() {
+	if constant.LockedMethods {
+		e.mu.RLock()
+	}
+
+	e.guildID = snowflake.ID(0)
+	e.ID = snowflake.ID(0)
+	e.Name = ""
+	e.Roles = nil
+	e.User = nil
+	e.RequireColons = false
+	e.Animated = false
+	e.Managed = false
+
+	if constant.LockedMethods {
+		e.mu.RUnlock()
+	}
+}
+
 // Missing GuildID...
 //func (e *Emoji) saveToDiscord(session Session) (err error) {
 //	session.Emoji
 //}
-//func (e *Emoji) deleteFromDiscord(session Session) (err error) {
-//	session.DeleteGuildEmoji(guildID, emojiID)
-//}
+func (e *Emoji) deleteFromDiscord(session Session) (err error) {
+	if e.guildID.Empty() {
+		err = errors.New("missing guild ID, call Emoji.LinkToGuild")
+		return
+	}
+	if e.ID.Empty() {
+		err = errors.New("missing emoji ID, cannot delete a not identified emoji")
+		return
+	}
+	err = session.DeleteGuildEmoji(e.guildID, e.ID)
+	return
+}
 
 //func (e *Emoji) createGuildEmoji(session Session) (err error) {
 //	params := &CreateGuildEmojiParams{
@@ -120,6 +154,21 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 // 	// obviously don't delete the user ...
 // }
 
+// ----------------------
+// CACHE
+
+func cacheEmoji_EventGuildEmojisUpdate(cache *Cache, evt *GuildEmojisUpdate) error {
+	return cacheEmoji_SetAll(cache, evt.GuildID, evt.Emojis)
+}
+
+func cacheEmoji_SetAll(cache *Cache, guildID snowflake.ID, emojis []*Emoji) error {
+	cache.SetGuildEmojis(guildID, emojis)
+	return nil
+}
+
+// ----------------------
+// REST
+
 // GetGuildEmojis [REST] Returns a list of emoji objects for the given guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis
@@ -128,45 +177,66 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisBuilder) {
-	builder = &listGuildEmojisBuilder{}
-	builder.setup(c.req, &httd.Request{
+	builder = &listGuildEmojisBuilder{
+		guildID: guildID,
+	}
+	builder.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.Guild(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),
 	}, nil)
-	// TODO: link cache
 
 	return builder
 }
 
 type listGuildEmojisBuilder struct {
 	RESTRequestBuilder
+	guildID snowflake.ID
 }
 
-func (b *listGuildEmojisBuilder) Execute() ([]*Emoji, error) {
-	var emojis []*Emoji
-	err := b.execute(&emojis)
-	if err != nil {
-		return nil, err
+func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
+	if !b.ignoreCache {
+		emojis, err = b.cache.GetGuildEmojis(b.guildID)
+		if err != nil {
+			return
+		}
 	}
 
-	return emojis, nil
+	b.prepare()
+	var body []byte
+	_, body, err = b.client.Request(b.config)
+	if err != nil {
+		return
+	}
+
+	if len(body) > 1 {
+		err = httd.Unmarshal(body, &emojis)
+		if err != nil {
+			return
+		}
+
+		for i := range emojis {
+			emojis[i].guildID = b.guildID
+		}
+		b.cache.SetGuildEmojis(b.guildID, emojis)
+	}
+	return
 }
 
 // GetGuildEmoji .
 func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	// TODO place emojis in their own cache system
+	// TODO place emojis in their own cacheLink system
 	var guild *Guild
 	guild, err = c.cache.GetGuild(guildID)
 	if err != nil {
 		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
-		// TODO: cache
+		// TODO: cacheLink
 		return
 	}
 	ret, err = guild.Emoji(emojiID)
 	if err != nil {
 		ret, err = GetGuildEmoji(c.req, guildID, emojiID)
-		// TODO: cache
+		// TODO: cacheLink
 		return
 	}
 	return

@@ -54,7 +54,7 @@ func TestListGuildEmojis(t *testing.T) {
 	}
 
 	builder := &listGuildEmojisBuilder{}
-	builder.setup(client, &httd.Request{
+	builder.IgnoreCache().setup(nil, client, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.Guild(keys.GuildDefault),
 		Endpoint:    endpoint.GuildEmojis(keys.GuildDefault),

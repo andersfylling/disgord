@@ -81,7 +81,7 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 
 func TestAuditLogParams(t *testing.T) {
 	params := &guildAuditLogsBuilder{}
-	params.setup(nil, nil, nil)
+	params.setup(nil, nil, nil, nil)
 	var wants string
 
 	wants = ""
@@ -113,7 +113,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.setup(client, &httd.Request{
+		builder.itemFactory = auditLogFactory
+		builder.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -145,7 +146,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.setup(client, &httd.Request{
+		builder.itemFactory = auditLogFactory
+		builder.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -181,7 +183,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.setup(client, &httd.Request{
+		builder.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -206,7 +208,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.setup(client, &httd.Request{
+		builder.itemFactory = auditLogFactory
+		builder.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -229,7 +232,7 @@ func TestLive_GuildAuditLogs(t *testing.T) {
 	}
 
 	builder := &guildAuditLogsBuilder{}
-	builder.setup(client, &httd.Request{
+	builder.IgnoreCache().setup(nil, client, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.GuildAuditLogs(keys.GuildAdmin),
 		Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(keys.GuildAdmin)),

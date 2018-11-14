@@ -33,9 +33,9 @@ type AvatarParamHolder interface {
 	UseDefaultAvatar()
 }
 
-func newRESTBuilder(client httd.Requester, config *httd.Request, middleware RESTRequestMiddleware) *RESTRequestBuilder {
+func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) *RESTRequestBuilder {
 	builder := &RESTRequestBuilder{}
-	builder.setup(client, config, middleware)
+	builder.setup(cache, client, config, middleware)
 
 	return builder
 }
@@ -98,15 +98,21 @@ func (p paramHolder) GetQueryString() string {
 
 var _ URLParameters = (*paramHolder)(nil)
 
-type RESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
+type fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
+type fRESTCacheMiddleware func(resp *http.Response, v interface{}, err error) error
+type fRESTItemFactory func() interface{}
 
 type RESTRequestBuilder struct {
-	middleware RESTRequestMiddleware
+	middleware fRESTRequestMiddleware
 	config     *httd.Request
 	client     httd.Requester
 
-	cacheID           uint
-	cacheActionUpdate bool
+	itemFactory fRESTItemFactory
+
+	cache           *Cache
+	cacheRegistry   cacheRegistry
+	cacheMiddleware fRESTCacheMiddleware
+	cacheItemID     snowflake.ID
 
 	body              map[string]interface{}
 	urlParams         paramHolder
@@ -114,31 +120,39 @@ type RESTRequestBuilder struct {
 	cancelOnRatelimit bool
 }
 
-func (b *RESTRequestBuilder) setup(client httd.Requester, config *httd.Request, middleware RESTRequestMiddleware) {
+func (b *RESTRequestBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
+	b.cache = cache
 	b.client = client
 	b.config = config
 	b.middleware = middleware
 }
 
-func (b *RESTRequestBuilder) cache(id uint, update bool) {
-	b.cacheID = id
-	b.cacheActionUpdate = update
+func (b *RESTRequestBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMiddleware) {
+	b.cacheRegistry = registry
+	b.cacheMiddleware = middleware
 }
 
-// execute ... v must be a nil pointer.
-func (b *RESTRequestBuilder) execute(v interface{}) (err error) {
-	if !b.ignoreCache && b.config.Method == http.MethodGet {
-		// cache lookup. return on cache hit
-
-	}
-
+func (b *RESTRequestBuilder) prepare() {
 	// update the config
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
 	}
 	b.config.Endpoint += b.urlParams.GetQueryString()
+}
+
+// execute ... v must be a nil pointer.
+func (b *RESTRequestBuilder) execute() (v interface{}, err error) {
+	if !b.ignoreCache && b.config.Method == http.MethodGet {
+		// cacheLink lookup. return on cacheLink hit
+		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
+		if err != nil {
+			return
+		}
+	}
+
+	b.prepare()
 
 	var resp *http.Response
 	var body []byte
@@ -154,12 +168,20 @@ func (b *RESTRequestBuilder) execute(v interface{}) (err error) {
 		}
 	}
 
-	if !b.ignoreCache {
-
-	}
-
 	if len(body) > 1 {
+		v = b.itemFactory()
 		err = httd.Unmarshal(body, v)
+		if err != nil {
+			return
+		}
+
+		if b.cacheRegistry != NoCacheSpecified {
+			if b.cacheMiddleware != nil {
+				b.cacheMiddleware(resp, v, err)
+			}
+
+			b.cache.Update(b.cacheRegistry, v)
+		}
 	}
 	return
 }
@@ -180,7 +202,7 @@ func (b *RESTRequestBuilder) CancelOnRatelimit() *RESTRequestBuilder {
 }
 
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the client can use for Connecting.
-// Clients should cache this value and only call this endpoint to retrieve a new URL if they are unable to
+// Clients should cacheLink this value and only call this endpoint to retrieve a new URL if they are unable to
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET
 //  Endpoint                /gateway

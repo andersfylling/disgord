@@ -2,6 +2,8 @@ package disgord
 
 import (
 	"errors"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/snowflake/v3"
 	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
@@ -9,34 +11,38 @@ import (
 	"github.com/andersfylling/disgord/cache/lru"
 )
 
-// cache keys to redirect to the related cache system
+type cacheRegistry uint
+
+// cacheLink keys to redirect to the related cacheLink system
 const (
-	UserCache = iota
+	NoCacheSpecified cacheRegistry = iota
+	UserCache
 	ChannelCache
 	GuildCache
+	GuildEmojiCache
 	VoiceStateCache
 )
 
-// the different cache replacement algorithms
+// the different cacheLink replacement algorithms
 const (
 	CacheAlgLRU  = "lru"
 	CacheAlgLFU  = "lfu"
 	CacheAlgTLRU = "tlru"
 )
 
-// Cacher gives basic cache interaction options, and won't require changes when adding more cache systems
+// Cacher gives basic cacheLink interaction options, and won't require changes when adding more cacheLink systems
 type Cacher interface {
-	Update(key int, v interface{}) (err error)
-	Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error)
+	Update(key cacheRegistry, v interface{}) (err error)
+	Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error)
 }
 
 func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
 	return &ErrorCacheItemNotFound{
-		info: "item with id{" + id.String() + "} was not found in cache",
+		info: "item with id{" + id.String() + "} was not found in cacheLink",
 	}
 }
 
-// ErrorCacheItemNotFound requested item was not found in cache
+// ErrorCacheItemNotFound requested item was not found in cacheLink
 type ErrorCacheItemNotFound struct {
 	info string
 }
@@ -48,11 +54,11 @@ func (e *ErrorCacheItemNotFound) Error() string {
 
 func newErrorUsingDeactivatedCache(cacheName string) *ErrorUsingDeactivatedCache {
 	return &ErrorUsingDeactivatedCache{
-		info: "cannot use deactivated cache: " + cacheName,
+		info: "cannot use deactivated cacheLink: " + cacheName,
 	}
 }
 
-// ErrorUsingDeactivatedCache the cache system you are trying to access has been disabled in the CacheConfig
+// ErrorUsingDeactivatedCache the cacheLink system you are trying to access has been disabled in the CacheConfig
 type ErrorUsingDeactivatedCache struct {
 	info string
 }
@@ -102,7 +108,7 @@ func newCache(conf *CacheConfig) (*Cache, error) {
 	}, nil
 }
 
-// CacheConfig allows for tweaking the cache system on a personal need
+// CacheConfig allows for tweaking the cacheLink system on a personal need
 type CacheConfig struct {
 	Immutable bool // Must be immutable to support concurrent access and long-running tasks(!)
 
@@ -127,7 +133,7 @@ type CacheConfig struct {
 	GuildCacheAlgorithm string
 }
 
-// Cache is the actual cache. It holds the different systems which can be tweaked using the CacheConfig.
+// Cache is the actual cacheLink. It holds the different systems which can be tweaked using the CacheConfig.
 type Cache struct {
 	conf        *CacheConfig
 	immutable   bool
@@ -138,7 +144,7 @@ type Cache struct {
 }
 
 // Updates does the same as Update. But allows for a slice of entries instead.
-func (c *Cache) Updates(key int, vs []interface{}) (err error) {
+func (c *Cache) Updates(key cacheRegistry, vs []interface{}) (err error) {
 	for _, v := range vs {
 		err = c.Update(key, v)
 		if err != nil {
@@ -149,40 +155,47 @@ func (c *Cache) Updates(key int, vs []interface{}) (err error) {
 	return
 }
 
-// Update updates a item in the cache given the key identifier and the new content.
+// Update updates a item in the cacheLink given the key identifier and the new content.
 // It also checks if the given structs implements the required interfaces (See below).
-func (c *Cache) Update(key int, v interface{}) (err error) {
+func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 	if v == nil {
 		err = errors.New("object was nil")
 		return
 	}
 
-	_, implementsDeepCopier := v.(DeepCopier)
-	_, implementsCacheCopier := v.(cacheCopier)
-	if !implementsCacheCopier && !implementsDeepCopier && c.immutable {
-		err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Immutable is set")
-		return
-	}
+	// Does not allow for bulk updates
+	//_, implementsDeepCopier := v.(DeepCopier)
+	//_, implementsCacheCopier := v.(cacheCopier)
+	//if !implementsCacheCopier && !implementsDeepCopier && c.immutable {
+	//	err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Immutable is set")
+	//	return
+	//}
 
 	switch key {
 	case UserCache:
 		if user, isUser := v.(*User); isUser {
 			c.SetUser(user)
 		} else {
-			err = errors.New("can only save *User structures to user cache")
+			err = errors.New("can only save *User structures to user cacheLink")
 		}
 	case VoiceStateCache:
 		if state, isVS := v.(*VoiceState); isVS {
 			c.SetVoiceState(state)
 		} else {
-			err = errors.New("can only save *VoiceState structures to voice state cache")
+			err = errors.New("can only save *VoiceState structures to voice state cacheLink")
 		}
 	case ChannelCache:
 		if channel, isChannel := v.(*Channel); isChannel {
 			c.SetChannel(channel)
 		} else {
-			err = errors.New("can only save *Channel structures to channel cache")
+			err = errors.New("can only save *Channel structures to channel cacheLink")
 		}
+	case GuildEmojiCache:
+		emojis := v.([]*Emoji)
+		if len(emojis) == 0 {
+			return
+		}
+		err = cacheEmoji_SetAll(c, emojis[0].guildID, emojis)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
@@ -190,9 +203,36 @@ func (c *Cache) Update(key int, v interface{}) (err error) {
 	return
 }
 
-// Get retrieve a item in the cache, or get an error when not found or if the cache system is disabled
+// DirectUpdate is used for socket events to only update provided fields. Will peek into the cacheLink for a matching entry
+// if found it updates it, otherwise a not found error is returned. May return a unmarshal error.
+//
+//  // user update
+//  id := extractAttribute([]byte(`"id":"`), 0, jsonData)
+//  err := cacheLink.DirectUpdate(UserCache, id, jsonData)
+//  if err != nil {
+//  	// most likely the user does not exist or it could not be updated
+//  	// add the new user. See Cache.Update
+//  }
+//
+// TODO-optimize: for bulk changes
+func (c *Cache) DirectUpdate(registry cacheRegistry, id snowflake.ID, changes []byte) error {
+	switch registry {
+	case UserCache:
+		usr, err := c.PeekUser(id)
+		if err != nil {
+			return err
+		}
+
+		err = httd.Unmarshal(changes, usr)
+		return err
+	}
+
+	return errors.New("could not do a direct update for registry, most likely missing implementation")
+}
+
+// Get retrieve a item in the cacheLink, or get an error when not found or if the cacheLink system is disabled
 // in your CacheConfig configuration.
-func (c *Cache) Get(key int, id Snowflake, args ...interface{}) (v interface{}, err error) {
+func (c *Cache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
 	switch key {
 	case UserCache:
 		v, err = c.GetUser(id)
@@ -201,10 +241,10 @@ func (c *Cache) Get(key int, id Snowflake, args ...interface{}) (v interface{}, 
 			if params, ok := args[0].(*guildVoiceStateCacheParams); ok {
 				v, err = c.GetVoiceState(id, params)
 			} else {
-				err = errors.New("voice state cache extraction requires an addition argument of type *guildVoiceStateCacheParams")
+				err = errors.New("voice state cacheLink extraction requires an addition argument of type *guildVoiceStateCacheParams")
 			}
 		} else {
-			err = errors.New("voice state cache extraction requires an addition argument for filtering")
+			err = errors.New("voice state cacheLink extraction requires an addition argument for filtering")
 		}
 	case ChannelCache:
 		v, err = c.GetChannel(id)
@@ -419,7 +459,7 @@ func (g *guildCacheItem) deleteChannel(id Snowflake) {
 	}
 }
 
-// SetGuild adds a new guild to cache or updates an existing one
+// SetGuild adds a new guild to cacheLink or updates an existing one
 func (c *Cache) SetGuild(guild *Guild) {
 	if c.guilds == nil || guild == nil {
 		return
@@ -437,7 +477,7 @@ func (c *Cache) SetGuild(guild *Guild) {
 	}
 }
 
-// SetGuildEmojis adds a new guild to cache if no guild exist for the emojis or updates an existing guild with the new emojis
+// SetGuildEmojis adds a new guild to cacheLink if no guild exist for the emojis or updates an existing guild with the new emojis
 func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 	if c.guilds == nil {
 		return
@@ -551,6 +591,26 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	return
 }
 
+func (c *Cache) PeekGuild(id snowflake.ID) (guild *Guild, err error) {
+	if c.guilds == nil {
+		err = newErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+	defer c.guilds.RUnlock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.guilds.Get(id); !exists {
+		err = newErrorCacheItemNotFound(id)
+		return
+	}
+
+	guild = result.Object().(*guildCacheItem).guild
+	return
+}
+
 // GetGuildRoles ...
 func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 	if c.guilds == nil {
@@ -576,6 +636,36 @@ func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 		}
 	} else {
 		roles = rolePs
+	}
+
+	return
+}
+
+// GetGuildRoles ...
+func (c *Cache) GetGuildEmojis(id Snowflake) (emojis []*Emoji, err error) {
+	if c.guilds == nil {
+		err = newErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+	defer c.guilds.RUnlock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.guilds.Get(id); !exists {
+		err = newErrorCacheItemNotFound(id)
+		return
+	}
+
+	emojiPs := result.Object().(*guildCacheItem).guild.Emojis
+	if c.immutable {
+		emojis = make([]*Emoji, len(emojiPs))
+		for i := range emojiPs {
+			emojis[i] = emojiPs[i].DeepCopy().(*Emoji)
+		}
+	} else {
+		emojis = emojiPs
 	}
 
 	return
@@ -721,7 +811,7 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 	return
 }
 
-// SetUser updates an existing user or adds a new one to the cache
+// SetUser updates an existing user or adds a new one to the cacheLink
 func (c *Cache) SetUser(new *User) {
 	if c.users == nil || new == nil {
 		return
@@ -771,6 +861,23 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	}
 
 	return
+}
+
+func (c *Cache) PeekUser(id snowflake.ID) (*User, error) {
+	if c.users == nil {
+		return nil, newErrorUsingDeactivatedCache("users")
+	}
+
+	c.users.RLock()
+	defer c.users.RUnlock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.users.Get(id); !exists {
+		return nil, newErrorCacheItemNotFound(id)
+	}
+
+	return result.Object().(*User), nil
 }
 
 // --------------------------------------------------------
@@ -846,7 +953,7 @@ func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 	// TODO: this point should not be reached, unless the above checks are incomplete
 }
 
-// SetVoiceState adds a new voice state to cache or updates an existing one
+// SetVoiceState adds a new voice state to cacheLink or updates an existing one
 func (c *Cache) SetVoiceState(state *VoiceState) {
 	if c.voiceStates == nil || state == nil {
 		return
@@ -963,7 +1070,7 @@ func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
 			usr = NewUser()
 			usr.ID = c.channel.recipientsIDs[i]
 			// TODO: should this be loaded by REST request?...
-			// TODO-2: maybe it can be a cache option to load dead members on read?
+			// TODO-2: maybe it can be a cacheLink option to load dead members on read?
 		}
 		recipients[i] = usr
 	}
@@ -982,7 +1089,7 @@ func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
 	fresh.copyOverToCache(c.channel)
 }
 
-// SetChannel adds a new channel to cache or updates an existing one
+// SetChannel adds a new channel to cacheLink or updates an existing one
 func (c *Cache) SetChannel(new *Channel) {
 	if c.channels == nil || new == nil {
 		return
@@ -1012,7 +1119,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
 		item.Object().(*channelCacheItem).channel.LastPinTimestamp = timestamp
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
-		// channel does not exist in cache, create a partial channel
+		// channel does not exist in cacheLink, create a partial channel
 		partial := &Channel{ID: id, LastPinTimestamp: timestamp}
 		content := &channelCacheItem{}
 		content.process(partial, c.immutable)
@@ -1032,7 +1139,7 @@ func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowfl
 		item.Object().(*channelCacheItem).channel.LastMessageID = messageID
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
-		// channel does not exist in cache, create a partial channel
+		// channel does not exist in cacheLink, create a partial channel
 		// this is an indirect channel update..
 		//partial := &PartialChannel{ID: channelID, LastMessageID: messageID}
 		//content := &channelCacheItem{}

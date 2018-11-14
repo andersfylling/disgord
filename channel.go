@@ -104,7 +104,7 @@ type Channel struct {
 	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
 
 	// set to true when the object is not incomplete. Used in situations
-	// like cache to avoid overwriting correct information.
+	// like cacheLink to avoid overwriting correct information.
 	// A partial or incomplete channel can be
 	//  "channel": {
 	//    "id": "165176875973476352",

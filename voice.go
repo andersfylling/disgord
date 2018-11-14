@@ -158,6 +158,11 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// voiceRegionsFactory temporary until flyweight is implemented
+func voiceRegionsFactory() interface{} {
+	return []*VoiceRegion{}
+}
+
 // listVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
@@ -167,7 +172,8 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 //  Comment                 -
 func (c *Client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
 	builder = &listVoiceRegionsBuilder{}
-	builder.setup(c.req, &httd.Request{
+	builder.itemFactory = voiceRegionsFactory
+	builder.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.VoiceRegions(),
 		Endpoint:    endpoint.VoiceRegions(),
@@ -182,12 +188,14 @@ type listVoiceRegionsBuilder struct {
 }
 
 // Execute execute get request to Discord
-func (b *listVoiceRegionsBuilder) Execute() ([]*VoiceRegion, error) {
-	var list []*VoiceRegion
-	err := b.execute(&list)
+func (b *listVoiceRegionsBuilder) Execute() (regions []*VoiceRegion, err error) {
+	b.IgnoreCache()
+	var v interface{}
+	v, err = b.execute()
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return list, nil
+	regions = v.([]*VoiceRegion)
+	return
 }

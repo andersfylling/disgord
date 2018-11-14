@@ -349,7 +349,7 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	}
 
 	if index == -1 {
-		return errors.New("channel with Snowflake{" + ID.String() + "} does not exist in cache")
+		return errors.New("channel with Snowflake{" + ID.String() + "} does not exist in cacheLink")
 	}
 
 	// delete the entry
@@ -399,7 +399,7 @@ func (g *Guild) LoadAllMembers(session Session) (err error) {
 		defer g.Unlock()
 	}
 
-	// TODO-1: check cache
+	// TODO-1: check cacheLink
 	// TODO-2: what if members have already been loaded? use Guild.MembersCount?
 
 	var lastCount = 1000

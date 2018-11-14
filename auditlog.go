@@ -283,6 +283,11 @@ func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// auditLogFactory temporary until flyweight is implemented
+func auditLogFactory() interface{} {
+	return &AuditLog{}
+}
+
 // GetGuildAuditLogs [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
 //  Method                   GET
@@ -291,10 +296,11 @@ func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
 //  Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 //  Reviewed                 2018-06-05
 //  Comment                  -
-//  Note                     Check the last entry in the cache, to avoid fetching data we already got
+//  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got
 func (c *Client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLogsBuilder) {
 	builder = &guildAuditLogsBuilder{}
-	builder.setup(c.req, &httd.Request{
+	builder.itemFactory = auditLogFactory
+	builder.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
 		Endpoint:    endpoint.GuildAuditLogs(guildID), // body are added automatically
@@ -332,13 +338,14 @@ func (b *guildAuditLogsBuilder) Limit(limit int) *guildAuditLogsBuilder {
 	return b
 }
 
-func (b *guildAuditLogsBuilder) Execute() (*AuditLog, error) {
-	b.IgnoreCache() // TODO: support caching of audit log entries. So we only fetch those we don't have.
-	var log AuditLog
-	err := b.execute(&log)
+func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
+	// TODO: support caching of audit log entries. So we only fetch those we don't have.
+	var v interface{}
+	v, err = b.execute()
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &log, nil
+	log = v.(*AuditLog)
+	return
 }

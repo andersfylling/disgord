@@ -375,7 +375,7 @@ type Session interface {
 	SaveToDiscord(obj discordSaver) error
 
 	// state/caching module
-	// checks the cache first, otherwise do a http request
+	// checks the cacheLink first, otherwise do a http request
 	RESTer
 
 	// Custom REST functions

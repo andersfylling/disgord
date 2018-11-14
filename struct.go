@@ -13,16 +13,16 @@ import (
 
 // Copier holds the CopyOverTo method which copies all it's content from one
 // struct to another. Note that this requires a deep copy.
-// useful when overwriting already existing content in the cache to reduce GC.
+// useful when overwriting already existing content in the cacheLink to reduce GC.
 type Copier interface {
 	CopyOverTo(other interface{}) error
 }
 
 // cacheCopier is similar to Copier interface. Except that it only copies over fields which has a value, unlike Copier
 // that creates an exact copy of everything. This will also ignore arrays that can be simplified to a snowflake array.
-// An example of said simplification is Guild.Channels, as there will already exist a channel cache.
+// An example of said simplification is Guild.Channels, as there will already exist a channel cacheLink.
 //
-// It is important to know that this should only be called by the cache. The cache must also make sure that the type
+// It is important to know that this should only be called by the cacheLink. The cacheLink must also make sure that the type
 // given as an argument for `other` is correct. Failure to do so results in a panic.
 type cacheCopier interface {
 	copyOverToCache(other interface{}) error
@@ -45,7 +45,7 @@ func (e *ErrorUnsupportedType) Error() string {
 
 // DiscordUpdater holds the Update method for updating any given Discord struct
 // (fetch the latest content). If you only want to keep up to date with the
-// cache use the UpdateFromCache method.
+// cacheLink use the UpdateFromCache method.
 // TODO: change param type for UpdateFromCache once caching is implemented
 //type DiscordUpdater interface {
 //	Update(session Session)
@@ -75,6 +75,18 @@ type discordDeleter interface {
 // any struct.
 type DeepCopier interface {
 	DeepCopy() interface{}
+}
+
+// hasher creates a hash for comparing objects. This exludes the identifier and object type as those are expected
+// to be the same during a comparison.
+type hasher interface {
+	hash() uint64
+}
+
+// zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
+// Used in the flyweight pattern.
+type zeroInitialiser interface {
+	zeroInitialize()
 }
 
 // Discord types
