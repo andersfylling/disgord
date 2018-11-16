@@ -1,10 +1,11 @@
 package websocket
 
 import (
-	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"strconv"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func getAllJSONFiles(t *testing.T) (files [][]byte) {

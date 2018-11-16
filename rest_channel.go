@@ -3,9 +3,10 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"net/http"
 )
 
 func ratelimitChannel(id Snowflake) string {

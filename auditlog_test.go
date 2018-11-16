@@ -2,13 +2,14 @@ package disgord
 
 import (
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/ratelimit"
 	"github.com/andersfylling/snowflake/v3"
-	"io/ioutil"
-	"net/http"
-	"testing"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {

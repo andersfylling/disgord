@@ -1,11 +1,12 @@
 package websocket
 
 import (
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
 )
 
 const (

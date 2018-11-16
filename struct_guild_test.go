@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"encoding/json"
-	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func TestGuild_InterfaceImplementations(t *testing.T) {

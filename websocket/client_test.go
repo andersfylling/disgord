@@ -3,13 +3,14 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/websocket/opcode"
 	"net/http"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/websocket/opcode"
 )
 
 type testWS struct {

@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"errors"
+	"time"
+
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake/v3"
-	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lfu"

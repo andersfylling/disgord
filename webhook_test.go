@@ -2,8 +2,9 @@ package disgord
 
 import (
 	"encoding/json"
-	"github.com/andersfylling/disgord/httd"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func getJSONMap(v interface{}) (map[string]*json.RawMessage, error) {

@@ -3,10 +3,11 @@ package disgord
 import (
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/constant"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
 )
 
 // common functionality/types used by struct_*.go files goes here

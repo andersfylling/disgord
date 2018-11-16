@@ -3,17 +3,18 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket/cmd"
-	"github.com/andersfylling/disgord/websocket/event"
-	"github.com/andersfylling/disgord/websocket/opcode"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/websocket/cmd"
+	"github.com/andersfylling/disgord/websocket/event"
+	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/sirupsen/logrus"
 )
 
 const (

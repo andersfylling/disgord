@@ -3,10 +3,11 @@ package websocket
 import (
 	"bytes"
 	"compress/zlib"
-	"github.com/andersfylling/disgord/httd"
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic

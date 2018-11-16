@@ -2,13 +2,14 @@ package disgord
 
 import (
 	"errors"
+	"net/http"
+	"strings"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/ratelimit"
 	"github.com/andersfylling/snowflake/v3"
-	"net/http"
-	"strings"
 )
 
 // Emoji ...

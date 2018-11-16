@@ -1,13 +1,14 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/websocket"
 	"net/http"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/event"
+	"github.com/andersfylling/disgord/websocket"
 )
 
 func TestValidateUsername(t *testing.T) {

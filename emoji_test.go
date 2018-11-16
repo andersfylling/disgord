@@ -1,15 +1,16 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
 )
 
 func TestEmoji_InterfaceImplementations(t *testing.T) {

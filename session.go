@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"errors"
-	"github.com/andersfylling/disgord/event"
 	"net/http"
 	"time"
+
+	"github.com/andersfylling/disgord/event"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/httd"

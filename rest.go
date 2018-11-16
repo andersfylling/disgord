@@ -2,10 +2,11 @@ package disgord
 
 import (
 	"encoding/json"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake/v3"
 	"net/http"
 	"strconv"
+
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/snowflake/v3"
 )
 
 type ErrRest = httd.ErrREST

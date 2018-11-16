@@ -2,11 +2,12 @@ package disgord
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"net/http"
-	"strconv"
 )
 
 // Reaction ...

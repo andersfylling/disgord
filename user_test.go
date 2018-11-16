@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"fmt"
-	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func TestUser_InterfaceImplementations(t *testing.T) {

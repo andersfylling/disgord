@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
 )
 
 // different message acticity types

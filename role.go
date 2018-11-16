@@ -2,10 +2,11 @@ package disgord
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"net/http"
 )
 
 // NewRole ...

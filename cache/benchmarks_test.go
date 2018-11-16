@@ -1,10 +1,11 @@
 package cache
 
 import (
+	"testing"
+
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lfu"
 	"github.com/andersfylling/disgord/cache/lru"
-	"testing"
 )
 
 type Snowflake = interfaces.Snowflake

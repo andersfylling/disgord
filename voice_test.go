@@ -1,12 +1,13 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/andersfylling/disgord/endpoint"
+	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/ratelimit"
 )
 
 func TestStateMarshalling(t *testing.T) {

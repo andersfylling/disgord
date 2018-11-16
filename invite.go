@@ -1,11 +1,12 @@
 package disgord
 
 import (
+	"net/http"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/ratelimit"
-	"net/http"
 )
 
 // PartialInvite ...

@@ -1,9 +1,10 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/httd"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func TestChannel_InterfaceImplementations(t *testing.T) {
