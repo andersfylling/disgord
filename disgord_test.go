@@ -11,6 +11,65 @@ import (
 	"github.com/andersfylling/disgord/websocket"
 )
 
+func injectRandomEvents(t *testing.T, callback func(name string, evt interface{}) error) {
+	events := map[string]interface{}{}
+
+	iterate := func(t *testing.T, events map[string]interface{}) {
+		var err error
+		for k, v := range events {
+			err = callback(k, v)
+			if err != nil {
+				t.Error("event{" + k + "}: " + err.Error())
+				err = nil
+			}
+		}
+	}
+
+	// first wave, just empty content
+	// looks for incorrect type casting
+	events[EventReady] = &Ready{
+		User: NewUser(),
+	}
+	events[EventChannelCreate] = &ChannelCreate{
+		Channel: NewChannel(),
+	}
+	events[EventChannelDelete] = &ChannelDelete{
+		Channel: NewChannel(),
+	}
+	events[EventGuildCreate] = &GuildCreate{
+		Guild: NewGuild(),
+	}
+	events[EventGuildDelete] = &GuildDelete{
+		UnavailableGuild: &GuildUnavailable{},
+	}
+	events[EventGuildBanRemove] = &GuildBanRemove{
+		User: NewUser(),
+	}
+	events[EventGuildIntegrationsUpdate] = &GuildIntegrationsUpdate{}
+	events[EventGuildMemberRemove] = &GuildMemberRemove{
+		User: NewUser(),
+	}
+	events[EventGuildMembersChunk] = &GuildMembersChunk{}
+	events[EventGuildRoleUpdate] = &GuildRoleUpdate{
+		Role: NewRole(),
+	}
+	events[EventMessageCreate] = &MessageCreate{
+		Message: NewMessage(),
+	}
+	events[EventMessageDelete] = &MessageDelete{}
+	events[EventMessageReactionAdd] = &MessageReactionAdd{
+		PartialEmoji: &Emoji{},
+	}
+	events[EventMessageReactionRemoveAll] = &MessageReactionRemoveAll{}
+	events[EventTypingStart] = &TypingStart{}
+	events[EventVoiceStateUpdate] = &VoiceStateUpdate{
+		VoiceState: &VoiceState{},
+	}
+	events[EventWebhooksUpdate] = &WebhooksUpdate{}
+	iterate(t, events)
+
+}
+
 func TestValidateUsername(t *testing.T) {
 	var err error
 

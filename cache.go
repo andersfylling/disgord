@@ -35,6 +35,14 @@ const (
 type Cacher interface {
 	Update(key cacheRegistry, v interface{}) (err error)
 	Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error)
+	DeleteChannel(channelID snowflake.ID)
+	DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
+	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)
+	DeleteGuild(guildID snowflake.ID)
+	DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)
+	UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID)
+	SetGuildEmojis(guildID Snowflake, emojis []*Emoji)
+	Updates(key cacheRegistry, vs []interface{}) error
 }
 
 func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
@@ -1183,3 +1191,5 @@ func (c *Cache) DeleteChannel(id Snowflake) {
 
 // --------------------------------------------------------
 // Guild
+
+var _ Cacher = (*Cache)(nil)

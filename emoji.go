@@ -158,11 +158,11 @@ func (e *Emoji) deleteFromDiscord(session Session) (err error) {
 // ----------------------
 // CACHE
 
-func cacheEmoji_EventGuildEmojisUpdate(cache *Cache, evt *GuildEmojisUpdate) error {
+func cacheEmoji_EventGuildEmojisUpdate(cache Cacher, evt *GuildEmojisUpdate) error {
 	return cacheEmoji_SetAll(cache, evt.GuildID, evt.Emojis)
 }
 
-func cacheEmoji_SetAll(cache *Cache, guildID snowflake.ID, emojis []*Emoji) error {
+func cacheEmoji_SetAll(cache Cacher, guildID snowflake.ID, emojis []*Emoji) error {
 	cache.SetGuildEmojis(guildID, emojis)
 	return nil
 }

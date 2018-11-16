@@ -1049,7 +1049,7 @@ func (c *Client) eventHandler() {
 
 		// cacheLink
 		if !c.config.DisableCache {
-			c.cacheEvent(evt.Name, box)
+			cacheEvent(c.cache, evt.Name, box)
 		}
 
 		// trigger listeners
@@ -1057,101 +1057,4 @@ func (c *Client) eventHandler() {
 		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
 		go c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
 	}
-}
-
-func (c *Client) cacheEvent(event string, v interface{}) (err error) {
-	// updates holds key and object to be cached
-	updates := map[cacheRegistry]([]interface{}){}
-
-	switch event {
-	case EventReady:
-		ready := v.(*Ready)
-		updates[UserCache] = append(updates[UserCache], ready.User)
-
-		for _, guild := range ready.Guilds {
-			updates[GuildCache] = append(updates[GuildCache], guild)
-		}
-	case EventVoiceStateUpdate:
-		update := v.(*VoiceStateUpdate)
-		updates[VoiceStateCache] = append(updates[VoiceStateCache], update.VoiceState)
-	case EventChannelCreate, EventChannelUpdate:
-		var channel *Channel
-		if event == EventChannelCreate {
-			channel = (v.(*ChannelCreate)).Channel
-		} else if event == EventChannelUpdate {
-			channel = (v.(*ChannelUpdate)).Channel
-		}
-		if len(channel.Recipients) > 0 {
-			for i := range channel.Recipients {
-				updates[UserCache] = append(updates[UserCache], channel.Recipients[i])
-			}
-		}
-
-		updates[ChannelCache] = append(updates[ChannelCache], channel)
-	case EventChannelDelete:
-		channel := (v.(*ChannelDelete)).Channel
-		c.cache.DeleteChannel(channel.ID)
-		c.cache.DeleteGuildChannel(channel.GuildID, channel.ID)
-	case EventChannelPinsUpdate:
-		evt := v.(*ChannelPinsUpdate)
-		c.cache.UpdateChannelPin(evt.ChannelID, evt.LastPinTimestamp)
-	case EventGuildCreate, EventGuildUpdate:
-		var guild *Guild
-		if event == EventGuildCreate {
-			guild = (v.(*GuildCreate)).Guild
-		} else if event == EventGuildUpdate {
-			guild = (v.(*GuildUpdate)).Guild
-		}
-		updates[GuildCache] = append(updates[GuildCache], guild)
-
-		// update all users
-		if len(guild.Members) > 0 {
-			updates[UserCache] = make([]interface{}, len(guild.Members))
-			for i := range guild.Members {
-				updates[UserCache][i] = guild.Members[i].User
-			}
-		}
-	case EventGuildDelete:
-		uguild := (v.(*GuildDelete)).UnavailableGuild
-		c.cache.DeleteGuild(uguild.ID)
-	case EventGuildRoleDelete:
-		evt := v.(*GuildRoleDelete)
-		c.cache.DeleteGuildRole(evt.GuildID, evt.RoleID)
-	case EventGuildEmojisUpdate:
-		err = cacheEmoji_EventGuildEmojisUpdate(c.cache, v.(*GuildEmojisUpdate))
-	case EventUserUpdate:
-		usr := v.(*UserUpdate).User
-		updates[UserCache] = append(updates[UserCache], usr)
-	case EventMessageCreate:
-		// TODO: performance issues?
-		msg := (v.(*MessageCreate)).Message
-		c.cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
-	default:
-		err = errors.New("unsupported event for caching")
-		//case EventResumed:
-		//case EventGuildBanAdd:
-		//case EventGuildBanRemove:
-		//case EventGuildIntegrationsUpdate:
-		//case EventGuildMemberAdd:
-		//case EventGuildMemberRemove:
-		//case EventGuildMemberUpdate:
-		//case EventGuildMembersChunk:
-		//case EventGuildRoleCreate:
-		//case EventGuildRoleUpdate:
-		//case EventMessageUpdate:
-		//case EventMessageDelete:
-		//case EventMessageDeleteBulk:
-		//case EventMessageReactionAdd:
-		//case EventMessageReactionRemove:
-		//case EventMessageReactionRemoveAll:
-		//case EventPresenceUpdate:
-		//case EventTypingStart:
-		//case EventVoiceServerUpdate:
-		//case EventWebhooksUpdate:
-	}
-
-	for key, structs := range updates {
-		err = c.cache.Updates(key, structs)
-	}
-	return
 }

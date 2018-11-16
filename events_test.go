@@ -3,7 +3,42 @@ package disgord
 import (
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/snowflake/v3"
 )
+
+func TestPrepareBox(t *testing.T) {
+	injectRandomEvents(t, func(name string, evt interface{}) error {
+		prepareBox(name, evt)
+		return nil
+	})
+}
+
+type mockCacheEvent struct{}
+
+func (m *mockCacheEvent) Update(key cacheRegistry, v interface{}) (err error) {
+	return nil
+}
+func (m *mockCacheEvent) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
+	return nil, nil
+}
+func (m *mockCacheEvent) DeleteChannel(channelID snowflake.ID)                                      {}
+func (m *mockCacheEvent) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
+func (m *mockCacheEvent) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)       {}
+func (m *mockCacheEvent) DeleteGuild(guildID snowflake.ID)                                          {}
+func (m *mockCacheEvent) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
+func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID) {}
+func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                         {}
+func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
+	return nil
+}
+
+func TestCacheEvent(t *testing.T) {
+	cache := &mockCacheEvent{}
+	injectRandomEvents(t, func(name string, evt interface{}) error {
+		return cacheEvent(cache, name, evt)
+	})
+}
 
 func TestChannelCreate_UnmarshalJSON(t *testing.T) {
 	channel := &Channel{}
