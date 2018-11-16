@@ -385,6 +385,10 @@ type Session interface {
 	UpdateMessage(message *Message) (msg *Message, err error)
 	UpdateChannel(channel *Channel) (err error)
 
+	// Status upate functions
+	UpdateStatus(s *UpdateStatusCommand) (err error)
+	UpdateStatusString(s string) (err error)
+
 	// same as above. Except these returns a channel
 	// WARNING: none below should be assumed to be working.
 	// TODO: implement in the future!
