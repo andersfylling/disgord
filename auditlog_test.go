@@ -100,7 +100,10 @@ func TestAuditLogParams(t *testing.T) {
 
 	params.ActionType(0)
 	wants = "?user_id=" + s + "&action_type=0"
-	verifyQueryString(t, params.urlParams, wants)
+	wantsAlternative := "?action_type=0&user_id=" + s
+	if !(wants == params.urlParams.GetQueryString() || wantsAlternative == params.urlParams.GetQueryString()) {
+		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.urlParams.GetQueryString(), wants, wantsAlternative)
+	}
 }
 
 func TestGuildAuditLogs(t *testing.T) {
