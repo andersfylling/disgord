@@ -3,10 +3,11 @@ package websocket
 // TODO: if we add any other websocket packages, add build constraints to this file.
 
 import (
-	"github.com/andersfylling/disgord/httd"
-	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
+
+	"github.com/andersfylling/disgord/httd"
+	"github.com/gorilla/websocket"
 )
 
 func newConn(HTTPClient *http.Client) (Conn, error) {

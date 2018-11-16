@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/websocket"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +11,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/websocket"
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"

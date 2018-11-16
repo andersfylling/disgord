@@ -2,7 +2,10 @@
 
 package httd
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 // Unmarshal is the json unmarshalling implementation that is defined by the used build tags.
 func Unmarshal(data []byte, v interface{}) error {

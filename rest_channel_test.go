@@ -1,8 +1,9 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/httd"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 const channelID = 486833611564253186

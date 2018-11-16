@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"errors"
-	"github.com/andersfylling/disgord/constant"
 	"strconv"
 	"time"
+
+	"github.com/andersfylling/disgord/constant"
 )
 
 // Channel types

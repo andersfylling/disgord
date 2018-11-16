@@ -138,9 +138,10 @@ package disgord
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/snowflake/v2"
-	"strings"
 )
 
 // LibraryInfo returns name + version

@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/andersfylling/disgord/constant"
 )
 

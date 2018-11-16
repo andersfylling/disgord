@@ -3,8 +3,9 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
-	"github.com/andersfylling/disgord/constant"
 	"sort"
+
+	"github.com/andersfylling/disgord/constant"
 )
 
 // consts inspired by: https://github.com/bwmarrin/discordgo/blob/master/structs.go
