@@ -10,7 +10,7 @@ import (
 func prepareBox(evtName string, box interface{}) {
 	switch evtName {
 	case EventGuildCreate:
-		guild := (box.(*GuildUpdate)).Guild
+		guild := (box.(*GuildCreate)).Guild
 		for _, role := range guild.Roles {
 			role.guildID = guild.ID
 		}
