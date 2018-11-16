@@ -916,6 +916,29 @@ func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event,
 	return
 }
 
+/* status updates */
+
+// UpdateStatus updates the client's game status
+// note: for simple games, check out UpdateStatusString
+func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
+	return c.Emit(CommandUpdateStatus, s)
+}
+
+// UpdateStatusString sets the client's game activity to the provided string, status to online
+// and type to Playing
+func (c *Client) UpdateStatusString(s string) error {
+	updateData := &UpdateStatusCommand{
+		Since: nil,
+		Game: &Activity{
+			Name: s,
+			Type: 0,
+		},
+		Status: StatusOnline,
+		AFK:    false,
+	}
+	return c.UpdateStatus(updateData)
+}
+
 // eventHandler Takes a incoming event from the websocket package, parses it, and sends
 // trigger requests to the event dispatcher and state cacher.
 func (c *Client) eventHandler() {
