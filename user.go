@@ -1,8 +1,12 @@
 package disgord
 
 import (
+	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -801,6 +805,17 @@ func (m *ModifyCurrentUserParams) SetAvatar(avatar string) {
 func (m *ModifyCurrentUserParams) UseDefaultAvatar() {
 	m.avatar = ""
 	m.avatarIsSet = true
+}
+
+// SetAvatarImage sets the Client's avatar to the provided io.Reader
+func (m *ModifyCurrentUserParams) SetAvatarImage(r io.Reader) {
+	// read the image into a byte slice
+	reader := bufio.NewReader(r)
+	content, _ := ioutil.ReadAll(reader)
+	// encode to base64
+	imgbase64 := base64.StdEncoding.EncodeToString(content)
+	m.avatarIsSet = true
+	m.avatar = imgbase64
 }
 
 func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
