@@ -1,9 +1,13 @@
 package disgord
 
 import (
+	"bufio"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -711,6 +715,20 @@ func (c *Client) GetUser(id Snowflake) (ret *User, err error) {
 func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
 	ret, err = ModifyCurrentUser(c.req, params)
 	return
+}
+
+// ModifyCurrentUserAvatar sets the Client's avatar to the provided io.Reader
+func (c *Client) ModifyCurrentUserAvatar(r io.Reader) (ret *User, err error) {
+	// read the image into a byte slice
+	reader := bufio.NewReader(r)
+	content, _ := ioutil.ReadAll(reader)
+	// encode to base64
+	imgbase64 := base64.StdEncoding.EncodeToString(content)
+	return c.ModifyCurrentUser(&ModifyCurrentUserParams{
+		avatarIsSet: true,
+		avatar:      imgbase64,
+		username:    "",
+	})
 }
 
 // GetCurrentUserGuilds .
