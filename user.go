@@ -1,8 +1,12 @@
 package disgord
 
 import (
+	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -792,6 +796,17 @@ func (m *ModifyCurrentUserParams) SetUsername(name string) {
 func (m *ModifyCurrentUserParams) SetAvatar(avatar string) {
 	m.avatar = avatar
 	m.avatarIsSet = avatar != ""
+}
+
+// ModifyCurrentUserAvatar sets the Client's avatar to the provided io.Reader
+func (m *ModifyCurrentUserParams) SetAvatarImage(r io.Reader) {
+	// read the image into a byte slice
+	reader := bufio.NewReader(r)
+	content, _ := ioutil.ReadAll(reader)
+	// encode to base64
+	imgbase64 := base64.StdEncoding.EncodeToString(content)
+	m.avatarIsSet = true
+	m.avatar = imgbase64
 }
 
 // UseDefaultAvatar sets the avatar param to null, and let's Discord assign a default avatar image.
