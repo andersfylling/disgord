@@ -8,7 +8,7 @@ defer file.Close()
 params := &disgord.ModifyCurrentUserParams{}
 params.SetAvatarImage(file)
 // update our client
-// s - *disgord.Session
+// s - disgord.Session
 s.ModifyCurrentUser(params)
 ```
 
