@@ -3,7 +3,7 @@ This example showcases an easy to way to change your Discord client's avatar. No
 ```go
 // load our png image, and close the body
 file, _ := os.Open("./avatar.png")
-defer file.Body.Close()
+defer file.Close()
 // initialize modify user parameters
 params := &disgord.ModifyCurrentUserParams{}
 params.SetAvatarImage(file)
