@@ -3,6 +3,7 @@ package disgord
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/andersfylling/disgord/httd"
@@ -227,6 +228,17 @@ func TestModifyCurrentUser(t *testing.T) {
 		}
 		params := &ModifyCurrentUserParams{}
 		params.SetUsername(originalUsername)
+		_, err := ModifyCurrentUser(client, params)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("changing avatar", func(t *testing.T) {
+		params := &ModifyCurrentUserNick{}
+		file, _ := os.Open("./gopher.png")
+		defer file.Close()
+		params.SetAvatarImage(file)
 		_, err := ModifyCurrentUser(client, params)
 		if err != nil {
 			t.Error(err)

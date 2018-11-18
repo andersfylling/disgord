@@ -814,8 +814,7 @@ func (m *ModifyCurrentUserParams) SetAvatarImage(r io.Reader) {
 	content, _ := ioutil.ReadAll(reader)
 	// encode to base64
 	imgbase64 := base64.StdEncoding.EncodeToString(content)
-	m.avatarIsSet = true
-	m.avatar = imgbase64
+	m.SetAvatar(imgbase64)
 }
 
 func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
