@@ -37,6 +37,7 @@ func NewClient(config *Config) (client *Client, err error) {
 		receiveChan:       make(chan *discordPacket),
 		emitChan:          make(chan *clientPacket),
 		conn:              ws,
+		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
 		disconnected:      true,
 	}
@@ -55,6 +56,7 @@ func NewTestClient(config *Config, conn Conn) (*Client, chan interface{}) {
 		receiveChan:       make(chan *discordPacket),
 		emitChan:          make(chan *clientPacket),
 		conn:              conn,
+		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
 		disconnected:      true,
 	}
@@ -119,13 +121,16 @@ type Client struct {
 	trace          []string
 	sequenceNumber uint
 
+	ratelimit ratelimiter
+
 	pulsating  uint8
 	pulseMutex sync.Mutex
 
-	receiveChan  chan *discordPacket
-	emitChan     chan *clientPacket
-	conn         Conn
-	disconnected bool
+	receiveChan       chan *discordPacket
+	emitChan          chan *clientPacket
+	conn              Conn
+	disconnected      bool
+	haveConnectedOnce bool
 
 	// identify timeout on invalid session
 	timeoutMultiplier int
@@ -168,6 +173,7 @@ func (m *Client) Connect() (err error) {
 	}
 
 	// we can now interact with Discord
+	m.haveConnectedOnce = true
 	m.disconnected = false
 	go m.receiver()
 	go m.emitter()
@@ -178,7 +184,7 @@ func (m *Client) Connect() (err error) {
 func (m *Client) Disconnect() (err error) {
 	m.Lock()
 	defer m.Unlock()
-	if m.conn.Disconnected() {
+	if m.conn.Disconnected() || !m.haveConnectedOnce {
 		m.disconnected = true
 		err = errors.New("already disconnected")
 		return
@@ -198,6 +204,10 @@ func (m *Client) Disconnect() (err error) {
 
 // Emit emits a command, if supported, and its data to the Discord Socket API
 func (m *Client) Emit(command string, data interface{}) (err error) {
+	if !m.haveConnectedOnce {
+		return errors.New("race condition detected: you must connect to the socket API/Gateway before you can send gateway commands!")
+	}
+
 	var op uint
 	switch command {
 	case event.Shutdown:
@@ -219,6 +229,11 @@ func (m *Client) Emit(command string, data interface{}) (err error) {
 	default:
 		err = errors.New("unsupported command: " + command)
 		return
+	}
+
+	accepted := m.ratelimit.Request(command)
+	if !accepted {
+		return errors.New("rate limited")
 	}
 
 	m.emitChan <- &clientPacket{
@@ -402,6 +417,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 
 	// validate the sequence numbers
 	if p.SequenceNumber != m.sequenceNumber {
+		logrus.Info("websocket sequence numbers missmatch, forcing reconnect")
 		m.sequenceNumber--
 		m.Unlock()
 		go m.reconnect()
@@ -472,9 +488,11 @@ func (m *Client) operationHandlers() {
 		case opcode.DiscordEvent:
 			m.eventHandler(p)
 		case opcode.Reconnect:
+			logrus.Info("Discord requested a reconnect")
 			go m.reconnect()
 		case opcode.InvalidSession:
 			// invalid session. Must respond with a identify packet
+			logrus.Info("Discord invalidated session")
 			go func() {
 				rand.Seed(time.Now().UnixNano())
 				delay := rand.Intn(4) + 1
@@ -598,7 +616,7 @@ func (m *Client) pulsate() {
 			m.RUnlock()
 
 			if !receivedHeartbeatAck {
-				logrus.Debug("heartbeat ACK was not received")
+				logrus.Info("heartbeat ACK was not received, forcing reconnect")
 				m.reconnect()
 			} else {
 				// update "latency"

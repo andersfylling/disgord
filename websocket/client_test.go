@@ -129,6 +129,7 @@ func TestManager_reconnect(t *testing.T) {
 		emitChan:     make(chan *clientPacket),
 		conn:         conn,
 		disconnected: true,
+		ratelimit:    newRatelimiter(),
 	}
 	seq := uint(1)
 
