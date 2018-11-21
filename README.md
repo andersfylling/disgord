@@ -2,9 +2,9 @@
 [![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/contains-technical-debt.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/for-you.svg)](https://forthebadge.com)
 
 ## Health
-| Branch       | Build status  | Code climate | Go Report Card | Codacy |
-| ------------ |:-------------:|:---------------:|:-------------:|:----------------:|
-| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Maintainability](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/maintainability)](https://codeclimate.com/github/andersfylling/disgord/maintainability) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8b2edae3c114dadb7946afdc4105a51)](https://www.codacy.com/project/andersfylling/disgord/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=andersfylling/disgord&amp;utm_campaign=Badge_Grade_Dashboard) |
+| Branch       | Status  | Standard | Code coverage |
+| ------------ |:-------------:|:---------------:|:----------------:|
+| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) |
 
 ## About
 GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
@@ -15,17 +15,17 @@ Disgord does not utilize reflection, except in unit tests and unmarshalling/mars
 
 To get started see the examples in [docs](docs/examples)
 
-Alternative GoLang package for Discord: [DiscordGo](https://github.com/bwmarrin/discordgo)
-
 Discord channel/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
+You can find a live chats for DisGord in Discord. We exist in both the Gopher server and the Discord API server:
+ - [Discord Gophers](https://discord.gg/qBVmnq9)
+ - [Discord API](https://discord.gg/HBTHbme)
 
 ## Issues and behavior you must be aware of
-Channels are not correctly implemented (see [issue #78](https://github.com/andersfylling/disgord/issues/78)). So information is lost at random. For now, only use handlers.
+The `Client.SaveToDiscord` method works great for creating new objects (make sure the obj has no Discord ID). However, when using it to update objects you must be careful that you provide a object that was first populated by Discord (cache is acceptable), otherwise you might start resetting objects in your Discord server. This behaviour will be fixed in v0.9 and force `SaveToDiscord(...)` to only create new objects, and allows updating them by introducing extra parameters (eg. `SaveToDiscord(originalObj, updatedObj)`).
 
-The cache is not complete (see [issue #65](https://github.com/andersfylling/disgord/issues/65)). It might also have bugs, and require more unit tests and stress testing would be great.
-The idea behind it is to make it as configurable as possible such that you as a developer can experiment and tweak your cache setup to greater performance.
-
-Once we have enough insight/discussion on what works best, we will use build constraints to let people choose between the very configurable cache (current), and then a more performance focused cache (future default).
+Currently the caching focuses on being very configurable instead of as optimal as possible. This will change in the future, such that you will need to use build constraints if you want to tweak your cache configuration. But for now, or users that don't worry about this should know that all of your requests runs through the cache layer. You can overwrite the cache depending on REST method:
+ - For those with a builder pattern, you can simply call `.IgnoreCache()` before you call `.Execute()`
+ - The remaining methods will require you to use the exported package functions (see /docs/examples) for how to in detail.
 
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
@@ -36,12 +36,14 @@ github.com/andersfylling/disgord
 └──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
 └──endpoint     :All the REST endpoints of Discord
+└──ratelimit    :All the ratelimit keys for the REST endpoints
 └──event        :All the Discord event identifiers
 └──generate     :All go generate scripts for "generic" code
 └──httd         :Deals with rate limits and http calls
 └──testdata     :Holds all test data for unit tests (typically JSON files)
 └──websocket    :Discord Websocket logic (reconnect, resume, etc.)
 ```
+The root pkg (disgord) holds all the data structures and the main client. Essentially all the features that should be used by the developer for creating bots. If you need access to the Snowflake type used by Disgord, then you should use `github.com/andersfylling/snowflake`.
 
 ### Dependencies
 ```Markdown
@@ -157,7 +159,16 @@ session.DisconnectOnInterrupt()
 ## Q&A
 
 ```Markdown
-1. Reason for making another Discord lib in GoLang?
+1. Is there an alternative Golang package?
+
+Yes, it's called Discordgo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
+level bindings for Discord, while DisGord wants to provide a more configurable system with more 
+features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
+Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the future, for now the biggest difference is that DisGord does not support self bots (as they aren't in the official documentation).
+```
+
+```Markdown
+2. Reason for making another Discord lib in GoLang?
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```
