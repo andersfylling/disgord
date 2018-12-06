@@ -603,7 +603,7 @@ func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (r
 }
 
 // ModifyGuildRolePositions .
-func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
 	ret, err = ModifyGuildRolePositions(c.req, guildID, params)
 	return
 }

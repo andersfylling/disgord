@@ -115,11 +115,11 @@ func (r *Role) saveToDiscord(session Session) (err error) {
 		}
 		if role.Position != r.Position {
 			// update the position
-			params := ModifyGuildRolePositionsParams{
+			params := []ModifyGuildRolePositionsParams{{
 				ID:       r.ID,
 				Position: r.Position,
-			}
-			_, err = session.ModifyGuildRolePositions(r.guildID, &params)
+			}}
+			_, err = session.ModifyGuildRolePositions(r.guildID, params)
 			if err != nil {
 				return
 			}
@@ -231,7 +231,7 @@ type ModifyGuildRolePositionsParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
 //  Reviewed                2018-08-18
 //  Comment                 -
-func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
 	details := &httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRoles(guildID),

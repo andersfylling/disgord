@@ -281,7 +281,7 @@ type GuildRESTer interface {
 	RemoveGuildBan(guildID, userID Snowflake) (err error)
 	GetGuildRoles(guildID Snowflake) (ret []*Role, err error)
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error)
-	ModifyGuildRolePositions(guildID Snowflake, params *ModifyGuildRolePositionsParams) (ret []*Role, err error)
+	ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error)
 	ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error)
 	DeleteGuildRole(guildID, roleID Snowflake) (err error)
 	GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error)
