@@ -158,12 +158,12 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 
 			// specific
 			if c.Type == ChannelTypeGuildText {
-				params.NSFW = &c.NSFW
-				params.Topic = &c.Topic
-				params.RateLimitPerUser = &c.RateLimitPerUser
+				params.NSFW = c.NSFW
+				params.Topic = c.Topic
+				params.RateLimitPerUser = c.RateLimitPerUser
 			} else if c.Type == ChannelTypeGuildVoice {
-				params.Bitrate = &c.Bitrate
-				params.UserLimit = &c.UserLimit
+				params.Bitrate = c.Bitrate
+				params.UserLimit = c.UserLimit
 			}
 
 			// shared
