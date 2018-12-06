@@ -145,7 +145,7 @@ const GuildMemberUpdate = "GUILD_MEMBER_UPDATE"
 //  Fields:
 //  - GuildID Snowflake
 //  - Members []*Member
-const GuildMembersChunk = "GUILD_MEMBER_CHUNK"
+const GuildMembersChunk = "GUILD_MEMBERS_CHUNK"
 
 // GuildRoleCreate Sent when a guild role is created.
 //  Fields:
