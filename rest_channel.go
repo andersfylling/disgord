@@ -308,6 +308,7 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 		Ratelimiter: ratelimitChannelPermissions(chanID),
 		Endpoint:    endpoint.ChannelPermission(chanID, overwriteID),
 		ContentType: httd.ContentTypeJSON,
+		Body:        params,
 	})
 	if err != nil {
 		return
