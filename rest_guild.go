@@ -267,7 +267,7 @@ type ModifyGuildChannelPositionsParams struct {
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
 func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
-	_, body, err := client.Patch(&httd.Request{
+	resp, _, err := client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		Body:        params,
@@ -277,7 +277,10 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []Mod
 		return
 	}
 
-	err = unmarshal(body, &ret)
+	if resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+	}
 	return
 }
 
