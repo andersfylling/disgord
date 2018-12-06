@@ -287,6 +287,10 @@ type EditChannelPermissionsParams struct {
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
 
+// SetChannelPermissionsParams is an alias for EditChannelPermissionsParams because Discord uses a single endpoint
+// for both editing and adding permission overwrites.
+type SetChannelPermissionsParams = EditChannelPermissionsParams
+
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
 // for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.

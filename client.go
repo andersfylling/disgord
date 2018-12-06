@@ -303,8 +303,8 @@ func (c *Client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
 	return
 }
 
-// EditChannelPermissions ...
-func (c *Client) EditChannelPermissions(chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
+// SetChannelPermissions ...
+func (c *Client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams) (err error) {
 	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
 	return
 }

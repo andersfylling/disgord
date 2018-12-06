@@ -226,7 +226,7 @@ type ChannelRESTer interface {
 	GetChannel(id Snowflake) (ret *Channel, err error)
 	ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error)
 	DeleteChannel(id Snowflake) (channel *Channel, err error)
-	EditChannelPermissions(chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error)
+	SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams) (err error)
 	GetChannelInvites(id Snowflake) (ret []*Invite, err error)
 	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error)
 	DeleteChannelPermission(channelID, overwriteID Snowflake) (err error)
