@@ -487,6 +487,12 @@ func (c *Client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelPara
 	return
 }
 
+// ModifyGuildChannelPositions .
+func (c *Client) ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
+	ret, err = ModifyGuildChannelPositions(c.req, id, params)
+	return
+}
+
 // GetGuildMember .
 func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
 	ret, err = c.cache.GetGuildMember(guildID, userID)

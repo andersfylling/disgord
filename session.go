@@ -266,6 +266,7 @@ type GuildRESTer interface {
 	DeleteGuild(id Snowflake) (err error)
 	GetGuildChannels(id Snowflake) (ret []*Channel, err error)
 	CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error)
+	ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error)
 	GetGuildMember(guildID, userID Snowflake) (ret *Member, err error)
 	GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error)
 	AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error)
