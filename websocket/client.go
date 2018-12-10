@@ -155,20 +155,12 @@ func (m *Client) Connect() (err error) {
 		}
 	}
 
-	// ready the error handler
-	defer func(err error) error {
-		if err != nil {
-			if m.conn != nil {
-				m.conn.Close()
-			}
-			return err
-		}
-		return nil
-	}(err)
-
 	// establish ws connection
 	err = m.conn.Open(m.conf.Endpoint, nil)
 	if err != nil {
+		if m.conn != nil {
+			m.conn.Close()
+		}
 		return
 	}
 
@@ -390,7 +382,7 @@ func (m *Client) reconnect() (err error) {
 			break
 		}
 		if try == maxReconnectTries {
-			err = errors.New("Too many reconnect attempts")
+			err = errors.New("too many reconnect attempts")
 			return err
 		}
 
@@ -399,6 +391,7 @@ func (m *Client) reconnect() (err error) {
 		logrus.Info(err)
 		select {
 		case <-time.After(time.Duration((try+3)*2) * time.Second):
+
 		case <-m.shutdown:
 			return
 		}
@@ -417,7 +410,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 
 	// validate the sequence numbers
 	if p.SequenceNumber != m.sequenceNumber {
-		logrus.Info("websocket sequence numbers missmatch, forcing reconnect")
+		logrus.Infof("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, m.sequenceNumber)
 		m.sequenceNumber--
 		m.Unlock()
 		go m.reconnect()
@@ -553,8 +546,8 @@ func (m *Client) sendHelloPacket() {
 	m.Emit(event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
-		SequenceNr *uint  `json:"seq"`
-	}{token, session, &sequence})
+		SequenceNr uint   `json:"seq"`
+	}{token, session, sequence})
 }
 
 // AllowedToStartPulsating you must notify when you are done pulsating!
