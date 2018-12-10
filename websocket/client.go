@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
-
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"

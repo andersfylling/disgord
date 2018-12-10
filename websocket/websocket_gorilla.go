@@ -67,7 +67,7 @@ func (g *gorilla) Close() (err error) {
 
 func (g *gorilla) Read() (packet []byte, err error) {
 	if g.Disconnected() {
-		// this gets triggered when loosing interconnection -> trying to reconnect for a while -> re-establishing a connection
+		// this gets triggered when losing internet connection -> trying to reconnect for a while -> re-establishing a connection
 		// as discord then sends a invalid session package and disgord tries to reconnect again, a panic takes place.
 		// this check is a tmp hack to fix that, as the actual issue is not clearly understood/defined yet.
 		err = errors.New("no connection is established. Can not read new messages")
