@@ -3,7 +3,6 @@ package websocket
 // TODO: if we add any other websocket packages, add build constraints to this file.
 
 import (
-	"errors"
 	"io"
 	"net/http"
 
@@ -61,10 +60,6 @@ func (g *gorilla) Close() (err error) {
 }
 
 func (g *gorilla) Read() (packet []byte, err error) {
-	if g.Disconnected() {
-		err = errors.New("no connection is established. Can not read new messages")
-		return
-	}
 	var messageType int
 	messageType, packet, err = g.c.ReadMessage()
 	if err != nil {

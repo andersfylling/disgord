@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -132,6 +131,8 @@ type Client struct {
 	disconnected      bool
 	haveConnectedOnce bool
 
+	isRestarting bool
+
 	// identify timeout on invalid session
 	timeoutMultiplier int
 }
@@ -158,7 +159,7 @@ func (m *Client) Connect() (err error) {
 	// establish ws connection
 	err = m.conn.Open(m.conf.Endpoint, nil)
 	if err != nil {
-		if m.conn != nil {
+		if !m.conn.Disconnected() {
 			m.conn.Close()
 		}
 		return
@@ -191,6 +192,46 @@ func (m *Client) Disconnect() (err error) {
 
 	// wait for processes
 	<-time.After(time.Millisecond * 10)
+	return
+}
+
+func (m *Client) reconnect() (err error) {
+	// make sure there aren't multiple reconnect processes running
+	if !m.lockRestart() {
+		return
+	}
+	defer func() {
+		m.isRestarting = false
+	}()
+
+	m.restart <- 1
+	_ = m.Disconnect()
+
+	var try uint
+	var delay time.Duration = 3 // seconds
+	for {
+		logrus.Debugf("Reconnect attempt #%d\n", try)
+		err = m.Connect()
+		if err == nil {
+			logrus.Info("successfully reconnected")
+			break
+		}
+
+		// wait N seconds
+		logrus.Infof("reconnect failed, trying again in N seconds; N =  %d", uint(delay))
+		logrus.Info(err)
+		select {
+		case <-time.After(delay * time.Second):
+			delay += 4 + time.Duration(try*2)
+		case <-m.shutdown:
+			return
+		}
+
+		if uint(delay) > 5*60 {
+			delay = 60
+		}
+	}
+
 	return
 }
 
@@ -357,47 +398,12 @@ func (m *Client) lockRestart() bool {
 	now := time.Now().UnixNano()
 	locked := (now - m.lastRestart) > (time.Second.Nanoseconds() / 2)
 
-	if locked {
+	if locked && !m.isRestarting {
 		m.lastRestart = now
+		m.isRestarting = true
 	}
 
 	return locked
-}
-
-func (m *Client) reconnect() (err error) {
-	// can we lock the restart process?
-	// if we cannot lock it, exit
-	if !m.lockRestart() {
-		return
-	}
-
-	m.restart <- 1
-	_ = m.Disconnect()
-
-	for try := 0; try <= maxReconnectTries; try++ {
-		logrus.Debugf("Reconnect attempt #%d\n", try)
-		err = m.Connect()
-		if err == nil {
-			logrus.Info("successfully reconnected")
-			break
-		}
-		if try == maxReconnectTries {
-			err = errors.New("too many reconnect attempts")
-			return err
-		}
-
-		// wait N seconds
-		logrus.Info("reconnect failed, trying again in N seconds; N = " + strconv.Itoa((try+3)*2))
-		logrus.Info(err)
-		select {
-		case <-time.After(time.Duration((try+3)*2) * time.Second):
-
-		case <-m.shutdown:
-			return
-		}
-	}
-
-	return
 }
 
 func (m *Client) eventHandler(p *discordPacket) {
