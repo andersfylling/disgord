@@ -493,6 +493,9 @@ func (m *Client) operationHandlers() {
 			// invalid session. Must respond with a identify packet
 			logrus.Info("Discord invalidated session")
 			go func() {
+				// session is invalidated, reset the sequence number
+				m.sequenceNumber = 0
+
 				rand.Seed(time.Now().UnixNano())
 				delay := rand.Intn(4) + 1
 				delay *= m.timeoutMultiplier
