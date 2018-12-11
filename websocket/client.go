@@ -89,6 +89,8 @@ type client struct {
 	isEmitting        bool // has the go routine started
 	recEmitMutex      sync.Mutex
 
+	isRestarting bool
+
 	// identify timeout on invalid session
 	// useful in unit tests when you want to drop any actual timeouts
 	timeoutMultiplier int
