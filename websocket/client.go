@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -132,6 +131,13 @@ type Client struct {
 	disconnected      bool
 	haveConnectedOnce bool
 
+	isReconnecting bool
+
+	// is the go routine started
+	isReceiving  bool
+	isEmitting   bool
+	recEmitMutex sync.Mutex
+
 	// identify timeout on invalid session
 	timeoutMultiplier int
 }
@@ -155,20 +161,12 @@ func (m *Client) Connect() (err error) {
 		}
 	}
 
-	// ready the error handler
-	defer func(err error) error {
-		if err != nil {
-			if m.conn != nil {
-				m.conn.Close()
-			}
-			return err
-		}
-		return nil
-	}(err)
-
 	// establish ws connection
 	err = m.conn.Open(m.conf.Endpoint, nil)
 	if err != nil {
+		if !m.conn.Disconnected() {
+			m.conn.Close()
+		}
 		return
 	}
 
@@ -199,6 +197,67 @@ func (m *Client) Disconnect() (err error) {
 
 	// wait for processes
 	<-time.After(time.Millisecond * 10)
+	return
+}
+
+func (m *Client) lockReconnect() bool {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	now := time.Now().UnixNano()
+	locked := (now - m.lastRestart) < (time.Second.Nanoseconds() / 2)
+
+	if !locked && !m.isReconnecting {
+		m.lastRestart = now
+		m.isReconnecting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockReconnect() {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	m.isReconnecting = false
+}
+
+func (m *Client) reconnect() (err error) {
+	// make sure there aren't multiple reconnect processes running
+	if !m.lockReconnect() {
+		return
+	}
+	defer m.unlockReconnect()
+
+	m.restart <- 1
+	_ = m.Disconnect()
+
+	var try uint
+	var delay time.Duration = 3 // seconds
+	for {
+		logrus.Debugf("Reconnect attempt #%d\n", try)
+		err = m.Connect()
+		if err == nil {
+			logrus.Info("successfully reconnected")
+			break
+		}
+
+		// wait N seconds
+		logrus.Infof("reconnect failed, trying again in N seconds; N =  %d", uint(delay))
+		logrus.Info(err)
+		select {
+		case <-time.After(delay * time.Second):
+			delay += 4 + time.Duration(try*2)
+		case <-m.shutdown:
+			return
+		}
+
+		if uint(delay) > 5*60 {
+			delay = 60
+		}
+	}
+
 	return
 }
 
@@ -248,8 +307,33 @@ func (m *Client) Receive() <-chan *discordPacket {
 	return m.receiveChan
 }
 
+func (m *Client) lockEmitter() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isEmitting {
+		m.isEmitting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockEmitter() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isEmitting = false
+}
+
 // emitter holds the actually dispatching logic for the Emit method. See DefaultClient#Emit.
 func (m *Client) emitter() {
+	if !m.lockEmitter() {
+		logrus.Error("tried to start another websocket emitter go routine")
+		return
+	}
+	defer m.unlockEmitter()
+
 	for {
 		var msg *clientPacket
 		var open bool
@@ -273,7 +357,32 @@ func (m *Client) emitter() {
 	}
 }
 
+func (m *Client) lockReceiver() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isReceiving {
+		m.isReceiving = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockReceiver() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isReceiving = false
+}
+
 func (m *Client) receiver() {
+	if !m.lockReceiver() {
+		logrus.Error("tried to start another websocket receiver go routine")
+		return
+	}
+	defer m.unlockReceiver()
+
 	for {
 		packet, err := m.conn.Read()
 		if err != nil {
@@ -358,55 +467,6 @@ func (m *Client) Shutdown() (err error) {
 	return
 }
 
-func (m *Client) lockRestart() bool {
-	m.restartMutex.Lock()
-	defer m.restartMutex.Unlock()
-
-	now := time.Now().UnixNano()
-	locked := (now - m.lastRestart) > (time.Second.Nanoseconds() / 2)
-
-	if locked {
-		m.lastRestart = now
-	}
-
-	return locked
-}
-
-func (m *Client) reconnect() (err error) {
-	// can we lock the restart process?
-	// if we cannot lock it, exit
-	if !m.lockRestart() {
-		return
-	}
-
-	m.restart <- 1
-	_ = m.Disconnect()
-
-	for try := 0; try <= maxReconnectTries; try++ {
-		logrus.Debugf("Reconnect attempt #%d\n", try)
-		err = m.Connect()
-		if err == nil {
-			logrus.Info("successfully reconnected")
-			break
-		}
-		if try == maxReconnectTries {
-			err = errors.New("Too many reconnect attempts")
-			return err
-		}
-
-		// wait N seconds
-		logrus.Info("reconnect failed, trying again in N seconds; N = " + strconv.Itoa((try+3)*2))
-		logrus.Info(err)
-		select {
-		case <-time.After(time.Duration((try+3)*2) * time.Second):
-		case <-m.shutdown:
-			return
-		}
-	}
-
-	return
-}
-
 func (m *Client) eventHandler(p *discordPacket) {
 	// discord events
 	// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
@@ -417,7 +477,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 
 	// validate the sequence numbers
 	if p.SequenceNumber != m.sequenceNumber {
-		logrus.Info("websocket sequence numbers missmatch, forcing reconnect")
+		logrus.Infof("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, m.sequenceNumber)
 		m.sequenceNumber--
 		m.Unlock()
 		go m.reconnect()
@@ -494,6 +554,9 @@ func (m *Client) operationHandlers() {
 			// invalid session. Must respond with a identify packet
 			logrus.Info("Discord invalidated session")
 			go func() {
+				// session is invalidated, reset the sequence number
+				m.sequenceNumber = 0
+
 				rand.Seed(time.Now().UnixNano())
 				delay := rand.Intn(4) + 1
 				delay *= m.timeoutMultiplier
@@ -553,8 +616,8 @@ func (m *Client) sendHelloPacket() {
 	m.Emit(event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
-		SequenceNr *uint  `json:"seq"`
-	}{token, session, &sequence})
+		SequenceNr uint   `json:"seq"`
+	}{token, session, sequence})
 }
 
 // AllowedToStartPulsating you must notify when you are done pulsating!

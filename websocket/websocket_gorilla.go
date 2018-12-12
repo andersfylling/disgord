@@ -3,6 +3,7 @@ package websocket
 // TODO: if we add any other websocket packages, add build constraints to this file.
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -55,11 +56,23 @@ func (g *gorilla) WriteJSON(v interface{}) (err error) {
 
 func (g *gorilla) Close() (err error) {
 	err = g.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err2 := g.c.Close()
 	g.c = nil
+
+	if err == nil && err2 != nil {
+		return err2
+	}
 	return
 }
 
 func (g *gorilla) Read() (packet []byte, err error) {
+	if g.Disconnected() {
+		// this gets triggered when loosing interconnection -> trying to reconnect for a while -> re-establishing a connection
+		// as discord then sends a invalid session package and disgord tries to reconnect again, a panic takes place.
+		// this check is a tmp hack to fix that, as the actual issue is not clearly understood/defined yet.
+		err = errors.New("no connection is established. Can not read new messages")
+		return
+	}
 	var messageType int
 	messageType, packet, err = g.c.ReadMessage()
 	if err != nil {
