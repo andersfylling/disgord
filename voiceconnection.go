@@ -42,7 +42,6 @@ type voiceImpl struct {
 	ssrc      uint32
 	secretKey [32]byte
 	send      chan []byte
-	recv      chan *VoicePacket
 	close     chan struct{}
 }
 
@@ -117,7 +116,6 @@ waiter:
 
 	voice := voiceImpl{
 		send:  make(chan []byte),
-		recv:  make(chan *VoicePacket),
 		close: make(chan struct{}),
 	}
 	// Defer a cleanup just in case
@@ -284,7 +282,6 @@ func (v *voiceImpl) Close() (err error) {
 
 	close(v.close)
 	close(v.send)
-	close(v.recv)
 	_ = v.udp.Close()
 	_ = v.ws.Disconnect()
 
@@ -344,10 +341,4 @@ func (v *voiceImpl) opusSendLoop() {
 		_, _ = v.udp.Write(toSend)
 		// err on udp write? hahahahahah... hahah.. good joke.
 	}
-}
-
-type VoicePacket struct {
-	Sequence  uint16
-	Timestamp uint32
-	Data      []byte
 }
