@@ -59,7 +59,12 @@ type VoiceClient struct {
 	haveConnectedOnce  bool
 	haveIdentifiedOnce bool
 
-	isRestarting bool
+	isReconnecting bool
+
+	// is the go routine started
+	isReceiving  bool
+	isEmitting   bool
+	recEmitMutex sync.Mutex
 
 	// identify timeout on invalid session
 	timeoutMultiplier int
@@ -152,14 +157,35 @@ func (m *VoiceClient) Disconnect() (err error) {
 	return
 }
 
+func (m *VoiceClient) lockReconnect() bool {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	now := time.Now().UnixNano()
+	locked := (now - m.lastRestart) < (time.Second.Nanoseconds() / 2)
+
+	if !locked && !m.isReconnecting {
+		m.lastRestart = now
+		m.isReconnecting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *VoiceClient) unlockReconnect() {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	m.isReconnecting = false
+}
+
 func (m *VoiceClient) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
-	if !m.lockRestart() {
+	if !m.lockReconnect() {
 		return
 	}
-	defer func() {
-		m.isRestarting = false
-	}()
+	defer m.unlockReconnect()
 
 	m.restart <- 1
 	_ = m.Disconnect()
@@ -228,8 +254,33 @@ func (m *VoiceClient) Receive() <-chan *voicePacket {
 	return m.receiveChan
 }
 
+func (m *VoiceClient) lockEmitter() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isEmitting {
+		m.isEmitting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *VoiceClient) unlockEmitter() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isEmitting = false
+}
+
 // emitter holds the actually dispatching logic for the Emit method. See DefaultClient#Emit.
 func (m *VoiceClient) emitter() {
+	if !m.lockEmitter() {
+		logrus.Error("tried to start another websocket emitter go routine")
+		return
+	}
+	defer m.unlockEmitter()
+
 	for {
 		var msg *clientPacket
 		var open bool
@@ -245,7 +296,6 @@ func (m *VoiceClient) emitter() {
 			return
 		}
 
-		logrus.WithField("op", msg.Op).Info("Sending vop")
 		err := m.conn.WriteJSON(msg)
 		if err != nil {
 			// TODO-logging
@@ -254,22 +304,48 @@ func (m *VoiceClient) emitter() {
 	}
 }
 
+func (m *VoiceClient) lockReceiver() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isReceiving {
+		m.isReceiving = true
+		return true
+	}
+
+	return false
+}
+
+func (m *VoiceClient) unlockReceiver() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isReceiving = false
+}
+
 func (m *VoiceClient) receiver() {
+	if !m.lockReceiver() {
+		logrus.Error("tried to start another websocket receiver go routine")
+		return
+	}
+	defer m.unlockReceiver()
+
 	for {
 		packet, err := m.conn.Read()
 		if err != nil {
-			logrus.WithError(err).Debug("closing voice readPump")
+			logrus.WithError(err).Debug("closing readPump")
 			return
 		}
 
+		//fmt.Printf("<-: %+v\n", string(packet))
+
 		// parse to gateway payload object
 		evt := &voicePacket{}
-		err = httd.Unmarshal(packet, &evt)
+		err = httd.Unmarshal(packet, evt)
 		if err != nil {
 			logrus.Error(err)
 			continue
 		}
-		logrus.WithField("op", evt.Op).Info("Receiving vop")
 
 		// notify listeners
 		m.receiveChan <- evt
@@ -282,7 +358,6 @@ func (m *VoiceClient) receiver() {
 		}
 	}
 }
-
 func (m *VoiceClient) operationHandler() {
 	logrus.Debug("Ready to receive voice operation codes...")
 	for {
@@ -416,21 +491,6 @@ func (m *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 		err = errors.New("did not receive voice session description in time")
 		return
 	}
-}
-
-func (m *VoiceClient) lockRestart() bool {
-	m.restartMutex.Lock()
-	defer m.restartMutex.Unlock()
-
-	now := time.Now().UnixNano()
-	locked := (now - m.lastRestart) > (time.Second.Nanoseconds() / 2)
-
-	if locked && !m.isRestarting {
-		m.lastRestart = now
-		m.isRestarting = true
-	}
-
-	return locked
 }
 
 // AllowedToStartPulsating you must notify when you are done pulsating!
