@@ -9,11 +9,12 @@ import (
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/proxy"
 )
 
-func newConn(HTTPClient *http.Client) (Conn, error) {
+func newConn(proxy proxy.Dialer) (Conn, error) {
 	return &gorilla{
-		HTTPClient: HTTPClient,
+		proxy: proxy,
 	}, nil
 }
 
@@ -21,20 +22,17 @@ func newConn(HTTPClient *http.Client) (Conn, error) {
 // Interface can be found at https://golang.org/pkg/net/#Conn
 // See original code at https://github.com/gorilla/websocket/issues/282
 type gorilla struct {
-	c          *websocket.Conn
-	HTTPClient *http.Client
+	c     *websocket.Conn
+	proxy proxy.Dialer
 }
 
 func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
 	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
 	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
 	dialer := websocket.DefaultDialer
-	if t, ok := g.HTTPClient.Transport.(*http.Transport); ok {
+	if g.proxy != nil {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: dialer.HandshakeTimeout,
-			Proxy:            t.Proxy,
-			NetDialContext:   t.DialContext,
-			NetDial:          t.Dial, // even though Dial is deprecated in http.Transport, it isn't in websocket
+			NetDial: g.proxy.Dial,
 		}
 	}
 

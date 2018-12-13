@@ -3,6 +3,7 @@ package websocket
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -32,7 +34,7 @@ type connectPermit interface {
 
 // newClient ...
 func newClient(config *Config, shardID uint) (c *client, err error) {
-	ws, err := newConn(config.HTTPClient)
+	ws, err := newConn(config.Proxy)
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +96,15 @@ type client struct {
 	// identify timeout on invalid session
 	// useful in unit tests when you want to drop any actual timeouts
 	timeoutMultiplier int
+
+	// HTTPClient allows for use of a custom proxy
+	HTTPClient *http.Client
+
+	// Proxy allows for use of a custom proxy
+	Proxy proxy.Dialer
+
+	// ChannelBuffer is used to set the event channel buffer
+	ChannelBuffer uint
 
 	log constant.Logger
 

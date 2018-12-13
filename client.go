@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket"
+	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"
@@ -42,6 +44,13 @@ func NewClient(conf *Config) (*Client, error) {
 		// http client configuration
 		conf.HTTPClient = &http.Client{
 			Timeout: time.Second * 10,
+		}
+	}
+	if conf.Proxy != nil {
+		conf.HTTPClient.Transport = &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
+				return conf.Proxy.Dial(network, addr)
+			},
 		}
 	}
 
@@ -107,6 +116,9 @@ func NewClient(conf *Config) (*Client, error) {
 		}
 	}
 
+	sharding.TrackEvent.Add(event.VoiceStateUpdate)
+	sharding.TrackEvent.Add(event.VoiceServerUpdate)
+
 	// event dispatcher
 	eventChanSize := 20
 	evtDispatcher := NewDispatch(conf.ActivateEventChannels, eventChanSize)
@@ -117,12 +129,14 @@ func NewClient(conf *Config) (*Client, error) {
 		config:       conf,
 		shardManager: sharding,
 		httpClient:   conf.HTTPClient,
+		Proxy:        conf.Proxy,
 		botToken:     conf.BotToken,
 		evtDispatch:  evtDispatcher,
 		req:          reqClient,
 		cache:        cacher,
 		log:          conf.Logger,
 	}
+	c.voiceRepository = newVoiceRepository(c)
 
 	return c, nil
 }
@@ -131,6 +145,7 @@ func NewClient(conf *Config) (*Client, error) {
 type Config struct {
 	BotToken   string
 	HTTPClient *http.Client
+	Proxy      proxy.Dialer
 
 	CancelRequestWhenRateLimited bool
 
@@ -181,14 +196,20 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 
 	// discord http api
-	req        *httd.Client
+	req *httd.Client
+
+	// http client used for connections
 	httpClient *http.Client
+	Proxy      proxy.Dialer
 
 	shardManager *WSShardManager
 
 	cache *Cache
 
 	log Logger
+
+	// voice
+	*voiceRepository
 }
 
 var _ Session = (*Client)(nil)
@@ -285,6 +306,17 @@ func (c *Client) setupConnectEnv() {
 
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
+	// set the user ID upon connection
+	// only works for socketing
+	//
+	// also verifies that the correct credentials were supplied
+	var me *User
+	me, err = c.GetCurrentUser().Execute()
+	if err != nil {
+		return
+	}
+	c.myID = me.ID
+
 	url, shardCount, err := c.shardManager.GetConnectionDetails(c.req)
 	if err != nil {
 		return err
@@ -300,13 +332,13 @@ func (c *Client) Connect() (err error) {
 	_ = c.shardManager.Prepare(c.config)
 	c.setupConnectEnv() // calling this before the c.ShardManager.Prepare will cause a evtChan deadlock
 
-	c.logInfo("Connecting to discord Gateway")
+	c.Info("Connecting to discord Gateway")
 	err = c.shardManager.Connect()
 	if err != nil {
-		c.logErr(err.Error())
+		c.Info(err)
 		return
 	}
-	c.logInfo("Connected")
+	c.Info("Connected")
 
 	return nil
 }
@@ -314,15 +346,15 @@ func (c *Client) Connect() (err error) {
 // Disconnect closes the discord websocket connection
 func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
-	c.logInfo("Closing Discord gateway connection")
+	c.Info("Closing Discord gateway connection")
 	close(c.evtDispatch.shutdown)
 	err = c.shardManager.Disconnect()
 	if err != nil {
-		c.logErr(err.Error())
+		c.Error(err)
 		return
 	}
 	close(c.shutdownChan)
-	c.logInfo("Disconnected")
+	c.Info("Disconnected")
 
 	return nil
 }
@@ -1170,6 +1202,14 @@ func (c *Client) eventHandler() {
 		// cacheLink
 		if !c.config.DisableCache {
 			cacheEvent(c.cache, evt.Name, box)
+		}
+
+		// voice
+		switch evt.Name {
+		case EventVoiceStateUpdate:
+			c.voiceRepository.onVoiceStateUpdate(box.(*VoiceStateUpdate))
+		case EventVoiceServerUpdate:
+			c.voiceRepository.onVoiceServerUpdate(box.(*VoiceServerUpdate))
 		}
 
 		// trigger listeners
