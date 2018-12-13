@@ -391,6 +391,7 @@ func (m *VoiceClient) operationHandler() {
 			err := httd.Unmarshal(p.Data, helloPk)
 			if err != nil {
 				logrus.Debug(err)
+				continue
 			}
 			m.Lock()
 			// From: https://discordapp.com/developers/docs/topics/voice-connections#heartbeating
@@ -406,6 +407,7 @@ func (m *VoiceClient) operationHandler() {
 			err := httd.Unmarshal(p.Data, readyPk)
 			if err != nil {
 				logrus.Debug(err)
+				continue
 			}
 			m.Lock()
 			if ch, ok := m.onceChannels[opcode.VoiceReady]; ok {
@@ -418,6 +420,7 @@ func (m *VoiceClient) operationHandler() {
 			err := httd.Unmarshal(p.Data, sessionPk)
 			if err != nil {
 				logrus.Debug(err)
+				continue
 			}
 			m.Lock()
 			if ch, ok := m.onceChannels[opcode.VoiceSessionDescription]; ok {
