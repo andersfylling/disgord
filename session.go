@@ -237,6 +237,11 @@ type RESTer interface {
 	WebhookRESTer
 }
 
+// VoiceHandler holds all the voice connection related methods
+type VoiceHandler interface {
+	VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error)
+}
+
 // Session The main interface for Disgord
 type Session interface {
 	// give information about the bot/connected user
@@ -287,6 +292,9 @@ type Session interface {
 	//UserChan(userID Snowflake) <-chan *UserChan
 	//MemberChan(guildID, userID Snowflake) <-chan *Member
 	//MembersChan(guildID Snowflake) <-chan map[Snowflake]*Member
+
+	// Voice handler, responsible for opening up new voice channel connections
+	VoiceHandler
 }
 
 type SessionMock interface {

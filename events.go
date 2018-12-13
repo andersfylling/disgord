@@ -517,8 +517,8 @@ type UserUpdate struct {
 
 // VoiceStateUpdate someone joined, left, or moved a voice channel
 type VoiceStateUpdate struct {
-	VoiceState *VoiceState     `json:"voice_state"`
-	Ctx        context.Context `json:"-"`
+	*VoiceState
+	Ctx context.Context `json:"-"`
 }
 
 // ---------------------------

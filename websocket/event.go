@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/proxy"
+
 	"github.com/andersfylling/disgord/websocket/cmd"
 
 	"github.com/andersfylling/disgord/constant"
@@ -61,6 +63,7 @@ type Config struct {
 
 	// HTTPClient custom http client to support the use of proxy
 	HTTPClient *http.Client
+	Proxy      proxy.Dialer
 
 	// ChannelBuffer is used to set the event channel buffer
 	ChannelBuffer uint
