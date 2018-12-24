@@ -2,12 +2,9 @@ package disgord
 
 import (
 	"io/ioutil"
-	"net/http"
 	"testing"
 
-	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
 )
 
 func TestStateMarshalling(t *testing.T) {
@@ -48,28 +45,4 @@ func TestVoice_InterfaceImplementations(t *testing.T) {
 			}
 		})
 	})
-}
-
-func TestListVoiceRegions(t *testing.T) {
-	client, _, err := createTestRequester()
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	builder := &listVoiceRegionsBuilder{}
-	builder.IgnoreCache().setup(nil, client, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimit.VoiceRegions(),
-		Endpoint:    endpoint.VoiceRegions(),
-	}, nil)
-
-	list, err := builder.Execute()
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(list) == 0 {
-		t.Error("expected at least one voice region")
-	}
 }

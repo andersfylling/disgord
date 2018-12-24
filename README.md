@@ -33,6 +33,7 @@ None of the sub-packages should be used outside the library. If there exists a r
 github.com/andersfylling/disgord
 └──.circleci    :CircleCI configuration
 └──cache        :Different cache replacement algorithms
+└──cmd        :Live code, bots for testing (temporary)
 └──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
 └──endpoint     :All the REST endpoints of Discord
