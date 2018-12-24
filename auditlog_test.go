@@ -232,27 +232,3 @@ func TestGuildAuditLogs(t *testing.T) {
 		// TODO: implement ErrREST check
 	})
 }
-
-func TestLive_GuildAuditLogs(t *testing.T) {
-	client, keys, err := createTestRequester()
-	if err != nil {
-		t.Skip()
-		return
-	}
-
-	builder := &guildAuditLogsBuilder{}
-	builder.IgnoreCache().setup(nil, client, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimit.GuildAuditLogs(keys.GuildAdmin),
-		Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(keys.GuildAdmin)),
-	}, nil)
-
-	log, err := builder.Execute()
-	if err != nil {
-		t.Error(err)
-	}
-
-	if log == nil {
-		t.Error("did not get a datastructure from rest.GuildAuditLogs()")
-	}
-}
