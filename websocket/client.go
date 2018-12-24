@@ -131,7 +131,12 @@ type Client struct {
 	disconnected      bool
 	haveConnectedOnce bool
 
-	isRestarting bool
+	isReconnecting bool
+
+	// is the go routine started
+	isReceiving  bool
+	isEmitting   bool
+	recEmitMutex sync.Mutex
 
 	// identify timeout on invalid session
 	timeoutMultiplier int
@@ -195,14 +200,35 @@ func (m *Client) Disconnect() (err error) {
 	return
 }
 
+func (m *Client) lockReconnect() bool {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	now := time.Now().UnixNano()
+	locked := (now - m.lastRestart) < (time.Second.Nanoseconds() / 2)
+
+	if !locked && !m.isReconnecting {
+		m.lastRestart = now
+		m.isReconnecting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockReconnect() {
+	m.restartMutex.Lock()
+	defer m.restartMutex.Unlock()
+
+	m.isReconnecting = false
+}
+
 func (m *Client) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
-	if !m.lockRestart() {
+	if !m.lockReconnect() {
 		return
 	}
-	defer func() {
-		m.isRestarting = false
-	}()
+	defer m.unlockReconnect()
 
 	m.restart <- 1
 	_ = m.Disconnect()
@@ -281,8 +307,33 @@ func (m *Client) Receive() <-chan *discordPacket {
 	return m.receiveChan
 }
 
+func (m *Client) lockEmitter() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isEmitting {
+		m.isEmitting = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockEmitter() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isEmitting = false
+}
+
 // emitter holds the actually dispatching logic for the Emit method. See DefaultClient#Emit.
 func (m *Client) emitter() {
+	if !m.lockEmitter() {
+		logrus.Error("tried to start another websocket emitter go routine")
+		return
+	}
+	defer m.unlockEmitter()
+
 	for {
 		var msg *clientPacket
 		var open bool
@@ -306,7 +357,32 @@ func (m *Client) emitter() {
 	}
 }
 
+func (m *Client) lockReceiver() bool {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	if !m.isReceiving {
+		m.isReceiving = true
+		return true
+	}
+
+	return false
+}
+
+func (m *Client) unlockReceiver() {
+	m.recEmitMutex.Lock()
+	defer m.recEmitMutex.Unlock()
+
+	m.isReceiving = false
+}
+
 func (m *Client) receiver() {
+	if !m.lockReceiver() {
+		logrus.Error("tried to start another websocket receiver go routine")
+		return
+	}
+	defer m.unlockReceiver()
+
 	for {
 		packet, err := m.conn.Read()
 		if err != nil {
@@ -389,21 +465,6 @@ func (m *Client) Shutdown() (err error) {
 	m.Disconnect()
 	close(m.shutdown)
 	return
-}
-
-func (m *Client) lockRestart() bool {
-	m.restartMutex.Lock()
-	defer m.restartMutex.Unlock()
-
-	now := time.Now().UnixNano()
-	locked := (now - m.lastRestart) > (time.Second.Nanoseconds() / 2)
-
-	if locked && !m.isRestarting {
-		m.lastRestart = now
-		m.isRestarting = true
-	}
-
-	return locked
 }
 
 func (m *Client) eventHandler(p *discordPacket) {
