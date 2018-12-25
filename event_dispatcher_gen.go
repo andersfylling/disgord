@@ -6,6 +6,7 @@ package disgord
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/andersfylling/disgord/websocket"
@@ -391,147 +392,419 @@ func (d *Dispatch) emptyChannel(evtName string) {
 	}
 }
 
-func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session Session, box interface{}) {
+func (d *Dispatch) triggerHandlers(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
 
 	case EventChannelCreate:
 		for _, listener := range d.listeners[EventChannelCreate] {
-			(listener.(ChannelCreateCallback))(session, box.(*ChannelCreate))
+			if cb, ok := listener.(ChannelCreateHandler); ok {
+				cb(session, box.(*ChannelCreate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: ChannelCreate")
+			}
 		}
 	case EventChannelDelete:
 		for _, listener := range d.listeners[EventChannelDelete] {
-			(listener.(ChannelDeleteCallback))(session, box.(*ChannelDelete))
+			if cb, ok := listener.(ChannelDeleteHandler); ok {
+				cb(session, box.(*ChannelDelete))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: ChannelDelete")
+			}
 		}
 	case EventChannelPinsUpdate:
 		for _, listener := range d.listeners[EventChannelPinsUpdate] {
-			(listener.(ChannelPinsUpdateCallback))(session, box.(*ChannelPinsUpdate))
+			if cb, ok := listener.(ChannelPinsUpdateHandler); ok {
+				cb(session, box.(*ChannelPinsUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: ChannelPinsUpdate")
+			}
 		}
 	case EventChannelUpdate:
 		for _, listener := range d.listeners[EventChannelUpdate] {
-			(listener.(ChannelUpdateCallback))(session, box.(*ChannelUpdate))
+			if cb, ok := listener.(ChannelUpdateHandler); ok {
+				cb(session, box.(*ChannelUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: ChannelUpdate")
+			}
 		}
 	case EventGuildBanAdd:
 		for _, listener := range d.listeners[EventGuildBanAdd] {
-			(listener.(GuildBanAddCallback))(session, box.(*GuildBanAdd))
+			if cb, ok := listener.(GuildBanAddHandler); ok {
+				cb(session, box.(*GuildBanAdd))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildBanAdd")
+			}
 		}
 	case EventGuildBanRemove:
 		for _, listener := range d.listeners[EventGuildBanRemove] {
-			(listener.(GuildBanRemoveCallback))(session, box.(*GuildBanRemove))
+			if cb, ok := listener.(GuildBanRemoveHandler); ok {
+				cb(session, box.(*GuildBanRemove))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildBanRemove")
+			}
 		}
 	case EventGuildCreate:
 		for _, listener := range d.listeners[EventGuildCreate] {
-			(listener.(GuildCreateCallback))(session, box.(*GuildCreate))
+			if cb, ok := listener.(GuildCreateHandler); ok {
+				cb(session, box.(*GuildCreate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildCreate")
+			}
 		}
 	case EventGuildDelete:
 		for _, listener := range d.listeners[EventGuildDelete] {
-			(listener.(GuildDeleteCallback))(session, box.(*GuildDelete))
+			if cb, ok := listener.(GuildDeleteHandler); ok {
+				cb(session, box.(*GuildDelete))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildDelete")
+			}
 		}
 	case EventGuildEmojisUpdate:
 		for _, listener := range d.listeners[EventGuildEmojisUpdate] {
-			(listener.(GuildEmojisUpdateCallback))(session, box.(*GuildEmojisUpdate))
+			if cb, ok := listener.(GuildEmojisUpdateHandler); ok {
+				cb(session, box.(*GuildEmojisUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildEmojisUpdate")
+			}
 		}
 	case EventGuildIntegrationsUpdate:
 		for _, listener := range d.listeners[EventGuildIntegrationsUpdate] {
-			(listener.(GuildIntegrationsUpdateCallback))(session, box.(*GuildIntegrationsUpdate))
+			if cb, ok := listener.(GuildIntegrationsUpdateHandler); ok {
+				cb(session, box.(*GuildIntegrationsUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildIntegrationsUpdate")
+			}
 		}
 	case EventGuildMemberAdd:
 		for _, listener := range d.listeners[EventGuildMemberAdd] {
-			(listener.(GuildMemberAddCallback))(session, box.(*GuildMemberAdd))
+			if cb, ok := listener.(GuildMemberAddHandler); ok {
+				cb(session, box.(*GuildMemberAdd))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildMemberAdd")
+			}
 		}
 	case EventGuildMemberRemove:
 		for _, listener := range d.listeners[EventGuildMemberRemove] {
-			(listener.(GuildMemberRemoveCallback))(session, box.(*GuildMemberRemove))
+			if cb, ok := listener.(GuildMemberRemoveHandler); ok {
+				cb(session, box.(*GuildMemberRemove))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildMemberRemove")
+			}
 		}
 	case EventGuildMemberUpdate:
 		for _, listener := range d.listeners[EventGuildMemberUpdate] {
-			(listener.(GuildMemberUpdateCallback))(session, box.(*GuildMemberUpdate))
+			if cb, ok := listener.(GuildMemberUpdateHandler); ok {
+				cb(session, box.(*GuildMemberUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildMemberUpdate")
+			}
 		}
 	case EventGuildMembersChunk:
 		for _, listener := range d.listeners[EventGuildMembersChunk] {
-			(listener.(GuildMembersChunkCallback))(session, box.(*GuildMembersChunk))
+			if cb, ok := listener.(GuildMembersChunkHandler); ok {
+				cb(session, box.(*GuildMembersChunk))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildMembersChunk")
+			}
 		}
 	case EventGuildRoleCreate:
 		for _, listener := range d.listeners[EventGuildRoleCreate] {
-			(listener.(GuildRoleCreateCallback))(session, box.(*GuildRoleCreate))
+			if cb, ok := listener.(GuildRoleCreateHandler); ok {
+				cb(session, box.(*GuildRoleCreate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildRoleCreate")
+			}
 		}
 	case EventGuildRoleDelete:
 		for _, listener := range d.listeners[EventGuildRoleDelete] {
-			(listener.(GuildRoleDeleteCallback))(session, box.(*GuildRoleDelete))
+			if cb, ok := listener.(GuildRoleDeleteHandler); ok {
+				cb(session, box.(*GuildRoleDelete))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildRoleDelete")
+			}
 		}
 	case EventGuildRoleUpdate:
 		for _, listener := range d.listeners[EventGuildRoleUpdate] {
-			(listener.(GuildRoleUpdateCallback))(session, box.(*GuildRoleUpdate))
+			if cb, ok := listener.(GuildRoleUpdateHandler); ok {
+				cb(session, box.(*GuildRoleUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildRoleUpdate")
+			}
 		}
 	case EventGuildUpdate:
 		for _, listener := range d.listeners[EventGuildUpdate] {
-			(listener.(GuildUpdateCallback))(session, box.(*GuildUpdate))
+			if cb, ok := listener.(GuildUpdateHandler); ok {
+				cb(session, box.(*GuildUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: GuildUpdate")
+			}
 		}
 	case EventMessageCreate:
 		for _, listener := range d.listeners[EventMessageCreate] {
-			(listener.(MessageCreateCallback))(session, box.(*MessageCreate))
+			if cb, ok := listener.(MessageCreateHandler); ok {
+				cb(session, box.(*MessageCreate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageCreate")
+			}
 		}
 	case EventMessageDelete:
 		for _, listener := range d.listeners[EventMessageDelete] {
-			(listener.(MessageDeleteCallback))(session, box.(*MessageDelete))
+			if cb, ok := listener.(MessageDeleteHandler); ok {
+				cb(session, box.(*MessageDelete))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageDelete")
+			}
 		}
 	case EventMessageDeleteBulk:
 		for _, listener := range d.listeners[EventMessageDeleteBulk] {
-			(listener.(MessageDeleteBulkCallback))(session, box.(*MessageDeleteBulk))
+			if cb, ok := listener.(MessageDeleteBulkHandler); ok {
+				cb(session, box.(*MessageDeleteBulk))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageDeleteBulk")
+			}
 		}
 	case EventMessageReactionAdd:
 		for _, listener := range d.listeners[EventMessageReactionAdd] {
-			(listener.(MessageReactionAddCallback))(session, box.(*MessageReactionAdd))
+			if cb, ok := listener.(MessageReactionAddHandler); ok {
+				cb(session, box.(*MessageReactionAdd))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageReactionAdd")
+			}
 		}
 	case EventMessageReactionRemove:
 		for _, listener := range d.listeners[EventMessageReactionRemove] {
-			(listener.(MessageReactionRemoveCallback))(session, box.(*MessageReactionRemove))
+			if cb, ok := listener.(MessageReactionRemoveHandler); ok {
+				cb(session, box.(*MessageReactionRemove))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageReactionRemove")
+			}
 		}
 	case EventMessageReactionRemoveAll:
 		for _, listener := range d.listeners[EventMessageReactionRemoveAll] {
-			(listener.(MessageReactionRemoveAllCallback))(session, box.(*MessageReactionRemoveAll))
+			if cb, ok := listener.(MessageReactionRemoveAllHandler); ok {
+				cb(session, box.(*MessageReactionRemoveAll))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageReactionRemoveAll")
+			}
 		}
 	case EventMessageUpdate:
 		for _, listener := range d.listeners[EventMessageUpdate] {
-			(listener.(MessageUpdateCallback))(session, box.(*MessageUpdate))
+			if cb, ok := listener.(MessageUpdateHandler); ok {
+				cb(session, box.(*MessageUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: MessageUpdate")
+			}
 		}
 	case EventPresenceUpdate:
 		for _, listener := range d.listeners[EventPresenceUpdate] {
-			(listener.(PresenceUpdateCallback))(session, box.(*PresenceUpdate))
+			if cb, ok := listener.(PresenceUpdateHandler); ok {
+				cb(session, box.(*PresenceUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: PresenceUpdate")
+			}
 		}
 	case EventPresencesReplace:
 		for _, listener := range d.listeners[EventPresencesReplace] {
-			(listener.(PresencesReplaceCallback))(session, box.(*PresencesReplace))
+			if cb, ok := listener.(PresencesReplaceHandler); ok {
+				cb(session, box.(*PresencesReplace))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: PresencesReplace")
+			}
 		}
 	case EventReady:
 		for _, listener := range d.listeners[EventReady] {
-			(listener.(ReadyCallback))(session, box.(*Ready))
+			if cb, ok := listener.(ReadyHandler); ok {
+				cb(session, box.(*Ready))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: Ready")
+			}
 		}
 	case EventResumed:
 		for _, listener := range d.listeners[EventResumed] {
-			(listener.(ResumedCallback))(session, box.(*Resumed))
+			if cb, ok := listener.(ResumedHandler); ok {
+				cb(session, box.(*Resumed))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: Resumed")
+			}
 		}
 	case EventTypingStart:
 		for _, listener := range d.listeners[EventTypingStart] {
-			(listener.(TypingStartCallback))(session, box.(*TypingStart))
+			if cb, ok := listener.(TypingStartHandler); ok {
+				cb(session, box.(*TypingStart))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: TypingStart")
+			}
 		}
 	case EventUserUpdate:
 		for _, listener := range d.listeners[EventUserUpdate] {
-			(listener.(UserUpdateCallback))(session, box.(*UserUpdate))
+			if cb, ok := listener.(UserUpdateHandler); ok {
+				cb(session, box.(*UserUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: UserUpdate")
+			}
 		}
 	case EventVoiceServerUpdate:
 		for _, listener := range d.listeners[EventVoiceServerUpdate] {
-			(listener.(VoiceServerUpdateCallback))(session, box.(*VoiceServerUpdate))
+			if cb, ok := listener.(VoiceServerUpdateHandler); ok {
+				cb(session, box.(*VoiceServerUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: VoiceServerUpdate")
+			}
 		}
 	case EventVoiceStateUpdate:
 		for _, listener := range d.listeners[EventVoiceStateUpdate] {
-			(listener.(VoiceStateUpdateCallback))(session, box.(*VoiceStateUpdate))
+			if cb, ok := listener.(VoiceStateUpdateHandler); ok {
+				cb(session, box.(*VoiceStateUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: VoiceStateUpdate")
+			}
 		}
 	case EventWebhooksUpdate:
 		for _, listener := range d.listeners[EventWebhooksUpdate] {
-			(listener.(WebhooksUpdateCallback))(session, box.(*WebhooksUpdate))
+			if cb, ok := listener.(WebhooksUpdateHandler); ok {
+				cb(session, box.(*WebhooksUpdate))
+			} else if cb, ok := listener.(SimpleHandler); ok {
+				cb(session)
+			} else if cb, ok := listener.(SimplestHandler); ok {
+				cb()
+			} else {
+				fmt.Println("ERROR! Incorrect handler type given for event: WebhooksUpdate")
+			}
 		}
 		//default:
-		//	fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
+		//	fmt.Printf("------\nTODO\nImplement handler for `%s`\n------\n\n", evtName)
 	}
 
 	// remove the run only once listeners

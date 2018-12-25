@@ -9,6 +9,12 @@ import (
 	"github.com/andersfylling/disgord/event"
 )
 
+// these "simple" handler can be used, if you don't care about the actual event data
+type SimplestHandler = func()
+type SimpleHandler = func(session Session)
+
+// ---------------------------
+
 // EventChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
 // guild channel object.
 //
@@ -16,8 +22,8 @@ const EventChannelCreate = event.ChannelCreate
 
 func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ChannelCreateCallback is triggered in ChannelCreate events
-type ChannelCreateCallback = func(session Session, h *ChannelCreate)
+// ChannelCreateHandler is triggered in ChannelCreate events
+type ChannelCreateHandler = func(session Session, h *ChannelCreate)
 
 // ---------------------------
 
@@ -27,8 +33,8 @@ const EventChannelDelete = event.ChannelDelete
 
 func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ChannelDeleteCallback is triggered in ChannelDelete events
-type ChannelDeleteCallback = func(session Session, h *ChannelDelete)
+// ChannelDeleteHandler is triggered in ChannelDelete events
+type ChannelDeleteHandler = func(session Session, h *ChannelDelete)
 
 // ---------------------------
 
@@ -42,8 +48,8 @@ const EventChannelPinsUpdate = event.ChannelPinsUpdate
 
 func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ChannelPinsUpdateCallback is triggered in ChannelPinsUpdate events
-type ChannelPinsUpdateCallback = func(session Session, h *ChannelPinsUpdate)
+// ChannelPinsUpdateHandler is triggered in ChannelPinsUpdate events
+type ChannelPinsUpdateHandler = func(session Session, h *ChannelPinsUpdate)
 
 // ---------------------------
 
@@ -53,8 +59,8 @@ const EventChannelUpdate = event.ChannelUpdate
 
 func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ChannelUpdateCallback is triggered in ChannelUpdate events
-type ChannelUpdateCallback = func(session Session, h *ChannelUpdate)
+// ChannelUpdateHandler is triggered in ChannelUpdate events
+type ChannelUpdateHandler = func(session Session, h *ChannelUpdate)
 
 // ---------------------------
 
@@ -64,8 +70,8 @@ const EventGuildBanAdd = event.GuildBanAdd
 
 func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildBanAddCallback is triggered in GuildBanAdd events
-type GuildBanAddCallback = func(session Session, h *GuildBanAdd)
+// GuildBanAddHandler is triggered in GuildBanAdd events
+type GuildBanAddHandler = func(session Session, h *GuildBanAdd)
 
 // ---------------------------
 
@@ -75,8 +81,8 @@ const EventGuildBanRemove = event.GuildBanRemove
 
 func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildBanRemoveCallback is triggered in GuildBanRemove events
-type GuildBanRemoveCallback = func(session Session, h *GuildBanRemove)
+// GuildBanRemoveHandler is triggered in GuildBanRemove events
+type GuildBanRemoveHandler = func(session Session, h *GuildBanRemove)
 
 // ---------------------------
 
@@ -90,8 +96,8 @@ const EventGuildCreate = event.GuildCreate
 
 func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildCreateCallback is triggered in GuildCreate events
-type GuildCreateCallback = func(session Session, h *GuildCreate)
+// GuildCreateHandler is triggered in GuildCreate events
+type GuildCreateHandler = func(session Session, h *GuildCreate)
 
 // ---------------------------
 
@@ -103,8 +109,8 @@ const EventGuildDelete = event.GuildDelete
 
 func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildDeleteCallback is triggered in GuildDelete events
-type GuildDeleteCallback = func(session Session, h *GuildDelete)
+// GuildDeleteHandler is triggered in GuildDelete events
+type GuildDeleteHandler = func(session Session, h *GuildDelete)
 
 // ---------------------------
 
@@ -117,8 +123,8 @@ const EventGuildEmojisUpdate = event.GuildEmojisUpdate
 
 func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildEmojisUpdateCallback is triggered in GuildEmojisUpdate events
-type GuildEmojisUpdateCallback = func(session Session, h *GuildEmojisUpdate)
+// GuildEmojisUpdateHandler is triggered in GuildEmojisUpdate events
+type GuildEmojisUpdateHandler = func(session Session, h *GuildEmojisUpdate)
 
 // ---------------------------
 
@@ -130,8 +136,8 @@ const EventGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildIntegrationsUpdateCallback is triggered in GuildIntegrationsUpdate events
-type GuildIntegrationsUpdateCallback = func(session Session, h *GuildIntegrationsUpdate)
+// GuildIntegrationsUpdateHandler is triggered in GuildIntegrationsUpdate events
+type GuildIntegrationsUpdateHandler = func(session Session, h *GuildIntegrationsUpdate)
 
 // ---------------------------
 
@@ -145,8 +151,8 @@ const EventGuildMemberAdd = event.GuildMemberAdd
 
 func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildMemberAddCallback is triggered in GuildMemberAdd events
-type GuildMemberAddCallback = func(session Session, h *GuildMemberAdd)
+// GuildMemberAddHandler is triggered in GuildMemberAdd events
+type GuildMemberAddHandler = func(session Session, h *GuildMemberAdd)
 
 // ---------------------------
 
@@ -159,8 +165,8 @@ const EventGuildMemberRemove = event.GuildMemberRemove
 
 func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildMemberRemoveCallback is triggered in GuildMemberRemove events
-type GuildMemberRemoveCallback = func(session Session, h *GuildMemberRemove)
+// GuildMemberRemoveHandler is triggered in GuildMemberRemove events
+type GuildMemberRemoveHandler = func(session Session, h *GuildMemberRemove)
 
 // ---------------------------
 
@@ -175,8 +181,8 @@ const EventGuildMemberUpdate = event.GuildMemberUpdate
 
 func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildMemberUpdateCallback is triggered in GuildMemberUpdate events
-type GuildMemberUpdateCallback = func(session Session, h *GuildMemberUpdate)
+// GuildMemberUpdateHandler is triggered in GuildMemberUpdate events
+type GuildMemberUpdateHandler = func(session Session, h *GuildMemberUpdate)
 
 // ---------------------------
 
@@ -189,8 +195,8 @@ const EventGuildMembersChunk = event.GuildMembersChunk
 
 func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildMembersChunkCallback is triggered in GuildMembersChunk events
-type GuildMembersChunkCallback = func(session Session, h *GuildMembersChunk)
+// GuildMembersChunkHandler is triggered in GuildMembersChunk events
+type GuildMembersChunkHandler = func(session Session, h *GuildMembersChunk)
 
 // ---------------------------
 
@@ -203,8 +209,8 @@ const EventGuildRoleCreate = event.GuildRoleCreate
 
 func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildRoleCreateCallback is triggered in GuildRoleCreate events
-type GuildRoleCreateCallback = func(session Session, h *GuildRoleCreate)
+// GuildRoleCreateHandler is triggered in GuildRoleCreate events
+type GuildRoleCreateHandler = func(session Session, h *GuildRoleCreate)
 
 // ---------------------------
 
@@ -217,8 +223,8 @@ const EventGuildRoleDelete = event.GuildRoleDelete
 
 func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildRoleDeleteCallback is triggered in GuildRoleDelete events
-type GuildRoleDeleteCallback = func(session Session, h *GuildRoleDelete)
+// GuildRoleDeleteHandler is triggered in GuildRoleDelete events
+type GuildRoleDeleteHandler = func(session Session, h *GuildRoleDelete)
 
 // ---------------------------
 
@@ -231,8 +237,8 @@ const EventGuildRoleUpdate = event.GuildRoleUpdate
 
 func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildRoleUpdateCallback is triggered in GuildRoleUpdate events
-type GuildRoleUpdateCallback = func(session Session, h *GuildRoleUpdate)
+// GuildRoleUpdateHandler is triggered in GuildRoleUpdate events
+type GuildRoleUpdateHandler = func(session Session, h *GuildRoleUpdate)
 
 // ---------------------------
 
@@ -242,8 +248,8 @@ const EventGuildUpdate = event.GuildUpdate
 
 func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// GuildUpdateCallback is triggered in GuildUpdate events
-type GuildUpdateCallback = func(session Session, h *GuildUpdate)
+// GuildUpdateHandler is triggered in GuildUpdate events
+type GuildUpdateHandler = func(session Session, h *GuildUpdate)
 
 // ---------------------------
 
@@ -253,8 +259,8 @@ const EventMessageCreate = event.MessageCreate
 
 func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageCreateCallback is triggered in MessageCreate events
-type MessageCreateCallback = func(session Session, h *MessageCreate)
+// MessageCreateHandler is triggered in MessageCreate events
+type MessageCreateHandler = func(session Session, h *MessageCreate)
 
 // ---------------------------
 
@@ -267,8 +273,8 @@ const EventMessageDelete = event.MessageDelete
 
 func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageDeleteCallback is triggered in MessageDelete events
-type MessageDeleteCallback = func(session Session, h *MessageDelete)
+// MessageDeleteHandler is triggered in MessageDelete events
+type MessageDeleteHandler = func(session Session, h *MessageDelete)
 
 // ---------------------------
 
@@ -281,8 +287,8 @@ const EventMessageDeleteBulk = event.MessageDeleteBulk
 
 func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageDeleteBulkCallback is triggered in MessageDeleteBulk events
-type MessageDeleteBulkCallback = func(session Session, h *MessageDeleteBulk)
+// MessageDeleteBulkHandler is triggered in MessageDeleteBulk events
+type MessageDeleteBulkHandler = func(session Session, h *MessageDeleteBulk)
 
 // ---------------------------
 
@@ -297,8 +303,8 @@ const EventMessageReactionAdd = event.MessageReactionAdd
 
 func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageReactionAddCallback is triggered in MessageReactionAdd events
-type MessageReactionAddCallback = func(session Session, h *MessageReactionAdd)
+// MessageReactionAddHandler is triggered in MessageReactionAdd events
+type MessageReactionAddHandler = func(session Session, h *MessageReactionAdd)
 
 // ---------------------------
 
@@ -313,8 +319,8 @@ const EventMessageReactionRemove = event.MessageReactionRemove
 
 func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageReactionRemoveCallback is triggered in MessageReactionRemove events
-type MessageReactionRemoveCallback = func(session Session, h *MessageReactionRemove)
+// MessageReactionRemoveHandler is triggered in MessageReactionRemove events
+type MessageReactionRemoveHandler = func(session Session, h *MessageReactionRemove)
 
 // ---------------------------
 
@@ -327,8 +333,8 @@ const EventMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageReactionRemoveAllCallback is triggered in MessageReactionRemoveAll events
-type MessageReactionRemoveAllCallback = func(session Session, h *MessageReactionRemoveAll)
+// MessageReactionRemoveAllHandler is triggered in MessageReactionRemoveAll events
+type MessageReactionRemoveAllHandler = func(session Session, h *MessageReactionRemoveAll)
 
 // ---------------------------
 
@@ -340,8 +346,8 @@ const EventMessageUpdate = event.MessageUpdate
 
 func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// MessageUpdateCallback is triggered in MessageUpdate events
-type MessageUpdateCallback = func(session Session, h *MessageUpdate)
+// MessageUpdateHandler is triggered in MessageUpdate events
+type MessageUpdateHandler = func(session Session, h *MessageUpdate)
 
 // ---------------------------
 
@@ -357,8 +363,8 @@ const EventPresenceUpdate = event.PresenceUpdate
 
 func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// PresenceUpdateCallback is triggered in PresenceUpdate events
-type PresenceUpdateCallback = func(session Session, h *PresenceUpdate)
+// PresenceUpdateHandler is triggered in PresenceUpdate events
+type PresenceUpdateHandler = func(session Session, h *PresenceUpdate)
 
 // ---------------------------
 
@@ -368,8 +374,8 @@ const EventPresencesReplace = event.PresencesReplace
 
 func (h *PresencesReplace) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// PresencesReplaceCallback is triggered in PresencesReplace events
-type PresencesReplaceCallback = func(session Session, h *PresencesReplace)
+// PresencesReplaceHandler is triggered in PresencesReplace events
+type PresencesReplaceHandler = func(session Session, h *PresencesReplace)
 
 // ---------------------------
 
@@ -388,8 +394,8 @@ const EventReady = event.Ready
 
 func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ReadyCallback is triggered in Ready events
-type ReadyCallback = func(session Session, h *Ready)
+// ReadyHandler is triggered in Ready events
+type ReadyHandler = func(session Session, h *Ready)
 
 // ---------------------------
 
@@ -402,8 +408,8 @@ const EventResumed = event.Resumed
 
 func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// ResumedCallback is triggered in Resumed events
-type ResumedCallback = func(session Session, h *Resumed)
+// ResumedHandler is triggered in Resumed events
+type ResumedHandler = func(session Session, h *Resumed)
 
 // ---------------------------
 
@@ -417,8 +423,8 @@ const EventTypingStart = event.TypingStart
 
 func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// TypingStartCallback is triggered in TypingStart events
-type TypingStartCallback = func(session Session, h *TypingStart)
+// TypingStartHandler is triggered in TypingStart events
+type TypingStartHandler = func(session Session, h *TypingStart)
 
 // ---------------------------
 
@@ -428,8 +434,8 @@ const EventUserUpdate = event.UserUpdate
 
 func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// UserUpdateCallback is triggered in UserUpdate events
-type UserUpdateCallback = func(session Session, h *UserUpdate)
+// UserUpdateHandler is triggered in UserUpdate events
+type UserUpdateHandler = func(session Session, h *UserUpdate)
 
 // ---------------------------
 
@@ -444,8 +450,8 @@ const EventVoiceServerUpdate = event.VoiceServerUpdate
 
 func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// VoiceServerUpdateCallback is triggered in VoiceServerUpdate events
-type VoiceServerUpdateCallback = func(session Session, h *VoiceServerUpdate)
+// VoiceServerUpdateHandler is triggered in VoiceServerUpdate events
+type VoiceServerUpdateHandler = func(session Session, h *VoiceServerUpdate)
 
 // ---------------------------
 
@@ -455,8 +461,8 @@ const EventVoiceStateUpdate = event.VoiceStateUpdate
 
 func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// VoiceStateUpdateCallback is triggered in VoiceStateUpdate events
-type VoiceStateUpdateCallback = func(session Session, h *VoiceStateUpdate)
+// VoiceStateUpdateHandler is triggered in VoiceStateUpdate events
+type VoiceStateUpdateHandler = func(session Session, h *VoiceStateUpdate)
 
 // ---------------------------
 
@@ -469,7 +475,7 @@ const EventWebhooksUpdate = event.WebhooksUpdate
 
 func (h *WebhooksUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// WebhooksUpdateCallback is triggered in WebhooksUpdate events
-type WebhooksUpdateCallback = func(session Session, h *WebhooksUpdate)
+// WebhooksUpdateHandler is triggered in WebhooksUpdate events
+type WebhooksUpdateHandler = func(session Session, h *WebhooksUpdate)
 
 // ---------------------------

@@ -6,6 +6,7 @@ package disgord
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/andersfylling/disgord/websocket"
@@ -95,15 +96,23 @@ func (d *Dispatch) emptyChannel(evtName string) {
     }
 }
 
-func (d *Dispatch) triggerCallbacks(ctx context.Context, evtName string, session Session, box interface{}) {
+func (d *Dispatch) triggerHandlers(ctx context.Context, evtName string, session Session, box interface{}) {
 	switch evtName {
     {{range .}} {{if .IsDiscordEvent}}
 	case Event{{.}}:
 		for _, listener := range d.listeners[Event{{.}}] {
-			(listener.({{.}}Callback))(session, box.(*{{.}}))
+		    if cb, ok := listener.({{.}}Handler); ok {
+		        cb(session, box.(*{{.}}))
+		    } else if cb, ok := listener.(SimpleHandler); ok {
+		        cb(session)
+		    } else if cb, ok := listener.(SimplestHandler); ok {
+		        cb()
+		    } else {
+		        fmt.Println("ERROR! Incorrect handler type given for event: {{.}}")
+		    }
 		} {{end}} {{end}}
 		//default:
-		//	fmt.Printf("------\nTODO\nImplement callback for `%s`\n------\n\n", evtName)
+		//	fmt.Printf("------\nTODO\nImplement handler for `%s`\n------\n\n", evtName)
 	}
 
 	// remove the run only once listeners

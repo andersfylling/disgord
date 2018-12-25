@@ -1061,6 +1061,6 @@ func (c *Client) eventHandler() {
 		// trigger listeners
 		prepareBox(evt.Name, box)
 		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
-		go c.evtDispatch.triggerCallbacks(ctx, evt.Name, c, box)
+		go c.evtDispatch.triggerHandlers(ctx, evt.Name, c, box)
 	}
 }

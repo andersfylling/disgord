@@ -9,7 +9,7 @@
 ## About
 GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
-Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the Disgord REST implementations. The socketing is not complete, but does support all event types that are documented (using both channels and callbacks).
+Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the Disgord REST implementations. The socketing is not complete, but does support all event types that are documented (using both channels and handlers).
 
 Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON. But does return custom error messages for some functions which can be type checked in a switch for a more readable error handling as well potentially giving access to more information.
 

@@ -9,6 +9,12 @@ import (
 	"github.com/andersfylling/disgord/event"
 )
 
+// these "simple" handler can be used, if you don't care about the actual event data
+type SimplestHandler = func()
+type SimpleHandler = func(session Session)
+
+// ---------------------------
+
 {{range .}}
 {{if .IsDiscordEvent}}
 {{.RenderDocs}}
@@ -16,7 +22,7 @@ const Event{{.}} = event.{{.}} {{end}}
 
 func (h *{{.}}) registerContext(ctx context.Context) { h.Ctx = ctx }
 
-// {{.}}Callback is triggered in {{.}} events
-type {{.}}Callback = func(session Session, h *{{.}})
+// {{.}}Handler is triggered in {{.}} events
+type {{.}}Handler = func(session Session, h *{{.}})
 
 // --------------------------- {{end}}
