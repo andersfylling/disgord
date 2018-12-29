@@ -2,30 +2,10 @@ package disgord
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
-	"github.com/andersfylling/disgord/event"
-
-	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket"
 )
-
-// NewRESTClient creates a client for sending and handling Discord protocols such as rate limiting
-func NewRESTClient(conf *Config) (client *httd.Client) {
-	// request client
-	reqConf := &httd.Config{
-		APIVersion:                   constant.DiscordVersion,
-		BotToken:                     conf.Token,
-		UserAgentSourceURL:           constant.GitHubURL,
-		UserAgentVersion:             constant.Version,
-		HTTPClient:                   conf.HTTPClient,
-		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
-	}
-	client = httd.NewClient(reqConf)
-	return
-}
 
 // NewSessionMock returns a session interface that triggers random events allows for fake rest requests.
 // Ideal to test the behaviour of your new bot.
@@ -36,110 +16,9 @@ func NewSessionMock(conf *Config) (SessionMock, error) {
 }
 
 // NewSession create a client and return the Session interface
+// Deprecated: Use NewClient instead
 func NewSession(conf *Config) (Session, error) {
-	if conf.HTTPClient == nil {
-		// http client configuration
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
-	}
-
-	if conf.ProjectName == "" {
-		conf.ProjectName = LibraryInfo()
-	}
-	dws, err := websocket.NewClient(&websocket.Config{
-		// identity
-		Browser:             LibraryInfo(),
-		Device:              conf.ProjectName,
-		GuildLargeThreshold: 250, // TODO: config
-		ShardID:             conf.ShardID,
-		ShardCount:          conf.TotalShards,
-
-		// lib specific
-		Version:       constant.DiscordVersion,
-		Encoding:      constant.JSONEncoding,
-		ChannelBuffer: 1,
-		Endpoint:      conf.WebsocketURL,
-
-		// user settings
-		Token:      conf.Token,
-		HTTPClient: conf.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// request client
-	reqClient := NewRESTClient(conf)
-
-	// event dispatcher
-	eventChanSize := 20
-	evtDispatcher := NewDispatch(dws, conf.ActivateEventChannels, eventChanSize)
-
-	// caching
-	var cacher *Cache
-	if !conf.DisableCache {
-		if conf.CacheConfig == nil {
-			conf.CacheConfig = &CacheConfig{
-				Immutable: true,
-
-				UserCacheAlgorithm: CacheAlgLRU,
-				UserCacheLimitMiB:  500,
-
-				VoiceStateCacheAlgorithm: CacheAlgLRU,
-
-				ChannelCacheAlgorithm: CacheAlgLFU,
-			}
-		}
-		cacher, err = newCache(conf.CacheConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		// register for events for activate caches
-		if !conf.CacheConfig.DisableUserCaching {
-			dws.RegisterEvent(event.Ready)
-			dws.RegisterEvent(event.UserUpdate)
-		}
-		if !conf.CacheConfig.DisableVoiceStateCaching {
-			dws.RegisterEvent(event.VoiceStateUpdate)
-		}
-		if !conf.CacheConfig.DisableChannelCaching {
-			dws.RegisterEvent(event.ChannelCreate)
-			dws.RegisterEvent(event.ChannelUpdate)
-			dws.RegisterEvent(event.ChannelPinsUpdate)
-			dws.RegisterEvent(event.ChannelDelete)
-		}
-		if !conf.CacheConfig.DisableGuildCaching {
-			dws.RegisterEvent(event.GuildCreate)
-			dws.RegisterEvent(event.GuildDelete)
-			dws.RegisterEvent(event.GuildUpdate)
-			dws.RegisterEvent(event.GuildEmojisUpdate)
-			dws.RegisterEvent(event.GuildMemberAdd)
-			dws.RegisterEvent(event.GuildMemberRemove)
-			dws.RegisterEvent(event.GuildMembersChunk)
-			dws.RegisterEvent(event.GuildMemberUpdate)
-			dws.RegisterEvent(event.GuildRoleCreate)
-			dws.RegisterEvent(event.GuildRoleDelete)
-			dws.RegisterEvent(event.GuildRoleUpdate)
-			dws.RegisterEvent(event.GuildIntegrationsUpdate)
-		}
-	}
-
-	// create a disgord client/instance/session
-	c := &Client{
-		shutdownChan:  make(chan interface{}),
-		config:        conf,
-		httpClient:    conf.HTTPClient,
-		ws:            dws,
-		socketEvtChan: dws.EventChan(),
-		token:         conf.Token,
-		evtDispatch:   evtDispatcher,
-		cache:         cacher,
-		req:           reqClient,
-	}
-
-	return c, nil
+	return NewClient(conf)
 }
 
 // NewSessionMustCompile same as NewClientMustCompile, but with the Session
