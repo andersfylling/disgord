@@ -819,6 +819,9 @@ func (d *Dispatch) triggerHandlers(ctx context.Context, evtName string, session 
 
 		if len(d.listeners[evtName]) == 0 {
 			// TODO: call removeEvent from socket pkg
+
+			// TODO: cleanup listener if they only had once in them
+			// But calling delete triggers GC..
 		}
 	}
 
