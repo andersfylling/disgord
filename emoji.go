@@ -181,7 +181,7 @@ func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisB
 	builder = &listGuildEmojisBuilder{
 		guildID: guildID,
 	}
-	builder.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.Guild(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),
@@ -191,21 +191,31 @@ func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisB
 }
 
 type listGuildEmojisBuilder struct {
-	RESTRequestBuilder
+	r RESTRequestBuilder
 	guildID snowflake.ID
 }
 
+func (b *listGuildEmojisBuilder) IgnoreCache() *listGuildEmojisBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+func (b *listGuildEmojisBuilder) CancelOnRatelimit() *listGuildEmojisBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
 func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
-	if !b.ignoreCache {
-		emojis, err = b.cache.GetGuildEmojis(b.guildID)
-		if err != nil {
+	if !b.r.ignoreCache {
+		emojis, err = b.r.cache.GetGuildEmojis(b.guildID)
+		if emojis != nil && err == nil {
 			return
 		}
 	}
 
-	b.prepare()
+	b.r.prepare()
 	var body []byte
-	_, body, err = b.client.Request(b.config)
+	_, body, err = b.r.client.Request(b.r.config)
 	if err != nil {
 		return
 	}
@@ -219,7 +229,7 @@ func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
 		for i := range emojis {
 			emojis[i].guildID = b.guildID
 		}
-		b.cache.SetGuildEmojis(b.guildID, emojis)
+		b.r.cache.SetGuildEmojis(b.guildID, emojis)
 	}
 	return
 }

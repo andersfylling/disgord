@@ -166,8 +166,8 @@ func inviteFactory() interface{} {
 //  Comment                 withCounts whether the invite should contain approximate member counts
 func (c *Client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
 	builder = &getInviteBuilder{}
-	builder.itemFactory = inviteFactory
-	builder.IgnoreCache().setup(nil, c.req, &httd.Request{
+	builder.r.itemFactory = inviteFactory
+	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode),
@@ -177,17 +177,27 @@ func (c *Client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
 }
 
 type getInviteBuilder struct {
-	RESTRequestBuilder
+	r RESTRequestBuilder
 }
 
 func (b *getInviteBuilder) AsInviteCode() *getInviteBuilder {
-	b.urlParams["with_counts"] = true
+	b.r.queryParam("with_counts", true)
+	return b
+}
+
+//func (b *getInviteBuilder) IgnoreCache() *getInviteBuilder {
+//	b.r.IgnoreCache()
+//	return b
+//}
+
+func (b *getInviteBuilder) CancelOnRatelimit() *getInviteBuilder {
+	b.r.CancelOnRatelimit()
 	return b
 }
 
 func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 	var v interface{}
-	v, err = b.execute()
+	v, err = b.r.execute()
 	if err != nil {
 		return
 	}
@@ -205,8 +215,8 @@ func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 //  Comment                 -
 func (c *Client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) {
 	builder = &deleteInviteBuilder{}
-	builder.itemFactory = inviteFactory
-	builder.IgnoreCache().setup(nil, c.req, &httd.Request{
+	builder.r.itemFactory = inviteFactory
+	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimit.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode),
@@ -216,12 +226,17 @@ func (c *Client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) 
 }
 
 type deleteInviteBuilder struct {
-	RESTRequestBuilder
+	r RESTRequestBuilder
+}
+
+func (b *deleteInviteBuilder) CancelOnRatelimit() *deleteInviteBuilder {
+	b.r.CancelOnRatelimit()
+	return b
 }
 
 func (b *deleteInviteBuilder) Execute() (invite *Invite, err error) {
 	var v interface{}
-	v, err = b.execute()
+	v, err = b.r.execute()
 	if err != nil {
 		return
 	}

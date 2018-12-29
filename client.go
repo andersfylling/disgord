@@ -228,7 +228,7 @@ func (c *Client) ShardIDString() string {
 // Myself get the current user / connected user
 func (c *Client) Myself() (user *User, err error) {
 	if c.myID.Empty() {
-		user, err = c.GetCurrentUser()
+		user, err = c.GetCurrentUser().IgnoreCache().Execute()
 		if err == nil {
 			c.myID = user.ID
 		}
@@ -374,7 +374,7 @@ func (c *Client) EventChannels() (channels EventChannels) {
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
-// to improve performance.
+// to reduce unnecessary marshalling and controls.
 func (c *Client) AcceptEvent(events ...string) {
 	for _, evt := range events {
 		c.ws.RegisterEvent(evt)
@@ -814,68 +814,6 @@ func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err e
 	return
 }
 
-// User
-
-// GetCurrentUser .
-func (c *Client) GetCurrentUser() (ret *User, err error) {
-	ret, err = GetCurrentUser(c.req)
-	return
-}
-
-// GetUser .
-func (c *Client) GetUser(id Snowflake) (ret *User, err error) {
-	ret, err = c.cache.GetUser(id)
-	if err != nil {
-		ret, err = GetUser(c.req, id)
-		if err != nil {
-			return
-		}
-		c.cache.Update(UserCache, ret)
-	}
-	return
-}
-
-// ModifyCurrentUser .
-func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
-	ret, err = ModifyCurrentUser(c.req, params)
-	return
-}
-
-// GetCurrentUserGuilds .
-func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
-	ret, err = GetCurrentUserGuilds(c.req, params)
-	return
-}
-
-// LeaveGuild .
-func (c *Client) LeaveGuild(id Snowflake) (err error) {
-	err = LeaveGuild(c.req, id)
-	return
-}
-
-// GetUserDMs .
-func (c *Client) GetUserDMs() (ret []*Channel, err error) {
-	ret, err = GetUserDMs(c.req)
-	return
-}
-
-// CreateDM .
-func (c *Client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
-	ret, err = CreateDM(c.req, recipientID)
-	return
-}
-
-// CreateGroupDM .
-func (c *Client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
-	ret, err = CreateGroupDM(c.req, params)
-	return
-}
-
-// GetUserConnections .
-func (c *Client) GetUserConnections() (ret []*UserConnection, err error) {
-	ret, err = GetUserConnections(c.req)
-	return
-}
 
 // Webhook
 

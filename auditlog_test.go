@@ -82,32 +82,32 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 
 func TestAuditLogParams(t *testing.T) {
 	params := &guildAuditLogsBuilder{}
-	params.setup(nil, nil, nil, nil)
+	params.r.setup(nil, nil, nil, nil)
 	var wants string
 
 	wants = ""
-	verifyQueryString(t, params.urlParams, wants)
+	verifyQueryString(t, params.r.urlParams, wants)
 
 	s := "438543957"
 	ss, _ := snowflake.GetSnowflake(s)
 	params.UserID(ss)
 	wants = "?user_id=" + s
-	verifyQueryString(t, params.urlParams, wants)
+	verifyQueryString(t, params.r.urlParams, wants)
 
 	params.ActionType(6)
 	wants += "&action_type=6"
 	wantsAlternative := "?action_type=6&user_id=" + s
-	got := params.urlParams.GetQueryString()
+	got := params.r.urlParams.GetQueryString()
 	if !(wants == got || wantsAlternative == got) {
-		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.urlParams.GetQueryString(), wants, wantsAlternative)
+		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.GetQueryString(), wants, wantsAlternative)
 	}
 
 	params.ActionType(0)
 	wants = "?user_id=" + s + "&action_type=0"
 	wantsAlternative = "?action_type=0&user_id=" + s
-	got = params.urlParams.GetQueryString()
+	got = params.r.urlParams.GetQueryString()
 	if !(wants == got || wantsAlternative == got) {
-		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.urlParams.GetQueryString(), wants, wantsAlternative)
+		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.GetQueryString(), wants, wantsAlternative)
 	}
 }
 
@@ -122,8 +122,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.itemFactory = auditLogFactory
-		builder.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.itemFactory = auditLogFactory
+		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -155,8 +155,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.itemFactory = auditLogFactory
-		builder.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.itemFactory = auditLogFactory
+		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -192,7 +192,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
@@ -217,8 +217,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.itemFactory = auditLogFactory
-		builder.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.itemFactory = auditLogFactory
+		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
 			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),

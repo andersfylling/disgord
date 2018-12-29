@@ -185,8 +185,8 @@ type InviteRESTer interface {
 
 // UserRESTer REST interface for all user endpoints
 type UserRESTer interface {
-	GetCurrentUser() (ret *User, err error)
-	GetUser(id Snowflake) (ret *User, err error)
+	GetCurrentUser() (builder *getUserBuilder)
+	GetUser(id Snowflake) (builder *getUserBuilder)
 	ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error)
 	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
 	LeaveGuild(id Snowflake) (err error)

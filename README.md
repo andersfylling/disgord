@@ -27,6 +27,10 @@ Currently the caching focuses on being very configurable instead of as optimal a
  - For those with a builder pattern, you can simply call `.IgnoreCache()` before you call `.Execute()`
  - The remaining methods will require you to use the exported package functions (see /docs/examples) for how to in detail.
 
+When using sharding, you are in charge of rate limiting how often your shards connect to the gateway. This might introduce an issue for larger bots and will be fixed in the future. See [issue #82](https://github.com/andersfylling/disgord/issues/82).
+
+The develop branch is under continuous breaking changes, so please use releases or be prepared to have a breaking codebase. A release branch will be introduced later when DisGord gets close to its v1.0.0 release.
+
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown

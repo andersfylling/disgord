@@ -300,8 +300,8 @@ func auditLogFactory() interface{} {
 //  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got
 func (c *Client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLogsBuilder) {
 	builder = &guildAuditLogsBuilder{}
-	builder.itemFactory = auditLogFactory
-	builder.IgnoreCache().setup(c.cache, c.req, &httd.Request{
+	builder.r.itemFactory = auditLogFactory
+	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
 		Endpoint:    endpoint.GuildAuditLogs(guildID), // body are added automatically
@@ -312,37 +312,47 @@ func (c *Client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLog
 
 // guildAuditLogsBuilder for building the GetGuildAuditLogs request
 type guildAuditLogsBuilder struct {
-	RESTRequestBuilder
+	r RESTRequestBuilder
 }
 
 // UserID filter the log for a user id
 func (b *guildAuditLogsBuilder) UserID(id snowflake.ID) *guildAuditLogsBuilder {
-	b.urlParams["user_id"] = id
+	b.r.queryParam("user_id", id)
 	return b
 }
 
 // ActionType the type of audit log event
 func (b *guildAuditLogsBuilder) ActionType(action uint) *guildAuditLogsBuilder {
-	b.urlParams["action_type"] = action
+	b.r.queryParam("action_type", action)
 	return b
 }
 
 // Before filter the log before a certain entry id
 func (b *guildAuditLogsBuilder) Before(id snowflake.ID) *guildAuditLogsBuilder {
-	b.urlParams["before"] = id
+	b.r.queryParam("before", id)
 	return b
 }
 
 // Before filter the log before a certain entry id
 func (b *guildAuditLogsBuilder) Limit(limit int) *guildAuditLogsBuilder {
-	b.urlParams["limit"] = limit
+	b.r.queryParam("limit", limit)
+	return b
+}
+
+func (b *guildAuditLogsBuilder) IgnoreCache() *guildAuditLogsBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+func (b *guildAuditLogsBuilder) CancelOnRatelimit() *guildAuditLogsBuilder {
+	b.r.CancelOnRatelimit()
 	return b
 }
 
 func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 	// TODO: support caching of audit log entries. So we only fetch those we don't have.
 	var v interface{}
-	v, err = b.execute()
+	v, err = b.r.execute()
 	if err != nil {
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/snowflake/v3"
 )
 
 const (
@@ -728,48 +729,6 @@ func ratelimitUsers() string {
 	return "u"
 }
 
-// GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
-// scope, which will return the object without an email, and optionally the email scope, which returns the object
-// with an email.
-//  Method                  GET
-//  Endpoint                /users/@me
-//  Rate limiter            /users
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
-//  Reviewed                2018-06-10
-//  Comment                 -
-func GetCurrentUser(client httd.Getter) (ret *User, err error) {
-	_, body, err := client.Get(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMe(),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
-// GetUser [REST] Returns a user object for a given user Snowflake.
-//  Method                  GET
-//  Endpoint                /users/{user.id}
-//  Rate limiter            /users
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
-//  Reviewed                2018-06-10
-//  Comment                 -
-func GetUser(client httd.Getter, id Snowflake) (ret *User, err error) {
-	_, body, err := client.Get(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.User(id),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
 // ModifyCurrentUserParams JSON params for func ModifyCurrentUser
 type ModifyCurrentUserParams struct {
 	avatarIsSet bool
@@ -1008,5 +967,133 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 	}
 
 	err = unmarshal(body, &ret)
+	return
+}
+
+
+// User
+
+
+// GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
+// scope, which will return the object without an email, and optionally the email scope, which returns the object
+// with an email.
+//  Method                  GET
+//  Endpoint                /users/@me
+//  Rate limiter            /users
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *Client) GetCurrentUser() (builder *getUserBuilder) {
+	builder = &getUserBuilder{
+		UserID: c.myID,
+	}
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimitUsers(),
+		Endpoint:    endpoint.UserMe(),
+	}, nil)
+
+	return builder
+}
+
+
+// GetUser [REST] Returns a user object for a given user Snowflake.
+//  Method                  GET
+//  Endpoint                /users/{user.id}
+//  Rate limiter            /users
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *Client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
+	builder = &getUserBuilder{
+		UserID: id,
+	}
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodGet,
+		Ratelimiter: ratelimitUsers(),
+		Endpoint:    endpoint.User(id),
+	}, nil)
+
+	return builder
+}
+
+type getUserBuilder struct {
+	r RESTRequestBuilder
+	UserID snowflake.ID
+}
+
+func (b *getUserBuilder) IgnoreCache() *getUserBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+func (b *getUserBuilder) CancelOnRatelimit() *getUserBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+func (b *getUserBuilder) Execute() (user *User, err error) {
+	if !b.r.ignoreCache && !b.UserID.Empty() {
+		if user, err = b.r.cache.GetUser(b.UserID); user != nil && err == nil {
+			return
+		}
+	}
+
+	b.r.prepare()
+	var body []byte
+	_, body, err = b.r.client.Request(b.r.config)
+	if err != nil {
+		return
+	}
+
+	if len(body) > 1 {
+		err = httd.Unmarshal(body, &user)
+		if err != nil {
+			return
+		}
+		b.r.cache.Update(UserCache, user)
+	}
+	return
+}
+
+// ModifyCurrentUser .
+func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
+	ret, err = ModifyCurrentUser(c.req, params)
+	return
+}
+
+// GetCurrentUserGuilds .
+func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+	ret, err = GetCurrentUserGuilds(c.req, params)
+	return
+}
+
+// LeaveGuild .
+func (c *Client) LeaveGuild(id Snowflake) (err error) {
+	err = LeaveGuild(c.req, id)
+	return
+}
+
+// GetUserDMs .
+func (c *Client) GetUserDMs() (ret []*Channel, err error) {
+	ret, err = GetUserDMs(c.req)
+	return
+}
+
+// CreateDM .
+func (c *Client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
+	ret, err = CreateDM(c.req, recipientID)
+	return
+}
+
+// CreateGroupDM .
+func (c *Client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
+	ret, err = CreateGroupDM(c.req, params)
+	return
+}
+
+// GetUserConnections .
+func (c *Client) GetUserConnections() (ret []*UserConnection, err error) {
+	ret, err = GetUserConnections(c.req)
 	return
 }

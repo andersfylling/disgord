@@ -187,8 +187,18 @@ func (b *RESTRequestBuilder) execute() (v interface{}, err error) {
 	return
 }
 
-func (b *RESTRequestBuilder) Param(name string, v interface{}) *RESTRequestBuilder {
-	b.body[name] = v
+func (b *RESTRequestBuilder) param(name string, v interface{}) *RESTRequestBuilder {
+	if b.config.Method == http.MethodGet {
+		// RFC says you can not send a body in a GET request
+		b.queryParam(name, v)
+	} else {
+		b.body[name] = v
+	}
+	return b
+}
+
+func (b *RESTRequestBuilder) queryParam(name string, v interface{}) *RESTRequestBuilder {
+	b.urlParams[name] = v
 	return b
 }
 
