@@ -89,6 +89,8 @@ func NewClient(conf *Config) (*Client, error) {
 				VoiceStateCacheAlgorithm: CacheAlgLRU,
 
 				ChannelCacheAlgorithm: CacheAlgLFU,
+
+				GuildCacheAlgorithm: CacheAlgLFU,
 			}
 		}
 		cacher, err = newCache(conf.CacheConfig)

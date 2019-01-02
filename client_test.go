@@ -85,7 +85,7 @@ func TestClient_On(t *testing.T) {
 	// TODO: add a timeout
 }
 
-// TestClient_System looks for crashes when the DisGord system starts to receive events.
+// TestClient_System looks for crashes when the DisGord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
 	c, err := NewClient(&Config{
@@ -158,6 +158,11 @@ func TestClient_System(t *testing.T) {
 			Name: p.E,
 			Data: p.D,
 		}
+	}
+
+	_, err = c.GetGuild(244200618854580224)
+	if err != nil {
+		t.Error(err)
 	}
 
 	// cleanup

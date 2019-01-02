@@ -108,12 +108,18 @@ func newCache(conf *CacheConfig) (*Cache, error) {
 		return nil, err
 	}
 
+	guildCacher, err := createGuildCacher(conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Cache{
 		immutable:   conf.Immutable,
 		conf:        conf,
 		users:       userCacher,
 		voiceStates: voiceStateCacher,
 		channels:    channelCacher,
+		guilds:      guildCacher,
 	}, nil
 }
 
@@ -205,6 +211,12 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			return
 		}
 		err = cacheEmoji_SetAll(c, emojis[0].guildID, emojis)
+	case GuildCache:
+		if guild, ok := v.(*Guild); ok {
+			c.SetGuild(guild)
+		} else {
+			err = errors.New("can only save *Guild structures to guild cacheLink")
+		}
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}

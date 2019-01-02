@@ -1018,12 +1018,15 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	}
 
 	member.GuildID = m.GuildID
-	member.User = m.User.DeepCopy().(*User)
 	member.Nick = m.Nick
 	member.Roles = m.Roles
 	member.JoinedAt = m.JoinedAt
 	member.Deaf = m.Deaf
 	member.Mute = m.Mute
+
+	if m.User != nil {
+		member.User = m.User.DeepCopy().(*User)
+	}
 
 	if constant.LockedMethods {
 		m.RUnlock()

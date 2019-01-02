@@ -230,7 +230,7 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 // NewActivity ...
 func NewActivity() (activity *Activity) {
 	return &Activity{
-		Timestamps: []*ActivityTimestamp{},
+		Timestamps: &ActivityTimestamp{},
 	}
 }
 
@@ -238,18 +238,18 @@ func NewActivity() (activity *Activity) {
 type Activity struct {
 	Lockable `json:"-"`
 
-	Name          string               `json:"name"`                     // the activity's name
-	Type          int                  `json:"type"`                     // activity type
-	URL           *string              `json:"url,omitempty"`            //stream url, is validated when type is 1
-	Timestamps    []*ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
-	ApplicationID Snowflake            `json:"application_id,omitempty"` //?	snowflake	application id for the game
-	Details       *string              `json:"details,omitempty"`        //?	?string	what the player is currently doing
-	State         *string              `json:"state,omitempty"`          //state?	?string	the user's current party status
-	Party         *ActivityParty       `json:"party,omitempty"`          //party?	party object	information for the current party of the player
-	Assets        *ActivityAssets      `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
-	Secrets       *ActivitySecrets     `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
-	Instance      bool                 `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session
-	Flags         int                  `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
+	Name          string             `json:"name"`                     // the activity's name
+	Type          int                `json:"type"`                     // activity type
+	URL           *string            `json:"url,omitempty"`            //stream url, is validated when type is 1
+	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
+	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
+	Details       *string            `json:"details,omitempty"`        //?	?string	what the player is currently doing
+	State         *string            `json:"state,omitempty"`          //state?	?string	the user's current party status
+	Party         *ActivityParty     `json:"party,omitempty"`          //party?	party object	information for the current party of the player
+	Assets        *ActivityAssets    `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
+	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
+	Instance      bool               `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session
+	Flags         int                `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -285,15 +285,7 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 		activity.URL = &url
 	}
 	if a.Timestamps != nil {
-		if activity.Timestamps == nil {
-			activity.Timestamps = make([]*ActivityTimestamp, len(a.Timestamps))
-		}
-		for i, timestampP := range a.Timestamps {
-			if timestampP == nil {
-				continue
-			}
-			activity.Timestamps[i] = timestampP.DeepCopy().(*ActivityTimestamp)
-		}
+		activity.Timestamps = a.Timestamps.DeepCopy().(*ActivityTimestamp)
 	}
 	if a.Details != nil {
 		details := *a.Details
@@ -661,10 +653,13 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 
 	presence.User = p.User.DeepCopy().(*User)
 	presence.Roles = p.Roles
-	presence.Game = p.Game.DeepCopy().(*Activity)
 	presence.GuildID = p.GuildID
 	presence.Nick = p.Nick
 	presence.Status = p.Status
+
+	if p.Game != nil {
+		presence.Game = p.Game.DeepCopy().(*Activity)
+	}
 
 	if constant.LockedMethods {
 		p.RUnlock()

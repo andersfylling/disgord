@@ -113,6 +113,7 @@ func (list *CacheList) ClearTables() {
 // Set set adds a new content to the list or returns false if the content already exists
 func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	newItem := newItemI.(*CacheItem)
+	newItem.id = id
 	if key, exists := list.table[id]; exists && key != -1 {
 		list.items[key].content = newItem.content
 		return
@@ -159,7 +160,8 @@ func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem)
 
 // Get get an content from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
-	if key, exists := list.table[id]; exists && key != -1 {
+	var key int
+	if key, exists = list.table[id]; exists && key != -1 {
 		ret = &list.items[key]
 		list.items[key].increment()
 		list.hits++
