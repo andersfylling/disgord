@@ -191,7 +191,7 @@ func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisB
 }
 
 type listGuildEmojisBuilder struct {
-	r RESTRequestBuilder
+	r       RESTRequestBuilder
 	guildID snowflake.ID
 }
 

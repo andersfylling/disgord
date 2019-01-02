@@ -970,9 +970,7 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 	return
 }
 
-
 // User
-
 
 // GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
 // scope, which will return the object without an email, and optionally the email scope, which returns the object
@@ -996,7 +994,6 @@ func (c *Client) GetCurrentUser() (builder *getUserBuilder) {
 	return builder
 }
 
-
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
@@ -1018,7 +1015,7 @@ func (c *Client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
 }
 
 type getUserBuilder struct {
-	r RESTRequestBuilder
+	r      RESTRequestBuilder
 	UserID snowflake.ID
 }
 

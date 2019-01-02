@@ -3,9 +3,11 @@ package websocket
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -390,14 +392,27 @@ func (m *Client) receiver() {
 			return
 		}
 
-		//fmt.Printf("<-: %+v\n", string(packet))
-
 		// parse to gateway payload object
 		evt := &discordPacket{}
 		err = evt.UnmarshalJSON(packet)
 		if err != nil {
 			logrus.Error(err)
 			continue
+		}
+
+		// save to file
+		// build tag: disgord_diagnosews
+		if SaveIncomingPackets {
+			evtStr := "_" + evt.EventName
+			if evtStr == "_" {
+				evtStr = ""
+			}
+			filename := strconv.FormatUint(uint64(evt.SequenceNumber), 10) +
+				"_" + strconv.FormatUint(uint64(evt.Op), 10) + evtStr + ".json"
+			err = ioutil.WriteFile(DiagnosePath_packets+"/"+filename, packet, 0644)
+			if err != nil {
+				logrus.WithField("ws-client", "writing packet to file").Error(err)
+			}
 		}
 
 		// notify listeners

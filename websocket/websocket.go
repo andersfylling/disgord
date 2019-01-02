@@ -28,3 +28,7 @@ type WebsocketErr struct {
 func (e *WebsocketErr) Error() string {
 	return e.message
 }
+
+// diagnosing
+const DiagnosePath = "diagnose-report"
+const DiagnosePath_packets = "diagnose-report/packets"

@@ -814,7 +814,6 @@ func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err e
 	return
 }
 
-
 // Webhook
 
 // CreateWebhook .
