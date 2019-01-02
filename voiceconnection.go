@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/binary"
 	"errors"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -26,7 +27,8 @@ type VoiceConnection interface {
 	StartSpeaking() error
 	StopSpeaking() error
 
-	Send(data []byte)
+	SendOpusFrame(data []byte)
+	SendDCA(r io.Reader) error
 
 	Close() error
 }
@@ -159,7 +161,7 @@ waiter:
 		return
 	}
 
-	// Send our SSRC with no further data for the IP discovery process.
+	// SendOpusFrame our SSRC with no further data for the IP discovery process.
 	ssrcBuffer := make([]byte, 70)
 	binary.BigEndian.PutUint32(ssrcBuffer, ready.SSRC)
 	_, err = voice.udp.Write(ssrcBuffer)
@@ -265,11 +267,34 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	})
 }
 
-func (v *voiceImpl) Send(data []byte) {
+func (v *voiceImpl) SendOpusFrame(data []byte) {
 	if !v.ready {
 		panic("Attempting to send to a closed voice connection")
 	}
 	v.send <- data
+}
+
+func (v *voiceImpl) SendDCA(r io.Reader) error {
+	if !v.ready {
+		panic("Attempting to send to a closed voice connection")
+	}
+
+	var sampleSize uint16
+	for {
+		if err := binary.Read(r, binary.LittleEndian, &sampleSize); err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		buf := make([]byte, sampleSize)
+		if _, err := io.ReadFull(r, buf); err != nil {
+			panic(err)
+		}
+
+		v.send <- buf
+	}
 }
 
 func (v *voiceImpl) Close() (err error) {
