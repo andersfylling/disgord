@@ -1,8 +1,17 @@
 package disgord
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"testing"
+
+	"github.com/andersfylling/disgord/websocket"
 )
 
 func TestClient_Once(t *testing.T) {
@@ -74,4 +83,84 @@ func TestClient_On(t *testing.T) {
 	wg.Wait()
 
 	// TODO: add a timeout
+}
+
+// TestClient_System looks for crashes when the DisGord system starts to receive events.
+// the websocket logic is excluded to avoid crazy rewrites. At least, for now.
+func TestClient_System(t *testing.T) {
+	c, err := NewClient(&Config{
+		Token: "testing",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	input := make(chan *websocket.Event)
+	c.ws = nil
+	c.socketEvtChan = input
+	c.setupConnectEnv()
+
+	var files []string
+
+	root := "testdata/phases/startup-smooth-1"
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := range files {
+		if files[i] == root {
+			files[i] = files[len(files)-1]
+			files = files[:len(files)-1]
+			break
+		}
+	}
+	sort.Slice(files, func(i, j int) bool {
+		starti := strings.Split(files[i][len(root+"/"):], "_")
+		startj := strings.Split(files[j][len(root+"/"):], "_")
+
+		if _, err := strconv.Atoi(starti[0]); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := strconv.Atoi(startj[0]); err != nil {
+			t.Fatal(err)
+		}
+
+		a, _ := strconv.Atoi(starti[0])
+		b, _ := strconv.Atoi(startj[0])
+
+		return a < b
+	})
+	for _, file := range files {
+		data, err := ioutil.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		p := &struct {
+			E string          `json:"t"`
+			D json.RawMessage `json:"d"`
+		}{}
+		err = json.Unmarshal(data, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// ignore non-event-type packets
+		if p.E == "" {
+			continue
+		}
+
+		input <- &websocket.Event{
+			Name: p.E,
+			Data: p.D,
+		}
+	}
+
+	// cleanup
+	close(c.evtDispatch.shutdown)
+	close(c.shutdownChan)
 }

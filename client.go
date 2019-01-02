@@ -264,8 +264,7 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 	return c.req.RateLimiter()
 }
 
-// Connect establishes a websocket connection to the discord API
-func (c *Client) Connect() (err error) {
+func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works for socketing
 	c.Once(event.Ready, func(session Session, rdy *Ready) {
@@ -275,17 +274,22 @@ func (c *Client) Connect() (err error) {
 		session.Cache().Update(UserCache, update.User)
 	})
 
-	c.logInfo("Connecting to discord Gateway")
+	// setup event observer
+	go c.eventHandler()
 	//c.evtDispatch.start()
+}
+
+// Connect establishes a websocket connection to the discord API
+func (c *Client) Connect() (err error) {
+	c.setupConnectEnv()
+
+	c.logInfo("Connecting to discord Gateway")
 	err = c.ws.Connect()
 	if err != nil {
 		c.logErr(err.Error())
 		return
 	}
 	c.logInfo("Connected")
-
-	// setup event observer
-	go c.eventHandler()
 
 	return nil
 }

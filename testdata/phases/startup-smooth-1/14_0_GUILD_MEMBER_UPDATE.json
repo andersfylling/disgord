@@ -1,0 +1,1 @@
+{"t":"GUILD_MEMBER_UPDATE","s":14,"op":0,"d":{"user":{"username":"ccdb-test","id":"384024646326026250","discriminator":"2689","bot":true,"avatar":null},"roles":["244241652561084416"],"nick":"testing-ccdb-bot","guild_id":"244200618854580224"}}

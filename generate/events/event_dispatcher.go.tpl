@@ -97,6 +97,7 @@ func (d *Dispatch) emptyChannel(evtName string) {
 }
 
 func (d *Dispatch) triggerHandlers(ctx context.Context, evtName string, session Session, box interface{}) {
+    d.listenersLock.RLock()
 	switch evtName {
     {{range .}} {{if .IsDiscordEvent}}
 	case Event{{.}}:
@@ -114,6 +115,7 @@ func (d *Dispatch) triggerHandlers(ctx context.Context, evtName string, session 
 		//default:
 		//	fmt.Printf("------\nTODO\nImplement handler for `%s`\n------\n\n", evtName)
 	}
+    d.listenersLock.RUnlock()
 
 	// remove the run only once listeners
 	d.listenersLock.Lock()

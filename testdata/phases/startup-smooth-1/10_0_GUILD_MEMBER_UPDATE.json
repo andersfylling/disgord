@@ -1,0 +1,1 @@
+{"t":"GUILD_MEMBER_UPDATE","s":10,"op":0,"d":{"user":{"username":"Anders","id":"228846961774559232","discriminator":"7237","avatar":"e3b02f485e421a346513f1fddd747d65"},"roles":["486833142091612160"],"nick":null,"guild_id":"486833041486905345"}}
