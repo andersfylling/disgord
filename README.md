@@ -168,7 +168,9 @@ session.DisconnectOnInterrupt()
 Yes, it's called Discordgo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
 level bindings for Discord, while DisGord wants to provide a more configurable system with more 
 features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
-Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the future, for now the biggest difference is that DisGord does not support self bots (as they aren't in the official documentation).
+Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
+future, for now the biggest difference is that DisGord does not support self bots (as they aren't 
+in the official documentation).
 ```
 
 ```Markdown
