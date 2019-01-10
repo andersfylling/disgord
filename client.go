@@ -905,8 +905,16 @@ func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (
 	return
 }
 
+//
+// #########################################################################
+//
+//
 // Custom methods are usually reused by the resource package for readability
 // -----
+
+func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams) ([]*Guild, error) {
+	return c.GetCurrentUserGuilds(params)
+}
 
 // SendMsg .
 func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
