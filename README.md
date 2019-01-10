@@ -97,7 +97,7 @@ So if you haven't used modules before and you just want to create a Bot using Di
             panic(err)
         }
 
-        myself, err := session.GetCurrentUser()
+        myself, err := session.GetCurrentUser().Execute() // after v0.8
         if err != nil {
             panic(err)
         }

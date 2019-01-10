@@ -80,18 +80,9 @@ func NewClient(conf *Config) (*Client, error) {
 	var cacher *Cache
 	if !conf.DisableCache {
 		if conf.CacheConfig == nil {
-			conf.CacheConfig = &CacheConfig{
-				Immutable: true,
-
-				UserCacheAlgorithm: CacheAlgLRU,
-				UserCacheLimitMiB:  500,
-
-				VoiceStateCacheAlgorithm: CacheAlgLRU,
-
-				ChannelCacheAlgorithm: CacheAlgLFU,
-
-				GuildCacheAlgorithm: CacheAlgLFU,
-			}
+			conf.CacheConfig = DefaultCacheConfig()
+		} else {
+			ensureBasicCacheConfig(conf.CacheConfig)
 		}
 		cacher, err = newCache(conf.CacheConfig)
 		if err != nil {

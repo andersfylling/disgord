@@ -114,7 +114,7 @@ func newCache(conf *CacheConfig) (*Cache, error) {
 	}
 
 	return &Cache{
-		immutable:   conf.Immutable,
+		immutable:   !conf.Mutable,
 		conf:        conf,
 		users:       userCacher,
 		voiceStates: voiceStateCacher,
@@ -123,29 +123,66 @@ func newCache(conf *CacheConfig) (*Cache, error) {
 	}, nil
 }
 
+func DefaultCacheConfig() *CacheConfig {
+	return &CacheConfig{
+		UserCacheAlgorithm:  CacheAlgLFU,
+		UserCacheMaxEntries: 1000,
+
+		VoiceStateCacheAlgorithm: CacheAlgLFU,
+
+		ChannelCacheAlgorithm: CacheAlgLFU,
+
+		GuildCacheAlgorithm: CacheAlgLFU,
+	}
+}
+
+func ensureBasicCacheConfig(conf *CacheConfig) {
+	if conf.UserCacheAlgorithm == "" {
+		conf.UserCacheAlgorithm = CacheAlgLFU
+	}
+	if conf.VoiceStateCacheAlgorithm == "" {
+		conf.VoiceStateCacheAlgorithm = CacheAlgLFU
+	}
+	if conf.ChannelCacheAlgorithm == "" {
+		conf.ChannelCacheAlgorithm = CacheAlgLFU
+	}
+	if conf.GuildCacheAlgorithm == "" {
+		conf.GuildCacheAlgorithm = CacheAlgLFU
+	}
+}
+
 // CacheConfig allows for tweaking the cacheLink system on a personal need
 type CacheConfig struct {
-	Immutable bool // Must be immutable to support concurrent access and long-running tasks(!)
+	// may be false, the new Mutable makes it immutable by default
+	// Deprecated
+	Immutable bool
+	Mutable   bool // Must be immutable to support concurrent access and long-running tasks(!)
 
 	DisableUserCaching bool
-	UserCacheLimitMiB  uint
-	UserCacheLifetime  time.Duration
-	UserCacheAlgorithm string
+	// Deprecated
+	UserCacheLimitMiB   uint
+	UserCacheMaxEntries uint
+	UserCacheLifetime   time.Duration
+	UserCacheAlgorithm  string
 
-	DisableVoiceStateCaching bool
-	//VoiceStateCacheLimitMiB              uint
-	VoiceStateCacheLifetime  time.Duration
-	VoiceStateCacheAlgorithm string
+	DisableVoiceStateCaching  bool
+	VoiceStateCacheMaxEntries uint
+	VoiceStateCacheLifetime   time.Duration
+	VoiceStateCacheAlgorithm  string
 
 	DisableChannelCaching bool
-	ChannelCacheLimitMiB  uint
-	ChannelCacheLifetime  time.Duration
-	ChannelCacheAlgorithm string
+	// Deprecated
+	ChannelCacheLimitMiB   uint
+	ChannelCacheMaxEntries uint
+	ChannelCacheLifetime   time.Duration
+	ChannelCacheAlgorithm  string
 
 	DisableGuildCaching bool
-	GuildCacheLimitMiB  uint
-	GuildCacheLifetime  time.Duration
-	GuildCacheAlgorithm string
+	// Deprecated
+	GuildCacheLimitMiB   uint
+	GuildCacheMaxEntries uint
+	GuildCacheLifetime   time.Duration
+	GuildCacheAlgorithm  string
 }
 
 // Cache is the actual cacheLink. It holds the different systems which can be tweaked using the CacheConfig.
@@ -182,7 +219,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 	//_, implementsDeepCopier := v.(DeepCopier)
 	//_, implementsCacheCopier := v.(cacheCopier)
 	//if !implementsCacheCopier && !implementsDeepCopier && c.immutable {
-	//	err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Immutable is set")
+	//	err = errors.New("object does not implement DeepCopier & cacheCopier and must do so when config.Mutable is set")
 	//	return
 	//}
 
@@ -284,8 +321,11 @@ func createGuildCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err err
 		return nil, nil
 	}
 
-	const channelWeight = 1 // MiB. TODO: what is the actual max size?
-	limit := conf.ChannelCacheLimitMiB / channelWeight
+	var limit uint = conf.GuildCacheMaxEntries
+	if limit == 0 && conf.GuildCacheLimitMiB > 0 {
+		const guildWeight = 1 // MiB. TODO: what is the actual max size?
+		limit = conf.GuildCacheLimitMiB / guildWeight
+	}
 
 	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
 	return
@@ -825,8 +865,11 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 		return nil, nil
 	}
 
-	const userWeight = 1 // MiB. TODO: what is the actual max size?
-	limit := conf.UserCacheLimitMiB / userWeight
+	var limit uint = conf.UserCacheMaxEntries
+	if limit == 0 && conf.UserCacheLimitMiB > 0 {
+		const userWeight = 1 // MiB. TODO: what is the actual max size?
+		limit = conf.UserCacheLimitMiB / userWeight
+	}
 
 	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
 	return
@@ -909,7 +952,7 @@ func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, er
 		return nil, nil
 	}
 
-	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, 0, conf.VoiceStateCacheLifetime)
+	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, conf.VoiceStateCacheMaxEntries, conf.VoiceStateCacheLifetime)
 	return
 }
 
@@ -1047,9 +1090,11 @@ func createChannelCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err e
 	if conf.DisableChannelCaching {
 		return nil, nil
 	}
-
-	const channelWeight = 1 // MiB. TODO: what is the actual max size?
-	limit := conf.ChannelCacheLimitMiB / channelWeight
+	var limit uint = conf.ChannelCacheMaxEntries
+	if limit == 0 && conf.ChannelCacheLimitMiB > 0 {
+		const channelWeight = 1 // MiB. TODO: what is the actual max size?
+		limit = conf.ChannelCacheLimitMiB / channelWeight
+	}
 
 	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
 	return

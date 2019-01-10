@@ -54,21 +54,22 @@
 //
 // Optimizing your cacheLink logic
 //
-// > Note: if you create a CacheConfig you must set the cacheLink replacement algorithm for each cacheLink (user, guild, etc.).
+// > Note: if you create a CacheConfig you don't have to set every field. All the CacheAlgorithms are default to LFU when left blank.
 //
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Here we pass the cacheLink config when creating the session to access to the different cacheLink replacement algorithms, lifetime settings, and the option to disable different cacheLink systems.
 //  discord, err := disgord.NewSession(&disgord.Config{
 //    Token: "my-secret-bot-token",
 //    Cache: &disgord.CacheConfig{
-//              Immutable: true, // everything going in and out of the cacheLink is deep copied
+//              Mutable: false, // everything going in and out of the cacheLink is deep copied
+//				// setting Mutable to true, might break your program as this is experimental.
 //
 //              DisableUserCaching: false, // activates caching for users
 //              UserCacheLimitMiB: 500, // don't use more than ~500MiB of memory space for caching of users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cacheLink after 9 hours, unless updated
-//              UserCacheAlgorithm: disgord.CacheAlgTLRU, // uses TLRU (Time aware Least Recently Used) for caching of users
+//              UserCacheAlgorithm: disgord.CacheAlgLFU,
 //
-//              DisableVoiceStateCaching: true, // don't cacheLink voice states
+//              DisableVoiceStateCaching: true, // don't cache voice states
 //              // VoiceStateCacheLifetime  time.Duration
 //              // VoiceStateCacheAlgorithm string
 //
@@ -76,8 +77,33 @@
 //              ChannelCacheLimitMiB: 300,
 //              ChannelCacheLifetime: 0, // lives forever
 //              ChannelCacheAlgorithm: disgord.CacheAlgLFU, // lfu (Least Frequently Used)
+//
+//				GuildCacheAlgorithm: disgord.CacheAlgLFU, // no limit set, so the strategy to replace entries is not used
 //           },
 //  })
+//
+// If you just want to change a specific field, you can do so. By either calling the disgord.DefaultCacheConfig which gives you a Cache configuration designed by DisGord. Or you can set specific fields in a new CacheConfig since the different Cache Strategies are automatically set to LFU if missing.
+// 	&disgord.Config{}
+// Will automatically become
+//  &disgord.Config{
+//  	UserCacheAlgorithm: disgord.CacheAlgLFU,
+//		VoiceStateCacheAlgorithm disgord.CacheAlgLFU,
+//		ChannelCacheAlgorithm: disgord.CacheAlgLFU,
+//		GuildCacheAlgorithm: disgord.CacheAlgLFU,
+//  }
+//
+// And writing
+//  &disgord.Config{
+//  	UserCacheAlgorithm: disgord.CacheAlgLRU,
+//		VoiceStateCacheAlgorithm disgord.CacheAlgLRU,
+//  }
+// Becomes
+//  &disgord.Config{
+//  	UserCacheAlgorithm: disgord.CacheAlgLRU, // unchanged
+//		VoiceStateCacheAlgorithm disgord.CacheAlgLRU,  // unchanged
+//		ChannelCacheAlgorithm: disgord.CacheAlgLFU,
+//		GuildCacheAlgorithm: disgord.CacheAlgLFU,
+//  }
 //
 // > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cacheLink to not reflect the true discord state.
 //
