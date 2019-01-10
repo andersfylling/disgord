@@ -58,36 +58,40 @@ func (g *testWS) Disconnected() bool {
 var _ Conn = (*testWS)(nil)
 
 func TestManager_RegisterEvent(t *testing.T) {
-	m := Client{}
+	m := Client{
+		trackedEvents: &UniqueStringSlice{},
+	}
 	t1 := "test"
 	m.RegisterEvent(t1)
 
-	if len(m.trackedEvents) == 0 {
+	if m.trackedEvents.Len() == 0 {
 		t.Error("expected length to be 1, got 0")
 	}
 
 	m.RegisterEvent(t1)
-	if len(m.trackedEvents) == 2 {
+	if m.trackedEvents.Len() == 2 {
 		t.Error("expected length to be 1, got 2")
 	}
 }
 
 func TestManager_RemoveEvent(t *testing.T) {
-	m := Client{}
+	m := Client{
+		trackedEvents: &UniqueStringSlice{},
+	}
 	t1 := "test"
 	m.RegisterEvent(t1)
 
-	if len(m.trackedEvents) == 0 {
+	if m.trackedEvents.Len() == 0 {
 		t.Error("expected length to be 1, got 0")
 	}
 
 	m.RemoveEvent("sdfsdf")
-	if len(m.trackedEvents) == 0 {
+	if m.trackedEvents.Len() == 0 {
 		t.Error("expected length to be 1, got 0")
 	}
 
 	m.RemoveEvent(t1)
-	if len(m.trackedEvents) == 1 {
+	if m.trackedEvents.Len() == 1 {
 		t.Error("expected length to be 0, got 1")
 	}
 }
@@ -101,35 +105,35 @@ func TestManager_reconnect(t *testing.T) {
 		disconnected: true,
 	}
 
+	eChan := make(chan *Event)
 	m := &Client{
 		conf: &Config{
 			// identity
 			Browser:             "disgord",
 			Device:              "disgord",
 			GuildLargeThreshold: 250,
-			ShardID:             0,
-			ShardCount:          0,
 
 			// lib specific
 			Version:       constant.DiscordVersion,
 			Encoding:      constant.JSONEncoding,
-			ChannelBuffer: 1,
+			ChannelBuffer: 3,
 			Endpoint:      "sfkjsdlfsf",
 
 			// user settings
-			Token: "sifhsdoifhsdifhsdf",
+			BotToken: "sifhsdoifhsdifhsdf",
 			HTTPClient: &http.Client{
 				Timeout: time.Second * 10,
 			},
 		},
-		shutdown:     make(chan interface{}),
-		restart:      make(chan interface{}),
-		eventChan:    make(chan *Event),
-		receiveChan:  make(chan *discordPacket),
-		emitChan:     make(chan *clientPacket),
-		conn:         conn,
-		disconnected: true,
-		ratelimit:    newRatelimiter(),
+		trackedEvents: &UniqueStringSlice{},
+		shutdown:      make(chan interface{}),
+		restart:       make(chan interface{}),
+		eventChan:     eChan,
+		receiveChan:   make(chan *discordPacket),
+		emitChan:      make(chan *clientPacket),
+		conn:          conn,
+		disconnected:  true,
+		ratelimit:     newRatelimiter(),
 	}
 	seq := uint(1)
 
@@ -161,7 +165,7 @@ func TestManager_reconnect(t *testing.T) {
 			select {
 			case v := <-conn.writing:
 				data = v.(*clientPacket)
-			case <-m.eventChan:
+			case <-eChan:
 				continue
 			case <-conn.opening:
 				wg[connecting].Done()

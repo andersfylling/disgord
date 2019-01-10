@@ -14,9 +14,8 @@ import (
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws *websocket.Client, activateEventChannels bool, evtChanSize int) *Dispatch {
+func NewDispatch(activateEventChannels bool, evtChanSize int) *Dispatch {
 	dispatcher := &Dispatch{
-		ws: ws,
 		activateEventChannels: activateEventChannels,
 
 		listeners:      make(map[string][]interface{}),
@@ -24,7 +23,6 @@ func NewDispatch(ws *websocket.Client, activateEventChannels bool, evtChanSize i
 
 		shutdown: make(chan struct{}),
 	}
-
 
 	if activateEventChannels {
         {{range .}} {{if .IsDiscordEvent}}
@@ -40,7 +38,6 @@ type Dispatch struct {
 	{{range .}} {{if .IsDiscordEvent}}
 	{{.LowerCaseFirst}}Chan chan *{{.}} {{end}} {{end}}
 
-	ws *websocket.Client
 	activateEventChannels bool
 
 	listeners      map[string][]interface{}

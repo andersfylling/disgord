@@ -90,9 +90,6 @@ type SocketHandler interface {
 	// events which are not registered are discarded at socket level
 	// to increase performance
 	AcceptEvent(events ...string)
-
-	ShardID() uint
-	ShardIDString() string
 }
 
 // AuditLogsRESTer REST interface for all audit-logs endpoints

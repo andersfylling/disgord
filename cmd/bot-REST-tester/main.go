@@ -45,7 +45,7 @@ func setupKeys() *keys {
 
 func main() {
 	c, err := disgord.NewSession(&disgord.Config{
-		Token: os.Getenv("DISGORD_TOKEN"),
+		BotToken: os.Getenv("DISGORD_TOKEN"),
 	})
 	if err != nil {
 		panic(err)

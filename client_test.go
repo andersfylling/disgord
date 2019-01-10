@@ -16,7 +16,7 @@ import (
 
 func TestClient_Once(t *testing.T) {
 	c, err := NewClient(&Config{
-		Token: "testing",
+		BotToken: "testing",
 	})
 	if err != nil {
 		panic(err)
@@ -56,7 +56,7 @@ func TestClient_Once(t *testing.T) {
 
 func TestClient_On(t *testing.T) {
 	c, err := NewClient(&Config{
-		Token: "testing",
+		BotToken: "testing",
 	})
 	if err != nil {
 		panic(err)
@@ -89,15 +89,15 @@ func TestClient_On(t *testing.T) {
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
 	c, err := NewClient(&Config{
-		Token: "testing",
+		BotToken: "testing",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	input := make(chan *websocket.Event)
-	c.ws = nil
-	c.socketEvtChan = input
+	c.shardManager.evtChan = make(chan *websocket.Event, 1)
+	c.shardManager.shards = append(c.shardManager.shards, &WSShard{})
+	input := c.shardManager.evtChan
 	c.setupConnectEnv()
 
 	var files []string
@@ -172,30 +172,31 @@ func TestClient_System(t *testing.T) {
 
 func TestInternalStateHandlers(t *testing.T) {
 	c, err := NewClient(&Config{
-		Token: "testing",
+		BotToken: "testing",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	c.shardManager.shards = append(c.shardManager.shards, &WSShard{}) // don't remove
 
 	id := Snowflake(123)
 
-	if len(c.connectedGuilds) != 0 {
-		t.Errorf("expected no guilds to have been added yet. Got %d, wants %d", len(c.connectedGuilds), 0)
+	if len(c.GetConnectedGuilds()) != 0 {
+		t.Errorf("expected no guilds to have been added yet. Got %d, wants %d", len(c.GetConnectedGuilds()), 0)
 	}
 
 	c.handlerAddToConnectedGuilds(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
-	if len(c.connectedGuilds) != 1 {
-		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.connectedGuilds), 1)
+	if len(c.GetConnectedGuilds()) != 1 {
+		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
 	c.handlerAddToConnectedGuilds(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
-	if len(c.connectedGuilds) != 1 {
-		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.connectedGuilds), 1)
+	if len(c.GetConnectedGuilds()) != 1 {
+		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
 	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
@@ -203,8 +204,8 @@ func TestInternalStateHandlers(t *testing.T) {
 			ID: 9999,
 		},
 	})
-	if len(c.connectedGuilds) != 1 {
-		t.Errorf("Removing a unknown guild should not affect the internal state. Got %d, wants %d", len(c.connectedGuilds), 1)
+	if len(c.GetConnectedGuilds()) != 1 {
+		t.Errorf("Removing a unknown guild should not affect the internal state. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
 	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
@@ -212,7 +213,7 @@ func TestInternalStateHandlers(t *testing.T) {
 			ID: id,
 		},
 	})
-	if len(c.connectedGuilds) != 0 {
-		t.Errorf("Removing a connected guild should affect the internal state. Got %d, wants %d", len(c.connectedGuilds), 0)
+	if len(c.GetConnectedGuilds()) != 0 {
+		t.Errorf("Removing a connected guild should affect the internal state. Got %d, wants %d", len(c.GetConnectedGuilds()), 0)
 	}
 }

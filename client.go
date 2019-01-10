@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -27,7 +26,7 @@ func NewRESTClient(conf *Config) (client *httd.Client) {
 	// request client
 	reqConf := &httd.Config{
 		APIVersion:                   constant.DiscordVersion,
-		BotToken:                     conf.Token,
+		BotToken:                     conf.BotToken,
 		UserAgentSourceURL:           constant.GitHubURL,
 		UserAgentVersion:             constant.Version,
 		HTTPClient:                   conf.HTTPClient,
@@ -39,6 +38,7 @@ func NewRESTClient(conf *Config) (client *httd.Client) {
 
 // NewSession create a client and return the Session interface
 func NewClient(conf *Config) (*Client, error) {
+	var err error
 	if conf.HTTPClient == nil {
 		// http client configuration
 		conf.HTTPClient = &http.Client{
@@ -49,36 +49,16 @@ func NewClient(conf *Config) (*Client, error) {
 	if conf.ProjectName == "" {
 		conf.ProjectName = LibraryInfo()
 	}
-	dws, err := websocket.NewClient(&websocket.Config{
-		// identity
-		Browser:             LibraryInfo(),
-		Device:              conf.ProjectName,
-		GuildLargeThreshold: 250, // TODO: config
-		ShardID:             conf.ShardID,
-		ShardCount:          conf.TotalShards,
-
-		// lib specific
-		Version:       constant.DiscordVersion,
-		Encoding:      constant.JSONEncoding,
-		ChannelBuffer: 1,
-		Endpoint:      conf.WebsocketURL,
-
-		// user settings
-		Token:      conf.Token,
-		HTTPClient: conf.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	// request client
 	reqClient := NewRESTClient(conf)
 
-	// event dispatcher
-	eventChanSize := 20
-	evtDispatcher := NewDispatch(dws, conf.ActivateEventChannels, eventChanSize)
+	shardConfig := conf.WSShardManagerConfig
+	sharding := NewShardManager(shardConfig)
 
 	// caching
+	// TODO: should not pre-set the cache sizes as some guilds might be small while others huge.
+	//  might spend more memory than needed
 	var cacher *Cache
 	if !conf.DisableCache {
 		if conf.CacheConfig == nil {
@@ -93,65 +73,65 @@ func NewClient(conf *Config) (*Client, error) {
 
 		// register for events for activate caches
 		if !conf.CacheConfig.DisableUserCaching {
-			dws.RegisterEvent(event.Ready)
-			dws.RegisterEvent(event.UserUpdate)
+			sharding.TrackEvent.Add(event.Ready)
+			sharding.TrackEvent.Add(event.UserUpdate)
 		}
 		if !conf.CacheConfig.DisableVoiceStateCaching {
-			dws.RegisterEvent(event.VoiceStateUpdate)
+			sharding.TrackEvent.Add(event.VoiceStateUpdate)
 		}
 		if !conf.CacheConfig.DisableChannelCaching {
-			dws.RegisterEvent(event.ChannelCreate)
-			dws.RegisterEvent(event.ChannelUpdate)
-			dws.RegisterEvent(event.ChannelPinsUpdate)
-			dws.RegisterEvent(event.ChannelDelete)
+			sharding.TrackEvent.Add(event.ChannelCreate)
+			sharding.TrackEvent.Add(event.ChannelUpdate)
+			sharding.TrackEvent.Add(event.ChannelPinsUpdate)
+			sharding.TrackEvent.Add(event.ChannelDelete)
 		}
 		if !conf.CacheConfig.DisableGuildCaching {
-			dws.RegisterEvent(event.GuildCreate)
-			dws.RegisterEvent(event.GuildDelete)
-			dws.RegisterEvent(event.GuildUpdate)
-			dws.RegisterEvent(event.GuildEmojisUpdate)
-			dws.RegisterEvent(event.GuildMemberAdd)
-			dws.RegisterEvent(event.GuildMemberRemove)
-			dws.RegisterEvent(event.GuildMembersChunk)
-			dws.RegisterEvent(event.GuildMemberUpdate)
-			dws.RegisterEvent(event.GuildRoleCreate)
-			dws.RegisterEvent(event.GuildRoleDelete)
-			dws.RegisterEvent(event.GuildRoleUpdate)
-			dws.RegisterEvent(event.GuildIntegrationsUpdate)
+			sharding.TrackEvent.Add(event.GuildCreate)
+			sharding.TrackEvent.Add(event.GuildDelete)
+			sharding.TrackEvent.Add(event.GuildUpdate)
+			sharding.TrackEvent.Add(event.GuildEmojisUpdate)
+			sharding.TrackEvent.Add(event.GuildMemberAdd)
+			sharding.TrackEvent.Add(event.GuildMemberRemove)
+			sharding.TrackEvent.Add(event.GuildMembersChunk)
+			sharding.TrackEvent.Add(event.GuildMemberUpdate)
+			sharding.TrackEvent.Add(event.GuildRoleCreate)
+			sharding.TrackEvent.Add(event.GuildRoleDelete)
+			sharding.TrackEvent.Add(event.GuildRoleUpdate)
+			sharding.TrackEvent.Add(event.GuildIntegrationsUpdate)
 		}
 	}
 
+	// event dispatcher
+	eventChanSize := 20
+	evtDispatcher := NewDispatch(conf.ActivateEventChannels, eventChanSize)
+
 	// create a disgord client/instance/session
 	c := &Client{
-		shutdownChan:  make(chan interface{}),
-		config:        conf,
-		httpClient:    conf.HTTPClient,
-		ws:            dws,
-		socketEvtChan: dws.EventChan(),
-		token:         conf.Token,
-		evtDispatch:   evtDispatcher,
-		cache:         cacher,
-		req:           reqClient,
+		shutdownChan: make(chan interface{}),
+		config:       conf,
+		shardManager: sharding,
+		httpClient:   conf.HTTPClient,
+		token:        conf.BotToken,
+		evtDispatch:  evtDispatcher,
+		req:          reqClient,
+		cache:        cacher,
 	}
 
 	return c, nil
 }
 
-// Config Configuration for the Disgord client
+// Config Configuration for the DisGord client
 type Config struct {
-	Token      string
+	BotToken   string
 	HTTPClient *http.Client
 
 	CancelRequestWhenRateLimited bool
 
-	CacheConfig *CacheConfig
-
-	ShardID      uint
-	TotalShards  uint
-	WebsocketURL string
+	DisableCache         bool
+	CacheConfig          *CacheConfig
+	WSShardManagerConfig *WSShardManagerConfig
 
 	//ImmutableCache bool
-	DisableCache bool
 
 	//LoadAllMembers   bool
 	//LoadAllChannels  bool
@@ -180,12 +160,6 @@ type Client struct {
 	config       *Config
 	token        string
 
-	connected            sync.Mutex
-	ws                   *websocket.Client
-	socketEvtChan        <-chan *websocket.Event
-	connectedGuilds      []snowflake.ID
-	connectedGuildsMutex sync.RWMutex
-
 	myID Snowflake
 
 	// register listeners for events
@@ -197,29 +171,21 @@ type Client struct {
 	cancelRequestWhenRateLimited bool
 
 	// discord http api
-	req *httd.Client
-
+	req        *httd.Client
 	httpClient *http.Client
 
-	// cacheLink
+	shardManager *WSShardManager
+
 	cache *Cache
 }
+
+var _ Session = (*Client)(nil)
 
 // HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
 // way to measure delay between the client and Discord server
 func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
-	return c.ws.HeartbeatLatency()
-}
-
-// ShardID ...
-func (c *Client) ShardID() uint {
-	return c.config.ShardID
-}
-
-// ShardIDString convert the shard ID to a string
-func (c *Client) ShardIDString() string {
-	return strconv.Itoa(int(c.ShardID()))
+	return c.shardManager.GetAvgHeartbeatLatency()
 }
 
 // Myself get the current user / connected user
@@ -242,12 +208,15 @@ func (c *Client) Myself() (user *User, err error) {
 
 // GetConnectedGuilds get a list over guild IDs that this client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
 func (c *Client) GetConnectedGuilds() []snowflake.ID {
-	c.connectedGuildsMutex.RLock()
-	defer c.connectedGuildsMutex.RUnlock()
+	c.shardManager.RLock()
+	defer c.shardManager.RUnlock()
 
-	tmp := make([]snowflake.ID, len(c.connectedGuilds))
-	copy(tmp, c.connectedGuilds)
-	return tmp
+	var guilds []snowflake.ID
+	for i := range c.shardManager.shards {
+		guilds = append(guilds, c.shardManager.shards[i].guilds...)
+	}
+
+	return guilds
 }
 
 func (c *Client) logInfo(msg string) {
@@ -288,8 +257,22 @@ func (c *Client) setupConnectEnv() {
 func (c *Client) Connect() (err error) {
 	c.setupConnectEnv()
 
+	url, shardCount, err := c.shardManager.GetConnectionDetails(c.req)
+	if err != nil {
+		return err
+	}
+
+	if c.config.WSShardManagerConfig.URL == "" {
+		c.config.WSShardManagerConfig.URL = url
+	}
+	if c.config.WSShardManagerConfig.ShardLimit == 0 {
+		c.config.WSShardManagerConfig.ShardLimit = shardCount
+	}
+
+	_ = c.shardManager.Prepare(c.config)
+
 	c.logInfo("Connecting to discord Gateway")
-	err = c.ws.Connect()
+	err = c.shardManager.ConnectAllShards()
 	if err != nil {
 		c.logErr(err.Error())
 		return
@@ -304,7 +287,7 @@ func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.logInfo("Closing Discord gateway connection")
 	close(c.evtDispatch.shutdown)
-	err = c.ws.Disconnect()
+	err = c.shardManager.DisconnectAllShards()
 	if err != nil {
 		c.logErr(err.Error())
 		return
@@ -339,7 +322,7 @@ func (c *Client) Cache() Cacher {
 // On adds a event handler on the given event.
 // On => event => handle the content like this
 func (c *Client) On(event string, handlers ...interface{}) {
-	c.evtDispatch.ws.RegisterEvent(event)
+	c.shardManager.TrackEvent.Add(event)
 
 	c.evtDispatch.listenersLock.Lock()
 	defer c.evtDispatch.listenersLock.Unlock()
@@ -351,7 +334,7 @@ func (c *Client) On(event string, handlers ...interface{}) {
 
 // Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
 func (c *Client) Once(event string, handlers ...interface{}) {
-	c.evtDispatch.ws.RegisterEvent(event) // TODO: remove event after firing. unless there are more handlers
+	c.shardManager.TrackEvent.Add(event) // TODO: remove event after firing. unless there are more handlers
 
 	c.evtDispatch.listenersLock.Lock()
 	defer c.evtDispatch.listenersLock.Unlock()
@@ -369,7 +352,7 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 	default:
 		return errors.New("command is not supported")
 	}
-	return c.ws.Emit(command, data)
+	return c.shardManager.EmitThroughAllShards(command, data)
 }
 
 // EventChan get a event channel using the event name
@@ -386,7 +369,7 @@ func (c *Client) EventChannels() (channels EventChannels) {
 // to reduce unnecessary marshalling and controls.
 func (c *Client) AcceptEvent(events ...string) {
 	for _, evt := range events {
-		c.ws.RegisterEvent(evt)
+		c.shardManager.TrackEvent.Add(evt)
 	}
 }
 
@@ -1030,7 +1013,7 @@ func (c *Client) eventHandler() {
 		var alive bool
 
 		select {
-		case evt, alive = <-c.socketEvtChan:
+		case evt, alive = <-c.shardManager.evtChan:
 			if !alive {
 				return
 			}
