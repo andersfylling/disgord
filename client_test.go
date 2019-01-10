@@ -184,21 +184,21 @@ func TestInternalStateHandlers(t *testing.T) {
 		t.Errorf("expected no guilds to have been added yet. Got %d, wants %d", len(c.connectedGuilds), 0)
 	}
 
-	c.handlerGuildCreate(c, &GuildCreate{
+	c.handlerAddToConnectedGuilds(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
 	if len(c.connectedGuilds) != 1 {
 		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.connectedGuilds), 1)
 	}
 
-	c.handlerGuildCreate(c, &GuildCreate{
+	c.handlerAddToConnectedGuilds(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
 	if len(c.connectedGuilds) != 1 {
 		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.connectedGuilds), 1)
 	}
 
-	c.handlerGuildDelete(c, &GuildDelete{
+	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{
 			ID: 9999,
 		},
@@ -207,7 +207,7 @@ func TestInternalStateHandlers(t *testing.T) {
 		t.Errorf("Removing a unknown guild should not affect the internal state. Got %d, wants %d", len(c.connectedGuilds), 1)
 	}
 
-	c.handlerGuildDelete(c, &GuildDelete{
+	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{
 			ID: id,
 		},
