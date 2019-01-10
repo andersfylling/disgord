@@ -529,11 +529,11 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake)
 
 // GroupDMAddRecipientParams JSON params for GroupDMAddRecipient
 type GroupDMAddRecipientParams struct {
-	AccessToken string `json:"access_token"` // access token of a user that has granted your app the gdm.join scope
+	AccessToken string `json:"access_token"` // access botToken of a user that has granted your app the gdm.join scope
 	Nickname    string `json:"nick"`         // nickname of the user being added
 }
 
-// GroupDMAddRecipient [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
+// GroupDMAddRecipient [REST] Adds a recipient to a Group DM using their access botToken. Returns a 204 empty response
 // on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}

@@ -30,8 +30,9 @@ type WSShardManagerConfig struct {
 
 func NewShardManager(conf *WSShardManagerConfig) *WSShardManager {
 	if conf == nil {
-		conf = &WSShardManagerConfig{}
+		panic("missing shard config")
 	}
+
 	return &WSShardManager{
 		conf:       conf,
 		TrackEvent: &websocket.UniqueStringSlice{},
@@ -77,13 +78,13 @@ func (s *WSShardManager) Prepare(conf *Config) error {
 	}
 	s.prepared = true
 
-	s.evtChan = make(chan *websocket.Event, 1+conf.WSShardManagerConfig.ShardLimit*2)
+	s.evtChan = make(chan *websocket.Event, 1+1+conf.WSShardManagerConfig.ShardLimit*2)
 	s.shards = make([]*WSShard, conf.WSShardManagerConfig.ShardLimit)
 
 	var err error
-	for i, e := range s.shards {
-		e = &WSShard{}
-		err = e.Prepare(conf, conf.WSShardManagerConfig.FirstID+uint(i))
+	for i := range s.shards {
+		s.shards[i] = &WSShard{}
+		err = s.shards[i].Prepare(conf, s.evtChan, s.TrackEvent, conf.WSShardManagerConfig.FirstID+uint(i))
 		if err != nil {
 			break
 		}
@@ -175,12 +176,11 @@ type WSShard struct {
 	id    uint
 	total uint
 
-	ws      *websocket.Client
-	evtChan <-chan *websocket.Event
-	guilds  []snowflake.ID
+	ws     *websocket.Client
+	guilds []snowflake.ID
 }
 
-func (s *WSShard) Prepare(conf *Config, id uint) (err error) {
+func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, trackEvents *websocket.UniqueStringSlice, id uint) (err error) {
 	s.id = id
 	s.total = conf.WSShardManagerConfig.ShardLimit
 
@@ -196,6 +196,8 @@ func (s *WSShard) Prepare(conf *Config, id uint) (err error) {
 		Encoding:      constant.JSONEncoding,
 		ChannelBuffer: 3,
 		Endpoint:      conf.WSShardManagerConfig.URL,
+		EventChan:     evtChan,
+		TrackedEvents: trackEvents,
 
 		// user settings
 		BotToken:   conf.BotToken,

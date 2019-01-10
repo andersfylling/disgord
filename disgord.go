@@ -6,7 +6,7 @@
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
 //  discord, err := disgord.NewSession(&disgord.Config{
-//    BotToken: "my-secret-bot-token",
+//    BotToken: "my-secret-bot-botToken",
 //  })
 //  if err != nil {
 //    panic(err)
@@ -59,7 +59,7 @@
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Here we pass the cacheLink config when creating the session to access to the different cacheLink replacement algorithms, lifetime settings, and the option to disable different cacheLink systems.
 //  discord, err := disgord.NewSession(&disgord.Config{
-//    BotToken: "my-secret-bot-token",
+//    BotToken: "my-secret-bot-botToken",
 //    Cache: &disgord.CacheConfig{
 //              Mutable: false, // everything going in and out of the cacheLink is deep copied
 //				// setting Mutable to true, might break your program as this is experimental.

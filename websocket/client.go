@@ -39,7 +39,7 @@ func NewClient(config *Config, shardID uint) (client *Client, err error) {
 	if config.EventChan != nil {
 		eChan = config.EventChan
 	} else {
-		eChan = make(chan *Event)
+		panic("missing event channel")
 	}
 
 	client = &Client{
@@ -63,10 +63,6 @@ func NewClient(config *Config, shardID uint) (client *Client, err error) {
 
 func NewTestClient(config *Config, shardID uint, conn Conn) (*Client, chan interface{}) {
 	s := make(chan interface{})
-
-	if config.TrackedEvents == nil {
-		config.TrackedEvents = &UniqueStringSlice{}
-	}
 
 	c := &Client{
 		conf:              config,
@@ -732,16 +728,13 @@ func sendIdentityPacket(m *Client) (err error) {
 			Device  string `json:"$device"`
 		}{runtime.GOOS, m.conf.Browser, m.conf.Device},
 		LargeThreshold: m.conf.GuildLargeThreshold,
+		Shard:          &[2]uint{m.ShardID, m.conf.ShardCount},
 		// Presence: struct {
 		// 	Since  *uint       `json:"since"`
 		// 	Game   interface{} `json:"game"`
 		// 	Status string      `json:"status"`
 		// 	AFK    bool        `json:"afk"`
 		// }{Status: "online"},
-	}
-
-	if m.conf.ShardCount > 1 {
-		identityPayload.Shard = &[2]uint{m.ShardID, m.conf.ShardCount}
 	}
 
 	err = m.Emit(event.Identify, &identityPayload)
