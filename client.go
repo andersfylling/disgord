@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/snowflake/v3"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket"
 
@@ -178,9 +180,11 @@ type Client struct {
 	config       *Config
 	token        string
 
-	connected     sync.Mutex
-	ws            *websocket.Client
-	socketEvtChan <-chan *websocket.Event
+	connected            sync.Mutex
+	ws                   *websocket.Client
+	socketEvtChan        <-chan *websocket.Event
+	connectedGuilds      []snowflake.ID
+	connectedGuildsMutex sync.RWMutex
 
 	myID Snowflake
 
@@ -236,6 +240,16 @@ func (c *Client) Myself() (user *User, err error) {
 	return
 }
 
+// GetConnectedGuilds get a list over guild IDs that this client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
+func (c *Client) GetConnectedGuilds() []snowflake.ID {
+	c.connectedGuildsMutex.RLock()
+	defer c.connectedGuildsMutex.RUnlock()
+
+	tmp := make([]snowflake.ID, len(c.connectedGuilds))
+	copy(tmp, c.connectedGuilds)
+	return tmp
+}
+
 func (c *Client) logInfo(msg string) {
 	logrus.WithFields(logrus.Fields{
 		"lib": LibraryInfo(),
@@ -257,15 +271,45 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 	return c.req.RateLimiter()
 }
 
+// handlerGuildDelete update internal state when joining or creating a guild
+func (c *Client) handlerGuildCreate(s Session, evt *GuildCreate) {
+	c.connectedGuildsMutex.Lock()
+	defer c.connectedGuildsMutex.Unlock()
+
+	// don't add an entry if there already is one
+	for i := range c.connectedGuilds {
+		if c.connectedGuilds[i] == evt.Guild.ID {
+			return
+		}
+	}
+	c.connectedGuilds = append(c.connectedGuilds, evt.Guild.ID)
+}
+
+// handlerGuildDelete update internal state when deleting or leaving a guild
+func (c *Client) handlerGuildDelete(s Session, evt *GuildDelete) {
+	c.connectedGuildsMutex.Lock()
+	for i := range c.connectedGuilds {
+		if c.connectedGuilds[i] != evt.UnavailableGuild.ID {
+			continue
+		}
+		c.connectedGuilds[i] = c.connectedGuilds[len(c.connectedGuilds)-1]
+		c.connectedGuilds = c.connectedGuilds[:len(c.connectedGuilds)-1]
+		break
+	}
+	c.connectedGuildsMutex.Unlock()
+}
+
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
-	// only works for socketing
+	// only works with socket logic
 	c.Once(event.Ready, func(session Session, rdy *Ready) {
 		c.myID = rdy.User.ID
 	})
 	c.On(event.UserUpdate, func(session Session, update *UserUpdate) {
 		session.Cache().Update(UserCache, update.User)
 	})
+	c.On(event.GuildCreate, c.handlerGuildCreate)
+	c.On(event.GuildDelete, c.handlerGuildDelete)
 
 	// setup event observer
 	go c.eventHandler()

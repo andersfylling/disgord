@@ -169,3 +169,50 @@ func TestClient_System(t *testing.T) {
 	close(c.evtDispatch.shutdown)
 	close(c.shutdownChan)
 }
+
+func TestInternalStateHandlers(t *testing.T) {
+	c, err := NewClient(&Config{
+		Token: "testing",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	id := Snowflake(123)
+
+	if len(c.connectedGuilds) != 0 {
+		t.Errorf("expected no guilds to have been added yet. Got %d, wants %d", len(c.connectedGuilds), 0)
+	}
+
+	c.handlerGuildCreate(c, &GuildCreate{
+		Guild: NewPartialGuild(id),
+	})
+	if len(c.connectedGuilds) != 1 {
+		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.connectedGuilds), 1)
+	}
+
+	c.handlerGuildCreate(c, &GuildCreate{
+		Guild: NewPartialGuild(id),
+	})
+	if len(c.connectedGuilds) != 1 {
+		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.connectedGuilds), 1)
+	}
+
+	c.handlerGuildDelete(c, &GuildDelete{
+		UnavailableGuild: &GuildUnavailable{
+			ID: 9999,
+		},
+	})
+	if len(c.connectedGuilds) != 1 {
+		t.Errorf("Removing a unknown guild should not affect the internal state. Got %d, wants %d", len(c.connectedGuilds), 1)
+	}
+
+	c.handlerGuildDelete(c, &GuildDelete{
+		UnavailableGuild: &GuildUnavailable{
+			ID: id,
+		},
+	})
+	if len(c.connectedGuilds) != 0 {
+		t.Errorf("Removing a connected guild should affect the internal state. Got %d, wants %d", len(c.connectedGuilds), 0)
+	}
+}
