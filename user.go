@@ -342,7 +342,7 @@ type userJSON struct {
 	/*-*/ Discriminator Discriminator `json:"discriminator,omitempty"`
 	/*1*/ Email *string `json:"email"`
 	/*2*/ Avatar *string `json:"avatar"`
-	/*3*/ Token *string `json:"token"`
+	/*3*/ Token *string `json:"botToken"`
 	/*4*/ Verified *bool `json:"verified"`
 	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
 	/*6*/ Bot *bool `json:"bot"`
@@ -381,7 +381,7 @@ type User struct {
 	Discriminator Discriminator `json:"discriminator,omitempty"`
 	Email         string        `json:"email,omitempty"`
 	Avatar        *string       `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
-	Token         string        `json:"token,omitempty"`
+	Token         string        `json:"botToken,omitempty"`
 	Verified      bool          `json:"verified,omitempty"`
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`

@@ -20,7 +20,7 @@ type Webhook struct {
 	User      *User     `json:"user,omitempty"`     // ?|
 	Name      string    `json:"name"`               //  |?
 	Avatar    string    `json:"avatar"`             //  |?
-	Token     string    `json:"token"`              //  |
+	Token     string    `json:"botToken"`           //  |
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -165,7 +165,7 @@ func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
 // GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
 // returns no user in the webhook object.
 //  Method                  GET
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
@@ -292,7 +292,7 @@ func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParam
 // ModifyWebhookWithToken [REST] Same as ModifyWebhook, except this call does not require authentication,
 // does not accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
@@ -331,7 +331,7 @@ func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
 
 // DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
@@ -382,7 +382,7 @@ type ExecuteWebhookParams struct {
 
 // ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-webhook
 //  Reviewed                2018-08-14
@@ -411,7 +411,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
 //  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
 //  Reviewed                2018-08-14
@@ -423,7 +423,7 @@ func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait 
 
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
 //  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Endpoint                /webhooks/{webhook.id}/{webhook.botToken}
 //  Rate limiter            /webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
 //  Reviewed                2018-08-14

@@ -53,8 +53,10 @@ func NewClient(conf *Config) (*Client, error) {
 	// request client
 	reqClient := NewRESTClient(conf)
 
-	shardConfig := conf.WSShardManagerConfig
-	sharding := NewShardManager(shardConfig)
+	if conf.WSShardManagerConfig == nil {
+		conf.WSShardManagerConfig = &WSShardManagerConfig{}
+	}
+	sharding := NewShardManager(conf.WSShardManagerConfig)
 
 	// caching
 	// TODO: should not pre-set the cache sizes as some guilds might be small while others huge.
@@ -111,7 +113,7 @@ func NewClient(conf *Config) (*Client, error) {
 		config:       conf,
 		shardManager: sharding,
 		httpClient:   conf.HTTPClient,
-		token:        conf.BotToken,
+		botToken:     conf.BotToken,
 		evtDispatch:  evtDispatcher,
 		req:          reqClient,
 		cache:        cacher,
@@ -158,7 +160,7 @@ type Client struct {
 
 	shutdownChan chan interface{}
 	config       *Config
-	token        string
+	botToken     string
 
 	myID Snowflake
 
@@ -255,8 +257,6 @@ func (c *Client) setupConnectEnv() {
 
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect() (err error) {
-	c.setupConnectEnv()
-
 	url, shardCount, err := c.shardManager.GetConnectionDetails(c.req)
 	if err != nil {
 		return err
@@ -270,6 +270,7 @@ func (c *Client) Connect() (err error) {
 	}
 
 	_ = c.shardManager.Prepare(c.config)
+	c.setupConnectEnv() // calling this before the c.ShardManager.Prepare will cause a evtChan deadlock
 
 	c.logInfo("Connecting to discord Gateway")
 	err = c.shardManager.ConnectAllShards()
