@@ -7,6 +7,55 @@ import (
 	"github.com/andersfylling/disgord/websocket/cmd"
 )
 
+type UniqueStringSlice struct {
+	mu  sync.RWMutex
+	ids []string
+}
+
+func (s *UniqueStringSlice) Len() int {
+	return len(s.ids)
+}
+
+func (s *UniqueStringSlice) Exists(id string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for i := range s.ids {
+		if id == s.ids[i] {
+			return true
+		}
+	}
+
+	return false
+}
+func (s *UniqueStringSlice) Add(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// check if the id already exists
+	for i := range s.ids {
+		if id == s.ids[i] {
+			return
+		}
+	}
+
+	s.ids = append(s.ids, id)
+}
+
+func (s *UniqueStringSlice) Remove(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// remove any matches
+	for i := range s.ids {
+		if id == s.ids[i] {
+			s.ids[i] = s.ids[len(s.ids)-1]
+			s.ids = s.ids[:len(s.ids)-1]
+			break
+		}
+	}
+}
+
 func newRatelimiter() ratelimiter {
 	rl := ratelimiter{
 		buckets: map[string]rlBucket{},

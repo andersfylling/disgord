@@ -137,7 +137,7 @@ func NewClient(conf *Config) *Client {
 	}
 
 	if conf.BotToken == "" {
-		panic("No Discord Bot Token was provided")
+		panic("No Discord Bot BotToken was provided")
 	}
 
 	// if no http client was provided, create a new one

@@ -19,22 +19,36 @@ import (
 )
 
 const (
+	// Deprecated
 	maxReconnectTries = 5
 )
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
-func NewClient(config *Config) (client *Client, err error) {
+func NewClient(config *Config, shardID uint) (client *Client, err error) {
 	ws, err := newConn(config.HTTPClient)
 	if err != nil {
 		return nil, err
 	}
 
+	if config.TrackedEvents == nil {
+		config.TrackedEvents = &UniqueStringSlice{}
+	}
+
+	var eChan chan<- *Event
+	if config.EventChan != nil {
+		eChan = config.EventChan
+	} else {
+		eChan = make(chan *Event)
+	}
+
 	client = &Client{
 		conf:              config,
+		ShardID:           shardID,
+		trackedEvents:     config.TrackedEvents,
 		shutdown:          make(chan interface{}),
 		restart:           make(chan interface{}),
-		eventChan:         make(chan *Event),
+		eventChan:         eChan,
 		receiveChan:       make(chan *discordPacket),
 		emitChan:          make(chan *clientPacket),
 		conn:              ws,
@@ -47,10 +61,17 @@ func NewClient(config *Config) (client *Client, err error) {
 	return
 }
 
-func NewTestClient(config *Config, conn Conn) (*Client, chan interface{}) {
+func NewTestClient(config *Config, shardID uint, conn Conn) (*Client, chan interface{}) {
 	s := make(chan interface{})
+
+	if config.TrackedEvents == nil {
+		config.TrackedEvents = &UniqueStringSlice{}
+	}
+
 	c := &Client{
 		conf:              config,
+		ShardID:           shardID,
+		trackedEvents:     config.TrackedEvents,
 		shutdown:          s,
 		restart:           make(chan interface{}),
 		eventChan:         make(chan *Event),
@@ -74,9 +95,11 @@ type Event struct {
 	Data []byte
 }
 
+// Config ws
+// TODO: remove shardID, such that this struct can be reused for every shard
 type Config struct {
-	// Token Discord bot token
-	Token string
+	// BotToken Discord bot token
+	BotToken string
 
 	// HTTPClient custom http client to support the use of proxy
 	HTTPClient *http.Client
@@ -94,11 +117,18 @@ type Config struct {
 	// Version make sure we support the correct Discord version
 	Version int
 
+	// TrackedEvents holds a list of predetermined events that should not be ignored.
+	// This is especially useful for creating multiple shards, to reuse the same slice
+	TrackedEvents *UniqueStringSlice
+
+	// EventChan can be used to inject a channel instead of letting the ws client construct one
+	// useful in sharding to avoid complicated patterns to handle N channels.
+	EventChan chan<- *Event
+
 	// for identify packets
 	Browser             string
 	Device              string
 	GuildLargeThreshold uint
-	ShardID             uint
 	ShardCount          uint
 }
 
@@ -110,9 +140,10 @@ type Client struct {
 	lastRestart  int64 //unix
 	restartMutex sync.Mutex
 
-	eventChan     chan *Event
-	trackedEvents []string
-	evtMutex      sync.RWMutex
+	ShardID uint
+
+	eventChan     chan<- *Event
+	trackedEvents *UniqueStringSlice
 
 	heartbeatInterval uint
 	heartbeatLatency  time.Duration
@@ -157,10 +188,11 @@ func (m *Client) Connect() (err error) {
 	}
 
 	if m.conf.Endpoint == "" {
-		m.conf.Endpoint, err = getGatewayRoute(m.conf.HTTPClient, m.conf.Version)
-		if err != nil {
-			return
-		}
+		panic("missing websocket endpoint. Must be set before constructing the sockets")
+		//m.conf.Endpoint, err = getGatewayRoute(m.conf.HTTPClient, m.conf.Version)
+		//if err != nil {
+		//	return
+		//}
 	}
 
 	// establish ws connection
@@ -440,36 +472,13 @@ func (m *Client) HeartbeatLatency() (duration time.Duration, err error) {
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
 // will be discarded once the socket info is extracted from the event.
 func (m *Client) RegisterEvent(event string) {
-	m.evtMutex.Lock()
-	defer m.evtMutex.Unlock()
-
-	for i := range m.trackedEvents {
-		if event == m.trackedEvents[i] {
-			return
-		}
-	}
-
-	m.trackedEvents = append(m.trackedEvents, event)
+	m.trackedEvents.Add(event)
 }
 
 // RemoveEvent removes an event type from the registry. This will cause the event type to be discarded
 // by the socket layer.
 func (m *Client) RemoveEvent(event string) {
-	m.evtMutex.Lock()
-	defer m.evtMutex.Unlock()
-
-	for i := range m.trackedEvents {
-		if event == m.trackedEvents[i] {
-			m.trackedEvents[i] = m.trackedEvents[len(m.trackedEvents)-1]
-			m.trackedEvents = m.trackedEvents[:len(m.trackedEvents)-1]
-			break
-		}
-	}
-	return
-}
-
-func (m *Client) EventChan() <-chan *Event {
-	return m.eventChan
+	m.trackedEvents.Remove(event)
 }
 
 func (m *Client) Start() {
@@ -528,16 +537,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 } // end eventHandler()
 
 func (m *Client) eventOfInterest(name string) bool {
-	m.evtMutex.RLock()
-	defer m.evtMutex.RUnlock()
-
-	for i := range m.trackedEvents {
-		if name == m.trackedEvents[i] {
-			return true
-		}
-	}
-
-	return false
+	return m.trackedEvents.Exists(name)
 }
 
 // operation handler demultiplexer
@@ -623,7 +623,7 @@ func (m *Client) sendHelloPacket() {
 	}
 
 	m.RLock()
-	token := m.conf.Token
+	token := m.conf.BotToken
 	session := m.sessionID
 	sequence := m.sequenceNumber
 	m.RUnlock()
@@ -725,7 +725,7 @@ func sendIdentityPacket(m *Client) (err error) {
 		Shard          *[2]uint    `json:"shard,omitempty"`
 		Presence       interface{} `json:"presence,omitempty"`
 	}{
-		Token: m.conf.Token,
+		Token: m.conf.BotToken,
 		Properties: struct {
 			OS      string `json:"$os"`
 			Browser string `json:"$browser"`
@@ -741,7 +741,7 @@ func sendIdentityPacket(m *Client) (err error) {
 	}
 
 	if m.conf.ShardCount > 1 {
-		identityPayload.Shard = &[2]uint{m.conf.ShardID, m.conf.ShardCount}
+		identityPayload.Shard = &[2]uint{m.ShardID, m.conf.ShardCount}
 	}
 
 	err = m.Emit(event.Identify, &identityPayload)

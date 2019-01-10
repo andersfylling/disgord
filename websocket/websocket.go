@@ -29,6 +29,10 @@ func (e *WebsocketErr) Error() string {
 	return e.message
 }
 
+const (
+	encodingJSON = "json"
+)
+
 // diagnosing
 const DiagnosePath = "diagnose-report"
 const DiagnosePath_packets = "diagnose-report/packets"

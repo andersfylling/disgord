@@ -161,7 +161,7 @@ func Benchmark1000DiscordEventToHandler_cacheDisabled(b *testing.B) {
 		reading: make(chan []byte),
 	}
 	// starts receiver and operation handler
-	wsClient, wsShutdownChan := websocket.NewTestClient(nil, &mocker)
+	wsClient, wsShutdownChan := websocket.NewTestClient(nil, 0, &mocker)
 
 	d := Client{
 		shutdownChan: make(chan interface{}),
@@ -171,10 +171,9 @@ func Benchmark1000DiscordEventToHandler_cacheDisabled(b *testing.B) {
 		httpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},
-		ws:            wsClient,
-		socketEvtChan: wsClient.EventChan(),
-		evtDispatch:   NewDispatch(wsClient, false, 20),
+		evtDispatch: NewDispatch(false, 20),
 	}
+	d.shardManager.shards[0].ws = wsClient
 	go d.eventHandler()
 
 	seq := uint(1)

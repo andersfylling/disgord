@@ -2,30 +2,46 @@ package disgord
 
 // handlerGuildDelete update internal state when joining or creating a guild
 func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
-	c.connectedGuildsMutex.Lock()
-	defer c.connectedGuildsMutex.Unlock()
+	var shard *WSShard
+	if shard = c.shardManager.GetShard(evt.Guild.ID); shard == nil {
+		// helps with writing unit tests
+		// TODO: remove
+		c.logErr("got a guild event from a unknown shard. Please notify the devs immediately")
+		return
+	}
+
+	shard.Lock()
+	defer shard.Unlock()
 
 	// don't add an entry if there already is one
-	for i := range c.connectedGuilds {
-		if c.connectedGuilds[i] == evt.Guild.ID {
+	for i := range shard.guilds {
+		if shard.guilds[i] == evt.Guild.ID {
 			return
 		}
 	}
-	c.connectedGuilds = append(c.connectedGuilds, evt.Guild.ID)
+	shard.guilds = append(shard.guilds, evt.Guild.ID)
 }
 
 // handlerGuildDelete update internal state when deleting or leaving a guild
 func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
-	c.connectedGuildsMutex.Lock()
-	for i := range c.connectedGuilds {
-		if c.connectedGuilds[i] != evt.UnavailableGuild.ID {
+	var shard *WSShard
+	if shard = c.shardManager.GetShard(evt.UnavailableGuild.ID); shard == nil {
+		// helps with writing unit tests
+		// TODO: remove
+		c.logErr("got a guild event from a unknown shard. Please notify the devs immediately")
+		return
+	}
+
+	shard.Lock()
+	defer shard.Unlock()
+
+	for i := range shard.guilds {
+		if shard.guilds[i] != evt.UnavailableGuild.ID {
 			continue
 		}
-		c.connectedGuilds[i] = c.connectedGuilds[len(c.connectedGuilds)-1]
-		c.connectedGuilds = c.connectedGuilds[:len(c.connectedGuilds)-1]
-		break
+		shard.guilds[i] = shard.guilds[len(shard.guilds)-1]
+		shard.guilds = shard.guilds[:len(shard.guilds)-1]
 	}
-	c.connectedGuildsMutex.Unlock()
 }
 
 func (c *Client) handlerSetSelfBotID(session Session, rdy *Ready) {

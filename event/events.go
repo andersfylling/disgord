@@ -183,7 +183,7 @@ const VoiceStateUpdate = "VOICE_STATE_UPDATE"
 // VoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
 //  Fields:
-//  - Token     string
+//  - BotToken     string
 //  - ChannelID Snowflake
 //  - Endpoint  string
 const VoiceServerUpdate = "VOICE_SERVER_UPDATE"

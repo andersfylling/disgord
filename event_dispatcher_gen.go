@@ -8,15 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-
-	"github.com/andersfylling/disgord/websocket"
 )
 
 // NewDispatch construct a Dispatch object for reacting to web socket events
 // from discord
-func NewDispatch(ws *websocket.Client, activateEventChannels bool, evtChanSize int) *Dispatch {
+func NewDispatch(activateEventChannels bool, evtChanSize int) *Dispatch {
 	dispatcher := &Dispatch{
-		ws:                    ws,
 		activateEventChannels: activateEventChannels,
 
 		listeners:      make(map[string][]interface{}),
@@ -104,7 +101,6 @@ type Dispatch struct {
 	voiceStateUpdateChan         chan *VoiceStateUpdate
 	webhooksUpdateChan           chan *WebhooksUpdate
 
-	ws                    *websocket.Client
 	activateEventChannels bool
 
 	listeners      map[string][]interface{}
