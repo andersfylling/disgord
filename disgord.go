@@ -5,7 +5,7 @@
 // Create a DisGord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
-//  discord, err := disgord.NewSession(&disgord.Config{
+//  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //  })
 //  if err != nil {
@@ -23,6 +23,14 @@
 //      panic(err)
 //  }
 //  discord.DisconnectOnInterrupt()
+//
+// If you want some logic to fire when the bot is ready (all shards has received their ready event), please use the Ready method.
+//  // ...
+//  discord.Ready(func() {
+//  	fmt.Println("READY NOW!")
+//  })
+//  // ...
+//
 //
 //
 // Listen for events using channels
@@ -58,7 +66,7 @@
 //
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Here we pass the cacheLink config when creating the session to access to the different cacheLink replacement algorithms, lifetime settings, and the option to disable different cacheLink systems.
-//  discord, err := disgord.NewSession(&disgord.Config{
+//  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //    Cache: &disgord.CacheConfig{
 //              Mutable: false, // everything going in and out of the cacheLink is deep copied
@@ -134,7 +142,7 @@
 //  }
 //
 //  // update the cacheLink
-//  cacheLink := session.Cache()
+//  cacheLink := discord.Cache()
 //  err = cacheLink.Update(disgord.UserCache, user)
 //  if err != nil {
 //      return err

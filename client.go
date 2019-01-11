@@ -320,6 +320,24 @@ func (c *Client) Cache() Cacher {
 	return c.cache
 }
 
+// Ready triggers a given callback when all shards has gotten their first Ready event
+// Warning: if you run client.Disconnect and want to run Connect again later, this will
+//  not work. The callback will be triggered instantly, as all the shards have already
+//  successfully connected once.
+// TODO: allow this method to be reused (see Warning paragraph)
+func (c *Client) Ready(cb func()) {
+	// TODO: optimize..
+	go func() {
+		for {
+			<-time.After(1 * time.Second)
+			if c.shardManager.InitialReadyReceived() {
+				break
+			}
+		}
+		cb()
+	}()
+}
+
 // On adds a event handler on the given event.
 // On => event => handle the content like this
 func (c *Client) On(event string, handlers ...interface{}) {

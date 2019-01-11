@@ -164,6 +164,20 @@ func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
 	return
 }
 
+// InitialReadyReceived checks if each shard has gotten at least one Ready event
+func (s *WSShardManager) InitialReadyReceived() bool {
+	s.RLock()
+	defer s.RUnlock()
+
+	for i := 0; i < len(s.shards); i++ {
+		if s.shards[i].ws.ReadyCounter == 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 var _ Emitter = (*WSShardManager)(nil)
 var _ Link = (*WSShardManager)(nil)
 
