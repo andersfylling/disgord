@@ -361,7 +361,7 @@ type AddGuildMemberParams struct {
 	Deaf        bool        `json:"deaf"`
 }
 
-// AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access botToken for the user with
+// AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with
 // the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
 // already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.

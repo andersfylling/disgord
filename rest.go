@@ -243,7 +243,7 @@ func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
 //  Rate limiter            /gateway/bot
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
-//  Comment                 This endpoint requires authentication using a valid bot botToken.
+//  Comment                 This endpoint requires authentication using a valid bot token.
 func GetGatewayBot(client httd.Getter) (gateway *GatewayBot, err error) {
 	_, body, err := client.Get(&httd.Request{
 		Ratelimiter: "/gateway/bot",

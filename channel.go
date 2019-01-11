@@ -181,7 +181,7 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 		} else if c.Type == ChannelTypeGroupDM {
 			err = errors.New("creating group DM using SaveToDiscord has not been implemented")
 			//if len(c.Recipients) == 0 {
-			//	err = errors.New("must have at least one recipient in Channel.Recipient (with access botToken) for creating a group DM. Got 0")
+			//	err = errors.New("must have at least one recipient in Channel.Recipient (with access token) for creating a group DM. Got 0")
 			//	return
 			//}
 			//total := len(c.Recipients)

@@ -273,7 +273,7 @@ func (c *Client) Connect() (err error) {
 	c.setupConnectEnv() // calling this before the c.ShardManager.Prepare will cause a evtChan deadlock
 
 	c.logInfo("Connecting to discord Gateway")
-	err = c.shardManager.ConnectAllShards()
+	err = c.shardManager.Connect()
 	if err != nil {
 		c.logErr(err.Error())
 		return
@@ -288,7 +288,7 @@ func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.logInfo("Closing Discord gateway connection")
 	close(c.evtDispatch.shutdown)
-	err = c.shardManager.DisconnectAllShards()
+	err = c.shardManager.Disconnect()
 	if err != nil {
 		c.logErr(err.Error())
 		return
@@ -353,7 +353,7 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 	default:
 		return errors.New("command is not supported")
 	}
-	return c.shardManager.EmitThroughAllShards(command, data)
+	return c.shardManager.Emit(command, data)
 }
 
 // EventChan get a event channel using the event name

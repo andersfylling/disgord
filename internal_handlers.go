@@ -2,14 +2,9 @@ package disgord
 
 // handlerGuildDelete update internal state when joining or creating a guild
 func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
-	var shard *WSShard
-	if shard = c.shardManager.GetShard(evt.Guild.ID); shard == nil {
-		// helps with writing unit tests
-		// TODO: remove
-		c.logErr("got a guild event from a unknown shard. Please notify the devs immediately")
-		return
-	}
-
+	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
+	//  meaning, you might have to add your own shards if you get a panic here
+	shard, _ := c.shardManager.GetShard(evt.Guild.ID)
 	shard.Lock()
 	defer shard.Unlock()
 
@@ -24,14 +19,9 @@ func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
 
 // handlerGuildDelete update internal state when deleting or leaving a guild
 func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
-	var shard *WSShard
-	if shard = c.shardManager.GetShard(evt.UnavailableGuild.ID); shard == nil {
-		// helps with writing unit tests
-		// TODO: remove
-		c.logErr("got a guild event from a unknown shard. Please notify the devs immediately")
-		return
-	}
-
+	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
+	//  meaning, you might have to add your own shards if you get a panic here
+	shard, _ := c.shardManager.GetShard(evt.UnavailableGuild.ID)
 	shard.Lock()
 	defer shard.Unlock()
 
