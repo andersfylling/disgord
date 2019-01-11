@@ -135,6 +135,7 @@ type Client struct {
 	restart      chan interface{}
 	lastRestart  int64 //unix
 	restartMutex sync.Mutex
+	ReadyCounter uint
 
 	ShardID uint
 
@@ -517,6 +518,7 @@ func (m *Client) eventHandler(p *discordPacket) {
 		m.Lock()
 		m.sessionID = ready.SessionID
 		m.trace = ready.Trace
+		m.ReadyCounter++
 		m.Unlock()
 	} else if p.EventName == event.Resume {
 		// eh? debugging.
