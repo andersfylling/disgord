@@ -511,7 +511,7 @@ type VoiceStateUpdate struct {
 // VoiceServerUpdate guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
 // connecting to voice, and when the current voice instance fails over to a new server.
 type VoiceServerUpdate struct {
-	Token    string          `json:"botToken"`
+	Token    string          `json:"token"`
 	GuildID  Snowflake       `json:"guild_id"`
 	Endpoint string          `json:"endpoint"`
 	Ctx      context.Context `json:"-"`
