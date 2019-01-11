@@ -51,13 +51,6 @@ type WSShardManager struct {
 	prepared bool
 }
 
-func (s *WSShardManager) NrOfShards() uint {
-	s.RLock()
-	defer s.RUnlock()
-
-	return uint(len(s.shards))
-}
-
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
 	var d *GatewayBot
 	d, err = GetGatewayBot(c)
@@ -93,16 +86,16 @@ func (s *WSShardManager) Prepare(conf *Config) error {
 	return err
 }
 
-func (s *WSShardManager) GetShard(guildID snowflake.ID) *WSShard {
+func (s *WSShardManager) GetShard(guildID snowflake.ID) (*WSShard, error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	if s.NrOfShards() == 0 {
-		return nil
+	if len(s.shards) == 0 {
+		return nil, errors.New("no shards exist")
 	}
 
 	id := (uint64(guildID) >> 22) % uint64(len(s.shards))
-	return s.shards[id]
+	return s.shards[id], nil
 }
 
 // GetAvgHeartbeatLatency can be 0 if no heartbeat has been measured yet
@@ -119,14 +112,14 @@ func (s *WSShardManager) GetAvgHeartbeatLatency() (latency time.Duration, err er
 
 		latency += tmp
 	}
-	if latency > 0 {
+	if latency > 0 && len(s.shards) > 0 {
 		latency = latency / time.Duration(len(s.shards))
 	}
 
 	return
 }
 
-func (s *WSShardManager) ConnectAllShards() (err error) {
+func (s *WSShardManager) Connect() (err error) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -150,7 +143,7 @@ func (s *WSShardManager) ConnectAllShards() (err error) {
 	return
 }
 
-func (s *WSShardManager) DisconnectAllShards() (err error) {
+func (s *WSShardManager) Disconnect() (err error) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -161,7 +154,7 @@ func (s *WSShardManager) DisconnectAllShards() (err error) {
 	return
 }
 
-func (s *WSShardManager) EmitThroughAllShards(cmd SocketCommand, data interface{}) (err error) {
+func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
 	s.RLock()
 	defer s.RUnlock()
 	for i := 0; i < len(s.shards); i++ {
@@ -170,6 +163,9 @@ func (s *WSShardManager) EmitThroughAllShards(cmd SocketCommand, data interface{
 
 	return
 }
+
+var _ Emitter = (*WSShardManager)(nil)
+var _ Link = (*WSShardManager)(nil)
 
 type WSShard struct {
 	sync.RWMutex
@@ -210,6 +206,10 @@ func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, trackEven
 	return nil
 }
 
+func (s *WSShard) Emit(cmd SocketCommand, data interface{}) (err error) {
+	return s.ws.Emit(cmd, data)
+}
+
 func (s *WSShard) Connect() error {
 	return s.ws.Connect()
 }
@@ -217,3 +217,6 @@ func (s *WSShard) Connect() error {
 func (s *WSShard) Disconnect() error {
 	return s.ws.Disconnect()
 }
+
+var _ Emitter = (*WSShard)(nil)
+var _ Link = (*WSShard)(nil)

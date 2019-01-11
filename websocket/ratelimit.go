@@ -7,6 +7,7 @@ import (
 	"github.com/andersfylling/disgord/websocket/cmd"
 )
 
+// UniqueStringSlice a thread safe string slice that does not allow duplicate strings to be stored
 type UniqueStringSlice struct {
 	mu  sync.RWMutex
 	ids []string

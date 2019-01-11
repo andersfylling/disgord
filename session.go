@@ -71,15 +71,26 @@ type EventChannels interface {
 	WebhooksUpdate() <-chan *WebhooksUpdate
 }
 
-// SocketHandler all socket related
-type SocketHandler interface {
+// Emitter for emitting data from A to B. Used in websocket connection
+type Emitter interface {
+	Emit(command SocketCommand, dataPointer interface{}) error
+}
+
+// Link is used to establish basic commands to create and destroy a link.
+// See client.Disconnect() and client.Connect() for linking to the Discord servers
+type Link interface {
 	Connect() error
 	Disconnect() error
+}
+
+// SocketHandler all socket related
+type SocketHandler interface {
+	Link
 	DisconnectOnInterrupt() error
 
 	// event handlers
 	On(event string, handler ...interface{})
-	Emit(command SocketCommand, dataPointer interface{}) error
+	Emitter
 	//Use(middleware ...interface{}) // TODO: is this useful?
 
 	// event channels
