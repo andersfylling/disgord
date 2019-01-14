@@ -11,11 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/constant"
+
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -55,6 +56,7 @@ func NewClient(config *Config, shardID uint) (client *Client, err error) {
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
 		disconnected:      true,
+		log:               config.Logger,
 	}
 	client.Start()
 
@@ -77,6 +79,7 @@ func NewTestClient(config *Config, shardID uint, conn Conn) (*Client, chan inter
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
 		disconnected:      true,
+		log:               config.Logger,
 	}
 	c.Start()
 	go c.receiver()
@@ -120,6 +123,8 @@ type Config struct {
 	// EventChan can be used to inject a channel instead of letting the ws client construct one
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
+
+	Logger constant.Logger
 
 	// for identify packets
 	Browser             string
@@ -170,117 +175,137 @@ type Client struct {
 
 	// identify timeout on invalid session
 	timeoutMultiplier int
+
+	log constant.Logger
 }
 
-// Connect establishes a socket connection with the Discord API
-func (m *Client) Connect() (err error) {
-	m.Lock()
-	defer m.Unlock()
+func (c *Client) Info(msg string) {
+	if c.log != nil {
+		c.log.Info("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
+	}
+}
+func (c *Client) Debug(msg string) {
+	if c.log != nil {
+		c.log.Debug("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
+	}
+}
+func (c *Client) Error(msg string) {
+	if c.log != nil {
+		c.log.Error("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
+	}
+}
 
-	// m.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+var _ constant.Logger = (*Client)(nil)
+
+// Connect establishes a socket connection with the Discord API
+func (c *Client) Connect() (err error) {
+	c.Lock()
+	defer c.Unlock()
+
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
 	// certainty say if we are connected
-	if !m.disconnected {
+	if !c.disconnected {
 		err = errors.New("cannot connect while a connection already exist")
 		return
 	}
 
-	if m.conf.Endpoint == "" {
+	if c.conf.Endpoint == "" {
 		panic("missing websocket endpoint. Must be set before constructing the sockets")
-		//m.conf.Endpoint, err = getGatewayRoute(m.conf.HTTPClient, m.conf.Version)
+		//c.conf.Endpoint, err = getGatewayRoute(c.conf.HTTPClient, c.conf.Version)
 		//if err != nil {
 		//	return
 		//}
 	}
 
 	// establish ws connection
-	err = m.conn.Open(m.conf.Endpoint, nil)
+	err = c.conn.Open(c.conf.Endpoint, nil)
 	if err != nil {
-		if !m.conn.Disconnected() {
-			m.conn.Close()
+		if !c.conn.Disconnected() {
+			c.conn.Close()
 		}
 		return
 	}
 
 	// we can now interact with Discord
-	m.haveConnectedOnce = true
-	m.disconnected = false
-	go m.receiver()
-	go m.emitter()
+	c.haveConnectedOnce = true
+	c.disconnected = false
+	go c.receiver()
+	go c.emitter()
 	return
 }
 
 // Disconnect disconnects the socket connection
-func (m *Client) Disconnect() (err error) {
-	m.Lock()
-	defer m.Unlock()
-	if m.conn.Disconnected() || !m.haveConnectedOnce {
-		m.disconnected = true
+func (c *Client) Disconnect() (err error) {
+	c.Lock()
+	defer c.Unlock()
+	if c.conn.Disconnected() || !c.haveConnectedOnce {
+		c.disconnected = true
 		err = errors.New("already disconnected")
 		return
 	}
 
 	// use the emitter to dispatch the close message
-	m.Emit(event.Close, nil)
-	m.disconnected = true
+	c.Emit(event.Close, nil)
+	c.disconnected = true
 
 	// close connection
-	<-time.After(time.Second * 1 * time.Duration(m.timeoutMultiplier))
+	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
 
 	// wait for processes
 	<-time.After(time.Millisecond * 10)
 	return
 }
 
-func (m *Client) lockReconnect() bool {
-	m.restartMutex.Lock()
-	defer m.restartMutex.Unlock()
+func (c *Client) lockReconnect() bool {
+	c.restartMutex.Lock()
+	defer c.restartMutex.Unlock()
 
 	now := time.Now().UnixNano()
-	locked := (now - m.lastRestart) < (time.Second.Nanoseconds() / 2)
+	locked := (now - c.lastRestart) < (time.Second.Nanoseconds() / 2)
 
-	if !locked && !m.isReconnecting {
-		m.lastRestart = now
-		m.isReconnecting = true
+	if !locked && !c.isReconnecting {
+		c.lastRestart = now
+		c.isReconnecting = true
 		return true
 	}
 
 	return false
 }
 
-func (m *Client) unlockReconnect() {
-	m.restartMutex.Lock()
-	defer m.restartMutex.Unlock()
+func (c *Client) unlockReconnect() {
+	c.restartMutex.Lock()
+	defer c.restartMutex.Unlock()
 
-	m.isReconnecting = false
+	c.isReconnecting = false
 }
 
-func (m *Client) reconnect() (err error) {
+func (c *Client) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
-	if !m.lockReconnect() {
+	if !c.lockReconnect() {
 		return
 	}
-	defer m.unlockReconnect()
+	defer c.unlockReconnect()
 
-	m.restart <- 1
-	_ = m.Disconnect()
+	c.restart <- 1
+	_ = c.Disconnect()
 
 	var try uint
 	var delay time.Duration = 3 // seconds
 	for {
-		logrus.Debugf("Reconnect attempt #%d\n", try)
-		err = m.Connect()
+		c.Debug(fmt.Sprintf("Reconnect attempt #%d\n", try))
+		err = c.Connect()
 		if err == nil {
-			logrus.Info("successfully reconnected")
+			c.Info("successfully reconnected")
 			break
 		}
 
 		// wait N seconds
-		logrus.Infof("reconnect failed, trying again in N seconds; N =  %d", uint(delay))
-		logrus.Info(err)
+		c.Info(fmt.Sprintf("reconnect failed, trying again in N seconds; N =  %d", uint(delay)))
+		c.Info(err.Error())
 		select {
 		case <-time.After(delay * time.Second):
 			delay += 4 + time.Duration(try*2)
-		case <-m.shutdown:
+		case <-c.shutdown:
 			return
 		}
 
@@ -293,9 +318,9 @@ func (m *Client) reconnect() (err error) {
 }
 
 // Emit emits a command, if supported, and its data to the Discord Socket API
-func (m *Client) Emit(command string, data interface{}) (err error) {
-	if !m.haveConnectedOnce {
-		return errors.New("race condition detected: you must connect to the socket API/Gateway before you can send gateway commands!")
+func (c *Client) Emit(command string, data interface{}) (err error) {
+	if !c.haveConnectedOnce {
+		return errors.New("race condition detected: you must connect to the socket API/Gateway before you can send gateway commands")
 	}
 
 	var op uint
@@ -321,12 +346,12 @@ func (m *Client) Emit(command string, data interface{}) (err error) {
 		return
 	}
 
-	accepted := m.ratelimit.Request(command)
+	accepted := c.ratelimit.Request(command)
 	if !accepted {
 		return errors.New("rate limited")
 	}
 
-	m.emitChan <- &clientPacket{
+	c.emitChan <- &clientPacket{
 		Op:   op,
 		Data: data,
 	}
@@ -334,90 +359,92 @@ func (m *Client) Emit(command string, data interface{}) (err error) {
 }
 
 // Receive returns the channel for receiving Discord packets
-func (m *Client) Receive() <-chan *discordPacket {
-	return m.receiveChan
+func (c *Client) Receive() <-chan *discordPacket {
+	return c.receiveChan
 }
 
-func (m *Client) lockEmitter() bool {
-	m.recEmitMutex.Lock()
-	defer m.recEmitMutex.Unlock()
+func (c *Client) lockEmitter() bool {
+	c.recEmitMutex.Lock()
+	defer c.recEmitMutex.Unlock()
 
-	if !m.isEmitting {
-		m.isEmitting = true
+	if !c.isEmitting {
+		c.isEmitting = true
 		return true
 	}
 
 	return false
 }
 
-func (m *Client) unlockEmitter() {
-	m.recEmitMutex.Lock()
-	defer m.recEmitMutex.Unlock()
+func (c *Client) unlockEmitter() {
+	c.recEmitMutex.Lock()
+	defer c.recEmitMutex.Unlock()
 
-	m.isEmitting = false
+	c.isEmitting = false
 }
 
 // emitter holds the actually dispatching logic for the Emit method. See DefaultClient#Emit.
-func (m *Client) emitter() {
-	if !m.lockEmitter() {
-		logrus.Error("tried to start another websocket emitter go routine")
+func (c *Client) emitter() {
+	if !c.lockEmitter() {
+		c.Error("tried to start another websocket emitter go routine")
 		return
 	}
-	defer m.unlockEmitter()
+	defer c.unlockEmitter()
 
 	for {
 		var msg *clientPacket
 		var open bool
 
 		select {
-		case <-m.shutdown:
-			// m.connection got closed
-		case msg, open = <-m.emitChan:
+		case <-c.shutdown:
+			// c.connection got closed
+		case msg, open = <-c.emitChan:
 		}
 		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
 			// TODO: what if we get a connection error, how do we restart?
-			m.conn.Close()
+			err := c.conn.Close()
+			if err != nil {
+				c.Error(err.Error())
+			}
 			return
 		}
 
-		err := m.conn.WriteJSON(msg)
+		err := c.conn.WriteJSON(msg)
 		if err != nil {
-			// TODO-logging
-			fmt.Printf("could not send data to discord: %+v\n", msg)
+			c.Error(err.Error())
 		}
 	}
 }
 
-func (m *Client) lockReceiver() bool {
-	m.recEmitMutex.Lock()
-	defer m.recEmitMutex.Unlock()
+func (c *Client) lockReceiver() bool {
+	c.recEmitMutex.Lock()
+	defer c.recEmitMutex.Unlock()
 
-	if !m.isReceiving {
-		m.isReceiving = true
+	if !c.isReceiving {
+		c.isReceiving = true
 		return true
 	}
 
 	return false
 }
 
-func (m *Client) unlockReceiver() {
-	m.recEmitMutex.Lock()
-	defer m.recEmitMutex.Unlock()
+func (c *Client) unlockReceiver() {
+	c.recEmitMutex.Lock()
+	defer c.recEmitMutex.Unlock()
 
-	m.isReceiving = false
+	c.isReceiving = false
 }
 
-func (m *Client) receiver() {
-	if !m.lockReceiver() {
-		logrus.Error("tried to start another websocket receiver go routine")
+func (c *Client) receiver() {
+	if !c.lockReceiver() {
+		c.Error("tried to start another websocket receiver go routine")
 		return
 	}
-	defer m.unlockReceiver()
+	defer c.unlockReceiver()
 
 	for {
-		packet, err := m.conn.Read()
+		packet, err := c.conn.Read()
 		if err != nil {
-			logrus.Debug("closing readPump")
+			c.Debug("closing receiver")
 			return
 		}
 
@@ -425,7 +452,7 @@ func (m *Client) receiver() {
 		evt := &discordPacket{}
 		err = evt.UnmarshalJSON(packet)
 		if err != nil {
-			logrus.Error(err)
+			c.Error(err.Error())
 			continue
 		}
 
@@ -440,16 +467,16 @@ func (m *Client) receiver() {
 				"_" + strconv.FormatUint(uint64(evt.Op), 10) + evtStr + ".json"
 			err = ioutil.WriteFile(DiagnosePath_packets+"/"+filename, packet, 0644)
 			if err != nil {
-				logrus.WithField("ws-client", "writing packet to file").Error(err)
+				c.Error(err.Error())
 			}
 		}
 
 		// notify listeners
-		m.receiveChan <- evt
+		c.receiveChan <- evt
 
 		// check if application has closed
 		select {
-		case <-m.shutdown:
+		case <-c.shutdown:
 			return
 		default:
 		}
@@ -457,8 +484,8 @@ func (m *Client) receiver() {
 }
 
 // HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
-func (m *Client) HeartbeatLatency() (duration time.Duration, err error) {
-	duration = m.heartbeatLatency
+func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
+	duration = c.heartbeatLatency
 	if duration == 0 {
 		err = errors.New("latency not determined yet")
 	}
@@ -468,43 +495,43 @@ func (m *Client) HeartbeatLatency() (duration time.Duration, err error) {
 
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
 // will be discarded once the socket info is extracted from the event.
-func (m *Client) RegisterEvent(event string) {
-	m.trackedEvents.Add(event)
+func (c *Client) RegisterEvent(event string) {
+	c.trackedEvents.Add(event)
 }
 
 // RemoveEvent removes an event type from the registry. This will cause the event type to be discarded
 // by the socket layer.
-func (m *Client) RemoveEvent(event string) {
-	m.trackedEvents.Remove(event)
+func (c *Client) RemoveEvent(event string) {
+	c.trackedEvents.Remove(event)
 }
 
-func (m *Client) Start() {
-	go m.operationHandlers()
+func (c *Client) Start() {
+	go c.operationHandlers()
 }
 
-func (m *Client) Shutdown() (err error) {
-	m.Disconnect()
-	close(m.shutdown)
+func (c *Client) Shutdown() (err error) {
+	c.Disconnect()
+	close(c.shutdown)
 	return
 }
 
-func (m *Client) eventHandler(p *discordPacket) {
+func (c *Client) eventHandler(p *discordPacket) {
 	// discord events
 	// events that directly correlates to the socket layer, will be dealt with here. But still dispatched.
 
 	// increment the sequence number for each event to make sure everything is synced with discord
-	m.Lock()
-	m.sequenceNumber++
+	c.Lock()
+	c.sequenceNumber++
 
 	// validate the sequence numbers
-	if p.SequenceNumber != m.sequenceNumber {
-		logrus.Infof("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, m.sequenceNumber)
-		m.sequenceNumber--
-		m.Unlock()
-		go m.reconnect()
+	if p.SequenceNumber != c.sequenceNumber {
+		c.Info(fmt.Sprintf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber))
+		c.sequenceNumber--
+		c.Unlock()
+		go c.reconnect()
 		return
 	}
-	m.Unlock()
+	c.Unlock()
 
 	if p.EventName == event.Ready {
 
@@ -512,170 +539,173 @@ func (m *Client) eventHandler(p *discordPacket) {
 		ready := readyPacket{}
 		err := httd.Unmarshal(p.Data, &ready)
 		if err != nil {
-			logrus.Error(err)
+			c.Error(err.Error())
 		}
 
-		m.Lock()
-		m.sessionID = ready.SessionID
-		m.trace = ready.Trace
-		m.ReadyCounter++
-		m.Unlock()
+		c.Lock()
+		c.sessionID = ready.SessionID
+		c.trace = ready.Trace
+		c.ReadyCounter++
+		c.Unlock()
 	} else if p.EventName == event.Resume {
 		// eh? debugging.
 		// TODO
-	} else if p.Op == opcode.DiscordEvent && !m.eventOfInterest(p.EventName) {
+	} else if p.Op == opcode.DiscordEvent && !c.eventOfInterest(p.EventName) {
 		return
 	}
 
 	// dispatch event
-	m.eventChan <- &Event{
+	c.eventChan <- &Event{
 		Name: p.EventName,
 		Data: p.Data,
 	}
 } // end eventHandler()
 
-func (m *Client) eventOfInterest(name string) bool {
-	return m.trackedEvents.Exists(name)
+func (c *Client) eventOfInterest(name string) bool {
+	return c.trackedEvents.Exists(name)
 }
 
 // operation handler demultiplexer
-func (m *Client) operationHandlers() {
-	logrus.Debug("Ready to receive operation codes...")
+func (c *Client) operationHandlers() {
+	c.Debug("Ready to receive operation codes...")
 	for {
 		var p *discordPacket
 		var open bool
 		select {
-		case p, open = <-m.Receive():
+		case p, open = <-c.Receive():
 			if !open {
-				logrus.Debug("operationChan is dead..")
+				c.Debug("operationChan is dead..")
 				return
 			}
-		// case <-m.restart:
-		case <-m.shutdown:
-			logrus.Debug("exiting operation handler")
+		// case <-c.restart:
+		case <-c.shutdown:
+			c.Debug("exiting operation handler")
 			return
 		}
 
 		// new packet that must be handled by it's Discord operation code
 		switch p.Op {
 		case opcode.DiscordEvent:
-			m.eventHandler(p)
+			c.eventHandler(p)
 		case opcode.Reconnect:
-			logrus.Info("Discord requested a reconnect")
-			go m.reconnect()
+			c.Info("Discord requested a reconnect")
+			go c.reconnect()
 		case opcode.InvalidSession:
 			// invalid session. Must respond with a identify packet
-			logrus.Info("Discord invalidated session")
+			c.Info("Discord invalidated session")
 			go func() {
 				// session is invalidated, reset the sequence number
-				m.sequenceNumber = 0
+				c.sequenceNumber = 0
 
 				rand.Seed(time.Now().UnixNano())
 				delay := rand.Intn(4) + 1
-				delay *= m.timeoutMultiplier
+				delay *= c.timeoutMultiplier
 				randomDelay := time.Second * time.Duration(delay)
 				<-time.After(randomDelay)
-				err := sendIdentityPacket(m)
+				err := sendIdentityPacket(c)
 				if err != nil {
-					logrus.Error(err)
+					c.Error(err.Error())
 				}
 			}()
 		case opcode.Heartbeat:
 			// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-			_ = m.Emit(event.Heartbeat, m.sequenceNumber)
+			_ = c.Emit(event.Heartbeat, c.sequenceNumber)
 		case opcode.Hello:
 			// hello
 			helloPk := &helloPacket{}
 			err := httd.Unmarshal(p.Data, helloPk)
 			if err != nil {
-				logrus.Debug(err)
+				c.Debug(err.Error())
 			}
-			m.Lock()
-			m.heartbeatInterval = helloPk.HeartbeatInterval
-			m.Unlock()
+			c.Lock()
+			c.heartbeatInterval = helloPk.HeartbeatInterval
+			c.Unlock()
 
-			m.sendHelloPacket()
+			c.sendHelloPacket()
 		case opcode.HeartbeatAck:
 			// heartbeat received
-			m.Lock()
-			m.lastHeartbeatAck = time.Now()
-			m.Unlock()
+			c.Lock()
+			c.lastHeartbeatAck = time.Now()
+			c.Unlock()
 		default:
 			// unknown
-			logrus.Debugf("Unknown operation: %+v\n", p)
+			c.Debug(fmt.Sprintf("Unknown operation: %+v\n", p))
 		}
 	}
 }
 
-func (m *Client) sendHelloPacket() {
+func (c *Client) sendHelloPacket() {
 	// TODO, this might create several idle goroutines..
-	go m.pulsate()
+	go c.pulsate()
 
 	// if this is a new connection we can drop the resume packet
-	if m.sessionID == "" && m.sequenceNumber == 0 {
-		err := sendIdentityPacket(m)
+	if c.sessionID == "" && c.sequenceNumber == 0 {
+		err := sendIdentityPacket(c)
 		if err != nil {
-			logrus.Error(err)
+			c.Error(err.Error())
 		}
 		return
 	}
 
-	m.RLock()
-	token := m.conf.BotToken
-	session := m.sessionID
-	sequence := m.sequenceNumber
-	m.RUnlock()
+	c.RLock()
+	token := c.conf.BotToken
+	session := c.sessionID
+	sequence := c.sequenceNumber
+	c.RUnlock()
 
-	m.Emit(event.Resume, struct {
+	err := c.Emit(event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
 	}{token, session, sequence})
+	if err != nil {
+		c.Error(err.Error())
+	}
 }
 
 // AllowedToStartPulsating you must notify when you are done pulsating!
-func (m *Client) AllowedToStartPulsating(serviceID uint8) bool {
-	m.pulseMutex.Lock()
-	defer m.pulseMutex.Unlock()
+func (c *Client) AllowedToStartPulsating(serviceID uint8) bool {
+	c.pulseMutex.Lock()
+	defer c.pulseMutex.Unlock()
 
-	if m.pulsating == 0 {
-		m.pulsating = serviceID
+	if c.pulsating == 0 {
+		c.pulsating = serviceID
 	}
 
-	return m.pulsating == serviceID
+	return c.pulsating == serviceID
 }
 
 // StopPulsating stops sending heartbeats to Discord
-func (m *Client) StopPulsating(serviceID uint8) {
-	m.pulseMutex.Lock()
-	defer m.pulseMutex.Unlock()
+func (c *Client) StopPulsating(serviceID uint8) {
+	c.pulseMutex.Lock()
+	defer c.pulseMutex.Unlock()
 
-	if m.pulsating == serviceID {
-		m.pulsating = 0
+	if c.pulsating == serviceID {
+		c.pulsating = 0
 	}
 }
 
-func (m *Client) pulsate() {
+func (c *Client) pulsate() {
 	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
-	if !m.AllowedToStartPulsating(serviceID) {
+	if !c.AllowedToStartPulsating(serviceID) {
 		return
 	}
-	defer m.StopPulsating(serviceID)
+	defer c.StopPulsating(serviceID)
 
-	m.RLock()
-	ticker := time.NewTicker(time.Millisecond * time.Duration(m.heartbeatInterval))
-	m.RUnlock()
+	c.RLock()
+	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
+	c.RUnlock()
 	defer ticker.Stop()
 
 	var last time.Time
 	var snr uint
 	for {
-		m.RLock()
-		last = m.lastHeartbeatAck
-		snr = m.sequenceNumber
-		m.RUnlock()
+		c.RLock()
+		last = c.lastHeartbeatAck
+		snr = c.sequenceNumber
+		c.RUnlock()
 
-		m.Emit(event.Heartbeat, snr)
+		c.Emit(event.Heartbeat, snr)
 
 		stopChan := make(chan interface{})
 
@@ -687,33 +717,36 @@ func (m *Client) pulsate() {
 			case <-time.After(3 * time.Second): // deadline for Discord to respond
 			}
 
-			m.RLock()
-			receivedHeartbeatAck := m.lastHeartbeatAck.After(last)
-			m.RUnlock()
+			c.RLock()
+			receivedHeartbeatAck := c.lastHeartbeatAck.After(last)
+			c.RUnlock()
 
 			if !receivedHeartbeatAck {
-				logrus.Info("heartbeat ACK was not received, forcing reconnect")
-				m.reconnect()
+				c.Info("heartbeat ACK was not received, forcing reconnect")
+				err := c.reconnect()
+				if err != nil {
+					c.Error(err.Error())
+				}
 			} else {
 				// update "latency"
-				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
+				c.heartbeatLatency = c.lastHeartbeatAck.Sub(sent)
 			}
-		}(m, last, time.Now(), stopChan)
+		}(c, last, time.Now(), stopChan)
 
 		select {
 		case <-ticker.C:
 			continue
-		case <-m.shutdown:
-		case <-m.restart:
+		case <-c.shutdown:
+		case <-c.restart:
 		}
 
-		logrus.Debug("Stopping pulse")
+		c.Debug("Stopping pulse")
 		close(stopChan)
 		return
 	}
 }
 
-func sendIdentityPacket(m *Client) (err error) {
+func sendIdentityPacket(c *Client) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
 	identityPayload := struct {
 		Token          string      `json:"token"`
@@ -723,14 +756,14 @@ func sendIdentityPacket(m *Client) (err error) {
 		Shard          *[2]uint    `json:"shard,omitempty"`
 		Presence       interface{} `json:"presence,omitempty"`
 	}{
-		Token: m.conf.BotToken,
+		Token: c.conf.BotToken,
 		Properties: struct {
 			OS      string `json:"$os"`
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
-		}{runtime.GOOS, m.conf.Browser, m.conf.Device},
-		LargeThreshold: m.conf.GuildLargeThreshold,
-		Shard:          &[2]uint{m.ShardID, m.conf.ShardCount},
+		}{runtime.GOOS, c.conf.Browser, c.conf.Device},
+		LargeThreshold: c.conf.GuildLargeThreshold,
+		Shard:          &[2]uint{c.ShardID, c.conf.ShardCount},
 		// Presence: struct {
 		// 	Since  *uint       `json:"since"`
 		// 	Game   interface{} `json:"game"`
@@ -739,6 +772,6 @@ func sendIdentityPacket(m *Client) (err error) {
 		// }{Status: "online"},
 	}
 
-	err = m.Emit(event.Identify, &identityPayload)
+	err = c.Emit(event.Identify, &identityPayload)
 	return
 }

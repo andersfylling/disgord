@@ -28,13 +28,14 @@ type WSShardManagerConfig struct {
 	URL string
 }
 
-func NewShardManager(conf *WSShardManagerConfig) *WSShardManager {
-	if conf == nil {
+func NewShardManager(conf *Config) *WSShardManager {
+	if conf == nil || conf.WSShardManagerConfig == nil {
 		panic("missing shard config")
 	}
 
 	return &WSShardManager{
-		conf:       conf,
+		conf:       conf.WSShardManagerConfig,
+		log:        conf.Logger,
 		TrackEvent: &websocket.UniqueStringSlice{},
 	}
 }
@@ -49,6 +50,7 @@ type WSShardManager struct {
 	TrackEvent *websocket.UniqueStringSlice
 
 	prepared bool
+	log      Logger
 }
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
@@ -208,6 +210,7 @@ func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, trackEven
 		Endpoint:      conf.WSShardManagerConfig.URL,
 		EventChan:     evtChan,
 		TrackedEvents: trackEvents,
+		Logger:        conf.Logger,
 
 		// user settings
 		BotToken:   conf.BotToken,

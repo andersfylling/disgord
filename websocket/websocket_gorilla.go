@@ -62,7 +62,7 @@ func (g *gorilla) Close() (err error) {
 	if err == nil && err2 != nil {
 		return err2
 	}
-	return
+	return err
 }
 
 func (g *gorilla) Read() (packet []byte, err error) {

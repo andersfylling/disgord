@@ -18,7 +18,6 @@ import (
 
 	"github.com/andersfylling/disgord/event"
 	"github.com/andersfylling/disgord/httd"
-	"github.com/sirupsen/logrus"
 )
 
 // NewRESTClient creates a client for sending and handling Discord protocols such as rate limiting
@@ -56,7 +55,7 @@ func NewClient(conf *Config) (*Client, error) {
 	if conf.WSShardManagerConfig == nil {
 		conf.WSShardManagerConfig = &WSShardManagerConfig{}
 	}
-	sharding := NewShardManager(conf.WSShardManagerConfig)
+	sharding := NewShardManager(conf)
 
 	// caching
 	// TODO: should not pre-set the cache sizes as some guilds might be small while others huge.
@@ -117,6 +116,7 @@ func NewClient(conf *Config) (*Client, error) {
 		evtDispatch:  evtDispatcher,
 		req:          reqClient,
 		cache:        cacher,
+		log:          conf.Logger,
 	}
 
 	return c, nil
@@ -140,7 +140,8 @@ type Config struct {
 	//LoadAllRoles     bool
 	//LoadAllPresences bool
 
-	Debug bool
+	// Deprecated
+	// Debug bool
 
 	// your project name, name of bot, or application
 	ProjectName string
@@ -151,7 +152,9 @@ type Config struct {
 	// should not experience any performance penalty (even though it might be unnoticeable).
 	ActivateEventChannels bool
 
-	//Logger logger.Logrus
+	// Logger is a dependency that must be injected to support logging.
+	// disgord.DefaultLogger() can be used
+	Logger Logger
 }
 
 // Client is the main disgord client to hold your state and data
@@ -179,6 +182,8 @@ type Client struct {
 	shardManager *WSShardManager
 
 	cache *Cache
+
+	log Logger
 }
 
 var _ Session = (*Client)(nil)
@@ -221,21 +226,39 @@ func (c *Client) GetConnectedGuilds() []snowflake.ID {
 	return guilds
 }
 
+// Deprecated
 func (c *Client) logInfo(msg string) {
-	logrus.WithFields(logrus.Fields{
-		"lib": LibraryInfo(),
-	}).Info(msg)
+	c.Info(msg)
 }
 
+// Deprecated
 func (c *Client) logErr(msg string) {
-	logrus.WithFields(logrus.Fields{
-		"lib": LibraryInfo(),
-	}).Error(msg)
+	c.Error(msg)
 }
+
+func (c *Client) Info(msg string) {
+	if c.log != nil {
+		c.log.Info(msg)
+	}
+}
+func (c *Client) Debug(msg string) {
+	if c.log != nil {
+		c.log.Debug(msg)
+	}
+}
+func (c *Client) Error(msg string) {
+	if c.log != nil {
+		c.log.Error(msg)
+	}
+}
+
+var _ Logger = (*Client)(nil)
 
 func (c *Client) String() string {
 	return LibraryInfo()
 }
+
+var _ fmt.Stringer = (*Client)(nil)
 
 // RateLimiter return the rate limiter object
 func (c *Client) RateLimiter() httd.RateLimiter {
@@ -298,6 +321,8 @@ func (c *Client) Disconnect() (err error) {
 
 	return nil
 }
+
+var _ Link = (*Client)(nil)
 
 // DisconnectOnInterrupt wait until a termination signal is detected
 func (c *Client) DisconnectOnInterrupt() (err error) {
@@ -1126,7 +1151,7 @@ func (c *Client) eventHandler() {
 
 		err = unmarshal(evt.Data, box)
 		if err != nil {
-			logrus.Error(err)
+			c.Error(err.Error())
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}

@@ -31,6 +31,9 @@ When using sharding, you are in charge of rate limiting how often your shards co
 
 The develop branch is under continuous breaking changes, so please use releases or be prepared to have a breaking codebase. A release branch will be introduced later when DisGord gets close to its v1.0.0 release.
 
+## Logging
+DisGord allows you to inject your own logger, use the default one for DisGord (Zap), do not use any logging at all, you decide. To inject your own logger you must comply with the interface `disgord.Logger` (see logging.go).
+
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
@@ -55,7 +58,7 @@ github.com/andersfylling/disgord
 └──github.com/andersfylling/snowflake  :The snowflake ID designed for Discord
 └──github.com/json-iterator/go         :For faster JSON decoding/encoding
 └──github.com/sergi/go-diff            :Unit testing for checking JSON encoding/decoding of structs
-└──github.com/sirupsen/logrus          :Logging (will be replaced with a simplified interface for DI)
+└──github.com/uber-go/zap              :Logging (optional)
 ```
 
 ### Build constraints
@@ -90,14 +93,16 @@ So if you haven't used modules before and you just want to create a Bot using Di
     import "fmt"
 
     func main() {
-        session, err := disgord.NewSession(&disgord.Config{
-            Token: "DISGORD_TOKEN",
+        session, err := disgord.NewClient(&disgord.Config{
+            BotToken: "DISGORD_TOKEN",
+            Logger: disgord.DefaultLogger(false), // optional logging
         })
         if err != nil {
             panic(err)
         }
 
-        myself, err := session.GetCurrentUser().Execute() // after v0.8
+        // note that the .Execute() is not on every REST method of DisGord (yet?)
+        myself, err := session.GetCurrentUser().Execute()
         if err != nil {
             panic(err)
         }

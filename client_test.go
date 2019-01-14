@@ -165,6 +165,24 @@ func TestClient_System(t *testing.T) {
 		t.Error(err)
 	}
 
+	//wg := sync.WaitGroup{}
+	//wg.Add(1)
+	//c.On(event.GuildMembersChunk, func(s Session, evt *GuildMembersChunk) {
+	//	var msg string
+	//	for i := range evt.Members {
+	//		if evt.Members[i].User == nil {
+	//			msg = fmt.Sprintf("expected user in member to not be nil. Got %+v", evt.Members[i])
+	//			break
+	//		}
+	//	}
+	//
+	//	if msg != "" {
+	//		t.Error(msg)
+	//	}
+	//	wg.Done()
+	//})
+	//wg.Wait()
+
 	// cleanup
 	close(c.evtDispatch.shutdown)
 	close(c.shutdownChan)
