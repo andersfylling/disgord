@@ -125,14 +125,10 @@ func newCache(conf *CacheConfig) (*Cache, error) {
 
 func DefaultCacheConfig() *CacheConfig {
 	return &CacheConfig{
-		UserCacheAlgorithm:  CacheAlgLFU,
-		UserCacheMaxEntries: 1000,
-
+		UserCacheAlgorithm:       CacheAlgLFU,
 		VoiceStateCacheAlgorithm: CacheAlgLFU,
-
-		ChannelCacheAlgorithm: CacheAlgLFU,
-
-		GuildCacheAlgorithm: CacheAlgLFU,
+		ChannelCacheAlgorithm:    CacheAlgLFU,
+		GuildCacheAlgorithm:      CacheAlgLFU,
 	}
 }
 
