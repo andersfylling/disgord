@@ -55,10 +55,10 @@ func (g *gorilla) WriteJSON(v interface{}) (err error) {
 }
 
 func (g *gorilla) Close() (err error) {
-	err = g.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))	
+	err = g.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	err2 := g.c.Close()
 	g.c = nil
- 	if err == nil && err2 != nil {
+	if err == nil && err2 != nil {
 		return err2
 	}
 	return
