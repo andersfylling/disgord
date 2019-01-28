@@ -62,9 +62,9 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 // response on success. The maximum request size when sending a message is 8MB.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages TODO: I have no idea what the key is
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
-//  Reviewed                2018-06-07
+//  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
 	if channelID.Empty() {
@@ -91,7 +91,7 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 	}
 
 	_, body, err := client.Put(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID),
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
 		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 	})
 	if err != nil {
@@ -107,9 +107,9 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 // Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea what the key is
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
-//  Reviewed                2018-06-07
+//  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
@@ -135,7 +135,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
 		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 	})
 	if err != nil {
@@ -153,9 +153,9 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 // to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
-//  Reviewed                2018-06-07
+//  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
@@ -181,7 +181,7 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
 		Endpoint:    endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
 	})
 	if err != nil {
@@ -227,9 +227,9 @@ func (params *GetReactionURLParams) GetQueryString() string {
 // GetReaction [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages TODO: I have no idea if this is the correct key
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
-//  Reviewed                2018-06-07
+//  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
 	if channelID.Empty() {
@@ -260,7 +260,7 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	}
 
 	_, body, err := client.Get(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID),
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:    endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
 	})
 	if err != nil {
@@ -276,9 +276,9 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 // permission to be present on the current user.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: I have no idea if this is the correct key
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
-//  Reviewed                2018-06-07
+//  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (err error) {
 	if channelID.Empty() {
@@ -289,7 +289,7 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
+		Ratelimiter: ratelimitChannelMessagesDelete(channelID) + "/reactions",
 		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
 	})
 	if err != nil {
