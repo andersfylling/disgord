@@ -186,6 +186,7 @@ type SocketHandler interface {
 
 	// event handlers
 	On(event string, handler ...interface{})
+	Once(event string, handler ...interface{})
 	Emit(command SocketCommand, dataPointer interface{}) error
 	//Use(middleware ...interface{}) // TODO: is this useful?
 
