@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
@@ -988,6 +989,13 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 // ------------------------------------------
 // Reaction
 
+func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
+	if d.Seconds() == 1 {
+		d = time.Duration(250) * time.Millisecond
+	}
+	return d
+}
+
 // CreateReaction [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 // permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
@@ -1023,8 +1031,9 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 	}
 
 	_, body, err := client.Put(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
-		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
 		return
@@ -1067,8 +1076,9 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
-		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
 		return
@@ -1113,8 +1123,9 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions/@me",
-		Endpoint:    endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+		Endpoint:          endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
+		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
 		return
@@ -1192,8 +1203,9 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	}
 
 	_, body, err := client.Get(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
-		Endpoint:    endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:          endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
+		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
 		return
@@ -1221,8 +1233,9 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter: ratelimitChannelMessagesDelete(channelID) + "/reactions",
-		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
+		Ratelimiter:       ratelimitChannelMessagesDelete(channelID) + "/reactions",
+		Endpoint:          endpoint.ChannelMessageReactions(channelID, messageID),
+		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
 		return
