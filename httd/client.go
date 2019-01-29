@@ -247,9 +247,6 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 // Client.Timeout value.
 func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 	deadtime := c.RateLimiter().WaitTime(r)
-	if r.RateLimitAdjuster != nil {
-		deadtime = r.RateLimitAdjuster(deadtime)
-	}
 	if deadtime.Nanoseconds() > 0 {
 		if c.cancelRequestWhenRateLimited {
 			err = errors.New("rate limited")
