@@ -195,13 +195,17 @@ type Details struct {
 	SuccessHTTPCode int
 }
 
+// RateLimitAdjuster acts as a middleware when receiving ratelimits from Discord.
+type RateLimitAdjuster func(timeout time.Duration) time.Duration
+
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
-	Method      string
-	Ratelimiter string
-	Endpoint    string
-	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
-	ContentType string
+	Method            string
+	Ratelimiter       string
+	RateLimitAdjuster RateLimitAdjuster
+	Endpoint          string
+	Body              interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
+	ContentType       string
 }
 
 func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {
@@ -243,6 +247,9 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 // Client.Timeout value.
 func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
 	deadtime := c.RateLimiter().WaitTime(r)
+	if r.RateLimitAdjuster != nil {
+		deadtime = r.RateLimitAdjuster(deadtime)
+	}
 	if deadtime.Nanoseconds() > 0 {
 		if c.cancelRequestWhenRateLimited {
 			err = errors.New("rate limited")
@@ -304,7 +311,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	body, err = c.decodeResponseBody(resp)
 
 	// update rate limits
-	c.RateLimiter().UpdateRegisters(r.Ratelimiter, resp, body)
+	c.RateLimiter().UpdateRegisters(r.Ratelimiter, r.RateLimitAdjuster, resp, body)
 
 	// check if request was successful
 	noDiff := resp.StatusCode == http.StatusNotModified

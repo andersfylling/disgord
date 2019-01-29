@@ -23,7 +23,7 @@ type RateLimiter interface {
 	Bucket(key string) *Bucket
 	RateLimitTimeout(key string) int64
 	RateLimited(key string) bool
-	UpdateRegisters(key string, res *http.Response, responseBody []byte)
+	UpdateRegisters(key string, adjuster RateLimitAdjuster, res *http.Response, responseBody []byte)
 	WaitTime(req *Request) time.Duration
 }
 
@@ -234,9 +234,19 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	return time.Duration(timeout) * time.Millisecond
 }
 
+func adjustReset(reset int64, adjuster RateLimitAdjuster) (newReset int64) {
+	if adjuster != nil {
+		d := time.Duration(reset) * time.Millisecond
+		d = adjuster(d)
+		reset = d.Nanoseconds() / int64(time.Millisecond)
+	}
+
+	return reset
+}
+
 // UpdateRegisters updates the relevant buckets and time desync between the
 // client and the Discord servers.
-func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []byte) {
+func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp *http.Response, content []byte) {
 	// update time difference
 	if discordTime, err := HeaderToTime(&resp.Header); err == nil {
 		r.TimeDiff.Update(time.Now(), discordTime)
@@ -255,6 +265,12 @@ func (r *RateLimit) UpdateRegisters(key string, resp *http.Response, content []b
 		bucket = r.global
 	} else {
 		bucket = r.Bucket(key)
+	}
+
+	// adjust rate limit if desired (however, respect global rate limits)
+	// In DisGord the Reset value is in milliseconds, not seconds.
+	if !info.Global {
+		info.Reset = adjustReset(info.Reset, adjuster)
 	}
 
 	// update
