@@ -990,8 +990,8 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 // Reaction
 
 func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
-	if d.Seconds() == 1 {
-		d = time.Duration(250) * time.Millisecond
+	if d.Seconds() <= 2 { // the time diff is not accurate at all.. might be 1s or 2s.
+		d = time.Duration(250) * time.Millisecond // 1/250ms
 	}
 	return d
 }
@@ -1002,11 +1002,11 @@ func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
 // response on success. The maximum request size when sending a message is 8MB.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
-//  Reviewed                2019-01-28
+//  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
+func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -1021,8 +1021,8 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 	}
 
 	emojiCode := ""
-	if _, ok := emoji.(*Emoji); ok {
-		emojiCode = emoji.(*Emoji).ID.String()
+	if e, ok := emoji.(*Emoji); ok {
+		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
 	} else {
@@ -1030,17 +1030,11 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 		return
 	}
 
-	_, body, err := client.Put(&httd.Request{
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+	_, _, err = client.Put(&httd.Request{
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
-	if err != nil {
-		return
-	}
-
-	ret = &Reaction{}
-	err = unmarshal(body, ret)
 	return
 }
 
@@ -1048,7 +1042,7 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 // Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -1067,8 +1061,8 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	}
 
 	emojiCode := ""
-	if _, ok := emoji.(*Emoji); ok {
-		emojiCode = emoji.(*Emoji).ID.String()
+	if e, ok := emoji.(*Emoji); ok {
+		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
 	} else {
@@ -1076,7 +1070,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
@@ -1095,7 +1089,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 // to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions/@me
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages/reactions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -1114,8 +1108,8 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 	}
 
 	emojiCode := ""
-	if _, ok := emoji.(*Emoji); ok {
-		emojiCode = emoji.(*Emoji).ID.String()
+	if e, ok := emoji.(*Emoji); ok {
+		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
 	} else {
@@ -1123,7 +1117,7 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions/@me",
+		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
@@ -1189,8 +1183,8 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	}
 
 	emojiCode := ""
-	if _, ok := emoji.(*Emoji); ok {
-		emojiCode = emoji.(*Emoji).ID.String()
+	if e, ok := emoji.(*Emoji); ok {
+		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
 	} else {
@@ -1233,9 +1227,8 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 	}
 
 	resp, _, err := client.Delete(&httd.Request{
-		Ratelimiter:       ratelimitChannelMessagesDelete(channelID) + "/reactions",
-		Endpoint:          endpoint.ChannelMessageReactions(channelID, messageID),
-		RateLimitAdjuster: reactionEndpointRLAdjuster,
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
 	})
 	if err != nil {
 		return

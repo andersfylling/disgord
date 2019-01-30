@@ -269,8 +269,11 @@ func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp
 
 	// adjust rate limit if desired (however, respect global rate limits)
 	// In DisGord the Reset value is in milliseconds, not seconds.
-	if !info.Global {
-		info.Reset = adjustReset(info.Reset, adjuster)
+	if !info.Global && info.Reset > 0 && adjuster != nil {
+		now := int64(r.TimeDiff.Now().UnixNano()) / int64(time.Millisecond)
+		d := info.Reset - now
+		d = adjustReset(d, adjuster)
+		info.Reset = now + d
 	}
 
 	// update
