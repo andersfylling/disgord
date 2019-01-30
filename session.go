@@ -129,7 +129,7 @@ type ChannelRESTer interface {
 	EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error)
 	DeleteMessage(channelID, msgID Snowflake) (err error)
 	BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error)
-	CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error)
+	CreateReaction(channelID, messageID Snowflake, emoji interface{}) (err error)
 	DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error)
 	DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error)
 	GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error)

@@ -558,8 +558,8 @@ func (c *Client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessages
 }
 
 // CreateReaction .
-func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (ret *Reaction, err error) {
-	ret, err = CreateReaction(c.req, channelID, messageID, emoji)
+func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
+	err = CreateReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
