@@ -1,21 +1,5 @@
 package opcode
 
-// operation codes sent by Discord over the socket connection
-const (
-	DiscordEvent uint = iota
-	Heartbeat
-	Identify
-	StatusUpdate
-	VoiceStateUpdate
-	VoiceServerPing
-	Resume
-	Reconnect
-	RequestGuildMembers
-	InvalidSession
-	Hello
-	HeartbeatAck
-)
-
 // custom op codes used by Disgord internally
 const (
 	Shutdown uint = 100

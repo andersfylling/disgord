@@ -108,36 +108,39 @@ func TestManager_reconnect(t *testing.T) {
 	eChan := make(chan *Event)
 	aChan := make(A)
 	m := &Client{
-		conf: &Config{
-			// identity
-			Browser:             "disgord",
-			Device:              "disgord",
-			GuildLargeThreshold: 250,
-
-			// lib specific
-			Version:       constant.DiscordVersion,
-			Encoding:      constant.JSONEncoding,
-			ChannelBuffer: 3,
-			Endpoint:      "sfkjsdlfsf",
-			A:             aChan,
-
-			// user settings
-			BotToken: "sifhsdoifhsdifhsdf",
-			HTTPClient: &http.Client{
-				Timeout: time.Second * 10,
-			},
-		},
 		trackedEvents: &UniqueStringSlice{},
-		shutdown:      make(chan interface{}),
-		restart:       make(chan interface{}),
 		eventChan:     eChan,
-		receiveChan:   make(chan *discordPacket),
-		emitChan:      make(chan *clientPacket),
-		conn:          conn,
-		disconnected:  true,
-		ratelimit:     newRatelimiter(),
-		a:             aChan,
+		baseClient: &baseClient{
+			conf: &Config{
+				// identity
+				Browser:             "disgord",
+				Device:              "disgord",
+				GuildLargeThreshold: 250,
+
+				// lib specific
+				Version:       constant.DiscordVersion,
+				Encoding:      constant.JSONEncoding,
+				ChannelBuffer: 3,
+				Endpoint:      "sfkjsdlfsf",
+				A:             aChan,
+
+				// user settings
+				BotToken: "sifhsdoifhsdifhsdf",
+				HTTPClient: &http.Client{
+					Timeout: time.Second * 10,
+				},
+			},
+			shutdown:     make(chan interface{}),
+			restart:      make(chan interface{}),
+			receiveChan:  make(chan *discordPacket),
+			emitChan:     make(chan *clientPacket),
+			conn:         conn,
+			disconnected: true,
+			ratelimit:    newRatelimiter(),
+			a:            aChan,
+		},
 	}
+	m.connectPermit = m.baseClient
 	seq := uint(1)
 
 	shutdown := make(chan interface{})

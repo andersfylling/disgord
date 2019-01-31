@@ -1,4 +1,4 @@
-// +build !removeDiscordMutex
+// +build !disgord_removeDiscordMutex
 
 package disgord
 

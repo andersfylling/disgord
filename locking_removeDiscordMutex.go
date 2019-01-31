@@ -1,9 +1,9 @@
-// +build removeDiscordMutex
+// +build disgord_removeDiscordMutex
 
 package disgord
 
 // Lockable is removed on compile time since it holds no content. This allows the removal of mutexes if desired by the
-// developer. Might improve memory usage for larger bots.
+// developer.
 type Lockable struct{}
 
 func (l *Lockable) RLock()   {}
