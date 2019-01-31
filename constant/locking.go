@@ -1,4 +1,4 @@
-// +build !parallelism
+// +build !disgord_parallelism
 
 package constant
 

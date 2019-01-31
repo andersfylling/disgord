@@ -2,8 +2,6 @@ package websocket
 
 import (
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 type Conn interface {
@@ -46,36 +44,6 @@ type B chan *K
 type K struct {
 	Release B
 	Key     interface{}
-}
-
-func requestConnectPermission(c *Client) error {
-	c.Debug("trying to get connect permission")
-	b := make(B)
-	defer close(b)
-	c.a <- b
-	c.Info("waiting")
-	var ok bool
-	select {
-	case c.K, ok = <-b:
-		if !ok || c.K == nil {
-			c.Debug("unable to get connect permission")
-			return errors.New("channel closed or K was nil")
-		}
-		c.Debug("got connect permission")
-	case <-c.shutdown:
-	}
-
-	return nil
-}
-
-func releaseConnectPermission(c *Client) error {
-	if c.K == nil {
-		return errors.New("K has not been granted yet")
-	}
-
-	c.K.Release <- c.K
-	c.K = nil
-	return nil
 }
 
 // diagnosing

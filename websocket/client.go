@@ -6,14 +6,11 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
-	"strconv"
-	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
 
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
@@ -26,11 +23,6 @@ const (
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
 func NewClient(config *Config, shardID uint) (client *Client, err error) {
-	ws, err := newConn(config.HTTPClient)
-	if err != nil {
-		return nil, err
-	}
-
 	if config.TrackedEvents == nil {
 		config.TrackedEvents = &UniqueStringSlice{}
 	}
@@ -43,20 +35,12 @@ func NewClient(config *Config, shardID uint) (client *Client, err error) {
 	}
 
 	client = &Client{
-		conf:              config,
-		ShardID:           shardID,
-		trackedEvents:     config.TrackedEvents,
-		shutdown:          make(chan interface{}),
-		restart:           make(chan interface{}),
-		eventChan:         eChan,
-		receiveChan:       make(chan *discordPacket),
-		emitChan:          make(chan *clientPacket),
-		conn:              ws,
-		ratelimit:         newRatelimiter(),
-		timeoutMultiplier: 1,
-		disconnected:      true,
-		log:               config.Logger,
-		a:                 config.A,
+		trackedEvents: config.TrackedEvents,
+		eventChan:     eChan,
+	}
+	client.baseClient, err = newBaseClient(config, shardID)
+	if err != nil {
+		return nil, err
 	}
 	client.Start()
 
@@ -67,19 +51,8 @@ func NewTestClient(config *Config, shardID uint, conn Conn) (*Client, chan inter
 	s := make(chan interface{})
 
 	c := &Client{
-		conf:              config,
-		ShardID:           shardID,
-		trackedEvents:     config.TrackedEvents,
-		shutdown:          s,
-		restart:           make(chan interface{}),
-		eventChan:         make(chan *Event),
-		receiveChan:       make(chan *discordPacket),
-		emitChan:          make(chan *clientPacket),
-		conn:              conn,
-		ratelimit:         newRatelimiter(),
-		timeoutMultiplier: 1,
-		disconnected:      true,
-		log:               config.Logger,
+		trackedEvents: config.TrackedEvents,
+		eventChan:     make(chan *Event),
 	}
 	c.Start()
 	go c.receiver()
@@ -136,371 +109,22 @@ type Config struct {
 }
 
 type Client struct {
-	sync.RWMutex
-	conf         *Config
-	shutdown     chan interface{}
-	restart      chan interface{}
-	lastRestart  int64 //unix
-	restartMutex sync.Mutex
+	*baseClient
 	ReadyCounter uint
 
-	ShardID uint
+	eventChan        chan<- *Event
+	trackedEvents    *UniqueStringSlice
+	heartbeatLatency time.Duration
 
-	eventChan     chan<- *Event
-	trackedEvents *UniqueStringSlice
-
-	heartbeatInterval uint
-	heartbeatLatency  time.Duration
-	lastHeartbeatAck  time.Time
-
-	sessionID      string
-	trace          []string
-	sequenceNumber uint
-
-	ratelimit ratelimiter
-
-	pulsating  uint8
-	pulseMutex sync.Mutex
-
-	receiveChan       chan *discordPacket
-	emitChan          chan *clientPacket
-	conn              Conn
-	disconnected      bool
-	haveConnectedOnce bool
-
-	isReconnecting bool
-
-	// is the go routine started
-	isReceiving  bool
-	isEmitting   bool
-	recEmitMutex sync.Mutex
-
-	// identify timeout on invalid session
-	timeoutMultiplier int
-
-	log constant.Logger
-
-	// choreographic programming to handle rate limit, reconnects, and connects
-	K *K
-	a A
-}
-
-func (c *Client) Info(msg string) {
-	if c.log != nil {
-		c.log.Info("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
-	}
-}
-func (c *Client) Debug(msg string) {
-	if c.log != nil {
-		c.log.Debug("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
-	}
-}
-func (c *Client) Error(msg string) {
-	if c.log != nil {
-		c.log.Error("[ws-client, shard:" + strconv.FormatUint(uint64(c.ShardID), 10) + "] " + msg)
-	}
+	sessionID string
+	trace     []string
 }
 
 var _ constant.Logger = (*Client)(nil)
 
 // Connect establishes a socket connection with the Discord API
 func (c *Client) Connect() (err error) {
-	c.Lock()
-	defer c.Unlock()
-
-	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
-	// certainty say if we are connected
-	if !c.disconnected {
-		err = errors.New("cannot connect while a connection already exist")
-		return
-	}
-
-	if c.conf.Endpoint == "" {
-		panic("missing websocket endpoint. Must be set before constructing the sockets")
-		//c.conf.Endpoint, err = getGatewayRoute(c.conf.HTTPClient, c.conf.Version)
-		//if err != nil {
-		//	return
-		//}
-	}
-
-	err = requestConnectPermission(c)
-	if err != nil {
-		return errors.New("unable to get permission to connect. Err: " + err.Error())
-	}
-
-	// establish ws connection
-	err = c.conn.Open(c.conf.Endpoint, nil)
-	if err != nil {
-		if !c.conn.Disconnected() {
-			c.conn.Close()
-		}
-		return err
-	}
-
-	// we can now interact with Discord
-	c.haveConnectedOnce = true
-	c.disconnected = false
-	go c.receiver()
-	go c.emitter()
-	return
-}
-
-// Disconnect disconnects the socket connection
-func (c *Client) Disconnect() (err error) {
-	c.Lock()
-	defer c.Unlock()
-	if c.conn.Disconnected() || !c.haveConnectedOnce {
-		c.disconnected = true
-		err = errors.New("already disconnected")
-		return
-	}
-
-	// use the emitter to dispatch the close message
-	err = c.conn.Close()
-	if err != nil {
-		c.Error(err.Error())
-	}
-	// c.Emit(event.Close, nil)
-	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
-	c.disconnected = true
-
-	// close connection
-	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
-
-	// wait for processes
-	<-time.After(time.Millisecond * 10)
-	return
-}
-
-func (c *Client) lockReconnect() bool {
-	c.restartMutex.Lock()
-	defer c.restartMutex.Unlock()
-
-	now := time.Now().UnixNano()
-	locked := (now - c.lastRestart) < (time.Second.Nanoseconds() / 2)
-
-	if !locked && !c.isReconnecting {
-		c.lastRestart = now
-		c.isReconnecting = true
-		return true
-	}
-
-	return false
-}
-
-func (c *Client) unlockReconnect() {
-	c.restartMutex.Lock()
-	defer c.restartMutex.Unlock()
-
-	c.isReconnecting = false
-}
-
-func (c *Client) reconnect() (err error) {
-	// make sure there aren't multiple reconnect processes running
-	if !c.lockReconnect() {
-		return
-	}
-	defer c.unlockReconnect()
-
-	c.Debug("is reconnecting")
-
-	c.restart <- 1
-	_ = c.Disconnect()
-
-	var try uint
-	var delay time.Duration = 3 // seconds
-	for {
-		c.Debug(fmt.Sprintf("Reconnect attempt #%d\n", try))
-		err = c.Connect()
-		if err == nil {
-			c.Info("successfully reconnected")
-			break
-		}
-
-		c.Info(fmt.Sprintf("reconnect failed, trying again in N seconds; N =  %d", uint(delay)))
-		c.Info(err.Error())
-
-		err = releaseConnectPermission(c)
-		if err != nil {
-			err = errors.New("unable to release connection permission. Err: " + err.Error())
-			c.Info(err.Error())
-		}
-
-		// wait N seconds
-		select {
-		case <-time.After(delay * time.Second):
-			delay += 4 + time.Duration(try*2)
-		case <-c.shutdown:
-			return
-		}
-
-		if uint(delay) > 5*60 {
-			delay = 60
-		}
-	}
-
-	return
-}
-
-// Emit emits a command, if supported, and its data to the Discord Socket API
-func (c *Client) Emit(command string, data interface{}) (err error) {
-	if !c.haveConnectedOnce {
-		return errors.New("race condition detected: you must connect to the socket API/Gateway before you can send gateway commands")
-	}
-
-	var op uint
-	switch command {
-	case event.Shutdown:
-		op = opcode.Shutdown
-	case event.Close:
-		op = opcode.Close
-	case event.Heartbeat:
-		op = opcode.Heartbeat
-	case event.Identify:
-		op = opcode.Identify
-	case event.Resume:
-		op = opcode.Resume
-	case cmd.RequestGuildMembers:
-		op = opcode.RequestGuildMembers
-	case cmd.UpdateVoiceState:
-		op = opcode.VoiceStateUpdate
-	case cmd.UpdateStatus:
-		op = opcode.StatusUpdate
-	default:
-		err = errors.New("unsupported command: " + command)
-		return
-	}
-
-	accepted := c.ratelimit.Request(command)
-	if !accepted {
-		return errors.New("rate limited")
-	}
-
-	c.emitChan <- &clientPacket{
-		Op:   op,
-		Data: data,
-	}
-	return
-}
-
-// Receive returns the channel for receiving Discord packets
-func (c *Client) Receive() <-chan *discordPacket {
-	return c.receiveChan
-}
-
-func (c *Client) lockEmitter() bool {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	if !c.isEmitting {
-		c.isEmitting = true
-		return true
-	}
-
-	return false
-}
-
-func (c *Client) unlockEmitter() {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	c.isEmitting = false
-}
-
-// emitter holds the actually dispatching logic for the Emit method. See DefaultClient#Emit.
-func (c *Client) emitter() {
-	if !c.lockEmitter() {
-		c.Error("tried to start another websocket emitter go routine")
-		return
-	}
-	defer c.unlockEmitter()
-
-	for {
-		var msg *clientPacket
-		var open bool
-
-		select {
-		case <-c.shutdown:
-			// c.connection got closed
-		case msg, open = <-c.emitChan:
-		}
-		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
-			// TODO: what if we get a connection error, how do we restart?
-			err := c.Disconnect()
-			if err != nil {
-				c.Error(err.Error())
-			}
-			c.Debug("closing emitter")
-			return
-		}
-		var err error
-
-		// save to file
-		// build tag: disgord_diagnosews
-		saveOutgoingPacket(c, msg)
-
-		err = c.conn.WriteJSON(msg)
-		if err != nil {
-			c.Error(err.Error())
-		}
-	}
-}
-
-func (c *Client) lockReceiver() bool {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	if !c.isReceiving {
-		c.isReceiving = true
-		return true
-	}
-
-	return false
-}
-
-func (c *Client) unlockReceiver() {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	c.isReceiving = false
-}
-
-func (c *Client) receiver() {
-	if !c.lockReceiver() {
-		c.Error("tried to start another websocket receiver go routine")
-		return
-	}
-	defer c.unlockReceiver()
-
-	for {
-		packet, err := c.conn.Read()
-		if err != nil {
-			c.Debug("closing receiver")
-			return
-		}
-
-		// parse to gateway payload object
-		evt := &discordPacket{}
-		err = evt.UnmarshalJSON(packet)
-		if err != nil {
-			c.Error(err.Error())
-			continue
-		}
-
-		// save to file
-		// build tag: disgord_diagnosews
-		saveIncomingPacker(c, evt, packet)
-
-		// notify listeners
-		c.receiveChan <- evt
-
-		// check if application has closed
-		select {
-		case <-c.shutdown:
-			return
-		default:
-		}
-	}
+	return c.connect()
 }
 
 // HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
@@ -643,7 +267,7 @@ func (c *Client) operationHandlers() {
 				c.Debug(err.Error())
 			}
 			c.Lock()
-			c.heartbeatInterval = helloPk.HeartbeatInterval
+			c.baseClient.heartbeatInterval = helloPk.HeartbeatInterval
 			c.Unlock()
 
 			c.sendHelloPacket()
@@ -687,93 +311,10 @@ func (c *Client) sendHelloPacket() {
 		c.Error(err.Error())
 	}
 
-	err = releaseConnectPermission(c)
+	err = c.connectPermit.releaseConnectPermit()
 	if err != nil {
 		err = errors.New("unable to release connection permission. Err: " + err.Error())
 		c.Error(err.Error())
-	}
-}
-
-// AllowedToStartPulsating you must notify when you are done pulsating!
-func (c *Client) AllowedToStartPulsating(serviceID uint8) bool {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == 0 {
-		c.pulsating = serviceID
-	}
-
-	return c.pulsating == serviceID
-}
-
-// StopPulsating stops sending heartbeats to Discord
-func (c *Client) StopPulsating(serviceID uint8) {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == serviceID {
-		c.pulsating = 0
-	}
-}
-
-func (c *Client) pulsate() {
-	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
-	if !c.AllowedToStartPulsating(serviceID) {
-		return
-	}
-	defer c.StopPulsating(serviceID)
-
-	c.RLock()
-	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
-	c.RUnlock()
-	defer ticker.Stop()
-
-	var last time.Time
-	var snr uint
-	for {
-		c.RLock()
-		last = c.lastHeartbeatAck
-		snr = c.sequenceNumber
-		c.RUnlock()
-
-		c.Emit(event.Heartbeat, snr)
-
-		stopChan := make(chan interface{})
-
-		// verify the heartbeat ACK
-		go func(m *Client, last time.Time, sent time.Time, cancel chan interface{}) {
-			select {
-			case <-cancel:
-				return
-			case <-time.After(3 * time.Second): // deadline for Discord to respond
-			}
-
-			c.RLock()
-			receivedHeartbeatAck := c.lastHeartbeatAck.After(last)
-			c.RUnlock()
-
-			if !receivedHeartbeatAck {
-				c.Info("heartbeat ACK was not received, forcing reconnect")
-				err := c.reconnect()
-				if err != nil {
-					c.Error(err.Error())
-				}
-			} else {
-				// update "latency"
-				c.heartbeatLatency = c.lastHeartbeatAck.Sub(sent)
-			}
-		}(c, last, time.Now(), stopChan)
-
-		select {
-		case <-ticker.C:
-			continue
-		case <-c.shutdown:
-		case <-c.restart:
-		}
-
-		c.Debug("Stopping pulse")
-		close(stopChan)
-		return
 	}
 }
 
@@ -808,7 +349,7 @@ func sendIdentityPacket(c *Client) (err error) {
 		return err
 	}
 
-	err = releaseConnectPermission(c)
+	err = c.connectPermit.releaseConnectPermit()
 	if err != nil {
 		err = errors.New("unable to release connection permission. Err: " + err.Error())
 	}

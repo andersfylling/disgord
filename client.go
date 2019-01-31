@@ -162,7 +162,7 @@ type Config struct {
 	Logger Logger
 }
 
-// Client is the main disgord client to hold your state and data
+// conClient is the main disgord client to hold your state and data
 type Client struct {
 	sync.RWMutex
 
