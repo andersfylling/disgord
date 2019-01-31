@@ -49,11 +49,16 @@ func NewClient(conf *Config) (*Client, error) {
 		conf.ProjectName = LibraryInfo()
 	}
 
+	conf.shutdownChan = make(chan interface{})
+
 	// request client
 	reqClient := NewRESTClient(conf)
 
 	if conf.WSShardManagerConfig == nil {
 		conf.WSShardManagerConfig = &WSShardManagerConfig{}
+	}
+	if conf.WSShardManagerConfig.ShardRateLimit == 0 {
+		conf.WSShardManagerConfig.ShardRateLimit = DefaultShardRateLimit
 	}
 	sharding := NewShardManager(conf)
 
@@ -108,7 +113,7 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// create a disgord client/instance/session
 	c := &Client{
-		shutdownChan: make(chan interface{}),
+		shutdownChan: conf.shutdownChan,
 		config:       conf,
 		shardManager: sharding,
 		httpClient:   conf.HTTPClient,
@@ -140,8 +145,8 @@ type Config struct {
 	//LoadAllRoles     bool
 	//LoadAllPresences bool
 
-	// Deprecated
-	// Debug bool
+	// for cancellation
+	shutdownChan chan interface{}
 
 	// your project name, name of bot, or application
 	ProjectName string

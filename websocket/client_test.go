@@ -106,6 +106,7 @@ func TestManager_reconnect(t *testing.T) {
 	}
 
 	eChan := make(chan *Event)
+	aChan := make(A)
 	m := &Client{
 		conf: &Config{
 			// identity
@@ -118,6 +119,7 @@ func TestManager_reconnect(t *testing.T) {
 			Encoding:      constant.JSONEncoding,
 			ChannelBuffer: 3,
 			Endpoint:      "sfkjsdlfsf",
+			A:             aChan,
 
 			// user settings
 			BotToken: "sifhsdoifhsdifhsdf",
@@ -134,6 +136,7 @@ func TestManager_reconnect(t *testing.T) {
 		conn:          conn,
 		disconnected:  true,
 		ratelimit:     newRatelimiter(),
+		a:             aChan,
 	}
 	seq := uint(1)
 
@@ -158,6 +161,27 @@ func TestManager_reconnect(t *testing.T) {
 		close(done)
 	}()
 
+	// mocked DisGord logic (shard manager and event handler)
+	go func() {
+		for {
+			select {
+			case <-eChan:
+				continue
+			case b, ok := <-aChan:
+				if !ok {
+					continue
+				}
+				<-time.After(10 * time.Millisecond)
+				releaser := make(B)
+				b <- &K{
+					Release: releaser,
+					Key:     412, // random
+				}
+				<-releaser
+			}
+		}
+	}()
+
 	// mocked websocket server.. ish
 	go func(seq *uint) {
 		for {
@@ -165,8 +189,6 @@ func TestManager_reconnect(t *testing.T) {
 			select {
 			case v := <-conn.writing:
 				data = v.(*clientPacket)
-			case <-eChan:
-				continue
 			case <-conn.opening:
 				wg[connecting].Done()
 				continue
@@ -231,7 +253,6 @@ func TestManager_reconnect(t *testing.T) {
 	wg[heartbeat].Add(1)
 	conn.reading <- []byte(`{"t":null,"s":null,"op":10,"d":{"heartbeat_interval":45000,"_trace":["discord-gateway-prd-1-99"]}}`)
 	wg[resume].Wait()
-	fmt.Println("a")
 	wg[heartbeat].Wait()
 
 	// during testing, most timeouts are 0, so we experience moments where not all
