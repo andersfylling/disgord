@@ -13,6 +13,8 @@ import (
 	"github.com/andersfylling/snowflake/v3"
 )
 
+const DefaultShardRateLimit float64 = 5.5 // seconds
+
 type WSShardManagerConfig struct {
 	// FirstID and ShardLimit creates the shard id range for this client.
 	// this can be useful if you have multiple clients and don't want to
@@ -24,6 +26,8 @@ type WSShardManagerConfig struct {
 	FirstID    uint
 	ShardLimit uint
 
+	ShardRateLimit float64
+
 	// URL is fetched from the gateway before initialising a connection
 	URL string
 }
@@ -34,9 +38,11 @@ func NewShardManager(conf *Config) *WSShardManager {
 	}
 
 	return &WSShardManager{
-		conf:       conf.WSShardManagerConfig,
-		log:        conf.Logger,
-		TrackEvent: &websocket.UniqueStringSlice{},
+		conf:              conf.WSShardManagerConfig,
+		log:               conf.Logger,
+		identifyRatelimit: 5,
+		shutdownChan:      conf.shutdownChan,
+		TrackEvent:        &websocket.UniqueStringSlice{},
 	}
 }
 
@@ -48,6 +54,13 @@ type WSShardManager struct {
 	shards     []*WSShard
 	conf       *WSShardManagerConfig
 	TrackEvent *websocket.UniqueStringSlice
+
+	identifyRatelimit float64 // seconds
+	previousIdentify  time.Time
+	idMutex           sync.RWMutex
+
+	conRequestChan websocket.A
+	shutdownChan   <-chan interface{}
 
 	prepared bool
 	log      Logger
@@ -76,10 +89,41 @@ func (s *WSShardManager) Prepare(conf *Config) error {
 	s.evtChan = make(chan *websocket.Event, 1+1+conf.WSShardManagerConfig.ShardLimit*2)
 	s.shards = make([]*WSShard, conf.WSShardManagerConfig.ShardLimit)
 
+	s.conRequestChan = make(websocket.A, conf.WSShardManagerConfig.ShardLimit+1)
+
+	// handle shards asking for permission to connect (rate limiting)
+	go func(a websocket.A) {
+		for {
+			select {
+			case <-s.shutdownChan:
+				return
+			case b, ok := <-a:
+				if !ok {
+					s.log.Error("b is closed")
+					continue
+				}
+
+				releaser := make(websocket.B)
+				b <- &websocket.K{
+					Release: releaser,
+					Key:     412, // random
+					// TODO: store shard info for better error handling and potential metrics
+				}
+				select {
+				case <-releaser:
+					// apply rate limit
+					<-time.After(time.Duration(s.conf.ShardRateLimit) * time.Second)
+				case <-s.shutdownChan:
+					return
+				}
+			}
+		}
+	}(s.conRequestChan)
+
 	var err error
 	for i := range s.shards {
 		s.shards[i] = &WSShard{}
-		err = s.shards[i].Prepare(conf, s.evtChan, s.TrackEvent, conf.WSShardManagerConfig.FirstID+uint(i))
+		err = s.shards[i].Prepare(conf, s.evtChan, s.conRequestChan, s.TrackEvent, conf.WSShardManagerConfig.FirstID+uint(i))
 		if err != nil {
 			break
 		}
@@ -129,16 +173,11 @@ func (s *WSShardManager) Connect() (err error) {
 		return errors.New("no shards exists")
 	}
 
-	if err = s.shards[0].Connect(); err != nil {
-		return err
-	}
-
-	for i := 1; i < len(s.shards); i++ {
-		// ratelimit: 1/5s
-		<-time.After(5 * time.Second)
+	for i := 0; i < len(s.shards); i++ {
 		err = s.shards[i].Connect()
 		if err != nil {
-			break
+			s.log.Error(err.Error())
+			// break
 		}
 	}
 
@@ -192,7 +231,7 @@ type WSShard struct {
 	guilds []snowflake.ID
 }
 
-func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, trackEvents *websocket.UniqueStringSlice, id uint) (err error) {
+func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, conRequestChan websocket.A, trackEvents *websocket.UniqueStringSlice, id uint) (err error) {
 	s.id = id
 	s.total = conf.WSShardManagerConfig.ShardLimit
 
@@ -211,6 +250,7 @@ func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, trackEven
 		EventChan:     evtChan,
 		TrackedEvents: trackEvents,
 		Logger:        conf.Logger,
+		A:             conRequestChan,
 
 		// user settings
 		BotToken:   conf.BotToken,

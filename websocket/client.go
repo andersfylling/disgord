@@ -3,7 +3,6 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -57,6 +56,7 @@ func NewClient(config *Config, shardID uint) (client *Client, err error) {
 		timeoutMultiplier: 1,
 		disconnected:      true,
 		log:               config.Logger,
+		a:                 config.A,
 	}
 	client.Start()
 
@@ -124,6 +124,8 @@ type Config struct {
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
 
+	A A
+
 	Logger constant.Logger
 
 	// for identify packets
@@ -177,6 +179,10 @@ type Client struct {
 	timeoutMultiplier int
 
 	log constant.Logger
+
+	// choreographic programming to handle rate limit, reconnects, and connects
+	K *K
+	a A
 }
 
 func (c *Client) Info(msg string) {
@@ -217,13 +223,18 @@ func (c *Client) Connect() (err error) {
 		//}
 	}
 
+	err = requestConnectPermission(c)
+	if err != nil {
+		return errors.New("unable to get permission to connect. Err: " + err.Error())
+	}
+
 	// establish ws connection
 	err = c.conn.Open(c.conf.Endpoint, nil)
 	if err != nil {
 		if !c.conn.Disconnected() {
 			c.conn.Close()
 		}
-		return
+		return err
 	}
 
 	// we can now interact with Discord
@@ -245,7 +256,12 @@ func (c *Client) Disconnect() (err error) {
 	}
 
 	// use the emitter to dispatch the close message
-	c.Emit(event.Close, nil)
+	err = c.conn.Close()
+	if err != nil {
+		c.Error(err.Error())
+	}
+	// c.Emit(event.Close, nil)
+	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.disconnected = true
 
 	// close connection
@@ -286,6 +302,8 @@ func (c *Client) reconnect() (err error) {
 	}
 	defer c.unlockReconnect()
 
+	c.Debug("is reconnecting")
+
 	c.restart <- 1
 	_ = c.Disconnect()
 
@@ -299,9 +317,16 @@ func (c *Client) reconnect() (err error) {
 			break
 		}
 
-		// wait N seconds
 		c.Info(fmt.Sprintf("reconnect failed, trying again in N seconds; N =  %d", uint(delay)))
 		c.Info(err.Error())
+
+		err = releaseConnectPermission(c)
+		if err != nil {
+			err = errors.New("unable to release connection permission. Err: " + err.Error())
+			c.Info(err.Error())
+		}
+
+		// wait N seconds
 		select {
 		case <-time.After(delay * time.Second):
 			delay += 4 + time.Duration(try*2)
@@ -401,14 +426,20 @@ func (c *Client) emitter() {
 		}
 		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
 			// TODO: what if we get a connection error, how do we restart?
-			err := c.conn.Close()
+			err := c.Disconnect()
 			if err != nil {
 				c.Error(err.Error())
 			}
+			c.Debug("closing emitter")
 			return
 		}
+		var err error
 
-		err := c.conn.WriteJSON(msg)
+		// save to file
+		// build tag: disgord_diagnosews
+		saveOutgoingPacket(c, msg)
+
+		err = c.conn.WriteJSON(msg)
 		if err != nil {
 			c.Error(err.Error())
 		}
@@ -458,18 +489,7 @@ func (c *Client) receiver() {
 
 		// save to file
 		// build tag: disgord_diagnosews
-		if SaveIncomingPackets {
-			evtStr := "_" + evt.EventName
-			if evtStr == "_" {
-				evtStr = ""
-			}
-			filename := strconv.FormatUint(uint64(evt.SequenceNumber), 10) +
-				"_" + strconv.FormatUint(uint64(evt.Op), 10) + evtStr + ".json"
-			err = ioutil.WriteFile(DiagnosePath_packets+"/"+filename, packet, 0644)
-			if err != nil {
-				c.Error(err.Error())
-			}
-		}
+		saveIncomingPacker(c, evt, packet)
 
 		// notify listeners
 		c.receiveChan <- evt
@@ -510,8 +530,8 @@ func (c *Client) Start() {
 }
 
 func (c *Client) Shutdown() (err error) {
-	c.Disconnect()
 	close(c.shutdown)
+	c.Disconnect()
 	return
 }
 
@@ -601,6 +621,11 @@ func (c *Client) operationHandlers() {
 				delay := rand.Intn(4) + 1
 				delay *= c.timeoutMultiplier
 				randomDelay := time.Second * time.Duration(delay)
+
+				// This ignores the identify rate limit of 1/5s, because of the documentation stating:
+				//  It's also possible that your client cannot reconnect in time to resume, in which case
+				//  the client will receive a Opcode 9 Invalid Session and is expected to wait a random
+				//  amount of time—between 1 and 5 seconds—then send a fresh Opcode 2 Identify.
 				<-time.After(randomDelay)
 				err := sendIdentityPacket(c)
 				if err != nil {
@@ -659,6 +684,12 @@ func (c *Client) sendHelloPacket() {
 		SequenceNr uint   `json:"seq"`
 	}{token, session, sequence})
 	if err != nil {
+		c.Error(err.Error())
+	}
+
+	err = releaseConnectPermission(c)
+	if err != nil {
+		err = errors.New("unable to release connection permission. Err: " + err.Error())
 		c.Error(err.Error())
 	}
 }
@@ -773,5 +804,14 @@ func sendIdentityPacket(c *Client) (err error) {
 	}
 
 	err = c.Emit(event.Identify, &identityPayload)
+	if err != nil {
+		return err
+	}
+
+	err = releaseConnectPermission(c)
+	if err != nil {
+		err = errors.New("unable to release connection permission. Err: " + err.Error())
+	}
+
 	return
 }
