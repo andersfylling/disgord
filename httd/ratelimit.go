@@ -25,6 +25,7 @@ type RateLimiter interface {
 	RateLimited(key string) bool
 	UpdateRegisters(key string, adjuster RateLimitAdjuster, res *http.Response, responseBody []byte)
 	WaitTime(req *Request) time.Duration
+	RequestPermit(key string) (timeout time.Duration, err error)
 }
 
 type ratelimitBody struct {
@@ -116,64 +117,18 @@ func HeaderToTime(header *http.Header) (t time.Time, err error) {
 	return
 }
 
-// NewDiscordTimeDiff constructor
-func NewDiscordTimeDiff() *DiscordTimeDiff {
-	return &DiscordTimeDiff{
-		Local:   time.Now(),
-		Discord: time.Now(),
-	}
-}
-
-// DiscordTimeDiff allows for synchronizing the timestamp found in http responses with out local timestamp to avoid
-// desyncs
-type DiscordTimeDiff struct {
-	sync.RWMutex
-	Local   time.Time
-	Discord time.Time
-	offset  time.Duration
-}
-
-// Update updates the current time difference on a new response
-func (d *DiscordTimeDiff) Update(now time.Time, discord time.Time) {
-	d.Lock()
-	defer d.Unlock()
-
-	d.Local = now
-	d.Discord = discord
-	d.calculateOffset()
-}
-
-func (d *DiscordTimeDiff) calculateOffset() {
-	if d.Local.After(d.Discord) {
-		d.offset = d.Local.Sub(d.Discord) * -1
-	} else {
-		d.offset = d.Discord.Sub(d.Local)
-	}
-}
-
-// Now calculates the current timestamp with the http response timestamp in mind
-func (d *DiscordTimeDiff) Now() (t time.Time) {
-	d.RLock()
-	defer d.RUnlock()
-
-	t = time.Now().Add(d.offset)
-	return
-}
-
 // NewRateLimit creates a new rate limit manager
 func NewRateLimit() *RateLimit {
 	return &RateLimit{
-		buckets:  make(map[string]*Bucket),
-		global:   &Bucket{},
-		TimeDiff: NewDiscordTimeDiff(),
+		buckets: make(map[string]*Bucket),
+		global:  &Bucket{},
 	}
 }
 
 // RateLimit ...
 type RateLimit struct {
-	buckets  map[string]*Bucket
-	global   *Bucket
-	TimeDiff *DiscordTimeDiff
+	buckets map[string]*Bucket
+	global  *Bucket
 
 	mu sync.RWMutex
 }
@@ -184,15 +139,24 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 	var bucket *Bucket
 	var exists bool
 
-	r.mu.Lock()
-	if bucket, exists = r.buckets[key]; !exists {
-		r.buckets[key] = &Bucket{
-			endpoint: key,
-			reset:    r.TimeDiff.Now().UnixNano() / int64(time.Millisecond),
+	r.mu.RLock()
+	bucket, exists = r.buckets[key]
+	r.mu.RUnlock()
+
+	if !exists {
+		r.mu.Lock()
+		if bucket, exists = r.buckets[key]; !exists {
+			r.buckets[key] = &Bucket{
+				endpoint:        key,
+				limit:           1,
+				remaining:       1,
+				shortestTimeout: int(time.Second.Nanoseconds() / int64(time.Millisecond)),
+				reset:           time.Now().UnixNano() / int64(time.Millisecond),
+			}
+			bucket = r.buckets[key]
 		}
-		bucket = r.buckets[key]
+		r.mu.Unlock()
 	}
-	r.mu.Unlock()
 
 	return bucket
 }
@@ -200,10 +164,11 @@ func (r *RateLimit) Bucket(key string) *Bucket {
 // RateLimitTimeout returns the time left before the rate limit for a given key
 // is reset. This takes the global rate limit into account.
 func (r *RateLimit) RateLimitTimeout(key string) int64 {
-	global := r.global.timeout(r.TimeDiff.Now())
+	now := time.Now()
+	global := r.global.timeout(now)
 
 	bucket := r.Bucket(key)
-	unique := bucket.timeout(r.TimeDiff.Now())
+	unique := bucket.timeout(now)
 
 	if global > unique {
 		return global
@@ -214,12 +179,13 @@ func (r *RateLimit) RateLimitTimeout(key string) int64 {
 // RateLimited checks if the given key is rate limited. This takes the global
 // rate limiter into account.
 func (r *RateLimit) RateLimited(key string) bool {
-	if r.global.limited(r.TimeDiff.Now()) {
+	now := time.Now()
+	if r.global.limited(now) {
 		return true
 	}
 
 	bucket := r.Bucket(key)
-	return bucket.limited(r.TimeDiff.Now())
+	return bucket.limited(now)
 }
 
 // WaitTime get's the remaining time before another request can be made.
@@ -234,22 +200,46 @@ func (r *RateLimit) WaitTime(req *Request) time.Duration {
 	return time.Duration(timeout) * time.Millisecond
 }
 
-func adjustReset(reset int64, adjuster RateLimitAdjuster) (newReset int64) {
-	if adjuster != nil {
-		d := time.Duration(reset) * time.Millisecond
-		d = adjuster(d)
-		reset = d.Nanoseconds() / int64(time.Millisecond)
+func (r *RateLimit) RequestPermit(key string) (timeout time.Duration, err error) {
+	now := time.Now()
+
+	r.global.mu.Lock()
+	if r.global._limited(now) {
+		// TODO: makes no sense to check limited first...
+		timeout, err = r.global._requestPermit(key, now)
+	}
+	r.global.mu.Unlock()
+	if err != nil || timeout > 0 {
+		return
 	}
 
-	return reset
+	bucket := r.Bucket(key)
+	bucket.mu.Lock()
+	timeout, err = bucket._requestPermit(key, now)
+	bucket.mu.Unlock()
+
+	return
+}
+
+func adjustReset(timeout int64, adjuster RateLimitAdjuster) (newTimeout int64) {
+	if adjuster != nil {
+		d := time.Duration(timeout) * time.Millisecond
+		d = adjuster(d)
+		timeout = d.Nanoseconds() / int64(time.Millisecond)
+	}
+
+	return timeout
 }
 
 // UpdateRegisters updates the relevant buckets and time desync between the
 // client and the Discord servers.
 func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp *http.Response, content []byte) {
+	now := time.Now()
 	// update time difference
-	if discordTime, err := HeaderToTime(&resp.Header); err == nil {
-		r.TimeDiff.Update(time.Now(), discordTime)
+	var discordTime time.Time
+	var err error
+	if discordTime, err = HeaderToTime(&resp.Header); err != nil {
+		discordTime = now
 	}
 
 	// update bucket
@@ -257,6 +247,17 @@ func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp
 	if err != nil {
 		return // TODO: logging
 	}
+
+	// adjust rate limit if desired (however, respect global rate limits)
+	// In DisGord the Reset value is in milliseconds, not seconds.
+	timeout := info.Reset - (int64(discordTime.UnixNano()) / int64(time.Millisecond))
+	if !info.Global && timeout > 0 && adjuster != nil {
+		timeout = adjustReset(timeout, adjuster)
+	}
+	if info.RetryAfter > 0 {
+		timeout = info.RetryAfter
+	}
+	info.Reset = (now.UnixNano() / int64(time.Millisecond)) + timeout
 
 	// select bucket
 	// TODO: what if "key" is an endpoint with a global rate limiter only?
@@ -267,18 +268,14 @@ func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp
 		bucket = r.Bucket(key)
 	}
 
-	// adjust rate limit if desired (however, respect global rate limits)
-	// In DisGord the Reset value is in milliseconds, not seconds.
-	if !info.Global && info.Reset > 0 && adjuster != nil {
-		now := int64(r.TimeDiff.Now().UnixNano()) / int64(time.Millisecond)
-		d := info.Reset - now
-		d = adjustReset(d, adjuster)
-		info.Reset = now + d
-	}
-
 	// update
 	bucket.mu.Lock()
-	bucket.update(info, r.TimeDiff.Now())
+	bucket.update(info, now)
+	if bucket.longestTimeout < int(timeout) {
+		bucket.longestTimeout = int(timeout)
+	} else {
+		bucket.shortestTimeout = int(timeout)
+	}
 	bucket.mu.Unlock()
 }
 
@@ -287,35 +284,34 @@ func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp
 // Bucket holds the rate limit info for a given key or endpoint
 type Bucket struct {
 	endpoint  string // endpoint where rate limit is applied. endpoint = key
-	limit     uint64 // total allowed requests before rate limit
-	remaining uint64 // remaining requests
+	limit     int    // total allowed requests before rate limit
+	remaining int    // remaining requests
 	reset     int64  // unix milliseconds, even tho discord prefers seconds. global uses milliseconds however.
+
+	// milliseconds
+	longestTimeout  int // store the longest timeout to simulate a reset correctly
+	shortestTimeout int
 
 	mu sync.RWMutex
 }
 
 func (b *Bucket) update(info *RateLimitInfo, now time.Time) {
-	b.limit = uint64(info.Limit)
-	b.remaining = uint64(info.Remaining)
+	b.limit = info.Limit
+	b.remaining = info.Remaining
 	b.reset = info.Reset
+}
 
-	retryAt := info.RetryAfter + (now.UnixNano() / int64(time.Millisecond))
-	if b.reset < retryAt {
-		b.reset = retryAt
-	}
+func (b *Bucket) _limited(now time.Time) bool {
+	return b.reset > (now.UnixNano()/int64(time.Millisecond)) && b.remaining == 0
 }
 
 func (b *Bucket) limited(now time.Time) bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-
-	return b.reset > (now.UnixNano()/int64(time.Millisecond)) && b.remaining == 0
+	return b._limited(now)
 }
 
-func (b *Bucket) timeout(now time.Time) int64 {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-
+func (b *Bucket) _timeout(now time.Time) int64 {
 	nowMilli := now.UnixNano() / int64(time.Millisecond)
 	var timeout int64
 	if b.reset > nowMilli && b.remaining == 0 { // will b.reset > nowMilli if remaining == 0?
@@ -323,4 +319,35 @@ func (b *Bucket) timeout(now time.Time) int64 {
 	}
 
 	return timeout
+}
+
+func (b *Bucket) timeout(now time.Time) int64 {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b._timeout(now)
+}
+
+func (b *Bucket) _requestPermit(key string, now time.Time) (timeout time.Duration, err error) {
+	// make sure the restrictions are valid
+	nowMilli := now.UnixNano() / int64(time.Millisecond)
+	if b.reset <= nowMilli {
+		longestTimeout := int64(b.longestTimeout)
+		if longestTimeout == 0 {
+			longestTimeout = time.Hour.Nanoseconds()
+		}
+		b.reset = nowMilli + longestTimeout
+		b.remaining = b.limit
+		if b.remaining == 0 {
+			b.remaining++ // so we can do one request to get the new rate limits
+		}
+	}
+
+	// see if we can execute a request right now, or for how long we need to wait
+	b.remaining--
+	if b.remaining < 0 {
+		b.remaining++
+		timeout = time.Duration(b.shortestTimeout) * time.Millisecond
+	}
+
+	return
 }

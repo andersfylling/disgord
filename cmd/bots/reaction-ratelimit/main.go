@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord"
@@ -49,23 +50,30 @@ func main() {
 		panic(err)
 	}
 
-	msgID := snowflake.ID(540004388891262976)
-	chanID := snowflake.ID(540004372231225344)
+	msgID := snowflake.ID(540519319814275089)
+	chanID := snowflake.ID(540519296640614416)
 
-	e, err := c.GetGuildEmojis(486833611564253184).Execute()
+	e, err := c.GetGuildEmojis(486833041486905345).Execute()
 	if err != nil {
 		panic(err)
 	}
 
 	_ = c.DeleteAllReactions(chanID, msgID)
+	wg := sync.WaitGroup{}
 	for i := range e {
-		start := time.Now()
-		err = c.CreateReaction(chanID, msgID, e[i])
-		if err != nil {
-			fmt.Println(i, ": ", err)
-			break
-		}
+		wg.Add(1)
+		go func(index int) {
+			start := time.Now()
+			var msg string
+			err = c.CreateReaction(chanID, msgID, e[index])
+			if err != nil {
+				msg = fmt.Sprint(index, ": ", err, " ### ")
+			}
 
-		fmt.Println(time.Now().Sub(start).Seconds())
+			fmt.Println(msg, time.Now().Sub(start).String())
+			wg.Done()
+		}(i)
 	}
+
+	wg.Wait()
 }

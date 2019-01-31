@@ -238,35 +238,44 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return
 }
 
-// WaitIfRateLimited if the deadtime set by the encountered rate limit does not overstep the http.Client.Timeout and
-// the client.config.CancelRequestWhenRateLimited is set to false, then we simply run a time.After to wait until the
-// rate limits has been reset by Discord. If the dead time is higher than the http.Client.Timeout,
-// we return a rate limit error.
-//
-// The client.config.CancelRequestWhenRateLimited forces an error if a rate limit is encountered, regardless of the
-// Client.Timeout value.
-func WaitIfRateLimited(c *Client, r *Request) (waited bool, err error) {
-	deadtime := c.RateLimiter().WaitTime(r)
-	if deadtime.Nanoseconds() > 0 {
-		if c.cancelRequestWhenRateLimited {
+func makeRateLimitCompliant(key string, c *Client) (err error) {
+	var timeout time.Duration
+	remaining := c.httpClient.Timeout.Nanoseconds()
+	for {
+		timeout, err = c.rateLimit.RequestPermit(key)
+		if err != nil {
+			return // no way around the rate limiter in this case
+		}
+		tns := timeout.Nanoseconds()
+
+		if tns > 0 && c.cancelRequestWhenRateLimited {
 			err = errors.New("rate limited")
 			return
 		}
-		waitTimeLongerThanHTTPTimeout := c.httpClient.Timeout.Nanoseconds() <= deadtime.Nanoseconds()
-		if waitTimeLongerThanHTTPTimeout {
-			err = errors.New("rate limit timeout is higher than http.Client.Timeout, cannot wait")
-			return
+
+		if tns > 0 {
+			if remaining < tns {
+				return errors.New("rate limit timeout is higher than http.Client.Timeout, cannot wait")
+			}
+			remaining -= tns
+
+			// if we are given a timeout, we weren't allowed to send a request so we need to retry
+			<-time.After(timeout)
+			continue
 		}
 
-		<-time.After(deadtime)
+		return err
 	}
-
-	waited = true
-	return
 }
 
 // Request execute a Discord request
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
+	err = makeRateLimitCompliant(r.Ratelimiter, c)
+	if err != nil {
+		return
+	}
+
+	// prepare request body
 	var bodyReader io.Reader
 	if r.Body != nil {
 		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
@@ -283,12 +292,6 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 				return
 			}
 		}
-	}
-
-	// check the rate limiter for how long we must wait before sending the request
-	_, err = WaitIfRateLimited(c, r)
-	if err != nil {
-		return
 	}
 
 	// create request
@@ -308,7 +311,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	body, err = c.decodeResponseBody(resp)
 
 	// update rate limits
-	c.RateLimiter().UpdateRegisters(r.Ratelimiter, r.RateLimitAdjuster, resp, body)
+	c.rateLimit.UpdateRegisters(r.Ratelimiter, r.RateLimitAdjuster, resp, body)
 
 	// check if request was successful
 	noDiff := resp.StatusCode == http.StatusNotModified
