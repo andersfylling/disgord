@@ -961,8 +961,10 @@ func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 		message.RLock()
 	}
 	params := &CreateChannelMessageParams{
-		Content: message.Content,
-		Tts:     message.Tts,
+		Content:                  message.Content,
+		Tts:                      message.Tts,
+		SpoilerTagContent:        message.SpoilerTagContent,
+		SpoilerTagAllAttachments: message.SpoilerTagAllAttachments,
 		// File: ...
 		// Embed: ...
 	}
@@ -1154,6 +1156,10 @@ func (c *Client) eventHandler() {
 			c.Error(err.Error())
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
+		}
+
+		if updater, implements := box.(internalUpdater); implements {
+			updater.updateInternals()
 		}
 
 		// cacheLink

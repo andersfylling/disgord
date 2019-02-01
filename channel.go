@@ -3,6 +3,7 @@ package disgord
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
@@ -27,6 +28,12 @@ type Attachment struct {
 	ProxyURL string    `json:"proxy_url"`
 	Height   uint      `json:"height"`
 	Width    uint      `json:"width"`
+
+	SpoilerTag bool `json:"-"`
+}
+
+func (a *Attachment) updateInternals() {
+	a.SpoilerTag = strings.HasPrefix(a.Filename, AttachmentSpoilerPrefix)
 }
 
 // DeepCopy see interface at struct.go#DeepCopier

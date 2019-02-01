@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,6 +36,10 @@ const (
 	MessageTypeChannelIconChange
 	MessageTypeChannelPinnedMessage
 	MessageTypeGuildMemberJoin
+)
+
+const (
+	AttachmentSpoilerPrefix = "SPOILER_"
 )
 
 // NewMessage ...
@@ -88,6 +93,27 @@ type Message struct {
 	Type            uint               `json:"type"`
 	Activity        MessageActivity    `json:"activity"`
 	Application     MessageApplication `json:"application"`
+
+	// SpoilerTagContent is only true if the entire message text is tagged as a spoiler (aka completely wrapped in ||)
+	SpoilerTagContent        bool `json:"-"`
+	SpoilerTagAllAttachments bool `json:"-"`
+}
+
+func (m *Message) updateInternals() {
+	if len(m.Content) >= len("||||") {
+		prefix := m.Content[0:2]
+		suffix := m.Content[len(m.Content)-2 : len(m.Content)]
+		m.SpoilerTagContent = prefix+suffix == "||||"
+	}
+
+	m.SpoilerTagAllAttachments = len(m.Attachments) > 0
+	for i := range m.Attachments {
+		m.Attachments[i].updateInternals()
+		if !m.Attachments[i].SpoilerTag {
+			m.SpoilerTagAllAttachments = false
+			break
+		}
+	}
 }
 
 // TODO: why is this method needed?
@@ -350,6 +376,9 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 
 	ret = []*Message{}
 	err = unmarshal(body, ret)
+	for i := range ret {
+		ret[i].updateInternals()
+	}
 	return
 }
 
@@ -382,6 +411,7 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 
 	ret = &Message{}
 	err = unmarshal(body, ret)
+	ret.updateInternals()
 	return
 }
 
@@ -400,9 +430,28 @@ type CreateChannelMessageParams struct {
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 
 	Files []CreateChannelMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+
+	SpoilerTagContent        bool `json:"-"`
+	SpoilerTagAllAttachments bool `json:"-"`
 }
 
 func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+	// spoiler tag
+	if p.SpoilerTagContent && len(p.Content) > 0 {
+		p.Content = "|| " + p.Content + " ||"
+	}
+	if p.SpoilerTagAllAttachments {
+		for i := range p.Files {
+			p.Files[i].SpoilerTag = true
+		}
+	}
+	for i := range p.Files {
+		name := p.Files[i].FileName
+		if p.Files[i].SpoilerTag && !strings.HasPrefix(name, "SPOILER_") {
+			p.Files[i].FileName = "SPOILER_" + name
+		}
+	}
+
 	if len(p.Files) == 0 {
 		postBody = p
 		contentType = httd.ContentTypeJSON
@@ -441,8 +490,9 @@ func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentTyp
 // CreateChannelMessageFileParams contains the information needed to upload a file to Discord, it is part of the
 // CreateChannelMessageParams struct.
 type CreateChannelMessageFileParams struct {
-	Reader   io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
-	FileName string    `json:"-"`
+	Reader     io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
+	FileName   string    `json:"-"`
+	SpoilerTag bool      `json:"-"`
 }
 
 // write helper for file uploading in messages
@@ -503,6 +553,7 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 
 	ret = &Message{}
 	err = unmarshal(body, ret)
+	ret.updateInternals()
 	return
 }
 
@@ -542,6 +593,7 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 
 	ret = &Message{}
 	err = unmarshal(body, ret)
+	ret.updateInternals()
 	return
 }
 

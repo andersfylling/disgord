@@ -253,6 +253,10 @@ type MessageCreate struct {
 	Ctx     context.Context `json:"-"`
 }
 
+func (obj *MessageCreate) updateInternals() {
+	obj.Message.updateInternals()
+}
+
 // UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
@@ -265,6 +269,10 @@ func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 type MessageUpdate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
+}
+
+func (obj *MessageUpdate) updateInternals() {
+	obj.Message.updateInternals()
 }
 
 // UnmarshalJSON ...

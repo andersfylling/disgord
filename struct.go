@@ -90,6 +90,11 @@ type zeroInitialiser interface {
 	zeroInitialize()
 }
 
+// internalUpdater is called whenever a socket event or a REST response is created.
+type internalUpdater interface {
+	updateInternals()
+}
+
 // Discord types
 
 // helperTypes: timestamp, levels, etc.
