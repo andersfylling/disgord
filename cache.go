@@ -340,6 +340,12 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 			member.userID = member.User.ID
 			member.User = nil
 		}
+
+		g.channels = make([]snowflake.ID, len(g.guild.Channels))
+		for i, channel := range g.guild.Channels {
+			g.channels[i] = channel.ID
+		}
+		g.guild.Channels = nil
 	} else {
 		g.guild = guild
 
@@ -364,6 +370,17 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 				}
 			}
 		}
+		i := 0
+		for _, member := range guild.Members {
+			member.User, err = cache.GetUser(member.userID)
+			if err == nil {
+				guild.Members[i] = member
+				i++
+			}
+		}
+		// discard members with a nil user object
+		guild.Members = guild.Members[:i]
+
 		// TODO: voice state
 	} else {
 		guild = g.guild
@@ -378,6 +395,17 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 			}
 		}
 		guild.Channels = channels
+
+		i := 0
+		for _, member := range g.guild.Members {
+			member.User, err = cache.GetUser(member.userID)
+			if err == nil {
+				g.guild.Members[i] = member
+				i++
+			}
+		}
+		// discard members with a nil user object
+		g.guild.Members = g.guild.Members[:i]
 	}
 
 	return

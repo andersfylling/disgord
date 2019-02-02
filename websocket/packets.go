@@ -3,12 +3,121 @@ package websocket
 import (
 	"bytes"
 	"compress/zlib"
+	"encoding/json"
 	"io"
 	"strconv"
 	"strings"
 
 	"github.com/andersfylling/disgord/httd"
 )
+
+//////////////////////////////////////////////////////
+//
+// HELPER FUNCS
+//
+//////////////////////////////////////////////////////
+
+// decompressBytes decompresses a binary message
+func decompressBytes(input []byte) (output []byte, err error) {
+	b := bytes.NewReader(input)
+	var r io.ReadCloser
+
+	r, err = zlib.NewReader(b)
+	if err != nil {
+		return
+	}
+	defer r.Close()
+
+	buffer := new(bytes.Buffer)
+	_, err = buffer.ReadFrom(r)
+	if err != nil {
+		return
+	}
+
+	output = buffer.Bytes()
+	return
+}
+
+//////////////////////////////////////////////////////
+//
+// VOICE SPECIFIC
+//
+//////////////////////////////////////////////////////
+
+type voicePacket struct {
+	Op   uint            `json:"op"`
+	Data json.RawMessage `json:"d"`
+}
+
+type VoiceReady struct {
+	SSRC  uint32   `json:"ssrc"`
+	IP    string   `json:"ip"`
+	Port  int      `json:"port"`
+	Modes []string `json:"modes"`
+
+	// From: https://discordapp.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection
+	// `heartbeat_interval` here is an erroneous field and should be ignored.
+	// The correct heartbeat_interval value comes from the Hello payload.
+
+	// HeartbeatInterval uint `json:"heartbeat_interval"`
+}
+
+type voiceSelectProtocol struct {
+	Protocol string                     `json:"protocol"`
+	Data     *VoiceSelectProtocolParams `json:"data"`
+}
+
+type VoiceSelectProtocolParams struct {
+	Address string `json:"address"`
+	Port    uint16 `json:"port"`
+	Mode    string `json:"mode"`
+}
+
+type VoiceSessionDescription struct {
+	Mode      string   `json:"mode"`
+	SecretKey [32]byte `json:"secret_key"`
+}
+
+//////////////////////////////////////////////////////
+//
+// EVENT SPECIFIC
+//
+//////////////////////////////////////////////////////
+
+type evtReadyPacket struct {
+	SessionID string `json:"session_id"`
+	traceData
+}
+
+type evtIdentity struct {
+	Token          string      `json:"token"`
+	Properties     interface{} `json:"properties"`
+	Compress       bool        `json:"compress"`
+	LargeThreshold uint        `json:"large_threshold"`
+	Shard          *[2]uint    `json:"shard,omitempty"`
+	Presence       interface{} `json:"presence,omitempty"`
+}
+
+//////////////////////////////////////////////////////
+//
+// GENERAL PURPOSE
+//
+//////////////////////////////////////////////////////
+
+// clientPacket is outgoing packets by the client
+type clientPacket struct {
+	Op   uint        `json:"op"`
+	Data interface{} `json:"d"`
+}
+
+type traceData struct {
+	Trace []string `json:"_trace"`
+}
+
+type helloPacket struct {
+	HeartbeatInterval uint `json:"heartbeat_interval"`
+	traceData
+}
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic
 type discordPacketJSON struct {
@@ -18,15 +127,15 @@ type discordPacketJSON struct {
 	EventName      string `json:"t"`
 }
 
-func (p *discordPacketJSON) CopyOverTo(packet *discordPacket) {
+func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 	packet.Op = p.Op
 	packet.Data = p.Data
 	packet.SequenceNumber = p.SequenceNumber
 	packet.EventName = p.EventName
 }
 
-// discordPacket is packets sent by Discord over the socket connection
-type discordPacket struct {
+// DiscordPacket is packets sent by Discord over the socket connection
+type DiscordPacket struct {
 	Op             uint   `json:"op"`
 	Data           []byte `json:"d"`
 	SequenceNumber uint   `json:"s"`
@@ -34,7 +143,7 @@ type discordPacket struct {
 }
 
 // UnmarshalJSON see interface json.Unmarshaler
-func (p *discordPacket) UnmarshalJSON(data []byte) (err error) {
+func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	var i int
 
 	// t
@@ -133,47 +242,13 @@ func (p *discordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 3 // skip `d":`
 	p.Data = data[i : len(data)-1]
 
-	//fmt.Println("asdas")
 	return
 }
 
-// clientPacket is outgoing packets by the client
-type clientPacket struct {
-	Op   uint        `json:"op"`
-	Data interface{} `json:"d"`
-}
-
-type traceData struct {
-	Trace []string `json:"_trace"`
-}
-
-type helloPacket struct {
-	HeartbeatInterval uint `json:"heartbeat_interval"`
-	traceData
-}
-
-type readyPacket struct {
-	SessionID string `json:"session_id"`
-	traceData
-}
-
-// decompressBytes decompresses a binary message
-func decompressBytes(input []byte) (output []byte, err error) {
-	b := bytes.NewReader(input)
-	var r io.ReadCloser
-
-	r, err = zlib.NewReader(b)
-	if err != nil {
-		return
-	}
-	defer r.Close()
-
-	buffer := new(bytes.Buffer)
-	_, err = buffer.ReadFrom(r)
-	if err != nil {
-		return
-	}
-
-	output = buffer.Bytes()
-	return
+func (p *DiscordPacket) reset() {
+	p.Op = 0
+	p.SequenceNumber = 0
+	// TODO: re-use data slice in unmarshal ?
+	p.Data = nil
+	p.EventName = ""
 }

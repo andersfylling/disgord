@@ -58,7 +58,7 @@ func (g *testWS) Disconnected() bool {
 var _ Conn = (*testWS)(nil)
 
 func TestManager_RegisterEvent(t *testing.T) {
-	m := Client{
+	m := EvtClient{
 		trackedEvents: &UniqueStringSlice{},
 	}
 	t1 := "test"
@@ -75,7 +75,7 @@ func TestManager_RegisterEvent(t *testing.T) {
 }
 
 func TestManager_RemoveEvent(t *testing.T) {
-	m := Client{
+	m := EvtClient{
 		trackedEvents: &UniqueStringSlice{},
 	}
 	t1 := "test"
@@ -107,10 +107,10 @@ func TestManager_reconnect(t *testing.T) {
 
 	eChan := make(chan *Event)
 	aChan := make(A)
-	m := &Client{
+	m := &EvtClient{
 		trackedEvents: &UniqueStringSlice{},
 		eventChan:     eChan,
-		baseClient: &baseClient{
+		client: &client{
 			conf: &Config{
 				// identity
 				Browser:             "disgord",
@@ -130,17 +130,23 @@ func TestManager_reconnect(t *testing.T) {
 					Timeout: time.Second * 10,
 				},
 			},
+			behaviors:    map[string]*behavior{},
 			shutdown:     make(chan interface{}),
 			restart:      make(chan interface{}),
-			receiveChan:  make(chan *discordPacket),
+			receiveChan:  make(chan *DiscordPacket),
 			emitChan:     make(chan *clientPacket),
 			conn:         conn,
 			disconnected: true,
 			ratelimit:    newRatelimiter(),
 			a:            aChan,
+			poolDiscordPkt: &sync.Pool{
+				New: func() interface{} {
+					return &DiscordPacket{}
+				},
+			},
 		},
 	}
-	m.connectPermit = m.baseClient
+	m.connectPermit = m.client
 	seq := uint(1)
 
 	shutdown := make(chan interface{})
@@ -204,14 +210,14 @@ func TestManager_reconnect(t *testing.T) {
 				return
 			}
 			switch data.Op {
-			case opcode.Heartbeat:
+			case opcode.EventHeartbeat:
 				conn.reading <- []byte(`{"t":null,"s":null,"op":11,"d":null}`)
 				wg[heartbeat].Done()
-			case opcode.Identify:
+			case opcode.EventIdentify:
 				conn.reading <- []byte(`{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`)
 				*seq++
 				wg[identify].Done()
-			case opcode.Resume:
+			case opcode.EventResume:
 				conn.reading <- []byte(`{"t":"RESUMED","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`)
 				*seq++
 				wg[resume].Done()
@@ -235,7 +241,8 @@ func TestManager_reconnect(t *testing.T) {
 	m.Connect()
 	wg[connecting].Wait()
 
-	m.Start()
+	m.setupBehaviors()
+	m.start()
 
 	// send hello packet
 	wg[heartbeat].Add(1)
