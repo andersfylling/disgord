@@ -3,6 +3,7 @@ package websocket
 import (
 	"io/ioutil"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/andersfylling/disgord/httd"
@@ -31,7 +32,7 @@ func getAllJSONFiles(t *testing.T) (files [][]byte) {
 func TestDiscordEvent_CustomUnmarshaller(t *testing.T) {
 	files := getAllJSONFiles(t)
 	for _, file := range files {
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		err := httd.Unmarshal(file, &evt)
 		if err != nil {
 			t.Error(err)
@@ -45,10 +46,28 @@ func TestDiscordEvent_CustomUnmarshaller(t *testing.T) {
 			return
 		}
 
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		err = httd.Unmarshal(data, &evt)
 		if err != nil {
 			t.Error(err)
+		}
+	})
+
+	t.Run("reusing data", func(t *testing.T) {
+		pool := sync.Pool{
+			New: func() interface{} {
+				return &DiscordPacket{}
+			},
+		}
+		files := getAllJSONFiles(t)
+		for _, file := range files {
+			evt := pool.Get().(*DiscordPacket)
+			evt.reset()
+			err := httd.Unmarshal(file, evt)
+			pool.Put(evt)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 	})
 }
@@ -59,7 +78,7 @@ func BenchmarkEvent_CustomUnmarshal_smallJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		evt.UnmarshalJSON(data)
 	}
 }
@@ -70,7 +89,7 @@ func BenchmarkEvent_Unmarshal_smallJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		httd.Unmarshal(data, &evt)
 	}
 }
@@ -81,7 +100,7 @@ func BenchmarkEvent_CustomUnmarshal_largeJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		evt.UnmarshalJSON(data)
 	}
 }
@@ -92,7 +111,7 @@ func BenchmarkEvent_Unmarshal_largeJSON(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		evt := discordPacket{}
+		evt := DiscordPacket{}
 		httd.Unmarshal(data, &evt)
 	}
 }

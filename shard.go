@@ -43,6 +43,11 @@ func NewShardManager(conf *Config) *WSShardManager {
 		identifyRatelimit: 5,
 		shutdownChan:      conf.shutdownChan,
 		TrackEvent:        &websocket.UniqueStringSlice{},
+		discordPktPool: &sync.Pool{
+			New: func() interface{} {
+				return &websocket.DiscordPacket{}
+			},
+		},
 	}
 }
 
@@ -64,6 +69,8 @@ type WSShardManager struct {
 
 	prepared bool
 	log      Logger
+
+	discordPktPool *sync.Pool
 }
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
@@ -123,7 +130,7 @@ func (s *WSShardManager) Prepare(conf *Config) error {
 	var err error
 	for i := range s.shards {
 		s.shards[i] = &WSShard{}
-		err = s.shards[i].Prepare(conf, s.evtChan, s.conRequestChan, s.TrackEvent, conf.WSShardManagerConfig.FirstID+uint(i))
+		err = s.shards[i].Prepare(conf, s.discordPktPool, s.evtChan, s.conRequestChan, s.TrackEvent, conf.WSShardManagerConfig.FirstID+uint(i))
 		if err != nil {
 			break
 		}
@@ -227,30 +234,31 @@ type WSShard struct {
 	id    uint
 	total uint
 
-	ws     *websocket.Client
+	ws     *websocket.EvtClient
 	guilds []snowflake.ID
 }
 
-func (s *WSShard) Prepare(conf *Config, evtChan chan *websocket.Event, conRequestChan websocket.A, trackEvents *websocket.UniqueStringSlice, id uint) (err error) {
+func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan *websocket.Event, conRequestChan websocket.A, trackEvents *websocket.UniqueStringSlice, id uint) (err error) {
 	s.id = id
 	s.total = conf.WSShardManagerConfig.ShardLimit
 
-	s.ws, err = websocket.NewClient(&websocket.Config{
+	s.ws, err = websocket.NewEventClient(&websocket.Config{
 		// identity
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,
-		GuildLargeThreshold: 250, // TODO: config
+		GuildLargeThreshold: 0, // don't load any members unless the user loads all members - avoids cache issues
 		ShardCount:          s.total,
 
 		// lib specific
-		Version:       constant.DiscordVersion,
-		Encoding:      constant.JSONEncoding,
-		ChannelBuffer: 3,
-		Endpoint:      conf.WSShardManagerConfig.URL,
-		EventChan:     evtChan,
-		TrackedEvents: trackEvents,
-		Logger:        conf.Logger,
-		A:             conRequestChan,
+		Version:        constant.DiscordVersion,
+		Encoding:       constant.JSONEncoding,
+		ChannelBuffer:  3,
+		Endpoint:       conf.WSShardManagerConfig.URL,
+		EventChan:      evtChan,
+		TrackedEvents:  trackEvents,
+		Logger:         conf.Logger,
+		A:              conRequestChan,
+		DiscordPktPool: discordPktPool,
 
 		// user settings
 		BotToken:   conf.BotToken,

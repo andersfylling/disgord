@@ -20,7 +20,7 @@ var outgoingPacketSequence uint64 = 0
 // unix is the unix timestamp on save
 // seq is the sequence number: outgoingPacketSequence
 // op is the operation code
-func saveOutgoingPacket(c *baseClient, packet *clientPacket) {
+func saveOutgoingPacket(c *client, packet *clientPacket) {
 	data, err := httd.Marshal(packet)
 	if err != nil {
 		fmt.Println(err)
@@ -48,7 +48,7 @@ func saveOutgoingPacket(c *baseClient, packet *clientPacket) {
 // seq is the sequence number
 // op is the operation code
 // evt_name is the event name (optional)
-func saveIncomingPacker(c *baseClient, evt *discordPacket, packet []byte) {
+func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 	evtStr := "_" + evt.EventName
 	if evtStr == "_" {
 		evtStr = ""

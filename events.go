@@ -83,6 +83,13 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 				updates[UserCache][i] = guild.Members[i].User
 			}
 		}
+		// update all channels
+		if len(guild.Channels) > 0 {
+			updates[ChannelCache] = make([]interface{}, len(guild.Channels))
+			for i := range guild.Channels {
+				updates[ChannelCache] = append(updates[ChannelCache], guild.Channels[i])
+			}
+		}
 	case EventGuildDelete:
 		uguild := (v.(*GuildDelete)).UnavailableGuild
 		cache.DeleteGuild(uguild.ID)

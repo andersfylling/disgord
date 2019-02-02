@@ -1,9 +1,43 @@
 package opcode
 
-// custom op codes used by Disgord internally
+// custom op codes used by DisGord internally
 const (
 	Shutdown uint = 100
 	Close    uint = 101
+)
+
+// operation codes for the event client
+const (
+	EventDiscordEvent uint = iota
+	EventHeartbeat
+	EventIdentify
+	EventStatusUpdate
+	EventVoiceStateUpdate
+	EventVoiceServerPing
+	EventResume
+	EventReconnect
+	EventRequestGuildMembers
+	EventInvalidSession
+	EventHello
+	EventHeartbeatAck
+)
+
+// operation codes for the voice client
+const (
+	VoiceIdentify uint = iota
+	VoiceSelectProtocol
+	VoiceReady
+	VoiceHeartbeat
+	VoiceSessionDescription
+	VoiceSpeaking
+	VoiceHeartbeatAck
+	VoiceResume
+	VoiceHello
+	VoiceResumed
+	_ // unused
+	_ // unused
+	_ // unused
+	VoiceClientDisconnect
 )
 
 // OperationCodeHolder Used on objects that holds a operation code

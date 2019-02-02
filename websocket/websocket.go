@@ -40,7 +40,7 @@ const (
 type A chan B
 type B chan *K
 
-// K is used to get the connect permission from the shard manager
+// K is used to get the Connect permission from the shard manager
 type K struct {
 	Release B
 	Key     interface{}
