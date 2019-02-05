@@ -10,8 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/cmd"
+
 	"github.com/andersfylling/disgord/websocket"
-	"github.com/andersfylling/disgord/websocket/event"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
@@ -261,7 +262,7 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 		panic("Attempting to interact with a closed voice connection")
 	}
 
-	return v.ws.Emit(event.VoiceSpeaking, &voiceSpeakingData{
+	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
 		Speaking: b,
 		SSRC:     v.ssrc,
 	})
