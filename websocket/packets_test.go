@@ -79,7 +79,8 @@ func BenchmarkEvent_CustomUnmarshal_smallJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		evt.UnmarshalJSON(data)
+		// evt.UnmarshalJSON(data) custom unmarshal
+		_ = httd.Unmarshal(data, evt) // json.RawMessage
 	}
 }
 
@@ -90,7 +91,8 @@ func BenchmarkEvent_Unmarshal_smallJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		httd.Unmarshal(data, &evt)
+		// evt.UnmarshalJSON(data) custom unmarshal
+		_ = httd.Unmarshal(data, &evt) // json.RawMessage
 	}
 }
 
@@ -101,7 +103,8 @@ func BenchmarkEvent_CustomUnmarshal_largeJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		evt.UnmarshalJSON(data)
+		// evt.UnmarshalJSON(data) custom unmarshal
+		_ = httd.Unmarshal(data, &evt) // json.RawMessage
 	}
 }
 
@@ -112,6 +115,7 @@ func BenchmarkEvent_Unmarshal_largeJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		httd.Unmarshal(data, &evt)
+		// evt.UnmarshalJSON(data) custom unmarshal
+		_ = httd.Unmarshal(data, &evt) // json.RawMessage
 	}
 }
