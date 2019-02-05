@@ -521,6 +521,10 @@ type VoiceStateUpdate struct {
 	Ctx context.Context `json:"-"`
 }
 
+func (evt *VoiceStateUpdate) updateInternalsWithClient(c *Client) {
+	c.voiceRepository.onVoiceStateUpdate(evt)
+}
+
 // ---------------------------
 
 // VoiceServerUpdate guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
@@ -530,6 +534,10 @@ type VoiceServerUpdate struct {
 	GuildID  Snowflake       `json:"guild_id"`
 	Endpoint string          `json:"endpoint"`
 	Ctx      context.Context `json:"-"`
+}
+
+func (evt *VoiceServerUpdate) updateInternalsWithClient(c *Client) {
+	c.voiceRepository.onVoiceServerUpdate(evt)
 }
 
 // ---------------------------

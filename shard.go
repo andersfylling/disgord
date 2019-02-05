@@ -261,8 +261,8 @@ func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan 
 		DiscordPktPool: discordPktPool,
 
 		// user settings
-		BotToken:   conf.BotToken,
-		HTTPClient: conf.HTTPClient,
+		BotToken: conf.BotToken,
+		Proxy:    conf.Proxy,
 	}, s.id)
 	if err != nil {
 		return err
