@@ -218,19 +218,19 @@ func (c *client) getLogPrefix() string {
 		"] "
 }
 
-func (c *client) Info(msg string) {
+func (c *client) Info(v ...interface{}) {
 	if c.log != nil {
-		c.log.Info(c.getLogPrefix() + msg)
+		c.log.Info(c.getLogPrefix(), v)
 	}
 }
-func (c *client) Debug(msg string) {
+func (c *client) Debug(v ...interface{}) {
 	if c.log != nil {
-		c.log.Debug(c.getLogPrefix() + msg)
+		c.log.Debug(c.getLogPrefix(), v)
 	}
 }
-func (c *client) Error(msg string) {
+func (c *client) Error(v ...interface{}) {
 	if c.log != nil {
-		c.log.Error(c.getLogPrefix() + msg)
+		c.log.Error(c.getLogPrefix(), v)
 	}
 }
 
