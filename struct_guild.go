@@ -990,6 +990,16 @@ func (m *Member) String() string {
 	return "member{user:" + m.User.Username + ", nick:" + m.Nick + ", ID:" + m.User.ID.String() + "}"
 }
 
+// GetUser tries to ensure that you get a user object and not a nil. The user can be nil if the guild
+// was fetched from the cache.
+func (m *Member) GetUser(session Session) (usr *User, err error) {
+	if m.User != nil {
+		return m.User, nil
+	}
+
+	return session.GetUser(m.userID).Execute()
+}
+
 // Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
 	return m.User.MentionNickname()

@@ -305,6 +305,11 @@ func (c *Cache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v int
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
+	//
+	//// TODO: do deep copying here to speed up the code
+	//if copyable, implements := v.(DeepCopier); implements && c.immutable {
+	//	v = copyable.DeepCopy()
+	//}
 
 	return
 }
@@ -370,16 +375,10 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 				}
 			}
 		}
-		i := 0
 		for _, member := range guild.Members {
 			member.User, err = cache.GetUser(member.userID)
-			if err == nil {
-				guild.Members[i] = member
-				i++
-			}
+			// member has a GetUser method to handle nil users
 		}
-		// discard members with a nil user object
-		guild.Members = guild.Members[:i]
 
 		// TODO: voice state
 	} else {
@@ -395,17 +394,6 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 			}
 		}
 		guild.Channels = channels
-
-		i := 0
-		for _, member := range g.guild.Members {
-			member.User, err = cache.GetUser(member.userID)
-			if err == nil {
-				g.guild.Members[i] = member
-				i++
-			}
-		}
-		// discard members with a nil user object
-		g.guild.Members = g.guild.Members[:i]
 	}
 
 	return
