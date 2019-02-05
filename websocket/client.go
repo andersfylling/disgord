@@ -202,9 +202,8 @@ func (c *client) operationHandlers() {
 		}
 
 		if action, defined := c.behaviors[discordOperations].actions[p.Op]; defined {
-			err := action(p)
-			if err != nil {
-				c.Error(err.Error())
+			if err := action(p); err != nil {
+				c.Error(err)
 			}
 		}
 
@@ -291,6 +290,10 @@ func (c *client) connect() (err error) {
 			if err2 := c.conn.Close(); err2 != nil {
 				c.Error(err2)
 			}
+		}
+
+		if err3 := c.connectPermit.releaseConnectPermit(); err3 != nil {
+			c.Info("unable to release connection permission. Err: ", err3)
 		}
 		return
 	}
@@ -385,12 +388,6 @@ func (c *client) reconnect() (err error) {
 		if err == nil {
 			c.Info("successfully reconnected")
 			break
-		}
-
-		err = c.connectPermit.releaseConnectPermit()
-		if err != nil {
-			err = errors.New("unable to release connection permission. Err: " + err.Error())
-			c.Info(err.Error())
 		}
 
 		c.Info(fmt.Sprintf("reconnect failed, trying again in N seconds; N =  %d", uint(delay)))
@@ -501,7 +498,7 @@ func (c *client) unlockEmitter() {
 // client#Emit depends on this.
 func (c *client) emitter() {
 	if !c.lockEmitter() {
-		c.Error("tried to start another websocket emitter go routine")
+		c.Debug("tried to start another websocket emitter go routine")
 		return
 	}
 	defer c.unlockEmitter()
@@ -516,10 +513,8 @@ func (c *client) emitter() {
 		case msg, open = <-c.emitChan:
 		}
 		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
-			// TODO: what if we get a connection error, how do we restart?
-			err := c.Disconnect()
-			if err != nil {
-				c.Error(err.Error())
+			if err := c.Disconnect(); err != nil {
+				c.Error(err)
 			}
 			c.Debug("closing emitter")
 			return
@@ -569,7 +564,7 @@ func (c *client) unlockReceiver() {
 
 func (c *client) receiver() {
 	if !c.lockReceiver() {
-		c.Error("tried to start another websocket receiver go routine")
+		c.Debug("tried to start another websocket receiver go routine")
 		return
 	}
 	defer c.unlockReceiver()

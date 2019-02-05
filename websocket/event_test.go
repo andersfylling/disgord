@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
-
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
@@ -25,7 +23,6 @@ type testWS struct {
 }
 
 func (g *testWS) Open(endpoint string, requestHeader http.Header) (err error) {
-	fmt.Println("hmmmm")
 	g.opening <- 1
 	g.Lock()
 	g.disconnected = false
@@ -99,7 +96,7 @@ func TestManager_RemoveEvent(t *testing.T) {
 	}
 }
 
-func TestManager_reconnect(t *testing.T) {
+func TestEvtClient_reconnect(t *testing.T) {
 	conn := &testWS{
 		closing:      make(chan interface{}),
 		opening:      make(chan interface{}),
@@ -121,7 +118,7 @@ func TestManager_reconnect(t *testing.T) {
 		Version:       constant.DiscordVersion,
 		Encoding:      constant.JSONEncoding,
 		ChannelBuffer: 3,
-		Logger:        logger.DefaultLogger(true),
+		// Logger:        logger.DefaultLogger(true),
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",
@@ -186,7 +183,6 @@ func TestManager_reconnect(t *testing.T) {
 
 	// mocked websocket server.. ish
 	go func(seq *uint) {
-		defer fmt.Println("stopped")
 		for {
 			var data *clientPacket
 			select {
@@ -199,10 +195,8 @@ func TestManager_reconnect(t *testing.T) {
 				wg[disconnecting].Done()
 				continue
 			case <-shutdown:
-				fmt.Println("shutdown")
 				return
 			case <-done:
-				fmt.Println("done")
 				return
 			}
 			switch data.Op {
@@ -236,9 +230,6 @@ func TestManager_reconnect(t *testing.T) {
 	wg[connecting].Add(1)
 	m.Connect()
 	wg[connecting].Wait()
-
-	m.setupBehaviors()
-	m.start()
 
 	// send hello packet
 	wg[heartbeat].Add(1)
