@@ -378,9 +378,8 @@ func (c *client) reconnect() (err error) {
 
 	c.Debug("is reconnecting")
 
-	close(c.restart)
+	c.restart <- 1
 	_ = c.Disconnect()
-	c.restart = make(chan interface{})
 
 	var try uint
 	var delay time.Duration = 3 // seconds
