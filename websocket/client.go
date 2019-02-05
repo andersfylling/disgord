@@ -3,12 +3,12 @@ package websocket
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/logger"
+
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
@@ -27,20 +27,45 @@ type Link interface {
 	Disconnect() error
 }
 
+//////////////////////////////////////////////////////
+//
+// synchronization & rate limiting
+// By default, no such restrictions exist
+//
+//////////////////////////////////////////////////////
+
 type connectPermit interface {
 	requestConnectPermit() error
 	releaseConnectPermit() error
 }
 
+type emptyConnectPermit struct {
+}
+
+func (emptyConnectPermit) requestConnectPermit() error {
+	return nil
+}
+
+func (emptyConnectPermit) releaseConnectPermit() error {
+	return nil
+}
+
+var _ connectPermit = (*emptyConnectPermit)(nil)
+
 // newClient ...
-func newClient(config *Config, shardID uint) (c *client, err error) {
-	ws, err := newConn(config.Proxy)
-	if err != nil {
-		return nil, err
+func newClient(conf *config, shardID uint) (c *client, err error) {
+	var ws Conn
+	if conf.conn == nil {
+		ws, err = newConn(conf.Proxy)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ws = conf.conn
 	}
 
 	c = &client{
-		conf:              config,
+		conf:              conf,
 		shutdown:          make(chan interface{}),
 		restart:           make(chan interface{}),
 		ShardID:           shardID,
@@ -50,14 +75,30 @@ func newClient(config *Config, shardID uint) (c *client, err error) {
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
 		disconnected:      true,
-		log:               config.Logger,
-		a:                 config.A,
+		log:               conf.Logger,
 		behaviors:         map[string]*behavior{},
-		poolDiscordPkt:    config.DiscordPktPool,
+		poolDiscordPkt:    conf.DiscordPktPool,
 	}
-	c.connectPermit = c
+	c.connectPermit = &emptyConnectPermit{}
+	c.preCon = func() {}
+	c.postCon = func() {}
 
 	return
+}
+
+type config struct {
+	Proxy proxy.Dialer
+
+	// for testing only
+	conn Conn
+
+	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
+	// a valid socket endpoint from Discord
+	Endpoint string
+
+	DiscordPktPool *sync.Pool
+
+	Logger logger.Logger
 }
 
 // client can be used as a base for other ws clients; voice, event. Note the use of
@@ -69,7 +110,7 @@ func newClient(config *Config, shardID uint) (c *client, err error) {
 type client struct {
 	sync.RWMutex
 	clientType   int
-	conf         *Config
+	conf         *config
 	shutdown     chan interface{}
 	restart      chan interface{}
 	lastRestart  int64 //unix
@@ -93,12 +134,12 @@ type client struct {
 
 	isRestarting bool
 
+	preCon  func()
+	postCon func()
+
 	// identify timeout on invalid session
 	// useful in unit tests when you want to drop any actual timeouts
 	timeoutMultiplier int
-
-	// HTTPClient allows for use of a custom proxy
-	HTTPClient *http.Client
 
 	// Proxy allows for use of a custom proxy
 	Proxy proxy.Dialer
@@ -106,12 +147,10 @@ type client struct {
 	// ChannelBuffer is used to set the event channel buffer
 	ChannelBuffer uint
 
-	log constant.Logger
+	log logger.Logger
 
 	// choreographic programming to handle rate limit, reconnects, and connects
 	connectPermit connectPermit
-	K             *K
-	a             A
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -176,42 +215,6 @@ func (c *client) operationHandlers() {
 
 //////////////////////////////////////////////////////
 //
-// SHARD synchronization & rate limiting
-//
-//////////////////////////////////////////////////////
-
-func (c *client) requestConnectPermit() error {
-	c.Debug("trying to get Connect permission")
-	b := make(B)
-	defer close(b)
-	c.a <- b
-	c.Debug("waiting")
-	var ok bool
-	select {
-	case c.K, ok = <-b:
-		if !ok || c.K == nil {
-			c.Debug("unable to get Connect permission")
-			return errors.New("channel closed or K was nil")
-		}
-		c.Debug("got Connect permission")
-	case <-c.shutdown:
-	}
-
-	return nil
-}
-
-func (c *client) releaseConnectPermit() error {
-	if c.K == nil {
-		return errors.New("K has not been granted yet")
-	}
-
-	c.K.Release <- c.K
-	c.K = nil
-	return nil
-}
-
-//////////////////////////////////////////////////////
-//
 // LOGGING
 //
 //////////////////////////////////////////////////////
@@ -246,7 +249,7 @@ func (c *client) Error(v ...interface{}) {
 	}
 }
 
-var _ constant.Logger = (*client)(nil)
+var _ logger.Logger = (*client)(nil)
 
 //////////////////////////////////////////////////////
 //
@@ -254,11 +257,14 @@ var _ constant.Logger = (*client)(nil)
 //
 //////////////////////////////////////////////////////
 
-// Connect establishes a socket connection with the Discord API
-func (c *client) Connect() (err error) {
-	c.Lock()
-	defer c.Unlock()
+func (c *client) preConnect(cb func()) {
+	c.preCon = cb
+}
+func (c *client) postConnect(cb func()) {
+	c.postCon = cb
+}
 
+func (c *client) connect() (err error) {
 	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
 	// certainty say if we are connected
 	if !c.disconnected {
@@ -274,18 +280,17 @@ func (c *client) Connect() (err error) {
 		//}
 	}
 
-	err = c.connectPermit.requestConnectPermit()
-	if err != nil {
+	if err = c.connectPermit.requestConnectPermit(); err != nil {
 		err = errors.New("unable to get permission to Connect. Err: " + err.Error())
 		return
 	}
 
 	// establish ws connection
-	err = c.conn.Open(c.conf.Endpoint, nil)
-	if err != nil {
+	if err = c.conn.Open(c.conf.Endpoint, nil); err != nil {
 		if !c.conn.Disconnected() {
-			c.conn.Close()
-			// TODO: logging
+			if err2 := c.conn.Close(); err2 != nil {
+				c.Error(err2)
+			}
 		}
 		return
 	}
@@ -299,6 +304,19 @@ func (c *client) Connect() (err error) {
 	return
 }
 
+// Connect establishes a socket connection with the Discord API
+func (c *client) Connect() (err error) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.preCon()
+	if err = c.connect(); err != nil {
+		return err
+	}
+	c.postCon()
+	return nil
+}
+
 // Disconnect disconnects the socket connection
 func (c *client) Disconnect() (err error) {
 	c.Lock()
@@ -310,10 +328,10 @@ func (c *client) Disconnect() (err error) {
 	}
 
 	// use the emitter to dispatch the close message
-	err = c.conn.Close()
-	if err != nil {
+	if err = c.conn.Close(); err != nil {
 		c.Error(err.Error())
 	}
+
 	// c.Emit(event.Close, nil)
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.disconnected = true
@@ -355,13 +373,14 @@ func (c *client) reconnect() (err error) {
 
 	c.Debug("is reconnecting")
 
-	c.restart <- 1
+	close(c.restart)
 	_ = c.Disconnect()
+	c.restart = make(chan interface{})
 
 	var try uint
 	var delay time.Duration = 3 // seconds
 	for {
-		c.Debug(fmt.Sprintf("EventReconnect attempt #%d\n", try))
+		c.Debug("EvtClient reconnect attempt", try)
 		err = c.Connect()
 		if err == nil {
 			c.Info("successfully reconnected")

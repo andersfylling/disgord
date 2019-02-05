@@ -242,7 +242,7 @@ func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan 
 	s.id = id
 	s.total = conf.WSShardManagerConfig.ShardLimit
 
-	s.ws, err = websocket.NewEventClient(&websocket.Config{
+	s.ws, err = websocket.NewEventClient(&websocket.EvtConfig{
 		// identity
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,

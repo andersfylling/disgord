@@ -17,8 +17,8 @@ import (
 )
 
 type voiceRepository struct {
-	c *Client
 	sync.Mutex
+	c *Client
 
 	pendingStates  map[Snowflake]chan *VoiceStateUpdate
 	pendingServers map[Snowflake]chan *VoiceServerUpdate
@@ -141,6 +141,7 @@ waiter:
 		Token:     server.Token,
 		Proxy:     r.c.config.Proxy,
 		Endpoint:  "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
+		Logger:    r.c.log,
 	})
 	if err != nil {
 		return

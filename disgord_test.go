@@ -162,7 +162,7 @@ var sink1 int = 1
 //
 //	d := Client{
 //		shutdownChan: make(chan interface{}),
-//		config: &Config{
+//		config: &EvtConfig{
 //			DisableCache: true,
 //		},
 //		httpClient: &http.Client{

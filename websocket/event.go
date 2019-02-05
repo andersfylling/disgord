@@ -4,15 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/logger"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/websocket/cmd"
-	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/event"
@@ -21,26 +21,36 @@ import (
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
-func NewEventClient(config *Config, shardID uint) (client *EvtClient, err error) {
-	if config.TrackedEvents == nil {
-		config.TrackedEvents = &UniqueStringSlice{}
+func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error) {
+	if conf.TrackedEvents == nil {
+		conf.TrackedEvents = &UniqueStringSlice{}
 	}
 
 	var eChan chan<- *Event
-	if config.EventChan != nil {
-		eChan = config.EventChan
+	if conf.EventChan != nil {
+		eChan = conf.EventChan
 	} else {
-		panic("missing event channel")
+		err = errors.New("missing event channel")
+		return nil, err
 	}
 
 	client = &EvtClient{
-		trackedEvents: config.TrackedEvents,
+		conf:          conf,
+		trackedEvents: conf.TrackedEvents,
 		eventChan:     eChan,
+		a:             conf.A,
 	}
-	client.client, err = newClient(config, shardID)
+	client.client, err = newClient(&config{
+		Logger:         conf.Logger,
+		Endpoint:       conf.Endpoint,
+		DiscordPktPool: conf.DiscordPktPool,
+		Proxy:          conf.Proxy,
+		conn:           conf.conn,
+	}, shardID)
 	if err != nil {
 		return nil, err
 	}
+	client.connectPermit = client // adds  rate limiting for shards
 	client.setupBehaviors()
 	client.start()
 
@@ -54,28 +64,18 @@ type Event struct {
 	Data []byte
 }
 
-// Config ws
+// EvtConfig ws
 // TODO: remove shardID, such that this struct can be reused for every shard
-type Config struct {
+type EvtConfig struct {
 	// BotToken Discord bot token
 	BotToken string
+	Proxy    proxy.Dialer
 
-	// HTTPClient custom http client to support the use of proxy
-	HTTPClient *http.Client
-	Proxy      proxy.Dialer
+	// for testing only
+	conn Conn
 
 	// ChannelBuffer is used to set the event channel buffer
 	ChannelBuffer uint
-
-	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
-	// a valid socket endpoint from Discord
-	Endpoint string
-
-	// Encoding make sure we support the correct encoding
-	Encoding string
-
-	// Version make sure we support the correct Discord version
-	Version int
 
 	// TrackedEvents holds a list of predetermined events that should not be ignored.
 	// This is especially useful for creating multiple shards, to reuse the same slice
@@ -87,18 +87,30 @@ type Config struct {
 
 	A A
 
-	DiscordPktPool *sync.Pool
+	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
+	// a valid socket endpoint from Discord
+	Endpoint string
 
-	Logger constant.Logger
+	// Encoding make sure we support the correct encoding
+	Encoding string
+
+	// Version make sure we support the correct Discord version
+	Version int
 
 	// for identify packets
 	Browser             string
 	Device              string
 	GuildLargeThreshold uint
 	ShardCount          uint
+
+	DiscordPktPool *sync.Pool
+
+	Logger logger.Logger
 }
 
 type EvtClient struct {
+	conf *EvtConfig
+
 	*client
 	ReadyCounter uint
 
@@ -116,9 +128,50 @@ type EvtClient struct {
 	pulsating  uint8
 	pulseMutex sync.Mutex
 
+	// synchronization and rate limiting
+	K *K
+	a A
+
 	rdyPool *sync.Pool
 
 	identity *evtIdentity
+}
+
+//////////////////////////////////////////////////////
+//
+// SHARD synchronization & rate limiting
+//
+//////////////////////////////////////////////////////
+
+func (c *EvtClient) requestConnectPermit() (err error) {
+	c.Debug("trying to get Connect permission")
+	b := make(B)
+	defer close(b)
+	c.a <- b
+	c.Debug("waiting")
+	var ok bool
+	select {
+	case c.K, ok = <-b:
+		if !ok || c.K == nil {
+			c.Debug("unable to get Connect permission")
+			return errors.New("channel closed or K was nil")
+		}
+		c.Debug("got Connect permission")
+	case <-c.shutdown:
+		err = errors.New("shutting down")
+	}
+
+	return nil
+}
+
+func (c *EvtClient) releaseConnectPermit() error {
+	if c.K == nil {
+		return errors.New("K has not been granted yet")
+	}
+
+	c.K.Release <- c.K
+	c.K = nil
+	return nil
 }
 
 //////////////////////////////////////////////////////
