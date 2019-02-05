@@ -414,10 +414,12 @@ func sendIdentityPacket(c *EvtClient) (err error) {
 	}
 
 	err = c.Emit(event.Identify, c.identity)
-	err2 := c.connectPermit.releaseConnectPermit()
-	if err == nil && err2 != nil {
-		err = errors.New("unable to release connection permission. Err: " + err2.Error())
-	}
+
+	// ignore the error as identify can be called when the session is invalidated, DisGord
+	// does not try to reconnect cause Discord is just asking for a simple identification packet.
+	// Aka it doesn't need a connect permit and the error will always return, saying the
+	// connect permit has not yet been granted.
+	_ = c.connectPermit.releaseConnectPermit()
 
 	return
 }
