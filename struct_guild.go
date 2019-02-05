@@ -987,7 +987,15 @@ type Member struct {
 }
 
 func (m *Member) String() string {
-	return "member{user:" + m.User.Username + ", nick:" + m.Nick + ", ID:" + m.User.ID.String() + "}"
+	usrname := m.Nick
+	if m.User != nil {
+		usrname = m.User.Username
+	}
+	id := m.userID
+	if m.userID.Empty() && m.User != nil {
+		id = m.User.ID
+	}
+	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
 }
 
 // GetUser tries to ensure that you get a user object and not a nil. The user can be nil if the guild
@@ -1033,6 +1041,7 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	member.JoinedAt = m.JoinedAt
 	member.Deaf = m.Deaf
 	member.Mute = m.Mute
+	member.userID = m.userID
 
 	if m.User != nil {
 		member.User = m.User.DeepCopy().(*User)

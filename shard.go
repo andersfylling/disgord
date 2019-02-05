@@ -246,7 +246,7 @@ func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan 
 		// identity
 		Browser:             LibraryInfo(),
 		Device:              conf.ProjectName,
-		GuildLargeThreshold: 0, // don't load any members unless the user loads all members - avoids cache issues
+		GuildLargeThreshold: 250, // don't load any members unless the user loads all members - avoids cache issues
 		ShardCount:          s.total,
 
 		// lib specific

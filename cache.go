@@ -375,8 +375,8 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 				}
 			}
 		}
-		for _, member := range guild.Members {
-			member.User, err = cache.GetUser(member.userID)
+		for i, member := range guild.Members {
+			guild.Members[i].User, _ = cache.GetUser(member.userID)
 			// member has a GetUser method to handle nil users
 		}
 
