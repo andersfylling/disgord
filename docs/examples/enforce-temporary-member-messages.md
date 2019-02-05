@@ -28,22 +28,22 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 }
 
 func main() {
-	session, err := disgord.NewSession(&disgord.Config{
-		Token: os.Getenv("DISGORD_TOKEN"),
+	client, err := disgord.NewClient(&disgord.Config{
+		BotToken: os.Getenv("DISGORD_TOKEN"),
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	session.On(disgord.EventMessageCreate, autoDeleteNewMessages)
+	client.On(disgord.EventMessageCreate, autoDeleteNewMessages)
 
 	// connect to the discord gateway to receive events
-	err = session.Connect()
+	err = client.Connect()
 	if err != nil {
 		panic(err)
 	}
 
 	// graceful shutdown
-	session.DisconnectOnInterrupt()
+	client.DisconnectOnInterrupt()
 }
 ```

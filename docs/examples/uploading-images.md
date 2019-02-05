@@ -15,7 +15,7 @@ if err != nil {
 }
 defer f2.Close()
 
-discord.CreateChannelMessage(channelID, &disgord.CreateChannelMessageParams{
+client.CreateChannelMessage(channelID, &disgord.CreateChannelMessageParams{
 	Content: "This is my favourite image, and another in an embed!",
 	Files: []disgord.CreateChannelMessageFileParams{
 		{f1, "myfavouriteimage.jpg"},

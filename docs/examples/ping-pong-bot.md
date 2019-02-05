@@ -4,15 +4,15 @@ So the time has come where you want to be a bot engineer huh? In this article yo
 
 ```go
 // create a Disgord session
-session, err := disgord.NewSession(&disgord.Config{
-    Token: os.Getenv("DISGORD_TOKEN"),
+client, err := disgord.NewClient(&disgord.Config{
+    BotToken: os.Getenv("DISGORD_TOKEN"),
 })
 if err != nil {
     panic(err)
 }
 
 // create a handler and bind it to new message events
-session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+client.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     msg := data.Message
 
     fmt.Printf("user{%s} said: `%s`\n", msg.Author.Username, msg.Content) // noob logging
@@ -23,12 +23,11 @@ session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgo
 })
 
 // connect to the discord gateway to receive events
-err = session.Connect()
-if err != nil {
+if err = client.Connect(); err != nil {
     panic(err)
 }
 
 // Keep the socket connection alive, until you terminate the application
-session.DisconnectOnInterrupt()
+client.DisconnectOnInterrupt()
 ```
 If sending the response is slow. You are most likely rate limited, and Disgord is trying to wait out the rate limit delay before the message is sent. If you want to get an error message in stead of waiting enable the config option upon session creation, `Config.CancelRequestWhenRateLimited`. Note that if the bot has to wait a time that is longer than the http.Client.Timeout value, it always returns an error saying you were rate limited.
