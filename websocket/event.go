@@ -9,11 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/proxy"
+	"github.com/andersfylling/disgord/constant"
 
 	"github.com/andersfylling/disgord/websocket/cmd"
-
-	"github.com/andersfylling/disgord/constant"
+	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/event"

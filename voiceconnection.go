@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -103,10 +104,12 @@ waiter:
 	for {
 		select {
 		case state = <-stateCh:
+			fmt.Println("Got state")
 			if server != nil {
 				break waiter
 			}
 		case server = <-serverCh:
+			fmt.Println("Got server")
 			if state != nil {
 				break waiter
 			}

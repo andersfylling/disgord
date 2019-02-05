@@ -91,9 +91,6 @@ func NewClient(conf *Config) (*Client, error) {
 			sharding.TrackEvent.Add(event.Ready)
 			sharding.TrackEvent.Add(event.UserUpdate)
 		}
-		if !conf.CacheConfig.DisableVoiceStateCaching {
-			sharding.TrackEvent.Add(event.VoiceStateUpdate)
-		}
 		if !conf.CacheConfig.DisableChannelCaching {
 			sharding.TrackEvent.Add(event.ChannelCreate)
 			sharding.TrackEvent.Add(event.ChannelUpdate)
@@ -114,6 +111,10 @@ func NewClient(conf *Config) (*Client, error) {
 			sharding.TrackEvent.Add(event.GuildRoleUpdate)
 			sharding.TrackEvent.Add(event.GuildIntegrationsUpdate)
 		}
+
+		// Required for voice operation
+		sharding.TrackEvent.Add(event.VoiceStateUpdate)
+		sharding.TrackEvent.Add(event.VoiceServerUpdate)
 	}
 
 	sharding.TrackEvent.Add(event.VoiceStateUpdate)
@@ -292,6 +293,7 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 }
 
 func (c *Client) setupConnectEnv() {
+	fmt.Println("Setting up connect env")
 	// set the user ID upon connection
 	// only works with socket logic
 	c.Once(event.Ready, c.handlerSetSelfBotID)
@@ -1195,8 +1197,12 @@ func (c *Client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
+		fmt.Println("Got event", evt.Name)
 		if updater, implements := box.(internalUpdater); implements {
 			updater.updateInternals()
+		}
+		if updater, implements := box.(internalClientUpdater); implements {
+			updater.updateInternalsWithClient(c)
 		}
 
 		// cacheLink

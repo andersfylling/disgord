@@ -95,6 +95,10 @@ type internalUpdater interface {
 	updateInternals()
 }
 
+type internalClientUpdater interface {
+	updateInternalsWithClient(*Client)
+}
+
 // Discord types
 
 // helperTypes: timestamp, levels, etc.
