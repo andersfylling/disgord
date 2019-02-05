@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/httd"
+
 	"github.com/andersfylling/disgord/logger"
 
 	"github.com/andersfylling/disgord/websocket/cmd"
@@ -580,7 +582,8 @@ func (c *client) receiver() {
 		// see operationHandler for return/Put()
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
-		err = evt.UnmarshalJSON(packet)
+		//err = evt.UnmarshalJSON(packet) // custom unmarshal
+		err = httd.Unmarshal(packet, evt) // json.RawMessage
 		if err != nil {
 			c.Error(err.Error())
 			continue
