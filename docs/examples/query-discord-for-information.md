@@ -1,4 +1,6 @@
 ## Query Discord for information
+> NOTE! OUTDATED.
+
 > Warning! caching is not yet implemented and may change behaviour in the future
 
 In this article it is detailed how to fetch information about a user. You do also use the REST API to edit information, send messages, etc.

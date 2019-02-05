@@ -17,15 +17,18 @@ func main() {
 		panic(err)
 	}
 	
-	discord := disgord.NewSessionMustCompile(&disgord.Config{
-		Token: os.Getenv("DISGORD_TOKEN"),
+	client, err := disgord.NewClient(&disgord.Config{
+		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Proxy: p, // Anything satisfying the proxy.Dialer interface will work
 	})
-
-	if err := discord.Connect(); err != nil {
+	if err != nil {
 		panic(err)
 	}
 
-	discord.DisconnectOnInterrupt()
+	if err := client.Connect(); err != nil {
+		panic(err)
+	}
+
+	client.DisconnectOnInterrupt()
 }
 ```

@@ -2,8 +2,9 @@
 
 In Disgord it is required that you specify the event you are listening to using an event key (see package event). Unlike discordgo this library does not use reflection to understand which event type your function reacts to.
 ```go
-session, err := disgord.NewSession(&disgord.Config{
-    Token: os.Getenv("DISGORD_TOKEN"),
+
+client, err := disgord.NewClient(&disgord.Config{
+    BotToken: os.Getenv("DISGORD_TOKEN"),
 })
 if err != nil {
     panic(err)
@@ -13,18 +14,18 @@ if err != nil {
 // handlers/listener are run in sequence if you register more than one
 // so you should not need to worry about locking your objects unless you do any
 // parallel computing with said objects
-session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+client.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
 })
 
 // connect to the discord gateway to receive events
-err = session.Connect()
+err = client.Connect()
 if err != nil {
     panic(err)
 }
 
 // Keep the socket connection alive, until you terminate the application
-session.DisconnectOnInterrupt()
+client.DisconnectOnInterrupt()
 ```
 
 Note that if you dislike the long `disgord.EventMessageCreate` name. You can use the sub package `event`. However, the `event` package will only hold valid Discord events.
@@ -36,8 +37,8 @@ session.On(event.MessageCreate, func(session disgord.Session, data *disgord.Mess
 
 In addition, Disgord also supports the use of channels for handling events. It is extremely important that you remember to tell disgord which events you want, before you start using channels. Failure to do so may result in the desired events being discarded at the socket layer, as you did not notify you wanted them. See the code example below.
 ```go
-session, err := disgord.NewSession(&disgord.Config{
-    Token: os.Getenv("DISGORD_TOKEN"),
+client, err := disgord.NewClient(&disgord.Config{
+    BotToken: os.Getenv("DISGORD_TOKEN"),
 })
 if err != nil {
     panic(err)
@@ -48,8 +49,8 @@ go func() {
     // channels are more advanced and requires you to register which event-channels
     // you will be using, in advanced. Otherwise you may not receive an event on the given channel.
     // See disgord.Session.AcceptEvent
-    sess.AcceptEvent(disgord.EventGuildCreate) // IMPORTANT!
-    var messageCreateChan = session.EventChannels().MessageCreate()
+    client.AcceptEvent(disgord.EventGuildCreate) // IMPORTANT!
+    var messageCreateChan = client.EventChannels().MessageCreate()
     for {
         var msg *disgord.Message
 
@@ -72,13 +73,13 @@ go func() {
 }()
 
 // connect to the discord gateway to receive events
-err = session.Connect()
+err = client.Connect()
 if err != nil {
     panic(err)
 }
 
 // Keep the socket connection alive, until you terminate the application
-session.DisconnectOnInterrupt()
+client.DisconnectOnInterrupt()
 ```
 
 > **Note:** That you might experience parallel handling of event objects if you choose to use channels. However, this will only happen if you use the same channel in two or more of your own goroutines.
