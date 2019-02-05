@@ -29,7 +29,7 @@ func getAllJSONFiles(t *testing.T) (files [][]byte) {
 	return
 }
 
-func TestDiscordEvent_CustomUnmarshaller(t *testing.T) {
+func TestDiscordPacket_UnmarshalJSON(t *testing.T) {
 	files := getAllJSONFiles(t)
 	for _, file := range files {
 		evt := DiscordPacket{}

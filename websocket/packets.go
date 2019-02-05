@@ -138,8 +138,8 @@ func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 type DiscordPacket struct {
 	Op             uint   `json:"op"`
 	Data           []byte `json:"d"`
-	SequenceNumber uint   `json:"s"`
-	EventName      string `json:"t"`
+	SequenceNumber uint   `json:"s,omitempty"`
+	EventName      string `json:"t,omitempty"`
 }
 
 // UnmarshalJSON see interface json.Unmarshaler

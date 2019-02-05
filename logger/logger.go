@@ -1,6 +1,4 @@
-package constant
-
-// I know this isn't optimal...
+package logger
 
 // Logger super basic logging interface
 type Logger interface {

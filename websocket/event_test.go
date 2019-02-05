@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andersfylling/disgord/logger"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
@@ -23,6 +25,7 @@ type testWS struct {
 }
 
 func (g *testWS) Open(endpoint string, requestHeader http.Header) (err error) {
+	fmt.Println("hmmmm")
 	g.opening <- 1
 	g.Lock()
 	g.disconnected = false
@@ -107,46 +110,36 @@ func TestManager_reconnect(t *testing.T) {
 
 	eChan := make(chan *Event)
 	aChan := make(A)
-	m := &EvtClient{
-		trackedEvents: &UniqueStringSlice{},
-		eventChan:     eChan,
-		client: &client{
-			conf: &Config{
-				// identity
-				Browser:             "disgord",
-				Device:              "disgord",
-				GuildLargeThreshold: 250,
+	m, err := NewEventClient(&EvtConfig{
+		// identity
+		Browser:             "disgord",
+		Device:              "disgord",
+		GuildLargeThreshold: 250,
 
-				// lib specific
-				Version:       constant.DiscordVersion,
-				Encoding:      constant.JSONEncoding,
-				ChannelBuffer: 3,
-				Endpoint:      "sfkjsdlfsf",
-				A:             aChan,
+		// lib specific
+		Endpoint:      "sfkjsdlfsf",
+		Version:       constant.DiscordVersion,
+		Encoding:      constant.JSONEncoding,
+		ChannelBuffer: 3,
+		Logger:        logger.DefaultLogger(true),
 
-				// user settings
-				BotToken: "sifhsdoifhsdifhsdf",
-				HTTPClient: &http.Client{
-					Timeout: time.Second * 10,
-				},
-			},
-			behaviors:    map[string]*behavior{},
-			shutdown:     make(chan interface{}),
-			restart:      make(chan interface{}),
-			receiveChan:  make(chan *DiscordPacket),
-			emitChan:     make(chan *clientPacket),
-			conn:         conn,
-			disconnected: true,
-			ratelimit:    newRatelimiter(),
-			a:            aChan,
-			poolDiscordPkt: &sync.Pool{
-				New: func() interface{} {
-					return &DiscordPacket{}
-				},
+		// user settings
+		BotToken: "sifhsdoifhsdifhsdf",
+		DiscordPktPool: &sync.Pool{
+			New: func() interface{} {
+				return &DiscordPacket{}
 			},
 		},
+
+		// injected for testing
+		A:         aChan,
+		EventChan: eChan,
+		conn:      conn,
+	}, 0)
+	if err != nil {
+		t.Fatal(err)
 	}
-	m.connectPermit = m.client
+	m.client.timeoutMultiplier = 0
 	seq := uint(1)
 
 	shutdown := make(chan interface{})
@@ -193,6 +186,7 @@ func TestManager_reconnect(t *testing.T) {
 
 	// mocked websocket server.. ish
 	go func(seq *uint) {
+		defer fmt.Println("stopped")
 		for {
 			var data *clientPacket
 			select {
@@ -205,8 +199,10 @@ func TestManager_reconnect(t *testing.T) {
 				wg[disconnecting].Done()
 				continue
 			case <-shutdown:
+				fmt.Println("shutdown")
 				return
 			case <-done:
+				fmt.Println("done")
 				return
 			}
 			switch data.Op {

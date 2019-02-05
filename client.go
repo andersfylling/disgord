@@ -139,7 +139,7 @@ func NewClient(conf *Config) (*Client, error) {
 	return c, nil
 }
 
-// Config Configuration for the DisGord client
+// EvtConfig Configuration for the DisGord client
 type Config struct {
 	BotToken   string
 	HTTPClient *http.Client
