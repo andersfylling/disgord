@@ -10,7 +10,6 @@ const (
 	StatusUpdate        = "STATUS_UPDATE"
 	VoiceStateUpdate    = "VOICE_STATE_UPDATE"
 	RequestGuildMembers = "REQUEST_GUILD_MEMBERS"
-	VoiceSpeaking       = "SPEAKING"
 )
 
 // custom events for Disgord. Don't use these.
