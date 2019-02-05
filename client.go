@@ -293,7 +293,6 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 }
 
 func (c *Client) setupConnectEnv() {
-	fmt.Println("Setting up connect env")
 	// set the user ID upon connection
 	// only works with socket logic
 	c.Once(event.Ready, c.handlerSetSelfBotID)
@@ -1197,7 +1196,6 @@ func (c *Client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
-		fmt.Println("Got event", evt.Name)
 		if updater, implements := box.(internalUpdater); implements {
 			updater.updateInternals()
 		}
