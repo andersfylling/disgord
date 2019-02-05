@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"fmt"
+
 	"github.com/andersfylling/disgord/constant"
 	"go.uber.org/zap"
 )
@@ -32,15 +34,38 @@ type LoggerZap struct {
 	instance *zap.Logger
 }
 
-func (log *LoggerZap) Debug(msg string) {
-	log.instance.Debug(msg)
+func (log *LoggerZap) getMessage(v ...interface{}) (sentence string) {
+	for i := range v {
+		var msg string
+		switch t := v[i].(type) {
+		case string:
+			msg = t
+		case error:
+			msg = t.Error()
+		default:
+			// TODO
+			msg = fmt.Sprint(v[i])
+		}
+
+		if sentence != "" {
+			sentence += " " + msg
+		} else {
+			sentence = msg
+		}
+	}
+
+	return sentence
+}
+
+func (log *LoggerZap) Debug(v ...interface{}) {
+	log.instance.Debug(log.getMessage(v))
 	_ = log.instance.Sync()
 }
-func (log *LoggerZap) Info(msg string) {
-	log.instance.Info(msg)
+func (log *LoggerZap) Info(v ...interface{}) {
+	log.instance.Info(log.getMessage(v))
 	_ = log.instance.Sync()
 }
-func (log *LoggerZap) Error(msg string) {
-	log.instance.Error(msg)
+func (log *LoggerZap) Error(v ...interface{}) {
+	log.instance.Error(log.getMessage(v))
 	_ = log.instance.Sync()
 }

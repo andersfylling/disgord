@@ -241,19 +241,19 @@ func (c *Client) logErr(msg string) {
 	c.Error(msg)
 }
 
-func (c *Client) Info(msg string) {
+func (c *Client) Info(v ...interface{}) {
 	if c.log != nil {
-		c.log.Info(msg)
+		c.log.Info(v)
 	}
 }
-func (c *Client) Debug(msg string) {
+func (c *Client) Debug(v ...interface{}) {
 	if c.log != nil {
-		c.log.Debug(msg)
+		c.log.Debug(v)
 	}
 }
-func (c *Client) Error(msg string) {
+func (c *Client) Error(v ...interface{}) {
 	if c.log != nil {
-		c.log.Error(msg)
+		c.log.Error(v)
 	}
 }
 
