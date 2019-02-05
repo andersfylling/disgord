@@ -978,7 +978,7 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 //  Comment                 -
 func (c *Client) GetCurrentUser() (builder *getUserBuilder) {
 	builder = &getUserBuilder{
-		UserID: c.myID,
+		UserID: c.myID, // used to check cache
 	}
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,

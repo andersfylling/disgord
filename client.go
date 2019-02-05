@@ -111,12 +111,9 @@ func NewClient(conf *Config) (*Client, error) {
 			sharding.TrackEvent.Add(event.GuildRoleUpdate)
 			sharding.TrackEvent.Add(event.GuildIntegrationsUpdate)
 		}
-
-		// Required for voice operation
-		sharding.TrackEvent.Add(event.VoiceStateUpdate)
-		sharding.TrackEvent.Add(event.VoiceServerUpdate)
 	}
 
+	// Required for voice operation
 	sharding.TrackEvent.Add(event.VoiceStateUpdate)
 	sharding.TrackEvent.Add(event.VoiceServerUpdate)
 
@@ -295,7 +292,6 @@ func (c *Client) RateLimiter() httd.RateLimiter {
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
-	c.Once(event.Ready, c.handlerSetSelfBotID)
 	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
 	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
 	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
@@ -312,8 +308,7 @@ func (c *Client) Connect() (err error) {
 	//
 	// also verifies that the correct credentials were supplied
 	var me *User
-	me, err = c.GetCurrentUser().Execute()
-	if err != nil {
+	if me, err = c.GetCurrentUser().Execute(); err != nil {
 		return
 	}
 	c.myID = me.ID
@@ -339,8 +334,8 @@ func (c *Client) Connect() (err error) {
 		c.Info(err)
 		return
 	}
-	c.Info("Connected")
 
+	c.Info("Connected")
 	return nil
 }
 
