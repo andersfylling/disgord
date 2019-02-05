@@ -34,9 +34,6 @@ func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
 	}
 }
 
-func (c *Client) handlerSetSelfBotID(session Session, rdy *Ready) {
-	c.myID = rdy.User.ID
-}
 func (c *Client) handlerUpdateSelfBot(session Session, update *UserUpdate) {
 	_ = session.Cache().Update(UserCache, update.User)
 }
