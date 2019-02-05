@@ -1,7 +1,5 @@
 package disgord
 
-import "fmt"
-
 // handlerGuildDelete update internal state when joining or creating a guild
 func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
@@ -37,7 +35,6 @@ func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
 }
 
 func (c *Client) handlerSetSelfBotID(session Session, rdy *Ready) {
-	fmt.Println("Got READY in selfbot setter")
 	c.myID = rdy.User.ID
 }
 func (c *Client) handlerUpdateSelfBot(session Session, update *UserUpdate) {
