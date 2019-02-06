@@ -67,7 +67,8 @@ type Deleter interface {
 type ErrREST struct {
 	Code       int    `json:"code"`
 	Msg        string `json:"message"`
-	Suggestion string
+	Suggestion string `json:"-"`
+	HTTPCode   int    `json:"-"`
 }
 
 func (e *ErrREST) Error() string {
@@ -318,11 +319,18 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	withinSuccessScope := 200 <= resp.StatusCode && resp.StatusCode < 300
 	if !(noDiff || withinSuccessScope) {
 		// not within successful http range
-		// TODO: redirects?
 		msg := "response was not within the successful http code range [200, 300). code: "
-		msg += strconv.Itoa(resp.StatusCode) + ", response: "
-		msg += string(body)
-		err = errors.New(msg)
+		msg += strconv.Itoa(resp.StatusCode)
+
+		err = &ErrREST{
+			Suggestion: msg,
+			HTTPCode:   resp.StatusCode,
+		}
+
+		// store the Discord error if it exists
+		if len(body) > 0 {
+			_ = Unmarshal(body, err)
+		}
 	}
 
 	return
