@@ -125,7 +125,7 @@ waiter:
 	defer func(v *voiceImpl) {
 		if !v.ready {
 			if v.ws != nil {
-				_ = v.ws.Disconnect()
+				_ = v.ws.Shutdown()
 			}
 			if v.udp != nil {
 				_ = v.udp.Close()
