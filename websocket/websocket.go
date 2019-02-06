@@ -45,7 +45,3 @@ type K struct {
 	Release B
 	Key     interface{}
 }
-
-// diagnosing
-const DiagnosePath = "diagnose-report"
-const DiagnosePath_packets = "diagnose-report/packets"
