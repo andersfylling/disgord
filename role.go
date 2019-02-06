@@ -80,7 +80,7 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (r *Role) saveToDiscord(session Session) (err error) {
+func (r *Role) saveToDiscord(session Session, changes discordSaver) (err error) {
 	if r.guildID.Empty() {
 		err = newErrorMissingSnowflake("role has no guildID")
 		return
@@ -101,33 +101,36 @@ func (r *Role) saveToDiscord(session Session) (err error) {
 			return
 		}
 		err = role.CopyOverTo(r)
-	} else {
-		// modify/update role
-		params := ModifyGuildRoleParams{}
-		params.SetName(r.Name)
-		params.SetPermissions(r.Permissions)
-		params.SetColor(r.Color)
-		params.SetHoist(r.Hoist)
-		params.SetMentionable(r.Mentionable)
-		role, err = session.ModifyGuildRole(r.guildID, r.ID, &params)
-		if err != nil {
-			return
-		}
-		if role.Position != r.Position {
-			// update the position
-			params := []ModifyGuildRolePositionsParams{{
-				ID:       r.ID,
-				Position: r.Position,
-			}}
-			_, err = session.ModifyGuildRolePositions(r.guildID, params)
-			if err != nil {
-				return
-			}
-			role.Position = r.Position
-		}
+		return err
 	}
 
-	return
+	return errors.New("updating discord objects are not yet implemented - only saving new ones")
+	//
+	//// modify/update role
+	//params := ModifyGuildRoleParams{}
+	//params.SetName(r.Name)
+	//params.SetPermissions(r.Permissions)
+	//params.SetColor(r.Color)
+	//params.SetHoist(r.Hoist)
+	//params.SetMentionable(r.Mentionable)
+	//role, err = session.ModifyGuildRole(r.guildID, r.ID, &params)
+	//if err != nil {
+	//	return
+	//}
+	//if role.Position != r.Position {
+	//	// update the position
+	//	params := []ModifyGuildRolePositionsParams{{
+	//		ID:       r.ID,
+	//		Position: r.Position,
+	//	}}
+	//	_, err = session.ModifyGuildRolePositions(r.guildID, params)
+	//	if err != nil {
+	//		return
+	//	}
+	//	role.Position = r.Position
+	//}
+	//
+	//return
 }
 
 func (r *Role) deleteFromDiscord(session Session) (err error) {

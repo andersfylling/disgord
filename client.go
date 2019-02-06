@@ -459,10 +459,24 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
 	return
 }
 
-// SaveToDiscord saves an object to the Discord servers. This supports creation of new objects or udpating/modifying
-// existing objects. It really depends on how the object has implemented the private interface discordSaver.
-func (c *Client) SaveToDiscord(obj discordSaver) (err error) {
-	err = obj.saveToDiscord(c)
+// SaveToDiscord saves an object to the Discord servers. This supports creation of new objects. Given two arguments,
+// the original object before changes (that reflects the most recent known discord state) and the new object that
+// represents what the state should look like, the changes can be determined by a basic diff check and let DisGord
+// try to udpating/modify the object at Discord.
+//
+// client.SaveToDiscord(object) -> saves an entirely new object (must not have a discord id)
+// client.SaveToDiscord(original, new) -> updates an existing object (must have a discord id)
+func (c *Client) SaveToDiscord(objects ...discordSaver) (err error) {
+	if len(objects) == 0 {
+		return errors.New("you must specify at least one discord object to be saved to Discord")
+	}
+
+	var changes discordSaver
+	if len(objects) > 1 {
+		changes = objects[1]
+	}
+
+	err = objects[0].saveToDiscord(c, changes)
 	return
 }
 

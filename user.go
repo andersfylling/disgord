@@ -564,10 +564,9 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	return
 }
 
-func (u *User) saveToDiscord(session Session) (err error) {
+func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) {
 	var myself *User
-	myself, err = session.Myself()
-	if err != nil {
+	if myself, err = session.Myself(); err != nil {
 		return
 	}
 	if myself == nil {
@@ -581,20 +580,19 @@ func (u *User) saveToDiscord(session Session) (err error) {
 	}
 
 	params := &ModifyCurrentUserParams{}
-	if u.Username != "" {
-		params.SetUsername(u.Username)
-	}
-	if u.Avatar != nil && u.Avatar != myself.Avatar {
-		// TODO: allow resetting the avatar, somehow
+	params.SetUsername(u.Username)
+	if u.Avatar == nil {
+		params.UseDefaultAvatar()
+	} else {
 		params.SetAvatar(*u.Avatar)
 	}
 
 	var updated *User
-	updated, err = session.ModifyCurrentUser(params)
-	if err != nil {
+	if updated, err = session.ModifyCurrentUser(params); err != nil {
 		return
 	}
 
+	// TODO: remove once ModifyCurrentUser updates cache and the client var
 	*u = *updated
 	return
 }
@@ -1051,6 +1049,7 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 // ModifyCurrentUser .
 func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
 	ret, err = ModifyCurrentUser(c.req, params)
+	// TODO cache and update client
 	return
 }
 

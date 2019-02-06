@@ -5,7 +5,6 @@ package disgord
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/andersfylling/disgord/httd"
@@ -135,7 +134,6 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 		cache.RemoveGuildMember(evt.GuildID, evt.User.ID)
 	// TODO: mark user as free from guild...
 	case EventGuildRoleCreate:
-		fmt.Println("a")
 		evt := v.(*GuildRoleCreate)
 		cache.AddGuildRole(evt.GuildID, evt.Role)
 	//case EventGuildRoleUpdate:

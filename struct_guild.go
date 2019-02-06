@@ -770,7 +770,7 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 }
 
 // saveToDiscord creates a new Guild if ID is empty or updates an existing one
-func (g *Guild) saveToDiscord(session Session) (err error) {
+func (g *Guild) saveToDiscord(session Session, changes discordSaver) (err error) {
 	return errors.New("not implemented")
 }
 func (g *Guild) deleteFromDiscord(session Session) (err error) {
@@ -982,8 +982,10 @@ type Member struct {
 	Nick     string      `json:"nick,omitempty"` // ?|
 	Roles    []Snowflake `json:"roles"`
 	JoinedAt Timestamp   `json:"joined_at,omitempty"`
-	Deaf     bool        `json:"deaf"`
-	Mute     bool        `json:"mute"`
+
+	// voice
+	Deaf bool `json:"deaf"`
+	Mute bool `json:"mute"`
 
 	// used for caching
 	userID Snowflake

@@ -63,7 +63,7 @@ func (e *ErrorUnsupportedType) Error() string {
 // snowflake is missing/not set, it will create content (if possible,
 // otherwise you will get an error)
 type discordSaver interface {
-	saveToDiscord(session Session) error
+	saveToDiscord(session Session, changes discordSaver) error
 }
 
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given

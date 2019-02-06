@@ -212,11 +212,12 @@ func (m *Message) deleteFromDiscord(session Session) (err error) {
 	err = session.DeleteMessage(m.ChannelID, m.ID)
 	return
 }
-func (m *Message) saveToDiscord(session Session) (err error) {
+func (m *Message) saveToDiscord(session Session, changes discordSaver) (err error) {
 	var message *Message
 	if m.ID.Empty() {
 		message, err = m.Send(session)
 	} else {
+		return errors.New("updating discord objects are not yet implemented - only saving new ones")
 		message, err = m.update(session)
 	}
 

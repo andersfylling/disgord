@@ -150,8 +150,18 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-func (c *Channel) saveToDiscord(session Session) (err error) {
+func (c *Channel) saveToDiscord(session Session, changes discordSaver) (err error) {
 	var updated *Channel
+
+	// verify discord request
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		*c = *updated
+	}()
+
 	if c.ID.Empty() {
 		if c.Type != ChannelTypeDM && c.Type != ChannelTypeGroupDM {
 			// create
@@ -204,48 +214,45 @@ func (c *Channel) saveToDiscord(session Session) (err error) {
 		} else {
 			err = errors.New("cannot save to discord. Does not recognise what needs to be saved")
 		}
-	} else {
-		// modify / update channel
-		changes := ModifyChannelParams{}
-
-		// specific
-		if c.Type == ChannelTypeDM {
-			// nothing to change
-		} else if c.Type == ChannelTypeGroupDM {
-			// nothing to change
-		} else if c.Type == ChannelTypeGuildText {
-			changes.SetNSFW(c.NSFW)
-			changes.SetTopic(c.Topic)
-			changes.SetRateLimitPerUser(c.RateLimitPerUser)
-		} else if c.Type == ChannelTypeGuildVoice {
-			changes.SetBitrate(c.Bitrate)
-			changes.SetUserLimit(c.UserLimit)
-		}
-
-		// shared
-		if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
-			if c.ParentID.Empty() {
-				changes.RemoveParentID()
-			} else {
-				changes.SetParentID(c.ParentID)
-			}
-		}
-
-		// for all
-		changes.SetName(c.Name)
-		changes.SetPosition(c.Position)
-		changes.SetPermissionOverwrites(c.PermissionOverwrites)
-
-		updated, err = session.ModifyChannel(c.ID, &changes)
+		return err
 	}
 
-	// verify discord request
-	if err != nil {
-		return
-	}
-
-	*c = *updated
-	return
+	return errors.New("updating discord objects are not yet implemented - only saving new ones")
+	//
+	//
+	//// modify / update channel
+	//changes := ModifyChannelParams{}
+	//
+	//// specific
+	//if c.Type == ChannelTypeDM {
+	//	// nothing to change
+	//} else if c.Type == ChannelTypeGroupDM {
+	//	// nothing to change
+	//} else if c.Type == ChannelTypeGuildText {
+	//	changes.SetNSFW(c.NSFW)
+	//	changes.SetTopic(c.Topic)
+	//	changes.SetRateLimitPerUser(c.RateLimitPerUser)
+	//} else if c.Type == ChannelTypeGuildVoice {
+	//	changes.SetBitrate(c.Bitrate)
+	//	changes.SetUserLimit(c.UserLimit)
+	//}
+	//
+	//// shared
+	//if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
+	//	if c.ParentID.Empty() {
+	//		changes.RemoveParentID()
+	//	} else {
+	//		changes.SetParentID(c.ParentID)
+	//	}
+	//}
+	//
+	//// for all
+	//changes.SetName(c.Name)
+	//changes.SetPosition(c.Position)
+	//changes.SetPermissionOverwrites(c.PermissionOverwrites)
+	//
+	//updated, err = session.ModifyChannel(c.ID, &changes)
+	//return
 }
 
 func (c *Channel) deleteFromDiscord(session Session) (err error) {

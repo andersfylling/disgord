@@ -266,7 +266,7 @@ type Session interface {
 
 	// Generic CRUD operations for Discord interaction
 	DeleteFromDiscord(obj discordDeleter) error
-	SaveToDiscord(obj discordSaver) error
+	SaveToDiscord(objects ...discordSaver) error
 
 	// state/caching module
 	// checks the cacheLink first, otherwise do a http request

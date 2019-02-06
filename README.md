@@ -9,9 +9,7 @@
 ## About
 GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
-Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, although unit-tests have been created for several of the Disgord REST implementations. The socketing is not complete, but does support all event types that are documented (using both channels and handlers).
-
-Disgord does not utilize reflection, except in unit tests and unmarshalling/marshalling of JSON. But does return custom error messages for some functions which can be type checked in a switch for a more readable error handling as well potentially giving access to more information.
+Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, hence the "contains technical debt" label, so any bug report/feedback is greatly appreciated!
 
 To get started see the examples in [docs](docs/examples)
 
@@ -21,15 +19,11 @@ You can find a live chats for DisGord in Discord. We exist in both the Gopher se
  - [Discord API](https://discord.gg/HBTHbme)
 
 ## Issues and behavior you must be aware of
-The `Client.SaveToDiscord` method works great for creating new objects (make sure the obj has no Discord ID). However, when using it to update objects you must be careful that you provide a object that was first populated by Discord (cache is acceptable), otherwise you might start resetting objects in your Discord server. This behaviour will be fixed in v0.9 and force `SaveToDiscord(...)` to only create new objects, and allows updating them by introducing extra parameters (eg. `SaveToDiscord(originalObj, updatedObj)`).
-
 Currently the caching focuses on being very configurable instead of as optimal as possible. This will change in the future, such that you will need to use build constraints if you want to tweak your cache configuration. But for now, or users that don't worry about this should know that all of your requests runs through the cache layer. You can overwrite the cache depending on REST method:
  - For those with a builder pattern, you can simply call `.IgnoreCache()` before you call `.Execute()`
  - The remaining methods will require you to use the exported package functions (see /docs/examples) for how to in detail.
 
-When using sharding, you are in charge of rate limiting how often your shards connect to the gateway. This might introduce an issue for larger bots and will be fixed in the future. See [issue #82](https://github.com/andersfylling/disgord/issues/82).
-
-The develop branch is under continuous breaking changes, so please use releases or be prepared to have a breaking codebase. A release branch will be introduced later when DisGord gets close to its v1.0.0 release.
+The develop branch is under continuous breaking changes, so please use releases or be prepared to have a breaking codebase. A release branch will be introduced later when DisGord gets close to its v1.0.0 release. This is one of the reasons go modules is the only official supported way to use DisGord.
 
 ## Logging
 DisGord allows you to inject your own logger, use the default one for DisGord (Zap), do not use any logging at all, you decide. To inject your own logger you must comply with the interface `disgord.Logger` (see logging.go).
@@ -42,6 +36,7 @@ github.com/andersfylling/disgord
 └──cache        :Different cache replacement algorithms
 └──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
+└──logger       :Logger interface and Zap wrapper
 └──endpoint     :All the REST endpoints of Discord
 └──ratelimit    :All the ratelimit keys for the REST endpoints
 └──event        :All the Discord event identifiers
@@ -69,13 +64,13 @@ However, json-iterator is the recommended default for this library.
 
 Disgord has the option to use mutexes (sync.RWMutex) on Discord objects. By default, methods of Discord objects are not locked as this is
 not needed in our event driven architecture unless you create a parallel computing environment.
-If you want the internal methods to deal with read-write locks on their own, you can pass `-tags=parallelism`, which will activate built-in locking.
+If you want the internal methods to deal with read-write locks on their own, you can pass `-tags=disgord_parallelism`, which will activate built-in locking.
 Making all methods thread safe.
 
 If you want to remove the extra memory used by mutexes, or you just want to completely avoid potential deadlocks by disabling
-mutexes you can pass `-tags=removeDiscordMutex` which will replace the RWMutex with an empty struct, causing mutexes (in Discord objects only) to be removed at compile time.
+mutexes you can pass `-tags=disgord_removeDiscordMutex` which will replace the RWMutex with an empty struct, causing mutexes (in Discord objects only) to be removed at compile time.
 This cannot be the default behaviour, as it creates confusion whether or not a mutex exists and leads to more error prone code. The developer has to be aware themselves whether or not
-their code can be run without the need of mutexes. This option is not affected by the `parallelism` tag.
+their code can be run without the need of mutexes. This option is not affected by the `disgord_parallelism` tag.
 
 ## Setup / installation guide
 As this is a go module, it is expected that your project utilises the module concept (minimum Go version: 1.11). If you do not, then there is no guarantee that using this will work. To get this, simply use go get: `go get github.com/andersfylling/disgord`. I have been using this project in none module projects, so it might function for you as well. But official, this is not supported.
@@ -95,13 +90,13 @@ So if you haven't used modules before and you just want to create a Bot using Di
     func main() {
         session, err := disgord.NewClient(&disgord.Config{
             BotToken: "DISGORD_TOKEN",
-            Logger: disgord.DefaultLogger(false), // optional logging
+            Logger: disgord.DefaultLogger(false), // optional logging, debug=false
         })
         if err != nil {
             panic(err)
         }
 
-        // note that the .Execute() is not on every REST method of DisGord (yet?)
+        // note that the .Execute() is not on every REST method of DisGord (yet)
         myself, err := session.GetCurrentUser().Execute()
         if err != nil {
             panic(err)
@@ -128,41 +123,61 @@ The branch:develop holds the most recent changes, as it name implies. There is n
 The cache can be either immutable (recommended) or mutable. When the cache is mutable you will share the memory space with the cache, such that if you change your data structure you might also change the cache directly. However, by using the immutable option all incoming data is deep copied to the cache and you will not be able to directly access the memory space, this should keep your code less error-prone and allow for concurrent cache access in case you want to use channels or other long-running tasks/processes.
 
 #### Requests
-For every REST API request the request is rate limited and cached auto-magically by Disgord. This means that when you utilize the Session interface you won't have to worry about rate limits and data is cached to improve performance. See the GoDoc for how to bypass the caching.
+For every REST API request the request is rate limited and cached auto-magically by DisGord. This means that when you utilize the Session interface you won't have to worry about rate limits and data is cached to improve performance. See the GoDoc for how to bypass the caching.
 
 #### Events
+> Note: if requested, a build flag can be added to use pro-actor pattern instead of reactor for handlers.
+
 The reactor pattern is used. This will always be the default behavior, however channels will ofcourse work more as a pro-actor system as you deal with the data parallel to other functions.
 Incoming events from the discord servers are parsed into respective structs and dispatched to either a) handlers, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. Pick handlers (register them using Session.On method) simplicity as they run in sequence, while channels are executed in a parallel setting (it's expected you understand how channels work so I won't go in-depth here).
 
 ## Quick example
 > **NOTE:** To see more examples go visit the docs/examples folder.
-See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot.
+See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
 ```go
-// create a Disgord session
-session, err := disgord.NewSession(&disgord.Config{
-    Token: os.Getenv("DISGORD_TOKEN"),
-})
-if err != nil {
-    panic(err)
-}
+package main 
 
-// create a handler and bind it to new message events
-session.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+import (
+	"github.com/andersfylling/disgord"
+	"os"
+)
+
+func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
     msg := data.Message
-
+    
+    // whenever the message written is "ping", the bot replies "pong"
     if msg.Content == "ping" {
         msg.RespondString(session, "pong")
     }
-})
-
-// connect to the discord gateway to receive events
-err = session.Connect()
-if err != nil {
-    panic(err)
 }
 
-// Keep the socket connection alive, until you terminate the application
-session.DisconnectOnInterrupt()
+func main() {
+	var err error 
+	
+	botConfig := &disgord.Config{
+        BotToken: os.Getenv("DISGORD_TOKEN"),
+        Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+    }
+	
+    // create a Disgord session
+    var client *disgord.Client
+    if client, err = disgord.NewClient(botConfig); err != nil {
+        panic(err)
+    }
+    
+    // create a handler and bind it to new message events
+    client.On(disgord.EventMessageCreate, replyPongToPing)
+    
+    // connect to the discord gateway to receive events
+    if err = client.Connect(); err != nil {
+        panic(err)
+    }
+    
+    // Keep the socket connection alive, until you terminate the application (eg. Ctrl + C)
+    if err = client.DisconnectOnInterrupt(); err != nil {
+    	botConfig.Logger.Error(err) // reuse the logger from DisGord
+    }
+}
 ```
 
 ## Q&A
