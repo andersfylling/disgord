@@ -1200,7 +1200,7 @@ func (c *Client) eventHandler() {
 
 		// cacheLink
 		if !c.config.DisableCache {
-			cacheEvent(c.cache, evt.Name, box)
+			cacheEvent(c.cache, evt.Name, box, evt.Data)
 		}
 
 		// trigger listeners

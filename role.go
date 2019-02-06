@@ -260,12 +260,12 @@ type ModifyGuildRoleParams struct {
 	data map[string]interface{}
 }
 
-func (m *ModifyGuildRoleParams) init() {
-	if m.data != nil {
+func (p *ModifyGuildRoleParams) init() {
+	if p.data != nil {
 		return
 	}
 
-	m.data = map[string]interface{}{}
+	p.data = map[string]interface{}{}
 }
 
 func (p *ModifyGuildRoleParams) SetName(name string) {
@@ -293,12 +293,12 @@ func (p *ModifyGuildRoleParams) SetMentionable(mentionable bool) {
 	p.data["mentionable"] = mentionable
 }
 
-func (m *ModifyGuildRoleParams) MarshalJSON() ([]byte, error) {
-	if len(m.data) == 0 {
+func (p *ModifyGuildRoleParams) MarshalJSON() ([]byte, error) {
+	if len(p.data) == 0 {
 		return []byte(`{}`), nil
 	}
 
-	return httd.Marshal(m.data)
+	return httd.Marshal(p.data)
 }
 
 var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)

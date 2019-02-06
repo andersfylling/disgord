@@ -4,6 +4,8 @@ package disgord
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/andersfylling/disgord/httd"
@@ -33,7 +35,7 @@ func prepareBox(evtName string, box interface{}) {
 	}
 }
 
-func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
+func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage) (err error) {
 	// updates holds key and object to be cached
 	updates := map[cacheRegistry]([]interface{}){}
 
@@ -122,17 +124,27 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 			}
 		}
 	case EventGuildMemberUpdate:
-		//evt := v.(*GuildMemberUpdate)
-		//evt.
+		evt := v.(*GuildMemberUpdate)
+		cache.UpdateMemberAndUser(evt.GuildID, evt.User.ID, data)
+	case EventGuildMemberAdd:
+		evt := v.(*GuildMemberAdd)
+		cache.AddGuildMember(evt.Member.GuildID, evt.Member)
+		updates[UserCache] = append(updates[UserCache], evt.Member.User)
+	case EventGuildMemberRemove:
+		evt := v.(*GuildMemberRemove)
+		cache.RemoveGuildMember(evt.GuildID, evt.User.ID)
+	// TODO: mark user as free from guild...
+	case EventGuildRoleCreate:
+		fmt.Println("a")
+		evt := v.(*GuildRoleCreate)
+		cache.AddGuildRole(evt.GuildID, evt.Role)
+	//case EventGuildRoleUpdate:
+	//evt := v.(*GuildRoleUpdate)
 	default:
 		//case EventResumed:
 		//case EventGuildBanAdd:
 		//case EventGuildBanRemove:
 		//case EventGuildIntegrationsUpdate:
-		//case EventGuildMemberAdd:
-		//case EventGuildMemberRemove:
-		//case EventGuildRoleCreate:
-		//case EventGuildRoleUpdate:
 		//case EventMessageUpdate:
 		//case EventMessageDelete:
 		//case EventMessageDeleteBulk:

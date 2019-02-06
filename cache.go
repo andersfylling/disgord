@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -40,12 +41,16 @@ type Cacher interface {
 	DeleteChannel(channelID snowflake.ID)
 	DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
 	AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
+	AddGuildMember(guildID snowflake.ID, member *Member)
+	RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)
 	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)
+	UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)
 	DeleteGuild(guildID snowflake.ID)
 	DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)
 	UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID)
 	SetGuildEmojis(guildID Snowflake, emojis []*Emoji)
 	Updates(key cacheRegistry, vs []interface{}) error
+	AddGuildRole(guildID Snowflake, role *Role)
 }
 
 func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
@@ -533,13 +538,17 @@ func (g *guildCacheItem) deleteChannel(id Snowflake) {
 
 		g.channels[i] = g.channels[len(g.channels)-1]
 		g.channels = g.channels[:len(g.channels)-1]
-		g.guild.DeleteChannelByID(id)
+		_ = g.guild.DeleteChannelByID(id) // if cache is mutable
 		return
 	}
 }
 
 func (g *guildCacheItem) addChannel(channelID snowflake.ID) {
 	g.channels = append(g.channels, channelID)
+}
+
+func (g *guildCacheItem) addRole(role *Role) {
+	g.guild.Roles = append(g.guild.Roles, role)
 }
 
 // SetGuild adds a new guild to cacheLink or updates an existing one
@@ -651,6 +660,77 @@ func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 		}, c.immutable)
 		c.guilds.Set(guildID, c.guilds.CreateCacheableItem(content))
 	}
+}
+
+func (c *Cache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage) {
+	var tmpUser = &User{
+		ID: userID,
+	}
+	var member *Member
+	var newMember bool
+	c.guilds.Lock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		guild := item.Object().(*guildCacheItem)
+		for i := range guild.guild.Members {
+			if guild.guild.Members[i].userID == userID {
+				member = guild.guild.Members[i]
+				break
+			}
+		}
+	}
+	if member == nil {
+		newMember = true
+		member = &Member{
+			userID: userID,
+		}
+	}
+
+	member.User = tmpUser
+	if err := httd.Unmarshal(data, member); err != nil {
+		c.guilds.Unlock()
+		// TODO: logging
+		return
+	}
+	c.guilds.Unlock()
+
+	if newMember {
+		c.UpdateOrAddGuildMembers(guildID, []*Member{member})
+	}
+
+	c.SetUser(tmpUser)
+}
+
+func (c *Cache) AddGuildMember(guildID snowflake.ID, member *Member) {
+	guild, err := c.PeekGuild(guildID)
+	if err != nil {
+		return
+	}
+
+	c.guilds.Lock()
+	if member.User != nil {
+		member.userID = member.User.ID
+		member.User = nil
+	}
+	guild.Members = append(guild.Members, member)
+	c.guilds.Unlock()
+}
+
+func (c *Cache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID) {
+	guild, err := c.PeekGuild(guildID)
+	if err != nil {
+		return
+	}
+
+	c.guilds.Lock()
+	for i := range guild.Members {
+		if guild.Members[i].userID == memberID {
+			// delete member without preserving order
+			guild.Members[i] = guild.Members[len(guild.Members)-1]
+			guild.Members = guild.Members[:len(guild.Members)-1]
+			break
+		}
+	}
+	c.guilds.Unlock()
 }
 
 // GetGuild ...
@@ -898,6 +978,19 @@ func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 		item.Object().(*guildCacheItem).deleteChannel(channelID)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
+}
+
+func (c *Cache) AddGuildRole(guildID Snowflake, role *Role) {
+	if c.guilds == nil {
+		return
+	}
+
+	c.guilds.Lock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		item.Object().(*guildCacheItem).addRole(role)
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	}
+	c.guilds.Unlock()
 }
 
 func (c *Cache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID) {

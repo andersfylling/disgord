@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
 
@@ -28,7 +29,11 @@ func (m *mockCacheEvent) AddGuildChannel(guildID snowflake.ID, channelID snowfla
 func (m *mockCacheEvent) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)       {}
 func (m *mockCacheEvent) DeleteGuild(guildID snowflake.ID)                                          {}
 func (m *mockCacheEvent) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
+func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                                {}
 func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID) {}
+func (m *mockCacheEvent) AddGuildMember(guildID snowflake.ID, member *Member)                       {}
+func (m *mockCacheEvent) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)             {}
+func (m *mockCacheEvent) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)    {}
 func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                         {}
 func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
 	return nil
@@ -37,7 +42,7 @@ func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
 func TestCacheEvent(t *testing.T) {
 	cache := &mockCacheEvent{}
 	injectRandomEvents(t, func(name string, evt interface{}) error {
-		return cacheEvent(cache, name, evt)
+		return cacheEvent(cache, name, evt, nil)
 	})
 }
 
