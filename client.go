@@ -1203,14 +1203,6 @@ func (c *Client) eventHandler() {
 			cacheEvent(c.cache, evt.Name, box)
 		}
 
-		// voice
-		switch evt.Name {
-		case EventVoiceStateUpdate:
-			c.voiceRepository.onVoiceStateUpdate(box.(*VoiceStateUpdate))
-		case EventVoiceServerUpdate:
-			c.voiceRepository.onVoiceServerUpdate(box.(*VoiceServerUpdate))
-		}
-
 		// trigger listeners
 		prepareBox(evt.Name, box)
 		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
