@@ -139,7 +139,7 @@ func NewClient(conf *Config) (*Client, error) {
 	return c, nil
 }
 
-// EvtConfig Configuration for the DisGord client
+// Config Configuration for the DisGord client
 type Config struct {
 	BotToken   string
 	HTTPClient *http.Client
@@ -175,7 +175,7 @@ type Config struct {
 	Logger Logger
 }
 
-// conClient is the main disgord client to hold your state and data
+// Client is the main disgord client to hold your state and data
 type Client struct {
 	sync.RWMutex
 
