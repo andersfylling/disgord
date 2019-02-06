@@ -121,6 +121,9 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 				updates[UserCache][i] = evt.Members[i].User
 			}
 		}
+	case EventGuildMemberUpdate:
+		//evt := v.(*GuildMemberUpdate)
+		//evt.
 	default:
 		//case EventResumed:
 		//case EventGuildBanAdd:
@@ -128,7 +131,6 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 		//case EventGuildIntegrationsUpdate:
 		//case EventGuildMemberAdd:
 		//case EventGuildMemberRemove:
-		//case EventGuildMemberUpdate:
 		//case EventGuildRoleCreate:
 		//case EventGuildRoleUpdate:
 		//case EventMessageUpdate:

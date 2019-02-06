@@ -102,13 +102,12 @@ func (r *Role) saveToDiscord(session Session) (err error) {
 		err = role.CopyOverTo(r)
 	} else {
 		// modify/update role
-		params := ModifyGuildRoleParams{
-			Name:        r.Name,
-			Permissions: r.Permissions,
-			Color:       r.Color,
-			Hoist:       r.Hoist,
-			Mentionable: r.Mentionable,
-		}
+		params := ModifyGuildRoleParams{}
+		params.Name(r.Name)
+		params.Permissions(r.Permissions)
+		params.Color(r.Color)
+		params.Hoist(r.Hoist)
+		params.Mentionable(r.Mentionable)
 		role, err = session.ModifyGuildRole(r.guildID, r.ID, &params)
 		if err != nil {
 			return
@@ -257,11 +256,27 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []M
 
 // ModifyGuildRoleParams JSON params for func ModifyGuildRole
 type ModifyGuildRoleParams struct {
-	Name        string `json:"name,omitempty"`
-	Permissions uint64 `json:"permissions,omitempty"`
-	Color       uint   `json:"color,omitempty"`
-	Hoist       bool   `json:"hoist,omitempty"`
-	Mentionable bool   `json:"mentionable,omitempty"`
+	params map[string]interface{}
+}
+
+func (p *ModifyGuildRoleParams) Name(name string) {
+	p.params["name"] = name
+}
+
+func (p *ModifyGuildRoleParams) Permissions(permissions uint64) {
+	p.params["permissions"] = permissions
+}
+
+func (p *ModifyGuildRoleParams) Color(color uint) {
+	p.params["color"] = color
+}
+
+func (p *ModifyGuildRoleParams) Hoist(hoist bool) {
+	p.params["hoist"] = hoist
+}
+
+func (p *ModifyGuildRoleParams) Mentionable(mentionable bool) {
+	p.params["mentionable"] = mentionable
 }
 
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
