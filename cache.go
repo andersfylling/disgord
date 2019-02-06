@@ -22,6 +22,8 @@ const (
 	GuildCache
 	GuildEmojiCache
 	VoiceStateCache
+
+	GuildMembersCache
 )
 
 // the different cacheLink replacement algorithms
@@ -250,6 +252,10 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 		} else {
 			err = errors.New("can only save *Guild structures to guild cacheLink")
 		}
+	case GuildMembersCache:
+		if guild, ok := v.(*GuildMembersChunk); ok {
+			c.UpdateOrAddGuildMembers(guild.GuildID, guild.Members)
+		}
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
@@ -346,11 +352,11 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 			member.User = nil
 		}
 
-		g.channels = make([]snowflake.ID, len(g.guild.Channels))
-		for i, channel := range g.guild.Channels {
-			g.channels[i] = channel.ID
-		}
 		g.guild.Channels = nil
+		g.channels = make([]snowflake.ID, len(guild.Channels))
+		for i := range guild.Channels {
+			g.channels[i] = guild.Channels[i].ID
+		}
 	} else {
 		g.guild = guild
 
@@ -368,8 +374,7 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 		guild = g.guild.DeepCopy().(*Guild)
 		guild.Channels = make([]*Channel, len(g.channels))
 		for i := range g.channels {
-			guild.Channels[i], err = cache.GetChannel(g.channels[i])
-			if err != nil {
+			if guild.Channels[i], err = cache.GetChannel(g.channels[i]); err != nil {
 				guild.Channels[i] = &Channel{
 					ID: g.channels[i],
 				}
@@ -742,6 +747,41 @@ func (c *Cache) GetGuildEmojis(id Snowflake) (emojis []*Emoji, err error) {
 	}
 
 	return
+}
+
+// UpdateOrAddGuildMembers updates and add new members to the guild. It discards the user object
+// so these must be handled before hand.
+// complexity: O(M * N)
+func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
+	guild, err := c.PeekGuild(guildID)
+	if err != nil {
+		return
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	var newMembers []*Member
+	for i := range members {
+		if members[i].User != nil {
+			members[i].userID = members[i].User.ID
+			members[i].User = nil
+		}
+
+		var updated bool
+		for j := range guild.Members {
+			if guild.Members[j].userID == members[i].userID {
+				*guild.Members[j] = *members[i]
+				updated = true
+				break
+			}
+		}
+
+		if !updated {
+			newMembers = append(newMembers, members[i])
+		}
+	}
+
+	guild.Members = append(guild.Members, newMembers...)
 }
 
 // GetGuildMember ...

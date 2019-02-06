@@ -87,7 +87,7 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 		if len(guild.Channels) > 0 {
 			updates[ChannelCache] = make([]interface{}, len(guild.Channels))
 			for i := range guild.Channels {
-				updates[ChannelCache] = append(updates[ChannelCache], guild.Channels[i])
+				updates[ChannelCache][i] = guild.Channels[i]
 			}
 		}
 	case EventGuildDelete:
@@ -105,6 +105,17 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 		// TODO: performance issues?
 		msg := (v.(*MessageCreate)).Message
 		cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
+	case EventGuildMembersChunk:
+		evt := v.(*GuildMembersChunk)
+		updates[GuildMembersCache] = append(updates[GuildMembersCache], evt)
+
+		// update all users
+		if len(evt.Members) > 0 {
+			updates[UserCache] = make([]interface{}, len(evt.Members))
+			for i := range evt.Members {
+				updates[UserCache][i] = evt.Members[i].User
+			}
+		}
 	default:
 		//case EventResumed:
 		//case EventGuildBanAdd:
@@ -113,7 +124,6 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 		//case EventGuildMemberAdd:
 		//case EventGuildMemberRemove:
 		//case EventGuildMemberUpdate:
-		//case EventGuildMembersChunk:
 		//case EventGuildRoleCreate:
 		//case EventGuildRoleUpdate:
 		//case EventMessageUpdate:
@@ -129,9 +139,8 @@ func cacheEvent(cache Cacher, event string, v interface{}) (err error) {
 	}
 
 	for key, structs := range updates {
-		err = cache.Updates(key, structs)
-		if err != nil {
-			break
+		if err = cache.Updates(key, structs); err != nil {
+			// TODO: logging
 		}
 	}
 	return
