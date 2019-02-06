@@ -3,7 +3,10 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
+
+	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/constant"
 )
@@ -1010,7 +1013,16 @@ func (m *Member) GetUser(session Session) (usr *User, err error) {
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
-	return m.User.MentionNickname()
+	var id snowflake.ID
+	if !m.userID.Empty() {
+		id = m.userID
+	} else if m.User != nil {
+		id = m.User.ID
+	} else {
+		fmt.Println("ERRPR: unable to fetch user id. please create a issue at github.com/andersfylling/disgord")
+		return "*" + m.Nick + "*"
+	}
+	return "<@!" + id.String() + ">"
 }
 
 // DeepCopy see interface at struct.go#DeepCopier

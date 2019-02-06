@@ -5,6 +5,8 @@ package disgord
 import (
 	"context"
 	"sync"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func prepareBox(evtName string, box interface{}) {
@@ -444,6 +446,12 @@ type GuildIntegrationsUpdate struct {
 type GuildMemberAdd struct {
 	Member *Member         `json:"member"`
 	Ctx    context.Context `json:"-"`
+}
+
+// UnmarshalJSON ...
+func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
+	obj.Member = &Member{}
+	return httd.Unmarshal(data, obj.Member)
 }
 
 // ---------------------------
