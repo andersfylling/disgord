@@ -3,12 +3,11 @@
 package websocket
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"strconv"
 	"time"
-
-	"github.com/andersfylling/disgord/httd"
 )
 
 const SaveIncomingPackets = true
@@ -16,7 +15,29 @@ const SaveIncomingPackets = true
 const DiagnosePath = "diagnose-report"
 const DiagnosePath_packets = "diagnose-report/packets"
 
-var outgoingPacketSequence uint64 = 0
+var outgoingPacketSequence uint = 0 // TODO: this needs to support sharding
+
+func formatFilename(incoming bool, clientType int, shardID, opCode, sequencenr uint, suffix string) (filename string) {
+
+	unix := strconv.FormatInt(time.Now().UnixNano(), 10)
+	shard := strconv.FormatUint(uint64(shardID), 10)
+	op := strconv.FormatUint(uint64(opCode), 10)
+	seq := strconv.FormatUint(uint64(sequencenr), 10)
+
+	var direction string
+	if incoming {
+		direction = "IN"
+	} else {
+		direction = "OUT"
+	}
+
+	t := "E"
+	if clientType == clientTypeVoice {
+		t = "V"
+	}
+
+	return unix + "_" + t + "_" + direction + "_id" + shard + "_op" + op + "_s" + seq + suffix + ".json"
+}
 
 // saveOutgoingPacket saves raw json content to disk
 // format: I_<seq>_<op>_<shard_id>_<unix>.json
@@ -24,29 +45,17 @@ var outgoingPacketSequence uint64 = 0
 // seq is the sequence number: outgoingPacketSequence
 // op is the operation code
 func saveOutgoingPacket(c *client, packet *clientPacket) {
-	data, err := httd.Marshal(packet)
+	data, err := json.MarshalIndent(packet, "", "\t")
 	if err != nil {
-		fmt.Println(err)
+		c.Debug(err)
 	}
 
-	unix := strconv.FormatInt(time.Now().UnixNano(), 10)
-
-	seq := strconv.FormatUint(uint64(outgoingPacketSequence), 10)
+	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, outgoingPacketSequence, "")
 	outgoingPacketSequence++
 
-	shardID := strconv.FormatUint(uint64(c.ShardID), 10)
-
-	op := strconv.FormatUint(uint64(packet.Op), 10)
-
-	t := "E"
-	if c.clientType == clientTypeVoice {
-		t = "V"
-	}
-
-	filename := t + "_O_" + seq + "_" + op + "_" + shardID + "_" + unix + ".json"
-	err = ioutil.WriteFile(DiagnosePath_packets+"/"+filename, data, 0644)
-	if err != nil {
-		c.Error(err.Error())
+	path := DiagnosePath_packets + "/" + filename
+	if err = ioutil.WriteFile(path, data, 0644); err != nil {
+		c.Debug(err)
 	}
 }
 
@@ -59,21 +68,19 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 	evtStr := "_" + evt.EventName
 	if evtStr == "_" {
-		evtStr = ""
-	}
-	unix := strconv.FormatInt(time.Now().UnixNano(), 10)
-	seq := strconv.FormatUint(uint64(evt.SequenceNumber), 10)
-	op := strconv.FormatUint(uint64(evt.Op), 10)
-	shardID := strconv.FormatUint(uint64(c.ShardID), 10)
-
-	t := "E"
-	if c.clientType == clientTypeVoice {
-		t = "V"
+		evtStr = "_EMPTY"
 	}
 
-	filename := t + "_I_" + unix + "_" + seq + "_" + op + "_" + shardID + evtStr + ".json"
-	err := ioutil.WriteFile(DiagnosePath_packets+"/"+filename, packet, 0644)
-	if err != nil {
-		c.Error(err.Error())
+	filename := formatFilename(true, c.clientType, c.ShardID, evt.Op, evt.SequenceNumber, evtStr)
+	path := DiagnosePath_packets + "/" + filename
+
+	// pretty
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, packet, "", "\t"); err != nil {
+		c.Debug(err)
+	}
+
+	if err := ioutil.WriteFile(path, prettyJSON.Bytes(), 0644); err != nil {
+		c.Debug(err)
 	}
 }
