@@ -103,11 +103,11 @@ func (r *Role) saveToDiscord(session Session) (err error) {
 	} else {
 		// modify/update role
 		params := ModifyGuildRoleParams{}
-		params.Name(r.Name)
-		params.Permissions(r.Permissions)
-		params.Color(r.Color)
-		params.Hoist(r.Hoist)
-		params.Mentionable(r.Mentionable)
+		params.SetName(r.Name)
+		params.SetPermissions(r.Permissions)
+		params.SetColor(r.Color)
+		params.SetHoist(r.Hoist)
+		params.SetMentionable(r.Mentionable)
 		role, err = session.ModifyGuildRole(r.guildID, r.ID, &params)
 		if err != nil {
 			return
