@@ -91,7 +91,7 @@ func (c *VoiceClient) setupBehaviors() {
 		actions: behaviorActions{
 			opcode.VoiceReady:              c.onReady,
 			opcode.VoiceHeartbeat:          c.onHeartbeatRequest,
-			opcode.EventHeartbeatAck:       c.onHeartbeatAck,
+			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
 			opcode.VoiceHello:              c.onHello,
 			opcode.VoiceSessionDescription: c.onVoiceSessionDescription,
 		},
@@ -197,6 +197,7 @@ func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
 	if err = c.client.Connect(); err != nil {
 		return nil, err
 	}
+
 	// TODO: plausible race condition
 	c.Lock()
 	rdy = c.ready

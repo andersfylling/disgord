@@ -311,13 +311,15 @@ func (c *client) connect() (err error) {
 
 // Connect establishes a socket connection with the Discord API
 func (c *client) Connect() (err error) {
-	c.Lock()
-	defer c.Unlock()
-
 	c.preCon()
+
+	c.Lock()
 	if err = c.connect(); err != nil {
+		c.Unlock()
 		return err
 	}
+	c.Unlock()
+
 	c.postCon()
 	return nil
 }
