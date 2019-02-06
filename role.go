@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -256,28 +257,51 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []M
 
 // ModifyGuildRoleParams JSON params for func ModifyGuildRole
 type ModifyGuildRoleParams struct {
-	params map[string]interface{}
+	data map[string]interface{}
+}
+
+func (m *ModifyGuildRoleParams) init() {
+	if m.data != nil {
+		return
+	}
+
+	m.data = map[string]interface{}{}
 }
 
 func (p *ModifyGuildRoleParams) SetName(name string) {
-	p.params["name"] = name
+	p.init()
+	p.data["name"] = name
 }
 
 func (p *ModifyGuildRoleParams) SetPermissions(permissions uint64) {
-	p.params["permissions"] = permissions
+	p.init()
+	p.data["permissions"] = permissions
 }
 
 func (p *ModifyGuildRoleParams) SetColor(color uint) {
-	p.params["color"] = color
+	p.init()
+	p.data["color"] = color
 }
 
 func (p *ModifyGuildRoleParams) SetHoist(hoist bool) {
-	p.params["hoist"] = hoist
+	p.init()
+	p.data["hoist"] = hoist
 }
 
 func (p *ModifyGuildRoleParams) SetMentionable(mentionable bool) {
-	p.params["mentionable"] = mentionable
+	p.init()
+	p.data["mentionable"] = mentionable
 }
+
+func (m *ModifyGuildRoleParams) MarshalJSON() ([]byte, error) {
+	if len(m.data) == 0 {
+		return []byte(`{}`), nil
+	}
+
+	return httd.Marshal(m.data)
+}
+
+var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)
 
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
