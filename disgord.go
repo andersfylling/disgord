@@ -60,21 +60,20 @@
 //      // output example: "A message from @Anders was created"
 //  }
 //
-// Optimizing your cacheLink logic
+// Optimizing your cache logic
 //
 // > Note: if you create a CacheConfig you don't have to set every field. All the CacheAlgorithms are default to LFU when left blank.
 //
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
-// Here we pass the cacheLink config when creating the session to access to the different cacheLink replacement algorithms, lifetime settings, and the option to disable different cacheLink systems.
+// Here we pass the cache config when creating the session to access to the different cache replacement algorithms, lifetime settings, and the option to disable different cache systems.
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //    Cache: &disgord.CacheConfig{
-//              Mutable: false, // everything going in and out of the cacheLink is deep copied
+//              Mutable: false, // everything going in and out of the cache is deep copied
 //				// setting Mutable to true, might break your program as this is experimental.
 //
 //              DisableUserCaching: false, // activates caching for users
-//              UserCacheLimitMiB: 500, // don't use more than ~500MiB of memory space for caching of users
-//              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cacheLink after 9 hours, unless updated
+//              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
 //              UserCacheAlgorithm: disgord.CacheAlgLFU,
 //
 //              DisableVoiceStateCaching: true, // don't cache voice states
@@ -82,7 +81,6 @@
 //              // VoiceStateCacheAlgorithm string
 //
 //              DisableChannelCaching: false,
-//              ChannelCacheLimitMiB: 300,
 //              ChannelCacheLifetime: 0, // lives forever
 //              ChannelCacheAlgorithm: disgord.CacheAlgLFU, // lfu (Least Frequently Used)
 //
@@ -113,40 +111,52 @@
 //		GuildCacheAlgorithm: disgord.CacheAlgLFU,
 //  }
 //
-// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cacheLink to not reflect the true discord state.
+// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //
-// Example, activated guild but disabled channel caching: The guild is stored to the cacheLink, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cacheLink to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
+// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
 //
 //
-// Immutable and concurrent accessible cacheLink
+// Immutable and concurrent accessible cache
 //
-// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cacheLink), it increases reliability that the cacheLink always reflects the last known Discord state.
+// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cache), it increases reliability that the cache always reflects the last known Discord state.
 // If you are uncertain, just set it to `true`. The default setting is `true` if `disgord.Cache.CacheConfig` is `nil`.
 //
 //
-// Bypass the built-in REST cacheLink
+// Bypass the built-in REST cache
 //
-// Whenever you call a REST method from the Session interface; the cacheLink is always checked first. Upon a cacheLink hit, no REST request is executed and you get the data from the cacheLink in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using the REST functions directly. Remember that this will not update the cacheLink for you, and this needs to be done manually if you depend on the cacheLink.
-//  // get a user using the Session implementation (checks cacheLink, and updates the cacheLink on cacheLink miss)
+// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using the REST functions directly. Remember that this will not update the cache for you, and this needs to be done manually if you depend on the cache.
+//  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
 //  user, err := session.GetUser(userID)
 //
-//  // bypass the cacheLink checking. Same function name, but is found in the disgord package, not the session interface.
+//  // bypass the cache checking. Same function name, but is found in the disgord package, not the session interface.
 //  user, err := disgord.GetUser(userID)
 //
-// Manually updating the cacheLink
+// Manually updating the cache
 //
-// If required, you can access the cacheLink and update it by hand. Note that this should not be required when you use the Session interface.
+// If required, you can access the cache and update it by hand. Note that this should not be required when you use the Session interface.
 //  user, err := disgord.GetUser(userID)
 //  if err != nil {
 //      return err
 //  }
 //
-//  // update the cacheLink
-//  cacheLink := discord.Cache()
-//  err = cacheLink.Update(disgord.UserCache, user)
+//  // update the cache
+//  cache := discord.Cache()
+//  err = cache.Update(disgord.UserCache, user)
 //  if err != nil {
 //      return err
 //  }
+//
+//
+// Build tags
+//
+// `disgord_diagnosews` will store all the incoming and outgoing json data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
+//
+// `json-std` switches out jsoniter with the json package from the std libs.
+//
+// `disgord_removeDiscordMutex` replaces mutexes in discord structures with a empty mutex; removes locking behaviour and any mutex code when compiled.
+//
+// `disgord_parallelism` activates built-in locking in discord structure methods. Eg. Guild.AddChannel(*Channel) does not do locking by default. But if you find yourself using these discord data structures in parallel environment, you can activate the internal locking to reduce race conditions. Note that activating `disgord_parallelism` and `disgord_removeDiscordMutex` at the same time, will cause you to have no locking as `disgord_removeDiscordMutex` affects the same mutexes.
+//
 //
 // Saving and Deleting Discord data
 //
@@ -160,10 +170,6 @@
 //  role.GuildID = guild.ID // required, for an obvious reason
 //  role.Permissions = disgord.ManageChannelsPermission | disgord.ViewAuditLogsPermission
 //  err := session.SaveToDiscord(&role)
-//
-// hang on! I don't want them to have the ManageChannel permission anyway
-//  role.Permissions ^= disgord.ManageChannelsPermission // remove MANAGE_CHANNEL permission
-//  err := session.SaveToDiscord(&role) // yes, it also updates existing objects
 //
 // You know what.. Let's just remove the role
 //  err := session.DeleteFromDiscord(&role)
