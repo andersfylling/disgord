@@ -39,6 +39,7 @@ type Cacher interface {
 	Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error)
 	DeleteChannel(channelID snowflake.ID)
 	DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
+	AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
 	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)
 	DeleteGuild(guildID snowflake.ID)
 	DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)
@@ -537,6 +538,10 @@ func (g *guildCacheItem) deleteChannel(id Snowflake) {
 	}
 }
 
+func (g *guildCacheItem) addChannel(channelID snowflake.ID) {
+	g.channels = append(g.channels, channelID)
+}
+
 // SetGuild adds a new guild to cacheLink or updates an existing one
 func (c *Cache) SetGuild(guild *Guild) {
 	if c.guilds == nil || guild == nil {
@@ -891,6 +896,19 @@ func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
 		item.Object().(*guildCacheItem).deleteChannel(channelID)
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	}
+}
+
+func (c *Cache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID) {
+	if c.guilds == nil {
+		return
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		item.Object().(*guildCacheItem).addChannel(channelID)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 }
