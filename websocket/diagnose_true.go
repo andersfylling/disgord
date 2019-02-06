@@ -13,6 +13,9 @@ import (
 
 const SaveIncomingPackets = true
 
+const DiagnosePath = "diagnose-report"
+const DiagnosePath_packets = "diagnose-report/packets"
+
 var outgoingPacketSequence uint64 = 0
 
 // saveOutgoingPacket saves raw json content to disk
@@ -35,7 +38,12 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 
 	op := strconv.FormatUint(uint64(packet.Op), 10)
 
-	filename := "O_" + seq + "_" + op + "_" + shardID + "_" + unix + ".json"
+	t := "E"
+	if c.clientType == clientTypeVoice {
+		t = "V"
+	}
+
+	filename := t + "_O_" + seq + "_" + op + "_" + shardID + "_" + unix + ".json"
 	err = ioutil.WriteFile(DiagnosePath_packets+"/"+filename, data, 0644)
 	if err != nil {
 		c.Error(err.Error())
@@ -58,7 +66,12 @@ func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 	op := strconv.FormatUint(uint64(evt.Op), 10)
 	shardID := strconv.FormatUint(uint64(c.ShardID), 10)
 
-	filename := "I_" + unix + "_" + seq + "_" + op + "_" + shardID + evtStr + ".json"
+	t := "E"
+	if c.clientType == clientTypeVoice {
+		t = "V"
+	}
+
+	filename := t + "_I_" + unix + "_" + seq + "_" + op + "_" + shardID + evtStr + ".json"
 	err := ioutil.WriteFile(DiagnosePath_packets+"/"+filename, packet, 0644)
 	if err != nil {
 		c.Error(err.Error())
