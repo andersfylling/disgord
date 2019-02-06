@@ -259,23 +259,23 @@ type ModifyGuildRoleParams struct {
 	params map[string]interface{}
 }
 
-func (p *ModifyGuildRoleParams) Name(name string) {
+func (p *ModifyGuildRoleParams) SetName(name string) {
 	p.params["name"] = name
 }
 
-func (p *ModifyGuildRoleParams) Permissions(permissions uint64) {
+func (p *ModifyGuildRoleParams) SetPermissions(permissions uint64) {
 	p.params["permissions"] = permissions
 }
 
-func (p *ModifyGuildRoleParams) Color(color uint) {
+func (p *ModifyGuildRoleParams) SetColor(color uint) {
 	p.params["color"] = color
 }
 
-func (p *ModifyGuildRoleParams) Hoist(hoist bool) {
+func (p *ModifyGuildRoleParams) SetHoist(hoist bool) {
 	p.params["hoist"] = hoist
 }
 
-func (p *ModifyGuildRoleParams) Mentionable(mentionable bool) {
+func (p *ModifyGuildRoleParams) SetMentionable(mentionable bool) {
 	p.params["mentionable"] = mentionable
 }
 
