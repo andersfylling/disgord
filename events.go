@@ -136,8 +136,11 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 	case EventGuildRoleCreate:
 		evt := v.(*GuildRoleCreate)
 		cache.AddGuildRole(evt.GuildID, evt.Role)
-	//case EventGuildRoleUpdate:
-	//evt := v.(*GuildRoleUpdate)
+	case EventGuildRoleUpdate:
+		evt := v.(*GuildRoleUpdate)
+		if updated := cache.UpdateGuildRole(evt.GuildID, evt.Role, data); !updated {
+			cache.AddGuildRole(evt.GuildID, evt.Role)
+		}
 	default:
 		//case EventResumed:
 		//case EventGuildBanAdd:

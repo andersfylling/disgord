@@ -51,6 +51,7 @@ type Cacher interface {
 	SetGuildEmojis(guildID Snowflake, emojis []*Emoji)
 	Updates(key cacheRegistry, vs []interface{}) error
 	AddGuildRole(guildID Snowflake, role *Role)
+	UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool
 }
 
 func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
@@ -551,6 +552,20 @@ func (g *guildCacheItem) addRole(role *Role) {
 	g.guild.Roles = append(g.guild.Roles, role)
 }
 
+func (g *guildCacheItem) updateRole(role *Role, data json.RawMessage) bool {
+	var updated bool
+	for i := range g.guild.Roles {
+		if g.guild.Roles[i].ID == role.ID {
+			todo := &GuildRoleUpdate{Role: g.guild.Roles[i]}
+			err := httd.Unmarshal(data, todo)
+			updated = err == nil
+			break
+		}
+	}
+
+	return updated
+}
+
 // SetGuild adds a new guild to cacheLink or updates an existing one
 func (c *Cache) SetGuild(guild *Guild) {
 	if c.guilds == nil || guild == nil {
@@ -985,12 +1000,32 @@ func (c *Cache) AddGuildRole(guildID Snowflake, role *Role) {
 		return
 	}
 
+	if c.immutable {
+		role = role.DeepCopy().(*Role)
+	}
+
 	c.guilds.Lock()
 	if item, exists := c.guilds.Get(guildID); exists {
 		item.Object().(*guildCacheItem).addRole(role)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 	c.guilds.Unlock()
+}
+
+func (c *Cache) UpdateGuildRole(guildID snowflake.ID, role *Role, data json.RawMessage) bool {
+	if c.guilds == nil {
+		return false
+	}
+
+	var updated bool
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		updated = item.Object().(*guildCacheItem).updateRole(role, data)
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	}
+
+	return updated
 }
 
 func (c *Cache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID) {

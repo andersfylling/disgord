@@ -23,6 +23,9 @@ func (m *mockCacheEvent) Update(key cacheRegistry, v interface{}) (err error) {
 func (m *mockCacheEvent) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
 	return nil, nil
 }
+func (m *mockCacheEvent) UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool {
+	return false
+}
 func (m *mockCacheEvent) DeleteChannel(channelID snowflake.ID)                                      {}
 func (m *mockCacheEvent) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
 func (m *mockCacheEvent) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
