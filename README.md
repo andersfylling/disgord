@@ -78,7 +78,7 @@ As this is a go module, it is expected that your project utilises the module con
 Read more about modules here: [https://github.com/golang/go/wiki/Modules](https://github.com/golang/go/wiki/Modules)
 
 ### Creating a fresh project using Disgord
-To use the install script: `wget https://github.com/andersfylling/disgord/disgord.sh && ./disgord.sh` and follow the guide (please use go v1.11 minimum), or you can do it manually:
+To use the install script: `wget https://github.com/andersfylling/disgord/disgord.sh && ./disgord.sh` and follow the guide (please use go v1.11 minimum. Note that this sets GO111MODULE=auto only temporary, and you must do so permanently), or you can do it manually:
 
 So if you haven't used modules before and you just want to create a Bot using Disgord, this is how it's done (Linux):
  1. Create a folder with your project name: `mkdir my-bot && cd my-bot` (outside the go path!)
