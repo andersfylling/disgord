@@ -137,6 +137,13 @@ type EvtClient struct {
 	identity *evtIdentity
 }
 
+func (c *EvtClient) ReceivedReadyOnce() bool {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.ReadyCounter > 0
+}
+
 //////////////////////////////////////////////////////
 //
 // SHARD synchronization & rate limiting

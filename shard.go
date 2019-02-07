@@ -218,7 +218,7 @@ func (s *WSShardManager) InitialReadyReceived() bool {
 	defer s.RUnlock()
 
 	for i := 0; i < len(s.shards); i++ {
-		if s.shards[i].ws.ReadyCounter == 0 {
+		if !s.shards[i].ws.ReceivedReadyOnce() {
 			return false
 		}
 	}
