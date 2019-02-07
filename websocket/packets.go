@@ -5,6 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/json"
 	"io"
+
+	"github.com/andersfylling/snowflake/v3"
 )
 
 //////////////////////////////////////////////////////
@@ -72,6 +74,13 @@ type VoiceSelectProtocolParams struct {
 type VoiceSessionDescription struct {
 	Mode      string   `json:"mode"`
 	SecretKey [32]byte `json:"secret_key"`
+}
+
+type voiceIdentify struct {
+	GuildID   snowflake.ID `json:"server_id"` // Yay for eventual consistency
+	UserID    snowflake.ID `json:"user_id"`
+	SessionID string       `json:"session_id"`
+	Token     string       `json:"token"`
 }
 
 //////////////////////////////////////////////////////

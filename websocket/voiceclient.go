@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"errors"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -34,27 +33,28 @@ type VoiceConfig struct {
 	Endpoint string
 
 	Logger logger.Logger
+
+	SystemShutdown chan interface{}
 }
 
 type VoiceClient struct {
 	*client
 	conf *VoiceConfig
 
-	heartbeatInterval uint
-	heartbeatLatency  time.Duration
-	lastHeartbeatAck  time.Time
-
 	haveConnectedOnce  bool
 	haveIdentifiedOnce bool
 
-	pulsating  uint8
-	pulseMutex sync.Mutex
-
 	onceChannels map[uint]chan interface{}
 	ready        *VoiceReady
+
+	SystemShutdown chan interface{}
 }
 
 func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
+	if conf.SystemShutdown == nil {
+		panic("missing conf.SystemShutdown channel")
+	}
+
 	client = &VoiceClient{
 		conf:         conf,
 		onceChannels: make(map[uint]chan interface{}),
@@ -67,13 +67,14 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 				return &DiscordPacket{}
 			},
 		},
+
+		SystemShutdown: conf.SystemShutdown,
 	}, 0)
 	if err != nil {
 		return nil, err
 	}
 	client.clientType = clientTypeVoice
 	client.setupBehaviors()
-	client.start()
 
 	return
 }
@@ -94,6 +95,13 @@ func (c *VoiceClient) setupBehaviors() {
 			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
 			opcode.VoiceHello:              c.onHello,
 			opcode.VoiceSessionDescription: c.onVoiceSessionDescription,
+		},
+	})
+
+	c.addBehavior(&behavior{
+		addresses: heartbeating,
+		actions: behaviorActions{
+			sendHeartbeat: c.sendHeartbeat,
 		},
 	})
 
@@ -165,6 +173,8 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 	c.heartbeatInterval = uint(float64(helloPk.HeartbeatInterval) * .75)
 	c.Unlock()
 
+	c.activateHeartbeats <- true
+
 	c.sendVoiceHelloPacket()
 	return nil
 }
@@ -188,7 +198,17 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 
 //////////////////////////////////////////////////////
 //
-// GENERAL
+// BEHAVIOR: heartbeat
+//
+//////////////////////////////////////////////////////
+
+func (c *VoiceClient) sendHeartbeat(i interface{}) error {
+	return c.Emit(cmd.VoiceHeartbeat, nil)
+}
+
+//////////////////////////////////////////////////////
+//
+// GENERAL: unique to voice client
 //
 //////////////////////////////////////////////////////
 
@@ -200,15 +220,11 @@ func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
 
 	// TODO: plausible race condition
 	c.Lock()
-	rdy = c.ready
-	c.Unlock()
-
-	return rdy, nil
+	defer c.Unlock()
+	return c.ready, nil
 }
 
 func (c *VoiceClient) sendVoiceHelloPacket() {
-	go c.pulsate()
-
 	// if this is a new connection we can drop the resume packet
 	if !c.haveIdentifiedOnce {
 		if err := sendVoiceIdentityPacket(c); err != nil {
@@ -226,19 +242,13 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	identityPayload := struct {
-		GuildID   snowflake.Snowflake `json:"server_id"` // Yay for eventual consistency
-		UserID    snowflake.Snowflake `json:"user_id"`
-		SessionID string              `json:"session_id"`
-		Token     string              `json:"token"`
-	}{
+	err = m.Emit(cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
 		Token:     m.conf.Token,
-	}
+	})
 
-	err = m.Emit(cmd.VoiceIdentify, &identityPayload)
 	m.haveIdentifiedOnce = true
 	return
 }
@@ -262,90 +272,6 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 		return
 	case <-timeout:
 		err = errors.New("did not receive voice session description in time")
-		return
-	}
-}
-
-//////////////////////////////////////////////////////
-//
-// BEHAVIOR: heartbeat / pulse
-//
-//////////////////////////////////////////////////////
-
-// AllowedToStartPulsating you must notify when you are done pulsating!
-func (c *VoiceClient) AllowedToStartPulsating(serviceID uint8) bool {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == 0 {
-		c.pulsating = serviceID
-	}
-
-	return c.pulsating == serviceID
-}
-
-// StopPulsating stops sending heartbeats to Discord
-func (c *VoiceClient) StopPulsating(serviceID uint8) {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == serviceID {
-		c.pulsating = 0
-	}
-}
-
-func (c *VoiceClient) pulsate() {
-	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
-	if !c.AllowedToStartPulsating(serviceID) {
-		return
-	}
-	defer c.StopPulsating(serviceID)
-
-	c.RLock()
-	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
-	c.RUnlock()
-	defer ticker.Stop()
-
-	var last time.Time
-	for {
-		c.RLock()
-		last = c.lastHeartbeatAck
-		c.RUnlock()
-
-		_ = c.Emit(cmd.VoiceHeartbeat, nil)
-
-		stopChan := make(chan interface{})
-
-		// verify the heartbeat ACK
-		go func(m *VoiceClient, last time.Time, sent time.Time, cancel chan interface{}) {
-			select {
-			case <-cancel:
-				return
-			case <-time.After(3 * time.Second): // deadline for Discord to respond
-			}
-
-			m.RLock()
-			receivedHeartbeatAck := m.lastHeartbeatAck.After(last)
-			m.RUnlock()
-
-			if !receivedHeartbeatAck {
-				c.Info("heartbeat ACK was not received, forcing reconnect")
-				_ = m.reconnect()
-			} else {
-				// update "latency"
-				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
-			}
-		}(c, last, time.Now(), stopChan)
-
-		select {
-		case <-ticker.C:
-			continue
-		case <-c.shutdown:
-		case <-c.restart:
-		}
-
-		c.Debug("Stopping pulse")
-		close(stopChan)
 		return
 	}
 }

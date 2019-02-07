@@ -12,8 +12,6 @@ import (
 
 	"golang.org/x/net/proxy"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
@@ -24,6 +22,10 @@ import (
 func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error) {
 	if conf.TrackedEvents == nil {
 		conf.TrackedEvents = &UniqueStringSlice{}
+	}
+
+	if conf.SystemShutdown == nil {
+		panic("missing conf.SystemShutdown channel")
 	}
 
 	var eChan chan<- *Event
@@ -46,13 +48,14 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 		DiscordPktPool: conf.DiscordPktPool,
 		Proxy:          conf.Proxy,
 		conn:           conf.conn,
+
+		SystemShutdown: conf.SystemShutdown,
 	}, shardID)
 	if err != nil {
 		return nil, err
 	}
 	client.connectPermit = client // adds  rate limiting for shards
 	client.setupBehaviors()
-	client.start()
 
 	return
 }
@@ -106,6 +109,8 @@ type EvtConfig struct {
 	DiscordPktPool *sync.Pool
 
 	Logger logger.Logger
+
+	SystemShutdown chan interface{}
 }
 
 type EvtClient struct {
@@ -114,19 +119,12 @@ type EvtClient struct {
 	*client
 	ReadyCounter uint
 
-	eventChan        chan<- *Event
-	trackedEvents    *UniqueStringSlice
-	heartbeatLatency time.Duration
-
-	heartbeatInterval uint
-	lastHeartbeatAck  time.Time
+	eventChan     chan<- *Event
+	trackedEvents *UniqueStringSlice
 
 	sessionID      string
 	trace          []string
 	sequenceNumber uint
-
-	pulsating  uint8
-	pulseMutex sync.Mutex
 
 	// synchronization and rate limiting
 	K *K
@@ -164,7 +162,7 @@ func (c *EvtClient) requestConnectPermit() (err error) {
 			return errors.New("channel closed or K was nil")
 		}
 		c.Debug("got Connect permission")
-	case <-c.shutdown:
+	case <-c.SystemShutdown:
 		err = errors.New("shutting down")
 	}
 
@@ -207,6 +205,13 @@ func (c *EvtClient) setupBehaviors() {
 			},
 		},
 	})
+
+	c.addBehavior(&behavior{
+		addresses: heartbeating,
+		actions: behaviorActions{
+			sendHeartbeat: c.sendHeartbeat,
+		},
+	})
 }
 
 //////////////////////////////////////////////////////
@@ -224,7 +229,7 @@ func (c *EvtClient) synchronizeSnr(p *DiscordPacket) (err error) {
 	if p.SequenceNumber != c.sequenceNumber+1 {
 		go c.reconnect()
 
-		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber)
+		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber+1)
 		return
 	}
 
@@ -282,12 +287,7 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 } // end onDiscordEvent
 
 func (c *EvtClient) onHeartbeatRequest(v interface{}) error {
-	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	c.RLock()
-	snr := c.sequenceNumber
-	c.RUnlock()
-
-	return c.Emit(event.Heartbeat, snr)
+	return c.sendHeartbeat(v)
 }
 
 func (c *EvtClient) onHeartbeatAck(v interface{}) error {
@@ -310,8 +310,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 	c.heartbeatInterval = helloPk.HeartbeatInterval
 	c.Unlock()
 
-	// TODO, this might create several idle goroutines..
-	go c.pulsate()
+	c.activateHeartbeats <- true
 
 	// if this is a new connection we can drop the resume packet
 	if c.virginConnection() {
@@ -340,25 +339,34 @@ func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 	//  It's also possible that your client cannot reconnect in time to resume, in which case
 	//  the client will receive a Opcode 9 Invalid Session and is expected to wait a random
 	//  amount of time—between 1 and 5 seconds—then send a fresh Opcode 2 EventIdentify.
-	<-time.After(randomDelay)
+	select {
+	case <-time.After(randomDelay):
+	case <-c.SystemShutdown:
+		return errors.New("system is shutting down")
+	}
+
 	return sendIdentityPacket(c)
 }
 
 //////////////////////////////////////////////////////
 //
-// BEHAVIOR: EventHeartbeat
+// BEHAVIOR: heartbeat
 //
 //////////////////////////////////////////////////////
 
-// HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
-func (c *EvtClient) HeartbeatLatency() (duration time.Duration, err error) {
-	duration = c.heartbeatLatency
-	if duration == 0 {
-		err = errors.New("latency not determined yet")
-	}
+func (c *EvtClient) sendHeartbeat(i interface{}) error {
+	c.RLock()
+	snr := c.sequenceNumber
+	c.RUnlock()
 
-	return
+	return c.Emit(event.Heartbeat, snr)
 }
+
+//////////////////////////////////////////////////////
+//
+// GENERAL: unique to event
+//
+//////////////////////////////////////////////////////
 
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
 // will be discarded once the socket info is extracted from the event.
@@ -389,13 +397,11 @@ func (c *EvtClient) sendHelloPacket() {
 		SequenceNr uint   `json:"seq"`
 	}{token, session, sequence})
 	if err != nil {
-		c.Error(err.Error())
+		c.Error(err)
 	}
 
-	err = c.connectPermit.releaseConnectPermit()
-	if err != nil {
-		err = errors.New("unable to release connection permission. Err: " + err.Error())
-		c.Error(err.Error())
+	if err = c.connectPermit.releaseConnectPermit(); err != nil {
+		c.Error("unable to release connection permission. Err: ", err)
 	}
 }
 
@@ -429,90 +435,6 @@ func sendIdentityPacket(c *EvtClient) (err error) {
 	_ = c.connectPermit.releaseConnectPermit()
 
 	return
-}
-
-// AllowedToStartPulsating you must notify when you are done pulsating!
-func (c *EvtClient) AllowedToStartPulsating(serviceID uint8) bool {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == 0 {
-		c.pulsating = serviceID
-	}
-
-	return c.pulsating == serviceID
-}
-
-// StopPulsating stops sending heartbeats to Discord
-func (c *EvtClient) StopPulsating(serviceID uint8) {
-	c.pulseMutex.Lock()
-	defer c.pulseMutex.Unlock()
-
-	if c.pulsating == serviceID {
-		c.pulsating = 0
-	}
-}
-
-func (c *EvtClient) pulsate() {
-	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
-	if !c.AllowedToStartPulsating(serviceID) {
-		return
-	}
-	defer c.StopPulsating(serviceID)
-
-	c.RLock()
-	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
-	c.RUnlock()
-	defer ticker.Stop()
-
-	var last time.Time
-	var snr uint
-	for {
-		c.RLock()
-		last = c.lastHeartbeatAck
-		snr = c.sequenceNumber
-		c.RUnlock()
-
-		command := event.Heartbeat
-		if c.clientType == clientTypeVoice {
-			command = cmd.VoiceHeartbeat
-		}
-		_ = c.Emit(command, snr)
-
-		stopChan := make(chan interface{})
-
-		// verify the heartbeat ACK
-		go func(m *EvtClient, last time.Time, sent time.Time, cancel chan interface{}) {
-			select {
-			case <-cancel:
-				return
-			case <-time.After(3 * time.Second): // deadline for Discord to respond
-			}
-
-			c.RLock()
-			receivedHeartbeatAck := c.lastHeartbeatAck.After(last)
-			c.RUnlock()
-
-			if !receivedHeartbeatAck {
-				c.Info("heartbeat ACK was not received, forcing reconnect")
-				err := c.reconnect()
-				if err != nil {
-					c.Error(err.Error())
-				}
-			}
-		}(c, last, time.Now(), stopChan)
-
-		select {
-		case <-ticker.C:
-			continue
-		case <-c.shutdown:
-		case <-c.restart:
-		}
-
-		c.Debug("Stopping pulse")
-		close(stopChan)
-		return
-	}
 }
 
 var _ Link = (*EvtClient)(nil)

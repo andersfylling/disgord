@@ -1,8 +1,9 @@
 package websocket
 
 import (
+	"context"
 	"errors"
-	"fmt"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
@@ -68,8 +69,6 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 
 	c = &client{
 		conf:              conf,
-		shutdown:          make(chan interface{}),
-		restart:           make(chan interface{}),
 		ShardID:           shardID,
 		receiveChan:       make(chan *DiscordPacket),
 		emitChan:          make(chan *clientPacket),
@@ -80,6 +79,9 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 		log:               conf.Logger,
 		behaviors:         map[string]*behavior{},
 		poolDiscordPkt:    conf.DiscordPktPool,
+
+		activateHeartbeats: make(chan interface{}),
+		SystemShutdown:     conf.SystemShutdown,
 	}
 	c.connectPermit = &emptyConnectPermit{}
 	c.preCon = func() {}
@@ -101,6 +103,8 @@ type config struct {
 	DiscordPktPool *sync.Pool
 
 	Logger logger.Logger
+
+	SystemShutdown chan interface{}
 }
 
 // client can be used as a base for other ws clients; voice, event. Note the use of
@@ -113,10 +117,15 @@ type client struct {
 	sync.RWMutex
 	clientType   int
 	conf         *config
-	shutdown     chan interface{}
-	restart      chan interface{}
 	lastRestart  int64 //unix
 	restartMutex sync.Mutex
+
+	pulsating          uint8
+	pulseMutex         sync.Mutex
+	heartbeatLatency   time.Duration
+	heartbeatInterval  uint
+	lastHeartbeatAck   time.Time
+	activateHeartbeats chan interface{}
 
 	ShardID uint
 
@@ -158,6 +167,10 @@ type client struct {
 	behaviors map[string]*behavior
 
 	poolDiscordPkt *sync.Pool
+
+	cancel context.CancelFunc
+
+	SystemShutdown <-chan interface{}
 }
 
 type behaviorActions map[interface{}]actionFunc
@@ -174,19 +187,20 @@ func (c *client) addBehavior(b *behavior) {
 const (
 	discordOperations string = "discord-ops"
 	heartbeating      string = "heartbeats"
+	sendHeartbeat            = 0
 )
 
-func (c *client) start() {
+func (c *client) startBehaviors(ctx context.Context) {
 	for k := range c.behaviors {
 		switch k {
 		case discordOperations:
-			go c.operationHandlers()
+			go c.operationHandlers(ctx)
 		}
 	}
 }
 
 // operation handler de-multiplexer
-func (c *client) operationHandlers() {
+func (c *client) operationHandlers(ctx context.Context) {
 	c.Debug("Ready to receive operation codes...")
 	for {
 		var p *DiscordPacket
@@ -197,9 +211,8 @@ func (c *client) operationHandlers() {
 				c.Debug("operationChan is dead..")
 				return
 			}
-		// case <-c.restart:
-		case <-c.shutdown:
-			c.Debug("exiting operation handler")
+		case <-ctx.Done():
+			c.Debug("closing operations handler")
 			return
 		}
 
@@ -300,11 +313,23 @@ func (c *client) connect() (err error) {
 		return
 	}
 
+	var ctx context.Context
+	ctx, c.cancel = context.WithCancel(context.Background())
+
 	// we can now interact with Discord
 	c.haveConnectedOnce = true
 	c.disconnected = false
-	go c.receiver()
-	go c.emitter()
+	go c.receiver(ctx)
+	go c.emitter(ctx)
+	go c.startBehaviors(ctx)
+	go c.prepareHeartbeating(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.SystemShutdown:
+			_ = c.Disconnect()
+		}
+	}()
 
 	return
 }
@@ -321,6 +346,8 @@ func (c *client) Connect() (err error) {
 	c.Unlock()
 
 	c.postCon()
+
+	c.Info("connected")
 	return nil
 }
 
@@ -328,20 +355,26 @@ func (c *client) Connect() (err error) {
 func (c *client) Disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
-	if c.conn.Disconnected() || !c.haveConnectedOnce {
+	if c.conn.Disconnected() || !c.haveConnectedOnce || c.cancel == nil {
 		c.disconnected = true
 		err = errors.New("already disconnected")
 		return
 	}
 
+	// stop emitter, receiver and behaviors
+	c.cancel()
+	c.cancel = nil
+
 	// use the emitter to dispatch the close message
 	if err = c.conn.Close(); err != nil {
-		c.Error(err.Error())
+		c.Error(err)
 	}
 
 	// c.Emit(event.Close, nil)
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.disconnected = true
+
+	c.Info("disconnected")
 
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
@@ -374,33 +407,34 @@ func (c *client) unlockReconnect() {
 func (c *client) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
 	if !c.lockReconnect() {
+		c.Debug("tried to start reconnect when already reconnecting")
 		return
 	}
 	defer c.unlockReconnect()
 
 	c.Debug("is reconnecting")
-
-	c.restart <- 1
-	_ = c.Disconnect()
+	if err := c.Disconnect(); err != nil {
+		c.Debug(err)
+		return errors.New("already disconnected, cannot reconnect")
+	}
 
 	var try uint
 	var delay time.Duration = 3 // seconds
 	for {
-		c.Debug("EvtClient reconnect attempt", try)
-		err = c.Connect()
-		if err == nil {
-			c.Info("successfully reconnected")
+		c.Debug("reconnect attempt", try)
+		if err = c.Connect(); err == nil {
 			break
 		}
 
-		c.Info(fmt.Sprintf("reconnect failed, trying again in N seconds; N =  %d", uint(delay)))
-		c.Info(err.Error())
+		c.Info("reconnect failed, trying again in ", delay)
+		c.Info(err)
 
 		// wait N seconds
 		select {
 		case <-time.After(delay * time.Second):
 			delay += 4 + time.Duration(try*2)
-		case <-c.shutdown:
+		case <-c.SystemShutdown:
+			c.Debug("stopping reconnect")
 			return
 		}
 
@@ -466,10 +500,11 @@ func (c *client) Emit(command string, data interface{}) (err error) {
 		return
 	}
 
-	accepted := c.ratelimit.Request(command)
-	if !accepted {
+	if accepted := c.ratelimit.Request(command); !accepted {
 		return errors.New("rate limited")
 	}
+
+	// TODO: que messages when disconnected( or suspended)
 
 	c.emitChan <- &clientPacket{
 		Op:   op,
@@ -499,28 +534,30 @@ func (c *client) unlockEmitter() {
 
 // emitter holds the actually dispatching logic for sending data to the Discord Gateway.
 // client#Emit depends on this.
-func (c *client) emitter() {
+func (c *client) emitter(ctx context.Context) {
 	if !c.lockEmitter() {
-		c.Debug("tried to start another websocket emitter go routine")
+		c.Debug("tried to startBehaviors another websocket emitter go routine")
 		return
 	}
 	defer c.unlockEmitter()
+	c.Debug("starting emitter")
 
 	for {
 		var msg *clientPacket
 		var open bool
 
 		select {
-		case <-c.shutdown:
-			// c.connection got closed
-		case msg, open = <-c.emitChan:
-		}
-		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
-			if err := c.Disconnect(); err != nil {
-				c.Error(err)
-			}
+		case <-ctx.Done():
 			c.Debug("closing emitter")
 			return
+		case msg, open = <-c.emitChan:
+			if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
+				if err := c.Disconnect(); err != nil {
+					c.Error(err)
+				}
+				c.Debug("closing emitter")
+				return
+			}
 		}
 		var err error
 
@@ -528,9 +565,8 @@ func (c *client) emitter() {
 		// build tag: disgord_diagnosews
 		saveOutgoingPacket(c, msg)
 
-		err = c.conn.WriteJSON(msg)
-		if err != nil {
-			c.Error(err.Error())
+		if err = c.conn.WriteJSON(msg); err != nil {
+			c.Error(err)
 		}
 	}
 }
@@ -565,16 +601,18 @@ func (c *client) unlockReceiver() {
 	c.isReceiving = false
 }
 
-func (c *client) receiver() {
+func (c *client) receiver(ctx context.Context) {
 	if !c.lockReceiver() {
-		c.Debug("tried to start another websocket receiver go routine")
+		c.Debug("tried to start another receiver")
 		return
 	}
 	defer c.unlockReceiver()
+	c.Debug("starting receiver")
 
 	for {
-		packet, err := c.conn.Read()
-		if err != nil {
+		var packet []byte
+		var err error
+		if packet, err = c.conn.Read(); err != nil {
 			c.Debug("closing receiver")
 			return
 		}
@@ -584,9 +622,8 @@ func (c *client) receiver() {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		err = httd.Unmarshal(packet, evt) // json.RawMessage
-		if err != nil {
-			c.Error(err.Error())
+		if err = httd.Unmarshal(packet, evt); err != nil {
+			c.Error(err)
 			continue
 		}
 
@@ -599,17 +636,12 @@ func (c *client) receiver() {
 
 		// check if application has closed
 		select {
-		case <-c.shutdown:
+		case <-ctx.Done():
+			c.Debug("closing receiver")
 			return
 		default:
 		}
 	}
-}
-
-func (c *client) Shutdown() (err error) {
-	close(c.shutdown)
-	c.Disconnect()
-	return
 }
 
 //////////////////////////////////////////////////////
@@ -618,4 +650,107 @@ func (c *client) Shutdown() (err error) {
 //
 //////////////////////////////////////////////////////
 
-// TODO - is it worth it?
+// AllowedToStartPulsating you must notify when you are done pulsating!
+func (c *client) AllowedToStartPulsating(serviceID uint8) bool {
+	c.pulseMutex.Lock()
+	defer c.pulseMutex.Unlock()
+
+	if c.pulsating == 0 {
+		c.pulsating = serviceID
+	}
+
+	return c.pulsating == serviceID
+}
+
+// StopPulsating stops sending heartbeats to Discord
+func (c *client) StopPulsating(serviceID uint8) {
+	c.pulseMutex.Lock()
+	defer c.pulseMutex.Unlock()
+
+	if c.pulsating == serviceID {
+		c.pulsating = 0
+	}
+}
+
+func (c *client) prepareHeartbeating(ctx context.Context) {
+	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
+	if !c.AllowedToStartPulsating(serviceID) {
+		c.Debug("tried to start an additional pulse")
+		return
+	}
+	defer c.StopPulsating(serviceID)
+
+	select {
+	case <-ctx.Done():
+		c.Debug("heartbeat preparations cancelled")
+		return
+	case <-c.activateHeartbeats:
+	}
+
+	c.pulsate(ctx)
+}
+
+func (c *client) pulsate(ctx context.Context) {
+	c.RLock()
+	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
+	c.RUnlock()
+	defer ticker.Stop()
+
+	var last time.Time
+	for {
+		c.RLock()
+		last = c.lastHeartbeatAck
+		c.RUnlock()
+
+		if err := c.behaviors[heartbeating].actions[sendHeartbeat](nil); err != nil {
+			c.Error(err)
+		}
+
+		stopChan := make(chan interface{})
+
+		// verify the heartbeat ACK
+		go func(m *client, last time.Time, sent time.Time, cancel chan interface{}) {
+			select {
+			case <-cancel:
+				return
+			case <-time.After(3 * time.Second): // deadline for Discord to respond
+			}
+
+			c.RLock()
+			receivedHeartbeatAck := c.lastHeartbeatAck.After(last)
+			c.RUnlock()
+
+			if !receivedHeartbeatAck {
+				c.Info("heartbeat ACK was not received, forcing reconnect")
+				if err := c.reconnect(); err != nil {
+					c.Error(err)
+				}
+			} else {
+				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
+			}
+		}(c, last, time.Now(), stopChan)
+
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+		}
+
+		c.Debug("Stopping pulse")
+		close(stopChan)
+		return
+	}
+}
+
+// HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack
+func (c *client) HeartbeatLatency() (duration time.Duration, err error) {
+	c.RLock()
+	defer c.RUnlock()
+
+	duration = c.heartbeatLatency
+	if duration == 0 {
+		err = errors.New("latency not determined yet")
+	}
+
+	return
+}

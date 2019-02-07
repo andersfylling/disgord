@@ -40,14 +40,18 @@ type LoggerZap struct {
 func (log *LoggerZap) getMessage(v ...interface{}) (sentence string) {
 	for i := range v {
 		var msg string
-		switch t := v[i].(type) {
-		case string:
-			msg = t
-		case error:
-			msg = t.Error()
-		default:
-			// TODO
-			msg = fmt.Sprint(v[i])
+		if str, ok := v[i].(fmt.Stringer); ok {
+			msg = str.String()
+		} else {
+			switch t := v[i].(type) {
+			case string:
+				msg = t
+			case error:
+				msg = t.Error()
+			default:
+				// TODO
+				msg = fmt.Sprint(v[i])
+			}
 		}
 
 		if sentence != "" {

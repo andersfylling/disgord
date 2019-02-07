@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andersfylling/disgord/logger"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
@@ -19,7 +21,7 @@ type testWS struct {
 	writing      chan interface{}
 	reading      chan []byte
 	disconnected bool
-	sync.Mutex
+	sync.RWMutex
 }
 
 func (g *testWS) Open(endpoint string, requestHeader http.Header) (err error) {
@@ -44,7 +46,20 @@ func (g *testWS) Close() (err error) {
 }
 
 func (g *testWS) Read() (packet []byte, err error) {
-	packet = <-g.reading
+	for {
+		select {
+		case packet = <-g.reading:
+		case <-time.After(1 * time.Millisecond):
+			g.RLock()
+			dis := g.disconnected
+			g.RUnlock()
+			if !dis {
+				continue
+			}
+		}
+		break
+	}
+
 	if packet == nil {
 		err = errors.New("empty")
 	}
@@ -97,6 +112,7 @@ func TestManager_RemoveEvent(t *testing.T) {
 }
 
 func TestEvtClient_reconnect(t *testing.T) {
+	deadline := 1 * time.Second
 	conn := &testWS{
 		closing:      make(chan interface{}),
 		opening:      make(chan interface{}),
@@ -107,6 +123,10 @@ func TestEvtClient_reconnect(t *testing.T) {
 
 	eChan := make(chan *Event)
 	aChan := make(A)
+
+	shutdown := make(chan interface{})
+	done := make(chan interface{})
+
 	m, err := NewEventClient(&EvtConfig{
 		// identity
 		Browser:             "disgord",
@@ -118,7 +138,7 @@ func TestEvtClient_reconnect(t *testing.T) {
 		Version:       constant.DiscordVersion,
 		Encoding:      constant.JSONEncoding,
 		ChannelBuffer: 3,
-		// Logger:        logger.DefaultLogger(true),
+		Logger:        logger.DefaultLogger(false),
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",
@@ -132,15 +152,14 @@ func TestEvtClient_reconnect(t *testing.T) {
 		A:         aChan,
 		EventChan: eChan,
 		conn:      conn,
+
+		SystemShutdown: shutdown,
 	}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	m.client.timeoutMultiplier = 0
 	seq := uint(1)
-
-	shutdown := make(chan interface{})
-	done := make(chan interface{})
 
 	resume := 0
 	identify := 1
@@ -156,7 +175,6 @@ func TestEvtClient_reconnect(t *testing.T) {
 	}
 	defer func() {
 		wg[disconnecting].Add(1)
-		m.Shutdown()
 		close(done)
 	}()
 
@@ -201,14 +219,20 @@ func TestEvtClient_reconnect(t *testing.T) {
 			}
 			switch data.Op {
 			case opcode.EventHeartbeat:
-				conn.reading <- []byte(`{"t":null,"s":null,"op":11,"d":null}`)
+				var d string = `{"t":null,"s":null,"op":11,"d":null}`
+				conn.reading <- []byte(d)
+				//fmt.Printf("discord: ->%+v\n", d)
 				wg[heartbeat].Done()
 			case opcode.EventIdentify:
-				conn.reading <- []byte(`{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`)
+				var d string = `{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`
+				conn.reading <- []byte(d)
+				//fmt.Printf("discord: ->%+v\n", d)
 				*seq++
 				wg[identify].Done()
 			case opcode.EventResume:
-				conn.reading <- []byte(`{"t":"RESUMED","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`)
+				var d string = `{"t":"RESUMED","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`
+				conn.reading <- []byte(d)
+				//fmt.Printf("discord: ->%+v\n", d)
 				*seq++
 				wg[resume].Done()
 			default:
@@ -219,7 +243,7 @@ func TestEvtClient_reconnect(t *testing.T) {
 	}(&seq)
 	go func(t *testing.T) {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(deadline):
 		case <-done:
 			return
 		}
@@ -266,6 +290,7 @@ func TestEvtClient_reconnect(t *testing.T) {
 
 	// what if there is a session invalidate event
 	wg[identify].Add(1)
+	seq = 1
 	conn.reading <- []byte(`{"t":null,"s":null,"op":9,"d":false}`)
 
 	// wait for identify

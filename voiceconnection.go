@@ -125,7 +125,7 @@ waiter:
 	defer func(v *voiceImpl) {
 		if !v.ready {
 			if v.ws != nil {
-				_ = v.ws.Shutdown()
+				_ = v.ws.Disconnect()
 			}
 			if v.udp != nil {
 				_ = v.udp.Close()
@@ -135,13 +135,14 @@ waiter:
 
 	// Connect to the websocket
 	voice.ws, err = websocket.NewVoiceClient(&websocket.VoiceConfig{
-		GuildID:   server.GuildID,
-		UserID:    r.c.myID,
-		SessionID: state.SessionID,
-		Token:     server.Token,
-		Proxy:     r.c.config.Proxy,
-		Endpoint:  "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
-		Logger:    r.c.log,
+		GuildID:        server.GuildID,
+		UserID:         r.c.myID,
+		SessionID:      state.SessionID,
+		Token:          server.Token,
+		Proxy:          r.c.config.Proxy,
+		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
+		Logger:         r.c.log,
+		SystemShutdown: r.c.shutdownChan,
 	})
 	if err != nil {
 		return

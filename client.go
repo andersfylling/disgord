@@ -344,13 +344,24 @@ func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.Info("Closing Discord gateway connection")
 	close(c.evtDispatch.shutdown)
-	err = c.shardManager.Disconnect()
-	if err != nil {
+	if err = c.shardManager.Disconnect(); err != nil {
 		c.Error(err)
 		return
 	}
 	close(c.shutdownChan)
 	c.Info("Disconnected")
+
+	return nil
+}
+
+// Suspend in case you want to temporary disconnect from the Gateway. But plan on
+// connecting again without restarting your software/application, this should be used.
+func (c *Client) Suspend() (err error) {
+	c.Info("Closing Discord gateway connection")
+	if err = c.shardManager.Disconnect(); err != nil {
+		return
+	}
+	c.Info("Suspended")
 
 	return nil
 }
