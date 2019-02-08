@@ -726,7 +726,9 @@ func (c *client) pulsate(ctx context.Context) {
 					c.Error(err)
 				}
 			} else {
+				c.RLock()
 				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
+				c.RUnlock()
 			}
 		}(c, last, time.Now(), stopChan)
 
