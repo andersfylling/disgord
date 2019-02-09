@@ -54,6 +54,38 @@ type Cacher interface {
 	UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool
 }
 
+// emptyCache ...
+type emptyCache struct {
+	err error
+}
+
+func (c *emptyCache) Update(key cacheRegistry, v interface{}) (err error) {
+	return c.err
+}
+func (c *emptyCache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
+	return nil, c.err
+}
+func (c *emptyCache) DeleteChannel(channelID snowflake.ID)                                      {}
+func (c *emptyCache) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
+func (c *emptyCache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
+func (c *emptyCache) AddGuildMember(guildID snowflake.ID, member *Member)                       {}
+func (c *emptyCache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)             {}
+func (c *emptyCache) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)       {}
+func (c *emptyCache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)    {}
+func (c *emptyCache) DeleteGuild(guildID snowflake.ID)                                          {}
+func (c *emptyCache) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
+func (c *emptyCache) UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID) {}
+func (c *emptyCache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                         {}
+func (c *emptyCache) Updates(key cacheRegistry, vs []interface{}) error {
+	return c.err
+}
+func (c *emptyCache) AddGuildRole(guildID Snowflake, role *Role) {}
+func (c *emptyCache) UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool {
+	return false
+}
+
+var _ Cacher = (*emptyCache)(nil)
+
 func newErrorCacheItemNotFound(id Snowflake) *ErrorCacheItemNotFound {
 	return &ErrorCacheItemNotFound{
 		info: "item with id{" + id.String() + "} was not found in cacheLink",
@@ -101,35 +133,27 @@ func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (ca
 	return
 }
 
-func newCache(conf *CacheConfig) (*Cache, error) {
-	userCacher, err := createUserCacher(conf)
-	if err != nil {
+func newCache(conf *CacheConfig) (c *Cache, err error) {
+	c = &Cache{
+		immutable: !conf.Mutable,
+		conf:      conf,
+	}
+
+	// setup cache repositories
+	if c.users, err = createUserCacher(conf); err != nil {
+		return nil, err
+	}
+	if c.voiceStates, err = createVoiceStateCacher(conf); err != nil {
+		return nil, err
+	}
+	if c.channels, err = createChannelCacher(conf); err != nil {
+		return nil, err
+	}
+	if c.guilds, err = createGuildCacher(conf); err != nil {
 		return nil, err
 	}
 
-	voiceStateCacher, err := createVoiceStateCacher(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	channelCacher, err := createChannelCacher(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	guildCacher, err := createGuildCacher(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Cache{
-		immutable:   !conf.Mutable,
-		conf:        conf,
-		users:       userCacher,
-		voiceStates: voiceStateCacher,
-		channels:    channelCacher,
-		guilds:      guildCacher,
-	}, nil
+	return // success
 }
 
 func DefaultCacheConfig() *CacheConfig {

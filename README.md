@@ -28,6 +28,8 @@ The develop branch is under continuous breaking changes, so please use releases 
 ## Logging
 DisGord allows you to inject your own logger, use the default one for DisGord (Zap), do not use any logging at all, you decide. To inject your own logger you must comply with the interface `disgord.Logger` (see logging.go).
 
+To use the logger later on, call the `Session.Logger()` method.
+
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
@@ -90,16 +92,13 @@ So if you haven't used modules before and you just want to create a Bot using Di
     import "fmt"
 
     func main() {
-        session, err := disgord.NewClient(&disgord.Config{
+        client := disgord.New(&disgord.Config{
             BotToken: "DISGORD_TOKEN",
             Logger: disgord.DefaultLogger(false), // optional logging, debug=false
         })
-        if err != nil {
-            panic(err)
-        }
 
         // note that the .Execute() is not on every REST method of DisGord (yet)
-        myself, err := session.GetCurrentUser().Execute()
+        myself, err := client.GetCurrentUser().Execute()
         if err != nil {
             panic(err)
         }
@@ -162,22 +161,14 @@ func main() {
     }
 	
     // create a Disgord session
-    var client *disgord.Client
-    if client, err = disgord.NewClient(botConfig); err != nil {
-        panic(err)
-    }
+    client := disgord.New(botConfig)
     
     // create a handler and bind it to new message events
     client.On(disgord.EventMessageCreate, replyPongToPing)
     
     // connect to the discord gateway to receive events
-    if err = client.Connect(); err != nil {
-        panic(err)
-    }
-    
-    // Keep the socket connection alive, until you terminate the application (eg. Ctrl + C)
-    if err = client.DisconnectOnInterrupt(); err != nil {
-    	botConfig.Logger.Error(err) // reuse the logger from DisGord
+    if err = client.StayConnectedUntilInterrupted(); err != nil {
+        botConfig.Logger.Error(err)
     }
 }
 ```

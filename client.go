@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/disgord/logger"
+
 	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/constant"
@@ -23,25 +25,31 @@ import (
 )
 
 // NewRESTClient creates a client for sending and handling Discord protocols such as rate limiting
-func NewRESTClient(conf *Config) (client *httd.Client) {
-	// request client
-	reqConf := &httd.Config{
+func NewRESTClient(conf *Config) (*httd.Client, error) {
+	return httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.BotToken,
 		UserAgentSourceURL:           constant.GitHubURL,
 		UserAgentVersion:             constant.Version,
 		HTTPClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
-	}
-	client = httd.NewClient(reqConf)
-	return
+	})
 }
 
-// NewSession create a client and return the Session interface
-func NewClient(conf *Config) (*Client, error) {
+// New create a client. But panics on configuration/setup errors.
+func New(conf *Config) (c *client) {
 	var err error
+	if c, err = NewClient(conf); err != nil {
+		panic(err)
+	}
+
+	return c
+
+}
+
+// NewClient creates a new DisGord client and returns an error on configuration issues
+func NewClient(conf *Config) (c *client, err error) {
 	if conf.HTTPClient == nil {
-		// http client configuration
 		conf.HTTPClient = &http.Client{
 			Timeout: time.Second * 10,
 		}
@@ -60,8 +68,15 @@ func NewClient(conf *Config) (*Client, error) {
 
 	conf.shutdownChan = make(chan interface{})
 
-	// request client
-	reqClient := NewRESTClient(conf)
+	if conf.Logger == nil {
+		conf.Logger = logger.Empty{}
+	}
+
+	// request client for REST requests
+	reqClient, err := NewRESTClient(conf)
+	if err != nil {
+		return nil, err
+	}
 
 	if conf.WSShardManagerConfig == nil {
 		conf.WSShardManagerConfig = &WSShardManagerConfig{}
@@ -72,8 +87,6 @@ func NewClient(conf *Config) (*Client, error) {
 	sharding := NewShardManager(conf)
 
 	// caching
-	// TODO: should not pre-set the cache sizes as some guilds might be small while others huge.
-	//  might spend more memory than needed
 	var cacher *Cache
 	if !conf.DisableCache {
 		if conf.CacheConfig == nil {
@@ -111,6 +124,17 @@ func NewClient(conf *Config) (*Client, error) {
 			sharding.TrackEvent.Add(event.GuildRoleUpdate)
 			sharding.TrackEvent.Add(event.GuildIntegrationsUpdate)
 		}
+	} else {
+		// create an empty cache to avoid nil panics
+		cacher, err = newCache(&CacheConfig{
+			DisableUserCaching:       true,
+			DisableChannelCaching:    true,
+			DisableGuildCaching:      true,
+			DisableVoiceStateCaching: true,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Required for voice operation
@@ -122,7 +146,7 @@ func NewClient(conf *Config) (*Client, error) {
 	evtDispatcher := NewDispatch(conf.ActivateEventChannels, eventChanSize)
 
 	// create a disgord client/instance/session
-	c := &Client{
+	c = &client{
 		shutdownChan: conf.shutdownChan,
 		config:       conf,
 		shardManager: sharding,
@@ -136,7 +160,7 @@ func NewClient(conf *Config) (*Client, error) {
 	}
 	c.voiceRepository = newVoiceRepository(c)
 
-	return c, nil
+	return c, err
 }
 
 // Config Configuration for the DisGord client
@@ -175,8 +199,9 @@ type Config struct {
 	Logger Logger
 }
 
-// Client is the main disgord client to hold your state and data
-type Client struct {
+// client is the main disgord client to hold your state and data. You must always initiate it using the constructor
+// methods (eg. New(..) or NewClient(..)).
+type client struct {
 	sync.RWMutex
 
 	shutdownChan chan interface{}
@@ -210,17 +235,30 @@ type Client struct {
 	*voiceRepository
 }
 
-var _ Session = (*Client)(nil)
+//////////////////////////////////////////////////////
+//
+// COMPLIANCE'S / IMPLEMENTATIONS
+//
+//////////////////////////////////////////////////////
+var _ fmt.Stringer = (*client)(nil)
+var _ Session = (*client)(nil)
+var _ Link = (*client)(nil)
+
+//////////////////////////////////////////////////////
+//
+// METHODS
+//
+//////////////////////////////////////////////////////
 
 // HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
 // way to measure delay between the client and Discord server
-func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
+func (c *client) HeartbeatLatency() (duration time.Duration, err error) {
 	return c.shardManager.GetAvgHeartbeatLatency()
 }
 
 // Myself get the current user / connected user
-func (c *Client) Myself() (user *User, err error) {
+func (c *client) Myself() (user *User, err error) {
 	if c.myID.Empty() {
 		user, err = c.GetCurrentUser().IgnoreCache().Execute()
 		if err == nil {
@@ -229,16 +267,18 @@ func (c *Client) Myself() (user *User, err error) {
 		return
 	}
 
-	var usr interface{}
-	usr, err = c.cache.Get(UserCache, c.myID)
-	if err == nil {
-		user = usr.(*User)
+	if user == nil && c.cache != nil {
+		var usr interface{}
+		if usr, err = c.cache.Get(UserCache, c.myID); err == nil {
+			user = usr.(*User)
+		}
 	}
+
 	return
 }
 
 // GetConnectedGuilds get a list over guild IDs that this client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
-func (c *Client) GetConnectedGuilds() []snowflake.ID {
+func (c *client) GetConnectedGuilds() []snowflake.ID {
 	c.shardManager.RLock()
 	defer c.shardManager.RUnlock()
 
@@ -250,46 +290,24 @@ func (c *Client) GetConnectedGuilds() []snowflake.ID {
 	return guilds
 }
 
-// Deprecated
-func (c *Client) logInfo(msg string) {
-	c.Info(msg)
+// Logger returns the log instance of DisGord.
+// Note that this instance is never nil. When the conf.Logger is not assigned
+// an empty struct is used instead. Such that all calls are simply discarded at compile time
+// removing the need for nil checks.
+func (c *client) Logger() logger.Logger {
+	return c.log
 }
 
-// Deprecated
-func (c *Client) logErr(msg string) {
-	c.Error(msg)
-}
-
-func (c *Client) Info(v ...interface{}) {
-	if c.log != nil {
-		c.log.Info(v)
-	}
-}
-func (c *Client) Debug(v ...interface{}) {
-	if c.log != nil {
-		c.log.Debug(v)
-	}
-}
-func (c *Client) Error(v ...interface{}) {
-	if c.log != nil {
-		c.log.Error(v)
-	}
-}
-
-var _ Logger = (*Client)(nil)
-
-func (c *Client) String() string {
+func (c *client) String() string {
 	return LibraryInfo()
 }
 
-var _ fmt.Stringer = (*Client)(nil)
-
 // RateLimiter return the rate limiter object
-func (c *Client) RateLimiter() httd.RateLimiter {
+func (c *client) RateLimiter() httd.RateLimiter {
 	return c.req.RateLimiter()
 }
 
-func (c *Client) setupConnectEnv() {
+func (c *client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
 	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
@@ -302,7 +320,7 @@ func (c *Client) setupConnectEnv() {
 }
 
 // Connect establishes a websocket connection to the discord API
-func (c *Client) Connect() (err error) {
+func (c *client) Connect() (err error) {
 	// set the user ID upon connection
 	// only works for socketing
 	//
@@ -328,48 +346,45 @@ func (c *Client) Connect() (err error) {
 	_ = c.shardManager.Prepare(c.config)
 	c.setupConnectEnv() // calling this before the c.ShardManager.Prepare will cause a evtChan deadlock
 
-	c.Info("Connecting to discord Gateway")
-	err = c.shardManager.Connect()
-	if err != nil {
-		c.Info(err)
+	c.log.Info("Connecting to discord Gateway")
+	if err = c.shardManager.Connect(); err != nil {
+		c.log.Info(err)
 		return
 	}
 
-	c.Info("Connected")
+	c.log.Info("Connected")
 	return nil
 }
 
 // Disconnect closes the discord websocket connection
-func (c *Client) Disconnect() (err error) {
+func (c *client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
-	c.Info("Closing Discord gateway connection")
+	c.log.Info("Closing Discord gateway connection")
 	close(c.evtDispatch.shutdown)
 	if err = c.shardManager.Disconnect(); err != nil {
-		c.Error(err)
+		c.log.Error(err)
 		return
 	}
 	close(c.shutdownChan)
-	c.Info("Disconnected")
+	c.log.Info("Disconnected")
 
 	return nil
 }
 
 // Suspend in case you want to temporary disconnect from the Gateway. But plan on
 // connecting again without restarting your software/application, this should be used.
-func (c *Client) Suspend() (err error) {
-	c.Info("Closing Discord gateway connection")
+func (c *client) Suspend() (err error) {
+	c.log.Info("Closing Discord gateway connection")
 	if err = c.shardManager.Disconnect(); err != nil {
 		return
 	}
-	c.Info("Suspended")
+	c.log.Info("Suspended")
 
 	return nil
 }
 
-var _ Link = (*Client)(nil)
-
 // DisconnectOnInterrupt wait until a termination signal is detected
-func (c *Client) DisconnectOnInterrupt() (err error) {
+func (c *client) DisconnectOnInterrupt() (err error) {
 	// create a channel to listen for termination signals (graceful shutdown)
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
@@ -378,14 +393,28 @@ func (c *Client) DisconnectOnInterrupt() (err error) {
 	return c.Disconnect()
 }
 
+// StayConnectedUntilInterrupted is a simple wrapper for connect, and disconnect that listens for system interrupts.
+// When a error happens you can terminate the application without worries.
+func (c *client) StayConnectedUntilInterrupted() (err error) {
+	if err = c.Connect(); err != nil {
+		return err
+	}
+
+	if err = c.DisconnectOnInterrupt(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Req return the request object. Used in REST requests to handle rate limits,
 // wrong http responses, etc.
-func (c *Client) Req() httd.Requester {
+func (c *client) Req() httd.Requester {
 	return c.req
 }
 
 // Cache returns the cacheLink manager for the session
-func (c *Client) Cache() Cacher {
+func (c *client) Cache() Cacher {
 	return c.cache
 }
 
@@ -394,7 +423,7 @@ func (c *Client) Cache() Cacher {
 //  not work. The callback will be triggered instantly, as all the shards have already
 //  successfully connected once.
 // TODO: allow this method to be reused (see Warning paragraph)
-func (c *Client) Ready(cb func()) {
+func (c *client) Ready(cb func()) {
 	// TODO: optimize..
 	go func() {
 		for {
@@ -409,7 +438,7 @@ func (c *Client) Ready(cb func()) {
 
 // On adds a event handler on the given event.
 // On => event => handle the content like this
-func (c *Client) On(event string, handlers ...interface{}) {
+func (c *client) On(event string, handlers ...interface{}) {
 	c.shardManager.TrackEvent.Add(event)
 
 	c.evtDispatch.listenersLock.Lock()
@@ -421,7 +450,7 @@ func (c *Client) On(event string, handlers ...interface{}) {
 }
 
 // Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
-func (c *Client) Once(event string, handlers ...interface{}) {
+func (c *client) Once(event string, handlers ...interface{}) {
 	c.shardManager.TrackEvent.Add(event) // TODO: remove event after firing. unless there are more handlers
 
 	c.evtDispatch.listenersLock.Lock()
@@ -434,7 +463,7 @@ func (c *Client) Once(event string, handlers ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(command SocketCommand, data interface{}) error {
+func (c *client) Emit(command SocketCommand, data interface{}) error {
 	switch command {
 	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
 	default:
@@ -444,18 +473,18 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 }
 
 // EventChan get a event channel using the event name
-func (c *Client) EventChan(event string) (channel interface{}, err error) {
+func (c *client) EventChan(event string) (channel interface{}, err error) {
 	return c.evtDispatch.EventChan(event)
 }
 
 // EventChannels get access to all the event channels
-func (c *Client) EventChannels() (channels EventChannels) {
+func (c *client) EventChannels() (channels EventChannels) {
 	return c.evtDispatch
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
 // to reduce unnecessary marshalling and controls.
-func (c *Client) AcceptEvent(events ...string) {
+func (c *client) AcceptEvent(events ...string) {
 	for _, evt := range events {
 		c.shardManager.TrackEvent.Add(evt)
 	}
@@ -465,7 +494,7 @@ func (c *Client) AcceptEvent(events ...string) {
 
 // DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
 // be used to delete said object.
-func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
+func (c *client) DeleteFromDiscord(obj discordDeleter) (err error) {
 	err = obj.deleteFromDiscord(c)
 	return
 }
@@ -477,17 +506,17 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter) (err error) {
 //
 // client.SaveToDiscord(object) -> saves an entirely new object (must not have a discord id)
 // client.SaveToDiscord(original, new) -> updates an existing object (must have a discord id)
-func (c *Client) SaveToDiscord(objects ...discordSaver) (err error) {
-	if len(objects) == 0 {
+func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (err error) {
+	if original == nil {
 		return errors.New("you must specify at least one discord object to be saved to Discord")
 	}
 
-	var changes discordSaver
-	if len(objects) > 1 {
-		changes = objects[1]
+	var updated discordSaver
+	if len(changes) > 1 {
+		updated = changes[1]
 	}
 
-	err = objects[0].saveToDiscord(c, changes)
+	err = original.saveToDiscord(c, updated)
 	return
 }
 
@@ -496,7 +525,7 @@ func (c *Client) SaveToDiscord(objects ...discordSaver) (err error) {
 // Channel
 
 // GetChannel ...
-func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
+func (c *client) GetChannel(id Snowflake) (ret *Channel, err error) {
 	if ret, err = c.cache.GetChannel(id); err != nil {
 		ret, err = GetChannel(c.req, id)
 		if err != nil {
@@ -508,139 +537,139 @@ func (c *Client) GetChannel(id Snowflake) (ret *Channel, err error) {
 }
 
 // ModifyChannel ...
-func (c *Client) ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
+func (c *client) ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
 	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
 // DeleteChannel ...
-func (c *Client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
+func (c *client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
 	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
 // SetChannelPermissions ...
-func (c *Client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams) (err error) {
+func (c *client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams) (err error) {
 	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
 	return
 }
 
 // GetChannelInvites ...
-func (c *Client) GetChannelInvites(id Snowflake) (ret []*Invite, err error) {
+func (c *client) GetChannelInvites(id Snowflake) (ret []*Invite, err error) {
 	ret, err = GetChannelInvites(c.req, id)
 	return
 }
 
 // CreateChannelInvites ...
-func (c *Client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
+func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
 	ret, err = CreateChannelInvites(c.req, id, params)
 	return
 }
 
 // DeleteChannelPermission .
-func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake) (err error) {
+func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake) (err error) {
 	err = DeleteChannelPermission(c.req, channelID, overwriteID)
 	return
 }
 
 // TriggerTypingIndicator .
-func (c *Client) TriggerTypingIndicator(channelID Snowflake) (err error) {
+func (c *client) TriggerTypingIndicator(channelID Snowflake) (err error) {
 	err = TriggerTypingIndicator(c.req, channelID)
 	return
 }
 
 // GetPinnedMessages .
-func (c *Client) GetPinnedMessages(channelID Snowflake) (ret []*Message, err error) {
+func (c *client) GetPinnedMessages(channelID Snowflake) (ret []*Message, err error) {
 	ret, err = GetPinnedMessages(c.req, channelID)
 	return
 }
 
 // AddPinnedChannelMessage .
-func (c *Client) AddPinnedChannelMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) AddPinnedChannelMessage(channelID, msgID Snowflake) (err error) {
 	err = AddPinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // DeletePinnedChannelMessage .
-func (c *Client) DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error) {
 	err = DeletePinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // GroupDMAddRecipient .
-func (c *Client) GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
+func (c *client) GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
 	err = GroupDMAddRecipient(c.req, channelID, userID, params)
 	return
 }
 
 // GroupDMRemoveRecipient .
-func (c *Client) GroupDMRemoveRecipient(channelID, userID Snowflake) (err error) {
+func (c *client) GroupDMRemoveRecipient(channelID, userID Snowflake) (err error) {
 	err = GroupDMRemoveRecipient(c.req, channelID, userID)
 	return
 }
 
 // GetChannelMessages .
-func (c *Client) GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+func (c *client) GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
 	ret, err = GetChannelMessages(c.req, channelID, params)
 	return
 }
 
 // GetChannelMessage .
-func (c *Client) GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error) {
+func (c *client) GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error) {
 	ret, err = GetChannelMessage(c.req, channelID, messageID)
 	return
 }
 
 // CreateChannelMessage .
-func (c *Client) CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
+func (c *client) CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	ret, err = CreateChannelMessage(c.req, channelID, params)
 	return
 }
 
 // EditMessage .
-func (c *Client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
+func (c *client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
 	ret, err = EditMessage(c.req, chanID, msgID, params)
 	return
 }
 
 // DeleteMessage .
-func (c *Client) DeleteMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) DeleteMessage(channelID, msgID Snowflake) (err error) {
 	err = DeleteMessage(c.req, channelID, msgID)
 	return
 }
 
 // BulkDeleteMessages .
-func (c *Client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
+func (c *client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
 	err = BulkDeleteMessages(c.req, chanID, params)
 	return
 }
 
 // CreateReaction .
-func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
 	err = CreateReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteOwnReaction .
-func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
 	err = DeleteOwnReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteUserReaction .
-func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
 	err = DeleteUserReaction(c.req, channelID, messageID, userID, emoji)
 	return
 }
 
 // GetReaction .
-func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
+func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
 	ret, err = GetReaction(c.req, channelID, messageID, emoji, params)
 	return
 }
 
 // DeleteAllReactions .
-func (c *Client) DeleteAllReactions(channelID, messageID Snowflake) (err error) {
+func (c *client) DeleteAllReactions(channelID, messageID Snowflake) (err error) {
 	err = DeleteAllReactions(c.req, channelID, messageID)
 	return
 }
@@ -648,13 +677,13 @@ func (c *Client) DeleteAllReactions(channelID, messageID Snowflake) (err error) 
 // Guild
 
 // CreateGuild .
-func (c *Client) CreateGuild(params *CreateGuildParams) (ret *Guild, err error) {
+func (c *client) CreateGuild(params *CreateGuildParams) (ret *Guild, err error) {
 	ret, err = CreateGuild(c.req, params)
 	return
 }
 
 // GetGuild .
-func (c *Client) GetGuild(id Snowflake) (ret *Guild, err error) {
+func (c *client) GetGuild(id Snowflake) (ret *Guild, err error) {
 	ret, err = c.cache.GetGuild(id)
 	if err != nil {
 		ret, err = GetGuild(c.req, id)
@@ -667,19 +696,19 @@ func (c *Client) GetGuild(id Snowflake) (ret *Guild, err error) {
 }
 
 // ModifyGuild .
-func (c *Client) ModifyGuild(id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
+func (c *client) ModifyGuild(id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
 	ret, err = ModifyGuild(c.req, id, params)
 	return
 }
 
 // DeleteGuild .
-func (c *Client) DeleteGuild(id Snowflake) (err error) {
+func (c *client) DeleteGuild(id Snowflake) (err error) {
 	err = DeleteGuild(c.req, id)
 	return
 }
 
 // GetGuildChannels .
-func (c *Client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
+func (c *client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
 	var guild *Guild
 	guild, err = c.cache.GetGuild(id)
 	if err != nil {
@@ -698,19 +727,19 @@ func (c *Client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
 }
 
 // CreateGuildChannel .
-func (c *Client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
+func (c *client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
 	ret, err = CreateGuildChannel(c.req, id, params)
 	return
 }
 
 // ModifyGuildChannelPositions .
-func (c *Client) ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
+func (c *client) ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
 	ret, err = ModifyGuildChannelPositions(c.req, id, params)
 	return
 }
 
 // GetGuildMember .
-func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
+func (c *client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
 	ret, err = c.cache.GetGuildMember(guildID, userID)
 	if err != nil {
 		ret, err = GetGuildMember(c.req, guildID, userID)
@@ -724,7 +753,7 @@ func (c *Client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err err
 }
 
 // GetGuildMembers .
-func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error) {
+func (c *client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error) {
 	ret, err = c.cache.GetGuildMembersAfter(guildID, after, limit)
 	if err != nil {
 		ret, err = GetGuildMembers(c.req, guildID, after, limit)
@@ -739,67 +768,67 @@ func (c *Client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Me
 }
 
 // AddGuildMember .
-func (c *Client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
+func (c *client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
 	ret, err = AddGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyGuildMember .
-func (c *Client) ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
+func (c *client) ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
 	err = ModifyGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyCurrentUserNick .
-func (c *Client) ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
+func (c *client) ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
 	nick, err = ModifyCurrentUserNick(c.req, id, params)
 	return
 }
 
 // AddGuildMemberRole .
-func (c *Client) AddGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
+func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
 	err = AddGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMemberRole .
-func (c *Client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
+func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
 	err = RemoveGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMember .
-func (c *Client) RemoveGuildMember(guildID, userID Snowflake) (err error) {
+func (c *client) RemoveGuildMember(guildID, userID Snowflake) (err error) {
 	err = RemoveGuildMember(c.req, guildID, userID)
 	return
 }
 
 // GetGuildBans .
-func (c *Client) GetGuildBans(id Snowflake) (ret []*Ban, err error) {
+func (c *client) GetGuildBans(id Snowflake) (ret []*Ban, err error) {
 	ret, err = GetGuildBans(c.req, id)
 	return
 }
 
 // GetGuildBan .
-func (c *Client) GetGuildBan(guildID, userID Snowflake) (ret *Ban, err error) {
+func (c *client) GetGuildBan(guildID, userID Snowflake) (ret *Ban, err error) {
 	ret, err = GetGuildBan(c.req, guildID, userID)
 	return
 }
 
 // CreateGuildBan .
-func (c *Client) CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
+func (c *client) CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
 	err = CreateGuildBan(c.req, guildID, userID, params)
 	return
 }
 
 // RemoveGuildBan .
-func (c *Client) RemoveGuildBan(guildID, userID Snowflake) (err error) {
+func (c *client) RemoveGuildBan(guildID, userID Snowflake) (err error) {
 	err = RemoveGuildBan(c.req, guildID, userID)
 	return
 }
 
 // GetGuildRoles .
-func (c *Client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
+func (c *client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
 	ret, err = c.cache.GetGuildRoles(guildID)
 	if err != nil {
 		ret, err = GetGuildRoles(c.req, guildID)
@@ -813,97 +842,97 @@ func (c *Client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
 }
 
 // CreateGuildRole .
-func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
+func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
 	ret, err = CreateGuildRole(c.req, id, params)
 	return
 }
 
 // ModifyGuildRolePositions .
-func (c *Client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+func (c *client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
 	ret, err = ModifyGuildRolePositions(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildRole .
-func (c *Client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
+func (c *client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
 	ret, err = ModifyGuildRole(c.req, guildID, roleID, params)
 	return
 }
 
 // DeleteGuildRole .
-func (c *Client) DeleteGuildRole(guildID, roleID Snowflake) (err error) {
+func (c *client) DeleteGuildRole(guildID, roleID Snowflake) (err error) {
 	err = DeleteGuildRole(c.req, guildID, roleID)
 	return
 }
 
 // GetGuildPruneCount .
-func (c *Client) GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+func (c *client) GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
 	ret, err = GetGuildPruneCount(c.req, id, params)
 	return
 }
 
 // BeginGuildPrune .
-func (c *Client) BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+func (c *client) BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
 	ret, err = BeginGuildPrune(c.req, id, params)
 	return
 }
 
 // GetGuildVoiceRegions .
-func (c *Client) GetGuildVoiceRegions(id Snowflake) (ret []*VoiceRegion, err error) {
+func (c *client) GetGuildVoiceRegions(id Snowflake) (ret []*VoiceRegion, err error) {
 	ret, err = GetGuildVoiceRegions(c.req, id)
 	return
 }
 
 // GetGuildInvites .
-func (c *Client) GetGuildInvites(id Snowflake) (ret []*Invite, err error) {
+func (c *client) GetGuildInvites(id Snowflake) (ret []*Invite, err error) {
 	ret, err = GetGuildInvites(c.req, id)
 	return
 }
 
 // GetGuildIntegrations .
-func (c *Client) GetGuildIntegrations(id Snowflake) (ret []*Integration, err error) {
+func (c *client) GetGuildIntegrations(id Snowflake) (ret []*Integration, err error) {
 	ret, err = GetGuildIntegrations(c.req, id)
 	return
 }
 
 // CreateGuildIntegration .
-func (c *Client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
+func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
 	err = CreateGuildIntegration(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildIntegration .
-func (c *Client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
+func (c *client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
 	err = ModifyGuildIntegration(c.req, guildID, integrationID, params)
 	return
 }
 
 // DeleteGuildIntegration .
-func (c *Client) DeleteGuildIntegration(guildID, integrationID Snowflake) (err error) {
+func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake) (err error) {
 	err = DeleteGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // SyncGuildIntegration .
-func (c *Client) SyncGuildIntegration(guildID, integrationID Snowflake) (err error) {
+func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake) (err error) {
 	err = SyncGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // GetGuildEmbed .
-func (c *Client) GetGuildEmbed(guildID Snowflake) (ret *GuildEmbed, err error) {
+func (c *client) GetGuildEmbed(guildID Snowflake) (ret *GuildEmbed, err error) {
 	ret, err = GetGuildEmbed(c.req, guildID)
 	return
 }
 
 // ModifyGuildEmbed .
-func (c *Client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
+func (c *client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
 	ret, err = ModifyGuildEmbed(c.req, guildID, params)
 	return
 }
 
 // GetGuildVanityURL .
-func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error) {
+func (c *client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error) {
 	ret, err = GetGuildVanityURL(c.req, guildID)
 	return
 }
@@ -911,37 +940,37 @@ func (c *Client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err e
 // Webhook
 
 // CreateWebhook .
-func (c *Client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
+func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
 	ret, err = CreateWebhook(c.req, channelID, params)
 	return
 }
 
 // GetChannelWebhooks .
-func (c *Client) GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error) {
+func (c *client) GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error) {
 	ret, err = GetChannelWebhooks(c.req, channelID)
 	return
 }
 
 // GetGuildWebhooks .
-func (c *Client) GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error) {
+func (c *client) GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error) {
 	ret, err = GetGuildWebhooks(c.req, guildID)
 	return
 }
 
 // GetWebhook .
-func (c *Client) GetWebhook(id Snowflake) (ret *Webhook, err error) {
+func (c *client) GetWebhook(id Snowflake) (ret *Webhook, err error) {
 	ret, err = GetWebhook(c.req, id)
 	return
 }
 
 // GetWebhookWithToken .
-func (c *Client) GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error) {
+func (c *client) GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error) {
 	ret, err = GetWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ModifyWebhook .
-func (c *Client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
+func (c *client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
 	if id.Empty() {
 		err = errors.New("given webhook ID was not set, there is nothing to modify")
 		return
@@ -967,37 +996,37 @@ func (c *Client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *
 }
 
 // ModifyWebhookWithToken .
-func (c *Client) ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error) {
+func (c *client) ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error) {
 	ret, err = ModifyWebhookWithToken(c.req, newWebhook)
 	return
 }
 
 // DeleteWebhook .
-func (c *Client) DeleteWebhook(webhookID Snowflake) (err error) {
+func (c *client) DeleteWebhook(webhookID Snowflake) (err error) {
 	err = DeleteWebhook(c.req, webhookID)
 	return
 }
 
 // DeleteWebhookWithToken .
-func (c *Client) DeleteWebhookWithToken(id Snowflake, token string) (err error) {
+func (c *client) DeleteWebhookWithToken(id Snowflake, token string) (err error) {
 	err = DeleteWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ExecuteWebhook .
-func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
+func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
 	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
 	return
 }
 
 // ExecuteSlackWebhook .
-func (c *Client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
 	err = ExecuteSlackWebhook(c.req, params, wait)
 	return
 }
 
 // ExecuteGitHubWebhook .
-func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
 	err = ExecuteGitHubWebhook(c.req, params, wait)
 	return
 }
@@ -1009,12 +1038,12 @@ func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (
 // Custom methods are usually reused by the resource package for readability
 // -----
 
-func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams) ([]*Guild, error) {
+func (c *client) GetGuilds(params *GetCurrentUserGuildsParams) ([]*Guild, error) {
 	return c.GetCurrentUserGuilds(params)
 }
 
 // SendMsg .
-func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
+func (c *client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
 	if constant.LockedMethods {
 		message.RLock()
 	}
@@ -1041,7 +1070,7 @@ func (c *Client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 }
 
 // SendMsgString .
-func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *Message, err error) {
+func (c *client) SendMsgString(channelID Snowflake, content string) (msg *Message, err error) {
 	params := &CreateChannelMessageParams{
 		Content: content,
 	}
@@ -1051,7 +1080,7 @@ func (c *Client) SendMsgString(channelID Snowflake, content string) (msg *Messag
 }
 
 // UpdateMessage .
-func (c *Client) UpdateMessage(message *Message) (msg *Message, err error) {
+func (c *client) UpdateMessage(message *Message) (msg *Message, err error) {
 	if constant.LockedMethods {
 		message.RLock()
 		defer message.RUnlock()
@@ -1069,7 +1098,7 @@ func (c *Client) UpdateMessage(message *Message) (msg *Message, err error) {
 }
 
 // UpdateChannel Not implemented yet
-func (c *Client) UpdateChannel(channel *Channel) (err error) {
+func (c *client) UpdateChannel(channel *Channel) (err error) {
 	// there are several different REST calls that needs to be made in order
 	// to update the channel. But how exactly do we know what has changed?
 	return errors.New("not implemented")
@@ -1089,13 +1118,13 @@ func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event,
 
 // UpdateStatus updates the client's game status
 // note: for simple games, check out UpdateStatusString
-func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
+func (c *client) UpdateStatus(s *UpdateStatusCommand) error {
 	return c.Emit(CommandUpdateStatus, s)
 }
 
 // UpdateStatusString sets the client's game activity to the provided string, status to online
 // and type to Playing
-func (c *Client) UpdateStatusString(s string) error {
+func (c *client) UpdateStatusString(s string) error {
 	updateData := &UpdateStatusCommand{
 		Since: nil,
 		Game: &Activity{
@@ -1110,7 +1139,7 @@ func (c *Client) UpdateStatusString(s string) error {
 
 // eventHandler Takes a incoming event from the websocket package, parses it, and sends
 // trigger requests to the event dispatcher and state cacher.
-func (c *Client) eventHandler() {
+func (c *client) eventHandler() {
 	for {
 		var err error
 		var evt *websocket.Event
@@ -1209,9 +1238,8 @@ func (c *Client) eventHandler() {
 		// unmarshal into cacheLink
 		//err := c.cacheEvent2(evtName, box)
 
-		err = unmarshal(evt.Data, box)
-		if err != nil {
-			c.Error(err.Error())
+		if err = unmarshal(evt.Data, box); err != nil {
+			c.log.Error(err)
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
@@ -1223,7 +1251,7 @@ func (c *Client) eventHandler() {
 			updater.updateInternalsWithClient(c)
 		}
 
-		// cacheLink
+		// cache
 		if !c.config.DisableCache {
 			cacheEvent(c.cache, evt.Name, box, evt.Data)
 		}

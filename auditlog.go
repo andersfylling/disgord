@@ -298,7 +298,7 @@ func auditLogFactory() interface{} {
 //  Reviewed                 2018-06-05
 //  Comment                  -
 //  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got
-func (c *Client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLogsBuilder) {
+func (c *client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLogsBuilder) {
 	builder = &guildAuditLogsBuilder{}
 	builder.r.itemFactory = auditLogFactory
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{

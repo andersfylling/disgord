@@ -18,7 +18,7 @@ import (
 
 type voiceRepository struct {
 	sync.Mutex
-	c *Client
+	c *client
 
 	pendingStates  map[Snowflake]chan *VoiceStateUpdate
 	pendingServers map[Snowflake]chan *VoiceServerUpdate
@@ -48,7 +48,7 @@ type voiceImpl struct {
 	close     chan struct{}
 }
 
-func newVoiceRepository(c *Client) (voice *voiceRepository) {
+func newVoiceRepository(c *client) (voice *voiceRepository) {
 	return &voiceRepository{
 		c: c,
 

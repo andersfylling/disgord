@@ -177,7 +177,7 @@ func cacheEmoji_SetAll(cache Cacher, guildID snowflake.ID, emojis []*Emoji) erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisBuilder) {
+func (c *client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisBuilder) {
 	builder = &listGuildEmojisBuilder{
 		guildID: guildID,
 	}
@@ -235,7 +235,7 @@ func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
 }
 
 // GetGuildEmoji .
-func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
+func (c *client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
 	// TODO place emojis in their own cacheLink system
 	var guild *Guild
 	guild, err = c.cache.GetGuild(guildID)
@@ -254,19 +254,19 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err erro
 }
 
 // CreateGuildEmoji .
-func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
+func (c *client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
 	ret, err = CreateGuildEmoji(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildEmoji .
-func (c *Client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
+func (c *client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
 	ret, err = ModifyGuildEmoji(c.req, guildID, emojiID, params)
 	return
 }
 
 // DeleteGuildEmoji .
-func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
+func (c *client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
 	err = DeleteGuildEmoji(c.req, guildID, emojiID)
 	return
 }

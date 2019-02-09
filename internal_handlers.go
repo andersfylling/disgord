@@ -1,7 +1,7 @@
 package disgord
 
 // handlerGuildDelete update internal state when joining or creating a guild
-func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
+func (c *client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
 	shard, _ := c.shardManager.GetShard(evt.Guild.ID)
@@ -18,7 +18,7 @@ func (c *Client) handlerAddToConnectedGuilds(s Session, evt *GuildCreate) {
 }
 
 // handlerGuildDelete update internal state when deleting or leaving a guild
-func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
+func (c *client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
 	shard, _ := c.shardManager.GetShard(evt.UnavailableGuild.ID)
@@ -34,6 +34,6 @@ func (c *Client) handlerRemoveFromConnectedGuilds(s Session, evt *GuildDelete) {
 	}
 }
 
-func (c *Client) handlerUpdateSelfBot(session Session, update *UserUpdate) {
+func (c *client) handlerUpdateSelfBot(session Session, update *UserUpdate) {
 	_ = session.Cache().Update(UserCache, update.User)
 }

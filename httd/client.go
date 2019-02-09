@@ -132,13 +132,13 @@ func SupportsDiscordAPIVersion(version int) bool {
 }
 
 // NewClient ...
-func NewClient(conf *Config) *Client {
+func NewClient(conf *Config) (*Client, error) {
 	if !SupportsDiscordAPIVersion(conf.APIVersion) {
-		panic(fmt.Sprintf("Discord API version %d is not supported", conf.APIVersion))
+		return nil, errors.New(fmt.Sprintf("Discord API version %d is not supported", conf.APIVersion))
 	}
 
 	if conf.BotToken == "" {
-		panic("No Discord Bot Token was provided")
+		return nil, errors.New("no Discord Bot Token was provided")
 	}
 
 	// if no http client was provided, create a new one
@@ -152,7 +152,7 @@ func NewClient(conf *Config) *Client {
 	// information about the client library and version in the following format:
 	//	User-Agent: DiscordBot ($url, $versionNumber)
 	if conf.UserAgentSourceURL == "" || conf.UserAgentVersion == "" {
-		panic("Both a source(url) and a version must be present for sending requests to the Discord REST API")
+		return nil, errors.New("both a source(url) and a version must be present for sending requests to the Discord REST API")
 	}
 
 	// setup the required http request header fields
@@ -169,7 +169,7 @@ func NewClient(conf *Config) *Client {
 		reqHeader:  header,
 		httpClient: conf.HTTPClient,
 		rateLimit:  NewRateLimit(),
-	}
+	}, nil
 }
 
 // Config is the configuration options for the httd.Client structure. Essentially the behaviour of all requests

@@ -6,3 +6,11 @@ type Logger interface {
 	Info(v ...interface{})
 	Error(v ...interface{})
 }
+
+type Empty struct{}
+
+func (Empty) Debug(v ...interface{}) {}
+func (Empty) Info(v ...interface{})  {}
+func (Empty) Error(v ...interface{}) {}
+
+var _ Logger = (*Empty)(nil)

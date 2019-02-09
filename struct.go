@@ -96,7 +96,7 @@ type internalUpdater interface {
 }
 
 type internalClientUpdater interface {
-	updateInternalsWithClient(*Client)
+	updateInternalsWithClient(*client)
 }
 
 // Discord types

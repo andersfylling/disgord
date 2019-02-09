@@ -974,7 +974,7 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetCurrentUser() (builder *getUserBuilder) {
+func (c *client) GetCurrentUser() (builder *getUserBuilder) {
 	builder = &getUserBuilder{
 		UserID: c.myID, // used to check cache
 	}
@@ -994,7 +994,7 @@ func (c *Client) GetCurrentUser() (builder *getUserBuilder) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
+func (c *client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
 	builder = &getUserBuilder{
 		UserID: id,
 	}
@@ -1047,44 +1047,44 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 }
 
 // ModifyCurrentUser .
-func (c *Client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
+func (c *client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
 	ret, err = ModifyCurrentUser(c.req, params)
 	// TODO cache and update client
 	return
 }
 
 // GetCurrentUserGuilds .
-func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
 	ret, err = GetCurrentUserGuilds(c.req, params)
 	return
 }
 
 // LeaveGuild .
-func (c *Client) LeaveGuild(id Snowflake) (err error) {
+func (c *client) LeaveGuild(id Snowflake) (err error) {
 	err = LeaveGuild(c.req, id)
 	return
 }
 
 // GetUserDMs .
-func (c *Client) GetUserDMs() (ret []*Channel, err error) {
+func (c *client) GetUserDMs() (ret []*Channel, err error) {
 	ret, err = GetUserDMs(c.req)
 	return
 }
 
 // CreateDM .
-func (c *Client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
+func (c *client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
 	ret, err = CreateDM(c.req, recipientID)
 	return
 }
 
 // CreateGroupDM .
-func (c *Client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
+func (c *client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
 	ret, err = CreateGroupDM(c.req, params)
 	return
 }
 
 // GetUserConnections .
-func (c *Client) GetUserConnections() (ret []*UserConnection, err error) {
+func (c *client) GetUserConnections() (ret []*UserConnection, err error) {
 	ret, err = GetUserConnections(c.req)
 	return
 }

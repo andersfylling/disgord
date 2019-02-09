@@ -556,7 +556,7 @@ type VoiceStateUpdate struct {
 	Ctx context.Context `json:"-"`
 }
 
-func (evt *VoiceStateUpdate) updateInternalsWithClient(c *Client) {
+func (evt *VoiceStateUpdate) updateInternalsWithClient(c *client) {
 	c.voiceRepository.onVoiceStateUpdate(evt)
 }
 
@@ -571,7 +571,7 @@ type VoiceServerUpdate struct {
 	Ctx      context.Context `json:"-"`
 }
 
-func (evt *VoiceServerUpdate) updateInternalsWithClient(c *Client) {
+func (evt *VoiceServerUpdate) updateInternalsWithClient(c *client) {
 	c.voiceRepository.onVoiceServerUpdate(evt)
 }
 

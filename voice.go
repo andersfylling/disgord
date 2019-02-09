@@ -171,7 +171,7 @@ func voiceRegionsFactory() interface{} {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
-func (c *Client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
+func (c *client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
 	builder = &listVoiceRegionsBuilder{}
 	builder.itemFactory = voiceRegionsFactory
 	builder.setup(c.cache, c.req, &httd.Request{

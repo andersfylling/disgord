@@ -4,6 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/andersfylling/disgord/logger"
+
+	"github.com/andersfylling/snowflake/v3"
+
 	"github.com/andersfylling/disgord/httd"
 )
 
@@ -23,6 +27,7 @@ func NewSession(conf *Config) (Session, error) {
 
 // NewSessionMustCompile same as NewClientMustCompile, but with the Session
 // interface
+// Deprecated: Use New(..) instead
 func NewSessionMustCompile(conf *Config) (session Session) {
 	var err error
 	session, err = NewSession(conf)
@@ -85,13 +90,13 @@ type Link interface {
 
 // SocketHandler all socket related
 type SocketHandler interface {
-	Link
-	DisconnectOnInterrupt() error
+	// Link
+	Disconnect() error
 
 	// event handlers
 	On(event string, handler ...interface{})
+	Once(event string, handler ...interface{})
 	Emitter
-	//Use(middleware ...interface{}) // TODO: is this useful?
 
 	// event channels
 	EventChan(event string) (channel interface{}, err error)
@@ -242,7 +247,9 @@ type VoiceHandler interface {
 	VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error)
 }
 
-// Session The main interface for Disgord
+// Session Is the runtime interface for DisGord. It allows you to interact with a live session (using sockets or not).
+// Note that this interface is used after you've configured DisGord, and therefore won't allow you to configure it
+// further.
 type Session interface {
 	// give information about the bot/connected user
 	Myself() (*User, error)
@@ -257,6 +264,8 @@ type Session interface {
 	// Should be used instead of requesting objects.
 	Cache() Cacher
 
+	Logger() logger.Logger
+
 	// RateLimiter the rate limiter for the discord REST API
 	RateLimiter() httd.RateLimiter
 
@@ -266,7 +275,7 @@ type Session interface {
 
 	// Generic CRUD operations for Discord interaction
 	DeleteFromDiscord(obj discordDeleter) error
-	SaveToDiscord(objects ...discordSaver) error
+	SaveToDiscord(original discordSaver, changes ...discordSaver) error
 
 	// state/caching module
 	// checks the cacheLink first, otherwise do a http request
@@ -278,9 +287,11 @@ type Session interface {
 	UpdateMessage(message *Message) (msg *Message, err error)
 	UpdateChannel(channel *Channel) (err error)
 
-	// Status upate functions
+	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) (err error)
 	UpdateStatusString(s string) (err error)
+
+	GetConnectedGuilds() []snowflake.ID
 
 	// same as above. Except these returns a channel
 	// WARNING: none below should be assumed to be working.

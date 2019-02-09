@@ -248,19 +248,13 @@ func (c *client) getLogPrefix() string {
 }
 
 func (c *client) Info(v ...interface{}) {
-	if c.log != nil {
-		c.log.Info(c.getLogPrefix(), v)
-	}
+	c.log.Info(c.getLogPrefix(), v)
 }
 func (c *client) Debug(v ...interface{}) {
-	if c.log != nil {
-		c.log.Debug(c.getLogPrefix(), v)
-	}
+	c.log.Debug(c.getLogPrefix(), v)
 }
 func (c *client) Error(v ...interface{}) {
-	if c.log != nil {
-		c.log.Error(c.getLogPrefix(), v)
-	}
+	c.log.Error(c.getLogPrefix(), v)
 }
 
 var _ logger.Logger = (*client)(nil)
