@@ -613,7 +613,7 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(); err != nil {
-			c.Debug("closing receiver")
+			c.Debug("closing receiver", err)
 			return
 		}
 
