@@ -171,6 +171,9 @@ type client struct {
 	cancel context.CancelFunc
 
 	SystemShutdown <-chan interface{}
+
+	// receiver gets closed when the connection is lost
+	requestedDisconnect bool
 }
 
 type behaviorActions map[interface{}]actionFunc
@@ -328,8 +331,7 @@ func (c *client) connect() (err error) {
 	return
 }
 
-// Connect establishes a socket connection with the Discord API
-func (c *client) Connect() (err error) {
+func (c *client) _connect() (err error) {
 	c.preCon()
 
 	c.Lock()
@@ -345,8 +347,16 @@ func (c *client) Connect() (err error) {
 	return nil
 }
 
-// Disconnect disconnects the socket connection
-func (c *client) Disconnect() (err error) {
+// Connect establishes a socket connection with the Discord API
+func (c *client) Connect() (err error) {
+	c.Lock()
+	c.requestedDisconnect = false
+	c.Unlock()
+
+	return c._connect()
+}
+
+func (c *client) disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
 	if c.conn.Disconnected() || !c.haveConnectedOnce || c.cancel == nil {
@@ -360,9 +370,8 @@ func (c *client) Disconnect() (err error) {
 	c.cancel = nil
 
 	// use the emitter to dispatch the close message
-	if err = c.conn.Close(); err != nil {
-		c.Error(err)
-	}
+	err = c.conn.Close()
+	// a typical err here is that the pipe is closed. Err is returned later
 
 	// c.Emit(event.Close, nil)
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
@@ -373,6 +382,14 @@ func (c *client) Disconnect() (err error) {
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
 	return
+}
+
+// Disconnect disconnects the socket connection
+func (c *client) Disconnect() (err error) {
+	c.Lock()
+	c.requestedDisconnect = true
+	c.Unlock()
+	return c.disconnect()
 }
 
 func (c *client) lockReconnect() bool {
@@ -407,16 +424,21 @@ func (c *client) reconnect() (err error) {
 	defer c.unlockReconnect()
 
 	c.Debug("is reconnecting")
-	if err := c.Disconnect(); err != nil {
-		c.Debug(err)
-		return errors.New("already disconnected, cannot reconnect")
+	if err := c.disconnect(); err != nil {
+		c.RLock()
+		if c.requestedDisconnect {
+			c.RUnlock()
+			c.Debug(err)
+			return errors.New("already disconnected, cannot reconnect")
+		}
+		c.RUnlock()
 	}
 
 	var try uint
-	var delay time.Duration = 3 // seconds
+	var delay = 3 * time.Second
 	for {
 		c.Debug("reconnect attempt", try)
-		if err = c.Connect(); err == nil {
+		if err = c._connect(); err == nil {
 			break
 		}
 
@@ -425,7 +447,7 @@ func (c *client) reconnect() (err error) {
 
 		// wait N seconds
 		select {
-		case <-time.After(delay * time.Second):
+		case <-time.After(delay):
 			delay += 4 + time.Duration(try*2)
 		case <-c.SystemShutdown:
 			c.Debug("stopping reconnect")
@@ -608,6 +630,7 @@ func (c *client) receiver(ctx context.Context) {
 		var err error
 		if packet, err = c.conn.Read(); err != nil {
 			c.Debug("closing receiver", err)
+			// TODO: should be able to tag c.conn as disconnected at this stage
 			return
 		}
 
