@@ -17,6 +17,7 @@ DEFAULT_PROJECT_NAME="mybot"
 DEFAULT_BOT_PREFIX="!"
 DEFAULT_PROJECT_PATH="."
 DEFAULT_GIT_SUPPORT="y"
+DEFAULT_K8S_SUPPORT="y"
 
 read -p "project name (${DEFAULT_PROJECT_NAME}): " PROJECT_NAME
 if [[ ${PROJECT_NAME} == "" ]]; then
@@ -47,6 +48,10 @@ if [[ ${GIT_SUPPORT} == "" ]]; then
     GIT_SUPPORT=${DEFAULT_GIT_SUPPORT}
 fi
 
+read -p "kubernetes deployment script (y/n): " K8S_SUPPORT
+if [[ ${K8S_SUPPORT} == "" ]]; then
+    K8S_SUPPORT=${DEFAULT_K8S_SUPPORT}
+fi
 
 
 # Create the project
@@ -71,53 +76,36 @@ func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
 }
 
 func main() {
-	var err error
-
 	botConfig := &disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // optional logging, debug=false
     }
 
-    // create a Disgord session
-    var client *disgord.Client
-    if client, err = disgord.NewClient(botConfig); err != nil {
-        panic(err)
-    }
+    // create a DisGord client
+    client := disgord.New(botConfig)
 
     // create a handler and bind it to new message events
     client.On(disgord.EventMessageCreate, replyPongToPing)
 
-    // connect to the discord gateway to receive events
-    if err = client.Connect(); err != nil {
-        panic(err)
-    }
-
-    // Keep the socket connection alive, until you terminate the application (eg. Ctrl + C)
-    if err = client.DisconnectOnInterrupt(); err != nil {
-    	botConfig.Logger.Error(err) // reuse the logger from DisGord
+    // connect to the discord gateway to receive events, and disconnect on a system interrupt
+    if err = client.StayConnectedUntilInterrupted(); err != nil {
+        botConfig.Logger.Error(err)
     }
 }
 ' >> main.go
 
 echo "FROM golang:1.11.5 as builder
-
+MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY . /build
-
 RUN export GO111MODULE=on
-
 RUN go test ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags \"-static\"' -o discordbot .
 
-
-FROM scratch
+FROM gcr.io/distroless/base
 WORKDIR /bot
-
-COPY . /bot
 COPY --from=builder /build/discordbot .
-RUN chmod +x /bot/discordbot
-
-CMD [\"./discordbot\"]
+CMD [\"/bot/discordbot\"]
 " >> Dockerfile
 
 echo "# ${PROJECT_NAME}
@@ -131,6 +119,33 @@ eg. \"export DISGORD_TOKEN=si7fisdgfsfushgsjdf.sdfksgjyefs.dfgysyefs\"
 A dockerfile has also been created for you if this is a preference. Note that you must supply the environment variable during run.
 
 " >> README.md
+
+if [[ ${K8S_SUPPORT} == "y" ]]; then
+    echo "# kubernetes deployment file (GKE)
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ${PROJECT_NAME}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: ${PROJECT_NAME}
+    spec:
+      containers:
+        - name: ${PROJECT_NAME}
+          image: *DOCKERHUBUSERNAME*/${PROJECT_NAME}-disgord:latest
+          env:
+            - name: DISGORD_TOKEN
+              valueFrom:
+                secretKeyRef: # needs to be manually created
+                  name: discord-tokens
+                  key: ${PROJECT_NAME}
+" >> deployment.yaml
+    echo "> remember to change *DOCKERHUBUSERNAME* in deployment.yaml with your actual username on hub.docker.com or other hosting site."
+    echo "> note that deployment.yaml is just a suggestion. You will still need to manually edit it ot make it work."
+fi
 
 if [[ -z ${GO111MODULE} ]] || [[ ${GO111MODULE} == "off" ]]; then
     export GO111MODULE="auto"
