@@ -143,20 +143,20 @@ func NewClient(conf *Config) (c *client, err error) {
 
 	// event dispatcher
 	eventChanSize := 20
-	evtDispatcher := NewDispatch(conf.ActivateEventChannels, eventChanSize)
+	evtDemultiplexer := newEvtDemultiplexer(conf.ActivateEventChannels, eventChanSize)
 
 	// create a disgord client/instance/session
 	c = &client{
-		shutdownChan: conf.shutdownChan,
-		config:       conf,
-		shardManager: sharding,
-		httpClient:   conf.HTTPClient,
-		Proxy:        conf.Proxy,
-		botToken:     conf.BotToken,
-		evtDispatch:  evtDispatcher,
-		req:          reqClient,
-		cache:        cacher,
-		log:          conf.Logger,
+		shutdownChan:     conf.shutdownChan,
+		config:           conf,
+		shardManager:     sharding,
+		httpClient:       conf.HTTPClient,
+		Proxy:            conf.Proxy,
+		botToken:         conf.BotToken,
+		evtDemultiplexer: evtDemultiplexer,
+		req:              reqClient,
+		cache:            cacher,
+		log:              conf.Logger,
 	}
 	c.voiceRepository = newVoiceRepository(c)
 
@@ -210,8 +210,8 @@ type client struct {
 
 	myID Snowflake
 
-	// register listeners for events
-	evtDispatch *Dispatch
+	// reactor demultiplexer for events
+	evtDemultiplexer *evtDemultiplexer
 
 	// cancelRequestWhenRateLimited by default the client waits until either the HTTPClient.timeout or
 	// the rate limit ends before closing a request channel. If activated, in stead, requests will
@@ -360,7 +360,7 @@ func (c *client) Connect() (err error) {
 func (c *client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.log.Info("Closing Discord gateway connection")
-	close(c.evtDispatch.shutdown)
+	close(c.evtDemultiplexer.shutdown)
 	if err = c.shardManager.Disconnect(); err != nil {
 		c.log.Error(err)
 		return
@@ -436,30 +436,46 @@ func (c *client) Ready(cb func()) {
 	}()
 }
 
-// On adds a event handler on the given event.
+// On adds a singular or multiple event handlers on the given event, with the same middlewares.
 // On => event => handle the content like this
-func (c *client) On(event string, handlers ...interface{}) {
+func (c *client) On(event string, inputs ...interface{}) error {
 	c.shardManager.TrackEvent.Add(event)
 
-	c.evtDispatch.listenersLock.Lock()
-	defer c.evtDispatch.listenersLock.Unlock()
-
-	for _, handler := range handlers {
-		c.evtDispatch.listeners[event] = append(c.evtDispatch.listeners[event], handler)
+	// detect middleware then handlers. Ordering is important.
+	spec := &handlerSpec{}
+	if err := spec.populate(inputs...); err != nil {
+		return err
 	}
+
+	c.evtDemultiplexer.Lock()
+	defer c.evtDemultiplexer.Unlock()
+	c.evtDemultiplexer.handlers[event] = append(c.evtDemultiplexer.handlers[event], spec)
+
+	return nil
 }
 
 // Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
-func (c *client) Once(event string, handlers ...interface{}) {
-	c.shardManager.TrackEvent.Add(event) // TODO: remove event after firing. unless there are more handlers
-
-	c.evtDispatch.listenersLock.Lock()
-	defer c.evtDispatch.listenersLock.Unlock()
-	for _, handler := range handlers {
-		index := len(c.evtDispatch.listeners[event])
-		c.evtDispatch.listeners[event] = append(c.evtDispatch.listeners[event], handler)
-		c.evtDispatch.listenOnceOnly[event] = append(c.evtDispatch.listenOnceOnly[event], index)
+// Deprecated: is now just a wrapper
+func (c *client) Once(event string, inputs ...interface{}) error {
+	if len(inputs) == 0 {
+		return errors.New("must specify at least one handler")
 	}
+
+	var params []interface{}
+	params = append(params, inputs...)
+
+	ctrl := &simpleHandlerCtrl{
+		remaining: 1,
+	}
+
+	// ensure there's only one controller
+	if _, ok := params[len(params)-1].(HandlerCtrl); ok {
+		params[len(params)-1] = ctrl // overwrite - don't use Once with a controller...
+	} else {
+		params = append(params, ctrl)
+	}
+
+	return c.On(event, params...)
 }
 
 // Emit sends a socket command directly to Discord.
@@ -474,12 +490,12 @@ func (c *client) Emit(command SocketCommand, data interface{}) error {
 
 // EventChan get a event channel using the event name
 func (c *client) EventChan(event string) (channel interface{}, err error) {
-	return c.evtDispatch.EventChan(event)
+	return c.evtDemultiplexer.EventChan(event)
 }
 
 // EventChannels get access to all the event channels
 func (c *client) EventChannels() (channels EventChannels) {
-	return c.evtDispatch
+	return c.evtDemultiplexer
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
@@ -1258,7 +1274,7 @@ func (c *client) eventHandler() {
 
 		// trigger listeners
 		prepareBox(evt.Name, box)
-		c.evtDispatch.triggerChan(ctx, evt.Name, c, box)
-		go c.evtDispatch.triggerHandlers(ctx, evt.Name, c, box)
+		c.evtDemultiplexer.triggerChan(ctx, evt.Name, c, box)
+		go c.evtDemultiplexer.triggerHandlers(ctx, evt.Name, c, box)
 	}
 }
