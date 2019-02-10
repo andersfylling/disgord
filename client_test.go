@@ -83,8 +83,52 @@ func TestClient_On(t *testing.T) {
 	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
 	dispatcher.triggerHandlers(nil, EventReady, c, evt)
 	wg.Wait()
+}
 
-	// TODO: add a timeout
+func TestClient_On_Middleware(t *testing.T) {
+	c := New(&Config{
+		BotToken:     "testing",
+		DisableCache: true,
+	})
+	dispatcher := c.evtDemultiplexer
+
+	const prefix = "this cool prefix"
+	var mdlwHasBotPrefix Middleware = func(evt interface{}) interface{} {
+		msg := (evt.(*MessageCreate)).Message
+		if strings.HasPrefix(msg.Content, prefix) {
+			return evt
+		}
+
+		return nil
+	}
+	var mdlwHasDifferentPrefix Middleware = func(evt interface{}) interface{} {
+		msg := (evt.(*MessageCreate)).Message
+		if strings.HasPrefix(msg.Content, "random unknown prefix") {
+			return evt
+		}
+
+		return nil
+	}
+
+	wg := sync.WaitGroup{}
+	_ = c.On(EventMessageCreate, func() {
+		wg.Done()
+	})
+	_ = c.On(EventMessageCreate, mdlwHasBotPrefix, func() {
+		wg.Done()
+	})
+	_ = c.On(EventMessageCreate, mdlwHasDifferentPrefix, func() {
+		wg.Done()
+	})
+	wg.Add(2)
+
+	// trigger the handler twice
+	evt := &MessageCreate{
+		Message: &Message{Content: prefix + " testing"},
+	}
+	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
+	dispatcher.triggerHandlers(nil, EventReady, c, evt)
+	wg.Wait()
 }
 
 // TestClient_System looks for crashes when the DisGord system starts up.
