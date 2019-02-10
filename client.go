@@ -436,8 +436,20 @@ func (c *client) Ready(cb func()) {
 	}()
 }
 
-// On adds a singular or multiple event handlers on the given event, with the same middlewares.
-// On => event => handle the content like this
+// On binds a singular or multiple event handlers to the stated event, with the same middlewares.
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions)
+// the mdlwHasMentions is optional, as are any middleware and controller. But a handler must be specified.
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, &ctrl{remaining:3})
+// here ctrl is a custom struct that implements disgord.HandlerCtrl, and after 3 calls it is no longer callable.
+//
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveToDB, &ctrl{remaining:3})
+// the On statement takes all it's parameters as a unique definition. These are not two separate
+// handlers. But rather, two handler run in sequence after the middleware (3 times).
+//
+// Another example is to create a voting system where you specify a deadline instead of a remaining counter:
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveToDB, &ctrl{deadline:time.Now().Add(time.Hour)})
+// again, you specify the IsDead() method to comply with the disgord.HandlerCtrl interface, so you can do whatever
+// you want.
 func (c *client) On(event string, inputs ...interface{}) error {
 	c.shardManager.TrackEvent.Add(event)
 
