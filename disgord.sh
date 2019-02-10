@@ -88,7 +88,7 @@ func main() {
     client.On(disgord.EventMessageCreate, replyPongToPing)
 
     // connect to the discord gateway to receive events, and disconnect on a system interrupt
-    if err = client.StayConnectedUntilInterrupted(); err != nil {
+    if err := client.StayConnectedUntilInterrupted(); err != nil {
         botConfig.Logger.Error(err)
     }
 }
