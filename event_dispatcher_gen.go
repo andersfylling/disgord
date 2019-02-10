@@ -284,106 +284,106 @@ func (d *Dispatch) emptyChannel(evtName string) {
 	switch evtName {
 
 	case EventChannelCreate:
-		for _ = range d.channelCreateChan {
+		for range d.channelCreateChan {
 		}
 	case EventChannelDelete:
-		for _ = range d.channelDeleteChan {
+		for range d.channelDeleteChan {
 		}
 	case EventChannelPinsUpdate:
-		for _ = range d.channelPinsUpdateChan {
+		for range d.channelPinsUpdateChan {
 		}
 	case EventChannelUpdate:
-		for _ = range d.channelUpdateChan {
+		for range d.channelUpdateChan {
 		}
 	case EventGuildBanAdd:
-		for _ = range d.guildBanAddChan {
+		for range d.guildBanAddChan {
 		}
 	case EventGuildBanRemove:
-		for _ = range d.guildBanRemoveChan {
+		for range d.guildBanRemoveChan {
 		}
 	case EventGuildCreate:
-		for _ = range d.guildCreateChan {
+		for range d.guildCreateChan {
 		}
 	case EventGuildDelete:
-		for _ = range d.guildDeleteChan {
+		for range d.guildDeleteChan {
 		}
 	case EventGuildEmojisUpdate:
-		for _ = range d.guildEmojisUpdateChan {
+		for range d.guildEmojisUpdateChan {
 		}
 	case EventGuildIntegrationsUpdate:
-		for _ = range d.guildIntegrationsUpdateChan {
+		for range d.guildIntegrationsUpdateChan {
 		}
 	case EventGuildMemberAdd:
-		for _ = range d.guildMemberAddChan {
+		for range d.guildMemberAddChan {
 		}
 	case EventGuildMemberRemove:
-		for _ = range d.guildMemberRemoveChan {
+		for range d.guildMemberRemoveChan {
 		}
 	case EventGuildMemberUpdate:
-		for _ = range d.guildMemberUpdateChan {
+		for range d.guildMemberUpdateChan {
 		}
 	case EventGuildMembersChunk:
-		for _ = range d.guildMembersChunkChan {
+		for range d.guildMembersChunkChan {
 		}
 	case EventGuildRoleCreate:
-		for _ = range d.guildRoleCreateChan {
+		for range d.guildRoleCreateChan {
 		}
 	case EventGuildRoleDelete:
-		for _ = range d.guildRoleDeleteChan {
+		for range d.guildRoleDeleteChan {
 		}
 	case EventGuildRoleUpdate:
-		for _ = range d.guildRoleUpdateChan {
+		for range d.guildRoleUpdateChan {
 		}
 	case EventGuildUpdate:
-		for _ = range d.guildUpdateChan {
+		for range d.guildUpdateChan {
 		}
 	case EventMessageCreate:
-		for _ = range d.messageCreateChan {
+		for range d.messageCreateChan {
 		}
 	case EventMessageDelete:
-		for _ = range d.messageDeleteChan {
+		for range d.messageDeleteChan {
 		}
 	case EventMessageDeleteBulk:
-		for _ = range d.messageDeleteBulkChan {
+		for range d.messageDeleteBulkChan {
 		}
 	case EventMessageReactionAdd:
-		for _ = range d.messageReactionAddChan {
+		for range d.messageReactionAddChan {
 		}
 	case EventMessageReactionRemove:
-		for _ = range d.messageReactionRemoveChan {
+		for range d.messageReactionRemoveChan {
 		}
 	case EventMessageReactionRemoveAll:
-		for _ = range d.messageReactionRemoveAllChan {
+		for range d.messageReactionRemoveAllChan {
 		}
 	case EventMessageUpdate:
-		for _ = range d.messageUpdateChan {
+		for range d.messageUpdateChan {
 		}
 	case EventPresenceUpdate:
-		for _ = range d.presenceUpdateChan {
+		for range d.presenceUpdateChan {
 		}
 	case EventPresencesReplace:
-		for _ = range d.presencesReplaceChan {
+		for range d.presencesReplaceChan {
 		}
 	case EventReady:
-		for _ = range d.readyChan {
+		for range d.readyChan {
 		}
 	case EventResumed:
-		for _ = range d.resumedChan {
+		for range d.resumedChan {
 		}
 	case EventTypingStart:
-		for _ = range d.typingStartChan {
+		for range d.typingStartChan {
 		}
 	case EventUserUpdate:
-		for _ = range d.userUpdateChan {
+		for range d.userUpdateChan {
 		}
 	case EventVoiceServerUpdate:
-		for _ = range d.voiceServerUpdateChan {
+		for range d.voiceServerUpdateChan {
 		}
 	case EventVoiceStateUpdate:
-		for _ = range d.voiceStateUpdateChan {
+		for range d.voiceStateUpdateChan {
 		}
 	case EventWebhooksUpdate:
-		for _ = range d.webhooksUpdateChan {
+		for range d.webhooksUpdateChan {
 		}
 	}
 }

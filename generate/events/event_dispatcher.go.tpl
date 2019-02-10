@@ -87,7 +87,7 @@ func (d *Dispatch) emptyChannel(evtName string) {
     switch evtName {
         {{range .}} {{if .IsDiscordEvent}}
         case Event{{.}}:
-            for _ = range d.{{.LowerCaseFirst}}Chan {} {{end}} {{end}}
+            for range d.{{.LowerCaseFirst}}Chan {} {{end}} {{end}}
     }
 }
 
