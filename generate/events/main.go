@@ -87,8 +87,8 @@ func main() {
 	}
 
 	// And finally pass the event information to different templates to generate some files
-	makeFile(events, "generate/events/event_dispatcher.go.tpl", "event_dispatcher_gen.go")
-	makeFile(events, "generate/events/events.go.tpl", "events_gen.go")
+	makeFile(events, "generate/events/event_demultiplexer.gotpl", "event_demultiplexer_gen.go")
+	makeFile(events, "generate/events/events.gotpl", "events_gen.go")
 }
 
 func makeFile(events []*eventName, tplFile, target string) {

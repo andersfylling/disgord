@@ -22,30 +22,31 @@ func TestClient_Once(t *testing.T) {
 		panic(err)
 	}
 
-	dispatcher := c.evtDispatch
-	if len(dispatcher.listenOnceOnly) > 0 {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", len(dispatcher.listenOnceOnly))
+	dispatcher := c.evtDemultiplexer
+	if dispatcher.nrOfAliveHandlers() > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	wg := sync.WaitGroup{}
-	c.Once(EventMessageCreate, func() {
+	_ = c.Once(EventMessageCreate, func() {
 		wg.Done()
 	})
-	if len(dispatcher.listenOnceOnly) != 1 {
-		t.Errorf("expected dispatch to have 1 listener. Got %d", len(dispatcher.listenOnceOnly))
+	if dispatcher.nrOfAliveHandlers() != 1 {
+		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 	wg.Add(1) // only run once
 
 	// trigger the handler
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, nil)
-	if len(dispatcher.listenOnceOnly) > 0 {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", len(dispatcher.listenOnceOnly))
+	box := &MessageCreate{}
+	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
+	if dispatcher.nrOfAliveHandlers() > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	// trigger the handler, again
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, nil)
-	if len(dispatcher.listenOnceOnly) > 0 {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", len(dispatcher.listenOnceOnly))
+	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
+	if dispatcher.nrOfAliveHandlers() > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	wg.Wait()
@@ -62,24 +63,25 @@ func TestClient_On(t *testing.T) {
 		panic(err)
 	}
 
-	dispatcher := c.evtDispatch
-	if len(dispatcher.listeners) > 0 {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", len(dispatcher.listeners))
+	dispatcher := c.evtDemultiplexer
+	if dispatcher.nrOfAliveHandlers() > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	wg := sync.WaitGroup{}
-	c.On(EventMessageCreate, func() {
+	_ = c.On(EventMessageCreate, func() {
 		wg.Done()
 	})
-	if len(dispatcher.listeners) != 1 {
-		t.Errorf("expected dispatch to have 1 listener. Got %d", len(dispatcher.listeners))
+	if dispatcher.nrOfAliveHandlers() != 1 {
+		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 	wg.Add(2)
 
 	// trigger the handler twice
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, nil)
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, nil)
-	dispatcher.triggerHandlers(nil, EventReady, c, nil)
+	evt := &MessageCreate{}
+	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
+	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
+	dispatcher.triggerHandlers(nil, EventReady, c, evt)
 	wg.Wait()
 
 	// TODO: add a timeout
@@ -184,7 +186,7 @@ func TestClient_System(t *testing.T) {
 	//wg.Wait()
 
 	// cleanup
-	close(c.evtDispatch.shutdown)
+	close(c.evtDemultiplexer.shutdown)
 	close(c.shutdownChan)
 }
 

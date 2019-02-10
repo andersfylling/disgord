@@ -94,8 +94,11 @@ type SocketHandler interface {
 	Disconnect() error
 
 	// event handlers
-	On(event string, handler ...interface{})
-	Once(event string, handler ...interface{})
+	// inputs are in the following order: middlewares, handlers, controller
+	On(event string, inputs ...interface{}) error
+
+	// Deprecated
+	Once(event string, inputs ...interface{}) error
 	Emitter
 
 	// event channels
