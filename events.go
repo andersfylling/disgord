@@ -160,10 +160,10 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 
 	for key, structs := range updates {
 		if err = cache.Updates(key, structs); err != nil {
-			// TODO: logging
+			// TODO: logging? or append all errs to the return statement?
 		}
 	}
-	return
+	return nil
 }
 
 // ---------------------------

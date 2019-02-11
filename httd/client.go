@@ -212,7 +212,7 @@ type Request struct {
 func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {
 	buffer, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	switch resp.Header.Get(ContentEncoding) {
@@ -222,13 +222,13 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 		var r io.Reader
 		r, err = gzip.NewReader(b)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		var resB bytes.Buffer
 		_, err = resB.ReadFrom(r)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		body = resB.Bytes()
@@ -236,7 +236,7 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 		body = buffer
 	}
 
-	return
+	return body, nil
 }
 
 func makeRateLimitCompliant(key string, c *Client) (err error) {
@@ -245,13 +245,12 @@ func makeRateLimitCompliant(key string, c *Client) (err error) {
 	for {
 		timeout, err = c.rateLimit.RequestPermit(key)
 		if err != nil {
-			return // no way around the rate limiter in this case
+			return err // no way around the rate limiter in this case
 		}
 		tns := timeout.Nanoseconds()
 
 		if tns > 0 && c.cancelRequestWhenRateLimited {
-			err = errors.New("rate limited")
-			return
+			return errors.New("rate limited")
 		}
 
 		if tns > 0 {
@@ -265,7 +264,7 @@ func makeRateLimitCompliant(key string, c *Client) (err error) {
 			continue
 		}
 
-		return err
+		return nil
 	}
 }
 
@@ -273,7 +272,7 @@ func makeRateLimitCompliant(key string, c *Client) (err error) {
 func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
 	err = makeRateLimitCompliant(r.Ratelimiter, c)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	// prepare request body
@@ -290,7 +289,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 
 			bodyReader, err = convertStructToIOReader(r.Body)
 			if err != nil {
-				return
+				return nil, nil, err
 			}
 		}
 	}
@@ -298,7 +297,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	// create request
 	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, bodyReader)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	req.Header = c.reqHeader
 	req.Header.Set(ContentType, r.ContentType) // unique for each request
@@ -306,7 +305,7 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	// send request
 	resp, err = c.httpClient.Do(req)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 	body, err = c.decodeResponseBody(resp)
@@ -331,9 +330,10 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 		if len(body) > 0 {
 			_ = Unmarshal(body, err)
 		}
+		return nil, nil, err
 	}
 
-	return
+	return resp, body, nil
 }
 
 // RateLimiter get the rate limit manager

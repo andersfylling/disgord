@@ -287,7 +287,8 @@ func (c *client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func GetGuildEmoji(client httd.Getter, guildID, emojiID Snowflake) (ret *Emoji, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 	})
@@ -327,7 +328,8 @@ func CreateGuildEmoji(client httd.Poster, guildID Snowflake, params *CreateGuild
 		err = errors.New("emoji name contains illegal characters. Did not send request")
 		return
 	}
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),
 		Body:        params,
@@ -360,7 +362,8 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake, params *M
 		err = errors.New("emoji name contains illegal characters. Did not send request")
 		return
 	}
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 		Body:        params,
@@ -383,7 +386,8 @@ func ModifyGuildEmoji(client httd.Patcher, guildID, emojiID Snowflake, params *M
 //  Reviewed                2018-06-10
 //  Comment                 -
 func DeleteGuildEmoji(client httd.Deleter, guildID, emojiID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuild(guildID),
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 	})

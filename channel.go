@@ -192,7 +192,7 @@ func (c *Channel) saveToDiscord(session Session, changes discordSaver) (err erro
 		} else if c.Type == ChannelTypeDM {
 			if len(c.Recipients) != 1 {
 				err = errors.New("must have only one recipient in Channel.Recipient (with ID) for creating a DM. Got " + strconv.Itoa(len(c.Recipients)))
-				return
+				return err
 			}
 			updated, err = session.CreateDM(c.Recipients[0].ID)
 		} else if c.Type == ChannelTypeGroupDM {
@@ -261,8 +261,7 @@ func (c *Channel) deleteFromDiscord(session Session) (err error) {
 		return
 	}
 	var deleted *Channel
-	deleted, err = session.DeleteChannel(c.ID)
-	if err != nil {
+	if deleted, err = session.DeleteChannel(c.ID); err != nil {
 		return
 	}
 
@@ -380,7 +379,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 		channel.Unlock()
 		c.RUnlock()
 	}
-	return
+	return nil
 }
 
 //func (c *Channel) Clear() {
@@ -516,7 +515,7 @@ func (c *ChannelEmbed) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
@@ -602,7 +601,7 @@ func (c *ChannelEmbedVideo) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
@@ -646,7 +645,7 @@ func (c *ChannelEmbedImage) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
@@ -686,7 +685,7 @@ func (c *ChannelEmbedProvider) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
@@ -730,7 +729,7 @@ func (c *ChannelEmbedAuthor) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
@@ -772,7 +771,7 @@ func (c *ChannelEmbedFooter) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }
 
 // ChannelEmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
@@ -814,5 +813,5 @@ func (c *ChannelEmbedField) CopyOverTo(other interface{}) (err error) {
 		c.RUnlock()
 		embed.Unlock()
 	}
-	return
+	return nil
 }

@@ -222,7 +222,8 @@ func (b *RESTRequestBuilder) CancelOnRatelimit() *RESTRequestBuilder {
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
 func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: "/gateway",
 		Endpoint:    "/gateway",
 	})
@@ -245,7 +246,8 @@ func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
 func GetGatewayBot(client httd.Getter) (gateway *GatewayBot, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: "/gateway/bot",
 		Endpoint:    "/gateway/bot",
 	})

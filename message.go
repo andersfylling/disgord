@@ -367,7 +367,8 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 		query += params.GetQueryString()
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    endpoint.ChannelMessages(channelID) + query,
 	})
@@ -402,7 +403,8 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 		return
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    endpoint.ChannelMessage(channelID, messageID),
 	})
@@ -524,11 +526,11 @@ func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) erro
 func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
-		return
+		return nil, err
 	}
 	if params == nil {
 		err = errors.New("message must be set")
-		return
+		return nil, err
 	}
 
 	var (
@@ -536,12 +538,12 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 		contentType string
 	)
 
-	postBody, contentType, err = params.prepare()
-	if err != nil {
-		return
+	if postBody, contentType, err = params.prepare(); err != nil {
+		return nil, err
 	}
 
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages",
 		Body:        postBody,
@@ -549,13 +551,13 @@ func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *Creat
 	})
 
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret = &Message{}
 	err = unmarshal(body, ret)
 	ret.updateInternals()
-	return
+	return ret, err
 }
 
 // EditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
@@ -575,27 +577,28 @@ type EditMessageParams struct {
 func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
-		return
+		return nil, err
 	}
 	if msgID.Empty() {
 		err = errors.New("msgID must be set to edit the message")
-		return
+		return nil, err
 	}
 
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret = &Message{}
 	err = unmarshal(body, ret)
 	ret.updateInternals()
-	return
+	return ret, err
 }
 
 // DeleteMessage [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
@@ -617,7 +620,8 @@ func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) 
 		return
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
 		Endpoint:    endpoint.ChannelMessage(channelID, msgID),
 	})
@@ -660,8 +664,7 @@ func (p *BulkDeleteMessagesParams) Valid() (err error) {
 	defer p.m.RUnlock()
 
 	messages := len(p.Messages)
-	err = p.tooMany(messages)
-	if err != nil {
+	if err = p.tooMany(messages); err != nil {
 		return
 	}
 	err = p.tooFew(messages)
@@ -673,8 +676,7 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	err = p.tooMany(len(p.Messages) + 1)
-	if err != nil {
+	if err = p.tooMany(len(p.Messages) + 1); err != nil {
 		return
 	}
 
@@ -699,25 +701,25 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
-		return
+		return err
 	}
-	err = params.Valid()
-	if err != nil {
-		return
+	if err = params.Valid(); err != nil {
+		return err
 	}
 
-	resp, _, err := client.Post(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelMessagesDelete(chanID),
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(chanID),
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+	return err
 }

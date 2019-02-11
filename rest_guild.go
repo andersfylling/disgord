@@ -79,18 +79,19 @@ type CreateGuildParams struct {
 func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 guilds?
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: endpoint.Guilds(),
 		Endpoint:    endpoint.Guilds(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	err = unmarshal(body, &ret)
-	return
+	return ret, err
 }
 
 // GetGuild [REST] Returns the guild object for the given id.
@@ -101,17 +102,18 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 //  Reviewed                2018-08-17
 //  Comment                 -
 func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	err = unmarshal(body, &ret)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	// add guild id to roles
@@ -119,7 +121,7 @@ func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
 		role.guildID = id
 	}
 
-	return
+	return ret, nil
 }
 
 // ModifyGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
@@ -147,26 +149,27 @@ type ModifyGuildParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
 func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return
+	if err = unmarshal(body, &ret); err != nil {
+		return nil, err
 	}
 
 	// add guild id to roles
 	for _, role := range ret.Roles {
 		role.guildID = id
 	}
-	return
+
+	return ret, nil
 }
 
 // DeleteGuild [REST] Delete a guild permanently. User must be owner. Returns 204 No Content on success.
@@ -178,7 +181,8 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (
 //  Reviewed                2018-08-17
 //  Comment                 -
 func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
 	})
@@ -201,7 +205,8 @@ func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
 //  Reviewed                2018-08-17
 //  Comment                 -
 func GetGuildChannels(client httd.Getter, id Snowflake) (ret []*Channel, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
 	})
@@ -235,7 +240,8 @@ type CreateGuildChannelParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
 func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		Body:        params,
@@ -267,7 +273,8 @@ type ModifyGuildChannelPositionsParams struct {
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
 func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
-	resp, _, err := client.Patch(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		Body:        params,
@@ -292,7 +299,8 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []Mod
 //  Reviewed                2018-08-17
 //  Comment                 -
 func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 	})
@@ -339,7 +347,8 @@ func GetGuildMembers(client httd.Getter, guildID, after Snowflake, limit int) (r
 		}
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMembers(guildID) + query,
 	})
@@ -372,7 +381,9 @@ type AddGuildMemberParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 All parameters to this endpoint. except for access_token are optional.
 func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
-	resp, body, err := client.Put(&httd.Request{
+	var resp *http.Response
+	var body []byte
+	resp, body, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 		Body:        params,
@@ -476,7 +487,8 @@ var _ json.Marshaler = (*ModifyGuildMemberParams)(nil)
 //                          the API user must have permissions to both connect to the channel and have the
 //                          MOVE_MEMBERS permission.
 func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
-	resp, _, err := client.Patch(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 		Body:        params,
@@ -487,7 +499,7 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not change attributes of member. Does the member exist, and do you have permissions?"
+		msg := "could not change attributes of member. Does the member exist, and do you have permissions?"
 		err = errors.New(msg)
 	}
 
@@ -509,7 +521,9 @@ type ModifyCurrentUserNickParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
-	resp, body, err := client.Patch(&httd.Request{
+	var resp *http.Response
+	var body []byte
+	resp, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(id),
 		Endpoint:    endpoint.GuildMembersMeNick(id),
 		Body:        params,
@@ -538,7 +552,8 @@ func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurr
 //  Reviewed                2018-08-18
 //  Comment                 -
 func AddGuildMemberRole(client httd.Puter, guildID, userID, roleID Snowflake) (err error) {
-	resp, _, err := client.Put(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMemberRole(guildID, userID, roleID),
 	})
@@ -563,7 +578,8 @@ func AddGuildMemberRole(client httd.Puter, guildID, userID, roleID Snowflake) (e
 //  Reviewed                2018-08-18
 //  Comment                 -
 func RemoveGuildMemberRole(client httd.Deleter, guildID, userID, roleID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMemberRole(guildID, userID, roleID),
 	})
@@ -588,7 +604,8 @@ func RemoveGuildMemberRole(client httd.Deleter, guildID, userID, roleID Snowflak
 //  Reviewed                2018-08-18
 //  Comment                 -
 func RemoveGuildMember(client httd.Deleter, guildID, userID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 	})
@@ -612,7 +629,8 @@ func RemoveGuildMember(client httd.Deleter, guildID, userID Snowflake) (err erro
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildBans(client httd.Getter, id Snowflake) (ret []*Ban, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(id),
 		Endpoint:    endpoint.GuildBans(id),
 	})
@@ -633,7 +651,9 @@ func GetGuildBans(client httd.Getter, id Snowflake) (ret []*Ban, err error) {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildBan(client httd.Getter, guildID, userID Snowflake) (ret *Ban, err error) {
-	resp, body, err := client.Get(&httd.Request{
+	var body []byte
+	var resp *http.Response
+	resp, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID),
 	})
@@ -683,7 +703,8 @@ func (params *CreateGuildBanParams) GetQueryString() string {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
-	resp, _, err := client.Put(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID) + params.GetQueryString(),
 		ContentType: httd.ContentTypeJSON,
@@ -709,7 +730,8 @@ func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *Create
 //  Reviewed                2018-08-18
 //  Comment                 -
 func RemoveGuildBan(client httd.Deleter, guildID, userID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID),
 	})
@@ -752,7 +774,8 @@ func (params *GuildPruneParams) GetQueryString() string {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildPrune(id),
 		Endpoint:    endpoint.GuildPrune(id) + params.GetQueryString(),
 	})
@@ -774,7 +797,8 @@ func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPrunePara
 //  Reviewed                2018-08-18
 //  Comment                 -
 func BeginGuildPrune(client httd.Poster, id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildPrune(id),
 		Endpoint:    endpoint.GuildPrune(id) + params.GetQueryString(),
 	})
@@ -795,7 +819,8 @@ func BeginGuildPrune(client httd.Poster, id Snowflake, params *GuildPruneParams)
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildVoiceRegions(client httd.Getter, id Snowflake) (ret []*VoiceRegion, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildRegions(id),
 		Endpoint:    endpoint.GuildRegions(id),
 	})
@@ -816,7 +841,8 @@ func GetGuildVoiceRegions(client httd.Getter, id Snowflake) (ret []*VoiceRegion,
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildInvites(id),
 		Endpoint:    endpoint.GuildInvites(id),
 	})
@@ -837,7 +863,8 @@ func GetGuildInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error
 //  Reviewed                 2018-08-18
 //  Comment                  -
 func GetGuildIntegrations(client httd.Getter, id Snowflake) (ret []*Integration, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(id),
 		Endpoint:    endpoint.GuildIntegrations(id),
 	})
@@ -866,7 +893,8 @@ type CreateGuildIntegrationParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
-	resp, _, err := client.Post(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrations(guildID),
 		Body:        params,
@@ -902,7 +930,8 @@ type ModifyGuildIntegrationParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
-	resp, _, err := client.Patch(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
 		Body:        params,
@@ -930,7 +959,8 @@ func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflak
 //  Reviewed                2018-08-18
 //  Comment                 -
 func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
 	})
@@ -955,7 +985,8 @@ func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflak
 //  Reviewed                2018-08-18
 //  Comment                 -
 func SyncGuildIntegration(client httd.Poster, guildID, integrationID Snowflake) (err error) {
-	resp, _, err := client.Post(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrationSync(guildID, integrationID),
 	})
@@ -978,7 +1009,8 @@ func SyncGuildIntegration(client httd.Poster, guildID, integrationID Snowflake) 
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildEmbed(client httd.Getter, guildID Snowflake) (ret *GuildEmbed, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
 	})
@@ -999,7 +1031,8 @@ func GetGuildEmbed(client httd.Getter, guildID Snowflake) (ret *GuildEmbed, err 
 //  Reviewed                2018-08-18
 //  Comment                 -
 func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
 		Body:        params,
@@ -1022,7 +1055,8 @@ func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildVanityURL(client httd.Getter, guildID Snowflake) (ret *PartialInvite, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildVanityURL(guildID),
 		Endpoint:    endpoint.GuildVanityURL(guildID),
 	})

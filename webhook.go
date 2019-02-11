@@ -87,7 +87,8 @@ type CreateWebhookParams struct {
 //  Reviewed                2018-08-14
 //  Comment                 -
 func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		Body:        params,
@@ -109,7 +110,8 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 //  Reviewed                2018-08-14
 //  Comment                 -
 func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 	})
@@ -129,7 +131,8 @@ func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
 func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildWebhooks(guildID),
 		Endpoint:    endpoint.GuildWebhooks(guildID),
 	})
@@ -149,11 +152,11 @@ func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, er
 //  Reviewed                2018-08-14
 //  Comment                 -
 func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
-	details := &httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
-	}
-	_, body, err := client.Get(details)
+	})
 	if err != nil {
 		return
 	}
@@ -171,7 +174,8 @@ func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
 //  Reviewed                2018-08-14
 //  Comment                 -
 func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *Webhook, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.WebhookToken(id, token),
 	})
@@ -275,7 +279,8 @@ func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParam
 		return
 	}
 
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
 		ContentType: httd.ContentTypeJSON,
@@ -305,7 +310,8 @@ func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 		return
 	}
 
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.WebhookToken(id, newWebhook.Token),
 		ContentType: httd.ContentTypeJSON,
@@ -344,7 +350,8 @@ func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (er
 		e = endpoint.Webhook(id)
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    e,
 	})
@@ -401,12 +408,7 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix,
 		ContentType: httd.ContentTypeJSON,
 	})
-	if err != nil {
-		return
-	}
-
-	//err = unmarshal(body, ret) // TODO: how to verify success?
-	return
+	return // TODO: how to verify success?
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.

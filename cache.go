@@ -227,8 +227,7 @@ type Cache struct {
 // Updates does the same as Update. But allows for a slice of entries instead.
 func (c *Cache) Updates(key cacheRegistry, vs []interface{}) (err error) {
 	for _, v := range vs {
-		err = c.Update(key, v)
-		if err != nil {
+		if err = c.Update(key, v); err != nil {
 			return
 		}
 	}
@@ -941,13 +940,8 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 		return
 	}
 
-	// add user object
-	member.User, err = c.GetUser(userID)
-	if err != nil {
-		member.User = &User{
-			ID: userID,
-		}
-	}
+	// add user object if it exists
+	member.User, _ = c.GetUser(userID)
 	return
 }
 
@@ -982,13 +976,8 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 	c.guilds.RUnlock()
 
 	for i := range members {
-		// add user object
-		members[i].User, err = c.GetUser(members[i].userID)
-		if err != nil {
-			members[i].User = &User{
-				ID: members[i].userID,
-			}
-		}
+		// add user object if it exists
+		members[i].User, _ = c.GetUser(members[i].userID)
 	}
 	return
 }

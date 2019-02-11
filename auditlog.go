@@ -352,8 +352,7 @@ func (b *guildAuditLogsBuilder) CancelOnRatelimit() *guildAuditLogsBuilder {
 func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 	// TODO: support caching of audit log entries. So we only fetch those we don't have.
 	var v interface{}
-	v, err = b.r.execute()
-	if err != nil {
+	if v, err = b.r.execute(); err != nil {
 		return
 	}
 

@@ -777,7 +777,8 @@ func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (ret *User, err error) {
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMe(),
 		Body:        params,
@@ -831,7 +832,8 @@ func (params *GetCurrentUserGuildsParams) GetQueryString() string {
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of users' guilds.
 func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeGuilds() + params.GetQueryString(),
 	})
@@ -851,7 +853,8 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 //  Reviewed                2018-06-10
 //  Comment                 -
 func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeGuild(id),
 	})
@@ -874,7 +877,8 @@ func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
 	})
@@ -900,7 +904,8 @@ type BodyUserCreateDM struct {
 //  Comment                 -
 // TODO: review
 func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
@@ -929,7 +934,8 @@ type CreateGroupDMParams struct {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channel, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
@@ -951,7 +957,8 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 //  Reviewed                2018-06-10
 //  Comment                 -
 func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMeConnections(),
 	})

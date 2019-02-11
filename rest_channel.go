@@ -49,7 +49,8 @@ func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannel(id),
 		Endpoint:    endpoint.Channel(id),
 	})
@@ -228,19 +229,23 @@ func ModifyChannel(client httd.Patcher, id Snowflake, changes *ModifyChannelPara
 		return
 	}
 
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitChannel(id),
 		Endpoint:    endpoint.Channel(id),
 		Body:        changes,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret = &Channel{}
-	err = unmarshal(body, ret)
-	return
+	if err = unmarshal(body, ret); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 // DeleteChannel [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -262,22 +267,28 @@ func DeleteChannel(client httd.Deleter, id Snowflake) (channel *Channel, err err
 		return
 	}
 
-	resp, body, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	var body []byte
+	resp, body, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannel(id),
 		Endpoint:    endpoint.Channel(id),
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusOK)
 		err = errors.New(msg)
+		return nil, err
 	}
 
 	channel = &Channel{}
-	err = unmarshal(body, channel)
-	return
+	if err = unmarshal(body, channel); err != nil {
+		return nil, err
+	}
+
+	return channel, nil
 }
 
 // EditChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
@@ -308,21 +319,22 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
-	resp, _, err := client.Put(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelPermissions(chanID),
 		Endpoint:    endpoint.ChannelPermission(chanID, overwriteID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+	return err
 }
 
 // GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
@@ -339,7 +351,8 @@ func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err err
 		return
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelInvites(id),
 		Endpoint:    endpoint.ChannelInvites(id),
 	})
@@ -372,25 +385,26 @@ type CreateChannelInvitesParams struct {
 func CreateChannelInvites(client httd.Poster, id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
 	if id.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
-		return
+		return nil, err
 	}
 	if params == nil {
 		params = &CreateChannelInvitesParams{} // have to send an empty JSON object ({}). maybe just struct{}?
 	}
 
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelInvites(id),
 		Endpoint:    endpoint.ChannelInvites(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret = &Invite{}
 	err = unmarshal(body, ret)
-	return
+	return nil, err
 }
 
 // DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
@@ -410,19 +424,21 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannelPermissions(channelID),
 		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }
 
 // TriggerTypingIndicator [REST] Post a typing indicator for the specified channel. Generally bots should not implement
@@ -436,19 +452,21 @@ func DeleteChannelPermission(client httd.Deleter, channelID, overwriteID Snowfla
 //  Reviewed                2018-06-10
 //  Comment                 -
 func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error) {
-	resp, _, err := client.Post(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitChannelTyping(channelID),
 		Endpoint:    endpoint.ChannelTyping(channelID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }
 
 // GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
@@ -459,7 +477,8 @@ func TriggerTypingIndicator(client httd.Poster, channelID Snowflake) (err error)
 //  Reviewed                2018-06-10
 //  Comment                 -
 func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message, err error) {
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitChannelPins(channelID),
 		Endpoint:    endpoint.ChannelPins(channelID),
 	})
@@ -481,19 +500,21 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 //  Reviewed                2018-06-10
 //  Comment                 -
 func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err error) {
-	resp, _, err := client.Put(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelPins(channelID),
 		Endpoint:    endpoint.ChannelPin(channelID, msgID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }
 
 // DeletePinnedChannelMessage [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
@@ -512,19 +533,21 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake)
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannelPins(channelID),
 		Endpoint:    endpoint.ChannelPin(channelID, msgID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }
 
 // GroupDMAddRecipientParams JSON params for GroupDMAddRecipient
@@ -549,21 +572,23 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	resp, _, err := client.Put(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelRecipients(channelID),
 		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }
 
 // GroupDMRemoveRecipient [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
@@ -581,17 +606,19 @@ func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (e
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannelRecipients(channelID),
 		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+
+	return err
 }

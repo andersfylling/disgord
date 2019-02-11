@@ -137,20 +137,21 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+	return err
 }
 
 // DeleteUserReaction [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
@@ -184,20 +185,21 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+	return err
 }
 
 // GetReactionURLParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
@@ -264,7 +266,8 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 		query += params.GetQueryString()
 	}
 
-	_, body, err := client.Get(&httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
@@ -294,12 +297,13 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
 	})
 	if err != nil {
-		return
+		return err
 	}
 
 	// TODO: what is the response on a successful execution?
@@ -307,5 +311,5 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
 		err = errors.New(msg)
 	}
-	return
+	return err
 }

@@ -80,7 +80,7 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		invite.Unlock()
 	}
 
-	return
+	return nil
 }
 
 // InviteMetadata Object
@@ -149,7 +149,7 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		invite.Unlock()
 	}
 
-	return
+	return nil
 }
 
 // voiceRegionsFactory temporary until flyweight is implemented
@@ -199,11 +199,11 @@ func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 	var v interface{}
 	v, err = b.r.execute()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	invite = v.(*Invite)
-	return
+	return invite, err
 }
 
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.

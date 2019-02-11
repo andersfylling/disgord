@@ -327,7 +327,7 @@ func (c *client) Connect() (err error) {
 	// also verifies that the correct credentials were supplied
 	var me *User
 	if me, err = c.GetCurrentUser().Execute(); err != nil {
-		return
+		return err
 	}
 	c.myID = me.ID
 
@@ -349,7 +349,7 @@ func (c *client) Connect() (err error) {
 	c.log.Info("Connecting to discord Gateway")
 	if err = c.shardManager.Connect(); err != nil {
 		c.log.Info(err)
-		return
+		return err
 	}
 
 	c.log.Info("Connected")
@@ -363,7 +363,7 @@ func (c *client) Disconnect() (err error) {
 	close(c.evtDemultiplexer.shutdown)
 	if err = c.shardManager.Disconnect(); err != nil {
 		c.log.Error(err)
-		return
+		return err
 	}
 	close(c.shutdownChan)
 	c.log.Info("Disconnected")
@@ -376,7 +376,7 @@ func (c *client) Disconnect() (err error) {
 func (c *client) Suspend() (err error) {
 	c.log.Info("Closing Discord gateway connection")
 	if err = c.shardManager.Disconnect(); err != nil {
-		return
+		return err
 	}
 	c.log.Info("Suspended")
 
@@ -555,13 +555,12 @@ func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (
 // GetChannel ...
 func (c *client) GetChannel(id Snowflake) (ret *Channel, err error) {
 	if ret, err = c.cache.GetChannel(id); err != nil {
-		ret, err = GetChannel(c.req, id)
-		if err != nil {
-			return
+		if ret, err = GetChannel(c.req, id); err != nil {
+			return nil, err
 		}
 		_ = c.cache.Update(ChannelCache, ret)
 	}
-	return
+	return ret, nil
 }
 
 // ModifyChannel ...
@@ -716,11 +715,11 @@ func (c *client) GetGuild(id Snowflake) (ret *Guild, err error) {
 	if err != nil {
 		ret, err = GetGuild(c.req, id)
 		if err != nil {
-			return
+			return nil, err
 		}
 		c.cache.SetGuild(ret)
 	}
-	return
+	return ret, err
 }
 
 // ModifyGuild .
@@ -742,7 +741,7 @@ func (c *client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
 	if err != nil {
 		ret, err = GetGuildChannels(c.req, id)
 		if err != nil {
-			return
+			return nil, err
 		}
 		c.cache.SetGuild(&Guild{
 			ID:       id,
@@ -751,7 +750,7 @@ func (c *client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
 	} else {
 		ret = guild.Channels
 	}
-	return
+	return ret, nil
 }
 
 // CreateGuildChannel .
@@ -775,7 +774,7 @@ func (c *client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err err
 			return
 		}
 		c.cache.SetGuildMember(guildID, ret)
-		c.cache.Update(UserCache, ret.User)
+		_ = c.cache.Update(UserCache, ret.User)
 	}
 	return
 }
@@ -786,13 +785,13 @@ func (c *client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Me
 	if err != nil {
 		ret, err = GetGuildMembers(c.req, guildID, after, limit)
 		if err != nil {
-			return
+			return nil, err
 		}
 		c.cache.SetGuildMembers(guildID, ret)
 		//c.cacheLink.Update(UserCache, ret.User)
 		// TODO: update users
 	}
-	return
+	return ret, nil
 }
 
 // AddGuildMember .
@@ -861,12 +860,12 @@ func (c *client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
 	if err != nil {
 		ret, err = GetGuildRoles(c.req, guildID)
 		if err != nil {
-			return
+			return nil, err
 		}
 		c.cache.SetGuildRoles(guildID, ret)
 	}
 
-	return
+	return ret, nil
 }
 
 // CreateGuildRole .

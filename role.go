@@ -158,11 +158,11 @@ func (r *Role) deleteFromDiscord(session Session) (err error) {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func GetGuildRoles(client httd.Getter, guildID Snowflake) (ret []*Role, err error) {
-	details := &httd.Request{
+	var body []byte
+	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/roles",
-	}
-	_, body, err := client.Get(details)
+	})
 	if err != nil {
 		return
 	}
@@ -198,24 +198,24 @@ type CreateGuildRoleParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
 func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
-	_, body, err := client.Post(&httd.Request{
+	var body []byte
+	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(id),
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return
+	if err = unmarshal(body, &ret); err != nil {
+		return nil, err
 	}
 
 	// add guild id to roles
 	ret.guildID = id
-	return
+	return ret, nil
 }
 
 // ModifyGuildRolePositionsParams ...
@@ -235,27 +235,26 @@ type ModifyGuildRolePositionsParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
-	details := &httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRoles(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	}
-	_, body, err := client.Patch(details)
+	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return
+	if err = unmarshal(body, &ret); err != nil {
+		return nil, err
 	}
 
 	// add guild id to roles
 	for _, role := range ret {
 		role.guildID = guildID
 	}
-	return
+	return ret, nil
 }
 
 // ModifyGuildRoleParams JSON params for func ModifyGuildRole
@@ -315,24 +314,24 @@ var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)
 //  Reviewed                2018-08-18
 //  Comment                 -
 func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
-	_, body, err := client.Patch(&httd.Request{
+	var body []byte
+	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return
+	if err = unmarshal(body, &ret); err != nil {
+		return nil, err
 	}
 
 	// add guild id to role
 	ret.guildID = guildID
-	return
+	return ret, nil
 }
 
 // DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.
@@ -344,7 +343,8 @@ func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *Mod
 //  Reviewed                2018-08-18
 //  Comment                 -
 func DeleteGuildRole(client httd.Deleter, guildID, roleID Snowflake) (err error) {
-	resp, _, err := client.Delete(&httd.Request{
+	var resp *http.Response
+	resp, _, err = client.Delete(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 	})

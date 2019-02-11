@@ -476,7 +476,8 @@ func (c *client) Emit(command string, data interface{}) (err error) {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands")
 	}
 
-	op := ^uint(0)
+	noMatch := ^uint(0)
+	op := noMatch
 	// TODO: refactor command and event name to avoid conversion (?)
 	if c.clientType == clientTypeVoice {
 		switch command {
@@ -511,9 +512,9 @@ func (c *client) Emit(command string, data interface{}) (err error) {
 			op = opcode.EventStatusUpdate
 		}
 	}
-	if op == ^uint(0) {
-		err = errors.New("unsupported command: " + command)
-		return
+
+	if op == noMatch {
+		return errors.New("unsupported command: " + command)
 	}
 
 	if accepted := c.ratelimit.Request(command); !accepted {

@@ -284,8 +284,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 //  Discord when editing or updating names.
 func ValidateUsername(name string) (err error) {
 	if name == "" {
-		err = errors.New("empty")
-		return
+		return errors.New("empty")
 	}
 
 	// attributes
@@ -298,7 +297,7 @@ func ValidateUsername(name string) (err error) {
 		err = errors.New("name is too long")
 	}
 	if err != nil {
-		return
+		return err
 	}
 
 	// Names are sanitized and trimmed of leading, trailing, and excessive internal whitespace.
@@ -317,7 +316,7 @@ func ValidateUsername(name string) (err error) {
 		}
 	}
 	if err != nil {
-		return
+		return err
 	}
 
 	// Names cannot contain the following substrings: '@', '#', ':', '```'
@@ -327,7 +326,7 @@ func ValidateUsername(name string) (err error) {
 	for _, illegalChar := range illegalChars {
 		if strings.Contains(name, illegalChar) {
 			err = errors.New("can not contain the character " + illegalChar)
-			return
+			return err
 		}
 	}
 
@@ -338,17 +337,16 @@ func ValidateUsername(name string) (err error) {
 	for _, illegalName := range illegalNames {
 		if name == illegalName {
 			err = errors.New("the given username is illegal")
-			break
+			return err
 		}
 	}
 
-	return
+	return nil
 }
 
 func validateChannelName(name string) (err error) {
 	if name == "" {
-		err = errors.New("empty")
-		return
+		return errors.New("empty")
 	}
 
 	// attributes
@@ -361,8 +359,8 @@ func validateChannelName(name string) (err error) {
 		err = errors.New("name is too long")
 	}
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return nil
 }
