@@ -317,12 +317,13 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 // ---------
 
 const (
-	userOEmail      = 0x1 << iota
-	userOAvatar     = 0x1 << iota
-	userOToken      = 0x1 << iota
-	userOVerified   = 0x1 << iota
-	userOMFAEnabled = 0x1 << iota
-	userOBot        = 0x1 << iota
+	userOEmail = 0x1 << iota
+	userOAvatar
+	userOToken
+	userOVerified
+	userOMFAEnabled
+	userOBot
+	userOPremiumType
 )
 
 type PremiumType int
@@ -372,6 +373,7 @@ type userJSON struct {
 	/*4*/ Verified *bool `json:"verified"`
 	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
 	/*6*/ Bot *bool `json:"bot"`
+	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
 }
 
 func (u *userJSON) extractMap() uint8 {
@@ -393,6 +395,9 @@ func (u *userJSON) extractMap() uint8 {
 	}
 	if u.Bot != nil {
 		overwritten |= userOBot
+	}
+	if u.PremiumType != nil {
+		overwritten |= userOPremiumType
 	}
 
 	return overwritten
@@ -474,6 +479,9 @@ func (u *User) UnmarshalJSON(data []byte) (err error) {
 	}
 	if (changes & userOBot) > 0 {
 		u.Bot = *j.Bot
+	}
+	if (changes & userOPremiumType) > 0 {
+		u.PremiumType = *j.PremiumType
 	}
 	u.overwritten |= changes
 

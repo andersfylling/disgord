@@ -78,10 +78,10 @@ type DeepCopier interface {
 	DeepCopy() interface{}
 }
 
-// hasher creates a hash for comparing objects. This exludes the identifier and object type as those are expected
+// hasher creates a hash for comparing objects. This excludes the identifier and object type as those are expected
 // to be the same during a comparison.
 type hasher interface {
-	hash() uint64
+	hash() string
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
