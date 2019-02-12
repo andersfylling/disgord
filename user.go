@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -324,6 +325,31 @@ const (
 	userOBot        = 0x1 << iota
 )
 
+type PremiumType int
+
+func (p PremiumType) String() (t string) {
+	switch p {
+	case PremiumTypeNitroClassic:
+		t = "Nitro Classic"
+	case PremiumTypeNitro:
+		t = "Nitro"
+	default:
+		t = ""
+	}
+
+	return t
+}
+
+var _ fmt.Stringer = (*PremiumType)(nil)
+
+const (
+	// PremiumTypeNitroClassic includes app perks like animated emojis and avatars, but not games
+	PremiumTypeNitroClassic PremiumType = 1
+
+	// PremiumTypeNitro includes app perks as well as the games subscription service
+	PremiumTypeNitro PremiumType = 2
+)
+
 // NewUser creates a new, empty user object
 func NewUser() *User {
 	return &User{}
@@ -385,6 +411,7 @@ type User struct {
 	Verified      bool          `json:"verified,omitempty"`
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
+	PremiumType   PremiumType   `json:"premium_type,omitempty"`
 
 	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
 	overwritten uint8 // map. see number left of field in userJSON struct.
