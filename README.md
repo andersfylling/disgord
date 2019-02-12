@@ -191,3 +191,9 @@ in the official documentation).
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```
+
+```Markdown
+3. How do I find my bot token and/or add my bot to a server?
+
+Please follow this tutorial: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
+```
