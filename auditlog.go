@@ -312,7 +312,7 @@ func (c *client) GetGuildAuditLogs(guildID snowflake.ID) (builder *guildAuditLog
 
 // guildAuditLogsBuilder for building the GetGuildAuditLogs request
 type guildAuditLogsBuilder struct {
-	r RESTRequestBuilder
+	r RESTBuilder
 }
 
 // UserID filter the log for a user id
@@ -336,16 +336,6 @@ func (b *guildAuditLogsBuilder) Before(id snowflake.ID) *guildAuditLogsBuilder {
 // Before filter the log before a certain entry id
 func (b *guildAuditLogsBuilder) Limit(limit int) *guildAuditLogsBuilder {
 	b.r.queryParam("limit", limit)
-	return b
-}
-
-func (b *guildAuditLogsBuilder) IgnoreCache() *guildAuditLogsBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-func (b *guildAuditLogsBuilder) CancelOnRatelimit() *guildAuditLogsBuilder {
-	b.r.CancelOnRatelimit()
 	return b
 }
 

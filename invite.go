@@ -177,21 +177,11 @@ func (c *client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
 }
 
 type getInviteBuilder struct {
-	r RESTRequestBuilder
+	r RESTBuilder
 }
 
 func (b *getInviteBuilder) AsInviteCode() *getInviteBuilder {
 	b.r.queryParam("with_counts", true)
-	return b
-}
-
-//func (b *getInviteBuilder) IgnoreCache() *getInviteBuilder {
-//	b.r.IgnoreCache()
-//	return b
-//}
-
-func (b *getInviteBuilder) CancelOnRatelimit() *getInviteBuilder {
-	b.r.CancelOnRatelimit()
 	return b
 }
 
@@ -226,12 +216,7 @@ func (c *client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) 
 }
 
 type deleteInviteBuilder struct {
-	r RESTRequestBuilder
-}
-
-func (b *deleteInviteBuilder) CancelOnRatelimit() *deleteInviteBuilder {
-	b.r.CancelOnRatelimit()
-	return b
+	r RESTBuilder
 }
 
 func (b *deleteInviteBuilder) Execute() (invite *Invite, err error) {

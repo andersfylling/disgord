@@ -34,8 +34,8 @@ type AvatarParamHolder interface {
 	UseDefaultAvatar()
 }
 
-func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) *RESTRequestBuilder {
-	builder := &RESTRequestBuilder{}
+func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) *RESTBuilder {
+	builder := &RESTBuilder{}
 	builder.setup(cache, client, config, middleware)
 
 	return builder
@@ -103,7 +103,9 @@ type fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) er
 type fRESTCacheMiddleware func(resp *http.Response, v interface{}, err error) error
 type fRESTItemFactory func() interface{}
 
-type RESTRequestBuilder struct {
+//go:generate go run generate/restbuilders/main.go
+
+type RESTBuilder struct {
 	middleware fRESTRequestMiddleware
 	config     *httd.Request
 	client     httd.Requester
@@ -121,7 +123,7 @@ type RESTRequestBuilder struct {
 	cancelOnRatelimit bool
 }
 
-func (b *RESTRequestBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
+func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
 	b.cache = cache
@@ -130,12 +132,12 @@ func (b *RESTRequestBuilder) setup(cache *Cache, client httd.Requester, config *
 	b.middleware = middleware
 }
 
-func (b *RESTRequestBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMiddleware) {
+func (b *RESTBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMiddleware) {
 	b.cacheRegistry = registry
 	b.cacheMiddleware = middleware
 }
 
-func (b *RESTRequestBuilder) prepare() {
+func (b *RESTBuilder) prepare() {
 	// update the config
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
@@ -144,7 +146,7 @@ func (b *RESTRequestBuilder) prepare() {
 }
 
 // execute ... v must be a nil pointer.
-func (b *RESTRequestBuilder) execute() (v interface{}, err error) {
+func (b *RESTBuilder) execute() (v interface{}, err error) {
 	if !b.ignoreCache && b.config.Method == http.MethodGet {
 		// cacheLink lookup. return on cacheLink hit
 		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
@@ -187,7 +189,25 @@ func (b *RESTRequestBuilder) execute() (v interface{}, err error) {
 	return
 }
 
-func (b *RESTRequestBuilder) param(name string, v interface{}) *RESTRequestBuilder {
+type restReqBuilderAsync struct {
+	Data interface{}
+	Err  error
+	// FromCache bool // TODO
+}
+
+func (b *RESTBuilder) async() <-chan *restReqBuilderAsync {
+	A := make(chan *restReqBuilderAsync)
+	go func() {
+		resp := &restReqBuilderAsync{}
+		resp.Data, resp.Err = b.execute()
+
+		A <- resp
+	}()
+
+	return A
+}
+
+func (b *RESTBuilder) param(name string, v interface{}) *RESTBuilder {
 	if b.config.Method == http.MethodGet {
 		// RFC says you can not send a body in a GET request
 		b.queryParam(name, v)
@@ -197,17 +217,17 @@ func (b *RESTRequestBuilder) param(name string, v interface{}) *RESTRequestBuild
 	return b
 }
 
-func (b *RESTRequestBuilder) queryParam(name string, v interface{}) *RESTRequestBuilder {
+func (b *RESTBuilder) queryParam(name string, v interface{}) *RESTBuilder {
 	b.urlParams[name] = v
 	return b
 }
 
-func (b *RESTRequestBuilder) IgnoreCache() *RESTRequestBuilder {
+func (b *RESTBuilder) IgnoreCache() *RESTBuilder {
 	b.ignoreCache = true
 	return b
 }
 
-func (b *RESTRequestBuilder) CancelOnRatelimit() *RESTRequestBuilder {
+func (b *RESTBuilder) CancelOnRatelimit() *RESTBuilder {
 	b.cancelOnRatelimit = true
 	return b
 }

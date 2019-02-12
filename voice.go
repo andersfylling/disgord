@@ -173,8 +173,8 @@ func voiceRegionsFactory() interface{} {
 //  Comment                 -
 func (c *client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
 	builder = &listVoiceRegionsBuilder{}
-	builder.itemFactory = voiceRegionsFactory
-	builder.setup(c.cache, c.req, &httd.Request{
+	builder.r.itemFactory = voiceRegionsFactory
+	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.VoiceRegions(),
 		Endpoint:    endpoint.VoiceRegions(),
@@ -185,14 +185,14 @@ func (c *client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
 
 // listVoiceRegionsBuilder for building the REST request to the endpoint: List Voice Regions
 type listVoiceRegionsBuilder struct {
-	RESTRequestBuilder
+	r RESTBuilder
 }
 
 // Execute execute get request to Discord
 func (b *listVoiceRegionsBuilder) Execute() (regions []*VoiceRegion, err error) {
-	b.IgnoreCache()
+	b.r.IgnoreCache()
 	var v interface{}
-	v, err = b.execute()
+	v, err = b.r.execute()
 	if err != nil {
 		return
 	}

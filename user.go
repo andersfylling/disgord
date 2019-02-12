@@ -1015,18 +1015,8 @@ func (c *client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
 }
 
 type getUserBuilder struct {
-	r      RESTRequestBuilder
+	r      RESTBuilder
 	UserID snowflake.ID
-}
-
-func (b *getUserBuilder) IgnoreCache() *getUserBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-func (b *getUserBuilder) CancelOnRatelimit() *getUserBuilder {
-	b.r.CancelOnRatelimit()
-	return b
 }
 
 func (b *getUserBuilder) Execute() (user *User, err error) {

@@ -191,18 +191,8 @@ func (c *client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisB
 }
 
 type listGuildEmojisBuilder struct {
-	r       RESTRequestBuilder
+	r       RESTBuilder
 	guildID snowflake.ID
-}
-
-func (b *listGuildEmojisBuilder) IgnoreCache() *listGuildEmojisBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-func (b *listGuildEmojisBuilder) CancelOnRatelimit() *listGuildEmojisBuilder {
-	b.r.CancelOnRatelimit()
-	return b
 }
 
 func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
