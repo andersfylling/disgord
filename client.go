@@ -450,6 +450,8 @@ func (c *client) Ready(cb func()) {
 //  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveToDB, &ctrl{deadline:time.Now().Add(time.Hour)})
 // again, you specify the IsDead() method to comply with the disgord.HandlerCtrl interface, so you can do whatever
 // you want.
+// 
+// This ctrl feature was inspired by https://github.com/discordjs/discord.js
 func (c *client) On(event string, inputs ...interface{}) error {
 	c.shardManager.TrackEvent.Add(event)
 
