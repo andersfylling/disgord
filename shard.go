@@ -42,6 +42,7 @@ func NewShardManager(conf *Config) *WSShardManager {
 		log:               conf.Logger,
 		identifyRatelimit: 5,
 		shutdownChan:      conf.shutdownChan,
+		Presence:          conf.Presence,
 		TrackEvent:        &websocket.UniqueStringSlice{},
 		discordPktPool: &sync.Pool{
 			New: func() interface{} {
@@ -67,10 +68,15 @@ type WSShardManager struct {
 	conRequestChan websocket.A
 	shutdownChan   <-chan interface{}
 
+	// Presence represents the desired bot status at any given time
+	Presence *UpdateStatusCommand
+
 	prepared bool
 	log      Logger
 
 	discordPktPool *sync.Pool
+
+	client *client // hacky - used to register handlers
 }
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
@@ -181,9 +187,10 @@ func (s *WSShardManager) Connect() (err error) {
 	}
 
 	for i := 0; i < len(s.shards); i++ {
-		err = s.shards[i].Connect()
-		if err != nil {
-			s.log.Error(err.Error())
+		tmpErr := s.shards[i].Connect()
+		if tmpErr != nil {
+			err = tmpErr
+			s.log.Error(err)
 			// break
 		}
 	}
@@ -203,6 +210,16 @@ func (s *WSShardManager) Disconnect() (err error) {
 }
 
 func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
+	if guild, ok := data.(guilder); ok {
+		guildID := guild.getGuildID()
+		shard, err := s.GetShard(guildID)
+		if err != nil {
+			return err
+		}
+
+		return shard.Emit(cmd, data)
+	}
+
 	s.RLock()
 	defer s.RUnlock()
 	for i := 0; i < len(s.shards); i++ {
@@ -226,6 +243,88 @@ func (s *WSShardManager) InitialReadyReceived() bool {
 	return true
 }
 
+//
+//func (s *WSShardManager) UpdatePresence(command *UpdateStatusCommand) error {
+//	s.Presence.mu.Lock()
+//	command.mu = s.Presence.mu
+//	*s.Presence = *command // don't change the pointer as each shard has a copy
+//	s.Presence.mu.Unlock()
+//
+//	s.RLock()
+//	for i := range s.shards {
+//		s.shards[i].ws.SetPresence(command)
+//	}
+//	s.RUnlock()
+//
+//	go func() {
+//		// this is just to ensure that the bot is updated on all shards
+//
+//		s.RLock()
+//		updated := make([]bool, len(s.shards))
+//		// TODO: before auto-scaling of shards is added, a token or hash must be added to check if the same shards
+//		//  are used later on in the update confirmations
+//		s.RUnlock()
+//
+//		for {
+//			timeout := time.Now().Add(10 * time.Second)
+//			done := make(chan interface{})
+//
+//			_ = s.client.On(
+//				EventPresenceUpdate,
+//				// middleware
+//				func(evt interface{}) interface{} {
+//					e := evt.(*PresenceUpdate)
+//					if e.User.ID != s.client.myID {
+//						return nil // don't proceed if this regards another user
+//					}
+//					return evt
+//				},
+//				// handler
+//				func(s Session, evt *PresenceUpdate) {
+//					if int(evt.ShardID) >= len(updated) {
+//						s.Logger().Error("the ShardID does not exists. Got", evt.ShardID, "wants below", len(updated))
+//						return
+//					}
+//
+//					updated[evt.ShardID] = true
+//					for i := range updated {
+//						if updated[i] == false {
+//							return
+//						}
+//					}
+//
+//					close(done)
+//				},
+//				// ctrl
+//				&timeoutHandlerCtrl{timeout},
+//			)
+//
+//			// either continue when all the shards completed, or wait for a system interrupt or timeout
+//			select {
+//			case <-s.client.shutdownChan:
+//				return
+//			case <-time.After(time.Now().Sub(timeout)):
+//			case <-done:
+//			}
+//
+//			// TODO: check shards hash here to make sure that these are the same shards, in the same order
+//			//  as earlier.
+//			for i := range updated {
+//				if !updated[i] {
+//					// retry updating the shard
+//					// TODO: if the shard disconnected.. it would send a identify with the correct presence info -
+//					//   how can this be checked, to avoid redundant traffic?
+//					_ = s.shards[i].Emit(CommandUpdateStatus, command)
+//				}
+//			}
+//		}
+//	}()
+//
+//	_ = s.Emit(CommandUpdateStatus, command)
+//
+//	return nil
+//}
+
 var _ Emitter = (*WSShardManager)(nil)
 var _ Link = (*WSShardManager)(nil)
 
@@ -248,6 +347,7 @@ func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan 
 		Device:              conf.ProjectName,
 		GuildLargeThreshold: 250,
 		ShardCount:          s.total,
+		Presence:            conf.Presence,
 
 		// lib specific
 		Version:        constant.DiscordVersion,

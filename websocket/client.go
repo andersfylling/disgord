@@ -448,14 +448,14 @@ func (c *client) reconnect() (err error) {
 		// wait N seconds
 		select {
 		case <-time.After(delay):
-			delay += 4 + time.Duration(try*2)
+			delay += (4 + time.Duration(try*2)) * time.Second
 		case <-c.SystemShutdown:
 			c.Debug("stopping reconnect")
 			return
 		}
 
-		if uint(delay) > 5*60 {
-			delay = 60
+		if delay > 5*60*time.Second {
+			delay = 60 * time.Second
 		}
 	}
 

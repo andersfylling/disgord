@@ -178,6 +178,7 @@ type eventBox interface {
 type PresencesReplace struct {
 	Presnces []*PresenceUpdate `json:"presences_replace"` // TODO: verify json tag
 	Ctx      context.Context   `json:"-"`
+	ShardID  uint              `json:"-"`
 }
 
 // ---------------------------
@@ -207,14 +208,16 @@ type Ready struct {
 
 	sync.RWMutex `json:"-"`
 	Ctx          context.Context `json:"-"`
+	ShardID      uint            `json:"-"`
 }
 
 // ---------------------------
 
 // Resumed response to Resume
 type Resumed struct {
-	Trace []string        `json:"_trace"`
-	Ctx   context.Context `json:"-"`
+	Trace   []string        `json:"_trace"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -223,6 +226,7 @@ type Resumed struct {
 type ChannelCreate struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -237,6 +241,7 @@ func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 type ChannelUpdate struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -251,6 +256,7 @@ func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 type ChannelDelete struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -269,6 +275,7 @@ type ChannelPinsUpdate struct {
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
 	LastPinTimestamp Timestamp       `json:"last_pin_timestamp,omitempty"` // ?|
 	Ctx              context.Context `json:"-"`
+	ShardID          uint            `json:"-"`
 }
 
 // ---------------------------
@@ -279,6 +286,7 @@ type TypingStart struct {
 	UserID        Snowflake       `json:"user_id"`
 	TimestampUnix int             `json:"timestamp"`
 	Ctx           context.Context `json:"-"`
+	ShardID       uint            `json:"-"`
 }
 
 // ---------------------------
@@ -287,6 +295,7 @@ type TypingStart struct {
 type MessageCreate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 func (obj *MessageCreate) updateInternals() {
@@ -305,6 +314,7 @@ func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 type MessageUpdate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 func (obj *MessageUpdate) updateInternals() {
@@ -325,6 +335,7 @@ type MessageDelete struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	GuildID   Snowflake       `json:"guild_id,omitempty"`
 	Ctx       context.Context `json:"-"`
+	ShardID   uint            `json:"-"`
 }
 
 // ---------------------------
@@ -334,6 +345,7 @@ type MessageDeleteBulk struct {
 	MessageIDs []Snowflake     `json:"ids"`
 	ChannelID  Snowflake       `json:"channel_id"`
 	Ctx        context.Context `json:"-"`
+	ShardID    uint            `json:"-"`
 }
 
 // ---------------------------
@@ -346,6 +358,7 @@ type MessageReactionAdd struct {
 	// PartialEmoji id and name. id might be nil
 	PartialEmoji *Emoji          `json:"emoji"`
 	Ctx          context.Context `json:"-"`
+	ShardID      uint            `json:"-"`
 }
 
 // ---------------------------
@@ -358,6 +371,7 @@ type MessageReactionRemove struct {
 	// PartialEmoji id and name. id might be nil
 	PartialEmoji *Emoji          `json:"emoji"`
 	Ctx          context.Context `json:"-"`
+	ShardID      uint            `json:"-"`
 }
 
 // ---------------------------
@@ -367,6 +381,7 @@ type MessageReactionRemoveAll struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	MessageID Snowflake       `json:"id"`
 	Ctx       context.Context `json:"-"`
+	ShardID   uint            `json:"-"`
 }
 
 // ---------------------------
@@ -376,6 +391,7 @@ type GuildEmojisUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Emojis  []*Emoji        `json:"emojis"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -386,8 +402,9 @@ type GuildEmojisUpdate struct {
 //	2. When a Guild becomes available again to the client.
 // 	3. When the current user joins a new Guild.
 type GuildCreate struct {
-	Guild *Guild          `json:"guild"`
-	Ctx   context.Context `json:"-"`
+	Guild   *Guild          `json:"guild"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -400,8 +417,9 @@ func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 
 // GuildUpdate guild was updated
 type GuildUpdate struct {
-	Guild *Guild          `json:"guild"`
-	Ctx   context.Context `json:"-"`
+	Guild   *Guild          `json:"guild"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -416,6 +434,7 @@ func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 type GuildDelete struct {
 	UnavailableGuild *GuildUnavailable `json:"guild_unavailable"`
 	Ctx              context.Context   `json:"-"`
+	ShardID          uint              `json:"-"`
 }
 
 // UserWasRemoved ... TODO
@@ -436,6 +455,7 @@ type GuildBanAdd struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -445,6 +465,7 @@ type GuildBanRemove struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -453,14 +474,16 @@ type GuildBanRemove struct {
 type GuildIntegrationsUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
 
 // GuildMemberAdd new user joined a guild
 type GuildMemberAdd struct {
-	Member *Member         `json:"member"`
-	Ctx    context.Context `json:"-"`
+	Member  *Member         `json:"member"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // UnmarshalJSON ...
@@ -476,6 +499,7 @@ type GuildMemberRemove struct {
 	GuildID Snowflake       `json:"guild_id"`
 	User    *User           `json:"user"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -487,6 +511,7 @@ type GuildMemberUpdate struct {
 	User    *User           `json:"user"`
 	Nick    string          `json:"nick"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -496,6 +521,7 @@ type GuildMembersChunk struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Members []*Member       `json:"members"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -505,6 +531,7 @@ type GuildRoleCreate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Role    *Role           `json:"role"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -514,6 +541,7 @@ type GuildRoleUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
 	Role    *Role           `json:"role"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -523,6 +551,7 @@ type GuildRoleDelete struct {
 	GuildID Snowflake       `json:"guild_id"`
 	RoleID  Snowflake       `json:"role_id"`
 	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -536,16 +565,18 @@ type PresenceUpdate struct {
 
 	// Status either "idle", "dnd", "online", or "offline"
 	// TODO: constants somewhere..
-	Status string          `json:"status"`
-	Ctx    context.Context `json:"-"`
+	Status  string          `json:"status"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
 
 // UserUpdate properties about a user changed
 type UserUpdate struct {
-	User *User           `json:"user"`
-	Ctx  context.Context `json:"-"`
+	User    *User           `json:"user"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 // ---------------------------
@@ -553,7 +584,8 @@ type UserUpdate struct {
 // VoiceStateUpdate someone joined, left, or moved a voice channel
 type VoiceStateUpdate struct {
 	*VoiceState
-	Ctx context.Context `json:"-"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
 
 func (evt *VoiceStateUpdate) updateInternalsWithClient(c *client) {
@@ -569,6 +601,7 @@ type VoiceServerUpdate struct {
 	GuildID  Snowflake       `json:"guild_id"`
 	Endpoint string          `json:"endpoint"`
 	Ctx      context.Context `json:"-"`
+	ShardID  uint            `json:"-"`
 }
 
 func (evt *VoiceServerUpdate) updateInternalsWithClient(c *client) {
@@ -582,4 +615,5 @@ type WebhooksUpdate struct {
 	GuildID   Snowflake       `json:"guild_id"`
 	ChannelID Snowflake       `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
+	ShardID   uint            `json:"-"`
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
 
 // HandlerCtrl used when inserting a handler to dictate whether or not the handler(s) should
@@ -38,6 +39,19 @@ func (ctrl *simpleHandlerCtrl) Update() {
 }
 
 var _ HandlerCtrl = (*simpleHandlerCtrl)(nil)
+
+type timeoutHandlerCtrl struct {
+	deadline time.Time
+}
+
+func (ctrl *timeoutHandlerCtrl) IsDead() bool {
+	return time.Now().After(ctrl.deadline)
+}
+func (ctrl *timeoutHandlerCtrl) OnInsert(s Session) error { return nil }
+func (ctrl *timeoutHandlerCtrl) OnRemove(s Session) error { return nil }
+func (ctrl *timeoutHandlerCtrl) Update()                  {}
+
+var _ HandlerCtrl = (*timeoutHandlerCtrl)(nil)
 
 type Handler = interface{}
 type Middleware = func(interface{}) interface{}

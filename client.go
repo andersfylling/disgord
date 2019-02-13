@@ -159,6 +159,7 @@ func NewClient(conf *Config) (c *client, err error) {
 		log:              conf.Logger,
 	}
 	c.voiceRepository = newVoiceRepository(c)
+	sharding.client = c
 
 	return c, err
 }
@@ -174,6 +175,7 @@ type Config struct {
 	DisableCache         bool
 	CacheConfig          *CacheConfig
 	WSShardManagerConfig *WSShardManagerConfig
+	Presence             *UpdateStatusCommand
 
 	//ImmutableCache bool
 
@@ -1148,7 +1150,9 @@ func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event,
 // UpdateStatus updates the client's game status
 // note: for simple games, check out UpdateStatusString
 func (c *client) UpdateStatus(s *UpdateStatusCommand) error {
-	return c.Emit(CommandUpdateStatus, s)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return c.shardManager.Emit(CommandUpdateStatus, s)
 }
 
 // UpdateStatusString sets the client's game activity to the provided string, status to online

@@ -1,12 +1,15 @@
 package websocket
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/websocket/cmd"
 
 	"github.com/andersfylling/disgord/logger"
 
@@ -57,14 +60,31 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 	client.connectPermit = client // adds  rate limiting for shards
 	client.setupBehaviors()
 
+	client.identity = &evtIdentity{
+		Token: client.conf.BotToken,
+		Properties: struct {
+			OS      string `json:"$os"`
+			Browser string `json:"$browser"`
+			Device  string `json:"$device"`
+		}{runtime.GOOS, client.conf.Browser, client.conf.Device},
+		LargeThreshold: client.conf.GuildLargeThreshold,
+		Shard:          &[2]uint{client.ShardID, client.conf.ShardCount},
+	}
+	if conf.Presence != nil {
+		if err = client.SetPresence(conf.Presence); err != nil {
+			return nil, err
+		}
+	}
+
 	return
 }
 
 // Event is dispatched by the socket layer after parsing and extracting Discord data from a incoming packet.
 // This is the data structure used by Disgord for triggering handlers and channels with an event.
 type Event struct {
-	Name string
-	Data []byte
+	Name    string
+	Data    []byte
+	ShardID uint
 }
 
 // EvtConfig ws
@@ -89,6 +109,8 @@ type EvtConfig struct {
 	EventChan chan<- *Event
 
 	A A
+
+	Presence interface{}
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
 	// a valid socket endpoint from Discord
@@ -133,6 +155,7 @@ type EvtClient struct {
 	rdyPool *sync.Pool
 
 	identity *evtIdentity
+	idMu     sync.RWMutex
 }
 
 func (c *EvtClient) ReceivedReadyOnce() bool {
@@ -140,6 +163,28 @@ func (c *EvtClient) ReceivedReadyOnce() bool {
 	defer c.RUnlock()
 
 	return c.ReadyCounter > 0
+}
+
+func (c *EvtClient) SetPresence(data interface{}) (err error) {
+	// marshalling is done to avoid race
+	var presence json.RawMessage
+	if presence, err = httd.Marshal(data); err != nil {
+		return err
+	}
+	c.idMu.Lock()
+	c.identity.Presence = presence
+	c.idMu.Unlock()
+
+	return nil
+}
+
+func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+	if command == cmd.UpdateStatus {
+		if err = c.SetPresence(data); err != nil {
+			return err
+		}
+	}
+	return c.client.Emit(command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -279,8 +324,9 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 
 	// dispatch event through out the DisGord system
 	c.eventChan <- &Event{
-		Name: p.EventName,
-		Data: p.Data,
+		Name:    p.EventName,
+		Data:    p.Data,
+		ShardID: c.ShardID,
 	}
 
 	return nil
@@ -406,27 +452,12 @@ func (c *EvtClient) sendHelloPacket() {
 }
 
 func sendIdentityPacket(c *EvtClient) (err error) {
-	if c.identity == nil {
-		// https://discordapp.com/developers/docs/topics/gateway#identify
-		c.identity = &evtIdentity{
-			Token: c.conf.BotToken,
-			Properties: struct {
-				OS      string `json:"$os"`
-				Browser string `json:"$browser"`
-				Device  string `json:"$device"`
-			}{runtime.GOOS, c.conf.Browser, c.conf.Device},
-			LargeThreshold: c.conf.GuildLargeThreshold,
-			Shard:          &[2]uint{c.ShardID, c.conf.ShardCount},
-			// Presence: struct {
-			// 	Since  *uint       `json:"since"`
-			// 	Game   interface{} `json:"game"`
-			// 	Status string      `json:"status"`
-			// 	AFK    bool        `json:"afk"`
-			// }{Status: "online"},
-		}
-	}
-
-	err = c.Emit(event.Identify, c.identity)
+	c.idMu.RLock()
+	var id = &evtIdentity{}
+	*id = *c.identity
+	// copy it to avoid data race
+	c.idMu.RUnlock()
+	err = c.Emit(event.Identify, id)
 
 	// ignore the error as identify can be called when the session is invalidated, DisGord
 	// does not try to reconnect cause Discord is just asking for a simple identification packet.

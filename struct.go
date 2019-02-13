@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/snowflake/v3"
+
 	"github.com/andersfylling/disgord/constant"
 )
 
@@ -82,6 +84,10 @@ type DeepCopier interface {
 // to be the same during a comparison.
 type hasher interface {
 	hash() string
+}
+
+type guilder interface {
+	getGuildID() snowflake.ID
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.

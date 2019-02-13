@@ -1,6 +1,12 @@
 package disgord
 
-import "github.com/andersfylling/disgord/websocket/cmd"
+import (
+	"sync"
+
+	"github.com/andersfylling/snowflake/v3"
+
+	"github.com/andersfylling/disgord/websocket/cmd"
+)
 
 // SocketCommand represents the type used to emit commands to Discord
 // over the socket connection
@@ -28,6 +34,12 @@ type RequestGuildMembersCommand struct {
 	Limit uint `json:"limit"`
 }
 
+func (u *RequestGuildMembersCommand) getGuildID() snowflake.ID {
+	return u.GuildID
+}
+
+var _ guilder = (*RequestGuildMembersCommand)(nil)
+
 // CommandUpdateVoiceState Sent when a client wants to join, move, or
 // disconnect from a voice channel.
 const CommandUpdateVoiceState SocketCommand = cmd.UpdateVoiceState
@@ -49,6 +61,12 @@ type UpdateVoiceStateCommand struct {
 	SelfDeaf bool `json:"self_deaf"`
 }
 
+func (u *UpdateVoiceStateCommand) getGuildID() snowflake.ID {
+	return u.GuildID
+}
+
+var _ guilder = (*UpdateVoiceStateCommand)(nil)
+
 // CommandUpdateStatus Sent by the client to indicate a presence or status
 // update.
 const CommandUpdateStatus SocketCommand = cmd.UpdateStatus
@@ -56,6 +74,7 @@ const CommandUpdateStatus SocketCommand = cmd.UpdateStatus
 // UpdateStatusCommand payload for socket command UPDATE_STATUS.
 // see CommandUpdateStatus
 type UpdateStatusCommand struct {
+	mu sync.RWMutex
 	// Since unix time (in milliseconds) of when the client went idle, or null if the client is not idle
 	Since *uint `json:"since"`
 
@@ -68,3 +87,5 @@ type UpdateStatusCommand struct {
 	// AFK whether or not the client is afk
 	AFK bool `json:"afk"`
 }
+
+type Presence = UpdateStatusCommand
