@@ -750,6 +750,8 @@ func (c *Cache) AddGuildMember(guildID snowflake.ID, member *Member) {
 		member.User = nil
 	}
 	guild.Members = append(guild.Members, member)
+	guild.MemberCount++
+	// TODO: look for duplicates
 	c.guilds.Unlock()
 }
 
@@ -765,6 +767,9 @@ func (c *Cache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID) {
 			// delete member without preserving order
 			guild.Members[i] = guild.Members[len(guild.Members)-1]
 			guild.Members = guild.Members[:len(guild.Members)-1]
+			if guild.MemberCount > 0 {
+				guild.MemberCount--
+			}
 			break
 		}
 	}
