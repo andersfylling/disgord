@@ -3,8 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v3"
+
+	"github.com/andersfylling/disgord"
 )
 
 func main() {
@@ -17,12 +18,53 @@ func main() {
 	}
 
 	chanID := snowflake.ID(540519296640614416)
-	_, err = c.CreateChannelMessage(chanID, &disgord.CreateChannelMessageParams{
+	_, err = c.CreateMessage(chanID, &disgord.CreateMessageParams{
 		Content:           "testing",
 		SpoilerTagContent: true,
+	})
+
+	f1, err := os.Open("myfavouriteimage.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer f1.Close()
+	f2, err := os.Open("another.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer f2.Close()
+
+	_, _ = c.CreateMessage(chanID, &disgord.CreateMessageParams{
+		Content: "with embed",
+		Files: []disgord.CreateMessageFileParams{
+			{Reader: f1, FileName: "myfavouriteimage.jpg", SpoilerTag: true},
+			{Reader: f2, FileName: "another.jpg"},
+		},
+		Embed: &disgord.ChannelEmbed{
+			Description: "Look here!",
+			Image: &disgord.ChannelEmbedImage{
+				URL: "attachment://another.jpg",
+			},
+		},
+	})
+
+	_, _ = c.CreateMessage(chanID, &disgord.CreateMessageParams{
+		Content: "This is my favourite image, and another in an embed!",
+		Files: []disgord.CreateMessageFileParams{
+			{Reader: f1, FileName: "myfavouriteimage.jpg"},
+			{Reader: f2, FileName: "another.jpg", SpoilerTag: true},
+		},
+		Embed: &disgord.ChannelEmbed{
+			Description: "Look here!",
+			Image: &disgord.ChannelEmbedImage{
+				URL: "attachment://another.jpg",
+			},
+		},
 	})
 
 	if err != nil {
 		panic(err)
 	}
+
+	<-make(chan interface{})
 }

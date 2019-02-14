@@ -639,21 +639,39 @@ func (c *client) GroupDMRemoveRecipient(channelID, userID Snowflake) (err error)
 	return
 }
 
-// GetChannelMessages .
+// Deprecated: use GetMessages instead
 func (c *client) GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
 	ret, err = GetChannelMessages(c.req, channelID, params)
 	return
 }
 
-// GetChannelMessage .
+// GetMessages .
+func (c *client) GetMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+	ret, err = GetMessages(c.req, channelID, params)
+	return
+}
+
+// Deprecated: use GetMessage instead
 func (c *client) GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error) {
 	ret, err = GetChannelMessage(c.req, channelID, messageID)
 	return
 }
 
-// CreateChannelMessage .
+// GetMessage .
+func (c *client) GetMessage(channelID, messageID Snowflake) (ret *Message, err error) {
+	ret, err = GetMessage(c.req, channelID, messageID)
+	return
+}
+
+// Deprecated: use CreateMessage instead
 func (c *client) CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
 	ret, err = CreateChannelMessage(c.req, channelID, params)
+	return
+}
+
+// CreateMessage .
+func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+	ret, err = CreateMessage(c.req, channelID, params)
 	return
 }
 
