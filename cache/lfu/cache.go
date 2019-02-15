@@ -166,6 +166,7 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 		list.items[key].increment()
 		list.hits++
 	} else {
+		exists = false // if key == -1, exists might still be true
 		list.misses++
 	}
 	return
