@@ -13,6 +13,8 @@ Disgord has complete implementation for Discord's documented REST API. It lacks 
 
 To get started see the examples in [docs](docs/examples)
 
+Some projects using DisGord can be found [here](PROJECTS.md).
+
 Discord channel/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
 You can find a live chats for DisGord in Discord. We exist in both the Gopher server and the Discord API server:
  - [Discord Gophers](https://discord.gg/qBVmnq9)
