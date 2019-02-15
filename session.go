@@ -131,9 +131,9 @@ type ChannelRESTer interface {
 	DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error)
 	GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error)
 	GroupDMRemoveRecipient(channelID, userID Snowflake) (err error)
-	GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error)
-	GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error)
-	CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error)
+	GetMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error)
+	GetMessage(channelID, messageID Snowflake) (ret *Message, err error)
+	CreateMessage(channelID Snowflake, params *CreateMessageParams) (ret *Message, err error)
 	EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error)
 	DeleteMessage(channelID, msgID Snowflake) (err error)
 	BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error)
@@ -142,6 +142,13 @@ type ChannelRESTer interface {
 	DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error)
 	GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error)
 	DeleteAllReactions(channelID, messageID Snowflake) (err error)
+
+	// Deprecated: use CreateMessage instead
+	CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error)
+	// Deprecated: use GetMessages instead
+	GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error)
+	// Deprecated: use GetMessage instead
+	GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error)
 }
 
 // EmojiRESTer REST interface for all emoji endpoints
@@ -261,15 +268,18 @@ type Session interface {
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested. Note that this only holds http
 	// CRUD operation and not the actual rest endpoints for discord (See Rest()).
+	// Deprecated: will be unexported in next breaking release
 	Req() httd.Requester
 
 	// Cache reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
+	// Deprecated: will be unexported in next breaking release
 	Cache() Cacher
 
 	Logger() logger.Logger
 
 	// RateLimiter the rate limiter for the discord REST API
+	// Deprecated: will be unexported in next breaking release
 	RateLimiter() httd.RateLimiter
 
 	// Discord Gateway, web socket

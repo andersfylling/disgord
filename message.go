@@ -97,6 +97,7 @@ type Message struct {
 	// SpoilerTagContent is only true if the entire message text is tagged as a spoiler (aka completely wrapped in ||)
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
+	HasSpoilerImage          bool `json:"-"`
 }
 
 func (m *Message) updateInternals() {
@@ -112,6 +113,8 @@ func (m *Message) updateInternals() {
 		if !m.Attachments[i].SpoilerTag {
 			m.SpoilerTagAllAttachments = false
 			break
+		} else {
+			m.HasSpoilerImage = true
 		}
 	}
 }
@@ -238,7 +241,7 @@ func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
 type MessageSender interface {
-	CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error)
+	CreateChannelMessage(channelID Snowflake, params *CreateMessageParams) (ret *Message, err error)
 }
 
 // Send sends this message to discord.
@@ -247,7 +250,7 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 	if constant.LockedMethods {
 		m.RLock()
 	}
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
 		Nonce:   m.Nonce,
@@ -290,7 +293,7 @@ func (m *Message) Respond(client MessageSender, message *Message) (msg *Message,
 
 // RespondString sends a reply to a message in the form of a string
 func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content: content,
 	}
 
@@ -312,7 +315,7 @@ func (m *Message) RespondString(client MessageSender, content string) (msg *Mess
 
 // GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
-type GetChannelMessagesParams struct {
+type GetMessagesParams struct {
 	Around Snowflake `urlparam:"around,omitempty"`
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
@@ -320,7 +323,7 @@ type GetChannelMessagesParams struct {
 }
 
 // GetQueryString .
-func (params *GetChannelMessagesParams) GetQueryString() string {
+func (params *GetMessagesParams) GetQueryString() string {
 	separator := "?"
 	query := ""
 
@@ -346,7 +349,7 @@ func (params *GetChannelMessagesParams) GetQueryString() string {
 	return query
 }
 
-// GetChannelMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
+// GetMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
@@ -357,7 +360,7 @@ func (params *GetChannelMessagesParams) GetQueryString() string {
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+func GetMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -384,7 +387,7 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 	return
 }
 
-// GetChannelMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints
+// GetMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints
 // requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 // Returns a message object on success.
 //  Method                  GET
@@ -393,7 +396,7 @@ func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParam
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
+func GetMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -419,46 +422,54 @@ func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret 
 }
 
 // NewMessageByString creates a message object from a string/content
-func NewMessageByString(content string) *CreateChannelMessageParams {
-	return &CreateChannelMessageParams{
+func NewMessageByString(content string) *CreateMessageParams {
+	return &CreateMessageParams{
 		Content: content,
 	}
 }
 
-// CreateChannelMessageParams JSON params for CreateChannelMessage
-type CreateChannelMessageParams struct {
+// CreateMessageParams JSON params for CreateChannelMessage
+type CreateMessageParams struct {
 	Content string        `json:"content"`
 	Nonce   Snowflake     `json:"nonce,omitempty"`
 	Tts     bool          `json:"tts,omitempty"`
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 
-	Files []CreateChannelMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+	Files []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
 }
 
-func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+func (p *CreateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
 	// spoiler tag
 	if p.SpoilerTagContent && len(p.Content) > 0 {
 		p.Content = "|| " + p.Content + " ||"
-	}
-	if p.SpoilerTagAllAttachments {
-		for i := range p.Files {
-			p.Files[i].SpoilerTag = true
-		}
-	}
-	for i := range p.Files {
-		name := p.Files[i].FileName
-		if p.Files[i].SpoilerTag && !strings.HasPrefix(name, "SPOILER_") {
-			p.Files[i].FileName = "SPOILER_" + name
-		}
 	}
 
 	if len(p.Files) == 0 {
 		postBody = p
 		contentType = httd.ContentTypeJSON
 		return
+	}
+
+	if p.SpoilerTagAllAttachments {
+		for i := range p.Files {
+			p.Files[i].SpoilerTag = true
+		}
+	}
+
+	if p.Embed != nil {
+		// check for spoilers
+		for i := range p.Files {
+			if p.Files[i].SpoilerTag && strings.Contains(p.Embed.Image.URL, p.Files[i].FileName) {
+				s := strings.Split(p.Embed.Image.URL, p.Files[i].FileName)
+				if len(s) > 0 {
+					s[0] += AttachmentSpoilerPrefix + p.Files[i].FileName
+					p.Embed.Image.URL = strings.Join(s, "")
+				}
+			}
+		}
 	}
 
 	// Set up a new multipart writer, as we'll be using this for the POST body instead
@@ -490,17 +501,27 @@ func (p *CreateChannelMessageParams) prepare() (postBody interface{}, contentTyp
 	return
 }
 
-// CreateChannelMessageFileParams contains the information needed to upload a file to Discord, it is part of the
-// CreateChannelMessageParams struct.
-type CreateChannelMessageFileParams struct {
-	Reader     io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
-	FileName   string    `json:"-"`
-	SpoilerTag bool      `json:"-"`
+// CreateMessageFileParams contains the information needed to upload a file to Discord, it is part of the
+// CreateMessageParams struct.
+type CreateMessageFileParams struct {
+	Reader   io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
+	FileName string    `json:"-"`
+
+	// SpoilerTag lets discord know that this image should be blurred out.
+	// Current Discord behaviour is that whenever a message with one or more images is marked as
+	// spoiler tag, all the images in that message are blurred out. (independent of msg.Content)
+	SpoilerTag bool `json:"-"`
 }
 
 // write helper for file uploading in messages
-func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) error {
-	w, err := mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), f.FileName)
+func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
+	var filename string
+	if f.SpoilerTag {
+		filename = AttachmentSpoilerPrefix + f.FileName
+	} else {
+		filename = f.FileName
+	}
+	w, err := mp.CreateFormFile("file"+strconv.FormatInt(int64(i), 10), filename)
 	if err != nil {
 		return err
 	}
@@ -512,7 +533,7 @@ func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) erro
 	return nil
 }
 
-// CreateChannelMessage [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this
+// CreateMessage [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this
 // endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 // the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 // Message Create Gateway event. See message formatting for more information on how to properly format messages.
@@ -523,7 +544,7 @@ func (f *CreateChannelMessageFileParams) write(i int, mp *multipart.Writer) erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
-func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
+func CreateMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -723,3 +744,33 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 	}
 	return err
 }
+
+//////////////////////////////////////////////////////
+//
+// DEPRECATED
+//
+//////////////////////////////////////////////////////
+
+// Deprecated: use GetMessages instead
+func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+	return GetMessages(client, channelID, params)
+}
+
+// Deprecated: use GetMessage instead
+func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
+	return GetMessage(client, channelID, messageID)
+}
+
+// Deprecated: use CreateMessageParams instead
+type CreateChannelMessageParams = CreateMessageParams
+
+// Deprecated: use CreateMessageFileParams instead
+type CreateChannelMessageFileParams = CreateMessageFileParams
+
+// Deprecated: use CreateMessage instead
+func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+	return CreateMessage(client, channelID, params)
+}
+
+// Deprecated: use GetMessagesParams instead
+type GetChannelMessagesParams = GetMessagesParams
