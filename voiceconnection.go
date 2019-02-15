@@ -24,13 +24,23 @@ type voiceRepository struct {
 	pendingServers map[Snowflake]chan *VoiceServerUpdate
 }
 
+// VoiceConnection is the interface used to interact with active voice connections.
 type VoiceConnection interface {
+	// StartSpeaking should be sent before sending voice data.
 	StartSpeaking() error
+	// StopSpeaking should be sent after sending voice data. If there's a break in the sent data, you should not simply
+	// stop sending data. Instead you have to send five frames of silence ([]byte{0xF8, 0xFF, 0xFE}) before stopping
+	// to avoid unintended Opus interpolation with subsequent transmissions.
 	StopSpeaking() error
 
+	// SendOpusFrame sends a single frame of opus data to the UDP server. Frames are sent every 20ms with 960 samples (48kHz).
 	SendOpusFrame(data []byte)
+	// SendDCA reads from a Reader expecting a DCA encoded stream/file and sends them as frames.
 	SendDCA(r io.Reader) error
 
+	// Close closes the websocket and UDP connection. This VoiceConnection interface will no longer be usable and will
+	// panic if any other functions are called beyond this point. It is the callers responsibility to ensure there are
+	// no concurrent calls to any other methods of this interface after calling Close.
 	Close() error
 }
 
