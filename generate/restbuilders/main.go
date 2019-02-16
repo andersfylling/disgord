@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -92,6 +93,10 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 			fieldName: fieldName,
 		})
 	}
+
+	sort.Slice(builders, func(i, j int) bool {
+		return builders[i].name < builders[j].name
+	})
 
 	return builders
 }
