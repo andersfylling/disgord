@@ -12,9 +12,7 @@ func getMsg(evt interface{}) (msg *disgord.Message) {
 		msg = t.Message
 	case *disgord.MessageUpdate:
 		msg = t.Message
-	case *disgord.MessageDelete:
-		msg = nil
-	case *disgord.MessageReactionAdd:
+	default:
 		msg = nil
 	}
 

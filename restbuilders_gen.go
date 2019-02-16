@@ -60,33 +60,6 @@ func (b *listGuildEmojisBuilder) Set(name string, v interface{}) *listGuildEmoji
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *getInviteBuilder) IgnoreCache() *getInviteBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *getInviteBuilder) CancelOnRatelimit() *getInviteBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *getInviteBuilder) URLParam(name string, v interface{}) *getInviteBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *getInviteBuilder) Set(name string, v interface{}) *getInviteBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
 func (b *deleteInviteBuilder) IgnoreCache() *deleteInviteBuilder {
 	b.r.IgnoreCache()
 	return b
@@ -108,6 +81,33 @@ func (b *deleteInviteBuilder) URLParam(name string, v interface{}) *deleteInvite
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
 func (b *deleteInviteBuilder) Set(name string, v interface{}) *deleteInviteBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *getInviteBuilder) IgnoreCache() *getInviteBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *getInviteBuilder) CancelOnRatelimit() *getInviteBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *getInviteBuilder) URLParam(name string, v interface{}) *getInviteBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *getInviteBuilder) Set(name string, v interface{}) *getInviteBuilder {
 	b.r.body[name] = v
 	return b
 }
