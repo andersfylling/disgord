@@ -21,11 +21,12 @@ You can find a live chats for DisGord in Discord. We exist in both the Gopher se
  - [Discord API](https://discord.gg/HBTHbme)
 
 ## Issues and behavior you must be aware of
+The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered breaking and patch releases might contain additional features. As soon as the issue #103 is finished, there should only be tweaking left before v1.0.0 is release.
+
 Currently the caching focuses on being very configurable instead of as optimal as possible. This will change in the future, such that you will need to use build constraints if you want to tweak your cache configuration. But for now, or users that don't worry about this should know that all of your requests runs through the cache layer. You can overwrite the cache depending on REST method:
  - For those with a builder pattern, you can simply call `.IgnoreCache()` before you call `.Execute()`
  - The remaining methods will require you to use the exported package functions (see /docs/examples) for how to in detail.
 
-The develop branch is under continuous breaking changes, so please use releases or be prepared to have a breaking codebase. A release branch will be introduced later when DisGord gets close to its v1.0.0 release. This is one of the reasons go modules is the only official supported way to use DisGord.
 
 ## Logging
 DisGord allows you to inject your own logger, use the default one for DisGord (Zap), do not use any logging at all, you decide. To inject your own logger you must comply with the interface `disgord.Logger` (see logging.go).

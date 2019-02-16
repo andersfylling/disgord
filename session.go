@@ -290,6 +290,10 @@ type Session interface {
 	DeleteFromDiscord(obj discordDeleter) error
 	SaveToDiscord(original discordSaver, changes ...discordSaver) error
 
+	AddPermission(permission int) (updatedPermissions int)
+	GetPermissions() (permissions int)
+	CreateBotURL() (u string, err error)
+
 	// state/caching module
 	// checks the cacheLink first, otherwise do a http request
 	RESTer

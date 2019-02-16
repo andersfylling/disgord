@@ -210,7 +210,8 @@ type client struct {
 	config       *Config
 	botToken     string
 
-	myID Snowflake
+	myID        Snowflake
+	permissions int
 
 	// reactor demultiplexer for events
 	evtDemultiplexer *evtDemultiplexer
@@ -251,6 +252,58 @@ var _ Link = (*client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
+
+// AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
+// This is useful for creating the bot URL.
+//
+// At the moment, this holds no other effect than aesthetics.
+func (c *client) AddPermission(permission int) (updatedPermissions int) {
+	if permission < 0 {
+		permission = 0
+	}
+
+	c.permissions |= permission
+	return c.GetPermissions()
+}
+
+// GetPermissions returns the minimum bot requirements.
+func (c *client) GetPermissions() (permissions int) {
+	return c.permissions
+}
+
+// CreateBotURL creates a URL that can be used to invite this bot to a guild/server.
+// Note that it depends on the bot ID to be after the Discord update where the client ID
+// is the same as the Bot ID.
+//
+// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
+// for your bot to run successfully, you should utilise
+//  client.
+func (c *client) CreateBotURL() (u string, err error) {
+	_, _ = c.Myself() // update c.myID
+
+	if c.myID.Empty() {
+		err = errors.New("unable to get bot id")
+		return "", err
+	}
+
+	// make sure the snowflake is new enough to be used as a client ID
+	t, err := time.Parse("2006-01-02 15:04:05", "2016-08-07 05:39:21.906")
+	if err != nil {
+		return "", err
+	}
+
+	loc, _ := time.LoadLocation("America/Los_Angeles")
+	t = t.In(loc)
+
+	if !c.myID.Date().After(t) {
+		err = errors.New("the bot was not created after " + t.String() + " and can therefore not use the bot ID to generate a invite link")
+		return "", err
+	}
+
+	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
+	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
+	return u, nil
+}
 
 // HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
