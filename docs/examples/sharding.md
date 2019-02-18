@@ -6,7 +6,7 @@ DisGord uses an internal shard manager to handle this for you. However, you are 
 
 # Enforce N number of shards
 ```go
-client := disgord.NewClient(&disgord.Config{
+client := disgord.New(&disgord.Config{
     WSShardManagerConfig: &disgord.WSShardManagerConfig{
         // If you have another instance running with shards 0-3, and want this instance to use the range 4-8
         // you can specify the number of the first shard this instance should have. Otherwise there is no
@@ -34,7 +34,7 @@ The entire shard config is optional as your bot will always use sharding by defa
 
 ```go
 // this client is also using shards
-client := disgord.NewClient(&disgord.Config{
+client := disgord.New(&disgord.Config{
     BotToken: "random token",
 })
 ```

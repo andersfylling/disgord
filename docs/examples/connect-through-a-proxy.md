@@ -17,13 +17,10 @@ func main() {
 		panic(err)
 	}
 	
-	client, err := disgord.NewClient(&disgord.Config{
+	client := disgord.New(&disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Proxy: p, // Anything satisfying the proxy.Dialer interface will work
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	if err := client.Connect(); err != nil {
 		panic(err)

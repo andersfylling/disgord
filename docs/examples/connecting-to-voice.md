@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// Set up a new Disgord client
-	discord, _ := disgord.NewClient(&disgord.Config{
+	discord := disgord.New(&disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 	})
 
