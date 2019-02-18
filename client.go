@@ -459,10 +459,12 @@ func (c *client) DisconnectOnInterrupt() (err error) {
 // When a error happens you can terminate the application without worries.
 func (c *client) StayConnectedUntilInterrupted() (err error) {
 	if err = c.Connect(); err != nil {
+		c.log.Error(err)
 		return err
 	}
 
 	if err = c.DisconnectOnInterrupt(); err != nil {
+		c.log.Error(err)
 		return err
 	}
 
@@ -942,12 +944,6 @@ func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, fl
 // ModifyGuildRolePositions .
 func (c *client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error) {
 	ret, err = ModifyGuildRolePositions(c.req, guildID, params)
-	return
-}
-
-// ModifyGuildRole .
-func (c *client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams, flags ...Flag) (ret *Role, err error) {
-	ret, err = ModifyGuildRole(c.req, guildID, roleID, params)
 	return
 }
 

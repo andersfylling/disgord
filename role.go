@@ -315,25 +315,41 @@ var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func ModifyGuildRole(client httd.Patcher, guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+func (c *client) ModifyGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder) {
+	builder = &modifyGuildRoleBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Role{}
+	}
+	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodGet,
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
+	}, nil)
+
+	builder.r.cacheMiddleware = func(resp *http.Response, v interface{}, err error) error {
+		role := v.(*Role)
+		role.guildID = guildID
+		return nil
 	}
 
-	if err = unmarshal(body, &ret); err != nil {
-		return nil, err
+	return builder
+}
+
+// modifyGuildRoleBuilder ...
+//generate-rest-params: name:string, permissions:uint64, color:uint, hoist:bool, mentionable:bool,
+type modifyGuildRoleBuilder struct {
+	r RESTBuilder
+}
+
+func (b *modifyGuildRoleBuilder) Execute() (role *Role, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return
 	}
 
-	// add guild id to role
-	ret.guildID = guildID
-	return ret, nil
+	role = v.(*Role)
+	return
 }
 
 // DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.

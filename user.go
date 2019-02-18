@@ -611,20 +611,21 @@ func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) 
 		return
 	}
 
-	params := &ModifyCurrentUserParams{}
-	params.SetUsername(u.Username)
-	if u.Avatar == nil {
-		params.UseDefaultAvatar()
-	} else {
-		params.SetAvatar(*u.Avatar)
+	avatar := ""
+	if u.Avatar != nil {
+		avatar = *u.Avatar
 	}
 
-	var updated *User
-	if updated, err = session.ModifyCurrentUser(params); err != nil {
-		return
+	updated, err := session.ModifyCurrentUser().
+		SetUsername(u.Username).
+		SetAvatar(avatar).
+		Execute()
+
+	if err != nil {
+		return err
 	}
 
-	// TODO: remove once ModifyCurrentUser updates cache and the client var
+	// TODO: remove once ModifyCurrentUser updates cache and the client var?
 	*u = *updated
 	return
 }
@@ -799,29 +800,6 @@ func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
 	}
 
 	return httd.Marshal(content)
-}
-
-// ModifyCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
-//  Method                  PATCH
-//  Endpoint                /users/@me
-//  Rate limiter            /users
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
-//  Reviewed                2018-06-10
-//  Comment                 -
-func ModifyCurrentUser(client httd.Patcher, params *ModifyCurrentUserParams) (ret *User, err error) {
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMe(),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
 }
 
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
@@ -1034,19 +1012,19 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *client) ModifyCurrentUser(params *ModifyCurrentUserParams, flags ...Flag) (ret *User, err error) {
-	r := c.newRESTRequest(&httd.Request{
+func (c *client) ModifyCurrentUser(flags ...Flag) (builder *putUserBuilder) {
+	builder = &putUserBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &User{}
+	}
+	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.UserMe(),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	}, flags)
-	r.CacheRegistry = UserCache
-	r.ID = c.myID
-	r.pool = c.userPool
+	}, nil)
 
-	return getUser(r.Execute)
+	return builder
 }
 
 // GetCurrentUserGuilds .
@@ -1106,4 +1084,55 @@ func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 func (c *client) GetUserConnections(flags ...Flag) (ret []*UserConnection, err error) {
 	ret, err = GetUserConnections(c.req)
 	return
+}
+
+func prepareUserRESTBuilder(r *RESTBuilder, userID snowflake.ID) {
+	r.cacheRegistry = UserCache
+	r.cacheItemID = userID
+	r.itemFactory = func() interface{} {
+		return &User{}
+	}
+}
+
+func newUserRESTBuilder(userID Snowflake) *getUserBuilder {
+	builder := &getUserBuilder{}
+	builder.r.cacheRegistry = UserCache
+	builder.r.cacheItemID = userID
+	builder.r.itemFactory = func() interface{} {
+		return &User{}
+	}
+
+	return builder
+}
+
+type getUserBuilder struct {
+	r RESTBuilder
+	c *client
+}
+
+func (b *getUserBuilder) Execute() (user *User, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	user = v.(*User)
+	if b.c.myID.Empty() {
+		b.c.myID = user.ID
+	}
+	return user, nil
+}
+
+//generate-rest-params: username:string, avatar:string,
+type putUserBuilder struct {
+	r RESTBuilder
+}
+
+func (b *putUserBuilder) Execute() (user *User, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.(*User), nil
 }
