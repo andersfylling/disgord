@@ -6,6 +6,7 @@ So the time has come where you want to be a bot engineer huh? In this article yo
 // create a Disgord session
 client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
+    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // create a handler and bind it to new message events

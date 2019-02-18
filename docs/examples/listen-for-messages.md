@@ -5,6 +5,7 @@ In Disgord it is required that you specify the event you are listening to using 
 
 client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
+    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // create a handler and bind it to new message events
@@ -36,6 +37,7 @@ In addition, Disgord also supports the use of channels for handling events. It i
 ```go
 client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
+    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // or use a channel to listen for events
