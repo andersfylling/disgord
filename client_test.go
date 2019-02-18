@@ -28,9 +28,9 @@ func TestClient_Once(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	_ = c.Once(EventMessageCreate, func() {
+	c.On(EventMessageCreate, func() {
 		wg.Done()
-	})
+	}, &ctrl{remaining: 1})
 	if dispatcher.nrOfAliveHandlers() != 1 {
 		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
@@ -69,7 +69,7 @@ func TestClient_On(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	_ = c.On(EventMessageCreate, func() {
+	c.On(EventMessageCreate, func() {
 		wg.Done()
 	})
 	if dispatcher.nrOfAliveHandlers() != 1 {
@@ -111,13 +111,13 @@ func TestClient_On_Middleware(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	_ = c.On(EventMessageCreate, func() {
+	c.On(EventMessageCreate, func() {
 		wg.Done()
 	})
-	_ = c.On(EventMessageCreate, mdlwHasBotPrefix, func() {
+	c.On(EventMessageCreate, mdlwHasBotPrefix, func() {
 		wg.Done()
 	})
-	_ = c.On(EventMessageCreate, mdlwHasDifferentPrefix, func() {
+	c.On(EventMessageCreate, mdlwHasDifferentPrefix, func() {
 		wg.Done()
 	})
 	wg.Add(2)

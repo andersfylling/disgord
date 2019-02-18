@@ -95,10 +95,7 @@ type SocketHandler interface {
 
 	// event handlers
 	// inputs are in the following order: middlewares, handlers, controller
-	On(event string, inputs ...interface{}) error
-
-	// Deprecated
-	Once(event string, inputs ...interface{}) error
+	On(event string, inputs ...interface{})
 	Emitter
 
 	// event channels

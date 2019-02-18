@@ -500,6 +500,37 @@ func (c *client) Ready(cb func()) {
 	}()
 }
 
+func ValidateHandlerInputs(inputs ...interface{}) (err error) {
+	var i int
+	var ok bool
+
+	// make sure that middlewares are only at beginning
+	for j := i; j < len(inputs); j++ {
+		if _, ok = inputs[j].(Middleware); ok {
+			if j != i {
+				return errors.New("middlewares can only be in the beginning. Grouped together")
+			}
+			i++
+		}
+	}
+
+	// there should now be N handlers, 0 < N.
+	if len(inputs) <= i {
+		return errors.New("missing handler(s)")
+	}
+
+	// check for extra controllers
+	for j := len(inputs) - 2; j >= i; j-- {
+		if _, ok = inputs[j].(HandlerCtrl); ok {
+			return errors.New("a handlerCtrl's can only be at the end of the definition. Expected a handler")
+		}
+	}
+
+	// TODO: test for all handler types?
+
+	return nil
+}
+
 // On binds a singular or multiple event handlers to the stated event, with the same middlewares.
 //  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions)
 // the mdlwHasMentions is optional, as are any middleware and controller. But a handler must be specified.
@@ -516,44 +547,22 @@ func (c *client) Ready(cb func()) {
 // you want.
 //
 // This ctrl feature was inspired by https://github.com/discordjs/discord.js
-func (c *client) On(event string, inputs ...interface{}) error {
+func (c *client) On(event string, inputs ...interface{}) {
+	if err := ValidateHandlerInputs(inputs...); err != nil {
+		panic(err)
+	}
 	c.shardManager.TrackEvent.Add(event)
 
 	// detect middleware then handlers. Ordering is important.
 	spec := &handlerSpec{}
-	if err := spec.populate(inputs...); err != nil {
-		return err
+	if err := spec.populate(inputs...); err != nil { // TODO: improve redundant checking
+		panic(err) // if the pattern is wrong: (event,[ ...middlewares,] ...handlers[, controller])
+		// if you want to error check before you use the .On, you can use disgord.ValidateHandlerInputs(...)
 	}
 
 	c.evtDemultiplexer.Lock()
-	defer c.evtDemultiplexer.Unlock()
 	c.evtDemultiplexer.handlers[event] = append(c.evtDemultiplexer.handlers[event], spec)
-
-	return nil
-}
-
-// Once same as `On`, however, once the handler is triggered, it is removed. In other words, it is only triggered once.
-// Deprecated: is now just a wrapper
-func (c *client) Once(event string, inputs ...interface{}) error {
-	if len(inputs) == 0 {
-		return errors.New("must specify at least one handler")
-	}
-
-	var params []interface{}
-	params = append(params, inputs...)
-
-	ctrl := &simpleHandlerCtrl{
-		remaining: 1,
-	}
-
-	// ensure there's only one controller
-	if _, ok := params[len(params)-1].(HandlerCtrl); ok {
-		params[len(params)-1] = ctrl // overwrite - don't use Once with a controller...
-	} else {
-		params = append(params, ctrl)
-	}
-
-	return c.On(event, params...)
+	c.evtDemultiplexer.Unlock()
 }
 
 // Emit sends a socket command directly to Discord.
