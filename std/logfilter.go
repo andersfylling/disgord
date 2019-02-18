@@ -25,7 +25,8 @@ type logFilter struct {
 // LogMsg logs messages in the format:
 //  - MESSAGE_CREATE: $user{usrid} created message{msgid} $content
 //  - MESSAGE_UPDATE: $user{usrid} updated message{msgid} $newContent
-//  - MESSAGE_DELETE: messages{len: 2, ids: [1234,34567]} was deleted
+//  - MESSAGE_DELETE: messages{msgid} was deleted
+//  - MESSAGE_DELETE_BULK: messages{len: 2, ids: [1234,34567]} was deleted
 // if unable to log the event, it does not exit the chain.
 func (f *logFilter) LogMsg(evt interface{}) interface{} {
 	var change string
@@ -53,6 +54,7 @@ func (f *logFilter) LogMsg(evt interface{}) interface{} {
 		f.log.Info(msgStr, "was deleted")
 		return evt
 	default:
+		f.log.Error("unable to log msg event", t)
 		return evt
 	}
 

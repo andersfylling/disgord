@@ -63,9 +63,11 @@ echo 'package main
 
 import (
 	"github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord/std"
 	"os"
 )
 
+// replyPongToPing is a handler that replies pong to ping messages
 func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
     msg := data.Message
 
@@ -76,21 +78,27 @@ func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
 }
 
 func main() {
-	botConfig := &disgord.Config{
+    client := disgord.New(&disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger: disgord.DefaultLogger(false), // optional logging, debug=false
-    }
+        Logger: disgord.DefaultLogger(false), // debug=false
+    })
+    defer client.StayConnectedUntilInterrupted()
 
-    // create a DisGord client
-    client := disgord.New(botConfig)
+    filter, err := std.NewMsgFilter(client)
+	if err != nil {
+		panic(err)
+	}
+	filter.SetPrefix("'${BOT_PREFIX}'")
 
     // create a handler and bind it to new message events
-    client.On(disgord.EventMessageCreate, replyPongToPing)
-
-    // connect to the discord gateway to receive events, and disconnect on a system interrupt
-    if err := client.StayConnectedUntilInterrupted(); err != nil {
-        botConfig.Logger.Error(err)
-    }
+    // tip: read the documentation for std.CopyMsgEvt and understand why it is used here.
+    _ = client.On(disgord.EventMessageCreate,
+    	// middleware
+    	filter.HasPrefix,   // read original
+    	std.CopyMsgEvt,     // read & copy original
+    	filter.StripPrefix, // write copy
+    	// handler
+    	replyPongToPing) // handles copy
 }
 ' >> main.go
 

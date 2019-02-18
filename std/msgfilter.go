@@ -23,7 +23,14 @@ func NewMsgFilter(client msgFilterdg) (filter *msgFilter, err error) {
 }
 
 type msgFilter struct {
-	botID disgord.Snowflake
+	botID  disgord.Snowflake
+	prefix string
+}
+
+// SetPrefix set the prefix attribute which is used in StripPrefix, HasPrefix.
+// Do not set the prefix to be a space, " ", as this will be trimmed when checking later.
+func (f *msgFilter) SetPrefix(p string) {
+	f.prefix = p
 }
 
 func (f *msgFilter) ContainsBotMention(evt interface{}) interface{} {
@@ -40,15 +47,27 @@ func (f *msgFilter) ContainsBotMention(evt interface{}) interface{} {
 }
 
 func (f *msgFilter) HasBotMentionPrefix(evt interface{}) interface{} {
-	var msg *disgord.Message
-	if msg = getMsg(evt); msg == nil {
+	return messageHasPrefix(evt, mentionString(f.botID))
+}
+
+func (f *msgFilter) HasPrefix(evt interface{}) interface{} {
+	if f.prefix == "" {
+		return evt
+	}
+
+	return messageHasPrefix(evt, f.prefix)
+}
+
+func (f *msgFilter) StripPrefix(evt interface{}) interface{} {
+	if f.prefix == "" {
+		return evt
+	}
+
+	if content := messageHasPrefix(evt, f.prefix); content == nil {
 		return nil
 	}
 
-	content := strings.TrimSpace(msg.Content)
-	if !strings.HasPrefix(content, mentionString(f.botID)) {
-		return nil
-	}
-
+	msg := getMsg(evt)
+	msg.Content = msg.Content[len(f.prefix):]
 	return evt
 }
