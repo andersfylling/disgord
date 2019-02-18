@@ -50,7 +50,6 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 
 	// Try to find all event structs defined in the file
 	const RESTBuilder = "RESTBuilder"
-	const RESTBuilder2 = "*RESTBuilder"
 	for name, item := range file.Scope.Objects {
 		// Only continue if we are dealing with a type declaration
 		if item.Kind != ast.Typ {
@@ -75,7 +74,7 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 		var isRESTBuilder bool
 		var fieldName string
 		for _, field := range fields {
-			if id, ok := field.Type.(*ast.Ident); ok && (id.Name == RESTBuilder || id.Name == RESTBuilder2) {
+			if id, ok := field.Type.(*ast.Ident); ok && id.Name == RESTBuilder {
 				if len(field.Names) == 0 {
 					panic("" + filename + "#" + name + " must specify a field Name for the embedded struct " + RESTBuilder)
 				}
