@@ -352,7 +352,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		}
 	}
 
-	if len(body) > 1 {
+	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
 		if err = httd.Unmarshal(body, v); err != nil {
 			return nil, err
@@ -413,6 +413,11 @@ func (b *RESTBuilder) IgnoreCache() *RESTBuilder {
 func (b *RESTBuilder) CancelOnRatelimit() *RESTBuilder {
 	b.cancelOnRatelimit = true
 	return b
+}
+
+//generate-rest-basic-execute: err:error,
+type basicBuilder struct {
+	r RESTBuilder
 }
 
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the client can use for Connecting.

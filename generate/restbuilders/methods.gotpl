@@ -42,13 +42,14 @@ func (b *{{$builder.Name}}) Set{{ $p.MethodName }}({{ $p.MethodName | Decapitali
 
 {{ if .BasicExecMethod }}
 {{ with $be := $builder.BasicExec }}
-func (b *{{$builder.Name}}) Execute() ({{ $be.Name }} {{ $be.Type }}, err error) {
-	var v interface{}
+func (b *{{$builder.Name}}) Execute() ({{ if ne $be.Name "err" }}{{ $be.Name }} {{ $be.Type }},{{end}} err error) {
+	{{ if ne $be.Name "err" }}var v interface{}
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
 
-	return v.({{ $be.Type }}), nil
+	return v.({{ $be.Type }}), nil{{ else }}_, err = b.r.execute()
+    return{{ end }}
 }
 {{ end }}
 {{ end }}

@@ -841,30 +841,6 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 	return
 }
 
-// LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /users/@me/guilds/{guild.id}
-//  Rate limiter            /users/@me/guilds
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
-//  Reviewed                2019-02-18
-//  Comment                 -
-func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
-		Ratelimiter: "/users/@me/guilds",
-		Endpoint:    endpoint.UserMeGuild(id),
-	})
-	if err != nil {
-		return
-	}
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-
-	return
-}
-
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
@@ -1054,6 +1030,10 @@ func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	}, flags)
 	r.CacheRegistry = GuildCache
 	r.ID = id
+	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
+		c.cache.DeleteGuild(id)
+		return nil
+	}
 
 	_, err = r.Execute()
 	return
@@ -1098,13 +1078,15 @@ func (c *client) GetUserConnections(flags ...Flag) (ret []*UserConnection, err e
 //
 //////////////////////////////////////////////////////
 
+func userFactory() interface{} {
+	return &User{}
+}
+
 func newUserRESTBuilder(userID Snowflake) *getUserBuilder {
 	builder := &getUserBuilder{}
 	builder.r.cacheRegistry = UserCache
 	builder.r.cacheItemID = userID
-	builder.r.itemFactory = func() interface{} {
-		return &User{}
-	}
+	builder.r.itemFactory = userFactory
 
 	return builder
 }
@@ -1121,11 +1103,7 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 		return nil, err
 	}
 
-	user = v.(*User)
-	if b.c.myID.Empty() {
-		b.c.myID = user.ID
-	}
-	return user, nil
+	return v.(*User), nil
 }
 
 // modifyCurrentUserBuilder ...
