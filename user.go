@@ -996,9 +996,7 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 //  Comment                 -
 func (c *client) ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBuilder) {
 	builder = &modifyCurrentUserBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &User{}
-	}
+	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitUsers(),
@@ -1009,10 +1007,36 @@ func (c *client) ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBui
 	return builder
 }
 
-// GetCurrentUserGuilds .
-func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error) {
-	ret, err = GetCurrentUserGuilds(c.req, params)
-	return
+// GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
+// Requires the guilds OAuth2 scope.
+//  Method                  GET
+//  Endpoint                /users/@me/guilds
+//  Rate limiter            /users/@me/guilds
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
+//  Reviewed                2019-02-18
+//  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
+//                          guilds a non-bot user can join. Therefore, pagination is not needed for
+//                          integrations that need to get a list of users' guilds.
+func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
+		Ratelimiter: "/users/@me/guilds",
+		Endpoint:    endpoint.UserMeGuilds(),
+	}, flags)
+	r.factory = func() interface{} {
+		a := []*PartialGuild{}
+		return &a
+	}
+
+	var vs interface{}
+	if vs, err = r.Execute(); err != nil {
+		return nil, err
+	}
+
+	if guilds, ok := vs.(*[]*PartialGuild); ok {
+		return *guilds, nil
+	}
+	return nil, errors.New("unable to cast guild slice")
 }
 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
@@ -1111,4 +1135,29 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 //generate-rest-basic-execute: user:*User,
 type modifyCurrentUserBuilder struct {
 	r RESTBuilder
+}
+
+// TODO: params should be url-params. But it works since we're using GET.
+//generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
+type getCurrentUserGuildsBuilder struct {
+	r RESTBuilder
+}
+
+func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBuilder {
+	delete(b.r.urlParams, "limit")
+	return b
+}
+
+func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*PartialGuild, err error) {
+	if a, ok := b.r.urlParams["limit"]; ok && a == 0 {
+		return nil, errors.New("limit can not be 0")
+	}
+
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	gsp := v.(*[]*PartialGuild)
+	return *gsp, nil
 }

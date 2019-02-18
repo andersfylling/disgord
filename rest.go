@@ -116,9 +116,9 @@ type rest struct {
 	httpMethod    string
 
 	// item creation
-	// pool is prioritzed over factory
+	// pool is prioritized over factory
 	pool    Pool
-	factory func() Reseter
+	factory func() interface{}
 
 	conf *httd.Request
 
@@ -128,23 +128,21 @@ type rest struct {
 	updateCache restStepUpdateCache
 }
 
-func (r *rest) Put(x Reseter) {
+func (r *rest) Put(x interface{}) {
 	if r.pool != nil {
-		r.pool.Put(x)
+		r.pool.Put(x.(Reseter))
 	} else {
 		x = nil // GC
 	}
 }
 
-func (r *rest) Get() (x Reseter) {
+func (r *rest) Get() (x interface{}) {
 	if r.pool != nil {
 		return r.pool.Get()
 	}
 
 	return r.factory()
 }
-
-var _ Pool = (*rest)(nil)
 
 func (r *rest) init() {
 	if r.conf != nil {

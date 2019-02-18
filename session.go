@@ -201,7 +201,7 @@ type UserRESTer interface {
 	GetCurrentUser(flags ...Flag) (*User, error)
 	GetUser(id Snowflake, flags ...Flag) (*User, error)
 	ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBuilder)
-	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error)
+	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
 	LeaveGuild(id Snowflake, flags ...Flag) (err error)
 	GetUserDMs(flags ...Flag) (ret []*Channel, err error)
 	CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error)
@@ -298,6 +298,7 @@ type Session interface {
 	UpdateStatus(s *UpdateStatusCommand) (err error)
 	UpdateStatusString(s string) (err error)
 
+	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error)
 	GetConnectedGuilds() []snowflake.ID
 
 	// same as above. Except these returns a channel

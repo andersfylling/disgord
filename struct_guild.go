@@ -154,7 +154,7 @@ type GuildUnavailable struct {
 // }
 
 // PartialGuild see Guild
-type PartialGuild = Guild
+type PartialGuild = Guild // TODO: find the actual data struct for partial guild
 
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
@@ -202,6 +202,13 @@ type Guild struct {
 }
 
 var _ Reseter = (*Guild)(nil)
+var _ fmt.Stringer = (*Guild)(nil)
+var _ Copier = (*Guild)(nil)
+var _ DeepCopier = (*Guild)(nil)
+
+func (g *Guild) String() string {
+	return g.Name + "{" + g.ID.String() + "}"
+}
 
 func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild := other.(*Guild)

@@ -158,22 +158,22 @@ func TestUser_copyOverToCache(t *testing.T) {
 }
 
 func TestGetCurrentUserGuildsParams(t *testing.T) {
-	params := &GetCurrentUserGuildsParams{}
+	params := &getCurrentUserGuildsBuilder{}
+	params.r.setup(nil, nil, nil, nil)
 	var wants string
 
 	wants = ""
-	verifyQueryString(t, params, wants)
+	verifyQueryString(t, params.r.urlParams, wants)
 
-	s := "438543957"
-	params.Before, _ = GetSnowflake(s)
-	wants = "?before=" + s
-	verifyQueryString(t, params, wants)
+	wants = "?before=438543957"
+	params.SetBefore(438543957)
+	verifyQueryString(t, params.r.urlParams, wants)
 
-	params.Limit = 6
 	wants += "&limit=6"
-	verifyQueryString(t, params, wants)
+	params.SetLimit(6)
+	verifyQueryString(t, params.r.urlParams, wants)
 
-	params.Limit = 0
-	wants = "?before=" + s
-	verifyQueryString(t, params, wants)
+	wants = "?before=438543957"
+	params.SetDefaultLimit()
+	verifyQueryString(t, params.r.urlParams, wants)
 }
