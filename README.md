@@ -5,6 +5,7 @@
 | Branch       | Status  | Standard | Code coverage |
 | ------------ |:-------------:|:---------------:|:----------------:|
 | develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) |
+| v0.10     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10) | - | - |
 
 ## About
 GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
