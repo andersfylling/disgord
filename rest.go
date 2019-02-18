@@ -301,6 +301,12 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 	b.client = client
 	b.config = config
 	b.middleware = middleware
+
+	if b.config == nil {
+		b.config = &httd.Request{
+			Method: http.MethodGet,
+		}
+	}
 }
 
 func (b *RESTBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMiddleware) {
@@ -314,6 +320,10 @@ func (b *RESTBuilder) prepare() {
 		b.config.Body = b.body
 	}
 	b.config.Endpoint += b.urlParams.URLQueryString()
+
+	if b.cache == nil {
+		b.IgnoreCache()
+	}
 }
 
 // execute ... v must be a nil pointer.
