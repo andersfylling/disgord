@@ -19,7 +19,7 @@ func UserMeGuilds() string {
 
 // UserMeGuild ...
 func UserMeGuild(id fmt.Stringer) string {
-	return UserMe() + guilds
+	return UserMe() + guilds + "/" + id.String()
 }
 
 // UserMeChannels ...
@@ -29,7 +29,7 @@ func UserMeChannels() string {
 
 // UserMeChannel ...
 func UserMeChannel(id fmt.Stringer) string {
-	return UserMe() + channels
+	return UserMe() + channels + "/" + id.String()
 }
 
 // UserMeConnections ...

@@ -883,14 +883,14 @@ func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Rate limiter            /users TODO: is this correct?
+//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
-//  Reviewed                2018-06-10
+//  Reviewed                2019-02-18
 //  Comment                 -
 func LeaveGuild(client httd.Deleter, id Snowflake) (err error) {
 	var resp *http.Response
 	resp, _, err = client.Delete(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
+		Ratelimiter: "/users/@me/guilds",
 		Endpoint:    endpoint.UserMeGuild(id),
 	})
 	if err != nil {
