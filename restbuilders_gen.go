@@ -51,6 +51,15 @@ func (b *guildAuditLogsBuilder) SetLimit(limit int) *guildAuditLogsBuilder {
 	return b
 }
 
+func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.(*AuditLog), nil
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *listGuildEmojisBuilder) IgnoreCache() *listGuildEmojisBuilder {
@@ -213,39 +222,48 @@ func (b *getUserBuilder) Set(name string, v interface{}) *getUserBuilder {
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *putUserBuilder) IgnoreCache() *putUserBuilder {
+func (b *modifyCurrentUserBuilder) IgnoreCache() *modifyCurrentUserBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *putUserBuilder) CancelOnRatelimit() *putUserBuilder {
+func (b *modifyCurrentUserBuilder) CancelOnRatelimit() *modifyCurrentUserBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *putUserBuilder) URLParam(name string, v interface{}) *putUserBuilder {
+func (b *modifyCurrentUserBuilder) URLParam(name string, v interface{}) *modifyCurrentUserBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *putUserBuilder) Set(name string, v interface{}) *putUserBuilder {
+func (b *modifyCurrentUserBuilder) Set(name string, v interface{}) *modifyCurrentUserBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *putUserBuilder) SetUsername(username string) *putUserBuilder {
+func (b *modifyCurrentUserBuilder) SetUsername(username string) *modifyCurrentUserBuilder {
 	b.r.param("username", username)
 	return b
 }
 
-func (b *putUserBuilder) SetAvatar(avatar string) *putUserBuilder {
+func (b *modifyCurrentUserBuilder) SetAvatar(avatar string) *modifyCurrentUserBuilder {
 	b.r.param("avatar", avatar)
 	return b
+}
+
+func (b *modifyCurrentUserBuilder) Execute() (user *User, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.(*User), nil
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a

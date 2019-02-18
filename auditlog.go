@@ -311,18 +311,9 @@ func (c *client) GetGuildAuditLogs(guildID snowflake.ID, flags ...Flag) (builder
 }
 
 // guildAuditLogsBuilder for building the GetGuildAuditLogs request.
+// TODO: support caching of audit log entries. So we only fetch those we don't have.
 //generate-rest-params: user_id:Snowflake, action_type:uint, before:Snowflake, limit:int,
+//generate-rest-basic-execute: log:*AuditLog,
 type guildAuditLogsBuilder struct {
 	r RESTBuilder
-}
-
-func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
-	// TODO: support caching of audit log entries. So we only fetch those we don't have.
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return
-	}
-
-	log = v.(*AuditLog)
-	return
 }
