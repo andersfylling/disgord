@@ -20,6 +20,7 @@ func main() {
 	client := disgord.New(&disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Proxy: p, // Anything satisfying the proxy.Dialer interface will work
+		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
 
 	if err := client.Connect(); err != nil {

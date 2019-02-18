@@ -27,6 +27,7 @@ client := disgord.New(&disgord.Config{
         URL: "",
     },
     BotToken: "random token",
+    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 ```
 
@@ -36,5 +37,6 @@ The entire shard config is optional as your bot will always use sharding by defa
 // this client is also using shards
 client := disgord.New(&disgord.Config{
     BotToken: "random token",
+    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 ```
