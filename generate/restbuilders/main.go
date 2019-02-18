@@ -21,6 +21,8 @@ func main() {
 		panic(err)
 	}
 
+	getAllRESTBuilders("user.go")
+
 	var builders []*builder
 	for i := range files {
 		builders = append(builders, getAllRESTBuilders(files[i])...)
@@ -29,7 +31,7 @@ func main() {
 	makeFile(builders, "generate/restbuilders/methods.gotpl", "restbuilders_gen.go")
 }
 
-type tuple struct {
+type methodInfo struct {
 	Name       string
 	MethodName string
 	Type       string
@@ -39,7 +41,12 @@ type builder struct {
 	Name      string
 	FieldName string
 	pos       token.Pos
-	Params    []tuple
+	Params    []methodInfo
+	BasicExec *methodInfo
+}
+
+func (b *builder) BasicExecMethod() bool {
+	return b.BasicExec != nil
 }
 
 func getAllRESTBuilders(filename string) (builders []*builder) {
@@ -87,13 +94,6 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 		if !isRESTBuilder {
 			continue
 		}
-		//
-		//if genDecl, ok := item.(*ast.GenDecl); ok {
-		//	fmt.Printf("%+v\n", genDecl)
-		//}
-		//if typeDecl.Doc != nil {
-		//	fmt.Printf("%+v\n", typeDecl.Doc.List)
-		//}
 
 		pos := item.Pos()
 		if pos > 300 {
@@ -113,46 +113,92 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 	if err != nil {
 		panic(err)
 	}
-	var pp int
+
 	const genPrefix = "//generate-rest-params: "
-	for _, item := range fileComments.Comments {
-		if len(builders) == pp {
+	const genPrefix2 = "//generate-rest-basic-execute: "
+	var ok bool
+	var genDecl *ast.GenDecl
+	for _, item := range fileComments.Decls {
+		if len(builders) == 0 {
 			break
 		}
 
-		if item.Pos() < builders[pp].pos {
+		// magic
+		if item.Pos() < builders[0].pos {
 			continue
 		}
 
-		for i := range item.List {
-			comment := item.List[i].Text
-			if !strings.HasPrefix(comment, genPrefix) {
+		genDecl, ok = item.(*ast.GenDecl)
+		if !ok || len(genDecl.Specs) == 0 || genDecl.Doc == nil || len(genDecl.Doc.List) == 0 {
+			continue
+		}
+
+		spec, ok := genDecl.Specs[0].(*ast.TypeSpec)
+		if !ok || spec.Name.IsExported() {
+			continue
+		}
+
+		// find slice index
+		structName := spec.Name.Name
+		index := -1
+		for i := range builders {
+			if builders[i].Name == structName {
+				index = i
+				break
+			}
+		}
+		if index == -1 {
+			continue
+		}
+
+		for i := range genDecl.Doc.List {
+			comment := genDecl.Doc.List[i].Text
+			if !strings.HasPrefix(comment, genPrefix) && !strings.HasPrefix(comment, genPrefix2) {
 				continue
 			}
-			var start = len(genPrefix)
-			var end int
-			if strings.HasSuffix(comment, ",") {
-				end = len(comment) - 1
-			} else {
-				end = len(comment)
-			}
-			paramsStr := comment[start:end]
-			params := strings.Split(paramsStr, ", ")
 
-			tuples := make([]tuple, 0, len(params))
-			for j := range params {
-				param := strings.Split(params[j], ":")
-				name := param[0]
-				typ := param[1]
-				methodName := jsonNameToMethodName(name)
-				tuples = append(tuples, tuple{
-					MethodName: methodName,
-					Name:       name,
-					Type:       typ,
-				})
+			if strings.HasPrefix(comment, genPrefix) {
+				var start = len(genPrefix)
+				var end int
+				if strings.HasSuffix(comment, ",") {
+					end = len(comment) - 1
+				} else {
+					end = len(comment)
+				}
+				paramsStr := comment[start:end]
+				params := strings.Split(paramsStr, ", ")
+
+				tuples := make([]methodInfo, 0, len(params))
+				for j := range params {
+					param := strings.Split(params[j], ":")
+					name := param[0]
+					typ := param[1]
+					methodName := jsonNameToMethodName(name)
+					tuples = append(tuples, methodInfo{
+						MethodName: methodName,
+						Name:       name,
+						Type:       typ,
+					})
+				}
+				builders[index].Params = tuples
+			} else if strings.HasPrefix(comment, genPrefix2) {
+				var start = len(genPrefix2)
+				var end int
+				if strings.HasSuffix(comment, ",") {
+					end = len(comment) - 1
+				} else {
+					end = len(comment)
+				}
+				paramsStr := comment[start:end]
+				params := strings.Split(paramsStr, ", ")
+				param := strings.Split(params[0], ":")
+				// let panic if missing params
+				builders[index].BasicExec = &methodInfo{
+					Name: param[0],
+					Type: param[1],
+				}
 			}
-			builders[pp].Params = tuples
-			pp++
+
 		}
 	}
 

@@ -39,4 +39,18 @@ func (b *{{$builder.Name}}) Set{{ $p.MethodName }}({{ $p.MethodName | Decapitali
     return b
 }
 {{ end }}
+
+{{ if .BasicExecMethod }}
+{{ with $be := $builder.BasicExec }}
+func (b *{{$builder.Name}}) Execute() ({{ $be.Name }} {{ $be.Type }}, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.({{ $be.Type }}), nil
+}
+{{ end }}
+{{ end }}
+
 {{ end }}
