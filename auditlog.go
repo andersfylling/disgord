@@ -310,33 +310,10 @@ func (c *client) GetGuildAuditLogs(guildID snowflake.ID, flags ...Flag) (builder
 	return builder
 }
 
-// guildAuditLogsBuilder for building the GetGuildAuditLogs request
+// guildAuditLogsBuilder for building the GetGuildAuditLogs request.
+//generate-rest-params: user_id:Snowflake, action_type:uint, before:Snowflake, limit:int,
 type guildAuditLogsBuilder struct {
 	r RESTBuilder
-}
-
-// UserID filter the log for a user id
-func (b *guildAuditLogsBuilder) UserID(id snowflake.ID) *guildAuditLogsBuilder {
-	b.r.queryParam("user_id", id)
-	return b
-}
-
-// ActionType the type of audit log event
-func (b *guildAuditLogsBuilder) ActionType(action uint) *guildAuditLogsBuilder {
-	b.r.queryParam("action_type", action)
-	return b
-}
-
-// Before filter the log before a certain entry id
-func (b *guildAuditLogsBuilder) Before(id snowflake.ID) *guildAuditLogsBuilder {
-	b.r.queryParam("before", id)
-	return b
-}
-
-// Before filter the log before a certain entry id
-func (b *guildAuditLogsBuilder) Limit(limit int) *guildAuditLogsBuilder {
-	b.r.queryParam("limit", limit)
-	return b
 }
 
 func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {

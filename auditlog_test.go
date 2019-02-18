@@ -90,11 +90,11 @@ func TestAuditLogParams(t *testing.T) {
 
 	s := "438543957"
 	ss, _ := snowflake.GetSnowflake(s)
-	params.UserID(ss)
+	params.SetUserID(ss)
 	wants = "?user_id=" + s
 	verifyQueryString(t, params.r.urlParams, wants)
 
-	params.ActionType(6)
+	params.SetActionType(6)
 	wants += "&action_type=6"
 	wantsAlternative := "?action_type=6&user_id=" + s
 	got := params.r.urlParams.URLQueryString()
@@ -102,7 +102,7 @@ func TestAuditLogParams(t *testing.T) {
 		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.URLQueryString(), wants, wantsAlternative)
 	}
 
-	params.ActionType(0)
+	params.SetActionType(0)
 	wants = "?user_id=" + s + "&action_type=0"
 	wantsAlternative = "?action_type=0&user_id=" + s
 	got = params.r.urlParams.URLQueryString()

@@ -318,12 +318,13 @@ func (b *RESTBuilder) prepare() {
 
 // execute ... v must be a nil pointer.
 func (b *RESTBuilder) execute() (v interface{}, err error) {
-	if !b.ignoreCache && b.config.Method == http.MethodGet {
+	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.Empty() {
 		// cacheLink lookup. return on cacheLink hit
 		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
-		if err != nil {
-			return
+		if v != nil && err == nil {
+			return v, nil
 		}
+		// otherwise we perform the request
 	}
 
 	b.prepare()
@@ -332,32 +333,32 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 	var body []byte
 	resp, body, err = b.client.Request(b.config)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if b.middleware != nil {
-		err = b.middleware(resp, body, err)
-		if err != nil {
-			return
+		if err = b.middleware(resp, body, err); err != nil {
+			return nil, err
 		}
 	}
 
 	if len(body) > 1 {
 		v = b.itemFactory()
-		err = httd.Unmarshal(body, v)
-		if err != nil {
-			return
+		if err = httd.Unmarshal(body, v); err != nil {
+			return nil, err
 		}
 
-		if b.cacheRegistry != NoCacheSpecified {
-			if b.cacheMiddleware != nil {
-				b.cacheMiddleware(resp, v, err)
-			}
-
-			b.cache.Update(b.cacheRegistry, v)
+		if b.cacheRegistry == NoCacheSpecified {
+			return v, err
 		}
+
+		if b.cacheMiddleware != nil {
+			b.cacheMiddleware(resp, v, err)
+		}
+
+		b.cache.Update(b.cacheRegistry, v)
 	}
-	return
+	return v, nil
 }
 
 type restReqBuilderAsync struct {
