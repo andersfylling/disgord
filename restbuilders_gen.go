@@ -227,6 +227,48 @@ func (b *modifyGuildRoleBuilder) SetMentionable(mentionable bool) *modifyGuildRo
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
+func (b *getCurrentUserGuildsBuilder) IgnoreCache() *getCurrentUserGuildsBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *getCurrentUserGuildsBuilder) CancelOnRatelimit() *getCurrentUserGuildsBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *getCurrentUserGuildsBuilder) URLParam(name string, v interface{}) *getCurrentUserGuildsBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) *getCurrentUserGuildsBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) *getCurrentUserGuildsBuilder {
+	b.r.param("before", before)
+	return b
+}
+
+func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) *getCurrentUserGuildsBuilder {
+	b.r.param("after", after)
+	return b
+}
+
+func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) *getCurrentUserGuildsBuilder {
+	b.r.param("limit", limit)
+	return b
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
 func (b *getUserBuilder) IgnoreCache() *getUserBuilder {
 	b.r.IgnoreCache()
 	return b

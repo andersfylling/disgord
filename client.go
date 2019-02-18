@@ -1083,7 +1083,7 @@ func (c *client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams, flags 
 
 	// verify avatar string prefix
 	if params.avatarIsSet && params.avatar != "" && !validAvatarPrefix(params.avatar) {
-		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. data:image/jpeg;base64,")
+		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. 'data:image/jpeg;base64,'")
 		return
 	}
 
@@ -1136,6 +1136,7 @@ func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, f
 // -----
 
 func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
+	// TODO: populate these partial guild objects
 	return c.GetCurrentUserGuilds(params)
 }
 
