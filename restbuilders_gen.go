@@ -143,6 +143,38 @@ func (b *getInviteBuilder) Set(name string, v interface{}) *getInviteBuilder {
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
+func (b *basicBuilder) IgnoreCache() *basicBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *basicBuilder) CancelOnRatelimit() *basicBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *basicBuilder) URLParam(name string, v interface{}) *basicBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *basicBuilder) Set(name string, v interface{}) *basicBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *basicBuilder) Execute() (err error) {
+	_, err = b.r.execute()
+	return
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
 func (b *modifyGuildRoleBuilder) IgnoreCache() *modifyGuildRoleBuilder {
 	b.r.IgnoreCache()
 	return b
