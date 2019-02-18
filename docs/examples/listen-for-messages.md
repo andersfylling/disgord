@@ -3,12 +3,9 @@
 In Disgord it is required that you specify the event you are listening to using an event key (see package event). Unlike discordgo this library does not use reflection to understand which event type your function reacts to.
 ```go
 
-client, err := disgord.NewClient(&disgord.Config{
+client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
 })
-if err != nil {
-    panic(err)
-}
 
 // create a handler and bind it to new message events
 // handlers/listener are run in sequence if you register more than one
@@ -37,12 +34,9 @@ session.On(event.MessageCreate, func(session disgord.Session, data *disgord.Mess
 
 In addition, Disgord also supports the use of channels for handling events. It is extremely important that you remember to tell disgord which events you want, before you start using channels. Failure to do so may result in the desired events being discarded at the socket layer, as you did not notify you wanted them. See the code example below.
 ```go
-client, err := disgord.NewClient(&disgord.Config{
+client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
 })
-if err != nil {
-    panic(err)
-}
 
 // or use a channel to listen for events
 go func() {

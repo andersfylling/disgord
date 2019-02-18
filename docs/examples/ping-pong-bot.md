@@ -4,12 +4,9 @@ So the time has come where you want to be a bot engineer huh? In this article yo
 
 ```go
 // create a Disgord session
-client, err := disgord.NewClient(&disgord.Config{
+client := disgord.New(&disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
 })
-if err != nil {
-    panic(err)
-}
 
 // create a handler and bind it to new message events
 client.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {

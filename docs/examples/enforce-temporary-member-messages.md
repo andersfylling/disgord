@@ -28,12 +28,9 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 }
 
 func main() {
-	client, err := disgord.NewClient(&disgord.Config{
+	client := disgord.New(&disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	client.On(disgord.EventMessageCreate, autoDeleteNewMessages)
 
