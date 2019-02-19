@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -124,6 +125,11 @@ type Channel struct {
 }
 
 var _ Reseter = (*Channel)(nil)
+var _ fmt.Stringer = (*Channel)(nil)
+
+func (c *Channel) String() string {
+	return "channel{" + c.ID.String() + "}"
+}
 
 func (c *Channel) valid() bool {
 	if c.RateLimitPerUser > 120 {
