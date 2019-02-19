@@ -267,6 +267,16 @@ func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) *getCurrentUserGuildsB
 	return b
 }
 
+func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*Guild, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	tmp := v.(*[]*Guild)
+	return *tmp, nil
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *getUserBuilder) IgnoreCache() *getUserBuilder {
@@ -292,6 +302,43 @@ func (b *getUserBuilder) URLParam(name string, v interface{}) *getUserBuilder {
 func (b *getUserBuilder) Set(name string, v interface{}) *getUserBuilder {
 	b.r.body[name] = v
 	return b
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *getUserConnectionsBuilder) IgnoreCache() *getUserConnectionsBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *getUserConnectionsBuilder) CancelOnRatelimit() *getUserConnectionsBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *getUserConnectionsBuilder) URLParam(name string, v interface{}) *getUserConnectionsBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *getUserConnectionsBuilder) Set(name string, v interface{}) *getUserConnectionsBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *getUserConnectionsBuilder) Execute() (cons []*UserConnection, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	tmp := v.(*[]*UserConnection)
+	return *tmp, nil
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
