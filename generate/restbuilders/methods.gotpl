@@ -48,7 +48,9 @@ func (b *{{$builder.Name}}) Execute() ({{ if ne $be.Name "err" }}{{ $be.Name }} 
 		return nil, err
 	}
 
-	return v.({{ $be.Type }}), nil{{ else }}_, err = b.r.execute()
+    {{ if $be.IsSlice }}
+    tmp := v.(*{{ $be.Type }})
+    return *tmp, nil{{else}}return v.({{ $be.Type }}), nil{{end}}{{ else }}_, err = b.r.execute()
     return{{ end }}
 }
 {{ end }}

@@ -921,27 +921,6 @@ func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channe
 	return
 }
 
-// GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
-//  Method                  GET
-//  Endpoint                /users/@me/connections
-//  Rate limiter            /users TODO: is this correct?
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
-//  Reviewed                2018-06-10
-//  Comment                 -
-func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeConnections(),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
 // User
 
 // GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
@@ -1024,8 +1003,8 @@ func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 		Endpoint:    endpoint.UserMeGuilds(),
 	}, flags)
 	r.factory = func() interface{} {
-		a := []*PartialGuild{}
-		return &a
+		tmp := make([]*PartialGuild, 0)
+		return &tmp
 	}
 
 	var vs interface{}
@@ -1090,10 +1069,32 @@ func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 	return getChannel(r.Execute)
 }
 
-// GetUserConnections .
-func (c *client) GetUserConnections(flags ...Flag) (ret []*UserConnection, err error) {
-	ret, err = GetUserConnections(c.req)
-	return
+// GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
+//  Method                  GET
+//  Endpoint                /users/@me/connections
+//  Rate limiter            /users/@me/connections
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
+//  Reviewed                2019-02-19
+//  Comment                 -
+func (c *client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: "/users/@me/connections",
+		Endpoint:    endpoint.UserMeConnections(),
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*UserConnection, 0)
+		return &tmp
+	}
+
+	var vs interface{}
+	if vs, err = r.Execute(); err != nil {
+		return nil, err
+	}
+
+	if cons, ok := vs.(*[]*UserConnection); ok {
+		return *cons, nil
+	}
+	return nil, errors.New("unable to cast guild slice")
 }
 
 //////////////////////////////////////////////////////
@@ -1139,6 +1140,7 @@ type modifyCurrentUserBuilder struct {
 
 // TODO: params should be url-params. But it works since we're using GET.
 //generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
+//generate-rest-basic-execute: guilds:[]*Guild,
 type getCurrentUserGuildsBuilder struct {
 	r RESTBuilder
 }
@@ -1148,16 +1150,7 @@ func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBui
 	return b
 }
 
-func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*PartialGuild, err error) {
-	if a, ok := b.r.urlParams["limit"]; ok && a == 0 {
-		return nil, errors.New("limit can not be 0")
-	}
-
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-
-	gsp := v.(*[]*PartialGuild)
-	return *gsp, nil
+//generate-rest-basic-execute: cons:[]*UserConnection,
+type getUserConnectionsBuilder struct {
+	r RESTBuilder
 }

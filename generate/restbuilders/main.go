@@ -35,6 +35,7 @@ type methodInfo struct {
 	Name       string
 	MethodName string
 	Type       string
+	IsSlice    bool
 }
 
 type builder struct {
@@ -192,10 +193,12 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 				paramsStr := comment[start:end]
 				params := strings.Split(paramsStr, ", ")
 				param := strings.Split(params[0], ":")
+				isSlice := strings.HasPrefix(param[1], "[]")
 				// let panic if missing params
 				builders[index].BasicExec = &methodInfo{
-					Name: param[0],
-					Type: param[1],
+					Name:    param[0],
+					Type:    param[1],
+					IsSlice: isSlice,
 				}
 			}
 
