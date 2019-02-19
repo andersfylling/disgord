@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -104,6 +105,11 @@ type Message struct {
 }
 
 var _ Reseter = (*Message)(nil)
+var _ fmt.Stringer = (*Message)(nil)
+
+func (m *Message) String() string {
+	return "message{" + m.ID.String() + "}"
+}
 
 func (m *Message) updateInternals() {
 	if len(m.Content) >= len("||||") {

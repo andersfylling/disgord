@@ -227,6 +227,78 @@ func (b *modifyGuildRoleBuilder) SetMentionable(mentionable bool) *modifyGuildRo
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
+func (b *createDMBuilder) IgnoreCache() *createDMBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *createDMBuilder) CancelOnRatelimit() *createDMBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *createDMBuilder) URLParam(name string, v interface{}) *createDMBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *createDMBuilder) Set(name string, v interface{}) *createDMBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *createDMBuilder) Execute() (channel *Channel, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.(*Channel), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *createGroupDMBuilder) IgnoreCache() *createGroupDMBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *createGroupDMBuilder) CancelOnRatelimit() *createGroupDMBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *createGroupDMBuilder) URLParam(name string, v interface{}) *createGroupDMBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *createGroupDMBuilder) Set(name string, v interface{}) *createGroupDMBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *createGroupDMBuilder) Execute() (channel *Channel, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	return v.(*Channel), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
 func (b *getCurrentUserGuildsBuilder) IgnoreCache() *getCurrentUserGuildsBuilder {
 	b.r.IgnoreCache()
 	return b
@@ -338,6 +410,43 @@ func (b *getUserConnectionsBuilder) Execute() (cons []*UserConnection, err error
 	}
 
 	tmp := v.(*[]*UserConnection)
+	return *tmp, nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *getUserDMsBuilder) IgnoreCache() *getUserDMsBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *getUserDMsBuilder) CancelOnRatelimit() *getUserDMsBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *getUserDMsBuilder) URLParam(name string, v interface{}) *getUserDMsBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *getUserDMsBuilder) Set(name string, v interface{}) *getUserDMsBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+
+	tmp := v.(*[]*Channel)
 	return *tmp, nil
 }
 

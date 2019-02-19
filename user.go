@@ -761,53 +761,6 @@ func ratelimitUsers() string {
 	return "u"
 }
 
-// ModifyCurrentUserParams JSON params for func ModifyCurrentUser
-type ModifyCurrentUserParams struct {
-	avatarIsSet bool
-	username    string // `json:"username,omitempty"`
-	avatar      string // `json:"avatar,omitempty"`
-}
-
-var _ AvatarParamHolder = (*ModifyCurrentUserParams)(nil)
-
-func (m *ModifyCurrentUserParams) Empty() bool {
-	return m.username == "" && !m.avatarIsSet
-}
-
-func (m *ModifyCurrentUserParams) SetUsername(name string) {
-	m.username = name
-}
-
-// SetAvatar updates the avatar image. Must be a base64 encoded string.
-// provide a nil to reset the avatar.
-func (m *ModifyCurrentUserParams) SetAvatar(avatar string) {
-	m.avatar = avatar
-	m.avatarIsSet = avatar != ""
-}
-
-// UseDefaultAvatar sets the avatar param to null, and let's Discord assign a default avatar image.
-// Note that the avatar value will never hold content, as default avatars only works on null values.
-//
-// Use this to reset an avatar image.
-func (m *ModifyCurrentUserParams) UseDefaultAvatar() {
-	m.avatar = ""
-	m.avatarIsSet = true
-}
-
-func (m *ModifyCurrentUserParams) MarshalJSON() ([]byte, error) {
-	var content = map[string]interface{}{}
-	if m.username != "" {
-		content["username"] = m.username
-	}
-	if m.avatarIsSet && m.avatar == "" {
-		content["avatar"] = nil
-	} else if m.avatarIsSet && m.avatar != "" {
-		content["avatar"] = m.avatar
-	}
-
-	return httd.Marshal(content)
-}
-
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
 type GetCurrentUserGuildsParams struct {
 	Before Snowflake `urlparam:"before,omitempty"`
@@ -816,112 +769,6 @@ type GetCurrentUserGuildsParams struct {
 }
 
 var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
-
-// GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
-// Requires the guilds OAuth2 scope.
-//  Method                  GET
-//  Endpoint                /users/@me/guilds
-//  Rate limiter            /users TODO: is this correct?
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
-//  Reviewed                2018-06-10
-//  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
-//                          guilds a non-bot user can join. Therefore, pagination is not needed for
-//                          integrations that need to get a list of users' guilds.
-func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeGuilds() + params.URLQueryString(),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
-// GetUserDMs [REST] Returns a list of DM channel objects.
-//  Method                  GET
-//  Endpoint                /users/@me/channels
-//  Rate limiter            /users TODO: is this correct?
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
-//  Reviewed                2018-06-10
-//  Comment                 -
-func GetUserDMs(client httd.Getter) (ret []*Channel, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeChannels(),
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
-// BodyUserCreateDM JSON param for func CreateDM
-type BodyUserCreateDM struct {
-	RecipientID Snowflake `json:"recipient_id"`
-}
-
-// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
-//  Method                  POST
-//  Endpoint                /users/@me/channels
-//  Rate limiter            /users TODO: is this correct?
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
-//  Reviewed                2018-06-10
-//  Comment                 -
-// TODO: review
-func CreateDM(client httd.Poster, recipientID Snowflake) (ret *Channel, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeChannels(),
-		Body:        &BodyUserCreateDM{recipientID},
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
-// CreateGroupDMParams JSON params for func CreateGroupDM
-// https://discordapp.com/developers/docs/resources/user#create-group-dm
-type CreateGroupDMParams struct {
-	AccessTokens []string             `json:"access_tokens"` // access tokens of users that have granted your app the gdm.join scope
-	Nicks        map[Snowflake]string `json:"nicks"`         // map[userID] = nickname
-}
-
-// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
-//  Method                  POST
-//  Endpoint                /users/@me/channels
-//  Rate limiter            /users TODO: is this correct?
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
-//  Reviewed                2018-06-10
-//  Comment                 -
-func CreateGroupDM(client httd.Poster, params *CreateGroupDMParams) (ret *Channel, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeChannels(),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	return
-}
-
-// User
 
 // GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
 // scope, which will return the object without an email, and optionally the email scope, which returns the object
@@ -1042,19 +889,83 @@ func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	return
 }
 
-// GetUserDMs .
+// GetUserDMs [REST] Returns a list of DM channel objects.
+//  Method                  GET
+//  Endpoint                /users/@me/channels
+//  Rate limiter            /users/@me/channels
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
+//  Reviewed                2019-02-19
+//  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
+//							https://github.com/discordapp/discord-api-docs/issues/184
+//							For now I'll just leave this here, until I can do a cache lookup. Making this cache
+//							dependent.
+// Deprecated: Needs cache checking to get the actual list of channels
 func (c *client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
-	ret, err = GetUserDMs(c.req)
-	return
+	r := c.newRESTRequest(&httd.Request{
+		Endpoint:    endpoint.UserMeChannels(),
+		Ratelimiter: "/users/@me/channels",
+	}, flags)
+	r.CacheRegistry = ChannelCache
+	r.factory = func() interface{} {
+		tmp := make([]*Channel, 0)
+		return &tmp
+	}
+
+	var vs interface{}
+	if vs, err = r.Execute(); err != nil {
+		return nil, err
+	}
+
+	if chans, ok := vs.(*[]*Channel); ok {
+		return *chans, nil
+	}
+	return nil, errors.New("unable to cast guild slice")
 }
 
-// CreateDM .
+// BodyUserCreateDM JSON param for func CreateDM
+type BodyUserCreateDM struct {
+	RecipientID Snowflake `json:"recipient_id"`
+}
+
+// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
+//  Method                  POST
+//  Endpoint                /users/@me/channels
+//  Rate limiter            /users/@me/channels
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
+//  Reviewed                2019-02-23
+//  Comment                 -
 func (c *client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
-	ret, err = CreateDM(c.req, recipientID)
-	return
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ratelimiter: ratelimitUsers(),
+		Endpoint:    endpoint.UserMeChannels(),
+		Body:        &BodyUserCreateDM{recipientID},
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.CacheRegistry = ChannelCache
+
+	return getChannel(r.Execute)
 }
 
-// CreateGroupDM .
+// CreateGroupDMParams required JSON params for func CreateGroupDM
+// https://discordapp.com/developers/docs/resources/user#create-group-dm
+type CreateGroupDMParams struct {
+	// AccessTokens access tokens of users that have granted your app the gdm.join scope
+	AccessTokens []string `json:"access_tokens"`
+
+	// map[userID] = nickname
+	Nicks map[Snowflake]string `json:"nicks"`
+}
+
+// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
+// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
+// endpoint will not be shown in the Discord client
+//  Method                  POST
+//  Endpoint                /users/@me/channels
+//  Rate limiter            /users/@me/channels
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
+//  Reviewed                2019-02-19
+//  Comment                 -
 func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
@@ -1152,5 +1063,20 @@ func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBui
 
 //generate-rest-basic-execute: cons:[]*UserConnection,
 type getUserConnectionsBuilder struct {
+	r RESTBuilder
+}
+
+//generate-rest-basic-execute: channel:*Channel,
+type createDMBuilder struct {
+	r RESTBuilder
+}
+
+//generate-rest-basic-execute: channels:[]*Channel,
+type getUserDMsBuilder struct {
+	r RESTBuilder
+}
+
+//generate-rest-basic-execute: channel:*Channel,
+type createGroupDMBuilder struct {
 	r RESTBuilder
 }

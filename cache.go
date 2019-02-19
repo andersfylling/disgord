@@ -267,6 +267,11 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 	case ChannelCache:
 		if channel, isChannel := v.(*Channel); isChannel {
 			c.SetChannel(channel)
+		} else if channelsP, isChannel := v.(*[]*Channel); isChannel {
+			var channels []*Channel = *channelsP
+			for i := range channels {
+				c.SetChannel(channels[i])
+			}
 		} else {
 			err = errors.New("can only save *Channel structures to channel cacheLink")
 		}
