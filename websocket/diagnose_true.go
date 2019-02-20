@@ -5,7 +5,9 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
 )
@@ -16,6 +18,7 @@ const DiagnosePath = "diagnose-report"
 const DiagnosePath_packets = "diagnose-report/packets"
 
 var outgoingPacketSequence uint = 0 // TODO: this needs to support sharding
+var dirExists bool
 
 func formatFilename(incoming bool, clientType int, shardID, opCode, sequencenr uint, suffix string) (filename string) {
 
@@ -39,12 +42,30 @@ func formatFilename(incoming bool, clientType int, shardID, opCode, sequencenr u
 	return unix + "_" + t + "_" + direction + "_id" + shard + "_op" + op + "_s" + seq + suffix + ".json"
 }
 
+func ensureDir() {
+	if dirExists {
+		return
+	}
+
+	if _, err := os.Stat(DiagnosePath_packets); err == nil {
+		return
+	}
+
+	if err := os.MkdirAll(DiagnosePath_packets, os.ModePerm); err != nil {
+		fmt.Println("unable to create directory " + DiagnosePath_packets + ", please create it and restart")
+		panic(err)
+	}
+
+	dirExists = true
+}
+
 // saveOutgoingPacket saves raw json content to disk
 // format: I_<seq>_<op>_<shard_id>_<unix>.json
 // unix is the unix timestamp on save
 // seq is the sequence number: outgoingPacketSequence
 // op is the operation code
 func saveOutgoingPacket(c *client, packet *clientPacket) {
+	ensureDir()
 	data, err := json.MarshalIndent(packet, "", "\t")
 	if err != nil {
 		c.Debug(err)
@@ -66,6 +87,7 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 // op is the operation code
 // evt_name is the event name (optional)
 func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
+	ensureDir()
 	evtStr := "_" + evt.EventName
 	if evtStr == "_" {
 		evtStr = "_EMPTY"
