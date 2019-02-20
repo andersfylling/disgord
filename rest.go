@@ -279,6 +279,8 @@ type RESTBuilder struct {
 	config     *httd.Request
 	client     httd.Requester
 
+	prerequisites []string // error msg
+
 	itemFactory fRESTItemFactory
 
 	cache           *Cache
@@ -290,6 +292,13 @@ type RESTBuilder struct {
 	urlParams         paramHolder
 	ignoreCache       bool
 	cancelOnRatelimit bool
+}
+
+func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
+	if condition == false {
+		return
+	}
+	b.prerequisites = append(b.prerequisites, errorMsg)
 }
 
 func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
@@ -326,6 +335,10 @@ func (b *RESTBuilder) prepare() {
 
 // execute ... v must be a nil pointer.
 func (b *RESTBuilder) execute() (v interface{}, err error) {
+	for i := range b.prerequisites {
+		return nil, errors.New(b.prerequisites[i])
+	}
+
 	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.Empty() {
 		// cacheLink lookup. return on cacheLink hit
 		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
