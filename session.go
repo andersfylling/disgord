@@ -19,25 +19,6 @@ func NewSessionMock(conf *Config) (SessionMock, error) {
 	return nil, errors.New("not implemented")
 }
 
-// NewSession create a client and return the Session interface
-// Deprecated: Use NewClient instead
-func NewSession(conf *Config) (Session, error) {
-	return NewClient(conf)
-}
-
-// NewSessionMustCompile same as NewClientMustCompile, but with the Session
-// interface
-// Deprecated: Use New(..) instead
-func NewSessionMustCompile(conf *Config) (session Session) {
-	var err error
-	session, err = NewSession(conf)
-	if err != nil {
-		panic(err)
-	}
-
-	return
-}
-
 // EventChannels all methods for retrieving event channels
 type EventChannels interface {
 	Ready() <-chan *Ready
