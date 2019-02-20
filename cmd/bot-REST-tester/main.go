@@ -243,7 +243,7 @@ func main() {
 			return
 		}
 
-		emoji, err := c.GetGuildEmoji(keys.GuildDefault, emojiID)
+		emoji, err := c.GetGuildEmoji(keys.GuildDefault, emojiID).Execute()
 		if err != nil && !notARateLimitIssue(err) {
 			panic("rate limited")
 		} else if err != nil && notARateLimitIssue(err) {
@@ -262,11 +262,7 @@ func main() {
 
 		// create emoji
 		func() {
-			params := &disgord.CreateGuildEmojiParams{
-				Name:  "testing4324",
-				Image: randomBase64Emoji,
-			}
-			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, params)
+			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, "testing4324", randomBase64Emoji).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -281,7 +277,7 @@ func main() {
 
 		// delete created emoji
 		func() {
-			err := c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID)
+			err := c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -299,11 +295,7 @@ func main() {
 
 		// create emoji
 		func() {
-			params := &disgord.CreateGuildEmojiParams{
-				Name:  "test6547465",
-				Image: randomBase64Emoji,
-			}
-			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, params)
+			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, "test6547465", randomBase64Emoji).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -315,10 +307,7 @@ func main() {
 
 		// modify emoji
 		func() {
-			params := &disgord.ModifyGuildEmojiParams{
-				Name: newName,
-			}
-			_, err = c.ModifyGuildEmoji(keys.GuildAdmin, emoji.ID, params)
+			_, err = c.ModifyGuildEmoji(keys.GuildAdmin, emoji.ID).SetName(newName).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -329,7 +318,7 @@ func main() {
 		// delete created emoji
 		func() {
 			time.Sleep(1 * time.Second) // just ensure that this get's run
-			err = c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID)
+			err = c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -350,12 +339,8 @@ func main() {
 		var mustDelete = false
 		// create emoji
 		func() {
-			params := &disgord.CreateGuildEmojiParams{
-				Name:  illegalNames[0],
-				Image: randomBase64Emoji,
-			}
 
-			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, params)
+			emoji, err = c.CreateGuildEmoji(keys.GuildAdmin, illegalNames[0], randomBase64Emoji).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil {
@@ -375,7 +360,7 @@ func main() {
 			if !mustDelete {
 				panic("no new emoji created")
 			}
-			err = c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID)
+			err = c.DeleteGuildEmoji(keys.GuildAdmin, emoji.ID).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}

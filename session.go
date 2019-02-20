@@ -143,11 +143,11 @@ type ChannelRESTer interface {
 
 // EmojiRESTer REST interface for all emoji endpoints
 type EmojiRESTer interface {
-	GetGuildEmojis(id Snowflake, flags ...Flag) *listGuildEmojisBuilder
-	GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (ret *Emoji, err error)
-	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (ret *Emoji, err error)
-	ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams, flags ...Flag) (ret *Emoji, err error)
-	DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (err error)
+	GetGuildEmojis(id Snowflake, flags ...Flag) *getGuildEmojisBuilder
+	GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *getGuildEmojiBuilder
+	CreateGuildEmoji(guildID Snowflake, name, image string, flags ...Flag) *createGuildEmojiBuilder
+	ModifyGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *modifyGuildEmojiBuilder
+	DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *basicBuilder
 }
 
 // GuildRESTer REST interface for all guild endpoints

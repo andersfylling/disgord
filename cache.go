@@ -276,11 +276,33 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			err = errors.New("can only save *Channel structures to channel cacheLink")
 		}
 	case GuildEmojiCache:
-		emojis := v.([]*Emoji)
-		if len(emojis) == 0 {
-			return
+		if emoji, ok := v.(*Emoji); ok {
+			// TODO:  improve, this is slow.
+			guildID := emoji.guildID
+			emojis, err := c.GetGuildEmojis(guildID)
+			if err != nil {
+				emojis = []*Emoji{
+					emoji,
+				}
+			} else {
+				var exists bool
+				for i := range emojis {
+					if exists = emojis[i].ID == emoji.ID; exists {
+						_ = emoji.CopyOverTo(emojis[i])
+						break
+					}
+				}
+				if !exists {
+					emojis = append(emojis, emoji)
+				}
+			}
+			err = cacheEmoji_SetAll(c, guildID, emojis)
+		} else if emojis, ok := v.([]*Emoji); ok {
+			if len(emojis) == 0 {
+				return
+			}
+			err = cacheEmoji_SetAll(c, emojis[0].guildID, emojis)
 		}
-		err = cacheEmoji_SetAll(c, emojis[0].guildID, emojis)
 	case GuildCache:
 		if guild, ok := v.(*Guild); ok {
 			c.SetGuild(guild)
@@ -1014,6 +1036,29 @@ func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
 		item.Object().(*guildCacheItem).deleteChannel(channelID)
+		c.guilds.RefreshAfterDiscordUpdate(item)
+	}
+}
+
+func (c *Cache) DeleteGuildEmoji(guildID, emojiID Snowflake) {
+	if c.guilds == nil {
+		return
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	if item, exists := c.guilds.Get(guildID); exists {
+		guild := item.Object().(*guildCacheItem).guild
+		for i := range guild.Emojis {
+			if guild.Emojis[i].ID != emojiID {
+				continue
+			}
+
+			copy(guild.Emojis[i:], guild.Emojis[i+1:])
+			guild.Emojis[len(guild.Emojis)-1] = nil
+			guild.Emojis = guild.Emojis[:len(guild.Emojis)-1]
+			break
+		}
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 }

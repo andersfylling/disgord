@@ -21,8 +21,6 @@ func main() {
 		panic(err)
 	}
 
-	getAllRESTBuilders("user.go")
-
 	var builders []*builder
 	for i := range files {
 		builders = append(builders, getAllRESTBuilders(files[i])...)
@@ -109,6 +107,10 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 		})
 	}
 
+	sort.Slice(builders, func(i, j int) bool {
+		return builders[i].Name < builders[j].Name
+	})
+
 	// Read the comment to check for generate instructions
 	fileComments, err := parser.ParseFile(token.NewFileSet(), filename, nil, parser.ParseComments)
 	if err != nil {
@@ -125,9 +127,9 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 		}
 
 		// magic
-		if item.Pos() < builders[0].pos {
-			continue
-		}
+		//if item.Pos() < builders[0].pos {
+		//	continue
+		//}
 
 		genDecl, ok = item.(*ast.GenDecl)
 		if !ok || len(genDecl.Specs) == 0 || genDecl.Doc == nil || len(genDecl.Doc.List) == 0 {
@@ -204,10 +206,6 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 
 		}
 	}
-
-	sort.Slice(builders, func(i, j int) bool {
-		return builders[i].Name < builders[j].Name
-	})
 
 	return builders
 }
