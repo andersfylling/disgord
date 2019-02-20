@@ -182,14 +182,9 @@ func ensureBasicCacheConfig(conf *CacheConfig) {
 
 // CacheConfig allows for tweaking the cacheLink system on a personal need
 type CacheConfig struct {
-	// may be false, the new Mutable makes it immutable by default
-	// Deprecated
-	Immutable bool
-	Mutable   bool // Must be immutable to support concurrent access and long-running tasks(!)
+	Mutable bool // Must be immutable to support concurrent access and long-running tasks(!)
 
-	DisableUserCaching bool
-	// Deprecated
-	UserCacheLimitMiB   uint
+	DisableUserCaching  bool
 	UserCacheMaxEntries uint
 	UserCacheLifetime   time.Duration
 	UserCacheAlgorithm  string
@@ -199,16 +194,12 @@ type CacheConfig struct {
 	VoiceStateCacheLifetime   time.Duration
 	VoiceStateCacheAlgorithm  string
 
-	DisableChannelCaching bool
-	// Deprecated
-	ChannelCacheLimitMiB   uint
+	DisableChannelCaching  bool
 	ChannelCacheMaxEntries uint
 	ChannelCacheLifetime   time.Duration
 	ChannelCacheAlgorithm  string
 
-	DisableGuildCaching bool
-	// Deprecated
-	GuildCacheLimitMiB   uint
+	DisableGuildCaching  bool
 	GuildCacheMaxEntries uint
 	GuildCacheLifetime   time.Duration
 	GuildCacheAlgorithm  string
@@ -386,11 +377,6 @@ func createGuildCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err err
 	}
 
 	var limit uint = conf.GuildCacheMaxEntries
-	if limit == 0 && conf.GuildCacheLimitMiB > 0 {
-		const guildWeight = 1 // MiB. TODO: what is the actual max size?
-		limit = conf.GuildCacheLimitMiB / guildWeight
-	}
-
 	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
 	return
 }
@@ -1132,11 +1118,6 @@ func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err erro
 	}
 
 	var limit uint = conf.UserCacheMaxEntries
-	if limit == 0 && conf.UserCacheLimitMiB > 0 {
-		const userWeight = 1 // MiB. TODO: what is the actual max size?
-		limit = conf.UserCacheLimitMiB / userWeight
-	}
-
 	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
 	return
 }
@@ -1357,11 +1338,6 @@ func createChannelCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err e
 		return nil, nil
 	}
 	var limit uint = conf.ChannelCacheMaxEntries
-	if limit == 0 && conf.ChannelCacheLimitMiB > 0 {
-		const channelWeight = 1 // MiB. TODO: what is the actual max size?
-		limit = conf.ChannelCacheLimitMiB / channelWeight
-	}
-
 	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
 	return
 }

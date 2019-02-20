@@ -410,7 +410,7 @@ func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Mess
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content: content,
 	}
 
@@ -425,7 +425,7 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 		return
 	}
 	message.RLock()
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content: message.Content,
 		Nonce:   message.Nonce,
 		Tts:     message.Tts,

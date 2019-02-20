@@ -730,33 +730,3 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 	}
 	return err
 }
-
-//////////////////////////////////////////////////////
-//
-// DEPRECATED
-//
-//////////////////////////////////////////////////////
-
-// Deprecated: use GetMessages instead
-func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLQueryStringer) (ret []*Message, err error) {
-	return GetMessages(client, channelID, params)
-}
-
-// Deprecated: use GetMessage instead
-func GetChannelMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
-	return GetMessage(client, channelID, messageID)
-}
-
-// Deprecated: use CreateMessageParams instead
-type CreateChannelMessageParams = CreateMessageParams
-
-// Deprecated: use CreateMessageFileParams instead
-type CreateChannelMessageFileParams = CreateMessageFileParams
-
-// Deprecated: use CreateMessage instead
-func CreateChannelMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
-	return CreateMessage(client, channelID, params)
-}
-
-// Deprecated: use GetMessagesParams instead
-type GetChannelMessagesParams = GetMessagesParams

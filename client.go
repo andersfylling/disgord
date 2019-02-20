@@ -1145,7 +1145,7 @@ func (c *client) SendMsg(channelID Snowflake, message *Message, flags ...Flag) (
 	if constant.LockedMethods {
 		message.RLock()
 	}
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content:                  message.Content,
 		Tts:                      message.Tts,
 		SpoilerTagContent:        message.SpoilerTagContent,
@@ -1169,7 +1169,7 @@ func (c *client) SendMsg(channelID Snowflake, message *Message, flags ...Flag) (
 
 // SendMsgString .
 func (c *client) SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error) {
-	params := &CreateChannelMessageParams{
+	params := &CreateMessageParams{
 		Content: content,
 	}
 
