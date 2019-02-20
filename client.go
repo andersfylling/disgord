@@ -1348,6 +1348,7 @@ func (c *client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
+		prepareBox(evt.Name, box)
 		if updater, implements := box.(internalUpdater); implements {
 			updater.updateInternals()
 		}
@@ -1361,7 +1362,6 @@ func (c *client) eventHandler() {
 		}
 
 		// trigger listeners
-		prepareBox(evt.Name, box)
 		c.evtDemultiplexer.triggerChan(ctx, evt.Name, c, box)
 		go c.evtDemultiplexer.triggerHandlers(ctx, evt.Name, c, box)
 	}

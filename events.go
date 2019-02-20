@@ -14,13 +14,25 @@ func prepareBox(evtName string, box interface{}) {
 	switch evtName {
 	case EventGuildCreate:
 		guild := (box.(*GuildCreate)).Guild
-		for _, role := range guild.Roles {
-			role.guildID = guild.ID
+		for i := range guild.Roles {
+			guild.Roles[i].guildID = guild.ID
+		}
+		for i := range guild.Emojis {
+			guild.Emojis[i].guildID = guild.ID
+		}
+		for i := range guild.Channels {
+			guild.Channels[i].GuildID = guild.ID
 		}
 	case EventGuildUpdate:
 		guild := (box.(*GuildUpdate)).Guild
-		for _, role := range guild.Roles {
-			role.guildID = guild.ID
+		for i := range guild.Roles {
+			guild.Roles[i].guildID = guild.ID
+		}
+		for i := range guild.Emojis {
+			guild.Emojis[i].guildID = guild.ID
+		}
+		for i := range guild.Channels {
+			guild.Channels[i].GuildID = guild.ID
 		}
 	case EventGuildRoleCreate:
 		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildRoleCreate)).GuildID
