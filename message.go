@@ -94,6 +94,9 @@ type Message struct {
 	Activity        MessageActivity    `json:"activity"`
 	Application     MessageApplication `json:"application"`
 
+	// GuildID is not set when using a REST request. Only socket events.
+	GuildID Snowflake `json:"guild_id"`
+
 	// SpoilerTagContent is only true if the entire message text is tagged as a spoiler (aka completely wrapped in ||)
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
