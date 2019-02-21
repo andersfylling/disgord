@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -11,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -29,11 +31,84 @@ func main() {
 	makeFile(builders, "generate/restbuilders/methods.gotpl", "restbuilders_gen.go")
 }
 
+type condition struct {
+	min int
+	max int
+}
+
+var _ fmt.Stringer = (*condition)(nil)
+
+func (c *condition) String() string {
+	return fmt.Sprintf("%d<N<%d", c.min, c.max)
+}
+
+func (c *condition) Render(name string) string {
+	min := strconv.Itoa(c.min)
+	max := strconv.Itoa(c.max)
+	// min < b && b < max
+	return "(" + min + "<" + name + " && " + name + "<" + max + `, "` + name + ` must be in the range of (` + min + ", " + max + `)")`
+}
+
+func GetCondition(param string) *condition {
+	if param == "" {
+		return nil
+	}
+	if strings.HasPrefix(param, "(") {
+		param = param[1:]
+	}
+	if strings.HasSuffix(param, ")") {
+		param = param[:len(param)-1]
+	}
+
+	vals := strings.Split(param, "<")
+	if len(vals) != 3 {
+		panic(fmt.Sprintf("expects to have 3 values, got: %+v", vals))
+	}
+	if vals[1] != "N" && vals[1] != "n" {
+		panic(fmt.Sprintf("expected middle value to be N, got %s", vals[1]))
+	}
+
+	min, err := strconv.Atoi(vals[0])
+	if err != nil {
+		panic(err)
+	}
+	max, err := strconv.Atoi(vals[2])
+	if err != nil {
+		panic(err)
+	}
+
+	return &condition{
+		min: min,
+		max: max,
+	}
+}
+
+func ProcessValueParam(param string) (name string, cond *condition) {
+	if param == "" {
+		return "", nil
+	}
+
+	if strings.Contains(param, "(") {
+		condStr := param[strings.Index(param, "("):]
+		cond = GetCondition(condStr)
+		name = param[:len(param)-len(condStr)]
+	} else {
+		name = param
+	}
+
+	return name, cond
+}
+
 type methodInfo struct {
 	Name       string
 	MethodName string
 	Type       string
 	IsSlice    bool
+	Cond       *condition
+}
+
+func (m *methodInfo) HasCond() bool {
+	return m.Cond != nil
 }
 
 type builder struct {
@@ -175,12 +250,13 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 				for j := range params {
 					param := strings.Split(params[j], ":")
 					name := param[0]
-					typ := param[1]
+					typ, cond := ProcessValueParam(param[1])
 					methodName := jsonNameToMethodName(name)
 					tuples = append(tuples, methodInfo{
 						MethodName: methodName,
 						Name:       name,
 						Type:       typ,
+						Cond:       cond,
 					})
 				}
 				builders[index].Params = tuples

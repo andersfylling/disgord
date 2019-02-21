@@ -337,6 +337,12 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	return err
 }
 
+// SetChannelPermissions ...
+func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams, falgs ...Flag) (err error) {
+	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
+	return
+}
+
 // GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 // guild channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET

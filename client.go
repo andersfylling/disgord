@@ -651,12 +651,6 @@ func (c *client) DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, e
 	return
 }
 
-// SetChannelPermissions ...
-func (c *client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams, flags ...Flag) (err error) {
-	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
-	return
-}
-
 // GetChannelInvites ...
 func (c *client) GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
 	ret, err = GetChannelInvites(c.req, id)
