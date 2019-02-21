@@ -10,8 +10,6 @@ output="$(go fmt ./... | tee /dev/fd/5)"
 [[ -z "$output" ]]
 
 # UNIT TESTS
-FILES=$(go list ./...)
-
 UNIT_TEST_REPORT=$(go test -timeout 30s -v -race ./...)
 
 returncode=$?
@@ -20,3 +18,7 @@ if [ $returncode -ne 0 ]; then
   echo ${UNIT_TEST_REPORT}
   exit 1
 fi
+
+go mod tidy
+
+git add .
