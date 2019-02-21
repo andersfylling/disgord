@@ -32,6 +32,7 @@ func (b *guildAuditLogsBuilder) Set(name string, v interface{}) *guildAuditLogsB
 }
 
 func (b *guildAuditLogsBuilder) SetUserID(userID Snowflake) *guildAuditLogsBuilder {
+	b.r.addPrereq(userID.Empty(), "userID can not be 0")
 	b.r.param("user_id", userID)
 	return b
 }
@@ -42,6 +43,7 @@ func (b *guildAuditLogsBuilder) SetActionType(actionType uint) *guildAuditLogsBu
 }
 
 func (b *guildAuditLogsBuilder) SetBefore(before Snowflake) *guildAuditLogsBuilder {
+	b.r.addPrereq(before.Empty(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
@@ -56,7 +58,6 @@ func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*AuditLog), nil
 }
 
@@ -97,7 +98,6 @@ func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*Emoji), nil
 }
 
@@ -133,7 +133,6 @@ func (b *getGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*Emoji), nil
 }
 
@@ -206,7 +205,6 @@ func (b *modifyGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*Emoji), nil
 }
 
@@ -380,7 +378,6 @@ func (b *createDMBuilder) Execute() (channel *Channel, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*Channel), nil
 }
 
@@ -416,7 +413,6 @@ func (b *createGroupDMBuilder) Execute() (channel *Channel, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*Channel), nil
 }
 
@@ -448,11 +444,13 @@ func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) *getCurren
 }
 
 func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) *getCurrentUserGuildsBuilder {
+	b.r.addPrereq(before.Empty(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
 
 func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) *getCurrentUserGuildsBuilder {
+	b.r.addPrereq(after.Empty(), "after can not be 0")
 	b.r.param("after", after)
 	return b
 }
@@ -467,7 +465,6 @@ func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*Guild, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	tmp := v.(*[]*Guild)
 	return *tmp, nil
 }
@@ -531,7 +528,6 @@ func (b *getUserConnectionsBuilder) Execute() (cons []*UserConnection, err error
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	tmp := v.(*[]*UserConnection)
 	return *tmp, nil
 }
@@ -568,7 +564,6 @@ func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	tmp := v.(*[]*Channel)
 	return *tmp, nil
 }
@@ -615,7 +610,6 @@ func (b *modifyCurrentUserBuilder) Execute() (user *User, err error) {
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
-
 	return v.(*User), nil
 }
 

@@ -35,6 +35,12 @@ func (b *{{$builder.Name}}) Set(name string, v interface{}) *{{$builder.Name}} {
 
 {{ range $i, $p := .Params }}
 func (b *{{$builder.Name}}) Set{{ $p.MethodName }}({{ $p.MethodName | Decapitalize }} {{ $p.Type }}) *{{$builder.Name}} {
+    {{- if $p.HasCond }}
+    b.{{ $builder.FieldName }}.addPrereq{{ $p.MethodName | Decapitalize | $p.Cond.Render }}
+    {{end}}
+    {{- if eq $p.Type "Snowflake" -}}
+    b.{{ $builder.FieldName }}.addPrereq({{ $p.MethodName | Decapitalize }}.Empty(), "{{ $p.MethodName | Decapitalize }} can not be 0")
+    {{- end }}
     b.{{ $builder.FieldName }}.param("{{ $p.Name }}", {{ $p.MethodName | Decapitalize }})
     return b
 }
@@ -43,15 +49,22 @@ func (b *{{$builder.Name}}) Set{{ $p.MethodName }}({{ $p.MethodName | Decapitali
 {{ if .BasicExecMethod }}
 {{ with $be := $builder.BasicExec }}
 func (b *{{$builder.Name}}) Execute() ({{ if ne $be.Name "err" }}{{ $be.Name }} {{ $be.Type }},{{end}} err error) {
-	{{ if ne $be.Name "err" }}var v interface{}
+	{{- if ne $be.Name "err" -}}
+	var v interface{}
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
 	}
 
-    {{ if $be.IsSlice }}
+        {{- if $be.IsSlice }}
     tmp := v.(*{{ $be.Type }})
-    return *tmp, nil{{else}}return v.({{ $be.Type }}), nil{{end}}{{ else }}_, err = b.r.execute()
-    return{{ end }}
+    return *tmp, nil
+        {{- else}}
+    return v.({{ $be.Type }}), nil
+        {{- end}}
+    {{- else}}
+    _, err = b.r.execute()
+    return
+    {{- end }}
 }
 {{ end }}
 {{ end }}
