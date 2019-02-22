@@ -96,6 +96,11 @@ type zeroInitialiser interface {
 	zeroInitialize()
 }
 
+// Reseter Reset() zero initialises or empties a struct instance
+type Reseter interface {
+	Reset()
+}
+
 // internalUpdater is called whenever a socket event or a REST response is created.
 type internalUpdater interface {
 	updateInternals()
