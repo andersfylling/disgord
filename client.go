@@ -161,6 +161,23 @@ func NewClient(conf *Config) (c *client, err error) {
 	c.voiceRepository = newVoiceRepository(c)
 	sharding.client = c
 
+	// pools
+	c.channelPool = &pool{
+		New: func() Reseter {
+			return &Channel{}
+		},
+	}
+	c.messagePool = &pool{
+		New: func() Reseter {
+			return &Message{}
+		},
+	}
+	c.userPool = &pool{
+		New: func() Reseter {
+			return &User{}
+		},
+	}
+
 	return c, err
 }
 
@@ -236,6 +253,11 @@ type client struct {
 
 	// voice
 	*voiceRepository
+
+	// pools
+	channelPool Pool
+	messagePool Pool
+	userPool    Pool
 }
 
 //////////////////////////////////////////////////////
@@ -314,22 +336,7 @@ func (c *client) HeartbeatLatency() (duration time.Duration, err error) {
 
 // Myself get the current user / connected user
 func (c *client) Myself() (user *User, err error) {
-	if c.myID.Empty() {
-		user, err = c.GetCurrentUser().IgnoreCache().Execute()
-		if err == nil {
-			c.myID = user.ID
-		}
-		return
-	}
-
-	if user == nil && c.cache != nil {
-		var usr interface{}
-		if usr, err = c.cache.Get(UserCache, c.myID); err == nil {
-			user = usr.(*User)
-		}
-	}
-
-	return
+	return c.GetCurrentUser()
 }
 
 // GetConnectedGuilds get a list over guild IDs that this client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
@@ -381,7 +388,7 @@ func (c *client) Connect() (err error) {
 	//
 	// also verifies that the correct credentials were supplied
 	var me *User
-	if me, err = c.GetCurrentUser().Execute(); err != nil {
+	if me, err = c.GetCurrentUser(); err != nil {
 		return err
 	}
 	c.myID = me.ID
@@ -591,6 +598,7 @@ func (c *client) DeleteFromDiscord(obj discordDeleter) (err error) {
 //
 // client.SaveToDiscord(object) -> saves an entirely new object (must not have a discord id)
 // client.SaveToDiscord(original, new) -> updates an existing object (must have a discord id)
+// TODO: flag support
 func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (err error) {
 	if original == nil {
 		return errors.New("you must specify at least one discord object to be saved to Discord")
@@ -610,7 +618,7 @@ func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (
 // Channel
 
 // GetChannel ...
-func (c *client) GetChannel(id Snowflake) (ret *Channel, err error) {
+func (c *client) GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error) {
 	if ret, err = c.cache.GetChannel(id); err != nil {
 		if ret, err = GetChannel(c.req, id); err != nil {
 			return nil, err
@@ -621,157 +629,139 @@ func (c *client) GetChannel(id Snowflake) (ret *Channel, err error) {
 }
 
 // ModifyChannel ...
-func (c *client) ModifyChannel(id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
+func (c *client) ModifyChannel(id Snowflake, changes *ModifyChannelParams, flags ...Flag) (ret *Channel, err error) {
 	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
 // DeleteChannel ...
-func (c *client) DeleteChannel(id Snowflake) (channel *Channel, err error) {
+func (c *client) DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error) {
 	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cacheLink
 	return
 }
 
 // SetChannelPermissions ...
-func (c *client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams) (err error) {
+func (c *client) SetChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams, flags ...Flag) (err error) {
 	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
 	return
 }
 
 // GetChannelInvites ...
-func (c *client) GetChannelInvites(id Snowflake) (ret []*Invite, err error) {
+func (c *client) GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
 	ret, err = GetChannelInvites(c.req, id)
 	return
 }
 
 // CreateChannelInvites ...
-func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams) (ret *Invite, err error) {
+func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
 	ret, err = CreateChannelInvites(c.req, id, params)
 	return
 }
 
 // DeleteChannelPermission .
-func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake) (err error) {
+func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
 	err = DeleteChannelPermission(c.req, channelID, overwriteID)
 	return
 }
 
 // TriggerTypingIndicator .
-func (c *client) TriggerTypingIndicator(channelID Snowflake) (err error) {
+func (c *client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error) {
 	err = TriggerTypingIndicator(c.req, channelID)
 	return
 }
 
 // GetPinnedMessages .
-func (c *client) GetPinnedMessages(channelID Snowflake) (ret []*Message, err error) {
+func (c *client) GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error) {
 	ret, err = GetPinnedMessages(c.req, channelID)
 	return
 }
 
 // AddPinnedChannelMessage .
-func (c *client) AddPinnedChannelMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) AddPinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
 	err = AddPinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // DeletePinnedChannelMessage .
-func (c *client) DeletePinnedChannelMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) DeletePinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
 	err = DeletePinnedChannelMessage(c.req, channelID, msgID)
 	return
 }
 
 // GroupDMAddRecipient .
-func (c *client) GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
+func (c *client) GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams, flags ...Flag) (err error) {
 	err = GroupDMAddRecipient(c.req, channelID, userID, params)
 	return
 }
 
 // GroupDMRemoveRecipient .
-func (c *client) GroupDMRemoveRecipient(channelID, userID Snowflake) (err error) {
+func (c *client) GroupDMRemoveRecipient(channelID, userID Snowflake, flags ...Flag) (err error) {
 	err = GroupDMRemoveRecipient(c.req, channelID, userID)
 	return
 }
 
-// Deprecated: use GetMessages instead
-func (c *client) GetChannelMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
-	ret, err = GetChannelMessages(c.req, channelID, params)
-	return
-}
-
 // GetMessages .
-func (c *client) GetMessages(channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+func (c *client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
 	ret, err = GetMessages(c.req, channelID, params)
 	return
 }
 
-// Deprecated: use GetMessage instead
-func (c *client) GetChannelMessage(channelID, messageID Snowflake) (ret *Message, err error) {
-	ret, err = GetChannelMessage(c.req, channelID, messageID)
-	return
-}
-
 // GetMessage .
-func (c *client) GetMessage(channelID, messageID Snowflake) (ret *Message, err error) {
+func (c *client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error) {
 	ret, err = GetMessage(c.req, channelID, messageID)
 	return
 }
 
-// Deprecated: use CreateMessage instead
-func (c *client) CreateChannelMessage(channelID Snowflake, params *CreateChannelMessageParams) (ret *Message, err error) {
-	ret, err = CreateChannelMessage(c.req, channelID, params)
-	return
-}
-
 // CreateMessage .
-func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
 	ret, err = CreateMessage(c.req, channelID, params)
 	return
 }
 
 // EditMessage .
-func (c *client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
+func (c *client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams, flags ...Flag) (ret *Message, err error) {
 	ret, err = EditMessage(c.req, chanID, msgID, params)
 	return
 }
 
 // DeleteMessage .
-func (c *client) DeleteMessage(channelID, msgID Snowflake) (err error) {
+func (c *client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
 	err = DeleteMessage(c.req, channelID, msgID)
 	return
 }
 
 // BulkDeleteMessages .
-func (c *client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
+func (c *client) BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams, flags ...Flag) (err error) {
 	err = BulkDeleteMessages(c.req, chanID, params)
 	return
 }
 
 // CreateReaction .
-func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	err = CreateReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteOwnReaction .
-func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	err = DeleteOwnReaction(c.req, channelID, messageID, emoji)
 	return
 }
 
 // DeleteUserReaction .
-func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	err = DeleteUserReaction(c.req, channelID, messageID, userID, emoji)
 	return
 }
 
 // GetReaction .
-func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
+func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
 	ret, err = GetReaction(c.req, channelID, messageID, emoji, params)
 	return
 }
 
 // DeleteAllReactions .
-func (c *client) DeleteAllReactions(channelID, messageID Snowflake) (err error) {
+func (c *client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
 	err = DeleteAllReactions(c.req, channelID, messageID)
 	return
 }
@@ -779,13 +769,13 @@ func (c *client) DeleteAllReactions(channelID, messageID Snowflake) (err error) 
 // Guild
 
 // CreateGuild .
-func (c *client) CreateGuild(params *CreateGuildParams) (ret *Guild, err error) {
+func (c *client) CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	ret, err = CreateGuild(c.req, params)
 	return
 }
 
 // GetGuild .
-func (c *client) GetGuild(id Snowflake) (ret *Guild, err error) {
+func (c *client) GetGuild(id Snowflake, flags ...Flag) (ret *Guild, err error) {
 	ret, err = c.cache.GetGuild(id)
 	if err != nil {
 		ret, err = GetGuild(c.req, id)
@@ -798,19 +788,19 @@ func (c *client) GetGuild(id Snowflake) (ret *Guild, err error) {
 }
 
 // ModifyGuild .
-func (c *client) ModifyGuild(id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
+func (c *client) ModifyGuild(id Snowflake, params *ModifyGuildParams, flags ...Flag) (ret *Guild, err error) {
 	ret, err = ModifyGuild(c.req, id, params)
 	return
 }
 
 // DeleteGuild .
-func (c *client) DeleteGuild(id Snowflake) (err error) {
+func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
 	err = DeleteGuild(c.req, id)
 	return
 }
 
 // GetGuildChannels .
-func (c *client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
+func (c *client) GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error) {
 	var guild *Guild
 	guild, err = c.cache.GetGuild(id)
 	if err != nil {
@@ -829,19 +819,19 @@ func (c *client) GetGuildChannels(id Snowflake) (ret []*Channel, err error) {
 }
 
 // CreateGuildChannel .
-func (c *client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
+func (c *client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
 	ret, err = CreateGuildChannel(c.req, id, params)
 	return
 }
 
 // ModifyGuildChannelPositions .
-func (c *client) ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
+func (c *client) ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error) {
 	ret, err = ModifyGuildChannelPositions(c.req, id, params)
 	return
 }
 
 // GetGuildMember .
-func (c *client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err error) {
+func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
 	ret, err = c.cache.GetGuildMember(guildID, userID)
 	if err != nil {
 		ret, err = GetGuildMember(c.req, guildID, userID)
@@ -855,7 +845,7 @@ func (c *client) GetGuildMember(guildID, userID Snowflake) (ret *Member, err err
 }
 
 // GetGuildMembers .
-func (c *client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Member, err error) {
+func (c *client) GetGuildMembers(guildID, after Snowflake, limit int, flags ...Flag) (ret []*Member, err error) {
 	ret, err = c.cache.GetGuildMembersAfter(guildID, after, limit)
 	if err != nil {
 		ret, err = GetGuildMembers(c.req, guildID, after, limit)
@@ -870,67 +860,67 @@ func (c *client) GetGuildMembers(guildID, after Snowflake, limit int) (ret []*Me
 }
 
 // AddGuildMember .
-func (c *client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
+func (c *client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error) {
 	ret, err = AddGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyGuildMember .
-func (c *client) ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
+func (c *client) ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams, flags ...Flag) (err error) {
 	err = ModifyGuildMember(c.req, guildID, userID, params)
 	return
 }
 
 // ModifyCurrentUserNick .
-func (c *client) ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
+func (c *client) ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams, flags ...Flag) (nick string, err error) {
 	nick, err = ModifyCurrentUserNick(c.req, id, params)
 	return
 }
 
 // AddGuildMemberRole .
-func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
+func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
 	err = AddGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMemberRole .
-func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake) (err error) {
+func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
 	err = RemoveGuildMemberRole(c.req, guildID, userID, roleID)
 	return
 }
 
 // RemoveGuildMember .
-func (c *client) RemoveGuildMember(guildID, userID Snowflake) (err error) {
+func (c *client) RemoveGuildMember(guildID, userID Snowflake, flags ...Flag) (err error) {
 	err = RemoveGuildMember(c.req, guildID, userID)
 	return
 }
 
 // GetGuildBans .
-func (c *client) GetGuildBans(id Snowflake) (ret []*Ban, err error) {
+func (c *client) GetGuildBans(id Snowflake, flags ...Flag) (ret []*Ban, err error) {
 	ret, err = GetGuildBans(c.req, id)
 	return
 }
 
 // GetGuildBan .
-func (c *client) GetGuildBan(guildID, userID Snowflake) (ret *Ban, err error) {
+func (c *client) GetGuildBan(guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error) {
 	ret, err = GetGuildBan(c.req, guildID, userID)
 	return
 }
 
 // CreateGuildBan .
-func (c *client) CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
+func (c *client) CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams, flags ...Flag) (err error) {
 	err = CreateGuildBan(c.req, guildID, userID, params)
 	return
 }
 
 // RemoveGuildBan .
-func (c *client) RemoveGuildBan(guildID, userID Snowflake) (err error) {
+func (c *client) RemoveGuildBan(guildID, userID Snowflake, flags ...Flag) (err error) {
 	err = RemoveGuildBan(c.req, guildID, userID)
 	return
 }
 
 // GetGuildRoles .
-func (c *client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
+func (c *client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	ret, err = c.cache.GetGuildRoles(guildID)
 	if err != nil {
 		ret, err = GetGuildRoles(c.req, guildID)
@@ -944,97 +934,97 @@ func (c *client) GetGuildRoles(guildID Snowflake) (ret []*Role, err error) {
 }
 
 // CreateGuildRole .
-func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
+func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	ret, err = CreateGuildRole(c.req, id, params)
 	return
 }
 
 // ModifyGuildRolePositions .
-func (c *client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+func (c *client) ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error) {
 	ret, err = ModifyGuildRolePositions(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildRole .
-func (c *client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams) (ret *Role, err error) {
+func (c *client) ModifyGuildRole(guildID, roleID Snowflake, params *ModifyGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	ret, err = ModifyGuildRole(c.req, guildID, roleID, params)
 	return
 }
 
 // DeleteGuildRole .
-func (c *client) DeleteGuildRole(guildID, roleID Snowflake) (err error) {
+func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
 	err = DeleteGuildRole(c.req, guildID, roleID)
 	return
 }
 
 // GetGuildPruneCount .
-func (c *client) GetGuildPruneCount(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+func (c *client) GetGuildPruneCount(id Snowflake, params *GuildPruneParams, flags ...Flag) (ret *GuildPruneCount, err error) {
 	ret, err = GetGuildPruneCount(c.req, id, params)
 	return
 }
 
 // BeginGuildPrune .
-func (c *client) BeginGuildPrune(id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
+func (c *client) BeginGuildPrune(id Snowflake, params *GuildPruneParams, flags ...Flag) (ret *GuildPruneCount, err error) {
 	ret, err = BeginGuildPrune(c.req, id, params)
 	return
 }
 
 // GetGuildVoiceRegions .
-func (c *client) GetGuildVoiceRegions(id Snowflake) (ret []*VoiceRegion, err error) {
+func (c *client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
 	ret, err = GetGuildVoiceRegions(c.req, id)
 	return
 }
 
 // GetGuildInvites .
-func (c *client) GetGuildInvites(id Snowflake) (ret []*Invite, err error) {
+func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
 	ret, err = GetGuildInvites(c.req, id)
 	return
 }
 
 // GetGuildIntegrations .
-func (c *client) GetGuildIntegrations(id Snowflake) (ret []*Integration, err error) {
+func (c *client) GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error) {
 	ret, err = GetGuildIntegrations(c.req, id)
 	return
 }
 
 // CreateGuildIntegration .
-func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
+func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
 	err = CreateGuildIntegration(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildIntegration .
-func (c *client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
+func (c *client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams, flags ...Flag) (err error) {
 	err = ModifyGuildIntegration(c.req, guildID, integrationID, params)
 	return
 }
 
 // DeleteGuildIntegration .
-func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake) (err error) {
+func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
 	err = DeleteGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // SyncGuildIntegration .
-func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake) (err error) {
+func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
 	err = SyncGuildIntegration(c.req, guildID, integrationID)
 	return
 }
 
 // GetGuildEmbed .
-func (c *client) GetGuildEmbed(guildID Snowflake) (ret *GuildEmbed, err error) {
+func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (ret *GuildEmbed, err error) {
 	ret, err = GetGuildEmbed(c.req, guildID)
 	return
 }
 
 // ModifyGuildEmbed .
-func (c *client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
+func (c *client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error) {
 	ret, err = ModifyGuildEmbed(c.req, guildID, params)
 	return
 }
 
 // GetGuildVanityURL .
-func (c *client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err error) {
+func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
 	ret, err = GetGuildVanityURL(c.req, guildID)
 	return
 }
@@ -1042,37 +1032,37 @@ func (c *client) GetGuildVanityURL(guildID Snowflake) (ret *PartialInvite, err e
 // Webhook
 
 // CreateWebhook .
-func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
+func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
 	ret, err = CreateWebhook(c.req, channelID, params)
 	return
 }
 
 // GetChannelWebhooks .
-func (c *client) GetChannelWebhooks(channelID Snowflake) (ret []*Webhook, err error) {
+func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	ret, err = GetChannelWebhooks(c.req, channelID)
 	return
 }
 
 // GetGuildWebhooks .
-func (c *client) GetGuildWebhooks(guildID Snowflake) (ret []*Webhook, err error) {
+func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	ret, err = GetGuildWebhooks(c.req, guildID)
 	return
 }
 
 // GetWebhook .
-func (c *client) GetWebhook(id Snowflake) (ret *Webhook, err error) {
+func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
 	ret, err = GetWebhook(c.req, id)
 	return
 }
 
 // GetWebhookWithToken .
-func (c *client) GetWebhookWithToken(id Snowflake, token string) (ret *Webhook, err error) {
+func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
 	ret, err = GetWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ModifyWebhook .
-func (c *client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
+func (c *client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams, flags ...Flag) (ret *Webhook, err error) {
 	if id.Empty() {
 		err = errors.New("given webhook ID was not set, there is nothing to modify")
 		return
@@ -1098,37 +1088,37 @@ func (c *client) ModifyWebhook(id Snowflake, params *ModifyWebhookParams) (ret *
 }
 
 // ModifyWebhookWithToken .
-func (c *client) ModifyWebhookWithToken(newWebhook *Webhook) (ret *Webhook, err error) {
+func (c *client) ModifyWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error) {
 	ret, err = ModifyWebhookWithToken(c.req, newWebhook)
 	return
 }
 
 // DeleteWebhook .
-func (c *client) DeleteWebhook(webhookID Snowflake) (err error) {
+func (c *client) DeleteWebhook(webhookID Snowflake, flags ...Flag) (err error) {
 	err = DeleteWebhook(c.req, webhookID)
 	return
 }
 
 // DeleteWebhookWithToken .
-func (c *client) DeleteWebhookWithToken(id Snowflake, token string) (err error) {
+func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
 	err = DeleteWebhookWithToken(c.req, id, token)
 	return
 }
 
 // ExecuteWebhook .
-func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
+func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
 	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
 	return
 }
 
 // ExecuteSlackWebhook .
-func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	err = ExecuteSlackWebhook(c.req, params, wait)
 	return
 }
 
 // ExecuteGitHubWebhook .
-func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (err error) {
+func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	err = ExecuteGitHubWebhook(c.req, params, wait)
 	return
 }
@@ -1140,12 +1130,12 @@ func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (
 // Custom methods are usually reused by the resource package for readability
 // -----
 
-func (c *client) GetGuilds(params *GetCurrentUserGuildsParams) ([]*Guild, error) {
+func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
 	return c.GetCurrentUserGuilds(params)
 }
 
 // SendMsg .
-func (c *client) SendMsg(channelID Snowflake, message *Message) (msg *Message, err error) {
+func (c *client) SendMsg(channelID Snowflake, message *Message, flags ...Flag) (msg *Message, err error) {
 	if constant.LockedMethods {
 		message.RLock()
 	}
@@ -1168,21 +1158,21 @@ func (c *client) SendMsg(channelID Snowflake, message *Message) (msg *Message, e
 		message.RUnlock()
 	}
 
-	return c.CreateChannelMessage(channelID, params)
+	return c.CreateMessage(channelID, params)
 }
 
 // SendMsgString .
-func (c *client) SendMsgString(channelID Snowflake, content string) (msg *Message, err error) {
+func (c *client) SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error) {
 	params := &CreateChannelMessageParams{
 		Content: content,
 	}
 
-	msg, err = c.CreateChannelMessage(channelID, params)
+	msg, err = c.CreateMessage(channelID, params)
 	return
 }
 
 // UpdateMessage .
-func (c *client) UpdateMessage(message *Message) (msg *Message, err error) {
+func (c *client) UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error) {
 	if constant.LockedMethods {
 		message.RLock()
 		defer message.RUnlock()
@@ -1200,7 +1190,7 @@ func (c *client) UpdateMessage(message *Message) (msg *Message, err error) {
 }
 
 // UpdateChannel Not implemented yet
-func (c *client) UpdateChannel(channel *Channel) (err error) {
+func (c *client) UpdateChannel(channel *Channel, flags ...Flag) (err error) {
 	// there are several different REST calls that needs to be made in order
 	// to update the channel. But how exactly do we know what has changed?
 	return errors.New("not implemented")
@@ -1348,13 +1338,16 @@ func (c *client) eventHandler() {
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
 
-		prepareBox(evt.Name, box)
 		if updater, implements := box.(internalUpdater); implements {
 			updater.updateInternals()
 		}
 		if updater, implements := box.(internalClientUpdater); implements {
 			updater.updateInternalsWithClient(c)
 		}
+		// prepareBox is called after the updater to provide consistent behavior with how the
+		// REST methods work. This is because, as with the REST methods, the updaters are
+		// triggered before dealing with the actual object.
+		prepareBox(evt.Name, box)
 
 		// cache
 		if !c.config.DisableCache {
@@ -1365,4 +1358,15 @@ func (c *client) eventHandler() {
 		c.evtDemultiplexer.triggerChan(ctx, evt.Name, c, box)
 		go c.evtDemultiplexer.triggerHandlers(ctx, evt.Name, c, box)
 	}
+}
+
+func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
+	r := &rest{
+		c:    c,
+		conf: conf,
+	}
+	r.init()
+	r.flags = mergeFlags(flags)
+
+	return r
 }

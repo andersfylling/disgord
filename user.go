@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
@@ -253,6 +252,8 @@ type Activity struct {
 	Flags         int                `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
+var _ Reseter = (*Activity)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
 func (a *Activity) DeepCopy() (copy interface{}) {
 	copy = &Activity{}
@@ -422,15 +423,11 @@ type User struct {
 	overwritten uint8 // map. see number left of field in userJSON struct.
 }
 
+var _ Reseter = (*User)(nil)
+
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
 	return "<@" + u.ID.String() + ">"
-}
-
-// MentionNickname same as Mention, but shows nicknames
-// TODO: move to member object(?)
-func (u *User) MentionNickname() string {
-	return "<@!" + u.ID.String() + ">"
 }
 
 func (u *User) String() string {
@@ -774,7 +771,7 @@ func (m *ModifyCurrentUserParams) SetUsername(name string) {
 	m.username = name
 }
 
-// SetAvatar updates the avatar image. Must be abase64 encoded string.
+// SetAvatar updates the avatar image. Must be a base64 encoded string.
 // provide a nil to reset the avatar.
 func (m *ModifyCurrentUserParams) SetAvatar(avatar string) {
 	m.avatar = avatar
@@ -834,27 +831,7 @@ type GetCurrentUserGuildsParams struct {
 	Limit  int       `urlparam:"limit,omitempty"`
 }
 
-// GetQueryString ...
-func (params *GetCurrentUserGuildsParams) GetQueryString() string {
-	separator := "?"
-	query := ""
-
-	if !params.Before.Empty() {
-		query += separator + "before=" + params.Before.String()
-		separator = "&"
-	}
-
-	if !params.After.Empty() {
-		query += separator + "after=" + params.After.String()
-		separator = "&"
-	}
-
-	if params.Limit > 0 {
-		query += separator + "limit=" + strconv.Itoa(params.Limit)
-	}
-
-	return query
-}
+var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 
 // GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the guilds OAuth2 scope.
@@ -866,11 +843,11 @@ func (params *GetCurrentUserGuildsParams) GetQueryString() string {
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of users' guilds.
-func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+func GetCurrentUserGuilds(client httd.Getter, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error) {
 	var body []byte
 	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.UserMeGuilds() + params.GetQueryString(),
+		Endpoint:    endpoint.UserMeGuilds() + params.URLQueryString(),
 	})
 	if err != nil {
 		return
@@ -1012,21 +989,23 @@ func GetUserConnections(client httd.Getter) (ret []*UserConnection, err error) {
 // with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
-//  Rate limiter            /users
+//  Rate limiter            /users/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
-//  Reviewed                2018-06-10
+//  Reviewed                2019-02-23
 //  Comment                 -
-func (c *client) GetCurrentUser() (builder *getUserBuilder) {
-	builder = &getUserBuilder{
-		UserID: c.myID, // used to check cache
-	}
-	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimitUsers(),
+func (c *client) GetCurrentUser(flags ...Flag) (user *User, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: "/users/@me",
 		Endpoint:    endpoint.UserMe(),
-	}, nil)
+	}, flags)
+	r.CacheRegistry = UserCache
+	r.ID = c.myID
+	r.pool = c.userPool
 
-	return builder
+	if user, err = getUser(r.Execute); err == nil {
+		c.myID = user.ID
+	}
+	return user, err
 }
 
 // GetUser [REST] Returns a user object for a given user Snowflake.
@@ -1036,87 +1015,95 @@ func (c *client) GetCurrentUser() (builder *getUserBuilder) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) GetUser(id snowflake.ID) (builder *getUserBuilder) {
-	builder = &getUserBuilder{
-		UserID: id,
-	}
-	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
+func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.User(id),
-	}, nil)
+	}, flags)
+	r.CacheRegistry = UserCache
+	r.ID = id
+	r.pool = c.userPool
 
-	return builder
+	return getUser(r.Execute)
 }
 
-type getUserBuilder struct {
-	r      RESTBuilder
-	UserID snowflake.ID
-}
+// ModifyCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
+//  Method                  PATCH
+//  Endpoint                /users/@me
+//  Rate limiter            /users
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
+//  Reviewed                2019-02-18
+//  Comment                 -
+func (c *client) ModifyCurrentUser(params *ModifyCurrentUserParams, flags ...Flag) (ret *User, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
+		Ratelimiter: ratelimitUsers(),
+		Endpoint:    endpoint.UserMe(),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.CacheRegistry = UserCache
+	r.ID = c.myID
+	r.pool = c.userPool
 
-func (b *getUserBuilder) Execute() (user *User, err error) {
-	if !b.r.ignoreCache && !b.UserID.Empty() {
-		if user, err = b.r.cache.GetUser(b.UserID); user != nil && err == nil {
-			return
-		}
-	}
-
-	b.r.prepare()
-	var body []byte
-	_, body, err = b.r.client.Request(b.r.config)
-	if err != nil {
-		return
-	}
-
-	if len(body) > 1 {
-		err = httd.Unmarshal(body, &user)
-		if err != nil {
-			return
-		}
-		b.r.cache.Update(UserCache, user)
-	}
-	return
-}
-
-// ModifyCurrentUser .
-func (c *client) ModifyCurrentUser(params *ModifyCurrentUserParams) (ret *User, err error) {
-	ret, err = ModifyCurrentUser(c.req, params)
-	// TODO cache and update client
-	return
+	return getUser(r.Execute)
 }
 
 // GetCurrentUserGuilds .
-func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error) {
 	ret, err = GetCurrentUserGuilds(c.req, params)
 	return
 }
 
-// LeaveGuild .
-func (c *client) LeaveGuild(id Snowflake) (err error) {
-	err = LeaveGuild(c.req, id)
+// LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /users/@me/guilds/{guild.id}
+//  Rate limiter            /users/@me/guilds TODO: is this correct?
+//  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
+//  Reviewed                2019-02-18
+//  Comment                 -
+func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
+		Ratelimiter: "/users/@me/guilds",
+		Endpoint:    endpoint.UserMeGuild(id),
+	}, flags)
+	r.CacheRegistry = GuildCache
+	r.ID = id
+
+	_, err = r.Execute()
 	return
 }
 
 // GetUserDMs .
-func (c *client) GetUserDMs() (ret []*Channel, err error) {
+func (c *client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
 	ret, err = GetUserDMs(c.req)
 	return
 }
 
 // CreateDM .
-func (c *client) CreateDM(recipientID Snowflake) (ret *Channel, err error) {
+func (c *client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	ret, err = CreateDM(c.req, recipientID)
 	return
 }
 
 // CreateGroupDM .
-func (c *client) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
-	ret, err = CreateGroupDM(c.req, params)
-	return
+func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ratelimiter: "/users/@me/channels",
+		Endpoint:    endpoint.UserMeChannels(),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.CacheRegistry = ChannelCache
+
+	// TODO: go generate casting func: return getChannel(r.Execute)
+	return getChannel(r.Execute)
 }
 
 // GetUserConnections .
-func (c *client) GetUserConnections() (ret []*UserConnection, err error) {
+func (c *client) GetUserConnections(flags ...Flag) (ret []*UserConnection, err error) {
 	ret, err = GetUserConnections(c.req)
 	return
 }

@@ -4,7 +4,7 @@ import "sync"
 
 type Pool interface {
 	Put(x Reseter)
-	Get() (x interface{})
+	Get() (x Reseter)
 }
 
 type pool struct {
@@ -30,10 +30,27 @@ func (p *pool) Put(x Reseter) {
 // the values returned by Get.
 //
 // This assumes that p.New is always set.
-func (p *pool) Get() (x interface{}) {
-	if x = p.pool.Get(); x == nil {
-		x = p.New
+func (p *pool) Get() (x Reseter) {
+	var ok bool
+	if x, ok = p.pool.Get().(Reseter); x == nil || !ok {
+		x = p.New()
 	}
 
 	return
+}
+
+//////////////////////////////////////////////////////
+//
+// Client Pools
+//
+//////////////////////////////////////////////////////
+
+func (c *client) ChannelPool() Pool {
+	return c.channelPool
+}
+func (c *client) MessagePool() Pool {
+	return c.userPool
+}
+func (c *client) UserPool() Pool {
+	return c.userPool
 }

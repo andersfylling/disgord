@@ -103,6 +103,8 @@ type Message struct {
 	HasSpoilerImage          bool `json:"-"`
 }
 
+var _ Reseter = (*Message)(nil)
+
 func (m *Message) updateInternals() {
 	if len(m.Content) >= len("||||") {
 		prefix := m.Content[0:2]
@@ -233,7 +235,7 @@ func (m *Message) saveToDiscord(session Session, changes discordSaver) (err erro
 
 // MessageUpdater is a interface which only holds the message update method
 type MessageUpdater interface {
-	UpdateMessage(message *Message) (msg *Message, err error)
+	UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error)
 }
 
 // Update after changing the message object, call update to notify Discord about any changes made
@@ -244,7 +246,7 @@ func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
 type MessageSender interface {
-	CreateChannelMessage(channelID Snowflake, params *CreateMessageParams) (ret *Message, err error)
+	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
 }
 
 // Send sends this message to discord.
@@ -269,7 +271,7 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 		m.RUnlock()
 	}
 
-	msg, err = client.CreateChannelMessage(channelID, params)
+	msg, err = client.CreateMessage(channelID, params)
 	return
 }
 
@@ -303,7 +305,7 @@ func (m *Message) RespondString(client MessageSender, content string) (msg *Mess
 	if constant.LockedMethods {
 		m.RLock()
 	}
-	msg, err = client.CreateChannelMessage(m.ChannelID, params)
+	msg, err = client.CreateMessage(m.ChannelID, params)
 	if constant.LockedMethods {
 		m.RUnlock()
 	}
@@ -325,32 +327,7 @@ type GetMessagesParams struct {
 	Limit  int       `urlparam:"limit,omitempty"`
 }
 
-// GetQueryString .
-func (params *GetMessagesParams) GetQueryString() string {
-	separator := "?"
-	query := ""
-
-	if !params.Around.Empty() {
-		query += separator + params.Around.String()
-		separator = "&"
-	}
-
-	if !params.Before.Empty() {
-		query += separator + params.Before.String()
-		separator = "&"
-	}
-
-	if !params.After.Empty() {
-		query += separator + params.After.String()
-		separator = "&"
-	}
-
-	if params.Limit > 0 {
-		query += separator + strconv.Itoa(params.Limit)
-	}
-
-	return query
-}
+var _ URLQueryStringer = (*GetMessagesParams)(nil)
 
 // GetMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
@@ -363,14 +340,14 @@ func (params *GetMessagesParams) GetQueryString() string {
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func GetMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+func GetMessages(client httd.Getter, channelID Snowflake, params URLQueryStringer) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
 	}
 	query := ""
 	if params != nil {
-		query += params.GetQueryString()
+		query += params.URLQueryString()
 	}
 
 	var body []byte
@@ -755,7 +732,7 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 //////////////////////////////////////////////////////
 
 // Deprecated: use GetMessages instead
-func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLParameters) (ret []*Message, err error) {
+func GetChannelMessages(client httd.Getter, channelID Snowflake, params URLQueryStringer) (ret []*Message, err error) {
 	return GetMessages(client, channelID, params)
 }
 

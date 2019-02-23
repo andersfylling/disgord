@@ -3,7 +3,6 @@ package disgord
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
@@ -20,6 +19,8 @@ type Reaction struct {
 	Me    bool          `json:"me"`
 	Emoji *PartialEmoji `json:"Emoji"`
 }
+
+var _ Reseter = (*Reaction)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (r *Reaction) DeepCopy() (copy interface{}) {
@@ -209,27 +210,7 @@ type GetReactionURLParams struct {
 	Limit  int       `urlparam:"limit,omitempty"`  // max number of users to return (1-100)
 }
 
-// GetQueryString .
-func (params *GetReactionURLParams) GetQueryString() string {
-	separator := "?"
-	query := ""
-
-	if !params.Before.Empty() {
-		query += separator + params.Before.String()
-		separator = "&"
-	}
-
-	if !params.After.Empty() {
-		query += separator + params.After.String()
-		separator = "&"
-	}
-
-	if params.Limit > 0 {
-		query += separator + strconv.Itoa(params.Limit)
-	}
-
-	return query
-}
+var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 
 // GetReaction [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
@@ -238,7 +219,7 @@ func (params *GetReactionURLParams) GetQueryString() string {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLParameters) (ret []*User, err error) {
+func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer) (ret []*User, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -263,7 +244,7 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 
 	query := ""
 	if params != nil {
-		query += params.GetQueryString()
+		query += params.URLQueryString()
 	}
 
 	var body []byte

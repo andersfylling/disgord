@@ -123,6 +123,8 @@ type Channel struct {
 	recipientsIDs []Snowflake
 }
 
+var _ Reseter = (*Channel)(nil)
+
 func (c *Channel) valid() bool {
 	if c.RateLimitPerUser > 120 {
 		return false
@@ -406,7 +408,7 @@ func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Mess
 		Content: content,
 	}
 
-	msg, err = client.CreateChannelMessage(c.ID, params)
+	msg, err = client.CreateMessage(c.ID, params)
 	return
 }
 
@@ -429,7 +431,7 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 	}
 	message.RUnlock()
 
-	msg, err = client.CreateChannelMessage(c.ID, params)
+	msg, err = client.CreateMessage(c.ID, params)
 	return
 }
 

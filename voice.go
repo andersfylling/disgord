@@ -46,6 +46,8 @@ type VoiceState struct {
 	Suppress bool `json:"suppress"` // |
 }
 
+var _ Reseter = (*VoiceState)(nil)
+
 //func (vst *VoiceState) Clear() {
 //
 //}
@@ -120,6 +122,8 @@ type VoiceRegion struct {
 	Custom bool `json:"custom"`
 }
 
+var _ Reseter = (*VoiceRegion)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
 func (v *VoiceRegion) DeepCopy() (copy interface{}) {
 	copy = &VoiceRegion{}
@@ -171,7 +175,7 @@ func voiceRegionsFactory() interface{} {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
-func (c *client) GetVoiceRegions() (builder *listVoiceRegionsBuilder) {
+func (c *client) GetVoiceRegions(flags ...Flag) (builder *listVoiceRegionsBuilder) {
 	builder = &listVoiceRegionsBuilder{}
 	builder.r.itemFactory = voiceRegionsFactory
 	builder.r.setup(c.cache, c.req, &httd.Request{

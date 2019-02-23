@@ -5,15 +5,17 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/pkg/errors"
+
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake/v3"
 )
 
 type ErrRest = httd.ErrREST
 
-// URLParameters converts a struct of values to a valid URL query string
-type URLParameters interface {
-	GetQueryString() string
+// URLQueryStringer converts a struct of values to a valid URL query string
+type URLQueryStringer interface {
+	URLQueryString() string
 }
 
 func unmarshal(data []byte, v interface{}) error {
@@ -43,7 +45,9 @@ func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, m
 
 type paramHolder map[string]interface{}
 
-func (p paramHolder) GetQueryString() string {
+var _ URLQueryStringer = (*paramHolder)(nil)
+
+func (p paramHolder) URLQueryString() string {
 	if len(p) == 0 {
 		return ""
 	}
@@ -97,7 +101,174 @@ func (p paramHolder) GetQueryString() string {
 	return params
 }
 
-var _ URLParameters = (*paramHolder)(nil)
+type astrixREST func(repo cacheRegistry, ids []Snowflake, req *httd.Request, flags ...Flag) (v interface{}, err error)
+
+type restStepCheckCache func() (v interface{}, err error)
+type restStepDoRequest func() (resp *http.Response, body []byte, err error)
+type restStepUpdateCache func(registry cacheRegistry, id Snowflake, x interface{}) (err error)
+type rest struct {
+	c     *client
+	flags Flag // merge flags
+
+	// caching
+	ID            Snowflake
+	CacheRegistry cacheRegistry
+	httpMethod    string
+
+	// item creation
+	// pool is prioritzed over factory
+	pool    Pool
+	factory func() Reseter
+
+	conf *httd.Request
+
+	// steps
+	checkCache  restStepCheckCache
+	doRequest   restStepDoRequest
+	updateCache restStepUpdateCache
+}
+
+func (r *rest) Put(x Reseter) {
+	if r.pool != nil {
+		r.pool.Put(x)
+	} else {
+		x = nil // GC
+	}
+}
+
+func (r *rest) Get() (x Reseter) {
+	if r.pool != nil {
+		return r.pool.Get()
+	}
+
+	return r.factory()
+}
+
+var _ Pool = (*rest)(nil)
+
+func (r *rest) init() {
+	if r.conf != nil {
+		if r.conf.Method == "" {
+			r.conf.Method = http.MethodGet
+		}
+		if r.conf.Method != "" {
+			r.httpMethod = r.conf.Method
+		}
+	}
+	if r.httpMethod == "" {
+		r.httpMethod = http.MethodGet
+	}
+
+	r.checkCache = r.stepCheckCache
+	r.doRequest = r.stepDoRequest
+	r.updateCache = r.stepUpdateCache
+}
+
+func (r *rest) bindParams(params interface{}) {
+	if params == nil {
+		return
+	}
+}
+
+func (r *rest) stepCheckCache() (v interface{}, err error) {
+	if r.httpMethod != http.MethodGet {
+		return nil, nil
+	}
+
+	if r.CacheRegistry == NoCacheSpecified {
+		return nil, nil
+	}
+
+	if r.ID.Empty() {
+		return nil, nil
+	}
+
+	if r.flags.Ignorecache() {
+		return nil, nil
+	}
+
+	return r.c.cache.Get(r.CacheRegistry, r.ID)
+}
+
+func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
+	if r.conf == nil {
+		err = errors.New("missing httd.Request configuration")
+		return
+	}
+
+	resp, body, err = r.c.req.Request(r.conf)
+	return
+}
+
+// stepUpdateCache id is only used when deleting an object
+func (r *rest) stepUpdateCache(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
+	if r.CacheRegistry == NoCacheSpecified {
+		return nil
+	}
+
+	if x == nil {
+		return nil
+	}
+
+	return r.c.cache.Update(registry, x)
+}
+
+func (r *rest) processContent(body []byte) (v interface{}, err error) {
+	if len(body) == 0 {
+		return nil, nil // nothing more to do
+	}
+
+	// next we create the object and save it to cache
+	if r.pool == nil && r.factory == nil {
+		return nil, errors.New("missing factory method for either pool or factory")
+	}
+
+	obj := r.Get()
+	if err = httd.Unmarshal(body, obj); err != nil {
+		r.Put(obj)
+		return nil, err
+	}
+
+	// update the object
+	if updater, implements := obj.(internalUpdater); implements {
+		updater.updateInternals()
+	}
+	if updater, implements := obj.(internalClientUpdater); implements {
+		updater.updateInternalsWithClient(r.c)
+	}
+
+	return obj, nil
+}
+
+func (r *rest) Execute() (v interface{}, err error) {
+	if v, err = r.checkCache(); err == nil && v != nil {
+		return v, err
+	}
+
+	var resp *http.Response
+	var body []byte
+	if resp, body, err = r.doRequest(); err != nil {
+		return nil, err
+	}
+
+	if resp.Request.Method == http.MethodDelete && resp.StatusCode != http.StatusNoContent {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+		err = errors.New(msg)
+		return nil, err
+	}
+
+	var obj interface{}
+	if obj, err = r.processContent(body); err != nil {
+		return nil, err
+	}
+
+	// save it to cache / update the cache
+	if err = r.updateCache(r.CacheRegistry, r.ID, obj); err != nil {
+		r.c.log.Error(err)
+	}
+
+	return obj, nil
+}
 
 type fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
 type fRESTCacheMiddleware func(resp *http.Response, v interface{}, err error) error
@@ -142,7 +313,7 @@ func (b *RESTBuilder) prepare() {
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
 	}
-	b.config.Endpoint += b.urlParams.GetQueryString()
+	b.config.Endpoint += b.urlParams.URLQueryString()
 }
 
 // execute ... v must be a nil pointer.
@@ -202,6 +373,7 @@ func (b *RESTBuilder) async() <-chan *restReqBuilderAsync {
 		resp.Data, resp.Err = b.execute()
 
 		A <- resp
+		close(A)
 	}()
 
 	return A
@@ -277,4 +449,30 @@ func GetGatewayBot(client httd.Getter) (gateway *GatewayBot, err error) {
 
 	err = unmarshal(body, &gateway)
 	return
+}
+
+func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Channel), nil
+}
+
+func getUser(f func() (interface{}, error)) (user *User, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*User), nil
 }
