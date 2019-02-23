@@ -9,5 +9,13 @@ func (f Flag) Ignorecache() bool {
 }
 
 const (
-	DisableCache Flag = iota
+	DisableCache Flag = 1 << iota
 )
+
+func mergeFlags(flags []Flag) (f Flag) {
+	for i := range flags {
+		f |= flags[i]
+	}
+
+	return f
+}

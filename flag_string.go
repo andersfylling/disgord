@@ -9,8 +9,9 @@ const _Flag_name = "DisableCache"
 var _Flag_index = [...]uint8{0, 12}
 
 func (i Flag) String() string {
+	i -= 1
 	if i >= Flag(len(_Flag_index)-1) {
-		return "Flag(" + strconv.FormatInt(int64(i), 10) + ")"
+		return "Flag(" + strconv.FormatInt(int64(i+1), 10) + ")"
 	}
 	return _Flag_name[_Flag_index[i]:_Flag_index[i+1]]
 }

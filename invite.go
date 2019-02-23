@@ -164,7 +164,7 @@ func inviteFactory() interface{} {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
 //  Comment                 withCounts whether the invite should contain approximate member counts
-func (c *client) GetInvite(inviteCode string) (builder *getInviteBuilder) {
+func (c *client) GetInvite(inviteCode string, flags ...Flag) (builder *getInviteBuilder) {
 	builder = &getInviteBuilder{}
 	builder.r.itemFactory = inviteFactory
 	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{
@@ -203,7 +203,7 @@ func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) DeleteInvite(inviteCode string) (builder *deleteInviteBuilder) {
+func (c *client) DeleteInvite(inviteCode string, flags ...Flag) (builder *deleteInviteBuilder) {
 	builder = &deleteInviteBuilder{}
 	builder.r.itemFactory = inviteFactory
 	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{

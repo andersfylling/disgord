@@ -673,26 +673,11 @@ func GetGuildBan(client httd.Getter, guildID, userID Snowflake) (ret *Ban, err e
 // CreateGuildBanParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-ban-query-string-params
 type CreateGuildBanParams struct {
-	DeleteMessageDays int    `urlparam:"delete_message_days"` // number of days to delete messages for (0-7)
-	Reason            string `urlparam:"reason"`              // reason for being banned
+	DeleteMessageDays int    `urlparam:"delete_message_days,omitempty"` // number of days to delete messages for (0-7)
+	Reason            string `urlparam:"reason,omitempty"`              // reason for being banned
 }
 
-// GetQueryString ...
-func (params *CreateGuildBanParams) GetQueryString() string {
-	separator := "?"
-	query := ""
-
-	if params.DeleteMessageDays > 0 {
-		query += separator + "delete_message_days=" + strconv.Itoa(params.DeleteMessageDays)
-		separator = "&"
-	}
-
-	if params.Reason != "" {
-		query += separator + "reason=" + params.Reason
-	}
-
-	return query
-}
+var _ URLQueryStringer = (*CreateGuildBanParams)(nil)
 
 // CreateGuildBan [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
@@ -706,7 +691,7 @@ func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *Create
 	var resp *http.Response
 	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
-		Endpoint:    endpoint.GuildBan(guildID, userID) + params.GetQueryString(),
+		Endpoint:    endpoint.GuildBan(guildID, userID) + params.URLQueryString(),
 		ContentType: httd.ContentTypeJSON,
 	})
 	if err != nil {
@@ -750,20 +735,10 @@ func RemoveGuildBan(client httd.Deleter, guildID, userID Snowflake) (err error) 
 // GuildPruneParams ...
 // https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
 type GuildPruneParams struct {
-	Days int `urlparam:"days"` // number of days to count prune for (1 or more)
+	Days int `urlparam:"days,omitempty"` // number of days to count prune for (1 or more)
 }
 
-// GetQueryString ...
-func (params *GuildPruneParams) GetQueryString() string {
-	separator := "?"
-	query := ""
-
-	if params.Days > 0 {
-		query += separator + "days=" + strconv.Itoa(params.Days)
-	}
-
-	return query
-}
+var _ URLQueryStringer = (*GuildPruneParams)(nil)
 
 // GetGuildPruneCount [REST] Returns an object with one 'pruned' key indicating the number of members that would be
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
@@ -777,7 +752,7 @@ func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPrunePara
 	var body []byte
 	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: ratelimitGuildPrune(id),
-		Endpoint:    endpoint.GuildPrune(id) + params.GetQueryString(),
+		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
 	})
 	if err != nil {
 		return
@@ -800,7 +775,7 @@ func BeginGuildPrune(client httd.Poster, id Snowflake, params *GuildPruneParams)
 	var body []byte
 	_, body, err = client.Post(&httd.Request{
 		Ratelimiter: ratelimitGuildPrune(id),
-		Endpoint:    endpoint.GuildPrune(id) + params.GetQueryString(),
+		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
 	})
 	if err != nil {
 		return

@@ -31,6 +31,8 @@ type Role struct {
 	guildID Snowflake
 }
 
+var _ Reseter = (*Role)(nil)
+
 // Mention gives a formatted version of the role such that it can be parsed by Discord clients
 func (r *Role) Mention() string {
 	return "<@&" + r.ID.String() + ">"

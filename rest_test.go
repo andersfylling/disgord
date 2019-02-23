@@ -7,8 +7,8 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-func verifyQueryString(t *testing.T, params URLParameters, wants string) {
-	got := params.GetQueryString()
+func verifyQueryString(t *testing.T, params URLQueryStringer, wants string) {
+	got := params.URLQueryString()
 	if got != wants {
 		t.Errorf("incorrect query param string. Got '%s', wants '%s'", got, wants)
 	}

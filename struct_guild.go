@@ -201,6 +201,8 @@ type Guild struct {
 	//highestSnowflakeAmoungMembers Snowflake
 }
 
+var _ Reseter = (*Guild)(nil)
+
 func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild := other.(*Guild)
 
@@ -991,6 +993,8 @@ type Member struct {
 	userID Snowflake
 }
 
+var _ Reseter = (*Member)(nil)
+
 func (m *Member) String() string {
 	usrname := m.Nick
 	if m.User != nil {
@@ -1010,7 +1014,7 @@ func (m *Member) GetUser(session Session) (usr *User, err error) {
 		return m.User, nil
 	}
 
-	return session.GetUser(m.userID).Execute()
+	return session.GetUser(m.userID)
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's

@@ -25,8 +25,10 @@ type Emoji struct {
 	Animated      bool        `json:"animated,omitempty"`
 
 	//	image string // base 64 string, with prefix and everything
-	guildID snowflake.ID
+	guildID Snowflake
 }
+
+var _ Reseter = (*Emoji)(nil)
 
 // PartialEmoji see Emoji
 type PartialEmoji = Emoji
@@ -90,25 +92,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	}
 
 	return
-}
-
-func (e *Emoji) zeroInitialize() {
-	if constant.LockedMethods {
-		e.mu.RLock()
-	}
-
-	e.guildID = snowflake.ID(0)
-	e.ID = snowflake.ID(0)
-	e.Name = ""
-	e.Roles = nil
-	e.User = nil
-	e.RequireColons = false
-	e.Animated = false
-	e.Managed = false
-
-	if constant.LockedMethods {
-		e.mu.RUnlock()
-	}
 }
 
 // Missing GuildID...
@@ -177,7 +160,7 @@ func cacheEmoji_SetAll(cache Cacher, guildID snowflake.ID, emojis []*Emoji) erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) GetGuildEmojis(guildID snowflake.ID) (builder *listGuildEmojisBuilder) {
+func (c *client) GetGuildEmojis(guildID snowflake.ID, flags ...Flag) (builder *listGuildEmojisBuilder) {
 	builder = &listGuildEmojisBuilder{
 		guildID: guildID,
 	}
@@ -225,7 +208,7 @@ func (b *listGuildEmojisBuilder) Execute() (emojis []*Emoji, err error) {
 }
 
 // GetGuildEmoji .
-func (c *client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err error) {
+func (c *client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (ret *Emoji, err error) {
 	// TODO place emojis in their own cacheLink system
 	var guild *Guild
 	guild, err = c.cache.GetGuild(guildID)
@@ -244,19 +227,19 @@ func (c *client) GetGuildEmoji(guildID, emojiID Snowflake) (ret *Emoji, err erro
 }
 
 // CreateGuildEmoji .
-func (c *client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams) (ret *Emoji, err error) {
+func (c *client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (ret *Emoji, err error) {
 	ret, err = CreateGuildEmoji(c.req, guildID, params)
 	return
 }
 
 // ModifyGuildEmoji .
-func (c *client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams) (ret *Emoji, err error) {
+func (c *client) ModifyGuildEmoji(guildID, emojiID Snowflake, params *ModifyGuildEmojiParams, flags ...Flag) (ret *Emoji, err error) {
 	ret, err = ModifyGuildEmoji(c.req, guildID, emojiID, params)
 	return
 }
 
 // DeleteGuildEmoji .
-func (c *client) DeleteGuildEmoji(guildID, emojiID Snowflake) (err error) {
+func (c *client) DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (err error) {
 	err = DeleteGuildEmoji(c.req, guildID, emojiID)
 	return
 }

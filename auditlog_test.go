@@ -97,17 +97,17 @@ func TestAuditLogParams(t *testing.T) {
 	params.ActionType(6)
 	wants += "&action_type=6"
 	wantsAlternative := "?action_type=6&user_id=" + s
-	got := params.r.urlParams.GetQueryString()
+	got := params.r.urlParams.URLQueryString()
 	if !(wants == got || wantsAlternative == got) {
-		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.GetQueryString(), wants, wantsAlternative)
+		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.URLQueryString(), wants, wantsAlternative)
 	}
 
 	params.ActionType(0)
 	wants = "?user_id=" + s + "&action_type=0"
 	wantsAlternative = "?action_type=0&user_id=" + s
-	got = params.r.urlParams.GetQueryString()
+	got = params.r.urlParams.URLQueryString()
 	if !(wants == got || wantsAlternative == got) {
-		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.GetQueryString(), wants, wantsAlternative)
+		t.Errorf("incorrect query param string. Got '%s', wants '%s' or '%s'", params.r.urlParams.URLQueryString(), wants, wantsAlternative)
 	}
 }
 
