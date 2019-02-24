@@ -1,16 +1,29 @@
-DO NOT TOUCH THIS BRANCH
-
-# DisGord [![Documentation](https://godoc.org/github.com/andersfylling/disgord?status.svg)](http://godoc.org/github.com/andersfylling/disgord)
-[![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/contains-technical-debt.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/for-you.svg)](https://forthebadge.com)
-
-## Health
-| Branch       | Status  | Standard | Code coverage |
-| ------------ |:-------------:|:---------------:|:----------------:|
-| develop     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/develop) | [![Go Report Card](https://goreportcard.com/badge/github.com/andersfylling/disgord)](https://goreportcard.com/report/github.com/andersfylling/disgord) | [![Test Coverage](https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage)](https://codeclimate.com/github/andersfylling/disgord/test_coverage) |
-| v0.10     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10) | - | - |
+<div align='center'>
+  <img src="/docs/disgord-draft-8.jpeg" alt='Build Status' />
+  <p>
+    <a href='https://circleci.com/gh/andersfylling/disgord/tree/develop'>
+      <img src='https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield'
+           alt='Build Status' />
+    </a>
+    <a href='https://codeclimate.com/github/andersfylling/disgord/test_coverage'>
+      <img src='https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage'
+           alt='Maintainability' />
+    </a>
+    <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
+      <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord'
+           alt='Code coverage' />
+    </a>
+  </p>
+  <p>
+    <a href='http://godoc.org/github.com/andersfylling/disgord'>
+      <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg'
+           alt='Godoc' />
+    </a>
+  </p>
+</div>
 
 ## About
-GoLang module for interacting with the Discord API. Supports events, REST calls and voice (receive only).
+Go module for interacting with the Discord API. Supports events, REST calls and voice (receive only).
  
  and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
@@ -70,7 +83,7 @@ Whenever you want the bot to join a voice channel, a websocket and UDP connectio
 #### Cache
 The cache tries to represent the Discord state as accurate as it can. Because of this, the cache is immutable by default. Meaning the does not allow you to reference any cached objects directly, and every incoming and outgoing data of the cache is deep copied.
 
-## Package structure
+### Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
 github.com/andersfylling/disgord
@@ -99,14 +112,14 @@ github.com/andersfylling/disgord
 ```
 
 
-## Logging
+### Logging
 DisGord requires you to inject a logger instance if you want DisGord to log internal messages (recommended). Logrus is supported out of the box, while other projects might require you to wrap them to comply with `disgord.Logger`. 
 
 You can also use the default logger, which is a wrapped Zap instance: `disgord.DefaultLogger(false)` (see logging.go).
 
 To use the log instance later on, call the method `Session.Logger()`.
 
-## Build tags
+### Build tags
 > For **advanced users only**.
 
 If you do not wish to use json-iterator, you can pass `-tags=json-std` to switch to `"encoding/json"`.
@@ -131,7 +144,7 @@ Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be usef
 See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
 
 ```Markdown
-1. Is there an alternative Golang package?
+1. Is there an alternative Go package?
 
 Yes, it's called Discordgo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
 level bindings for Discord, while DisGord wants to provide a more configurable system with more 
