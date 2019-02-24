@@ -63,8 +63,11 @@ func GuildAuditLogs(id snowflake.ID) string {
 func Guild(id snowflake.ID) string {
 	return "g:" + id.String()
 }
-func GuildEmojis(id snowflake.ID) string {
-	return "g:" + id.String() + ":emojis"
+func GuildEmoji(guildID, emojiID snowflake.ID) string {
+	return GuildEmojis(guildID) + ":" + emojiID.String()
+}
+func GuildEmojis(guildID snowflake.ID) string {
+	return "g:" + guildID.String() + ":emojis"
 }
 func GuildEmbed(id snowflake.ID) string {
 	return Guild(id) + ":e"

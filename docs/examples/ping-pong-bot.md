@@ -1,31 +1,66 @@
 ## Ping-Pong bot
-So the time has come where you want to be a bot engineer huh? In this article you are introduced to creating the most basic bot. This snippet will contain the main function's body.
-
+So the time has come where you want to be a bot engineer huh? In this article you are introduced to creating the common ping-pong bot. This snippet will contain the main function's body.
 
 ```go
-// create a Disgord session
-client := disgord.New(&disgord.Config{
-    BotToken: os.Getenv("DISGORD_TOKEN"),
-    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
-})
+package main
 
-// create a handler and bind it to new message events
-client.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
-    msg := data.Message
+import (
+	"fmt"
+	"github.com/andersfylling/disgord"
+	"os"
+)
 
-    fmt.Printf("user{%s} said: `%s`\n", msg.Author.Username, msg.Content) // noob logging
-    if msg.Content == "ping" {
-        msg.RespondString(session, "pong")
-        // alternative: session.SendMsgString(msg.ChannelID, "pong")
-    }
-})
-
-// connect to the discord gateway to receive events
-if err = client.Connect(); err != nil {
-    panic(err)
+func main() {
+    // configure a DisGord client
+    client := disgord.New(&disgord.Config{
+        BotToken: os.Getenv("DISGORD_TOKEN"),
+        Logger: disgord.DefaultLogger(false), // debug=false
+    })
+    defer client.StayConnectedUntilInterrupted()
+    
+    // create a handler and bind it to new message events
+    client.On(disgord.EventMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+        msg := evt.Message
+        if msg.Content == "ping" {
+            _, _ = msg.RespondString(session, "pong")
+        }
+    })
 }
-
-// Keep the socket connection alive, until you terminate the application
-client.DisconnectOnInterrupt()
 ```
-If sending the response is slow. You are most likely rate limited, and Disgord is trying to wait out the rate limit delay before the message is sent. If you want to get an error message in stead of waiting enable the config option upon session creation, `Config.CancelRequestWhenRateLimited`. Note that if the bot has to wait a time that is longer than the http.Client.Timeout value, it always returns an error saying you were rate limited.
+
+
+DisGord also offers middlewares and a std package to checking the msg content
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord/std"
+	"os"
+)
+
+const NewMessage = disgord.EventMessageCreate
+
+func main() {
+    // configure a DisGord client
+    client := disgord.New(&disgord.Config{
+        BotToken: os.Getenv("DISGORD_TOKEN"),
+        Logger: disgord.DefaultLogger(false), // debug=false
+    })
+    defer client.StayConnectedUntilInterrupted()
+    
+    // create a mdlw that only accepts messages with a "ping" prefix
+    // tip: use this to identify bot commands
+    content, _ := std.NewMsgFilter(client)
+    content.SetPrefix("ping")
+    
+    // create a handler and bind it to new message events
+    // we add a middleware/filter to ensure that the message content 
+    // starts with "ping".
+    client.On(NewMessage, content.HasPrefix, func(s disgord.Session, evt *disgord.MessageCreate) {
+        _, _ = evt.Message.RespondString(s, "pong")
+    })
+}
+```

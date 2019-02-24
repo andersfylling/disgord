@@ -2,6 +2,16 @@
 
 package disgord
 
+func (g *GetInviteParams) URLQueryString() string {
+	params := make(paramHolder)
+
+	if !(g.WithMemberCount == false) {
+		params["with_count"] = g.WithMemberCount
+	}
+
+	return params.URLQueryString()
+}
+
 func (g *GetMessagesParams) URLQueryString() string {
 	params := make(paramHolder)
 
@@ -42,26 +52,26 @@ func (g *GetReactionURLParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (c *CreateGuildBanParams) URLQueryString() string {
+func (b *BanMemberParams) URLQueryString() string {
 	params := make(paramHolder)
 
-	if !(c.DeleteMessageDays == 0) {
-		params["delete_message_days"] = c.DeleteMessageDays
+	if !(b.DeleteMessageDays == 0) {
+		params["delete_message_days"] = b.DeleteMessageDays
 	}
 
-	if !(c.Reason == "") {
-		params["reason"] = c.Reason
+	if !(b.Reason == "") {
+		params["reason"] = b.Reason
 	}
 
 	return params.URLQueryString()
 }
 
-func (g *GuildPruneParams) URLQueryString() string {
+func (p *pruneMembersParams) URLQueryString() string {
 	params := make(paramHolder)
 
-	if !(g.Days == 0) {
-		params["days"] = g.Days
-	}
+	params["days"] = p.Days
+
+	params["compute_prune_count"] = p.ComputePruneCount
 
 	return params.URLQueryString()
 }

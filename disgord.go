@@ -250,7 +250,7 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 // https://discordapp.com/developers/docs/resources/user#avatar-data
 func validAvatarPrefix(avatar string) (valid bool) {
 	if avatar == "" {
-		return
+		return false
 	}
 
 	construct := func(encoding string) string {
@@ -258,7 +258,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 	}
 
 	if len(avatar) < len(construct("X")) {
-		return
+		return false // missing base64 declaration
 	}
 
 	encodings := []string{
@@ -272,7 +272,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 		}
 	}
 
-	return
+	return true
 }
 
 // ValidateUsername uses Discords rule-set to verify user-names and nicknames

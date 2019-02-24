@@ -41,16 +41,53 @@ func (p *pool) Get() (x Reseter) {
 
 //////////////////////////////////////////////////////
 //
-// Client Pools
+// Resource Pools
 //
 //////////////////////////////////////////////////////
 
-func (c *client) ChannelPool() Pool {
-	return c.channelPool
+func newPools() *pools {
+	p := &pools{}
+
+	p.channel = &pool{
+		New: func() Reseter {
+			return &Channel{}
+		},
+	}
+	p.message = &pool{
+		New: func() Reseter {
+			return &Message{}
+		},
+	}
+	p.user = &pool{
+		New: func() Reseter {
+			return &User{}
+		},
+	}
+	p.emoji = &pool{
+		New: func() Reseter {
+			return &Emoji{}
+		},
+	}
+
+	return p
 }
-func (c *client) MessagePool() Pool {
-	return c.userPool
+
+type pools struct {
+	channel Pool
+	message Pool
+	user    Pool
+	emoji   Pool
 }
-func (c *client) UserPool() Pool {
-	return c.userPool
+
+func (p *pools) ChannelPool() Pool {
+	return p.channel
+}
+func (p *pools) MessagePool() Pool {
+	return p.message
+}
+func (p *pools) UserPool() Pool {
+	return p.user
+}
+func (p *pools) EmojiPool() Pool {
+	return p.emoji
 }

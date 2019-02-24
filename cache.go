@@ -267,11 +267,14 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			err = errors.New("can only save *Channel structures to channel cacheLink")
 		}
 	case GuildEmojiCache:
+		var emojis []*Emoji
+		var guildID Snowflake
+
 		if emoji, ok := v.(*Emoji); ok {
 			// TODO:  improve, this is slow.
-			guildID := emoji.guildID
-			emojis, err := c.GetGuildEmojis(guildID)
-			if err != nil {
+			guildID = emoji.guildID
+			var err error
+			if emojis, err = c.GetGuildEmojis(guildID); err != nil {
 				emojis = []*Emoji{
 					emoji,
 				}
@@ -287,13 +290,22 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 					emojis = append(emojis, emoji)
 				}
 			}
-			err = cacheEmoji_SetAll(c, guildID, emojis)
-		} else if emojis, ok := v.([]*Emoji); ok {
-			if len(emojis) == 0 {
-				return
-			}
-			err = cacheEmoji_SetAll(c, emojis[0].guildID, emojis)
+		} else if emojis, ok = v.([]*Emoji); ok {
+		} else if es, ok := v.(*[]*Emoji); ok {
+			emojis = *es
+		} else {
+			return errors.New("not supported emoji data structure")
 		}
+
+		// save any content
+		if len(emojis) == 0 {
+			return nil
+		}
+		if guildID.Empty() {
+			// try to recover..
+			guildID = emojis[0].guildID
+		}
+		c.SetGuildEmojis(guildID, emojis)
 	case GuildCache:
 		if guild, ok := v.(*Guild); ok {
 			c.SetGuild(guild)

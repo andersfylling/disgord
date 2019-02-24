@@ -187,35 +187,35 @@ func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *W
 	return
 }
 
-// ModifyWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
+// UpdateWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
 // Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
 // avatar by providing a nil to SetAvatar.
-//  params = &ModifyWebhookParams{}
+//  params = &UpdateWebhookParams{}
 //  params.UseDefaultAvatar() // will reset any image data, if present
-type ModifyWebhookParams struct {
+type UpdateWebhookParams struct {
 	avatarIsSet bool
 	name        string
 	avatar      string
 	channelID   Snowflake
 }
 
-var _ AvatarParamHolder = (*ModifyWebhookParams)(nil)
+var _ AvatarParamHolder = (*UpdateWebhookParams)(nil)
 
-func NewModifyWebhookParams() *ModifyWebhookParams {
-	return &ModifyWebhookParams{}
+func NewUpdateWebhookParams() *UpdateWebhookParams {
+	return &UpdateWebhookParams{}
 }
 
-func (m *ModifyWebhookParams) Empty() bool {
+func (m *UpdateWebhookParams) Empty() bool {
 	return m.name == "" && m.channelID.Empty() && !m.avatarIsSet
 }
 
-func (m *ModifyWebhookParams) SetName(name string) {
+func (m *UpdateWebhookParams) SetName(name string) {
 	m.name = name
 }
 
 // SetAvatar updates the avatar image. Must be abase64 encoded string.
 // provide a nil to reset the avatar.
-func (m *ModifyWebhookParams) SetAvatar(avatar string) {
+func (m *UpdateWebhookParams) SetAvatar(avatar string) {
 	m.avatar = avatar
 	m.avatarIsSet = avatar != ""
 }
@@ -224,15 +224,15 @@ func (m *ModifyWebhookParams) SetAvatar(avatar string) {
 // Note that the avatar value will never hold content, as default avatars only works on null values.
 //
 // Use this to reset an avatar image.
-func (m *ModifyWebhookParams) UseDefaultAvatar() {
+func (m *UpdateWebhookParams) UseDefaultAvatar() {
 	m.avatar = ""
 	m.avatarIsSet = true
 }
-func (m *ModifyWebhookParams) SetChannelID(channelID Snowflake) {
+func (m *UpdateWebhookParams) SetChannelID(channelID Snowflake) {
 	m.channelID = channelID
 }
 
-func (m *ModifyWebhookParams) MarshalJSON() ([]byte, error) {
+func (m *UpdateWebhookParams) MarshalJSON() ([]byte, error) {
 	var v interface{}
 	if m.avatarIsSet {
 		p := &modifyWebhookParamsWithAvatar{
@@ -265,7 +265,7 @@ type modifyWebhookParamsWithAvatar struct {
 	ChannelID Snowflake `json:"channel_id,omitempty"`
 }
 
-// ModifyWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// UpdateWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
@@ -273,7 +273,7 @@ type modifyWebhookParamsWithAvatar struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParams) (ret *Webhook, err error) {
+func UpdateWebhook(client httd.Patcher, id Snowflake, params *UpdateWebhookParams) (ret *Webhook, err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -294,7 +294,7 @@ func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParam
 	return
 }
 
-// ModifyWebhookWithToken [REST] Same as ModifyWebhook, except this call does not require authentication,
+// UpdateWebhookWithToken [REST] Same as ModifyWebhook, except this call does not require authentication,
 // does not accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
@@ -303,7 +303,7 @@ func ModifyWebhook(client httd.Patcher, id Snowflake, params *ModifyWebhookParam
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional. Not tested:extra json fields might cause
 //                          an issue. Consider writing a json params object.
-func ModifyWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
+func UpdateWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
 	id := newWebhook.ID
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")

@@ -1,6 +1,6 @@
 DO NOT TOUCH THIS BRANCH
 
-# Disgord [![Documentation](https://godoc.org/github.com/andersfylling/disgord?status.svg)](http://godoc.org/github.com/andersfylling/disgord)
+# DisGord [![Documentation](https://godoc.org/github.com/andersfylling/disgord?status.svg)](http://godoc.org/github.com/andersfylling/disgord)
 [![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/contains-technical-debt.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/images/badges/for-you.svg)](https://forthebadge.com)
 
 ## Health
@@ -10,13 +10,15 @@ DO NOT TOUCH THIS BRANCH
 | v0.10     | [![CircleCI](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10.svg?style=shield)](https://circleci.com/gh/andersfylling/disgord/tree/release%2Fv0.10) | - | - |
 
 ## About
-GoLang module for interacting with the Discord API. Supports socketing and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
+GoLang module for interacting with the Discord API. Supports events, REST calls and voice (receive only).
+ 
+ and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 
 Disgord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, hence the "contains technical debt" label, so any bug report/feedback is greatly appreciated!
 
 To get started see the examples in [docs](docs/examples)
 
-Some projects using DisGord can be found [here](PROJECTS.md).
+Some projects using DisGord can be found [here](docs/PROJECTS.md).
 
 Discord channel/server: [Discord Gophers#Disgord](https://discord.gg/qBVmnq9)
 You can find a live chats for DisGord in Discord. We exist in both the Gopher server and the Discord API server:
@@ -30,11 +32,43 @@ Currently the caching focuses on being very configurable instead of as optimal a
  - For those with a builder pattern, you can simply call `.IgnoreCache()` before you call `.Execute()`
  - The remaining methods will require you to use the exported package functions (see /docs/examples) for how to in detail.
 
+## Starter guide (Linux)
+> Note! this is a Go module project, and Go module support should activated to properly use DisGord. It might work using only the GOPATH. But officially this is not supported: Read more about modules here: [https://github.com/golang/go/wiki/Modules](https://github.com/golang/go/wiki/Modules) 
 
-## Logging
-DisGord allows you to inject your own logger, use the default one for DisGord (Zap), do not use any logging at all, you decide. To inject your own logger you must comply with the interface `disgord.Logger` (see logging.go).
+To create a new bot you can use the disgord.sh script to automate the boring copy/paste process:
 
-To use the logger later on, call the `Session.Logger()` method.
+```bash
+bash <(curl -s -L https://git.io/disgord-script)
+``` 
+> Remember to activate module support. Your IDE might require you to activate it in the settings menu.
+
+Starter guide as a gif: https://terminalizer.com/view/469961d0695
+
+
+## Architecture & Behavior
+Discord provide communication in different forms. DisGord tackles the main ones, events (ws), voice (udp + ws), 
+and REST calls.
+
+You can think of DisGord as layered, in which case it will look something like:
+![Simple way to think about DisGord architecture from a layered perspective](docs/disgord-layered-version.png)
+
+#### Events
+For Events, DisGord uses the [reactor pattern](https://dzone.com/articles/understanding-reactor-pattern-thread-based-and-eve). Every incoming event from Discord is processed and checked if any handler is registered for it, otherwise it's discarded to save time and resource use. Once a desired event is received, DisGord starts up a Go routine and runs all the related handlers in sequence; avoiding locking the need to use mutexes the handlers. 
+
+In addition to traditional handlers, DisGord allows you to use Go channels. Note that if you use more than one channel per event, one of the channels will randomly receive the event data; this is how go channels work. It will act as a randomized load balancer.
+
+But before either channels or handlers are triggered, the cache is updated.
+
+#### REST
+The "REST manager", or the `httd.Client`, handles rate limiting for outgoing requests, and updated the internal logic on responses. All the REST methods are defined on the `disgord.Client` and checks for issues before the request is sent out.
+
+If the request is a standard GET request, the cache is always checked first to reduce delay, network traffic and load on the Discord servers. And on responses, regardless of the http method, the data is copied into the cache.
+
+#### Voice
+Whenever you want the bot to join a voice channel, a websocket and UDP connection is established. So if your bot is currently in 5 voice channels, then you have 5 websocket connections and 5 udp connections open to handle the voice traffic.
+
+#### Cache
+The cache tries to represent the Discord state as accurate as it can. Because of this, the cache is immutable by default. Meaning the does not allow you to reference any cached objects directly, and every incoming and outgoing data of the cache is deep copied.
 
 ## Package structure
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
@@ -64,7 +98,15 @@ github.com/andersfylling/disgord
 └──github.com/uber-go/zap              :Logging (optional)
 ```
 
-### Build constraints
+
+## Logging
+DisGord requires you to inject a logger instance if you want DisGord to log internal messages (recommended). Logrus is supported out of the box, while other projects might require you to wrap them to comply with `disgord.Logger`. 
+
+You can also use the default logger, which is a wrapped Zap instance: `disgord.DefaultLogger(false)` (see logging.go).
+
+To use the log instance later on, call the method `Session.Logger()`.
+
+## Build tags
 > For **advanced users only**.
 
 If you do not wish to use json-iterator, you can pass `-tags=json-std` to switch to `"encoding/json"`.
@@ -80,106 +122,13 @@ mutexes you can pass `-tags=disgord_removeDiscordMutex` which will replace the R
 This cannot be the default behaviour, as it creates confusion whether or not a mutex exists and leads to more error prone code. The developer has to be aware themselves whether or not
 their code can be run without the need of mutexes. This option is not affected by the `disgord_parallelism` tag.
 
-## Setup / installation guide
-As this is a go module, it is expected that your project utilises the module concept (minimum Go version: 1.11). If you do not, then there is no guarantee that using this will work. To get this, simply use go get: `go get github.com/andersfylling/disgord`. I have been using this project in none module projects, so it might function for you as well. But official, this is not supported.
-
-Read more about modules here: [https://github.com/golang/go/wiki/Modules](https://github.com/golang/go/wiki/Modules)
-
-### Creating a fresh project using Disgord
-To use the install script: `wget https://github.com/andersfylling/disgord/raw/develop/disgord.sh && chmod +x disgord.sh && ./disgord.sh && rm disgord.sh` and follow the guide (please use go v1.11 minimum. Note that this sets GO111MODULE=auto only temporary, and you must do so permanently), or you can do it manually:
-
-So if you haven't used modules before and you just want to create a Bot using Disgord, this is how it's done (Linux):
- 1. Create a folder with your project name: `mkdir my-bot && cd my-bot` (outside the go path!)
- 2. Create a main.go file, and add the following:
-    ```go
-    package main
-
-    import "github.com/andersfylling/disgord"
-    import "fmt"
-
-    func main() {
-        client := disgord.New(&disgord.Config{
-            BotToken: "DISGORD_TOKEN",
-            Logger: disgord.DefaultLogger(false), // optional logging, debug=false
-        })
-
-        // note that the .Execute() is not on every REST method of DisGord (yet)
-        myself, err := client.GetCurrentUser().Execute()
-        if err != nil {
-            panic(err)
-        }
-
-        fmt.Printf("Hello, %s!\n", myself.String())
-    }
-    ```
- 3. Make sure you have activated go modules: `export GO111MODULE=auto`
- 4. Initiate the project as a module: `go mod init my-bot` (you should now see a `go.mod` file)
- 5. Start building, this will find all your dependencies and store them in the go.mod file: `go build .`
- 6. You can now start the bot, and see the greeting: `go run .`
-
-If you experience any issues with this guide, please create a issue.
 
 ## Contributing
 Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be useful to read this regardless if you have the time)
 
-## Git branching model
-The branch:develop holds the most recent changes, as it name implies. There is no master branch as there will never be a "stable latest branch" except the git tags (or releases).
-
-## Mental model
-#### Caching
-The cache can be either immutable (recommended) or mutable. When the cache is mutable you will share the memory space with the cache, such that if you change your data structure you might also change the cache directly. However, by using the immutable option all incoming data is deep copied to the cache and you will not be able to directly access the memory space, this should keep your code less error-prone and allow for concurrent cache access in case you want to use channels or other long-running tasks/processes.
-
-#### Requests
-For every REST API request the request is rate limited and cached auto-magically by DisGord. This means that when you utilize the Session interface you won't have to worry about rate limits and data is cached to improve performance. See the GoDoc for how to bypass the caching.
-
-#### Events
-> Note: if requested, a build flag can be added to use pro-actor pattern instead of reactor for handlers.
-
-The reactor pattern is used. This will always be the default behavior, however channels will ofcourse work more as a pro-actor system as you deal with the data parallel to other functions.
-Incoming events from the discord servers are parsed into respective structs and dispatched to either a) handlers, or b) through channels. Both are dispatched from the same place, and the arguments share the same memory space. Pick handlers (register them using Session.On method) simplicity as they run in sequence, while channels are executed in a parallel setting (it's expected you understand how channels work so I won't go in-depth here).
-
-## Quick example
+## Q&A
 > **NOTE:** To see more examples go visit the docs/examples folder.
 See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
-```go
-package main 
-
-import (
-	"github.com/andersfylling/disgord"
-	"os"
-)
-
-func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
-    msg := data.Message
-    
-    // whenever the message written is "ping", the bot replies "pong"
-    if msg.Content == "ping" {
-        msg.RespondString(session, "pong")
-    }
-}
-
-func main() {
-	var err error 
-	
-	botConfig := &disgord.Config{
-        BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger: disgord.DefaultLogger(false), // optional logging, debug=false
-    }
-	
-    // create a Disgord session
-    client := disgord.New(botConfig)
-    
-    // create a handler and bind it to new message events
-    client.On(disgord.EventMessageCreate, replyPongToPing)
-    
-    // connect to the discord gateway to receive events
-    if err = client.StayConnectedUntilInterrupted(); err != nil {
-        botConfig.Logger.Error(err)
-    }
-}
-```
-
-## Q&A
 
 ```Markdown
 1. Is there an alternative Golang package?
@@ -193,13 +142,13 @@ in the official documentation).
 ```
 
 ```Markdown
-2. Reason for making another Discord lib in GoLang?
+2. How do I find my bot token and/or add my bot to a server?
 
-I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
+Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
 ```
 
 ```Markdown
-3. How do I find my bot token and/or add my bot to a server?
+3. Why make another Discord lib in GoLang?
 
-Please follow this tutorial: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
+I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```

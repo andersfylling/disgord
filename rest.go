@@ -120,12 +120,14 @@ type rest struct {
 	pool    Pool
 	factory func() interface{}
 
-	conf *httd.Request
+	conf              *httd.Request
+	expectsStatusCode int
 
 	// steps
-	checkCache  restStepCheckCache
-	doRequest   restStepDoRequest
-	updateCache restStepUpdateCache
+	checkCache     restStepCheckCache
+	doRequest      restStepDoRequest
+	preUpdateCache func(x interface{})
+	updateCache    restStepUpdateCache
 }
 
 func (r *rest) Put(x interface{}) {
@@ -208,6 +210,10 @@ func (r *rest) stepUpdateCache(registry cacheRegistry, id Snowflake, x interface
 		return nil
 	}
 
+	if r.preUpdateCache != nil {
+		r.preUpdateCache(x)
+	}
+
 	return r.c.cache.Update(registry, x)
 }
 
@@ -249,8 +255,8 @@ func (r *rest) Execute() (v interface{}, err error) {
 		return nil, err
 	}
 
-	if resp.Request.Method == http.MethodDelete && resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
+	if r.expectsStatusCode > 0 && resp.StatusCode != r.expectsStatusCode {
+		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(r.expectsStatusCode)
 		err = errors.New(msg)
 		return nil, err
 	}
@@ -478,6 +484,7 @@ func GetGatewayBot(client httd.Getter) (gateway *GatewayBot, err error) {
 	return
 }
 
+// TODO: auto generate
 func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 	var v interface{}
 	if v, err = f(); err != nil {
@@ -491,6 +498,7 @@ func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// TODO: auto generate
 func getUser(f func() (interface{}, error)) (user *User, err error) {
 	var v interface{}
 	if v, err = f(); err != nil {
@@ -502,4 +510,60 @@ func getUser(f func() (interface{}, error)) (user *User, err error) {
 	}
 
 	return v.(*User), nil
+}
+
+// TODO: auto generate
+func getNickName(f func() (interface{}, error)) (nick string, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return "", err
+	}
+
+	if v == nil {
+		return "", errors.New("object was nil")
+	}
+
+	return v.(*nickNameResponse).Nickname, nil
+}
+
+// TODO: auto generate
+func getBan(f func() (interface{}, error)) (ban *Ban, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Ban), nil
+}
+
+// TODO: auto generate
+func getEmoji(f func() (interface{}, error)) (emoji *Emoji, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Emoji), nil
+}
+
+// TODO: auto generate
+func getInvite(f func() (interface{}, error)) (invite *Invite, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Invite), nil
 }

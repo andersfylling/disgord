@@ -4,9 +4,9 @@ package disgord
 
 import "strconv"
 
-const _Flag_name = "DisableCache"
+const _Flag_name = "DisableCacheIgnoreEmptyParams"
 
-var _Flag_index = [...]uint8{0, 12}
+var _Flag_index = [...]uint8{0, 12, 29}
 
 func (i Flag) String() string {
 	i -= 1

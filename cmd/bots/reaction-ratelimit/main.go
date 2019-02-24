@@ -53,7 +53,7 @@ func main() {
 	msgID := snowflake.ID(540519319814275089)
 	chanID := snowflake.ID(540519296640614416)
 
-	e, err := c.GetGuildEmojis(486833041486905345).Execute()
+	e, err := c.GetGuildEmojis(486833041486905345)
 	if err != nil {
 		panic(err)
 	}
