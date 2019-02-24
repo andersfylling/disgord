@@ -158,6 +158,8 @@ Make them readable. And don't have external dependencies (eg. Discord API).
 ### Pull Requests
 If you create a PR that is not based on an issue. Please describe why you want DisGord to support it. Also add examples in both the docs/examples and a shorter version in the go doc (comments).
 
+If your PR is not ready yet, make it a Draft.
+
 ## Styleguides
 `go fmt ./...`
 

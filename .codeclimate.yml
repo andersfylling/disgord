@@ -1,3 +1,4 @@
 ## Exclude generated files
 exclude_patterns:
 - "**/*_gen.go"
+- "**/*_string.go"

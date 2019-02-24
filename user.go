@@ -616,7 +616,7 @@ func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) 
 		avatar = *u.Avatar
 	}
 
-	updated, err := session.ModifyCurrentUser().
+	updated, err := session.UpdateCurrentUser().
 		SetUsername(u.Username).
 		SetAvatar(avatar).
 		Execute()
@@ -786,7 +786,7 @@ func (c *client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
-	r.pool = c.userPool
+	r.pool = c.pool.user
 
 	if user, err = getUser(r.Execute); err == nil {
 		c.myID = user.ID
@@ -808,7 +808,7 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = id
-	r.pool = c.userPool
+	r.pool = c.pool.user
 
 	return getUser(r.Execute)
 }
@@ -820,8 +820,8 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *client) ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBuilder) {
-	builder = &modifyCurrentUserBuilder{}
+func (c *client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
+	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
@@ -845,7 +845,6 @@ func (c *client) ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBui
 //                          integrations that need to get a list of users' guilds.
 func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
 		Ratelimiter: "/users/@me/guilds",
 		Endpoint:    endpoint.UserMeGuilds(),
 	}, flags)
@@ -868,7 +867,7 @@ func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Rate limiter            /users/@me/guilds TODO: is this correct?
+//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -878,6 +877,7 @@ func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 		Ratelimiter: "/users/@me/guilds",
 		Endpoint:    endpoint.UserMeGuild(id),
 	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 	r.CacheRegistry = GuildCache
 	r.ID = id
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -907,7 +907,7 @@ func (c *client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
-		tmp := make([]*Channel, 0)
+		tmp := make([]*Channel, 0) // TODO: use channel pool to get enough channels
 		return &tmp
 	}
 
@@ -1042,10 +1042,10 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 	return v.(*User), nil
 }
 
-// modifyCurrentUserBuilder ...
+// updateCurrentUserBuilder ...
 //generate-rest-params: username:string, avatar:string,
 //generate-rest-basic-execute: user:*User,
-type modifyCurrentUserBuilder struct {
+type updateCurrentUserBuilder struct {
 	r RESTBuilder
 }
 

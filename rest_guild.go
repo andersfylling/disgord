@@ -124,9 +124,9 @@ func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
 	return ret, nil
 }
 
-// ModifyGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
+// UpdateGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
 // TODO: support nullable Icon, anything else?
-type ModifyGuildParams struct {
+type UpdateGuildParams struct {
 	Name                    string                        `json:"name,omitempty"`
 	Region                  string                        `json:"region,omitempty"`
 	VerificationLvl         int                           `json:"verification_level,omitempty"`
@@ -148,7 +148,7 @@ type ModifyGuildParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
-func ModifyGuild(client httd.Patcher, id Snowflake, params *ModifyGuildParams) (ret *Guild, err error) {
+func ModifyGuild(client httd.Patcher, id Snowflake, params *UpdateGuildParams) (ret *Guild, err error) {
 	var body []byte
 	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
@@ -255,9 +255,9 @@ func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildCha
 	return
 }
 
-// ModifyGuildChannelPositionsParams ...
+// UpdateGuildChannelPositionsParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
-type ModifyGuildChannelPositionsParams struct {
+type UpdateGuildChannelPositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 }
@@ -272,7 +272,7 @@ type ModifyGuildChannelPositionsParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
-func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []ModifyGuildChannelPositionsParams) (ret *Guild, err error) {
+func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []UpdateGuildChannelPositionsParams) (ret *Guild, err error) {
 	var resp *http.Response
 	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
@@ -406,13 +406,13 @@ func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGui
 	return
 }
 
-// ModifyGuildMemberParams ...
+// UpdateGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
-type ModifyGuildMemberParams struct {
+type UpdateGuildMemberParams struct {
 	data map[string]interface{}
 }
 
-func (m *ModifyGuildMemberParams) init() {
+func (m *UpdateGuildMemberParams) init() {
 	if m.data != nil {
 		return
 	}
@@ -421,7 +421,7 @@ func (m *ModifyGuildMemberParams) init() {
 }
 
 // SetNick set new nickname for user. Requires permission MANAGE_NICKNAMES
-func (m *ModifyGuildMemberParams) SetNick(name string) error {
+func (m *UpdateGuildMemberParams) SetNick(name string) error {
 	if err := ValidateUsername(name); err != nil {
 		return err
 	}
@@ -432,31 +432,31 @@ func (m *ModifyGuildMemberParams) SetNick(name string) error {
 }
 
 // RemoveNick removes nickname for user. Requires permission MANAGE_NICKNAMES
-func (m *ModifyGuildMemberParams) RemoveNick() {
+func (m *UpdateGuildMemberParams) RemoveNick() {
 	m.init()
 	m.data["nick"] = nil
 }
 
 // SetRoles updates the member with new roles. Requires permissions MANAGE_ROLES
-func (m *ModifyGuildMemberParams) SetRoles(roles []Snowflake) {
+func (m *UpdateGuildMemberParams) SetRoles(roles []Snowflake) {
 	m.init()
 	m.data["roles"] = roles
 }
 
 // SetMute mutes a member. Requires permission MUTE_MEMBERS
-func (m *ModifyGuildMemberParams) SetMute(yes bool) {
+func (m *UpdateGuildMemberParams) SetMute(yes bool) {
 	m.init()
 	m.data["mute"] = yes
 }
 
 // SetDeaf deafens a member. Requires permission DEAFEN_MEMBERS
-func (m *ModifyGuildMemberParams) SetDeaf(yes bool) {
+func (m *UpdateGuildMemberParams) SetDeaf(yes bool) {
 	m.init()
 	m.data["deaf"] = yes
 }
 
 // SetChannelID moves a member from one channel to another. Requires permission MOVE_MEMBERS
-func (m *ModifyGuildMemberParams) SetChannelID(id Snowflake) error {
+func (m *UpdateGuildMemberParams) SetChannelID(id Snowflake) error {
 	if id.Empty() {
 		return errors.New("empty snowflake")
 	}
@@ -466,7 +466,7 @@ func (m *ModifyGuildMemberParams) SetChannelID(id Snowflake) error {
 	return nil
 }
 
-func (m *ModifyGuildMemberParams) MarshalJSON() ([]byte, error) {
+func (m *UpdateGuildMemberParams) MarshalJSON() ([]byte, error) {
 	if len(m.data) == 0 {
 		return []byte(`{}`), nil
 	}
@@ -474,7 +474,7 @@ func (m *ModifyGuildMemberParams) MarshalJSON() ([]byte, error) {
 	return httd.Marshal(m.data)
 }
 
-var _ json.Marshaler = (*ModifyGuildMemberParams)(nil)
+var _ json.Marshaler = (*UpdateGuildMemberParams)(nil)
 
 // ModifyGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
 // Fires a Guild Member Update Gateway event.
@@ -486,7 +486,7 @@ var _ json.Marshaler = (*ModifyGuildMemberParams)(nil)
 //  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
 //                          the API user must have permissions to both connect to the channel and have the
 //                          MOVE_MEMBERS permission.
-func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *ModifyGuildMemberParams) (err error) {
+func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *UpdateGuildMemberParams) (err error) {
 	var resp *http.Response
 	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
@@ -503,43 +503,6 @@ func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *M
 		err = errors.New(msg)
 	}
 
-	return
-}
-
-// ModifyCurrentUserNickParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
-type ModifyCurrentUserNickParams struct {
-	Nick string `json:"nick"` // :CHANGE_NICKNAME
-}
-
-// ModifyCurrentUserNick [REST] Modifies the nickname of the current user in a guild.
-// Returns a 200 with the nickname on success. Fires a Guild Member Update Gateway event.
-//  Method                  PATCH
-//  Endpoint                /guilds/{guild.id}/members/@me/nick
-//  Rate limiter            /guilds/{guild.id}/members TODO: I don't know if this is correct
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
-//  Reviewed                2018-08-18
-//  Comment                 -
-func ModifyCurrentUserNick(client httd.Patcher, id Snowflake, params *ModifyCurrentUserNickParams) (nick string, err error) {
-	var resp *http.Response
-	var body []byte
-	resp, body, err = client.Patch(&httd.Request{
-		Ratelimiter: ratelimitGuildMembers(id),
-		Endpoint:    endpoint.GuildMembersMeNick(id),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		msg := "could not change nickname. Do you have the CHANGE_NICKNAME permission?"
-		err = errors.New(msg)
-		return
-	}
-
-	err = unmarshal(body, nick)
 	return
 }
 
@@ -628,18 +591,25 @@ func RemoveGuildMember(client httd.Deleter, guildID, userID Snowflake) (err erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-bans
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildBans(client httd.Getter, id Snowflake) (ret []*Ban, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildBans(id Snowflake, flags ...Flag) (bans []*Ban, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(id),
 		Endpoint:    endpoint.GuildBans(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Ban, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	var vs interface{}
+	if vs, err = r.Execute(); err != nil {
+		return nil, err
+	}
+
+	if cons, ok := vs.(*[]*Ban); ok {
+		return *cons, nil
+	}
+	return nil, errors.New("unable to cast guild slice")
 }
 
 // GetGuildBan [REST] Returns a ban object for the given user or a 404 not found if the ban cannot be found.
@@ -650,36 +620,35 @@ func GetGuildBans(client httd.Getter, id Snowflake) (ret []*Ban, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildBan(client httd.Getter, guildID, userID Snowflake) (ret *Ban, err error) {
-	var body []byte
-	var resp *http.Response
-	resp, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildBan(guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Ban{User: c.pool.user.Get().(*User)}
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		msg := "given user is not registered as banned"
-		err = errors.New(msg)
-	}
-
-	err = unmarshal(body, &ret)
-	return
+	return getBan(r.Execute)
 }
 
-// CreateGuildBanParams ...
+// BanMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-ban-query-string-params
-type CreateGuildBanParams struct {
+type BanMemberParams struct {
 	DeleteMessageDays int    `urlparam:"delete_message_days,omitempty"` // number of days to delete messages for (0-7)
 	Reason            string `urlparam:"reason,omitempty"`              // reason for being banned
 }
 
-var _ URLQueryStringer = (*CreateGuildBanParams)(nil)
+var _ URLQueryStringer = (*BanMemberParams)(nil)
 
-// CreateGuildBan [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+func (b *BanMemberParams) FindErrors() error {
+	if !(0 <= b.DeleteMessageDays && b.DeleteMessageDays <= 7) {
+		return errors.New("DeleteMessageDays must be a value in the range of [0, 7], got " + strconv.Itoa(b.DeleteMessageDays))
+	}
+	return nil
+}
+
+// BanMember [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
@@ -687,26 +656,26 @@ var _ URLQueryStringer = (*CreateGuildBanParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *CreateGuildBanParams) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Put(&httd.Request{
+func (c *client) BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error) {
+	if params == nil {
+		return errors.New("params was nil")
+	}
+	if err = params.FindErrors(); err != nil {
+		return err
+	}
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID) + params.URLQueryString(),
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "could not ban member"
-		err = errors.New(msg)
-	}
-
+	_, err = r.Execute()
 	return
 }
 
-// RemoveGuildBan [REST] Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
+// UnbanMember [REST] Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
@@ -714,33 +683,43 @@ func CreateGuildBan(client httd.Puter, guildID, userID Snowflake, params *Create
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func RemoveGuildBan(client httd.Deleter, guildID, userID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) UnbanMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not remove ban on user. Do you have the BAN_MEMBERS permission?"
-		err = errors.New(msg)
-	}
-
+	_, err = r.Execute()
 	return
 }
 
-// GuildPruneParams ...
+// PruneMembersParams will delete members, this is the same as kicking.
 // https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
-type GuildPruneParams struct {
-	Days int `urlparam:"days,omitempty"` // number of days to count prune for (1 or more)
+type pruneMembersParams struct {
+	// Days number of days to count prune for (1 or more)
+	Days int `urlparam:"days"`
+
+	// ComputePruneCount whether 'pruned' is returned, discouraged for large guilds
+	ComputePruneCount bool `urlparam:"compute_prune_count"`
 }
 
-var _ URLQueryStringer = (*GuildPruneParams)(nil)
+func (d *pruneMembersParams) FindErrors() (err error) {
+	if d.Days < 1 {
+		err = errors.New("days must be at least 1, got " + strconv.Itoa(d.Days))
+	}
+	return
+}
 
-// GetGuildPruneCount [REST] Returns an object with one 'pruned' key indicating the number of members that would be
+var _ URLQueryStringer = (*pruneMembersParams)(nil)
+
+// GuildPruneCount ...
+type guildPruneCount struct {
+	Pruned int `json:"pruned"`
+}
+
+// EstimatePruneMembersCount [REST] Returns an object with one 'pruned' key indicating the number of members that would be
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/prune
@@ -748,22 +727,38 @@ var _ URLQueryStringer = (*GuildPruneParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: ratelimitGuildPrune(id),
-		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
-	})
-	if err != nil {
-		return
+func (c *client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error) {
+	if id.Empty() {
+		return 0, errors.New("guildID can not be " + id.String())
+	}
+	params := pruneMembersParams{Days: days}
+	if err = params.FindErrors(); err != nil {
+		return 0, err
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: ratelimitGuildPrune(id),
+		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
+	}, flags)
+	r.factory = func() interface{} {
+		return &guildPruneCount{}
+	}
+
+	var v interface{}
+	if v, err = r.Execute(); err != nil {
+		return 0, err
+	}
+
+	if v == nil {
+		return 0, nil
+	}
+
+	return v.(*guildPruneCount).Pruned, nil
 }
 
-// BeginGuildPrune [REST] Begin a prune operation. Requires the 'KICK_MEMBERS' permission.
-// Returns an object with one 'pruned' key indicating the number of members that were removed in the prune operation.
+// PruneMembers [REST] Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
+// The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
+// if you need it.
 // Fires multiple Guild Member Remove Gateway events.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/prune
@@ -771,18 +766,20 @@ func GetGuildPruneCount(client httd.Getter, id Snowflake, params *GuildPrunePara
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
 //  Reviewed                2018-08-18
 //  Comment                 -
-func BeginGuildPrune(client httd.Poster, id Snowflake, params *GuildPruneParams) (ret *GuildPruneCount, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
-		Ratelimiter: ratelimitGuildPrune(id),
-		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
-	})
-	if err != nil {
-		return
+func (c *client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error) {
+	params := pruneMembersParams{Days: days}
+	if err = params.FindErrors(); err != nil {
+		return err
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ratelimiter: ratelimitGuildPrune(id),
+		Endpoint:    endpoint.GuildPrune(id) + params.URLQueryString(),
+	}, flags)
+
+	_, err = r.Execute()
+	return err
 }
 
 // GetGuildVoiceRegions [REST] Returns a list of voice region objects for the guild. Unlike the similar /voice route,
@@ -887,15 +884,15 @@ func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *Creat
 	return
 }
 
-// ModifyGuildIntegrationParams ...
+// UpdateGuildIntegrationParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
-type ModifyGuildIntegrationParams struct {
+type UpdateGuildIntegrationParams struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
 	ExpireGracePeriod int  `json:"expire_grace_period"`
 	EnableEmoticons   bool `json:"enable_emoticons"`
 }
 
-// ModifyGuildIntegration [REST] Modify the behavior and settings of a integration object for the guild.
+// UpdateGuildIntegration [REST] Modify the behavior and settings of a integration object for the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  PATCH
@@ -904,7 +901,7 @@ type ModifyGuildIntegrationParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func ModifyGuildIntegration(client httd.Patcher, guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams) (err error) {
+func UpdateGuildIntegration(client httd.Patcher, guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams) (err error) {
 	var resp *http.Response
 	resp, _, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
@@ -955,7 +952,7 @@ func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflak
 // Returns a 204 empty response on success.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}/sync
-//  Rate limiter            /guilds/{guild.id}/integrations TODO: is this correct?
+//  Rate limiter            /guilds/{guild.id}/integrations
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -

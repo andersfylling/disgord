@@ -15,73 +15,73 @@ import (
 
 // Constants for the different bit offsets of text channel permissions
 const (
-	ReadMessagesPermission = 1 << (iota + 10)
-	SendMessagesPermission
-	SendTTSMessagesPermission
-	ManageMessagesPermission
-	EmbedLinksPermission
-	AttachFilesPermission
-	ReadMessageHistoryPermission
-	MentionEveryonePermission
-	UseExternalEmojisPermission
+	PermissionReadMessages = 1 << (iota + 10)
+	PermissionSendMessages
+	PermissionSendTTSMessages
+	PermissionManageMessages
+	PermissionEmbedLinks
+	PermissionAttachFiles
+	PermissionReadMessageHistory
+	PermissionMentionEveryone
+	PermissionUseExternalEmojis
 )
 
 // Constants for the different bit offsets of voice permissions
 const (
-	VoiceConnectPermission = 1 << (iota + 20)
-	VoiceSpeakPermission
-	VoiceMuteMembersPermission
-	VoiceDeafenMembersPermission
-	VoiceMoveMembersPermission
-	VoiceUseVADPermission
+	PermissionVoiceConnect = 1 << (iota + 20)
+	PermissionVoiceSpeak
+	PermissionVoiceMuteMembers
+	PermissionVoiceDeafenMembers
+	PermissionVoiceMoveMembers
+	PermissionVoiceUseVAD
 )
 
 // Constants for general management.
 const (
-	ChangeNicknamePermission = 1 << (iota + 26)
-	ManageNicknamesPermission
-	ManageRolesPermission
-	ManageWebhooksPermission
-	ManageEmojisPermission
+	PermissionChangeNickname = 1 << (iota + 26)
+	PermissionManageNicknames
+	PermissionManageRoles
+	PermissionManageWebhooks
+	PermissionManageEmojis
 )
 
 // Constants for the different bit offsets of general permissions
 const (
-	CreateInstantInvitePermission = 1 << iota
-	KickMembersPermission
-	BanMembersPermission
-	AdministratorPermission
-	ManageChannelsPermission
-	ManageServerPermission
-	AddReactionsPermission
-	ViewAuditLogsPermission
+	PermissionCreateInstantInvite = 1 << iota
+	PermissionKickMembers
+	PermissionBanMembers
+	PermissionAdministrator
+	PermissionManageChannels
+	PermissionManageServer
+	PermissionAddReactions
+	PermissionViewAuditLogs
 
-	AllTextPermission = ReadMessagesPermission |
-		SendMessagesPermission |
-		SendTTSMessagesPermission |
-		ManageMessagesPermission |
-		EmbedLinksPermission |
-		AttachFilesPermission |
-		ReadMessageHistoryPermission |
-		MentionEveryonePermission
-	AllVoicePermission = VoiceConnectPermission |
-		VoiceSpeakPermission |
-		VoiceMuteMembersPermission |
-		VoiceDeafenMembersPermission |
-		VoiceMoveMembersPermission |
-		VoiceUseVADPermission
-	AllChannelPermission = AllTextPermission |
-		AllVoicePermission |
-		CreateInstantInvitePermission |
-		ManageRolesPermission |
-		ManageChannelsPermission |
-		AddReactionsPermission |
-		ViewAuditLogsPermission
-	AllPermission = AllChannelPermission |
-		KickMembersPermission |
-		BanMembersPermission |
-		ManageServerPermission |
-		AdministratorPermission
+	PermissionTextAll = PermissionReadMessages |
+		PermissionSendMessages |
+		PermissionSendTTSMessages |
+		PermissionManageMessages |
+		PermissionEmbedLinks |
+		PermissionAttachFiles |
+		PermissionReadMessageHistory |
+		PermissionMentionEveryone
+	PermissionAllVoice = PermissionVoiceConnect |
+		PermissionVoiceSpeak |
+		PermissionVoiceMuteMembers |
+		PermissionVoiceDeafenMembers |
+		PermissionVoiceMoveMembers |
+		PermissionVoiceUseVAD
+	PermissionChannelAll = PermissionTextAll |
+		PermissionAllVoice |
+		PermissionCreateInstantInvite |
+		PermissionManageRoles |
+		PermissionManageChannels |
+		PermissionAddReactions |
+		PermissionViewAuditLogs
+	PermissionAll = PermissionChannelAll |
+		PermissionKickMembers |
+		PermissionBanMembers |
+		PermissionManageServer |
+		PermissionAdministrator
 )
 
 // NewGuild ...
@@ -1118,8 +1118,3 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 //
 // 	return
 // }
-
-// GuildPruneCount ...
-type GuildPruneCount struct {
-	Pruned int `json:"pruned"`
-}

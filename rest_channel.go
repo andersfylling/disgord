@@ -65,8 +65,8 @@ func GetChannel(client httd.Getter, id Snowflake) (ret *Channel, err error) {
 
 // NewModifyVoiceChannelParams create a ModifyChannelParams for a voice channel. Prevents changing attributes that
 // only exists for text channels.
-func NewModifyVoiceChannelParams() *ModifyChannelParams {
-	return &ModifyChannelParams{
+func NewUpdateVoiceChannelParams() *UpdateChannelParams {
+	return &UpdateChannelParams{
 		data:    map[string]interface{}{},
 		isVoice: true,
 	}
@@ -74,21 +74,21 @@ func NewModifyVoiceChannelParams() *ModifyChannelParams {
 
 // NewModifyTextChannelParams create a ModifyChannelParams for a text channel. Prevents changing attributes that
 // only exists for voice channels.
-func NewModifyTextChannelParams() *ModifyChannelParams {
-	return &ModifyChannelParams{
+func NewModifyTextChannelParams() *UpdateChannelParams {
+	return &UpdateChannelParams{
 		data:   map[string]interface{}{},
 		isText: true,
 	}
 }
 
 // ModifyChannelParams https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-type ModifyChannelParams struct {
+type UpdateChannelParams struct {
 	data    map[string]interface{}
 	isText  bool
 	isVoice bool
 }
 
-func (m *ModifyChannelParams) init() {
+func (m *UpdateChannelParams) init() {
 	if m.data != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (m *ModifyChannelParams) init() {
 	m.data = map[string]interface{}{}
 }
 
-func (m *ModifyChannelParams) SetName(name string) error {
+func (m *UpdateChannelParams) SetName(name string) error {
 	if err := validateChannelName(name); err != nil {
 		return err
 	}
@@ -105,11 +105,11 @@ func (m *ModifyChannelParams) SetName(name string) error {
 	m.data["name"] = name
 	return nil
 }
-func (m *ModifyChannelParams) SetPosition(pos uint) {
+func (m *UpdateChannelParams) SetPosition(pos uint) {
 	m.init()
 	m.data["position"] = pos
 }
-func (m *ModifyChannelParams) SetTopic(topic string) error {
+func (m *UpdateChannelParams) SetTopic(topic string) error {
 	if m.isVoice {
 		return errors.New("cannot set topic for a voice channel. Text channels only")
 	}
@@ -122,7 +122,7 @@ func (m *ModifyChannelParams) SetTopic(topic string) error {
 	m.isText = true
 	return nil
 }
-func (m *ModifyChannelParams) SetNSFW(yes bool) error {
+func (m *UpdateChannelParams) SetNSFW(yes bool) error {
 	if m.isVoice {
 		return errors.New("cannot set NSFW status for voice channel. Text channels only")
 	}
@@ -131,7 +131,7 @@ func (m *ModifyChannelParams) SetNSFW(yes bool) error {
 	m.isText = true
 	return nil
 }
-func (m *ModifyChannelParams) SetRateLimitPerUser(seconds uint) error {
+func (m *UpdateChannelParams) SetRateLimitPerUser(seconds uint) error {
 	if m.isVoice {
 		return errors.New("cannot set rate limit for a voice channel. Text channels only")
 	}
@@ -144,7 +144,7 @@ func (m *ModifyChannelParams) SetRateLimitPerUser(seconds uint) error {
 	m.isText = true
 	return nil
 }
-func (m *ModifyChannelParams) SetBitrate(bitrate uint) error {
+func (m *UpdateChannelParams) SetBitrate(bitrate uint) error {
 	if m.isText {
 		return errors.New("cannot set bitrate for text channel. Voice channels only")
 	}
@@ -153,7 +153,7 @@ func (m *ModifyChannelParams) SetBitrate(bitrate uint) error {
 	m.isVoice = true
 	return nil
 }
-func (m *ModifyChannelParams) SetUserLimit(limit uint) error {
+func (m *UpdateChannelParams) SetUserLimit(limit uint) error {
 	if m.isText {
 		return errors.New("cannot set user limit for text channel. Voice channels only")
 	}
@@ -162,11 +162,11 @@ func (m *ModifyChannelParams) SetUserLimit(limit uint) error {
 	m.isVoice = true
 	return nil
 }
-func (m *ModifyChannelParams) SetPermissionOverwrites(permissions []PermissionOverwrite) {
+func (m *UpdateChannelParams) SetPermissionOverwrites(permissions []PermissionOverwrite) {
 	m.init()
 	m.data["permission_overwrites"] = permissions
 }
-func (m *ModifyChannelParams) AddPermissionOverwrite(permission PermissionOverwrite) {
+func (m *UpdateChannelParams) AddPermissionOverwrite(permission PermissionOverwrite) {
 	m.init()
 	if _, exists := m.data["permission_overwrites"]; !exists {
 		m.data["permission_overwrites"] = []PermissionOverwrite{permission}
@@ -175,7 +175,7 @@ func (m *ModifyChannelParams) AddPermissionOverwrite(permission PermissionOverwr
 		s = append(s, permission)
 	}
 }
-func (m *ModifyChannelParams) AddPermissionOverwrites(permissions []PermissionOverwrite) {
+func (m *UpdateChannelParams) AddPermissionOverwrites(permissions []PermissionOverwrite) {
 	m.init()
 	if _, exists := m.data["permission_overwrites"]; !exists {
 		m.data["permission_overwrites"] = permissions
@@ -186,7 +186,7 @@ func (m *ModifyChannelParams) AddPermissionOverwrites(permissions []PermissionOv
 		}
 	}
 }
-func (m *ModifyChannelParams) SetParentID(id Snowflake) error {
+func (m *UpdateChannelParams) SetParentID(id Snowflake) error {
 	if !m.isVoice && !m.isText {
 		return errors.New("can only set parent id for voice and text channels")
 	}
@@ -194,7 +194,7 @@ func (m *ModifyChannelParams) SetParentID(id Snowflake) error {
 	m.data["parent_id"] = id
 	return nil
 }
-func (m *ModifyChannelParams) RemoveParentID() error {
+func (m *UpdateChannelParams) RemoveParentID() error {
 	if !m.isVoice && !m.isText {
 		return errors.New("can only set parent id for voice and text channels")
 	}
@@ -203,7 +203,7 @@ func (m *ModifyChannelParams) RemoveParentID() error {
 	return nil
 }
 
-func (m *ModifyChannelParams) MarshalJSON() ([]byte, error) {
+func (m *UpdateChannelParams) MarshalJSON() ([]byte, error) {
 	if len(m.data) == 0 {
 		return []byte(`{}`), nil
 	}
@@ -211,7 +211,7 @@ func (m *ModifyChannelParams) MarshalJSON() ([]byte, error) {
 	return httd.Marshal(m.data)
 }
 
-var _ json.Marshaler = (*ModifyChannelParams)(nil)
+var _ json.Marshaler = (*UpdateChannelParams)(nil)
 
 // ModifyChannel [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 // a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
@@ -223,7 +223,7 @@ var _ json.Marshaler = (*ModifyChannelParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func ModifyChannel(client httd.Patcher, id Snowflake, changes *ModifyChannelParams) (ret *Channel, err error) {
+func ModifyChannel(client httd.Patcher, id Snowflake, changes *UpdateChannelParams) (ret *Channel, err error) {
 	if id.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -291,16 +291,12 @@ func DeleteChannel(client httd.Deleter, id Snowflake) (channel *Channel, err err
 	return channel, nil
 }
 
-// EditChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
-type EditChannelPermissionsParams struct {
+// UpdateChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
+type UpdateChannelPermissionsParams struct {
 	Allow int    `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  int    `json:"deny"`  // the bitwise value of all disallowed permissions
 	Type  string `json:"type"`  // "member" for a user or "role" for a role
 }
-
-// SetChannelPermissionsParams is an alias for EditChannelPermissionsParams because Discord uses a single endpoint
-// for both editing and adding permission overwrites.
-type SetChannelPermissionsParams = EditChannelPermissionsParams
 
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
 // for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
@@ -311,7 +307,7 @@ type SetChannelPermissionsParams = EditChannelPermissionsParams
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, params *EditChannelPermissionsParams) (err error) {
+func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams) (err error) {
 	if chanID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -337,8 +333,8 @@ func EditChannelPermissions(client httd.Puter, chanID, overwriteID Snowflake, pa
 	return err
 }
 
-// SetChannelPermissions ...
-func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams, falgs ...Flag) (err error) {
+// UpdateChannelPermissions ...
+func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
 	err = EditChannelPermissions(c.req, chanID, overwriteID, params)
 	return
 }
@@ -523,6 +519,106 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err
 	return err
 }
 
+// GetPinnedMessages .
+func (c *client) GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error) {
+	ret, err = GetPinnedMessages(c.req, channelID)
+	return
+}
+
+func (c *client) PinMessage(message *Message, flags ...Flag) error {
+	return c.PinMessageID(message.ChannelID, message.ID, flags...)
+}
+
+func (c *client) PinMessageID(channelID, messageID Snowflake, flags ...Flag) error {
+	return AddPinnedChannelMessage(c.req, channelID, messageID)
+}
+
+func (c *client) UnpinMessage(message *Message, flags ...Flag) error {
+	return c.UnpinMessageID(message.ChannelID, message.ID, flags...)
+}
+
+func (c *client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) error {
+	return deletePinnedChannelMessage(c.req, channelID, messageID)
+}
+
+type UpdatePinnedMessagesParams struct {
+	PinMessages []Snowflake
+	PinMessage  Snowflake
+
+	UnpinMessages []Snowflake
+	UnpinMessage  Snowflake
+}
+
+// UpdatePinnedMessages [REST] Pins one or more messages in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// By default, this method returns an error if one of the message ID's you wish to pin is zero/invalid. To
+// instead skip those invalid snowflakes/id pass in the disgord flag IgnoreEmptyParams.
+//  params := &disgord.UpdatePinnedMessagesParams{
+//      AddMessages: []disgord.Snowflake{
+//          0,          // empty/invalid
+//          1254334682, // ok
+//          6582332434, // ok
+//          0,          // empty/invalid
+//          0,          // empty/invalid
+//          683234823,  // ok
+//      },
+//  }
+//
+//  // because there exists N empty/invalid message id's, this method will return an error saying the message id
+//  // can not be empty/invalid.
+//  disgord.UpdatePinnedMessages(channelID, &params) // error
+//
+//  // The disgord.IgnoreEmptyParams, will in this situation skip all the message id's that are empty/invalid.
+//  disgord.UpdatePinnedMessages(channelID, &params, disgord.IgnoreEmptyParams) // ok
+//
+// This method sends N request, where N equals the number of messages to be pinned.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 Each request returns a 204 empty response on success.
+func (c *client) UpdatePinnedMessages(channelID Snowflake, params *UpdatePinnedMessagesParams, flags ...Flag) (pinned, unpinned []Snowflake, err error) {
+	if channelID.Empty() {
+		return nil, nil, errors.New("channelID can not be " + channelID.String())
+	}
+	if params == nil {
+		return nil, nil, errors.New("no message ID was given")
+	}
+
+	if len(params.PinMessages) == 0 || !params.PinMessage.Empty() {
+		params.PinMessages = append(params.PinMessages, params.PinMessage)
+	}
+	ctrl := mergeFlags(flags)
+
+	messages := make([]Snowflake, 0, len(params.PinMessages)+1)
+	for i := range params.PinMessages {
+		id := params.PinMessages[i]
+		if id.Empty() {
+			err = errors.New("specified messages ID's can not be " + id.String())
+			if !ctrl.IgnoreEmptyParams() {
+				return nil, nil, err
+			}
+		} else {
+			messages = append(messages, id)
+		}
+	}
+	if len(messages) == 0 {
+		return nil, nil, err
+	}
+
+	for _, messageID := range messages {
+		if err = AddPinnedChannelMessage(c.req, channelID, messageID); err != nil {
+			return pinned, nil, err
+		}
+
+		pinned = append(pinned, messageID)
+	}
+
+	// TODO: unpin messages
+
+	return pinned, nil, nil
+}
+
 // DeletePinnedChannelMessage [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
@@ -531,7 +627,7 @@ func AddPinnedChannelMessage(client httd.Puter, channelID, msgID Snowflake) (err
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
+func deletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -556,13 +652,32 @@ func DeletePinnedChannelMessage(client httd.Deleter, channelID, msgID Snowflake)
 	return err
 }
 
-// GroupDMAddRecipientParams JSON params for GroupDMAddRecipient
-type GroupDMAddRecipientParams struct {
-	AccessToken string `json:"access_token"` // access token of a user that has granted your app the gdm.join scope
-	Nickname    string `json:"nick"`         // nickname of the user being added
+// GroupDMParticipant Information needed to add a recipient to a group chat
+type GroupDMParticipant struct {
+	AccessToken string    `json:"access_token"`   // access token of a user that has granted your app the gdm.join scope
+	Nickname    string    `json:"nick,omitempty"` // nickname of the user being added
+	UserID      Snowflake `json:"-"`
 }
 
-// GroupDMAddRecipient [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
+func (g *GroupDMParticipant) FindErrors() error {
+	if g.UserID.Empty() {
+		return errors.New("missing userID")
+	}
+	if g.AccessToken == "" {
+		return errors.New("missing access token")
+	}
+	if err := ValidateUsername(g.Nickname); err != nil && g.Nickname != "" {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
+	return addGroupDMRecipient(c.req, channelID, participant)
+}
+
+// addGroupDMRecipient [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
 // on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
@@ -570,18 +685,21 @@ type GroupDMAddRecipientParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params *GroupDMAddRecipientParams) (err error) {
+func addGroupDMRecipient(client httd.Puter, channelID Snowflake, params *GroupDMParticipant) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if userID.Empty() {
+	if params == nil {
+		return errors.New("params can not be nil")
+	}
+	if params.UserID.Empty() {
 		return errors.New("userID must be set to target the specific recipient")
 	}
 
 	var resp *http.Response
 	resp, _, err = client.Put(&httd.Request{
 		Ratelimiter: ratelimitChannelRecipients(channelID),
-		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
+		Endpoint:    endpoint.ChannelRecipient(channelID, params.UserID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	})
@@ -597,14 +715,14 @@ func GroupDMAddRecipient(client httd.Puter, channelID, userID Snowflake, params 
 	return err
 }
 
-// GroupDMRemoveRecipient [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
+// removeGroupDMRecipient [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func GroupDMRemoveRecipient(client httd.Deleter, channelID, userID Snowflake) (err error) {
+func removeGroupDMRecipient(client httd.Deleter, channelID, userID Snowflake) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}

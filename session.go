@@ -97,9 +97,9 @@ type AuditLogsRESTer interface {
 // ChannelRESTer REST interface for all Channel endpoints
 type ChannelRESTer interface {
 	GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error)
-	ModifyChannel(id Snowflake, changes *ModifyChannelParams, flags ...Flag) (ret *Channel, err error)
+	UpdateChannel(id Snowflake, changes *UpdateChannelParams, flags ...Flag) (ret *Channel, err error)
 	DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error)
-	UpdateChannelPermissions(chanID, overwriteID Snowflake, params *SetChannelPermissionsParams, flags ...Flag) (err error)
+	UpdateChannelPermissions(chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error)
 	GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error)
 	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error)
 	DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error)
@@ -107,81 +107,81 @@ type ChannelRESTer interface {
 	GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error)
 	AddPinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
 	DeletePinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
-	GroupDMAddRecipient(channelID, userID Snowflake, params *GroupDMAddRecipientParams, flags ...Flag) (err error)
-	GroupDMRemoveRecipient(channelID, userID Snowflake, flags ...Flag) (err error)
 	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error)
 	GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error)
 	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
 	EditMessage(chanID, msgID Snowflake, params *EditMessageParams, flags ...Flag) (ret *Message, err error)
 	DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
-	BulkDeleteMessages(chanID Snowflake, params *BulkDeleteMessagesParams, flags ...Flag) (err error)
+	BulkDeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error)
 	CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error)
 	DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error)
+	AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) (err error)
+	KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error)
 }
 
 // EmojiRESTer REST interface for all emoji endpoints
 type EmojiRESTer interface {
-	GetGuildEmojis(id Snowflake, flags ...Flag) *getGuildEmojisBuilder
-	GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *getGuildEmojiBuilder
-	CreateGuildEmoji(guildID Snowflake, name, image string, flags ...Flag) *createGuildEmojiBuilder
-	ModifyGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *modifyGuildEmojiBuilder
-	DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *basicBuilder
+	GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error)
+	GetGuildEmojis(id Snowflake, flags ...Flag) ([]*Emoji, error)
+	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
+	UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *updateGuildEmojiBuilder
+	DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) error
 }
 
 // GuildRESTer REST interface for all guild endpoints
 type GuildRESTer interface {
 	CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error)
 	GetGuild(id Snowflake, flags ...Flag) (ret *Guild, err error)
-	ModifyGuild(id Snowflake, params *ModifyGuildParams, flags ...Flag) (ret *Guild, err error)
+	UpdateGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (ret *Guild, err error)
 	DeleteGuild(id Snowflake, flags ...Flag) (err error)
 	GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error)
 	CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error)
-	ModifyGuildChannelPositions(id Snowflake, params []ModifyGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error)
+	UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error)
 	GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error)
 	GetGuildMembers(guildID, after Snowflake, limit int, flags ...Flag) (ret []*Member, err error)
 	AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error)
-	ModifyGuildMember(guildID, userID Snowflake, params *ModifyGuildMemberParams, flags ...Flag) (err error)
-	ModifyCurrentUserNick(id Snowflake, params *ModifyCurrentUserNickParams, flags ...Flag) (nick string, err error)
+	UpdateGuildMember(guildID, userID Snowflake, params *UpdateGuildMemberParams, flags ...Flag) (err error)
+	SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error)
 	AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error)
 	RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error)
-	RemoveGuildMember(guildID, userID Snowflake, flags ...Flag) (err error)
+	KickMember(guildID, userID Snowflake, flags ...Flag) (err error)
 	GetGuildBans(id Snowflake, flags ...Flag) (ret []*Ban, err error)
 	GetGuildBan(guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error)
-	CreateGuildBan(guildID, userID Snowflake, params *CreateGuildBanParams, flags ...Flag) (err error)
-	RemoveGuildBan(guildID, userID Snowflake, flags ...Flag) (err error)
+	BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error)
+	UnbanMember(guildID, userID Snowflake, flags ...Flag) (err error)
 	GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error)
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error)
-	ModifyGuildRolePositions(guildID Snowflake, params []ModifyGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error)
-	ModifyGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder)
+	UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error)
+	UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder)
 	DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error)
-	GetGuildPruneCount(id Snowflake, params *GuildPruneParams, flags ...Flag) (ret *GuildPruneCount, err error)
-	BeginGuildPrune(id Snowflake, params *GuildPruneParams, flags ...Flag) (ret *GuildPruneCount, err error)
+	EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error)
+	PruneMembers(id Snowflake, days int, flags ...Flag) error
 	GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error)
 	GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error)
 	GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error)
 	CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error)
-	ModifyGuildIntegration(guildID, integrationID Snowflake, params *ModifyGuildIntegrationParams, flags ...Flag) (err error)
+	UpdateGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error)
 	DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error)
 	SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error)
 	GetGuildEmbed(guildID Snowflake, flags ...Flag) (ret *GuildEmbed, err error)
-	ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error)
+	UpdateGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error)
 	GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error)
 }
 
 // InviteRESTer REST interface for all invite endpoints
 type InviteRESTer interface {
-	GetInvite(inviteCode string, flags ...Flag) *getInviteBuilder
-	DeleteInvite(inviteCode string, flags ...Flag) *deleteInviteBuilder
+	GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (*Invite, error)
+	DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error)
 }
 
 // UserRESTer REST interface for all user endpoints
 type UserRESTer interface {
 	GetCurrentUser(flags ...Flag) (*User, error)
 	GetUser(id Snowflake, flags ...Flag) (*User, error)
-	ModifyCurrentUser(flags ...Flag) (builder *modifyCurrentUserBuilder)
+	UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder)
 	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
 	LeaveGuild(id Snowflake, flags ...Flag) (err error)
 	GetUserDMs(flags ...Flag) (ret []*Channel, err error)
@@ -192,7 +192,7 @@ type UserRESTer interface {
 
 // VoiceRESTer REST interface for all voice endpoints
 type VoiceRESTer interface {
-	GetVoiceRegions(flags ...Flag) *listVoiceRegionsBuilder
+	GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error)
 }
 
 // WebhookRESTer REST interface for all Webhook endpoints
@@ -202,8 +202,8 @@ type WebhookRESTer interface {
 	GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error)
 	GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error)
 	GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error)
-	ModifyWebhook(id Snowflake, params *ModifyWebhookParams, flags ...Flag) (ret *Webhook, err error)
-	ModifyWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error)
+	UpdateWebhook(id Snowflake, params *UpdateWebhookParams, flags ...Flag) (ret *Webhook, err error)
+	UpdateWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error)
 	DeleteWebhook(webhookID Snowflake, flags ...Flag) (err error)
 	DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error)
 	ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error)
@@ -265,6 +265,8 @@ type Session interface {
 	GetPermissions() (permissions int)
 	CreateBotURL() (u string, err error)
 
+	Pool() *pools
+
 	// state/caching module
 	// checks the cacheLink first, otherwise do a http request
 	RESTer
@@ -273,7 +275,6 @@ type Session interface {
 	SendMsg(channelID Snowflake, message *Message, flags ...Flag) (msg *Message, err error)
 	SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error)
 	UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error)
-	UpdateChannel(channel *Channel, flags ...Flag) (err error)
 
 	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) (err error)

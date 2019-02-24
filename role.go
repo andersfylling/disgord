@@ -109,7 +109,7 @@ func (r *Role) saveToDiscord(session Session, changes discordSaver) (err error) 
 	return errors.New("updating discord objects are not yet implemented - only saving new ones")
 	//
 	//// modify/update role
-	//params := ModifyGuildRoleParams{}
+	//params := UpdateGuildRoleParams{}
 	//params.SetName(r.Name)
 	//params.SetPermissions(r.Permissions)
 	//params.SetColor(r.Color)
@@ -121,11 +121,11 @@ func (r *Role) saveToDiscord(session Session, changes discordSaver) (err error) 
 	//}
 	//if role.Position != r.Position {
 	//	// update the position
-	//	params := []ModifyGuildRolePositionsParams{{
+	//	params := []UpdateGuildRolePositionsParams{{
 	//		ID:       r.ID,
 	//		Position: r.Position,
 	//	}}
-	//	_, err = session.ModifyGuildRolePositions(r.guildID, params)
+	//	_, err = session.UpdateGuildRolePositions(r.guildID, params)
 	//	if err != nil {
 	//		return
 	//	}
@@ -220,14 +220,14 @@ func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRolePa
 	return ret, nil
 }
 
-// ModifyGuildRolePositionsParams ...
+// UpdateGuildRolePositionsParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
-type ModifyGuildRolePositionsParams struct {
+type UpdateGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position uint      `json:"position"`
 }
 
-// ModifyGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
+// UpdateGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
 // Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
 // Fires multiple Guild Role Update Gateway events.
 //  Method                  PATCH
@@ -236,7 +236,7 @@ type ModifyGuildRolePositionsParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
 //  Reviewed                2018-08-18
 //  Comment                 -
-func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []ModifyGuildRolePositionsParams) (ret []*Role, err error) {
+func UpdateGuildRolePositions(client httd.Patcher, guildID Snowflake, params []UpdateGuildRolePositionsParams) (ret []*Role, err error) {
 	var body []byte
 	_, body, err = client.Patch(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
@@ -259,12 +259,12 @@ func ModifyGuildRolePositions(client httd.Patcher, guildID Snowflake, params []M
 	return ret, nil
 }
 
-// ModifyGuildRoleParams JSON params for func ModifyGuildRole
-type ModifyGuildRoleParams struct {
+// UpdateGuildRoleParams JSON params for func ModifyGuildRole
+type UpdateGuildRoleParams struct {
 	data map[string]interface{}
 }
 
-func (p *ModifyGuildRoleParams) init() {
+func (p *UpdateGuildRoleParams) init() {
 	if p.data != nil {
 		return
 	}
@@ -272,32 +272,32 @@ func (p *ModifyGuildRoleParams) init() {
 	p.data = map[string]interface{}{}
 }
 
-func (p *ModifyGuildRoleParams) SetName(name string) {
+func (p *UpdateGuildRoleParams) SetName(name string) {
 	p.init()
 	p.data["name"] = name
 }
 
-func (p *ModifyGuildRoleParams) SetPermissions(permissions uint64) {
+func (p *UpdateGuildRoleParams) SetPermissions(permissions uint64) {
 	p.init()
 	p.data["permissions"] = permissions
 }
 
-func (p *ModifyGuildRoleParams) SetColor(color uint) {
+func (p *UpdateGuildRoleParams) SetColor(color uint) {
 	p.init()
 	p.data["color"] = color
 }
 
-func (p *ModifyGuildRoleParams) SetHoist(hoist bool) {
+func (p *UpdateGuildRoleParams) SetHoist(hoist bool) {
 	p.init()
 	p.data["hoist"] = hoist
 }
 
-func (p *ModifyGuildRoleParams) SetMentionable(mentionable bool) {
+func (p *UpdateGuildRoleParams) SetMentionable(mentionable bool) {
 	p.init()
 	p.data["mentionable"] = mentionable
 }
 
-func (p *ModifyGuildRoleParams) MarshalJSON() ([]byte, error) {
+func (p *UpdateGuildRoleParams) MarshalJSON() ([]byte, error) {
 	if len(p.data) == 0 {
 		return []byte(`{}`), nil
 	}
@@ -305,7 +305,7 @@ func (p *ModifyGuildRoleParams) MarshalJSON() ([]byte, error) {
 	return httd.Marshal(p.data)
 }
 
-var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)
+var _ json.Marshaler = (*UpdateGuildRoleParams)(nil)
 
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
@@ -315,7 +315,7 @@ var _ json.Marshaler = (*ModifyGuildRoleParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) ModifyGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder) {
+func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder) {
 	builder = &modifyGuildRoleBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}

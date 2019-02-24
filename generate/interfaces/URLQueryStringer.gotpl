@@ -17,7 +17,7 @@ func ({{ $struct.ShortName }} *{{ $struct.Name }}) URLQueryString() string {
         params["{{ $field.Tag.Name }}"] = {{ $struct.ShortName }}.{{ $field.Name }}
     }
     {{ else }}
-        params[{{ $field.Tag.Name }}] = {{ $struct.ShortName }}.{{ $field.Name }}
+        params["{{ $field.Tag.Name }}"] = {{ $struct.ShortName }}.{{ $field.Name }}
     {{ end }}
 
     {{ end }}

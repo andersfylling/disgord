@@ -157,43 +157,32 @@ func inviteFactory() interface{} {
 	return &Invite{}
 }
 
+type GetInviteParams struct {
+	WithMemberCount bool `urlparam:"with_count,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetInviteParams)(nil)
+
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
 //  Rate limiter            /invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
-//  Comment                 withCounts whether the invite should contain approximate member counts
-func (c *client) GetInvite(inviteCode string, flags ...Flag) (builder *getInviteBuilder) {
-	builder = &getInviteBuilder{}
-	builder.r.itemFactory = inviteFactory
-	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimit.Invites(),
-		Endpoint:    endpoint.Invite(inviteCode),
-	}, nil)
-
-	return builder
-}
-
-type getInviteBuilder struct {
-	r RESTBuilder
-}
-
-func (b *getInviteBuilder) AsInviteCode() *getInviteBuilder {
-	b.r.queryParam("with_counts", true)
-	return b
-}
-
-func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
-	var v interface{}
-	v, err = b.r.execute()
-	if err != nil {
-		return nil, err
+//  Comment                 -
+//  withMemberCount: whether or not the invite should contain the approximate number of members
+func (c *client) GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (invite *Invite, err error) {
+	if params == nil {
+		params = &GetInviteParams{}
 	}
 
-	invite = v.(*Invite)
-	return invite, err
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: ratelimit.Invites(),
+		Endpoint:    endpoint.Invite(inviteCode) + params.URLQueryString(),
+	}, flags)
+	r.factory = inviteFactory
+
+	return getInvite(r.Execute)
 }
 
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
@@ -203,29 +192,13 @@ func (b *getInviteBuilder) Execute() (invite *Invite, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) DeleteInvite(inviteCode string, flags ...Flag) (builder *deleteInviteBuilder) {
-	builder = &deleteInviteBuilder{}
-	builder.r.itemFactory = inviteFactory
-	builder.r.IgnoreCache().setup(nil, c.req, &httd.Request{
+func (c *client) DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimit.Invites(),
 		Endpoint:    endpoint.Invite(inviteCode),
-	}, nil)
+	}, flags)
+	r.factory = inviteFactory
 
-	return builder
-}
-
-type deleteInviteBuilder struct {
-	r RESTBuilder
-}
-
-func (b *deleteInviteBuilder) Execute() (invite *Invite, err error) {
-	var v interface{}
-	v, err = b.r.execute()
-	if err != nil {
-		return
-	}
-
-	invite = v.(*Invite)
-	return
+	return getInvite(r.Execute)
 }

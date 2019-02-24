@@ -1,8 +1,6 @@
 package disgord
 
 import (
-	"net/http"
-
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
@@ -163,44 +161,30 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// voiceRegionsFactory temporary until flyweight is implemented
-func voiceRegionsFactory() interface{} {
-	return []*VoiceRegion{}
-}
-
-// listVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
+// GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
 //  Rate limiter            /voice/regions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
-func (c *client) GetVoiceRegions(flags ...Flag) (builder *listVoiceRegionsBuilder) {
-	builder = &listVoiceRegionsBuilder{}
-	builder.r.itemFactory = voiceRegionsFactory
-	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
+func (c *client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimit.VoiceRegions(),
 		Endpoint:    endpoint.VoiceRegions(),
-	}, nil)
-
-	return builder
-}
-
-// listVoiceRegionsBuilder for building the REST request to the endpoint: List Voice Regions
-type listVoiceRegionsBuilder struct {
-	r RESTBuilder
-}
-
-// Execute execute get request to Discord
-func (b *listVoiceRegionsBuilder) Execute() (regions []*VoiceRegion, err error) {
-	b.r.IgnoreCache()
-	var v interface{}
-	v, err = b.r.execute()
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*VoiceRegion, 0)
+		return &tmp
 	}
 
-	regions = v.([]*VoiceRegion)
-	return
+	var vs interface{}
+	if vs, err = r.Execute(); err != nil {
+		return nil, err
+	}
+
+	if ems, ok := vs.(*[]*VoiceRegion); ok {
+		return *ems, nil
+	}
+	return vs.([]*VoiceRegion), nil
 }

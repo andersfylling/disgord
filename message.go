@@ -643,13 +643,13 @@ func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) 
 	return
 }
 
-// BulkDeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
-type BulkDeleteMessagesParams struct {
+// DeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+type DeleteMessagesParams struct {
 	Messages []Snowflake `json:"messages"`
 	m        sync.RWMutex
 }
 
-func (p *BulkDeleteMessagesParams) tooMany(messages int) (err error) {
+func (p *DeleteMessagesParams) tooMany(messages int) (err error) {
 	if messages > 100 {
 		err = errors.New("must be 100 or less messages to delete")
 	}
@@ -657,7 +657,7 @@ func (p *BulkDeleteMessagesParams) tooMany(messages int) (err error) {
 	return
 }
 
-func (p *BulkDeleteMessagesParams) tooFew(messages int) (err error) {
+func (p *DeleteMessagesParams) tooFew(messages int) (err error) {
 	if messages < 2 {
 		err = errors.New("must be at least two messages to delete")
 	}
@@ -665,8 +665,8 @@ func (p *BulkDeleteMessagesParams) tooFew(messages int) (err error) {
 	return
 }
 
-// Valid validates the BulkDeleteMessagesParams data
-func (p *BulkDeleteMessagesParams) Valid() (err error) {
+// Valid validates the DeleteMessagesParams data
+func (p *DeleteMessagesParams) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
@@ -679,7 +679,7 @@ func (p *BulkDeleteMessagesParams) Valid() (err error) {
 }
 
 // AddMessage Adds a message to be deleted
-func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
+func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -705,7 +705,7 @@ func (p *BulkDeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
-func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDeleteMessagesParams) (err error) {
+func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *DeleteMessagesParams) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return err
@@ -729,4 +729,40 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *BulkDelete
 		err = errors.New(msg)
 	}
 	return err
+}
+
+// GetMessages .
+func (c *client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
+	ret, err = GetMessages(c.req, channelID, params)
+	return
+}
+
+// GetMessage .
+func (c *client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error) {
+	ret, err = GetMessage(c.req, channelID, messageID)
+	return
+}
+
+// CreateMessage .
+func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
+	ret, err = CreateMessage(c.req, channelID, params)
+	return
+}
+
+// EditMessage .
+func (c *client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams, flags ...Flag) (ret *Message, err error) {
+	ret, err = EditMessage(c.req, chanID, msgID, params)
+	return
+}
+
+// DeleteMessage .
+func (c *client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
+	err = DeleteMessage(c.req, channelID, msgID)
+	return
+}
+
+// BulkDeleteMessages .
+func (c *client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error) {
+	err = BulkDeleteMessages(c.req, chanID, params)
+	return
 }

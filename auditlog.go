@@ -304,7 +304,7 @@ func (c *client) GetGuildAuditLogs(guildID snowflake.ID, flags ...Flag) (builder
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
-		Endpoint:    endpoint.GuildAuditLogs(guildID), // body are added automatically
+		Endpoint:    endpoint.GuildAuditLogs(guildID),
 	}, nil)
 
 	return builder

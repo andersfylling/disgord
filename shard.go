@@ -81,8 +81,7 @@ type WSShardManager struct {
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
 	var d *GatewayBot
-	d, err = GetGatewayBot(c)
-	if err != nil {
+	if d, err = GetGatewayBot(c); err != nil {
 		return
 	}
 
@@ -153,7 +152,7 @@ func (s *WSShardManager) GetShard(guildID snowflake.ID) (*WSShard, error) {
 		return nil, errors.New("no shards exist")
 	}
 
-	id := (uint64(guildID) >> 22) % uint64(len(s.shards))
+	id := GetShardForGuildID(guildID, uint(len(s.shards)))
 	return s.shards[id], nil
 }
 

@@ -107,7 +107,7 @@ func TestChannel_saveToDiscord(t *testing.T) {
 
 func TestModifyChannelParams(t *testing.T) {
 	t.Run("type-all", func(t *testing.T) {
-		params := ModifyChannelParams{}
+		params := UpdateChannelParams{}
 		var err error
 
 		params.SetName("test")
@@ -158,7 +158,7 @@ func TestModifyChannelParams(t *testing.T) {
 		}
 	})
 	t.Run("type-voice", func(t *testing.T) {
-		params := NewModifyVoiceChannelParams()
+		params := NewUpdateVoiceChannelParams()
 		var err error
 
 		err = params.SetBitrate(9000)
@@ -177,7 +177,7 @@ func TestModifyChannelParams(t *testing.T) {
 		}
 	})
 	t.Run("empty-marshal", func(t *testing.T) {
-		params := ModifyChannelParams{}
+		params := UpdateChannelParams{}
 		data, err := httd.Marshal(params)
 		if err != nil {
 			t.Fatal(err)

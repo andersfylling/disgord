@@ -134,6 +134,10 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 								tag.ZeroValCheck = " OMFG"
 							}
 						}
+
+						if tag.Name == "-" {
+							continue
+						}
 					}
 
 					var zeroInit string

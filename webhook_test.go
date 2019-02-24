@@ -32,12 +32,12 @@ func contain(t *testing.T, list map[string]*json.RawMessage, key string) {
 
 func TestModifyWebhook(t *testing.T) {
 	t.Run("params", func(t *testing.T) {
-		var params *ModifyWebhookParams
+		var params *UpdateWebhookParams
 		var partial map[string]*json.RawMessage
 		var err error
 
 		// 1
-		params = &ModifyWebhookParams{}
+		params = &UpdateWebhookParams{}
 		partial, err = getJSONMap(params)
 		if err != nil {
 			t.Fatal(err)
@@ -48,7 +48,7 @@ func TestModifyWebhook(t *testing.T) {
 		notContain(t, partial, "name")
 
 		// 2
-		params = &ModifyWebhookParams{}
+		params = &UpdateWebhookParams{}
 		params.SetChannelID(45363)
 		partial, err = getJSONMap(params)
 		if err != nil {
@@ -60,7 +60,7 @@ func TestModifyWebhook(t *testing.T) {
 		notContain(t, partial, "name")
 
 		// 3
-		params = &ModifyWebhookParams{}
+		params = &UpdateWebhookParams{}
 		params.SetName("shfisudhf")
 		partial, err = getJSONMap(params)
 		if err != nil {
@@ -72,7 +72,7 @@ func TestModifyWebhook(t *testing.T) {
 		contain(t, partial, "name")
 
 		// 4
-		params = &ModifyWebhookParams{}
+		params = &UpdateWebhookParams{}
 		params.SetAvatar("hfjhsdfklsahkfjsdhfksdhf")
 		partial, err = getJSONMap(params)
 		if err != nil {
@@ -84,7 +84,7 @@ func TestModifyWebhook(t *testing.T) {
 		notContain(t, partial, "name")
 
 		// 5
-		params = &ModifyWebhookParams{}
+		params = &UpdateWebhookParams{}
 		params.UseDefaultAvatar()
 		partial, err = getJSONMap(params)
 		if err != nil {
