@@ -75,6 +75,9 @@ func main() {
 	enforcers := []Enforcer{
 		{Name: "Reseter"},
 		{Name: "URLQueryStringer"},
+
+		{Name: "internalUpdater"},
+		{Name: "internalClientUpdater"},
 	}
 	for i := range files {
 		file, err := parser.ParseFile(token.NewFileSet(), files[i], nil, 0)
@@ -83,11 +86,19 @@ func main() {
 		}
 
 		addEnforcers(enforcers, file)
+	}
+	for i := range files {
+		file, err := parser.ParseFile(token.NewFileSet(), files[i], nil, 0)
+		if err != nil {
+			panic(err)
+		}
+
 		addStructs(enforcers, file)
 	}
 
 	makeFile(enforcers, "generate/interfaces/Reseter.gotpl", "iface_reseter_gen.go")
 	makeFile(enforcers, "generate/interfaces/URLQueryStringer.gotpl", "iface_urlquerystringer_gen.go")
+	makeFile(enforcers, "generate/interfaces/internalUpdaters.gotpl", "iface_internalupdaters_gen.go")
 }
 
 func addStructs(enforcers []Enforcer, file *ast.File) {

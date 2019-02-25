@@ -63,6 +63,87 @@ func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateChannelBuilder) IgnoreCache() *updateChannelBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateChannelBuilder) CancelOnRatelimit() *updateChannelBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateChannelBuilder) URLParam(name string, v interface{}) *updateChannelBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateChannelBuilder) Set(name string, v interface{}) *updateChannelBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateChannelBuilder) SetParentID(parentID Snowflake) *updateChannelBuilder {
+	b.r.addPrereq(parentID.Empty(), "parentID can not be 0")
+	b.r.param("parent_id", parentID)
+	return b
+}
+
+func (b *updateChannelBuilder) SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) *updateChannelBuilder {
+	b.r.param("permission_overwrites", permissionOverwrites)
+	return b
+}
+
+func (b *updateChannelBuilder) SetUserLimit(userLimit int) *updateChannelBuilder {
+	b.r.param("user_limit", userLimit)
+	return b
+}
+
+func (b *updateChannelBuilder) SetBitrate(bitrate uint) *updateChannelBuilder {
+	b.r.param("bitrate", bitrate)
+	return b
+}
+
+func (b *updateChannelBuilder) SetRateLimitPerUser(rateLimitPerUser uint) *updateChannelBuilder {
+	b.r.param("rate_limit_per_user", rateLimitPerUser)
+	return b
+}
+
+func (b *updateChannelBuilder) SetNsfw(nsfw bool) *updateChannelBuilder {
+	b.r.param("nsfw", nsfw)
+	return b
+}
+
+func (b *updateChannelBuilder) SetTopic(topic string) *updateChannelBuilder {
+	b.r.param("topic", topic)
+	return b
+}
+
+func (b *updateChannelBuilder) SetPosition(position uint) *updateChannelBuilder {
+	b.r.param("position", position)
+	return b
+}
+
+func (b *updateChannelBuilder) SetName(name string) *updateChannelBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Channel), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
 func (b *createGuildEmojiBuilder) IgnoreCache() *createGuildEmojiBuilder {
 	b.r.IgnoreCache()
 	return b

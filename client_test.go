@@ -23,7 +23,8 @@ func TestClient_Once(t *testing.T) {
 	}
 
 	dispatcher := c.evtDemultiplexer
-	if dispatcher.nrOfAliveHandlers() > 0 {
+	base := dispatcher.nrOfAliveHandlers()
+	if dispatcher.nrOfAliveHandlers() > base {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
@@ -31,7 +32,7 @@ func TestClient_Once(t *testing.T) {
 	c.On(EventMessageCreate, func() {
 		wg.Done()
 	}, &ctrl{remaining: 1})
-	if dispatcher.nrOfAliveHandlers() != 1 {
+	if dispatcher.nrOfAliveHandlers() != 1+base {
 		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 	wg.Add(1) // only run once
@@ -39,13 +40,13 @@ func TestClient_Once(t *testing.T) {
 	// trigger the handler
 	box := &MessageCreate{}
 	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
-	if dispatcher.nrOfAliveHandlers() > 0 {
+	if dispatcher.nrOfAliveHandlers() > 0+base {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	// trigger the handler, again
 	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
-	if dispatcher.nrOfAliveHandlers() > 0 {
+	if dispatcher.nrOfAliveHandlers() > 0+base {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
@@ -64,7 +65,8 @@ func TestClient_On(t *testing.T) {
 	}
 
 	dispatcher := c.evtDemultiplexer
-	if dispatcher.nrOfAliveHandlers() > 0 {
+	base := dispatcher.nrOfAliveHandlers()
+	if dispatcher.nrOfAliveHandlers() > 0+base {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
@@ -72,7 +74,7 @@ func TestClient_On(t *testing.T) {
 	c.On(EventMessageCreate, func() {
 		wg.Done()
 	})
-	if dispatcher.nrOfAliveHandlers() != 1 {
+	if dispatcher.nrOfAliveHandlers() != 1+base {
 		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 	wg.Add(2)

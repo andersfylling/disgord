@@ -93,9 +93,7 @@ func main() {
 
 	// modify
 	func() {
-		changes := disgord.NewModifyTextChannelParams()
-		changes.SetName("hello")
-		channel, err := c.ModifyChannel(channelID, changes)
+		channel, err := c.UpdateChannel(channelID).SetName("hello").Execute()
 		if err != nil {
 			panic(err)
 		} else if channel == nil {

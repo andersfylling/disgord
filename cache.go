@@ -1497,6 +1497,33 @@ func (c *Cache) DeleteChannel(id Snowflake) {
 	c.channels.Delete(id)
 }
 
+func (c *Cache) DeleteChannelPermissionOverwrite(channelID Snowflake, overwriteID Snowflake) error {
+	if c.channels == nil {
+		return newErrorUsingDeactivatedCache("channels")
+	}
+
+	c.channels.Lock()
+	defer c.channels.Unlock()
+
+	var exists bool
+	var result interfaces.CacheableItem
+	if result, exists = c.channels.Get(channelID); !exists {
+		return newErrorCacheItemNotFound(channelID)
+	}
+
+	item := result.Object().(*channelCacheItem)
+	overwrites := item.channel.PermissionOverwrites
+	for i := range overwrites {
+		if overwrites[i].ID == overwriteID {
+			overwrites[i] = overwrites[len(overwrites)-1]
+			overwrites = overwrites[:len(overwrites)-1]
+			item.channel.PermissionOverwrites = overwrites
+			break
+		}
+	}
+	return nil
+}
+
 // --------------------------------------------------------
 // Guild
 

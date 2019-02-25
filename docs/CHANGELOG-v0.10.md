@@ -44,16 +44,32 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - func EditChannelPermissions => UpdateChannelPermissions
  - func AddPinnedChannelMessage => PinMessage + PinMessageID
  - func DeletePinnedChannelMessage => UnpinMessage + UnpinMessageID
+ - func EditMessage => UpdateMessge
+ - All Permission flags. They now have "Permission" as a prefix, instead of a suffix.
+ - RESTer => RESTMethods
+ - ChannelRESTer => RESTChannel
+ - GuildRESTer => RESTGuild
+ - AuditLogsRESTer => RESTAuditLogs
+ - EmojiRESTer => RESTEmoji
+ - InviteRESTer => RESTInvite
+ - UserRESTer => RESTUser
+ - VoiceRESTer => RESTVoice
+ - WebhookRESTer => RESTWebhook
 
 #### Removed / unexported
  - type BeginGuildPruneParams
  - type GuildPruneCount
  - type UpdateCurrentUserNickParams
  - .Once(event string, inputs ...interface{}) error
- - NewSession(conf *Config) (Session, error)
- - NewSessionMustCompile(conf *Config) (session Session)
+ - func NewSession(conf *Config) (Session, error)
+ - func NewSessionMustCompile(conf *Config) (session Session)
+ - func NewModifyTextChannelParams
+ - func NewUpdateVoiceChannelParams
+ - type UpdateChannelParams
+ - func .UpdateMessage, as EditMessage changed name to UpdateMessage
  
  - every REST func. REST functionality now only accessible from the client instance.
  
  #### Changed
   - .On(event string, inputs ...interface{}) error => .On(event string, inputs ...interface{})
+  

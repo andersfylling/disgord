@@ -13,6 +13,7 @@ import (
 )
 
 // common functionality/types used by struct_*.go files goes here
+//go:generate go run generate/interfaces/main.go
 
 // Copier holds the CopyOverTo method which copies all it's content from one
 // struct to another. Note that this requires a deep copy.
