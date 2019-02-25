@@ -59,12 +59,16 @@ type voiceImpl struct {
 }
 
 func newVoiceRepository(c *client) (voice *voiceRepository) {
-	return &voiceRepository{
+	voice = &voiceRepository{
 		c: c,
 
 		pendingStates:  make(map[Snowflake]chan *VoiceStateUpdate),
 		pendingServers: make(map[Snowflake]chan *VoiceServerUpdate),
 	}
+	c.On(EventVoiceServerUpdate, voice.onVoiceServerUpdate)
+	c.On(EventVoiceStateUpdate, voice.onVoiceStateUpdate)
+
+	return voice
 }
 
 func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error) {
@@ -228,7 +232,7 @@ waiter:
 	return
 }
 
-func (r *voiceRepository) onVoiceStateUpdate(event *VoiceStateUpdate) {
+func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
 	if event.UserID != r.c.myID {
 		return
 	}
@@ -245,7 +249,7 @@ func (r *voiceRepository) onVoiceStateUpdate(event *VoiceStateUpdate) {
 	}
 }
 
-func (r *voiceRepository) onVoiceServerUpdate(event *VoiceServerUpdate) {
+func (r *voiceRepository) onVoiceServerUpdate(_ Session, event *VoiceServerUpdate) {
 	r.Lock()
 
 	if ch, exists := r.pendingServers[event.GuildID]; exists {

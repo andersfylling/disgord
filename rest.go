@@ -127,6 +127,7 @@ type rest struct {
 	checkCache     restStepCheckCache
 	doRequest      restStepDoRequest
 	preUpdateCache func(x interface{})
+	updateContent  func(x interface{})
 	updateCache    restStepUpdateCache
 }
 
@@ -161,6 +162,7 @@ func (r *rest) init() {
 
 	r.checkCache = r.stepCheckCache
 	r.doRequest = r.stepDoRequest
+	r.updateContent = r.stepUpdateContent
 	r.updateCache = r.stepUpdateCache
 }
 
@@ -232,16 +234,17 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 		r.Put(obj)
 		return nil, err
 	}
-
-	// update the object
-	if updater, implements := obj.(internalUpdater); implements {
-		updater.updateInternals()
-	}
-	if updater, implements := obj.(internalClientUpdater); implements {
-		updater.updateInternalsWithClient(r.c)
-	}
+	r.updateContent(obj)
 
 	return obj, nil
+}
+
+func (r *rest) stepUpdateContent(x interface{}) {
+	if x == nil {
+		return
+	}
+	executeInternalUpdater(x)
+	executeInternalClientUpdater(r.c, x)
 }
 
 func (r *rest) Execute() (v interface{}, err error) {
@@ -499,6 +502,34 @@ func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 }
 
 // TODO: auto generate
+func getMessage(f func() (interface{}, error)) (msg *Message, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Message), nil
+}
+
+// TODO: auto generate
+func getMessages(f func() (interface{}, error)) (msgs []*Message, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Message), nil
+}
+
+// TODO: auto generate
 func getUser(f func() (interface{}, error)) (user *User, err error) {
 	var v interface{}
 	if v, err = f(); err != nil {
@@ -510,6 +541,20 @@ func getUser(f func() (interface{}, error)) (user *User, err error) {
 	}
 
 	return v.(*User), nil
+}
+
+// TODO: auto generate
+func getUsers(f func() (interface{}, error)) (users []*User, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*User), nil
 }
 
 // TODO: auto generate

@@ -75,7 +75,7 @@ func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -99,12 +99,16 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 		return
 	}
 
-	_, _, err = client.Put(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:            http.MethodPut,
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
-	})
-	return
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
 }
 
 // DeleteOwnReaction [REST] Delete a reaction the current user has made for the message.
@@ -115,7 +119,7 @@ func CreateReaction(client httd.Puter, channelID, messageID Snowflake, emoji int
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -138,20 +142,15 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:            http.MethodDelete,
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
-	})
-	if err != nil {
-		return err
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
+	_, err = r.Execute()
 	return err
 }
 
@@ -163,7 +162,7 @@ func DeleteOwnReaction(client httd.Deleter, channelID, messageID Snowflake, emoj
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowflake, emoji interface{}) (err error) {
+func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -186,20 +185,15 @@ func DeleteUserReaction(client httd.Deleter, channelID, messageID, userID Snowfl
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:            http.MethodDelete,
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
-	})
-	if err != nil {
-		return err
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
+	_, err = r.Execute()
 	return err
 }
 
@@ -219,7 +213,7 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer) (ret []*User, err error) {
+func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -247,19 +241,17 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 		query += params.URLQueryString()
 	}
 
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:          endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
 		RateLimitAdjuster: reactionEndpointRLAdjuster,
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*User, 0)
+		return &tmp
 	}
 
-	ret = []*User{}
-	err = unmarshal(body, ret)
-	return
+	return getUsers(r.Execute)
 }
 
 // DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
@@ -270,7 +262,7 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (err error) {
+func (c *client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -278,19 +270,13 @@ func DeleteAllReactions(client httd.Deleter, channelID, messageID Snowflake) (er
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
 		Endpoint:    endpoint.ChannelMessageReactions(channelID, messageID),
-	})
-	if err != nil {
-		return err
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	// TODO: what is the response on a successful execution?
-	if false && resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
+	_, err = r.Execute()
 	return err
 }

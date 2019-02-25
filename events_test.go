@@ -10,7 +10,8 @@ import (
 
 func TestPrepareBox(t *testing.T) {
 	injectRandomEvents(t, func(name string, evt interface{}) error {
-		prepareBox(name, evt)
+		//prepareBox(name, evt) // removed
+		executeInternalUpdater(evt)
 		return nil
 	})
 }

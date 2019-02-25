@@ -90,40 +90,50 @@ type SocketHandler interface {
 }
 
 // AuditLogsRESTer REST interface for all audit-logs endpoints
-type AuditLogsRESTer interface {
+type RESTAuditLogs interface {
 	GetGuildAuditLogs(guildID Snowflake, flags ...Flag) *guildAuditLogsBuilder
 }
 
-// ChannelRESTer REST interface for all Channel endpoints
-type ChannelRESTer interface {
-	GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error)
-	UpdateChannel(id Snowflake, changes *UpdateChannelParams, flags ...Flag) (ret *Channel, err error)
-	DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error)
-	UpdateChannelPermissions(chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error)
-	GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error)
-	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error)
-	DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error)
-	TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error)
-	GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error)
-	AddPinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
-	DeletePinnedChannelMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
-	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error)
+type RESTMessage interface {
+	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) ([]*Message, error)
 	GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error)
 	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
-	EditMessage(chanID, msgID Snowflake, params *EditMessageParams, flags ...Flag) (ret *Message, err error)
+	UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error)
 	DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
-	BulkDeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error)
+	DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error)
+}
+
+type RESTReaction interface {
 	CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error)
 	GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error)
 	DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error)
+}
+
+// RESTChannel REST interface for all Channel endpoints
+type RESTChannel interface {
+	RESTMessage
+	RESTReaction
+	TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error)
+	GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error)
+	PinMessage(msg *Message, flags ...Flag) (err error)
+	PinMessageID(channelID, msgID Snowflake, flags ...Flag) (err error)
+	UnpinMessage(msg *Message, flags ...Flag) (err error)
+	UnpinMessageID(channelID, msgID Snowflake, flags ...Flag) (err error)
+	GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error)
+	UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChannelBuilder)
+	DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error)
+	UpdateChannelPermissions(chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error)
+	GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error)
+	CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error)
+	DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error)
 	AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) (err error)
 	KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error)
 }
 
-// EmojiRESTer REST interface for all emoji endpoints
-type EmojiRESTer interface {
+// RESTEmoji REST interface for all emoji endpoints
+type RESTEmoji interface {
 	GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error)
 	GetGuildEmojis(id Snowflake, flags ...Flag) ([]*Emoji, error)
 	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
@@ -131,8 +141,8 @@ type EmojiRESTer interface {
 	DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) error
 }
 
-// GuildRESTer REST interface for all guild endpoints
-type GuildRESTer interface {
+// RESTGuild REST interface for all guild endpoints
+type RESTGuild interface {
 	CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error)
 	GetGuild(id Snowflake, flags ...Flag) (ret *Guild, err error)
 	UpdateGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (ret *Guild, err error)
@@ -171,14 +181,14 @@ type GuildRESTer interface {
 	GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error)
 }
 
-// InviteRESTer REST interface for all invite endpoints
-type InviteRESTer interface {
+// RESTInvite REST interface for all invite endpoints
+type RESTInvite interface {
 	GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (*Invite, error)
 	DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error)
 }
 
-// UserRESTer REST interface for all user endpoints
-type UserRESTer interface {
+// RESTUser REST interface for all user endpoints
+type RESTUser interface {
 	GetCurrentUser(flags ...Flag) (*User, error)
 	GetUser(id Snowflake, flags ...Flag) (*User, error)
 	UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder)
@@ -190,13 +200,13 @@ type UserRESTer interface {
 	GetUserConnections(flags ...Flag) (ret []*UserConnection, err error)
 }
 
-// VoiceRESTer REST interface for all voice endpoints
-type VoiceRESTer interface {
+// RESTVoice REST interface for all voice endpoints
+type RESTVoice interface {
 	GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error)
 }
 
-// WebhookRESTer REST interface for all Webhook endpoints
-type WebhookRESTer interface {
+// RESTWebhook REST interface for all Webhook endpoints
+type RESTWebhook interface {
 	CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error)
 	GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error)
 	GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error)
@@ -212,15 +222,15 @@ type WebhookRESTer interface {
 }
 
 // RESTer holds all the sub REST interfaces
-type RESTer interface {
-	AuditLogsRESTer
-	ChannelRESTer
-	EmojiRESTer
-	GuildRESTer
-	InviteRESTer
-	UserRESTer
-	VoiceRESTer
-	WebhookRESTer
+type RESTMethods interface {
+	RESTAuditLogs
+	RESTChannel
+	RESTEmoji
+	RESTGuild
+	RESTInvite
+	RESTUser
+	RESTVoice
+	RESTWebhook
 }
 
 // VoiceHandler holds all the voice connection related methods
@@ -269,12 +279,11 @@ type Session interface {
 
 	// state/caching module
 	// checks the cacheLink first, otherwise do a http request
-	RESTer
+	RESTMethods
 
 	// Custom REST functions
 	SendMsg(channelID Snowflake, message *Message, flags ...Flag) (msg *Message, err error)
 	SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error)
-	UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error)
 
 	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) (err error)

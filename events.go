@@ -10,42 +10,6 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-func prepareBox(evtName string, box interface{}) {
-	switch evtName {
-	case EventGuildCreate:
-		guild := (box.(*GuildCreate)).Guild
-		for i := range guild.Roles {
-			guild.Roles[i].guildID = guild.ID
-		}
-		for i := range guild.Emojis {
-			guild.Emojis[i].guildID = guild.ID
-		}
-		for i := range guild.Channels {
-			guild.Channels[i].GuildID = guild.ID
-		}
-	case EventGuildUpdate:
-		guild := (box.(*GuildUpdate)).Guild
-		for i := range guild.Roles {
-			guild.Roles[i].guildID = guild.ID
-		}
-		for i := range guild.Emojis {
-			guild.Emojis[i].guildID = guild.ID
-		}
-		for i := range guild.Channels {
-			guild.Channels[i].GuildID = guild.ID
-		}
-	case EventGuildRoleCreate:
-		(box.(*GuildRoleCreate)).Role.guildID = (box.(*GuildRoleCreate)).GuildID
-	case EventGuildRoleUpdate:
-		(box.(*GuildRoleUpdate)).Role.guildID = (box.(*GuildRoleUpdate)).GuildID
-	case EventGuildEmojisUpdate:
-		evt := box.(*GuildEmojisUpdate)
-		for i := range evt.Emojis {
-			evt.Emojis[i].guildID = evt.GuildID
-		}
-	}
-}
-
 func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage) (err error) {
 	// updates holds key and object to be cached
 	updates := map[cacheRegistry]([]interface{}){}
@@ -310,6 +274,8 @@ type MessageCreate struct {
 	ShardID uint            `json:"-"`
 }
 
+var _ internalUpdater = (*MessageCreate)(nil)
+
 func (obj *MessageCreate) updateInternals() {
 	obj.Message.updateInternals()
 }
@@ -328,6 +294,8 @@ type MessageUpdate struct {
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
 }
+
+var _ internalUpdater = (*MessageUpdate)(nil)
 
 func (obj *MessageUpdate) updateInternals() {
 	obj.Message.updateInternals()
@@ -363,6 +331,8 @@ type MessageDeleteBulk struct {
 // ---------------------------
 
 // MessageReactionAdd user reacted to a message
+// Note! do not cache emoji, unless it's updated with guildID
+// TODO: find guildID when given userID, ChannelID and MessageID
 type MessageReactionAdd struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -376,6 +346,8 @@ type MessageReactionAdd struct {
 // ---------------------------
 
 // MessageReactionRemove user removed a reaction from a message
+// Note! do not cache emoji, unless it's updated with guildID
+// TODO: find guildID when given userID, ChannelID and MessageID
 type MessageReactionRemove struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -406,6 +378,14 @@ type GuildEmojisUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+var _ internalUpdater = (*GuildEmojisUpdate)(nil)
+
+func (g *GuildEmojisUpdate) updateInternals() {
+	for i := range g.Emojis {
+		g.Emojis[i].guildID = g.GuildID
+	}
+}
+
 // ---------------------------
 
 // GuildCreate This event can be sent in three different scenarios:
@@ -417,6 +397,21 @@ type GuildCreate struct {
 	Guild   *Guild          `json:"guild"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+var _ internalUpdater = (*GuildCreate)(nil)
+
+func (g *GuildCreate) updateInternals() {
+	guild := g.Guild
+	for i := range guild.Roles {
+		guild.Roles[i].guildID = guild.ID
+	}
+	for i := range guild.Emojis {
+		guild.Emojis[i].guildID = guild.ID
+	}
+	for i := range guild.Channels {
+		guild.Channels[i].GuildID = guild.ID
+	}
 }
 
 // UnmarshalJSON ...
@@ -432,6 +427,21 @@ type GuildUpdate struct {
 	Guild   *Guild          `json:"guild"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+var _ internalUpdater = (*GuildUpdate)(nil)
+
+func (g *GuildUpdate) updateInternals() {
+	guild := g.Guild
+	for i := range guild.Roles {
+		guild.Roles[i].guildID = guild.ID
+	}
+	for i := range guild.Emojis {
+		guild.Emojis[i].guildID = guild.ID
+	}
+	for i := range guild.Channels {
+		guild.Channels[i].GuildID = guild.ID
+	}
 }
 
 // UnmarshalJSON ...
@@ -546,6 +556,12 @@ type GuildRoleCreate struct {
 	ShardID uint            `json:"-"`
 }
 
+var _ internalUpdater = (*GuildRoleCreate)(nil)
+
+func (g *GuildRoleCreate) updateInternals() {
+	g.Role.guildID = g.GuildID
+}
+
 // ---------------------------
 
 // GuildRoleUpdate guild role was updated
@@ -554,6 +570,12 @@ type GuildRoleUpdate struct {
 	Role    *Role           `json:"role"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+var _ internalUpdater = (*GuildRoleUpdate)(nil)
+
+func (g *GuildRoleUpdate) updateInternals() {
+	g.Role.guildID = g.GuildID
 }
 
 // ---------------------------
@@ -600,10 +622,6 @@ type VoiceStateUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
-func (evt *VoiceStateUpdate) updateInternalsWithClient(c *client) {
-	c.voiceRepository.onVoiceStateUpdate(evt)
-}
-
 // ---------------------------
 
 // VoiceServerUpdate guild's voice server was updated. Sent when a guild's voice server is updated. This is sent when initially
@@ -614,10 +632,6 @@ type VoiceServerUpdate struct {
 	Endpoint string          `json:"endpoint"`
 	Ctx      context.Context `json:"-"`
 	ShardID  uint            `json:"-"`
-}
-
-func (evt *VoiceServerUpdate) updateInternalsWithClient(c *client) {
-	c.voiceRepository.onVoiceServerUpdate(evt)
 }
 
 // ---------------------------

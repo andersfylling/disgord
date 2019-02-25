@@ -615,85 +615,6 @@ func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (
 
 // REST
 
-// Channel
-
-// GetChannel ...
-func (c *client) GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error) {
-	if ret, err = c.cache.GetChannel(id); err != nil {
-		if ret, err = GetChannel(c.req, id); err != nil {
-			return nil, err
-		}
-		_ = c.cache.Update(ChannelCache, ret)
-	}
-	return ret, nil
-}
-
-// ModifyChannel ...
-func (c *client) UpdateChannel(id Snowflake, changes *UpdateChannelParams, flags ...Flag) (ret *Channel, err error) {
-	ret, err = ModifyChannel(c.req, id, changes) // should trigger a socket event, no need to update cacheLink
-	return
-}
-
-// DeleteChannel ...
-func (c *client) DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error) {
-	channel, err = DeleteChannel(c.req, id) // should trigger a socket event, no need to update cacheLink
-	return
-}
-
-// GetChannelInvites ...
-func (c *client) GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
-	ret, err = GetChannelInvites(c.req, id)
-	return
-}
-
-// CreateChannelInvites ...
-func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
-	ret, err = CreateChannelInvites(c.req, id, params)
-	return
-}
-
-// DeleteChannelPermission .
-func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
-	err = DeleteChannelPermission(c.req, channelID, overwriteID)
-	return
-}
-
-// TriggerTypingIndicator .
-func (c *client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error) {
-	err = TriggerTypingIndicator(c.req, channelID)
-	return
-}
-
-// CreateReaction .
-func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	err = CreateReaction(c.req, channelID, messageID, emoji)
-	return
-}
-
-// DeleteOwnReaction .
-func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	err = DeleteOwnReaction(c.req, channelID, messageID, emoji)
-	return
-}
-
-// DeleteUserReaction .
-func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	err = DeleteUserReaction(c.req, channelID, messageID, userID, emoji)
-	return
-}
-
-// GetReaction .
-func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
-	ret, err = GetReaction(c.req, channelID, messageID, emoji, params)
-	return
-}
-
-// DeleteAllReactions .
-func (c *client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
-	err = DeleteAllReactions(c.req, channelID, messageID)
-	return
-}
-
 // Guild
 
 // CreateGuild .
@@ -853,12 +774,6 @@ func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags 
 // KickMember .
 func (c *client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
 	err = RemoveGuildMember(c.req, guildID, userID)
-	return
-}
-
-// KickParticipant removes a participant from a group DM
-func (c *client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error) {
-	err = removeGroupDMRecipient(c.req, channelID, userID)
 	return
 }
 
@@ -1097,24 +1012,6 @@ func (c *client) SendMsgString(channelID Snowflake, content string, flags ...Fla
 	return
 }
 
-// UpdateMessage .
-func (c *client) UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error) {
-	if constant.LockedMethods {
-		message.RLock()
-		defer message.RUnlock()
-	}
-
-	params := &EditMessageParams{
-		Content: message.Content,
-	}
-	if len(message.Embeds) > 0 {
-		params.Embed = message.Embeds[0]
-	}
-
-	msg, err = c.EditMessage(message.ChannelID, message.ID, params)
-	return
-}
-
 func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event, err error) {
 	var alive bool
 	event, alive = <-eventEmitter
@@ -1251,22 +1148,13 @@ func (c *client) eventHandler() {
 		// unmarshal into cacheLink
 		//err := c.cacheEvent2(evtName, box)
 
-		if err = unmarshal(evt.Data, box); err != nil {
+		if err = httd.Unmarshal(evt.Data, box); err != nil {
 			c.log.Error(err)
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
-
-		if updater, implements := box.(internalUpdater); implements {
-			updater.updateInternals()
-		}
-		if updater, implements := box.(internalClientUpdater); implements {
-			updater.updateInternalsWithClient(c)
-		}
-		// prepareBox is called after the updater to provide consistent behavior with how the
-		// REST methods work. This is because, as with the REST methods, the updaters are
-		// triggered before dealing with the actual object.
-		prepareBox(evt.Name, box)
+		executeInternalUpdater(evt)
+		executeInternalClientUpdater(c, evt)
 
 		// cache
 		if !c.config.DisableCache {
@@ -1305,8 +1193,8 @@ func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 //////////////////////////////////////////////////////
 
 // Deprecated: use UpdateChannel
-func (c *client) ModifyChannel(id Snowflake, params *UpdateChannelParams, flags ...Flag) (*Channel, error) {
-	return c.UpdateChannel(id, params, flags...)
+func (c *client) ModifyChannel(id Snowflake, flags ...Flag) *updateChannelBuilder {
+	return c.UpdateChannel(id, flags...)
 }
 
 // Deprecated: use DeleteChannel
@@ -1317,6 +1205,11 @@ func (c *client) CloseChannel(id Snowflake, flags ...Flag) (*Channel, error) {
 // Deprecated: use DeleteMessages
 func (c *client) BulkDeleteMessages(id Snowflake, params *DeleteMessagesParams, flags ...Flag) error {
 	return c.DeleteMessages(id, params, flags...)
+}
+
+// Deprecated: use UpdateMessage
+func (c *client) EditMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error) {
+	return c.UpdateMessage(chanID, msgID, params, flags...)
 }
 
 // Deprecated: use UpdateChannelPermissions

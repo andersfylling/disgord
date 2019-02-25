@@ -106,6 +106,7 @@ type Message struct {
 
 var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
+var _ internalUpdater = (*Message)(nil)
 
 func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
@@ -241,13 +242,20 @@ func (m *Message) saveToDiscord(session Session, changes discordSaver) (err erro
 
 // MessageUpdater is a interface which only holds the message update method
 type MessageUpdater interface {
-	UpdateMessage(message *Message, flags ...Flag) (msg *Message, err error)
+	UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error)
 }
 
 // Update after changing the message object, call update to notify Discord about any changes made
 func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
-	msg, err = client.UpdateMessage(m)
-	return
+	var embed *ChannelEmbed
+	if len(msg.Embeds) > 0 {
+		embed = msg.Embeds[0]
+	}
+
+	return client.UpdateMessage(m.ChannelID, msg.ID, &UpdateMessageParams{
+		Content: msg.Content,
+		Embed:   embed,
+	})
 }
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
@@ -324,6 +332,12 @@ func (m *Message) RespondString(client MessageSender, content string) (msg *Mess
 // RemoveReaction removes a reaction from the message
 //func (m *Message) RemoveReaction(id Snowflake)    {}
 
+//////////////////////////////////////////////////////
+//
+// REST Methods
+//
+//////////////////////////////////////////////////////
+
 // GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
 type GetMessagesParams struct {
@@ -346,31 +360,27 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func GetMessages(client httd.Getter, channelID Snowflake, params URLQueryStringer) (ret []*Message, err error) {
+func (c *client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
 	}
-	query := ""
+
+	var query string
 	if params != nil {
 		query += params.URLQueryString()
 	}
 
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    endpoint.ChannelMessages(channelID) + query,
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Message, 0)
+		return &tmp
 	}
 
-	ret = []*Message{}
-	err = unmarshal(body, ret)
-	for i := range ret {
-		ret[i].updateInternals()
-	}
-	return
+	return getMessages(r.Execute)
 }
 
 // GetMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints
@@ -382,7 +392,7 @@ func GetMessages(client httd.Getter, channelID Snowflake, params URLQueryStringe
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func GetMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Message, err error) {
+func (c *client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (message *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -392,19 +402,13 @@ func GetMessage(client httd.Getter, channelID, messageID Snowflake) (ret *Messag
 		return
 	}
 
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    endpoint.ChannelMessage(channelID, messageID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.pool = c.pool.message
 
-	ret = &Message{}
-	err = unmarshal(body, ret)
-	ret.updateInternals()
-	return
+	return getMessage(r.Execute)
 }
 
 // NewMessageByString creates a message object from a string/content
@@ -530,7 +534,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
-func CreateMessage(client httd.Poster, channelID Snowflake, params *CreateMessageParams) (ret *Message, err error) {
+func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -549,31 +553,25 @@ func CreateMessage(client httd.Poster, channelID Snowflake, params *CreateMessag
 		return nil, err
 	}
 
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitChannelMessages(channelID),
 		Endpoint:    "/channels/" + channelID.String() + "/messages",
 		Body:        postBody,
 		ContentType: contentType,
-	})
+	}, flags)
+	r.pool = c.pool.message
 
-	if err != nil {
-		return nil, err
-	}
-
-	ret = &Message{}
-	err = unmarshal(body, ret)
-	ret.updateInternals()
-	return ret, err
+	return getMessage(r.Execute)
 }
 
-// EditMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
-type EditMessageParams struct {
+// UpdateMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
+type UpdateMessageParams struct {
 	Content string        `json:"content,omitempty"`
 	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
 }
 
-// EditMessage [REST] Edit a previously sent message. You can only edit messages that have been sent by the
+// UpdateMessage [REST] Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
@@ -581,7 +579,7 @@ type EditMessageParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessageParams) (ret *Message, err error) {
+func (c *client) UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -591,21 +589,16 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 		return nil, err
 	}
 
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitChannelMessages(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
-	}
+	}, flags)
+	r.pool = c.pool.message
 
-	ret = &Message{}
-	err = unmarshal(body, ret)
-	ret.updateInternals()
-	return ret, err
+	return getMessage(r.Execute)
 }
 
 // DeleteMessage [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
@@ -617,7 +610,7 @@ func EditMessage(client httd.Patcher, chanID, msgID Snowflake, params *EditMessa
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) {
+func (c *client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -627,20 +620,15 @@ func DeleteMessage(client httd.Deleter, channelID, msgID Snowflake) (err error) 
 		return
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
 		Endpoint:    endpoint.ChannelMessage(channelID, msgID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+	_, err = r.Execute()
+	return err
 }
 
 // DeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
@@ -693,7 +681,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 	return
 }
 
-// BulkDeleteMessages [REST] Delete multiple messages in a single request. This endpoint can only be used on guild
+// DeleteMessages [REST] Delete multiple messages in a single request. This endpoint can only be used on guild
 // channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 // Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
@@ -705,7 +693,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
-func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *DeleteMessagesParams) (err error) {
+func (c *client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error) {
 	if chanID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return err
@@ -714,55 +702,114 @@ func BulkDeleteMessages(client httd.Poster, chanID Snowflake, params *DeleteMess
 		return err
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Post(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitChannelMessagesDelete(chanID),
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(chanID),
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return err
-	}
+		Body:        params,
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
+	_, err = r.Execute()
 	return err
 }
 
-// GetMessages .
-func (c *client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
-	ret, err = GetMessages(c.req, channelID, params)
-	return
+// TriggerTypingIndicator [REST] Post a typing indicator for the specified channel. Generally bots should not implement
+// this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
+// endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
+// on success. Fires a Typing Start Gateway event.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/typing
+//  Rate limiter [MAJOR]    /channels/{channel.id}/typing
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ratelimiter: ratelimitChannelTyping(channelID),
+		Endpoint:    endpoint.ChannelTyping(channelID),
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
 }
 
-// GetMessage .
-func (c *client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error) {
-	ret, err = GetMessage(c.req, channelID, messageID)
-	return
+// GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
+//  Method                  GET
+//  Endpoint                /channels/{channel.id}/pins
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *client) GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: ratelimitChannelPins(channelID),
+		Endpoint:    endpoint.ChannelPins(channelID),
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Message, 0)
+		return &tmp
+	}
+
+	return getMessages(r.Execute)
 }
 
-// CreateMessage .
-func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
-	ret, err = CreateMessage(c.req, channelID, params)
-	return
+// PinMessage see client.PinMessageID
+func (c *client) PinMessage(message *Message, flags ...Flag) error {
+	return c.PinMessageID(message.ChannelID, message.ID, flags...)
 }
 
-// EditMessage .
-func (c *client) EditMessage(chanID, msgID Snowflake, params *EditMessageParams, flags ...Flag) (ret *Message, err error) {
-	ret, err = EditMessage(c.req, chanID, msgID, params)
-	return
+// PinMessageID [REST] Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
+// Returns a 204 empty response on success.
+//  Method                  PUT
+//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *client) PinMessageID(channelID, messageID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
+		Ratelimiter: ratelimitChannelPins(channelID),
+		Endpoint:    endpoint.ChannelPin(channelID, messageID),
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
 }
 
-// DeleteMessage .
-func (c *client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
-	err = DeleteMessage(c.req, channelID, msgID)
-	return
+// UnpinMessage see client.UnpinMessageID
+func (c *client) UnpinMessage(message *Message, flags ...Flag) error {
+	return c.UnpinMessageID(message.ChannelID, message.ID, flags...)
 }
 
-// BulkDeleteMessages .
-func (c *client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error) {
-	err = BulkDeleteMessages(c.req, chanID, params)
-	return
+// UnpinMessageID [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// Returns a 204 empty response on success. Returns a 204 empty response on success.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
+//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (err error) {
+	if channelID.Empty() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if messageID.Empty() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
+		Ratelimiter: ratelimitChannelPins(channelID),
+		Endpoint:    endpoint.ChannelPin(channelID, messageID),
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
 }
