@@ -14,8 +14,21 @@ import (
 // consts inspired by: https://github.com/bwmarrin/discordgo/blob/master/structs.go
 
 // Constants for the different bit offsets of text channel permissions
+//go:generate stringer -type Permission
+type Permission uint
+
 const (
-	PermissionReadMessages = 1 << (iota + 10)
+	PermissionCreateInstantInvite Permission = 1 << iota
+	PermissionKickMembers
+	PermissionBanMembers
+	PermissionAdministrator
+	PermissionManageChannels
+	PermissionManageGuild
+	PermissionAddReactions
+	PermissionViewAuditLog
+	PermissionPrioritySpeaker
+	_
+	PermissionViewChannel
 	PermissionSendMessages
 	PermissionSendTTSMessages
 	PermissionManageMessages
@@ -24,39 +37,20 @@ const (
 	PermissionReadMessageHistory
 	PermissionMentionEveryone
 	PermissionUseExternalEmojis
-)
-
-// Constants for the different bit offsets of voice permissions
-const (
-	PermissionVoiceConnect = 1 << (iota + 20)
-	PermissionVoiceSpeak
-	PermissionVoiceMuteMembers
-	PermissionVoiceDeafenMembers
-	PermissionVoiceMoveMembers
-	PermissionVoiceUseVAD
-)
-
-// Constants for general management.
-const (
-	PermissionChangeNickname = 1 << (iota + 26)
+	_
+	PermissionConnect
+	PermissionSpeak
+	PermissionMuteMembers
+	PermissionDeafenMembers
+	PermissionMoveMembers
+	PermissionUseVAD
+	PermissionChangeNickname
 	PermissionManageNicknames
 	PermissionManageRoles
 	PermissionManageWebhooks
 	PermissionManageEmojis
-)
 
-// Constants for the different bit offsets of general permissions
-const (
-	PermissionCreateInstantInvite = 1 << iota
-	PermissionKickMembers
-	PermissionBanMembers
-	PermissionAdministrator
-	PermissionManageChannels
-	PermissionManageServer
-	PermissionAddReactions
-	PermissionViewAuditLogs
-
-	PermissionTextAll = PermissionReadMessages |
+	PermissionAllText Permission = PermissionViewChannel |
 		PermissionSendMessages |
 		PermissionSendTTSMessages |
 		PermissionManageMessages |
@@ -64,24 +58,17 @@ const (
 		PermissionAttachFiles |
 		PermissionReadMessageHistory |
 		PermissionMentionEveryone
-	PermissionAllVoice = PermissionVoiceConnect |
-		PermissionVoiceSpeak |
-		PermissionVoiceMuteMembers |
-		PermissionVoiceDeafenMembers |
-		PermissionVoiceMoveMembers |
-		PermissionVoiceUseVAD
-	PermissionChannelAll = PermissionTextAll |
+	PermissionAllVoice = PermissionConnect |
+		PermissionSpeak |
+		PermissionMuteMembers |
+		PermissionDeafenMembers |
+		PermissionMoveMembers |
+		PermissionPrioritySpeaker
+	PermissionAllChannel = PermissionAllText |
 		PermissionAllVoice |
 		PermissionCreateInstantInvite |
-		PermissionManageRoles |
-		PermissionManageChannels |
-		PermissionAddReactions |
-		PermissionViewAuditLogs
-	PermissionAll = PermissionChannelAll |
-		PermissionKickMembers |
-		PermissionBanMembers |
-		PermissionManageServer |
-		PermissionAdministrator
+		PermissionAddReactions | PermissionManageChannels
+	PermissionAll = 2146958847
 )
 
 // NewGuild ...
