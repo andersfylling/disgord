@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 )
 
 // HandlerCtrl used when inserting a handler to dictate whether or not the handler(s) should
@@ -26,34 +25,17 @@ type HandlerCtrl interface {
 	Update()
 }
 
-type ctrl = simpleHandlerCtrl
-type simpleHandlerCtrl struct {
-	remaining int
+type eternalHandlersCtrl struct {
+	Ctrl
 }
 
-func (ctrl *simpleHandlerCtrl) IsDead() bool {
-	return ctrl.remaining == 0
-}
-func (ctrl *simpleHandlerCtrl) OnInsert(s Session) error { return nil }
-func (ctrl *simpleHandlerCtrl) OnRemove(s Session) error { return nil }
-func (ctrl *simpleHandlerCtrl) Update() {
-	ctrl.remaining--
-}
+var _ HandlerCtrl = (*eternalHandlersCtrl)(nil)
 
-var _ HandlerCtrl = (*simpleHandlerCtrl)(nil)
+func (c *eternalHandlersCtrl) Update()      {}
+func (c *eternalHandlersCtrl) IsDead() bool { return false }
 
-type timeoutHandlerCtrl struct {
-	deadline time.Time
-}
-
-func (ctrl *timeoutHandlerCtrl) IsDead() bool {
-	return time.Now().After(ctrl.deadline)
-}
-func (ctrl *timeoutHandlerCtrl) OnInsert(s Session) error { return nil }
-func (ctrl *timeoutHandlerCtrl) OnRemove(s Session) error { return nil }
-func (ctrl *timeoutHandlerCtrl) Update()                  {}
-
-var _ HandlerCtrl = (*timeoutHandlerCtrl)(nil)
+// reused by handlers that have no ctrl defined
+var eternalCtrl = &eternalHandlersCtrl{}
 
 type Handler = interface{}
 type Middleware = func(interface{}) interface{}
@@ -106,9 +88,7 @@ func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 			i++
 		} else if handler, ok := inputs[i].(Handler); ok {
 			hs.handlers = append(hs.handlers, handler)
-			hs.ctrl = &simpleHandlerCtrl{
-				remaining: -1,
-			}
+			hs.ctrl = eternalCtrl
 			i++
 		}
 	}
@@ -641,6 +621,8 @@ type evtDemultiplexer struct {
 
 	handlers map[string][]*handlerSpec
 
+	// use session to allow mocking the client instance later on
+	session  Session
 	shutdown chan struct{}
 }
 
@@ -938,9 +920,11 @@ func (d *evtDemultiplexer) triggerHandlers(ctx context.Context, evtName string, 
 	handlers := d.handlers[evtName]
 	d.RUnlock()
 
+	dead := make([]*handlerSpec, 0)
+
 	for i := range handlers {
-		// TODO: remove dead handlers
 		if alive := handlers[i].next(); !alive {
+			dead = append(dead, handlers[i])
 			continue
 		}
 
@@ -951,6 +935,40 @@ func (d *evtDemultiplexer) triggerHandlers(ctx context.Context, evtName string, 
 
 		handlers[i].dispatch(evtName, session, localEvt)
 	}
+
+	// time to remove the dead
+	if len(dead) == 0 {
+		return
+	}
+
+	d.Lock()
+
+	// make sure the dead has not already been removed, after all this is concurrent
+	handlers = d.handlers[evtName]
+	for _, deadspec := range dead {
+		for i, spec := range handlers {
+			if spec == deadspec { // compare pointers
+				// delete the dead spec, but keep the ordering
+				copy(handlers[i:], handlers[i+1:])
+				handlers[len(handlers)-1] = nil /// GC
+				handlers = handlers[:len(handlers)-1]
+				break
+			}
+		}
+	}
+
+	// update the specs
+	d.handlers[evtName] = handlers
+	d.Unlock()
+
+	// notify specs
+	go func(dead []*handlerSpec) {
+		for i := range dead {
+			if err := dead[i].ctrl.OnRemove(d.session); err != nil {
+				d.session.Logger().Error(err)
+			}
+		}
+	}(dead)
 }
 
 // ChannelCreate gives access to channelCreateChan for ChannelCreate events

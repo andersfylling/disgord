@@ -179,6 +179,7 @@ package disgord
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/snowflake/v3"
@@ -363,4 +364,59 @@ func validateChannelName(name string) (err error) {
 	}
 
 	return nil
+}
+
+//////////////////////////////////////////////////////
+//
+// Handler Controller
+//
+//////////////////////////////////////////////////////
+
+// Ctrl is a handler controller that supports lifetime and max number of execution for one or several handlers.
+//  // register only the first 6 votes
+//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Remaining: 6})
+//
+//  // Allow voting for only 10 minutes
+//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Duration: 10*time.Second})
+//
+//  // Allow voting until the month is over
+//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Until: time.Now().AddDate(0, 1, 0)})
+type Ctrl struct {
+	Remaining int
+	Until     time.Time
+	Duration  time.Duration
+}
+
+var _ HandlerCtrl = (*Ctrl)(nil)
+
+func (c *Ctrl) OnInsert(Session) error {
+	if c.Remaining == 0 {
+		c.Remaining = -1
+	}
+	if c.Duration.Nanoseconds() > 0 {
+		if c.Until.IsZero() {
+			c.Until = time.Now()
+		}
+		c.Until = c.Until.Add(c.Duration)
+	}
+	if c.Until.IsZero() {
+		snow := Snowflake(^uint64(0))
+		c.Until = snow.Date() // until the snowflakes fall
+	}
+
+	return nil
+}
+
+func (c *Ctrl) OnRemove(Session) error {
+	return nil
+}
+
+func (c *Ctrl) IsDead() bool {
+	return c.Remaining == 0 || time.Now().After(c.Until)
+}
+
+func (c *Ctrl) Update() {
+	if c.Remaining > 0 {
+		c.Remaining--
+	}
 }

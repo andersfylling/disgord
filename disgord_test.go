@@ -3,6 +3,7 @@ package disgord
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/andersfylling/disgord/websocket"
 )
@@ -200,3 +201,61 @@ var sink1 int = 1
 //	close(d.shutdownChan)
 //	close(wsShutdownChan)
 //}
+
+func TestCtrl(t *testing.T) {
+	var ctrl *Ctrl
+	newCtrl := func(c *Ctrl) *Ctrl {
+		c.OnInsert(nil)
+		return c
+	}
+
+	ctrl = newCtrl(&Ctrl{})
+	if ctrl.IsDead() {
+		t.Error("ctrl is marked dead even though no conditions for it's death was defined")
+	}
+
+	ctrl = newCtrl(&Ctrl{Remaining: -1})
+	if ctrl.IsDead() {
+		t.Error("ctrl is marked dead even though no conditions for it's death was defined")
+	}
+
+	t.Run("counter", func(t *testing.T) {
+		ctrl = newCtrl(&Ctrl{Remaining: 5})
+		if ctrl.IsDead() {
+			t.Error("ctrl is marked dead too early")
+		}
+		for i := 0; i < 4; i++ {
+			ctrl.Update()
+			if ctrl.IsDead() {
+				t.Errorf("ctrl is marked dead too early. Counter is %d", ctrl.Remaining)
+			}
+		}
+		ctrl.Update()
+		if !ctrl.IsDead() {
+			t.Errorf("ctrl was not marked dead. But was expected to be. Counter is %d", ctrl.Remaining)
+		}
+	})
+
+	t.Run("until", func(t *testing.T) {
+		ctrl = newCtrl(&Ctrl{Until: time.Now().Add(1 * time.Millisecond)})
+		if ctrl.IsDead() {
+			t.Error("ctrl is marked dead too early")
+		}
+		<-time.After(3 * time.Millisecond)
+		if !ctrl.IsDead() {
+			t.Error("ctrl is dead. But was not marked dead even thought the condition have been met")
+		}
+	})
+
+	t.Run("duration", func(t *testing.T) {
+		ctrl = newCtrl(&Ctrl{Duration: 1 * time.Millisecond})
+		if ctrl.IsDead() {
+			t.Error("ctrl is marked dead too early")
+		}
+		<-time.After(3 * time.Millisecond)
+		if !ctrl.IsDead() {
+			t.Error("ctrl is dead. But was not marked dead even thought the condition have been met")
+		}
+	})
+
+}
