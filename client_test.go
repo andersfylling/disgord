@@ -31,7 +31,7 @@ func TestClient_Once(t *testing.T) {
 	wg := sync.WaitGroup{}
 	c.On(EventMessageCreate, func() {
 		wg.Done()
-	}, &ctrl{remaining: 1})
+	}, &Ctrl{Remaining: 1})
 	if dispatcher.nrOfAliveHandlers() != 1+base {
 		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
 	}
@@ -57,12 +57,9 @@ func TestClient_Once(t *testing.T) {
 }
 
 func TestClient_On(t *testing.T) {
-	c, err := NewClient(&Config{
+	c := New(&Config{
 		BotToken: "testing",
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	dispatcher := c.evtDemultiplexer
 	base := dispatcher.nrOfAliveHandlers()

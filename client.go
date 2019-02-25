@@ -161,6 +161,7 @@ func NewClient(conf *Config) (c *client, err error) {
 		log:              conf.Logger,
 		pool:             newPools(),
 	}
+	c.evtDemultiplexer.session = c
 	c.voiceRepository = newVoiceRepository(c)
 	sharding.client = c
 
@@ -535,6 +536,9 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 // again, you specify the IsDead() method to comply with the disgord.HandlerCtrl interface, so you can do whatever
 // you want.
 //
+// If the HandlerCtrl.OnInsert returns an error, the related handlers are still added to the demultiplexer reactor.
+// But the error is logged to the injected logger instance (.Error).
+//
 // This ctrl feature was inspired by https://github.com/discordjs/discord.js
 func (c *client) On(event string, inputs ...interface{}) {
 	if err := ValidateHandlerInputs(inputs...); err != nil {
@@ -551,6 +555,9 @@ func (c *client) On(event string, inputs ...interface{}) {
 
 	c.evtDemultiplexer.Lock()
 	c.evtDemultiplexer.handlers[event] = append(c.evtDemultiplexer.handlers[event], spec)
+	if err := spec.ctrl.OnInsert(c); err != nil {
+		c.log.Error(err)
+	}
 	c.evtDemultiplexer.Unlock()
 }
 
