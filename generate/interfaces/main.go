@@ -23,13 +23,32 @@ type tagInfo struct {
 }
 
 type fieldInfo struct {
-	Name    string
-	ZeroVal string
-	Tag     *tagInfo
+	Name             string
+	ZeroVal          string
+	typ              string
+	Tag              *tagInfo
+	resetableStructs *[]structInfo
 }
 
 func (f *fieldInfo) HasTag() bool {
 	return f.Tag != nil
+}
+
+func (f *fieldInfo) Resetable() bool {
+	structs := *f.resetableStructs
+	name := f.typ
+	if strings.Contains(name, " ") {
+		// pointer. eg. &{405 PartialEmoji}
+		s := strings.Split(name, " ")
+		name = s[1][:len(s[1])-1] // remove } suffix
+	}
+	for i := range structs {
+		if name == structs[i].Name {
+			return true
+		}
+	}
+
+	return false
 }
 
 type structInfo struct {
@@ -113,6 +132,13 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 			continue
 		}
 
+		var resetables *[]structInfo
+		for i := range enforcers {
+			if enforcers[i].Name == "Reseter" {
+				resetables = &enforcers[i].Structs
+			}
+		}
+
 		specs := item.(*ast.GenDecl).Specs
 		for i := range specs {
 			ts := specs[i].(*ast.TypeSpec)
@@ -128,6 +154,7 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 					field := st.Fields.List[j]
 					name := field.Names[0].Name
 					typ := fmt.Sprint(field.Type)
+
 					var tag *tagInfo
 					if field.Tag != nil && len(field.Tag.Value) > 2 {
 						tagStruct := reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]) // rm ` wraps
@@ -161,7 +188,7 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 					for a := range enforcers {
 						for b := range enforcers[a].Structs {
 							if enforcers[a].Structs[b].Name == ts.Name.Name {
-								info := fieldInfo{Name: name, ZeroVal: zeroInit, Tag: tag}
+								info := fieldInfo{Name: name, ZeroVal: zeroInit, Tag: tag, typ: typ, resetableStructs: resetables}
 								enforcers[a].Structs[b].Fields = append(enforcers[a].Structs[b].Fields, info)
 								break
 							}

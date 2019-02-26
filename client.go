@@ -1115,6 +1115,7 @@ func (c *client) eventHandler() {
 		case EventGuildRoleDelete:
 			box = &GuildRoleDelete{}
 		case EventMessageCreate:
+			//box = c.pool.msgCreate.Get().(*MessageCreate)
 			box = &MessageCreate{}
 		case EventMessageUpdate:
 			box = &MessageUpdate{}
