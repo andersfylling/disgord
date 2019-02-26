@@ -10,13 +10,69 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/andersfylling/disgord/websocket"
 )
 
+//////////////////////////////////////////////////////
+//
+// Struct extensions / extra methods for testing only
+//
+//////////////////////////////////////////////////////
+
+func (d *evtDemultiplexer) nrOfAliveHandlers() (counter int) {
+	for k := range d.handlers {
+		for i := range d.handlers[k] {
+			if d.handlers[k][i].ctrl.IsDead() == false {
+				counter++
+			}
+		}
+	}
+
+	return
+}
+
+//////////////////////////////////////////////////////
+//
+// Benchmarks
+//
+//////////////////////////////////////////////////////
+
+func BenchmarkClient_On(b *testing.B) {
+	c := New(&Config{
+		BotToken:     "testing",
+		DisableCache: true,
+	})
+	c.shardManager.evtChan = make(chan *websocket.Event)
+	c.setupConnectEnv()
+
+	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
+	evt := &websocket.Event{Name: EventMessageCreate, Data: msgData}
+
+	wg := sync.WaitGroup{}
+	c.On(EventMessageCreate, func() {
+		wg.Done()
+	})
+
+	for i := 0; i < b.N; i++ {
+		wg.Add(1)
+		c.shardManager.evtChan <- evt
+		wg.Wait()
+	}
+
+}
+
+//////////////////////////////////////////////////////
+//
+// TEST funcs
+//
+//////////////////////////////////////////////////////
+
 func TestClient_Once(t *testing.T) {
 	c, err := NewClient(&Config{
-		BotToken: "testing",
+		BotToken:     "testing",
+		DisableCache: true,
 	})
 	if err != nil {
 		panic(err)
@@ -50,15 +106,23 @@ func TestClient_Once(t *testing.T) {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
-	wg.Wait()
-	// if wg.Done() is called more than once, we get a panic.
+	done := make(chan interface{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 
-	// TODO: add a timeout
+	select {
+	case <-time.After(20 * time.Millisecond):
+		t.Fail()
+	case <-done:
+	}
 }
 
 func TestClient_On(t *testing.T) {
 	c := New(&Config{
-		BotToken: "testing",
+		BotToken:     "testing",
+		DisableCache: true,
 	})
 
 	dispatcher := c.evtDemultiplexer

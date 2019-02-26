@@ -107,14 +107,6 @@ func TestGuildEmbed(t *testing.T) {
 }
 
 // -------------
-func TestGuildMemberMarshalling(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/guild/member1.json")
-	check(err, t)
-
-	v := Member{}
-	err = validateJSONMarshalling(data, &v)
-	check(err, t)
-}
 
 func TestGuild_sortChannels(t *testing.T) {
 	snowflakes := []Snowflake{

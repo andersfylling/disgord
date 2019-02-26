@@ -1124,14 +1124,6 @@ func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags
 	return err
 }
 
-type UpdatePinnedMessagesParams struct {
-	PinMessages []Snowflake
-	PinMessage  Snowflake
-
-	UnpinMessages []Snowflake
-	UnpinMessage  Snowflake
-}
-
 // GroupDMParticipant Information needed to add a recipient to a group chat
 type GroupDMParticipant struct {
 	AccessToken string    `json:"access_token"`   // access token of a user that has granted your app the gdm.join scope
@@ -1153,7 +1145,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 	return nil
 }
 
-// addGroupDMRecipient [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
+// AddDMParticipant [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
 // on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
@@ -1185,7 +1177,7 @@ func (c *client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 	return err
 }
 
-// removeGroupDMRecipient [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
+// KickParticipant [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Rate limiter [MAJOR]    /channels/{channel.id}/recipients

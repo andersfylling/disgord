@@ -10,7 +10,15 @@ import "time"
 {{ range $struct := $enf.Structs }}
 func ({{ $struct.ShortName }} *{{ $struct.Name }}) Reset() {
     {{- range $i, $field := $struct.Fields }}
+    {{- if $field.Resetable }}
+    {{- if eq $field.ZeroVal "nil" }}
+    if {{ $struct.ShortName }}.{{ $field.Name }} != nil {
+        {{ $struct.ShortName }}.{{ $field.Name }}.Reset()
+    }
+    {{- end }}
+    {{- else }}
     {{ $struct.ShortName }}.{{ $field.Name }} = {{ if eq $field.ZeroVal "" }} "" {{ else }}{{ $field.ZeroVal }}{{ end }}
+    {{- end }}
     {{- end }}
 }
 {{ end }}

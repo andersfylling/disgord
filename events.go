@@ -274,6 +274,7 @@ type MessageCreate struct {
 	ShardID uint            `json:"-"`
 }
 
+var _ Reseter = (*MessageCreate)(nil)
 var _ internalUpdater = (*MessageCreate)(nil)
 
 func (obj *MessageCreate) updateInternals() {

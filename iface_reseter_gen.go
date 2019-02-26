@@ -32,17 +32,29 @@ func (e *Emoji) Reset() {
 	e.ID = 0
 	e.Name = ""
 	e.Roles = nil
-	e.User = nil
+	if e.User != nil {
+		e.User.Reset()
+	}
 	e.RequireColons = false
 	e.Managed = false
 	e.Animated = false
 	e.guildID = 0
 }
 
+func (m *MessageCreate) Reset() {
+	if m.Message != nil {
+		m.Message.Reset()
+	}
+	m.Ctx = nil
+	m.ShardID = 0
+}
+
 func (m *Message) Reset() {
 	m.ID = 0
 	m.ChannelID = 0
-	m.Author = nil
+	if m.Author != nil {
+		m.Author.Reset()
+	}
 	m.Content = ""
 	m.Timestamp = time.Unix(0, 0)
 	m.EditedTimestamp = time.Unix(0, 0)
@@ -119,7 +131,9 @@ func (g *Guild) Reset() {
 
 func (m *Member) Reset() {
 	m.GuildID = 0
-	m.User = nil
+	if m.User != nil {
+		m.User.Reset()
+	}
 	m.Nick = ""
 	m.Roles = nil
 	m.JoinedAt = Timestamp(time.Unix(0, 0))
@@ -161,7 +175,9 @@ func (v *VoiceState) Reset() {
 	v.GuildID = 0
 	v.ChannelID = 0
 	v.UserID = 0
-	v.Member = nil
+	if v.Member != nil {
+		v.Member.Reset()
+	}
 	v.SessionID = ""
 	v.Deaf = false
 	v.Mute = false

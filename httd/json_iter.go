@@ -9,12 +9,21 @@ import (
 	"github.com/json-iterator/go"
 )
 
+var jiter = jsoniter.Config{
+	EscapeHTML:                    false,
+	MarshalFloatWith6Digits:       true, // will lose precession
+	ObjectFieldMustBeSimpleString: true, // do not unescape object field
+	CaseSensitive:                 false,
+	ValidateJsonRawMessage:        false,
+	SortMapKeys:                   false,
+}.Froze()
+
 // Unmarshal is the json unmarshaler implementation that is defined by the used build tags.
 func Unmarshal(data []byte, v interface{}) error {
 	if j, has := v.(json.Unmarshaler); has {
 		return j.UnmarshalJSON(data)
 	}
-	return jsoniter.Unmarshal(data, v)
+	return jiter.Unmarshal(data, v)
 }
 
 func JSONEncode(w io.WriteCloser, v interface{}) error {
@@ -31,5 +40,5 @@ func Marshal(v interface{}) (data []byte, err error) {
 	if j, has := v.(json.Marshaler); has {
 		return j.MarshalJSON()
 	}
-	return jsoniter.Marshal(v)
+	return jiter.Marshal(v)
 }

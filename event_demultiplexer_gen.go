@@ -626,18 +626,6 @@ type evtDemultiplexer struct {
 	shutdown chan struct{}
 }
 
-func (d *evtDemultiplexer) nrOfAliveHandlers() (counter int) {
-	for k := range d.handlers {
-		for i := range d.handlers[k] {
-			if d.handlers[k][i].ctrl.IsDead() == false {
-				counter++
-			}
-		}
-	}
-
-	return
-}
-
 // EventChan ... TODO
 func (d *evtDemultiplexer) EventChan(evt string) (channel interface{}, err error) {
 	if !d.activateEventChannels {

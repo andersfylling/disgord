@@ -53,14 +53,16 @@ func newPools() *pools {
 			return &Channel{}
 		},
 	}
-	p.message = &pool{
-		New: func() Reseter {
-			return &Message{}
-		},
-	}
 	p.user = &pool{
 		New: func() Reseter {
 			return &User{}
+		},
+	}
+	p.message = &pool{
+		New: func() Reseter {
+			return &Message{
+				Author: p.user.Get().(*User),
+			}
 		},
 	}
 	p.emoji = &pool{
@@ -68,6 +70,14 @@ func newPools() *pools {
 			return &Emoji{}
 		},
 	}
+
+	//p.msgCreate = &pool{
+	//	New: func() Reseter {
+	//		return &MessageCreate{
+	//			Message: p.message.Get().(*Message),
+	//		}
+	//	},
+	//}
 
 	return p
 }
@@ -77,6 +87,9 @@ type pools struct {
 	message Pool
 	user    Pool
 	emoji   Pool
+
+	// events
+	//msgCreate Pool // this is actually slower
 }
 
 func (p *pools) ChannelPool() Pool {

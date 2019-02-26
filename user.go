@@ -434,15 +434,6 @@ func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
 }
 
-// MarshalJSON see interface json.Marshaler
-func (u *User) MarshalJSON() ([]byte, error) {
-	if u.ID.Empty() {
-		return []byte("{}"), nil
-	}
-
-	return json.Marshal(User(*u))
-}
-
 // UnmarshalJSON see interface json.Unmarshaler
 func (u *User) UnmarshalJSON(data []byte) (err error) {
 	j := userJSON{}
