@@ -207,6 +207,9 @@ type Config struct {
 
 // client is the main disgord client to hold your state and data. You must always initiate it using the constructor
 // methods (eg. New(..) or NewClient(..)).
+//
+// Note that this client holds all the REST methods, and is split across files, into whatever category
+// the REST methods regards.
 type client struct {
 	sync.RWMutex
 
@@ -359,6 +362,23 @@ func (c *client) RateLimiter() httd.RateLimiter {
 	return c.req.RateLimiter()
 }
 
+// Req return the request object. Used in REST requests to handle rate limits,
+// wrong http responses, etc.
+func (c *client) Req() httd.Requester {
+	return c.req
+}
+
+// Cache returns the cacheLink manager for the session
+func (c *client) Cache() Cacher {
+	return c.cache
+}
+
+//////////////////////////////////////////////////////
+//
+// Socket connection
+//
+//////////////////////////////////////////////////////
+
 func (c *client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
@@ -461,16 +481,55 @@ func (c *client) StayConnectedUntilInterrupted() (err error) {
 	return nil
 }
 
-// Req return the request object. Used in REST requests to handle rate limits,
-// wrong http responses, etc.
-func (c *client) Req() httd.Requester {
-	return c.req
+//////////////////////////////////////////////////////
+//
+// Internal event handlers
+//
+//////////////////////////////////////////////////////
+
+// handlerGuildDelete update internal state when joining or creating a guild
+func (c *client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
+	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
+	//  meaning, you might have to add your own shards if you get a panic here
+	shard, _ := c.shardManager.GetShard(evt.Guild.ID)
+	shard.Lock()
+	defer shard.Unlock()
+
+	// don't add an entry if there already is one
+	for i := range shard.guilds {
+		if shard.guilds[i] == evt.Guild.ID {
+			return
+		}
+	}
+	shard.guilds = append(shard.guilds, evt.Guild.ID)
 }
 
-// Cache returns the cacheLink manager for the session
-func (c *client) Cache() Cacher {
-	return c.cache
+// handlerGuildDelete update internal state when deleting or leaving a guild
+func (c *client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
+	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
+	//  meaning, you might have to add your own shards if you get a panic here
+	shard, _ := c.shardManager.GetShard(evt.UnavailableGuild.ID)
+	shard.Lock()
+	defer shard.Unlock()
+
+	for i := range shard.guilds {
+		if shard.guilds[i] != evt.UnavailableGuild.ID {
+			continue
+		}
+		shard.guilds[i] = shard.guilds[len(shard.guilds)-1]
+		shard.guilds = shard.guilds[:len(shard.guilds)-1]
+	}
 }
+
+func (c *client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
+	_ = c.cache.Update(UserCache, update.User)
+}
+
+//////////////////////////////////////////////////////
+//
+// Socket utilities
+//
+//////////////////////////////////////////////////////
 
 // Ready triggers a given callback when all shards has gotten their first Ready event
 // Warning: if you run client.Disconnect and want to run Connect again later, this will
@@ -488,37 +547,6 @@ func (c *client) Ready(cb func()) {
 		}
 		cb()
 	}()
-}
-
-func ValidateHandlerInputs(inputs ...interface{}) (err error) {
-	var i int
-	var ok bool
-
-	// make sure that middlewares are only at beginning
-	for j := i; j < len(inputs); j++ {
-		if _, ok = inputs[j].(Middleware); ok {
-			if j != i {
-				return errors.New("middlewares can only be in the beginning. Grouped together")
-			}
-			i++
-		}
-	}
-
-	// there should now be N handlers, 0 < N.
-	if len(inputs) <= i {
-		return errors.New("missing handler(s)")
-	}
-
-	// check for extra controllers
-	for j := len(inputs) - 2; j >= i; j-- {
-		if _, ok = inputs[j].(HandlerCtrl); ok {
-			return errors.New("a handlerCtrl's can only be at the end of the definition. Expected a handler")
-		}
-	}
-
-	// TODO: test for all handler types?
-
-	return nil
 }
 
 // On binds a singular or multiple event handlers to the stated event, with the same middlewares.
@@ -589,7 +617,11 @@ func (c *client) AcceptEvent(events ...string) {
 	}
 }
 
-// Generic CRUDS
+//////////////////////////////////////////////////////
+//
+// Abstract CRUD operations
+//
+//////////////////////////////////////////////////////
 
 // DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
 // be used to delete said object.
@@ -620,9 +652,12 @@ func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (
 	return
 }
 
-// REST
-
-// Guild
+//////////////////////////////////////////////////////
+//
+// REST Methods
+// from the Discord docs
+//
+//////////////////////////////////////////////////////
 
 // CreateGuild .
 func (c *client) CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
@@ -878,98 +913,6 @@ func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *Parti
 
 // Webhook
 
-// CreateWebhook .
-func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = CreateWebhook(c.req, channelID, params)
-	return
-}
-
-// GetChannelWebhooks .
-func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	ret, err = GetChannelWebhooks(c.req, channelID)
-	return
-}
-
-// GetGuildWebhooks .
-func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	ret, err = GetGuildWebhooks(c.req, guildID)
-	return
-}
-
-// GetWebhook .
-func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = GetWebhook(c.req, id)
-	return
-}
-
-// GetWebhookWithToken .
-func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = GetWebhookWithToken(c.req, id, token)
-	return
-}
-
-// ModifyWebhook .
-func (c *client) UpdateWebhook(id Snowflake, params *UpdateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	if id.Empty() {
-		err = errors.New("given webhook ID was not set, there is nothing to modify")
-		return
-	}
-	if params == nil {
-		err = errors.New("given param object was nil, there is nothing to modify")
-		return
-	}
-	if params.Empty() {
-		err = errors.New("given param object was empty, there is nothing to modify")
-		return
-	}
-
-	// verify avatar string prefix
-	if params.avatarIsSet && params.avatar != "" && !validAvatarPrefix(params.avatar) {
-		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. 'data:image/jpeg;base64,'")
-		return
-	}
-
-	// TODO: check if user has permission to modify webhook
-	ret, err = UpdateWebhook(c.req, id, params)
-	return
-}
-
-// ModifyWebhookWithToken .
-func (c *client) UpdateWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = UpdateWebhookWithToken(c.req, newWebhook)
-	return
-}
-
-// DeleteWebhook .
-func (c *client) DeleteWebhook(webhookID Snowflake, flags ...Flag) (err error) {
-	err = DeleteWebhook(c.req, webhookID)
-	return
-}
-
-// DeleteWebhookWithToken .
-func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
-	err = DeleteWebhookWithToken(c.req, id, token)
-	return
-}
-
-// ExecuteWebhook .
-func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
-	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
-	return
-}
-
-// ExecuteSlackWebhook .
-func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
-	err = ExecuteSlackWebhook(c.req, params, wait)
-	return
-}
-
-// ExecuteGitHubWebhook .
-func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
-	err = ExecuteGitHubWebhook(c.req, params, wait)
-	return
-}
-
 //
 // #########################################################################
 //
@@ -1197,13 +1140,12 @@ func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 //
 // Deprecated / Legacy supported REST methods
 //
-// I don't agree with the way Discord have named their
-// REST methods, and I've restricted DisGord to only use
-// CRUD prefixes (READ => GET). Here I list every REST
-// method that does not match the one in the Discord docs.
+// As I want to keep the method names simple, I
+// do not want to make it difficult to use
+// DisGord side by side with the documentation.
 //
-// This makes it intuitive to use DisGord while using
-// the Discord docs for reference.
+// Below I've added all the REST methods with
+// their names, as in, the discord documentation.
 //
 //////////////////////////////////////////////////////
 

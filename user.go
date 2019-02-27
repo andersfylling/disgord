@@ -617,7 +617,7 @@ func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) 
 	}
 
 	// TODO: remove once ModifyCurrentUser updates cache and the client var?
-	*u = *updated
+	_ = updated.copyOverToCache(u)
 	return
 }
 

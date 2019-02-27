@@ -23,7 +23,7 @@
 </div>
 
 ## About
-Go module for interacting with the Discord API. Supports events, REST calls and voice (receive only).
+Go module for interacting with the Discord API. Supports events, REST calls and voice (transmitting/sending).
  
  and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
 

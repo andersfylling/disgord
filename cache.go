@@ -559,7 +559,7 @@ func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 		for j := range g.guild.Members {
 			if g.guild.Members[j].userID == userID {
 				userID = 0
-				*g.guild.Members[j] = *members[i]
+				_ = members[i].CopyOverTo(g.guild.Members[j])
 				g.guild.Members[j].User = nil
 				break
 			}
@@ -923,7 +923,7 @@ func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
 		var updated bool
 		for j := range guild.Members {
 			if guild.Members[j].userID == members[i].userID {
-				*guild.Members[j] = *members[i]
+				_ = members[i].CopyOverTo(guild.Members[j])
 				updated = true
 				break
 			}

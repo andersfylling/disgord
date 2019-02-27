@@ -436,3 +436,95 @@ func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait 
 func ExecuteGitHubWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool) (err error) {
 	return ExecuteWebhook(client, params, wait, endpoint.GitHub())
 }
+
+// CreateWebhook .
+func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
+	ret, err = CreateWebhook(c.req, channelID, params)
+	return
+}
+
+// GetChannelWebhooks .
+func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+	ret, err = GetChannelWebhooks(c.req, channelID)
+	return
+}
+
+// GetGuildWebhooks .
+func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+	ret, err = GetGuildWebhooks(c.req, guildID)
+	return
+}
+
+// GetWebhook .
+func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
+	ret, err = GetWebhook(c.req, id)
+	return
+}
+
+// GetWebhookWithToken .
+func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
+	ret, err = GetWebhookWithToken(c.req, id, token)
+	return
+}
+
+// ModifyWebhook .
+func (c *client) UpdateWebhook(id Snowflake, params *UpdateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
+	if id.Empty() {
+		err = errors.New("given webhook ID was not set, there is nothing to modify")
+		return
+	}
+	if params == nil {
+		err = errors.New("given param object was nil, there is nothing to modify")
+		return
+	}
+	if params.Empty() {
+		err = errors.New("given param object was empty, there is nothing to modify")
+		return
+	}
+
+	// verify avatar string prefix
+	if params.avatarIsSet && params.avatar != "" && !validAvatarPrefix(params.avatar) {
+		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. 'data:image/jpeg;base64,'")
+		return
+	}
+
+	// TODO: check if user has permission to modify webhook
+	ret, err = UpdateWebhook(c.req, id, params)
+	return
+}
+
+// ModifyWebhookWithToken .
+func (c *client) UpdateWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error) {
+	ret, err = UpdateWebhookWithToken(c.req, newWebhook)
+	return
+}
+
+// DeleteWebhook .
+func (c *client) DeleteWebhook(webhookID Snowflake, flags ...Flag) (err error) {
+	err = DeleteWebhook(c.req, webhookID)
+	return
+}
+
+// DeleteWebhookWithToken .
+func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
+	err = DeleteWebhookWithToken(c.req, id, token)
+	return
+}
+
+// ExecuteWebhook .
+func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
+	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
+	return
+}
+
+// ExecuteSlackWebhook .
+func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+	err = ExecuteSlackWebhook(c.req, params, wait)
+	return
+}
+
+// ExecuteGitHubWebhook .
+func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+	err = ExecuteGitHubWebhook(c.req, params, wait)
+	return
+}
