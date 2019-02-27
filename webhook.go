@@ -60,15 +60,14 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+//////////////////////////////////////////////////////
+//
+// REST Methods
+//
+//////////////////////////////////////////////////////
+
 func ratelimitWebhook(id Snowflake) string {
 	return "wh:" + id.String()
-}
-
-func NewCreateWebhookParams(name string, avatar *string) *CreateWebhookParams {
-	return &CreateWebhookParams{
-		Name:   name,
-		Avatar: avatar,
-	}
 }
 
 // CreateWebhookParams json params for the create webhook rest request avatar string
@@ -76,6 +75,16 @@ func NewCreateWebhookParams(name string, avatar *string) *CreateWebhookParams {
 type CreateWebhookParams struct {
 	Name   string  `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+}
+
+func (c *CreateWebhookParams) FindErrors() error {
+	if c.Name == "" {
+		return errors.New("webhook must have a name")
+	}
+	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
+		return errors.New("webhook name must be 2 to 32 characters long")
+	}
+	return nil
 }
 
 // CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -86,20 +95,26 @@ type CreateWebhookParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhookParams) (ret *Webhook, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
+func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
+	if params == nil {
+		return nil, errors.New("params was nil")
+	}
+	if err = params.FindErrors(); err != nil {
+		return nil, err
+	}
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getWebhook(r.Execute)
 }
 
 // GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -109,18 +124,17 @@ func CreateWebhook(client httd.Poster, channelID Snowflake, params *CreateWebhoo
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
-func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Webhook, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getWebhooks(r.Execute)
 }
 
 // GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -130,18 +144,17 @@ func GetChannelWebhooks(client httd.Getter, channelID Snowflake) (ret []*Webhook
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
-func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildWebhooks(guildID),
 		Endpoint:    endpoint.GuildWebhooks(guildID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Webhook, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getWebhooks(r.Execute)
 }
 
 // GetWebhook [REST] Returns the new webhook object for the given id.
@@ -151,18 +164,16 @@ func GetGuildWebhooks(client httd.Getter, guildID Snowflake) (ret []*Webhook, er
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getWebhook(r.Execute)
 }
 
 // GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
@@ -173,96 +184,16 @@ func GetWebhook(client httd.Getter, id Snowflake) (ret *Webhook, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func GetWebhookWithToken(client httd.Getter, id Snowflake, token string) (ret *Webhook, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.WebhookToken(id, token),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
-}
-
-// UpdateWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
-// Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
-// avatar by providing a nil to SetAvatar.
-//  params = &UpdateWebhookParams{}
-//  params.UseDefaultAvatar() // will reset any image data, if present
-type UpdateWebhookParams struct {
-	avatarIsSet bool
-	name        string
-	avatar      string
-	channelID   Snowflake
-}
-
-var _ AvatarParamHolder = (*UpdateWebhookParams)(nil)
-
-func NewUpdateWebhookParams() *UpdateWebhookParams {
-	return &UpdateWebhookParams{}
-}
-
-func (m *UpdateWebhookParams) Empty() bool {
-	return m.name == "" && m.channelID.Empty() && !m.avatarIsSet
-}
-
-func (m *UpdateWebhookParams) SetName(name string) {
-	m.name = name
-}
-
-// SetAvatar updates the avatar image. Must be abase64 encoded string.
-// provide a nil to reset the avatar.
-func (m *UpdateWebhookParams) SetAvatar(avatar string) {
-	m.avatar = avatar
-	m.avatarIsSet = avatar != ""
-}
-
-// UseDefaultAvatar sets the avatar param to null, and let's Discord assign a default avatar image.
-// Note that the avatar value will never hold content, as default avatars only works on null values.
-//
-// Use this to reset an avatar image.
-func (m *UpdateWebhookParams) UseDefaultAvatar() {
-	m.avatar = ""
-	m.avatarIsSet = true
-}
-func (m *UpdateWebhookParams) SetChannelID(channelID Snowflake) {
-	m.channelID = channelID
-}
-
-func (m *UpdateWebhookParams) MarshalJSON() ([]byte, error) {
-	var v interface{}
-	if m.avatarIsSet {
-		p := &modifyWebhookParamsWithAvatar{
-			Name:      m.name,
-			ChannelID: m.channelID,
-		}
-		if m.avatar != "" {
-			p.Avatar = &m.avatar
-		}
-
-		v = p
-	} else {
-		v = &modifyWebhookParamsWithoutAvatar{
-			Name:      m.name,
-			ChannelID: m.channelID,
-		}
-	}
-
-	return marshal(v)
-}
-
-type modifyWebhookParamsWithoutAvatar struct {
-	Name      string    `json:"name,omitempty"` // name of the webhook (2-32 characters)
-	ChannelID Snowflake `json:"channel_id,omitempty"`
-}
-
-type modifyWebhookParamsWithAvatar struct {
-	Name      string    `json:"name,omitempty"` // name of the webhook (2-32 characters)
-	Avatar    *string   `json:"avatar"`         // avatar data uri scheme, image for the default webhook avatar
-	ChannelID Snowflake `json:"channel_id,omitempty"`
+	return getWebhook(r.Execute)
 }
 
 // UpdateWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -273,55 +204,47 @@ type modifyWebhookParamsWithAvatar struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func UpdateWebhook(client httd.Patcher, id Snowflake, params *UpdateWebhookParams) (ret *Webhook, err error) {
-	if id.Empty() {
-		err = errors.New("not a valid snowflake")
-		return
+func (c *client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebhookBuilder) {
+	builder = &updateWebhookBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Webhook{}
 	}
-
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+	builder.r.flags = flags
+	builder.r.addPrereq(id.Empty(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
 		ContentType: httd.ContentTypeJSON,
-		Body:        params,
-	})
-	if err != nil {
-		return
-	}
+	}, nil)
 
-	err = unmarshal(body, &ret)
-	return
+	return builder
 }
 
-// UpdateWebhookWithToken [REST] Same as ModifyWebhook, except this call does not require authentication,
-// does not accept a channel_id parameter in the body, and does not return a user in the webhook object.
+// UpdateWebhookWithToken [REST] Same as UpdateWebhook, except this call does not require authentication,
+// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint. are optional. Not tested:extra json fields might cause
-//                          an issue. Consider writing a json params object.
-func UpdateWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webhook, err error) {
-	id := newWebhook.ID
-	if id.Empty() {
-		err = errors.New("not a valid snowflake")
-		return
+//  Comment                 All parameters to this endpoint. are optional.
+func (c *client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder) {
+	builder = &updateWebhookBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Webhook{}
 	}
-
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+	builder.r.flags = flags
+	builder.r.addPrereq(id.Empty(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.addPrereq(token == "", "given webhook token was not set")
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitWebhook(id),
-		Endpoint:    endpoint.WebhookToken(id, newWebhook.Token),
+		Endpoint:    endpoint.WebhookToken(id, token),
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, nil)
 
-	err = unmarshal(body, &ret)
-	return
+	return builder
 }
 
 // DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
@@ -331,8 +254,8 @@ func UpdateWebhookWithToken(client httd.Patcher, newWebhook *Webhook) (ret *Webh
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
-	return DeleteWebhookWithToken(client, webhookID, "")
+func (c *client) DeleteWebhook(id Snowflake, flags ...Flag) (err error) {
+	return c.DeleteWebhookWithToken(id, "", flags...)
 }
 
 // DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
@@ -342,7 +265,7 @@ func DeleteWebhook(client httd.Deleter, webhookID Snowflake) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (err error) {
+func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
 	var e string
 	if token != "" {
 		e = endpoint.WebhookToken(id, token)
@@ -350,20 +273,15 @@ func DeleteWebhookWithToken(client httd.Deleter, id Snowflake, token string) (er
 		e = endpoint.Webhook(id)
 	}
 
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    e,
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
-	return
+	_, err = r.Execute()
+	return err
 }
 
 // NewExecuteWebhookParams creates params for func ExecuteWebhook
@@ -401,9 +319,9 @@ type ExecuteWebhookParams struct {
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-// TODO
-func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool, URLSuffix string) (err error) {
-	_, _, err = client.Post(&httd.Request{
+// TODO-flag
+func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
+	_, _, err = c.req.Post(&httd.Request{
 		Ratelimiter: ratelimitWebhook(params.WebhookID),
 		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix,
 		ContentType: httd.ContentTypeJSON,
@@ -419,8 +337,9 @@ func ExecuteWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool,
 //  Reviewed                2018-08-14
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool) (err error) {
-	return ExecuteWebhook(client, params, wait, endpoint.Slack())
+// TODO-flag
+func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+	return c.ExecuteWebhook(params, wait, endpoint.Slack(), flags...)
 }
 
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
@@ -433,98 +352,29 @@ func ExecuteSlackWebhook(client httd.Poster, params *ExecuteWebhookParams, wait 
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-func ExecuteGitHubWebhook(client httd.Poster, params *ExecuteWebhookParams, wait bool) (err error) {
-	return ExecuteWebhook(client, params, wait, endpoint.GitHub())
-}
-
-// CreateWebhook .
-func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = CreateWebhook(c.req, channelID, params)
-	return
-}
-
-// GetChannelWebhooks .
-func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	ret, err = GetChannelWebhooks(c.req, channelID)
-	return
-}
-
-// GetGuildWebhooks .
-func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	ret, err = GetGuildWebhooks(c.req, guildID)
-	return
-}
-
-// GetWebhook .
-func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = GetWebhook(c.req, id)
-	return
-}
-
-// GetWebhookWithToken .
-func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = GetWebhookWithToken(c.req, id, token)
-	return
-}
-
-// ModifyWebhook .
-func (c *client) UpdateWebhook(id Snowflake, params *UpdateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	if id.Empty() {
-		err = errors.New("given webhook ID was not set, there is nothing to modify")
-		return
-	}
-	if params == nil {
-		err = errors.New("given param object was nil, there is nothing to modify")
-		return
-	}
-	if params.Empty() {
-		err = errors.New("given param object was empty, there is nothing to modify")
-		return
-	}
-
-	// verify avatar string prefix
-	if params.avatarIsSet && params.avatar != "" && !validAvatarPrefix(params.avatar) {
-		err = errors.New("given avatar string is invalid. Must specify data encoding. Eg. 'data:image/jpeg;base64,'")
-		return
-	}
-
-	// TODO: check if user has permission to modify webhook
-	ret, err = UpdateWebhook(c.req, id, params)
-	return
-}
-
-// ModifyWebhookWithToken .
-func (c *client) UpdateWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error) {
-	ret, err = UpdateWebhookWithToken(c.req, newWebhook)
-	return
-}
-
-// DeleteWebhook .
-func (c *client) DeleteWebhook(webhookID Snowflake, flags ...Flag) (err error) {
-	err = DeleteWebhook(c.req, webhookID)
-	return
-}
-
-// DeleteWebhookWithToken .
-func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
-	err = DeleteWebhookWithToken(c.req, id, token)
-	return
-}
-
-// ExecuteWebhook .
-func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
-	err = ExecuteWebhook(c.req, params, wait, URLSuffix)
-	return
-}
-
-// ExecuteSlackWebhook .
-func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
-	err = ExecuteSlackWebhook(c.req, params, wait)
-	return
-}
-
-// ExecuteGitHubWebhook .
+// TODO-flag
 func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
-	err = ExecuteGitHubWebhook(c.req, params, wait)
-	return
+	return c.ExecuteWebhook(params, wait, endpoint.GitHub(), flags...)
+}
+
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
+// UpdateWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
+// Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
+// avatar by providing a nil to SetAvatar.
+//
+//generate-rest-params: name:string, avatar:string, channel_id:Snowflake,
+//generate-rest-basic-execute: webhook:*Webhook,
+type updateWebhookBuilder struct {
+	r RESTBuilder
+}
+
+// SetDefaultAvatar will reset the webhook image
+func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
+	u.r.param("avatar", nil)
+	return u
 }

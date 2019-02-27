@@ -1285,11 +1285,11 @@ func (c *client) ListVoiceRegions(flags ...Flag) ([]*VoiceRegion, error) {
 }
 
 // Deprecated: use UpdateWebhook
-func (c *client) ModifyWebhook(id Snowflake, params *UpdateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	return c.UpdateWebhook(id, params, flags...)
+func (c *client) ModifyWebhook(id Snowflake, flags ...Flag) *updateWebhookBuilder {
+	return c.UpdateWebhook(id, flags...)
 }
 
 // Deprecated: use UpdateWebhookWithToken
-func (c *client) ModifyWebhookWithToken(newWebhook *Webhook, flags ...Flag) (ret *Webhook, err error) {
-	return c.UpdateWebhookWithToken(newWebhook, flags...)
+func (c *client) ModifyWebhookWithToken(newWebhook *Webhook, flags ...Flag) *updateWebhookBuilder {
+	return c.UpdateWebhookWithToken(newWebhook.ID, newWebhook.Token, flags...)
 }

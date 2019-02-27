@@ -303,6 +303,7 @@ func (c *client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 	builder.r.itemFactory = func() interface{} {
 		return &Emoji{guildID: guildID}
 	}
+	builder.r.flags = flags
 	builder.r.cacheRegistry = GuildEmojiCache
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,

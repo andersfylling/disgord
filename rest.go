@@ -288,6 +288,8 @@ type RESTBuilder struct {
 	config     *httd.Request
 	client     httd.Requester
 
+	flags []Flag // TODO: checking
+
 	prerequisites []string // error msg
 
 	itemFactory fRESTItemFactory
@@ -303,6 +305,8 @@ type RESTBuilder struct {
 	cancelOnRatelimit bool
 }
 
+// addPrereq the naming here is kinda reversed..
+// just think that each resembles a normal; if true => error
 func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
 	if condition == false {
 		return
@@ -338,6 +342,11 @@ func (b *RESTBuilder) prepare() {
 	b.config.Endpoint += b.urlParams.URLQueryString()
 
 	if b.cache == nil {
+		b.IgnoreCache()
+	}
+
+	flags := mergeFlags(b.flags)
+	if flags.Ignorecache() {
 		b.IgnoreCache()
 	}
 }
@@ -499,6 +508,34 @@ func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 	}
 
 	return v.(*Channel), nil
+}
+
+// TODO: auto generate
+func getWebhook(f func() (interface{}, error)) (wh *Webhook, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Webhook), nil
+}
+
+// TODO: auto generate
+func getWebhooks(f func() (interface{}, error)) (whs []*Webhook, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Webhook), nil
 }
 
 // TODO: auto generate
