@@ -320,6 +320,7 @@ func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}
 	}
+	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimitGuildRoles(guildID),

@@ -902,6 +902,7 @@ func (c *client) UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChan
 	builder.r.itemFactory = func() interface{} {
 		return c.pool.channel.Get()
 	}
+	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitChannel(id),

@@ -67,6 +67,7 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - func NewUpdateVoiceChannelParams
  - type UpdateChannelParams
  - func .UpdateMessage, as EditMessage changed name to UpdateMessage
+ - func NewCreateWebhookParams
  
  - every REST func. REST functionality now only accessible from the client instance.
  

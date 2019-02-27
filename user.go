@@ -814,6 +814,7 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 func (c *client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
+	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitUsers(),
@@ -821,6 +822,7 @@ func (c *client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
 
+	// TODO: cache changes?
 	return builder
 }
 

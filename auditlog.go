@@ -301,6 +301,7 @@ func auditLogFactory() interface{} {
 func (c *client) GetGuildAuditLogs(guildID snowflake.ID, flags ...Flag) (builder *guildAuditLogsBuilder) {
 	builder = &guildAuditLogsBuilder{}
 	builder.r.itemFactory = auditLogFactory
+	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodGet,
 		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
