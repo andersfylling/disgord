@@ -289,7 +289,16 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 	return
 }
 
+type msgSender interface {
+	SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error)
+}
+
+func (m *Message) Reply(client msgSender, data ...interface{}) (*Message, error) {
+	return client.SendMsg(m.ChannelID, data...)
+}
+
 // Respond responds to a message using a Message object.
+// Deprecated: use Reply
 func (m *Message) Respond(client MessageSender, message *Message) (msg *Message, err error) {
 	if constant.LockedMethods {
 		m.RLock()
@@ -311,6 +320,7 @@ func (m *Message) Respond(client MessageSender, message *Message) (msg *Message,
 }
 
 // RespondString sends a reply to a message in the form of a string
+// Deprecated: use Reply
 func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
 	params := &CreateMessageParams{
 		Content: content,

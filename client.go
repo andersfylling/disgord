@@ -982,51 +982,58 @@ func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([
 	return c.GetCurrentUserGuilds(params)
 }
 
-// SendMsg .
-func (c *client) SendMsg(channelID Snowflake, message *Message, flags ...Flag) (msg *Message, err error) {
-	if constant.LockedMethods {
-		message.RLock()
+// SendMsg Input anything and it will be converted to a message and sent. If you
+// supply it with multiple data's, it will simply merge them. Even if they are multiple Message objects.
+// However, if you supply multiple CreateMessageParams objects, you will face issues. But at this point
+// you really need to reconsider your own code.
+//
+// Note that sending a &Message will simply refer to it, and not copy over the contents into
+// the reply. example output: message{6434732342356}
+//
+// If you want to affect the actual message data besides .Content; provide a
+// MessageCreateParams. The reply message will be updated by the last one provided.
+func (c *client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
+
+	var flags []Flag
+	params := &CreateMessageParams{}
+	for i := range data {
+		if data[i] == nil {
+			continue
+		}
+
+		var s string
+		switch t := data[i].(type) {
+		case *CreateMessageParams:
+			*params = *t
+		case CreateMessageParams:
+			*params = t
+		case string:
+			s = t
+		case *Flag:
+			flags = append(flags, *t)
+		case Flag:
+			flags = append(flags, t)
+		default:
+			if str, ok := t.(fmt.Stringer); ok {
+				s = str.String()
+			} else {
+				s = fmt.Sprint(t)
+			}
+		}
+
+		if s != "" {
+			params.Content += " " + s
+		}
 	}
-	params := &CreateMessageParams{
-		Content:                  message.Content,
-		Tts:                      message.Tts,
-		SpoilerTagContent:        message.SpoilerTagContent,
-		SpoilerTagAllAttachments: message.SpoilerTagAllAttachments,
-		// File: ...
-		// Embed: ...
-	}
-	if !message.Nonce.Empty() {
-		params.Nonce = message.Nonce
-	}
-	if len(message.Embeds) > 0 {
-		params.Embed = message.Embeds[0]
+	if data == nil {
+		if mergeFlags(flags).IgnoreEmptyParams() {
+			params.Content = ""
+		} else {
+			return nil, errors.New("params were nil")
+		}
 	}
 
-	if constant.LockedMethods {
-		message.RUnlock()
-	}
-
-	return c.CreateMessage(channelID, params)
-}
-
-// SendMsgString .
-func (c *client) SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error) {
-	params := &CreateMessageParams{
-		Content: content,
-	}
-
-	msg, err = c.CreateMessage(channelID, params)
-	return
-}
-
-func waitForEvent(eventEmitter <-chan *websocket.Event) (event *websocket.Event, err error) {
-	var alive bool
-	event, alive = <-eventEmitter
-	if !alive {
-		err = errors.New("event emitter (channel) is dead")
-	}
-
-	return
+	return c.CreateMessage(channelID, params, flags...)
 }
 
 /* status updates */
