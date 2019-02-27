@@ -282,8 +282,7 @@ type Session interface {
 	RESTMethods
 
 	// Custom REST functions
-	SendMsg(channelID Snowflake, message *Message, flags ...Flag) (msg *Message, err error)
-	SendMsgString(channelID Snowflake, content string, flags ...Flag) (msg *Message, err error)
+	SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error)
 
 	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) (err error)
