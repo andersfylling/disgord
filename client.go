@@ -665,19 +665,6 @@ func (c *client) CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Gui
 	return
 }
 
-// GetGuild .
-func (c *client) GetGuild(id Snowflake, flags ...Flag) (ret *Guild, err error) {
-	ret, err = c.cache.GetGuild(id)
-	if err != nil {
-		ret, err = GetGuild(c.req, id)
-		if err != nil {
-			return nil, err
-		}
-		c.cache.SetGuild(ret)
-	}
-	return ret, err
-}
-
 // ModifyGuild .
 func (c *client) UpdateGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	ret, err = ModifyGuild(c.req, id, params)
@@ -719,35 +706,6 @@ func (c *client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelPara
 func (c *client) UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error) {
 	ret, err = ModifyGuildChannelPositions(c.req, id, params)
 	return
-}
-
-// GetGuildMember .
-func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
-	ret, err = c.cache.GetGuildMember(guildID, userID)
-	if err != nil {
-		ret, err = GetGuildMember(c.req, guildID, userID)
-		if err != nil {
-			return
-		}
-		c.cache.SetGuildMember(guildID, ret)
-		_ = c.cache.Update(UserCache, ret.User)
-	}
-	return
-}
-
-// GetGuildMembers .
-func (c *client) GetGuildMembers(guildID, after Snowflake, limit int, flags ...Flag) (ret []*Member, err error) {
-	ret, err = c.cache.GetGuildMembersAfter(guildID, after, limit)
-	if err != nil {
-		ret, err = GetGuildMembers(c.req, guildID, after, limit)
-		if err != nil {
-			return nil, err
-		}
-		c.cache.SetGuildMembers(guildID, ret)
-		//c.cacheLink.Update(UserCache, ret.User)
-		// TODO: update users
-	}
-	return ret, nil
 }
 
 // AddGuildMember .
@@ -851,24 +809,6 @@ func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 	return
 }
 
-// GetGuildVoiceRegions .
-func (c *client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
-	ret, err = GetGuildVoiceRegions(c.req, id)
-	return
-}
-
-// GetGuildInvites .
-func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
-	ret, err = GetGuildInvites(c.req, id)
-	return
-}
-
-// GetGuildIntegrations .
-func (c *client) GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error) {
-	ret, err = GetGuildIntegrations(c.req, id)
-	return
-}
-
 // CreateGuildIntegration .
 func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
 	err = CreateGuildIntegration(c.req, guildID, params)
@@ -893,21 +833,9 @@ func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ..
 	return
 }
 
-// GetGuildEmbed .
-func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (ret *GuildEmbed, err error) {
-	ret, err = GetGuildEmbed(c.req, guildID)
-	return
-}
-
 // ModifyGuildEmbed .
 func (c *client) UpdateGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error) {
 	ret, err = ModifyGuildEmbed(c.req, guildID, params)
-	return
-}
-
-// GetGuildVanityURL .
-func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
-	ret, err = GetGuildVanityURL(c.req, guildID)
 	return
 }
 
@@ -1216,7 +1144,10 @@ func (c *client) ModifyGuildChannelPositions(id Snowflake, params []UpdateGuildC
 
 // Deprecated: use GetGuildMembers
 func (c *client) ListGuildMembers(id, after Snowflake, limit int, flags ...Flag) ([]*Member, error) {
-	return c.GetGuildMembers(id, after, limit, flags...)
+	return c.GetGuildMembers(id, &GetGuildMembersParams{
+		After: after,
+		Limit: limit,
+	}, flags...)
 }
 
 // TODO: AddGuildMember => CreateGuildMember

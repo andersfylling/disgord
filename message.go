@@ -417,6 +417,9 @@ func (c *client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (mess
 		Endpoint:    endpoint.ChannelMessage(channelID, messageID),
 	}, flags)
 	r.pool = c.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
 
 	return getMessage(r.Execute)
 }
@@ -571,6 +574,9 @@ func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams,
 		ContentType: contentType,
 	}, flags)
 	r.pool = c.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
 
 	return getMessage(r.Execute)
 }
@@ -607,6 +613,9 @@ func (c *client) UpdateMessage(chanID, msgID Snowflake, params *UpdateMessagePar
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
 	r.pool = c.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
 
 	return getMessage(r.Execute)
 }

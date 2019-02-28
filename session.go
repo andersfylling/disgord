@@ -151,7 +151,7 @@ type RESTGuild interface {
 	CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error)
 	UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error)
 	GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error)
-	GetGuildMembers(guildID, after Snowflake, limit int, flags ...Flag) (ret []*Member, err error)
+	GetGuildMembers(guildID Snowflake, params *GetGuildMembersParams, flags ...Flag) ([]*Member, error)
 	AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error)
 	UpdateGuildMember(guildID, userID Snowflake, params *UpdateGuildMemberParams, flags ...Flag) (err error)
 	SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error)

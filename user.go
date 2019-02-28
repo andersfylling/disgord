@@ -778,6 +778,7 @@ func (c *client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
 	r.pool = c.pool.user
+	r.factory = userFactory
 
 	if user, err = getUser(r.Execute); err == nil {
 		c.myID = user.ID
@@ -800,6 +801,7 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 	r.CacheRegistry = UserCache
 	r.ID = id
 	r.pool = c.pool.user
+	r.factory = userFactory
 
 	return getUser(r.Execute)
 }
@@ -936,6 +938,9 @@ func (c *client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, e
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
 	r.CacheRegistry = ChannelCache
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
 	return getChannel(r.Execute)
 }
@@ -968,6 +973,9 @@ func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
 	r.CacheRegistry = ChannelCache
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
 	// TODO: go generate casting func: return getChannel(r.Execute)
 	return getChannel(r.Execute)

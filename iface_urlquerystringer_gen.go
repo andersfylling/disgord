@@ -52,6 +52,20 @@ func (g *GetReactionURLParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
+func (g *GetGuildMembersParams) URLQueryString() string {
+	params := make(paramHolder)
+
+	if !(g.After == 0) {
+		params["after"] = g.After
+	}
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	return params.URLQueryString()
+}
+
 func (b *BanMemberParams) URLQueryString() string {
 	params := make(paramHolder)
 

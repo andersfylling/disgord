@@ -426,7 +426,10 @@ func (g *Guild) LoadAllMembers(session Session) (err error) {
 			break
 		}
 		var members []*Member
-		members, err = session.GetGuildMembers(g.ID, highestSnowflake, 1000)
+		members, err = session.GetGuildMembers(g.ID, &GetGuildMembersParams{
+			After: highestSnowflake,
+			Limit: 1000,
+		}, DisableCache)
 		if err != nil {
 			return
 		}
