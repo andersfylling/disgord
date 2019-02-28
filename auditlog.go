@@ -10,81 +10,99 @@ import (
 	"github.com/andersfylling/snowflake/v3"
 )
 
+type AuditLogEvt uint
+
 // Audit-log event types
 const (
-	AuditLogEvtGuildUpdate      = 1
-	AuditLogEvtChannelCreate    = 10
-	AuditLogEvtChannelUpdate    = 11
-	AuditLogEvtChannelDelete    = 12
-	AuditLogEvtOverwriteCreate  = 13
-	AuditLogEvtOverwriteUpdate  = 14
-	AuditLogEvtOverwriteDelete  = 15
-	AuditLogEvtMemberKick       = 20
-	AuditLogEvtMemberPrune      = 21
-	AuditLogEvtMemberBanAdd     = 22
-	AuditLogEvtMemberBanRemove  = 23
-	AuditLogEvtMemberUpdate     = 24
-	AuditLogEvtMemberRoleUpdate = 25
-	AuditLogEvtRoleCreate       = 30
-	AuditLogEvtRoleUpdate       = 31
-	AuditLogEvtRoleDelete       = 32
-	AuditLogEvtInviteCreate     = 40
-	AuditLogEvtInviteUpdate     = 41
-	AuditLogEvtInviteDelete     = 42
-	AuditLogEvtWebhookCreate    = 50
-	AuditLogEvtWebhookUpdate    = 51
-	AuditLogEvtWebhookDelete    = 52
-	AuditLogEvtEmojiCreate      = 60
-	AuditLogEvtEmojiUpdate      = 61
-	AuditLogEvtEmojiDelete      = 62
-	AuditLogEvtMessageDelete    = 72
+	AuditLogEvtGuildUpdate AuditLogEvt = 1
 )
+const (
+	AuditLogEvtChannelCreate AuditLogEvt = 10 + iota
+	AuditLogEvtChannelUpdate
+	AuditLogEvtChannelDelete
+	AuditLogEvtOverwriteCreate
+	AuditLogEvtOverwriteUpdate
+	AuditLogEvtOverwriteDelete
+)
+const (
+	AuditLogEvtMemberKick AuditLogEvt = 20 + iota
+	AuditLogEvtMemberPrune
+	AuditLogEvtMemberBanAdd
+	AuditLogEvtMemberBanRemove
+	AuditLogEvtMemberUpdate
+	AuditLogEvtMemberRoleUpdate
+)
+const (
+	AuditLogEvtRoleCreate AuditLogEvt = 30 + iota
+	AuditLogEvtRoleUpdate
+	AuditLogEvtRoleDelete
+)
+const (
+	AuditLogEvtInviteCreate AuditLogEvt = 40
+	AuditLogEvtInviteUpdate
+	AuditLogEvtInviteDelete
+)
+const (
+	AuditLogEvtWebhookCreate AuditLogEvt = 50 + iota
+	AuditLogEvtWebhookUpdate
+	AuditLogEvtWebhookDelete
+)
+const (
+	AuditLogEvtEmojiCreate AuditLogEvt = 60 + iota
+	AuditLogEvtEmojiUpdate
+	AuditLogEvtEmojiDelete
+)
+const (
+	AuditLogEvtMessageDelete AuditLogEvt = 72
+)
+
+type AuditLogChange string
 
 // all the different keys for an audit log change
 const (
 	// key name,								          identifier                       changed, type,   description
-	AuditLogChangeKeyName                        = "name"                          // guild	string	name changed
-	AuditLogChangeKeyIconHash                    = "icon_hash"                     // guild	string	icon changed
-	AuditLogChangeKeySplashHash                  = "splash_hash"                   // guild	string	invite splash page artwork changed
-	AuditLogChangeKeyOwnerID                     = "owner_id"                      // guild	snowflake	owner changed
-	AuditLogChangeKeyRegion                      = "region"                        // guild	string	region changed
-	AuditLogChangeKeyAFKChannelID                = "afk_channel_id"                // guild	snowflake	afk channel changed
-	AuditLogChangeKeyAFKTimeout                  = "afk_timeout"                   // guild	integer	afk timeout duration changed
-	AuditLogChangeKeyMFALevel                    = "mfa_level"                     // guild	integer	two-factor auth requirement changed
-	AuditLogChangeKeyVerificationLevel           = "verification_level"            // guild	integer	required verification level changed
-	AuditLogChangeKeyExplicitContentFilter       = "explicit_content_filter"       // guild	integer	change in whose messages are scanned and deleted for explicit content in the server
-	AuditLogChangeKeyDefaultMessageNotifications = "default_message_notifications" // guild	integer	default message notification level changed
-	AuditLogChangeKeyVanityURLCode               = "vanity_url_code"               // guild	string	guild invite vanity url changed
-	AuditLogChangeKeyAdd                         = "$add"                          // add	guild	array of role objects	new role added
-	AuditLogChangeKeyRemove                      = "$remove"                       // remove	guild	array of role objects	role removed
-	AuditLogChangeKeyPruneDeleteDays             = "prune_delete_days"             // guild	integer	change in number of days after which inactive and role-unassigned members are kicked
-	AuditLogChangeKeyWidgetEnabled               = "widget_enabled"                // guild	bool	server widget enabled/disable
-	AuditLogChangeKeyWidgetChannelID             = "widget_channel_id"             // guild	snowflake	channel id of the server widget changed
-	AuditLogChangeKeyPosition                    = "position"                      // channel	integer	text or voice channel position changed
-	AuditLogChangeKeyTopic                       = "topic"                         // channel	string	text channel topic changed
-	AuditLogChangeKeyBitrate                     = "bitrate"                       // channel	integer	voice channel bitrate changed
-	AuditLogChangeKeyPermissionOverwrites        = "permission_overwrites"         // channel	array of channel overwrite objects	permissions on a channel changed
-	AuditLogChangeKeyNSFW                        = "nsfw"                          // channel	bool	channel nsfw restriction changed
-	AuditLogChangeKeyApplicationID               = "application_id"                // channel	snowflake	application id of the added or removed webhook or bot
-	AuditLogChangeKeyPermissions                 = "permissions"                   // role	integer	permissions for a role changed
-	AuditLogChangeKeyColor                       = "color"                         // role	integer	role color changed
-	AuditLogChangeKeyHoist                       = "hoist"                         // role	bool	role is now displayed/no longer displayed separate from online users
-	AuditLogChangeKeyMentionable                 = "mentionable"                   // role	bool	role is now mentionable/unmentionable
-	AuditLogChangeKeyAllow                       = "allow"                         // role	integer	a permission on a text or voice channel was allowed for a role
-	AuditLogChangeKeyDeny                        = "deny"                          // role	integer	a permission on a text or voice channel was denied for a role
-	AuditLogChangeKeyCode                        = "code"                          // invite	string	invite code changed
-	AuditLogChangeKeyChannelID                   = "channel_id"                    // invite	snowflake	channel for invite code changed
-	AuditLogChangeKeyInviterID                   = "inviter_id"                    // invite	snowflake	person who created invite code changed
-	AuditLogChangeKeyMaxUses                     = "max_uses"                      // invite	integer	change to max number of times invite code can be used
-	AuditLogChangeKeyUses                        = "uses"                          // invite	integer	number of times invite code used changed
-	AuditLogChangeKeyMaxAge                      = "max_age"                       // invite	integer	how long invite code lasts changed
-	AuditLogChangeKeyTemporary                   = "temporary"                     // invite	bool	invite code is temporary/never expires
-	AuditLogChangeKeyDeaf                        = "deaf"                          // user	bool	user server deafened/undeafened
-	AuditLogChangeKeyMute                        = "mute"                          // user	bool	user server muted/unmuteds
-	AuditLogChangeKeyNick                        = "nick"                          // user	string	user nickname changed
-	AuditLogChangeKeyAvatarHash                  = "avatar_hash"                   // user	string	user avatar changed
-	AuditLogChangeKeyID                          = "id"                            // any	snowflake	the id of the changed entity - sometimes used in conjunction with other keys
-	AuditLogChangeKeyType                        = "type"                          // any	integer (channel type) or string	type of entity created
+	AuditLogChangeName                        AuditLogChange = "name"                          // guild	string	name changed
+	AuditLogChangeIconHash                    AuditLogChange = "icon_hash"                     // guild	string	icon changed
+	AuditLogChangeSplashHash                  AuditLogChange = "splash_hash"                   // guild	string	invite splash page artwork changed
+	AuditLogChangeOwnerID                     AuditLogChange = "owner_id"                      // guild	snowflake	owner changed
+	AuditLogChangeRegion                      AuditLogChange = "region"                        // guild	string	region changed
+	AuditLogChangeAFKChannelID                AuditLogChange = "afk_channel_id"                // guild	snowflake	afk channel changed
+	AuditLogChangeAFKTimeout                  AuditLogChange = "afk_timeout"                   // guild	integer	afk timeout duration changed
+	AuditLogChangeMFALevel                    AuditLogChange = "mfa_level"                     // guild	integer	two-factor auth requirement changed
+	AuditLogChangeVerificationLevel           AuditLogChange = "verification_level"            // guild	integer	required verification level changed
+	AuditLogChangeExplicitContentFilter       AuditLogChange = "explicit_content_filter"       // guild	integer	change in whose messages are scanned and deleted for explicit content in the server
+	AuditLogChangeDefaultMessageNotifications AuditLogChange = "default_message_notifications" // guild	integer	default message notification level changed
+	AuditLogChangeVanityURLCode               AuditLogChange = "vanity_url_code"               // guild	string	guild invite vanity url changed
+	AuditLogChangeAdd                         AuditLogChange = "$add"                          // add	guild	array of role objects	new role added
+	AuditLogChangeRemove                      AuditLogChange = "$remove"                       // remove	guild	array of role objects	role removed
+	AuditLogChangePruneDeleteDays             AuditLogChange = "prune_delete_days"             // guild	integer	change in number of days after which inactive and role-unassigned members are kicked
+	AuditLogChangeWidgetEnabled               AuditLogChange = "widget_enabled"                // guild	bool	server widget enabled/disable
+	AuditLogChangeWidgetChannelID             AuditLogChange = "widget_channel_id"             // guild	snowflake	channel id of the server widget changed
+	AuditLogChangePosition                    AuditLogChange = "position"                      // channel	integer	text or voice channel position changed
+	AuditLogChangeTopic                       AuditLogChange = "topic"                         // channel	string	text channel topic changed
+	AuditLogChangeBitrate                     AuditLogChange = "bitrate"                       // channel	integer	voice channel bitrate changed
+	AuditLogChangePermissionOverwrites        AuditLogChange = "permission_overwrites"         // channel	array of channel overwrite objects	permissions on a channel changed
+	AuditLogChangeNSFW                        AuditLogChange = "nsfw"                          // channel	bool	channel nsfw restriction changed
+	AuditLogChangeApplicationID               AuditLogChange = "application_id"                // channel	snowflake	application id of the added or removed webhook or bot
+	AuditLogChangePermissions                 AuditLogChange = "permissions"                   // role	integer	permissions for a role changed
+	AuditLogChangeColor                       AuditLogChange = "color"                         // role	integer	role color changed
+	AuditLogChangeHoist                       AuditLogChange = "hoist"                         // role	bool	role is now displayed/no longer displayed separate from online users
+	AuditLogChangeMentionable                 AuditLogChange = "mentionable"                   // role	bool	role is now mentionable/unmentionable
+	AuditLogChangeAllow                       AuditLogChange = "allow"                         // role	integer	a permission on a text or voice channel was allowed for a role
+	AuditLogChangeDeny                        AuditLogChange = "deny"                          // role	integer	a permission on a text or voice channel was denied for a role
+	AuditLogChangeCode                        AuditLogChange = "code"                          // invite	string	invite code changed
+	AuditLogChangeChannelID                   AuditLogChange = "channel_id"                    // invite	snowflake	channel for invite code changed
+	AuditLogChangeInviterID                   AuditLogChange = "inviter_id"                    // invite	snowflake	person who created invite code changed
+	AuditLogChangeMaxUses                     AuditLogChange = "max_uses"                      // invite	integer	change to max number of times invite code can be used
+	AuditLogChangeUses                        AuditLogChange = "uses"                          // invite	integer	number of times invite code used changed
+	AuditLogChangeMaxAge                      AuditLogChange = "max_age"                       // invite	integer	how long invite code lasts changed
+	AuditLogChangeTemporary                   AuditLogChange = "temporary"                     // invite	bool	invite code is temporary/never expires
+	AuditLogChangeDeaf                        AuditLogChange = "deaf"                          // user	bool	user server deafened/undeafened
+	AuditLogChangeMute                        AuditLogChange = "mute"                          // user	bool	user server muted/unmuteds
+	AuditLogChangeNick                        AuditLogChange = "nick"                          // user	string	user nickname changed
+	AuditLogChangeAvatarHash                  AuditLogChange = "avatar_hash"                   // user	string	user avatar changed
+	AuditLogChangeID                          AuditLogChange = "id"                            // any	snowflake	the id of the changed entity - sometimes used in conjunction with other keys
+	AuditLogChangeType                        AuditLogChange = "type"                          // any	integer (channel type) or string	type of entity created
 )
 
 // AuditLog ...
@@ -94,6 +112,19 @@ type AuditLog struct {
 	Webhooks        []*Webhook       `json:"webhooks"`
 	Users           []*User          `json:"users"`
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
+}
+
+func (l *AuditLog) Bans() (bans []*PartialBan) {
+	for _, e := range l.AuditLogEntries {
+		if e.Event == AuditLogEvtMemberBanAdd {
+			bans = append(bans, &PartialBan{
+				Reason:                 e.Reason,
+				ModeratorResponsibleID: e.UserID,
+				BannedUserID:           e.TargetID,
+			})
+		}
+	}
+	return bans
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -139,13 +170,13 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 type AuditLogEntry struct {
 	Lockable `json:"-"`
 
-	TargetID   Snowflake         `json:"target_id"`
-	Changes    []*AuditLogChange `json:"changes,omitempty"`
-	UserID     Snowflake         `json:"user_id"`
-	ID         Snowflake         `json:"id"`
-	ActionType uint              `json:"action_type"`
-	Options    *AuditLogOption   `json:"options,omitempty"`
-	Reason     string            `json:"reason,omitempty"`
+	TargetID Snowflake          `json:"target_id"`
+	Changes  []*AuditLogChanges `json:"changes,omitempty"`
+	UserID   Snowflake          `json:"user_id"`
+	ID       Snowflake          `json:"id"`
+	Event    AuditLogEvt        `json:"action_type"`
+	Options  *AuditLogOption    `json:"options,omitempty"`
+	Reason   string             `json:"reason,omitempty"`
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -173,11 +204,11 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 	log.TargetID = l.TargetID
 	log.UserID = l.UserID
 	log.ID = l.ID
-	log.ActionType = l.ActionType
+	log.Event = l.Event
 	log.Reason = l.Reason
 
 	for _, change := range l.Changes {
-		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChange))
+		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChanges))
 	}
 
 	if l.Options != nil {
@@ -241,8 +272,8 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// AuditLogChange ...
-type AuditLogChange struct {
+// AuditLogChanges ...
+type AuditLogChanges struct {
 	Lockable `json:"-"`
 
 	NewValue interface{} `json:"new_value,omitempty"`
@@ -251,19 +282,19 @@ type AuditLogChange struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogChange) DeepCopy() (copy interface{}) {
-	copy = &AuditLogChange{}
+func (l *AuditLogChanges) DeepCopy() (copy interface{}) {
+	copy = &AuditLogChanges{}
 	l.CopyOverTo(copy)
 
 	return
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogChange) CopyOverTo(other interface{}) (err error) {
+func (l *AuditLogChanges) CopyOverTo(other interface{}) (err error) {
 	var ok bool
-	var log *AuditLogChange
-	if log, ok = other.(*AuditLogChange); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogChange")
+	var log *AuditLogChanges
+	if log, ok = other.(*AuditLogChanges); !ok {
+		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogChanges")
 		return
 	}
 

@@ -791,6 +791,19 @@ func (g *Guild) deleteFromDiscord(session Session) (err error) {
 
 // --------------
 
+// PartialBan is used by audit logs
+type PartialBan struct {
+	Reason                 string
+	BannedUserID           Snowflake
+	ModeratorResponsibleID Snowflake
+}
+
+var _ fmt.Stringer = (*PartialBan)(nil)
+
+func (p *PartialBan) String() string {
+	return fmt.Sprintf("mod{%d} banned member{%d}, reason: %s.", p.ModeratorResponsibleID, p.BannedUserID, p.Reason)
+}
+
 // Ban https://discordapp.com/developers/docs/resources/guild#ban-object
 type Ban struct {
 	Lockable `json:"-"`

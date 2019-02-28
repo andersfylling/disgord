@@ -65,7 +65,7 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 		})
 	})
 	t.Run("AuditLogChange", func(t *testing.T) {
-		var u interface{} = &AuditLogChange{}
+		var u interface{} = &AuditLogChanges{}
 		t.Run("DeepCopier", func(t *testing.T) {
 			if _, ok := u.(DeepCopier); !ok {
 				t.Error("does not implement DeepCopier")
@@ -264,4 +264,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 		t.Error(err)
 	}
 
+	if v.Bans() != nil {
+		t.Error("these logs contains no bans")
+	}
 }
