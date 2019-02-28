@@ -144,7 +144,7 @@ type AuditLogEntry struct {
 	UserID     Snowflake         `json:"user_id"`
 	ID         Snowflake         `json:"id"`
 	ActionType uint              `json:"action_type"`
-	Options    []*AuditLogOption `json:"options,omitempty"`
+	Options    *AuditLogOption   `json:"options,omitempty"`
 	Reason     string            `json:"reason,omitempty"`
 }
 
@@ -180,8 +180,8 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChange))
 	}
 
-	for _, option := range l.Options {
-		log.Options = append(log.Options, option.DeepCopy().(*AuditLogOption))
+	if l.Options != nil {
+		log.Options = l.Options.DeepCopy().(*AuditLogOption)
 	}
 
 	if constant.LockedMethods {
