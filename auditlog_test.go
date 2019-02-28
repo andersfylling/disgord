@@ -232,3 +232,36 @@ func TestGuildAuditLogs(t *testing.T) {
 		// TODO: implement ErrREST check
 	})
 }
+
+func TestAuditlog_Unmarshal(t *testing.T) {
+
+	data := []byte(`{
+      "target_id": "547614326257877003",
+      "changes": [
+        {
+          "new_value": "andreesdsdsd",
+          "old_value": "test",
+          "key": "name"
+        }
+      ],
+      "user_id": "486832262592069632",
+      "id": "547614855067205678",
+      "action_type": 61
+    }`)
+	var v2 *AuditLogEntry
+	if err := httd.Unmarshal(data, &v2); err != nil {
+		t.Error(err)
+	}
+
+	data, err := ioutil.ReadFile("testdata/auditlog/logs-limit-10.json")
+	if err != nil {
+		t.Fatal("missing test data")
+		return
+	}
+
+	var v *AuditLog
+	if err := httd.Unmarshal(data, &v); err != nil {
+		t.Error(err)
+	}
+
+}
