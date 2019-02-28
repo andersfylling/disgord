@@ -883,6 +883,9 @@ func (c *client) GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err erro
 	r.CacheRegistry = ChannelCache
 	r.ID = id
 	r.pool = c.pool.channel
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
 	return getChannel(r.Execute)
 }
@@ -972,6 +975,9 @@ func (c *client) DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, e
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
 		c.cache.DeleteChannel(id)
 		return nil
+	}
+	r.factory = func() interface{} {
+		return &Channel{}
 	}
 
 	return getChannel(r.Execute)

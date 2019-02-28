@@ -195,6 +195,9 @@ func (c *client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoj
 	r.preUpdateCache = func(x interface{}) {
 		x.(*Emoji).guildID = guildID
 	}
+	r.factory = func() interface{} {
+		return &Emoji{}
+	}
 
 	return getEmoji(r.Execute)
 }
@@ -282,6 +285,9 @@ func (c *client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiPar
 	}, flags)
 	r.CacheRegistry = GuildEmojiCache
 	r.pool = c.pool.emoji
+	r.factory = func() interface{} {
+		return &Emoji{}
+	}
 
 	return getEmoji(r.Execute)
 }

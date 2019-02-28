@@ -101,27 +101,28 @@ func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
-func GetGuild(client httd.Getter, id Snowflake) (ret *Guild, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
-	})
-	if err != nil {
-		return nil, err
+	}, flags)
+	r.factory = func() interface{} {
+		return &Guild{}
+	}
+	r.CacheRegistry = GuildCache
+	r.ID = id
+	r.preUpdateCache = func(x interface{}) {
+		if x == nil {
+			return
+		}
+		if guild, ok := x.(*Guild); ok {
+			for i := range guild.Roles {
+				guild.Roles[i].guildID = id
+			}
+		}
 	}
 
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return nil, err
-	}
-
-	// add guild id to roles
-	for _, role := range ret.Roles {
-		role.guildID = id
-	}
-
-	return ret, nil
+	return getGuild(r.Execute)
 }
 
 // UpdateGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
@@ -298,18 +299,32 @@ func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []Upd
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 -
-func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.CacheRegistry = GuildMembersCache
+	r.ID = userID
+	r.factory = func() interface{} {
+		return &Member{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getMember(r.Execute)
+}
+
+type GetGuildMembersParams struct {
+	After Snowflake `urlparam:"after,omitempty"`
+	Limit int       `urlparam:"limit,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetGuildMembersParams)(nil)
+
+func (g *GetGuildMembersParams) FindErrors() error {
+	if g.Limit > 1000 || g.Limit < 0 {
+		return errors.New("limit value should be less than or equal to 1000, and non-negative")
+	}
+	return nil
 }
 
 // GetGuildMembers [REST] Returns a list of guild member objects that are members of the guild. The `after` param
@@ -322,42 +337,25 @@ func GetGuildMember(client httd.Getter, guildID, userID Snowflake) (ret *Member,
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
 //  Comment#3               https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func GetGuildMembers(client httd.Getter, guildID, after Snowflake, limit int) (ret []*Member, err error) {
-	if limit > 1000 || limit < 0 {
-		err = errors.New("limit value should be less than or equal to 1000, and non-negative")
-		return
+func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
+	if params == nil {
+		params = &GetGuildMembersParams{}
+	}
+	if err = params.FindErrors(); err != nil {
+		return nil, err
 	}
 
-	// TODO: convert after and limit to a query struct
-	// omg i hate myself. use reflection to convert a query struct to string(?). it's at least better.
-	query := ""
-	if limit > 0 || !after.Empty() {
-		query += "?"
-
-		if !after.Empty() {
-			query += "after=" + after.String()
-
-			if limit > 0 {
-				query += "&"
-			}
-		}
-
-		if limit > 0 {
-			query += "limit=" + strconv.Itoa(limit)
-		}
-	}
-
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
-		Endpoint:    endpoint.GuildMembers(guildID) + query,
-	})
-	if err != nil {
-		return
+		Endpoint:    endpoint.GuildMembers(guildID) + params.URLQueryString(),
+	}, flags)
+	r.CacheRegistry = GuildMembersCache
+	r.factory = func() interface{} {
+		tmp := make([]*Member, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getMembers(r.Execute)
 }
 
 // AddGuildMemberParams ...
@@ -790,18 +788,17 @@ func (c *client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-voice-regions
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildVoiceRegions(client httd.Getter, id Snowflake) (ret []*VoiceRegion, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildRegions(id),
 		Endpoint:    endpoint.GuildRegions(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*VoiceRegion, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getVoiceRegions(r.Execute)
 }
 
 // GetGuildInvites [REST] Returns a list of invite objects (with invite metadata) for the guild.
@@ -812,18 +809,17 @@ func GetGuildVoiceRegions(client httd.Getter, id Snowflake) (ret []*VoiceRegion,
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-invites
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildInvites(id),
 		Endpoint:    endpoint.GuildInvites(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Invite, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getInvites(r.Execute)
 }
 
 // GetGuildIntegrations [REST] Returns a list of integration objects for the guild.
@@ -834,18 +830,17 @@ func GetGuildInvites(client httd.Getter, id Snowflake) (ret []*Invite, err error
 //  Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
 //  Reviewed                 2018-08-18
 //  Comment                  -
-func GetGuildIntegrations(client httd.Getter, id Snowflake) (ret []*Integration, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(id),
 		Endpoint:    endpoint.GuildIntegrations(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Integration, 0)
+		return &tmp
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getIntegrations(r.Execute)
 }
 
 // CreateGuildIntegrationParams ...
@@ -980,18 +975,16 @@ func SyncGuildIntegration(client httd.Poster, guildID, integrationID Snowflake) 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildEmbed(client httd.Getter, guildID Snowflake) (ret *GuildEmbed, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEmbed, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &GuildEmbed{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getGuildEmbed(r.Execute)
 }
 
 // ModifyGuildEmbed [REST] Modify a guild embed object for the guild. All attributes may be passed in with JSON and
@@ -1026,16 +1019,14 @@ func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-vanity-url
 //  Reviewed                2018-08-18
 //  Comment                 -
-func GetGuildVanityURL(client httd.Getter, guildID Snowflake) (ret *PartialInvite, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildVanityURL(guildID),
 		Endpoint:    endpoint.GuildVanityURL(guildID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &PartialInvite{}
 	}
 
-	err = unmarshal(body, &ret)
-	return
+	return getPartialInvite(r.Execute)
 }

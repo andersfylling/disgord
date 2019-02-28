@@ -511,6 +511,34 @@ func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 }
 
 // TODO: auto generate
+func getMember(f func() (interface{}, error)) (member *Member, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Member), nil
+}
+
+// TODO: auto generate
+func getMembers(f func() (interface{}, error)) (members []*Member, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Member), nil
+}
+
+// TODO: auto generate
 func getWebhook(f func() (interface{}, error)) (wh *Webhook, err error) {
 	var v interface{}
 	if v, err = f(); err != nil {
@@ -648,4 +676,102 @@ func getInvite(f func() (interface{}, error)) (invite *Invite, err error) {
 	}
 
 	return v.(*Invite), nil
+}
+
+// TODO: auto generate
+func getInvites(f func() (interface{}, error)) (invite []*Invite, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Invite), nil
+}
+
+// TODO: auto generate
+func getGuild(f func() (interface{}, error)) (guild *Guild, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Guild), nil
+}
+
+// TODO: auto generate
+func getIntegrations(f func() (interface{}, error)) (integrations []*Integration, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Integration), nil
+}
+
+// TODO: auto generate
+func getVoiceRegions(f func() (interface{}, error)) (regions []*VoiceRegion, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*VoiceRegion), nil
+}
+
+// TODO: auto generate
+func getVoiceRegion(f func() (interface{}, error)) (region *VoiceRegion, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*VoiceRegion), nil
+}
+
+// TODO: auto generate
+func getPartialInvite(f func() (interface{}, error)) (invite *PartialInvite, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*PartialInvite), nil
+}
+
+// TODO: auto generate
+func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*GuildEmbed), nil
 }

@@ -313,9 +313,35 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			err = errors.New("can only save *Guild structures to guild cacheLink")
 		}
 	case GuildMembersCache:
-		if guild, ok := v.(*GuildMembersChunk); ok {
-			c.UpdateOrAddGuildMembers(guild.GuildID, guild.Members)
+		var members []*Member
+		var guildID Snowflake
+
+		switch t := v.(type) {
+		case *GuildMembersChunk:
+			guildID = t.GuildID
+			members = t.Members
+		case *[]*Member:
+			if len(*t) > 0 {
+				guildID = (*t)[0].GuildID
+				members = *t
+			}
+		case []*Member:
+			if len(t) > 0 {
+				guildID = t[0].GuildID
+				members = t
+			}
+		case *Member:
+			guildID = t.GuildID
+			members = []*Member{t}
+		default:
+			// TODO: logging
+			return
 		}
+
+		if len(members) == 0 || guildID.Empty() {
+			return
+		}
+		c.UpdateOrAddGuildMembers(guildID, members)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}
