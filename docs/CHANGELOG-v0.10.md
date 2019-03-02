@@ -69,9 +69,13 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - type UpdateChannelParams
  - func .UpdateMessage, as EditMessage changed name to UpdateMessage
  - func NewCreateWebhookParams
+ - type SessionMock
+ - func NewSessionMock
  
  - every REST func. REST functionality now only accessible from the client instance.
  
  #### Changed
   - .On(event string, inputs ...interface{}) error => .On(event string, inputs ...interface{})
+  - Majority of the REST methods. Please check their respective signature.
+  - Some of the REST interfaces have been split up by sub-category
   

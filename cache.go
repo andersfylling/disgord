@@ -25,6 +25,8 @@ const (
 	VoiceStateCache
 
 	GuildMembersCache
+	GuildRolesCache // warning: deletes previous roles
+	GuildRoleCache  // updates or adds a new role
 )
 
 // the different cacheLink replacement algorithms
@@ -342,6 +344,49 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			return
 		}
 		c.UpdateOrAddGuildMembers(guildID, members)
+	case GuildRolesCache:
+		var roles []*Role
+		var guildID Snowflake
+
+		switch t := v.(type) {
+		case *[]*Role:
+			roles = *t
+			if len(roles) > 0 {
+				guildID = roles[0].guildID
+			}
+		case []*Role:
+			roles = t
+			if len(roles) > 0 {
+				guildID = roles[0].guildID
+			}
+		case *Role:
+			// DO NOT HANDLE SINGLE ROLES HERE
+		}
+		if guildID.Empty() || len(roles) == 0 {
+			return
+		}
+
+		c.SetGuildRoles(guildID, roles)
+	//case GuildRoleCache:
+	//	var role *Role
+	//	var guildID Snowflake
+	//
+	//	switch t := v.(type) {
+	//	case *Role:
+	//		role = t
+	//		guildID = role.guildID
+	//	case Role:
+	//		role = &t
+	//		guildID = role.guildID
+	//	}
+	//
+	//	if guildID.Empty() {
+	//		return
+	//	}
+	//
+	//	c.GuildRole
+	//
+	//	c.SetGuildRoles(guildID, roles)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}

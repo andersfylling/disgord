@@ -202,7 +202,7 @@ func (c *Channel) saveToDiscord(session Session, changes discordSaver) (err erro
 				params.ParentID = c.ParentID
 			}
 
-			updated, err = session.CreateGuildChannel(c.GuildID, &params)
+			updated, err = session.CreateGuildChannel(c.GuildID, params.Name, &params)
 		} else if c.Type == ChannelTypeDM {
 			if len(c.Recipients) != 1 {
 				err = errors.New("must have only one recipient in Channel.Recipient (with ID) for creating a DM. Got " + strconv.Itoa(len(c.Recipients)))
@@ -918,35 +918,6 @@ func (c *client) UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChan
 	return builder
 }
 
-// updateChannelBuilder https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:int, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:uint, name:string,
-//generate-rest-basic-execute: channel:*Channel,
-type updateChannelBuilder struct {
-	r RESTBuilder
-}
-
-func (b *updateChannelBuilder) AddPermissionOverwrite(permission PermissionOverwrite) *updateChannelBuilder {
-	if _, exists := b.r.body["permission_overwrites"]; !exists {
-		b.SetPermissionOverwrites([]PermissionOverwrite{permission})
-	} else {
-		s := b.r.body["permission_overwrites"].([]PermissionOverwrite)
-		s = append(s, permission)
-		b.SetPermissionOverwrites(s)
-	}
-	return b
-}
-func (b *updateChannelBuilder) AddPermissionOverwrites(permissions []PermissionOverwrite) *updateChannelBuilder {
-	for i := range permissions {
-		b.AddPermissionOverwrite(permissions[i])
-	}
-	return b
-}
-
-func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
-	b.r.param("parent_id", nil)
-	return b
-}
-
 // DeleteChannel [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 // the guild. Deleting a category does not delete its child channels; they will have their parent_id removed and a
 // Channel Update Gateway event will fire for each of them. Returns a channel object on success.
@@ -1208,4 +1179,39 @@ func (c *client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (er
 
 	_, err = r.Execute()
 	return err
+}
+
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
+// updateChannelBuilder https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
+//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:int, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:uint, name:string,
+//generate-rest-basic-execute: channel:*Channel,
+type updateChannelBuilder struct {
+	r RESTBuilder
+}
+
+func (b *updateChannelBuilder) AddPermissionOverwrite(permission PermissionOverwrite) *updateChannelBuilder {
+	if _, exists := b.r.body["permission_overwrites"]; !exists {
+		b.SetPermissionOverwrites([]PermissionOverwrite{permission})
+	} else {
+		s := b.r.body["permission_overwrites"].([]PermissionOverwrite)
+		s = append(s, permission)
+		b.SetPermissionOverwrites(s)
+	}
+	return b
+}
+func (b *updateChannelBuilder) AddPermissionOverwrites(permissions []PermissionOverwrite) *updateChannelBuilder {
+	for i := range permissions {
+		b.AddPermissionOverwrite(permissions[i])
+	}
+	return b
+}
+
+func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
+	b.r.param("parent_id", nil)
+	return b
 }

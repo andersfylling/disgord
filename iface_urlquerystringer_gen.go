@@ -107,3 +107,11 @@ func (g *GetCurrentUserGuildsParams) URLQueryString() string {
 
 	return params.URLQueryString()
 }
+
+func (e *execWebhookParams) URLQueryString() string {
+	params := make(paramHolder)
+
+	params["wait"] = e.Wait
+
+	return params.URLQueryString()
+}

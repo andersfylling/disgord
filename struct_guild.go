@@ -205,9 +205,22 @@ var _ Reseter = (*Guild)(nil)
 var _ fmt.Stringer = (*Guild)(nil)
 var _ Copier = (*Guild)(nil)
 var _ DeepCopier = (*Guild)(nil)
+var _ internalUpdater = (*Guild)(nil)
 
 func (g *Guild) String() string {
 	return g.Name + "{" + g.ID.String() + "}"
+}
+
+func (g *Guild) updateInternals() {
+	for i := range g.Roles {
+		g.Roles[i].guildID = g.ID
+	}
+	for i := range g.Emojis {
+		g.Emojis[i].guildID = g.ID
+	}
+	for i := range g.Channels {
+		g.Channels[i].GuildID = g.ID
+	}
 }
 
 func (g *Guild) copyOverToCache(other interface{}) (err error) {

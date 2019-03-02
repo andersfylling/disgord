@@ -261,54 +261,259 @@ func (b *basicBuilder) Execute() (err error) {
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *modifyGuildRoleBuilder) IgnoreCache() *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) IgnoreCache() *updateGuildBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *modifyGuildRoleBuilder) CancelOnRatelimit() *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) CancelOnRatelimit() *updateGuildBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *modifyGuildRoleBuilder) URLParam(name string, v interface{}) *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) URLParam(name string, v interface{}) *updateGuildBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *modifyGuildRoleBuilder) Set(name string, v interface{}) *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) Set(name string, v interface{}) *updateGuildBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *modifyGuildRoleBuilder) SetName(name string) *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) SetName(name string) *updateGuildBuilder {
 	b.r.param("name", name)
 	return b
 }
 
-func (b *modifyGuildRoleBuilder) SetPermissions(permissions uint64) *modifyGuildRoleBuilder {
+func (b *updateGuildBuilder) SetRegion(region string) *updateGuildBuilder {
+	b.r.param("region", region)
+	return b
+}
+
+func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) *updateGuildBuilder {
+	b.r.param("verification_level", verificationLevel)
+	return b
+}
+
+func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) *updateGuildBuilder {
+	b.r.param("default_message_notifications", defaultMessageNotifications)
+	return b
+}
+
+func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) *updateGuildBuilder {
+	b.r.param("explicit_content_filter", explicitContentFilter)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) *updateGuildBuilder {
+	b.r.addPrereq(afkChannelID.Empty(), "afkChannelID can not be 0")
+	b.r.param("afk_channel_id", afkChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) *updateGuildBuilder {
+	b.r.param("afk_timeout", afkTimeout)
+	return b
+}
+
+func (b *updateGuildBuilder) SetIcon(icon string) *updateGuildBuilder {
+	b.r.param("icon", icon)
+	return b
+}
+
+func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) *updateGuildBuilder {
+	b.r.addPrereq(ownerID.Empty(), "ownerID can not be 0")
+	b.r.param("owner_id", ownerID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSplash(splash string) *updateGuildBuilder {
+	b.r.param("splash", splash)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) *updateGuildBuilder {
+	b.r.addPrereq(systemChannelID.Empty(), "systemChannelID can not be 0")
+	b.r.param("system_channel_id", systemChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Guild), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildEmbedBuilder) IgnoreCache() *updateGuildEmbedBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildEmbedBuilder) CancelOnRatelimit() *updateGuildEmbedBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildEmbedBuilder) URLParam(name string, v interface{}) *updateGuildEmbedBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) *updateGuildEmbedBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) *updateGuildEmbedBuilder {
+	b.r.param("enabled", enabled)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) *updateGuildEmbedBuilder {
+	b.r.addPrereq(channelID.Empty(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) Execute() (embed *GuildEmbed, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*GuildEmbed), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildMemberBuilder) IgnoreCache() *updateGuildMemberBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildMemberBuilder) CancelOnRatelimit() *updateGuildMemberBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildMemberBuilder) URLParam(name string, v interface{}) *updateGuildMemberBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildMemberBuilder) Set(name string, v interface{}) *updateGuildMemberBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetNick(nick string) *updateGuildMemberBuilder {
+	b.r.param("nick", nick)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetRoles(roles []Snowflake) *updateGuildMemberBuilder {
+	b.r.param("roles", roles)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetMute(mute bool) *updateGuildMemberBuilder {
+	b.r.param("mute", mute)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetDeaf(deaf bool) *updateGuildMemberBuilder {
+	b.r.param("deaf", deaf)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) *updateGuildMemberBuilder {
+	b.r.addPrereq(channelID.Empty(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) Execute() (err error) {
+	_, err = b.r.execute()
+	return
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildRoleBuilder) IgnoreCache() *updateGuildRoleBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildRoleBuilder) CancelOnRatelimit() *updateGuildRoleBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildRoleBuilder) URLParam(name string, v interface{}) *updateGuildRoleBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildRoleBuilder) Set(name string, v interface{}) *updateGuildRoleBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetName(name string) *updateGuildRoleBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetPermissions(permissions uint64) *updateGuildRoleBuilder {
 	b.r.param("permissions", permissions)
 	return b
 }
 
-func (b *modifyGuildRoleBuilder) SetColor(color uint) *modifyGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetColor(color uint) *updateGuildRoleBuilder {
 	b.r.param("color", color)
 	return b
 }
 
-func (b *modifyGuildRoleBuilder) SetHoist(hoist bool) *modifyGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetHoist(hoist bool) *updateGuildRoleBuilder {
 	b.r.param("hoist", hoist)
 	return b
 }
 
-func (b *modifyGuildRoleBuilder) SetMentionable(mentionable bool) *modifyGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) *updateGuildRoleBuilder {
 	b.r.param("mentionable", mentionable)
 	return b
+}
+
+func (b *updateGuildRoleBuilder) Execute() (role *Role, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Role), nil
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a

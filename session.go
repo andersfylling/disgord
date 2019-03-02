@@ -1,23 +1,12 @@
 package disgord
 
 import (
-	"errors"
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
-
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/snowflake/v3"
 )
-
-// NewSessionMock returns a session interface that triggers random events allows for fake rest requests.
-// Ideal to test the behaviour of your new bot.
-// Not implemented!
-// TODO: what about a terminal interface for triggering specific events?
-func NewSessionMock(conf *Config) (SessionMock, error) {
-	return nil, errors.New("not implemented")
-}
 
 // EventChannels all methods for retrieving event channels
 type EventChannels interface {
@@ -143,17 +132,17 @@ type RESTEmoji interface {
 
 // RESTGuild REST interface for all guild endpoints
 type RESTGuild interface {
-	CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error)
+	CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error)
 	GetGuild(id Snowflake, flags ...Flag) (ret *Guild, err error)
-	UpdateGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (ret *Guild, err error)
+	UpdateGuild(id Snowflake, flags ...Flag) *updateGuildBuilder
 	DeleteGuild(id Snowflake, flags ...Flag) (err error)
 	GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error)
-	CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error)
-	UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error)
+	CreateGuildChannel(id Snowflake, name string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error)
+	UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) error
 	GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error)
 	GetGuildMembers(guildID Snowflake, params *GetGuildMembersParams, flags ...Flag) ([]*Member, error)
-	AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error)
-	UpdateGuildMember(guildID, userID Snowflake, params *UpdateGuildMemberParams, flags ...Flag) (err error)
+	AddGuildMember(guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error)
+	UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder
 	SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error)
 	AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error)
 	RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error)
@@ -165,7 +154,7 @@ type RESTGuild interface {
 	GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error)
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error)
 	UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error)
-	UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder)
+	UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder)
 	DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error)
 	EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error)
 	PruneMembers(id Snowflake, days int, flags ...Flag) error
@@ -177,7 +166,7 @@ type RESTGuild interface {
 	DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error)
 	SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error)
 	GetGuildEmbed(guildID Snowflake, flags ...Flag) (ret *GuildEmbed, err error)
-	UpdateGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error)
+	UpdateGuildEmbed(guildID Snowflake, flags ...Flag) *updateGuildEmbedBuilder
 	GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error)
 }
 
@@ -304,9 +293,4 @@ type Session interface {
 
 	// Voice handler, responsible for opening up new voice channel connections
 	VoiceHandler
-}
-
-type SessionMock interface {
-	Session
-	// TODO: methods for triggering certain events and controlling states/tracking
 }

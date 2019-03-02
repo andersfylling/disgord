@@ -12,8 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/andersfylling/disgord/endpoint"
-
 	"github.com/andersfylling/disgord/logger"
 
 	"github.com/andersfylling/snowflake/v3"
@@ -655,198 +653,9 @@ func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (
 //////////////////////////////////////////////////////
 //
 // REST Methods
-// from the Discord docs
+// customs
 //
 //////////////////////////////////////////////////////
-
-// CreateGuild .
-func (c *client) CreateGuild(params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
-	ret, err = CreateGuild(c.req, params)
-	return
-}
-
-// ModifyGuild .
-func (c *client) UpdateGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (ret *Guild, err error) {
-	ret, err = ModifyGuild(c.req, id, params)
-	return
-}
-
-// DeleteGuild .
-func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
-	err = DeleteGuild(c.req, id)
-	return
-}
-
-// GetGuildChannels .
-func (c *client) GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error) {
-	var guild *Guild
-	guild, err = c.cache.GetGuild(id)
-	if err != nil {
-		ret, err = GetGuildChannels(c.req, id)
-		if err != nil {
-			return nil, err
-		}
-		c.cache.SetGuild(&Guild{
-			ID:       id,
-			Channels: ret,
-		})
-	} else {
-		ret = guild.Channels
-	}
-	return ret, nil
-}
-
-// CreateGuildChannel .
-func (c *client) CreateGuildChannel(id Snowflake, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
-	ret, err = CreateGuildChannel(c.req, id, params)
-	return
-}
-
-// ModifyGuildChannelPositions .
-func (c *client) UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (ret *Guild, err error) {
-	ret, err = ModifyGuildChannelPositions(c.req, id, params)
-	return
-}
-
-// AddGuildMember .
-func (c *client) AddGuildMember(guildID, userID Snowflake, params *AddGuildMemberParams, flags ...Flag) (ret *Member, err error) {
-	ret, err = AddGuildMember(c.req, guildID, userID, params)
-	return
-}
-
-// ModifyGuildMember .
-func (c *client) UpdateGuildMember(guildID, userID Snowflake, params *UpdateGuildMemberParams, flags ...Flag) (err error) {
-	err = ModifyGuildMember(c.req, guildID, userID, params)
-	return
-}
-
-// updateCurrentUserNickParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
-type updateCurrentUserNickParams struct {
-	Nick string `json:"nick"` // :CHANGE_NICKNAME
-}
-
-type nickNameResponse struct {
-	Nickname string `json:"nickname"`
-}
-
-// SetCurrentUserNick [REST] Modifies the nickname of the current user in a guild. Returns a 200
-// with the nickname on success. Fires a Guild Member Update Gateway event.
-//  Method                  PATCH
-//  Endpoint                /guilds/{guild.id}/members/@me/nick
-//  Rate limiter            /guilds/{guild.id}/members/@me/nick
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
-//  Reviewed                2018-08-18
-//  Comment                 -
-func (c *client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error) {
-	params := &updateCurrentUserNickParams{
-		Nick: nick,
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitGuildMembers(id),
-		Endpoint:    endpoint.GuildMembersMeNick(id),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-	}, flags)
-	r.expectsStatusCode = http.StatusOK
-	r.factory = func() interface{} {
-		return &nickNameResponse{}
-	}
-
-	return getNickName(r.Execute)
-}
-
-// AddGuildMemberRole .
-func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
-	err = AddGuildMemberRole(c.req, guildID, userID, roleID)
-	return
-}
-
-// RemoveGuildMemberRole .
-// TODO: merge with UpdateGuildMember
-func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
-	err = RemoveGuildMemberRole(c.req, guildID, userID, roleID)
-	return
-}
-
-// KickMember .
-func (c *client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
-	err = RemoveGuildMember(c.req, guildID, userID)
-	return
-}
-
-// GetGuildRoles .
-func (c *client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
-	ret, err = c.cache.GetGuildRoles(guildID)
-	if err != nil {
-		ret, err = GetGuildRoles(c.req, guildID)
-		if err != nil {
-			return nil, err
-		}
-		c.cache.SetGuildRoles(guildID, ret)
-	}
-
-	return ret, nil
-}
-
-// CreateGuildRole .
-func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
-	ret, err = CreateGuildRole(c.req, id, params)
-	return
-}
-
-// UpdateGuildRolePositions .
-func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error) {
-	ret, err = UpdateGuildRolePositions(c.req, guildID, params)
-	return
-}
-
-// DeleteGuildRole .
-func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
-	err = DeleteGuildRole(c.req, guildID, roleID)
-	return
-}
-
-// CreateGuildIntegration .
-func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
-	err = CreateGuildIntegration(c.req, guildID, params)
-	return
-}
-
-// UpdateGuildIntegration .
-func (c *client) UpdateGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error) {
-	err = UpdateGuildIntegration(c.req, guildID, integrationID, params)
-	return
-}
-
-// DeleteGuildIntegration .
-func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
-	err = DeleteGuildIntegration(c.req, guildID, integrationID)
-	return
-}
-
-// SyncGuildIntegration .
-func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
-	err = SyncGuildIntegration(c.req, guildID, integrationID)
-	return
-}
-
-// ModifyGuildEmbed .
-func (c *client) UpdateGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (ret *GuildEmbed, err error) {
-	ret, err = ModifyGuildEmbed(c.req, guildID, params)
-	return
-}
-
-// Webhook
-
-//
-// #########################################################################
-//
-//
-// Custom methods are usually reused by the resource package for readability
-// -----
 
 func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
 	// TODO: populate these partial guild objects
@@ -1133,12 +942,12 @@ func (c *client) ModifyGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *up
 }
 
 // Deprecated: use UpdateGuild
-func (c *client) ModifyGuild(id Snowflake, params *UpdateGuildParams, flags ...Flag) (*Guild, error) {
-	return c.UpdateGuild(id, params, flags...)
+func (c *client) ModifyGuild(id Snowflake, flags ...Flag) *updateGuildBuilder {
+	return c.UpdateGuild(id, flags...)
 }
 
 // Deprecated: use UpdateGuildChannelPositions
-func (c *client) ModifyGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (*Guild, error) {
+func (c *client) ModifyGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) error {
 	return c.UpdateGuildChannelPositions(id, params, flags...)
 }
 
@@ -1153,8 +962,8 @@ func (c *client) ListGuildMembers(id, after Snowflake, limit int, flags ...Flag)
 // TODO: AddGuildMember => CreateGuildMember
 
 // Deprecated: use UpdateGuildMember
-func (c *client) ModifyGuildMember(guildID, userID Snowflake, params *UpdateGuildMemberParams, flags ...Flag) error {
-	return c.UpdateGuildMember(guildID, userID, params, flags...)
+func (c *client) ModifyGuildMember(guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder {
+	return c.UpdateGuildMember(guildID, userID, flags...)
 }
 
 // Deprecated: use SetCurrentUserNick
@@ -1201,8 +1010,8 @@ func (c *client) ModifyGuildIntegration(guildID, integrationID Snowflake, params
 }
 
 // Deprecated: use UpdateGuildEmbed
-func (c *client) ModifyGuildEmbed(guildID Snowflake, params *GuildEmbed, flags ...Flag) (*GuildEmbed, error) {
-	return c.UpdateGuildEmbed(guildID, params, flags...)
+func (c *client) ModifyGuildEmbed(guildID Snowflake, flags ...Flag) *updateGuildEmbedBuilder {
+	return c.UpdateGuildEmbed(guildID, flags...)
 }
 
 // Deprecated: use UpdateCurrentUser

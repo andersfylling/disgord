@@ -403,16 +403,7 @@ type GuildCreate struct {
 var _ internalUpdater = (*GuildCreate)(nil)
 
 func (g *GuildCreate) updateInternals() {
-	guild := g.Guild
-	for i := range guild.Roles {
-		guild.Roles[i].guildID = guild.ID
-	}
-	for i := range guild.Emojis {
-		guild.Emojis[i].guildID = guild.ID
-	}
-	for i := range guild.Channels {
-		guild.Channels[i].GuildID = guild.ID
-	}
+	g.Guild.updateInternals()
 }
 
 // UnmarshalJSON ...
@@ -433,16 +424,7 @@ type GuildUpdate struct {
 var _ internalUpdater = (*GuildUpdate)(nil)
 
 func (g *GuildUpdate) updateInternals() {
-	guild := g.Guild
-	for i := range guild.Roles {
-		guild.Roles[i].guildID = guild.ID
-	}
-	for i := range guild.Emojis {
-		guild.Emojis[i].guildID = guild.ID
-	}
-	for i := range guild.Channels {
-		guild.Channels[i].GuildID = guild.ID
-	}
+	g.Guild.updateInternals()
 }
 
 // UnmarshalJSON ...

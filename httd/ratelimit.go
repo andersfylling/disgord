@@ -58,7 +58,9 @@ func GlobalRateLimit(resp *http.Response) bool {
 
 // ExtractRateLimitInfo uses the RateLimitInfo struct to obtain rate limits from the Discord response
 func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo, err error) {
-	info = &RateLimitInfo{}
+	info = &RateLimitInfo{
+		Empty: true,
+	}
 
 	// extract header information
 	limitStr := resp.Header.Get(XRateLimitLimit)
@@ -68,18 +70,21 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 
 	// convert types
 	if limitStr != "" {
+		info.Empty = false
 		info.Limit, err = strconv.Atoi(limitStr)
 		if err != nil {
 			return
 		}
 	}
 	if remainingStr != "" {
+		info.Empty = false
 		info.Remaining, err = strconv.Atoi(remainingStr)
 		if err != nil {
 			return
 		}
 	}
 	if resetStr != "" {
+		info.Empty = false
 		info.Reset, err = strconv.ParseInt(resetStr, 10, 64)
 		if err != nil {
 			return
@@ -87,6 +92,7 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 		info.Reset *= 1000 // second => milliseconds
 	}
 	if retryAfterStr != "" {
+		info.Empty = false
 		info.RetryAfter, err = strconv.ParseInt(retryAfterStr, 10, 64)
 		if err != nil {
 			return
@@ -95,6 +101,7 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 
 	// the body only contains information when a rate limit is exceeded
 	if RateLimited(resp) && len(body) > 0 {
+		info.Empty = false
 		err = Unmarshal(body, &info)
 	}
 	if !info.Global && GlobalRateLimit(resp) {
@@ -244,7 +251,7 @@ func (r *RateLimit) UpdateRegisters(key string, adjuster RateLimitAdjuster, resp
 
 	// update bucket
 	info, err := ExtractRateLimitInfo(resp, content)
-	if err != nil {
+	if err != nil { // what if the rate limiters were not defined in the response?
 		return // TODO: logging
 	}
 

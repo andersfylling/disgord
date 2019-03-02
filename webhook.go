@@ -305,6 +305,12 @@ type ExecuteWebhookParams struct {
 	Embeds    []*ChannelEmbed `json:"embeds"`
 }
 
+type execWebhookParams struct {
+	Wait bool `urlparam:"wait"`
+}
+
+var _ URLQueryStringer = (*execWebhookParams)(nil)
+
 // ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
@@ -319,14 +325,37 @@ type ExecuteWebhookParams struct {
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-// TODO-flag
 func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
-	_, _, err = c.req.Post(&httd.Request{
+	if params == nil {
+		return errors.New("params can not be nil")
+	}
+
+	if params.WebhookID.Empty() {
+		return errors.New("webhook id is required")
+	}
+	if params.Token == "" {
+		return errors.New("webhook token is required")
+	}
+
+	var contentType string
+	if params.File == nil {
+		contentType = httd.ContentTypeJSON
+	} else {
+		contentType = "multipart/form-data"
+	}
+
+	urlparams := &execWebhookParams{wait}
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitWebhook(params.WebhookID),
-		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix,
-		ContentType: httd.ContentTypeJSON,
-	})
-	return // TODO: how to verify success?
+		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix + urlparams.URLQueryString(),
+		Body:        params,
+		ContentType: contentType,
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent // TODO: verify
+
+	_, err = r.Execute()
+	return err
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
@@ -337,7 +366,6 @@ func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuff
 //  Reviewed                2018-08-14
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-// TODO-flag
 func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	return c.ExecuteWebhook(params, wait, endpoint.Slack(), flags...)
 }
@@ -352,7 +380,6 @@ func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, fl
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-// TODO-flag
 func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	return c.ExecuteWebhook(params, wait, endpoint.GitHub(), flags...)
 }
