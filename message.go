@@ -242,20 +242,17 @@ func (m *Message) saveToDiscord(session Session, changes discordSaver) (err erro
 
 // MessageUpdater is a interface which only holds the message update method
 type MessageUpdater interface {
-	UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error)
+	UpdateMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
 }
 
 // Update after changing the message object, call update to notify Discord about any changes made
 func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
-	var embed *ChannelEmbed
+	builder := client.UpdateMessage(m.ChannelID, msg.ID)
 	if len(msg.Embeds) > 0 {
-		embed = msg.Embeds[0]
+		builder.SetEmbed(msg.Embeds[0])
 	}
 
-	return client.UpdateMessage(m.ChannelID, msg.ID, &UpdateMessageParams{
-		Content: msg.Content,
-		Embed:   embed,
-	})
+	return builder.SetContent(m.Content).Execute()
 }
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
@@ -581,12 +578,6 @@ func (c *client) CreateMessage(channelID Snowflake, params *CreateMessageParams,
 	return getMessage(r.Execute)
 }
 
-// UpdateMessageParams https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
-type UpdateMessageParams struct {
-	Content string        `json:"content,omitempty"`
-	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
-}
-
 // UpdateMessage [REST] Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
@@ -595,29 +586,23 @@ type UpdateMessageParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (c *client) UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error) {
-	if chanID.Empty() {
-		err = errors.New("channelID must be set to get channel messages")
-		return nil, err
+// TODO: verify embed is working
+func (c *client) UpdateMessage(chanID, msgID Snowflake, flags ...Flag) (builder *updateMessageBuilder) {
+	builder = &updateMessageBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Message{}
 	}
-	if msgID.Empty() {
-		err = errors.New("msgID must be set to edit the message")
-		return nil, err
-	}
-
-	r := c.newRESTRequest(&httd.Request{
+	builder.r.flags = flags
+	builder.r.addPrereq(chanID.Empty(), "channelID must be set to get channel messages")
+	builder.r.addPrereq(msgID.Empty(), "msgID must be set to edit the message")
+	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitChannelMessages(chanID),
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	}, flags)
-	r.pool = c.pool.message
-	r.factory = func() interface{} {
-		return &Message{}
-	}
+	}, nil)
 
-	return getMessage(r.Execute)
+	return builder
 }
 
 // DeleteMessage [REST] Delete a message. If operating on a guild channel and trying to delete a message that was not
@@ -831,4 +816,18 @@ func (c *client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (
 
 	_, err = r.Execute()
 	return err
+}
+
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
+// updateMessageBuilder, params here
+//  https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
+//generate-rest-params: Content:string, Embed:*ChannelEmbed,
+//generate-rest-basic-execute: message:*Message,
+type updateMessageBuilder struct {
+	r RESTBuilder
 }
