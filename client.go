@@ -902,8 +902,8 @@ func (c *client) BulkDeleteMessages(id Snowflake, params *DeleteMessagesParams, 
 }
 
 // Deprecated: use UpdateMessage
-func (c *client) EditMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error) {
-	return c.UpdateMessage(chanID, msgID, params, flags...)
+func (c *client) EditMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder {
+	return c.UpdateMessage(chanID, msgID, flags...)
 }
 
 // Deprecated: use UpdateChannelPermissions

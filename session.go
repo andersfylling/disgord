@@ -87,7 +87,7 @@ type RESTMessage interface {
 	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) ([]*Message, error)
 	GetMessage(channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error)
 	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
-	UpdateMessage(chanID, msgID Snowflake, params *UpdateMessageParams, flags ...Flag) (ret *Message, err error)
+	UpdateMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
 	DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error)
 	DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error)
 }
