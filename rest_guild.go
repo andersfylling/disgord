@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -58,7 +57,7 @@ func ratelimitGuildWebhooks(id Snowflake) string {
 //    "type": 0
 // }
 type CreateGuildParams struct {
-	Name                    string                        `json:"name"`
+	Name                    string                        `json:"name"` // required
 	Region                  string                        `json:"region"`
 	Icon                    string                        `json:"icon"`
 	VerificationLvl         int                           `json:"verification_level"`
@@ -76,22 +75,36 @@ type CreateGuildParams struct {
 //  Reviewed                2018-08-16
 //  Comment                 This endpoint. can be used only by bots in less than 10 guilds. Creating channel
 //                          categories from this endpoint. is not supported.
-func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err error) {
+//							The params argument is optional.
+func (c *client) CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 guilds?
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
+
+	if guildName == "" {
+		return nil, errors.New("guild name is required")
+	}
+	if l := len(guildName); !(2 <= l && l <= 100) {
+		return nil, errors.New("guild name must be 2 or more characters and no more than 100 characters")
+	}
+
+	if params == nil {
+		params = &CreateGuildParams{}
+	}
+	params.Name = guildName
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: endpoint.Guilds(),
 		Endpoint:    endpoint.Guilds(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
+	}, flags)
+	r.factory = func() interface{} {
+		return &Guild{}
 	}
+	r.CacheRegistry = GuildCache
 
-	err = unmarshal(body, &ret)
-	return ret, err
+	return getGuild(r.Execute)
 }
 
 // GetGuild [REST] Returns the guild object for the given id.
@@ -111,34 +124,8 @@ func (c *client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error)
 	}
 	r.CacheRegistry = GuildCache
 	r.ID = id
-	r.preUpdateCache = func(x interface{}) {
-		if x == nil {
-			return
-		}
-		if guild, ok := x.(*Guild); ok {
-			for i := range guild.Roles {
-				guild.Roles[i].guildID = id
-			}
-		}
-	}
 
 	return getGuild(r.Execute)
-}
-
-// UpdateGuildParams https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
-// TODO: support nullable Icon, anything else?
-type UpdateGuildParams struct {
-	Name                    string                        `json:"name,omitempty"`
-	Region                  string                        `json:"region,omitempty"`
-	VerificationLvl         int                           `json:"verification_level,omitempty"`
-	DefaultMsgNotifications DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
-	ExplicitContentFilter   ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
-	AFKChannelID            Snowflake                     `json:"afk_channel_id,omitempty"`
-	AFKTimeout              int                           `json:"afk_timeout,omitempty"`
-	Icon                    string                        `json:"icon,omitempty"`
-	OwnerID                 Snowflake                     `json:"owner_id,omitempty"`
-	Splash                  string                        `json:"splash,omitempty"`
-	SystemChannelID         Snowflake                     `json:"system_channel_id,omitempty"`
 }
 
 // ModifyGuild [REST] Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated guild
@@ -149,28 +136,22 @@ type UpdateGuildParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
-func ModifyGuild(client httd.Patcher, id Snowflake, params *UpdateGuildParams) (ret *Guild, err error) {
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+func (c *client) UpdateGuild(id Snowflake, flags ...Flag) (builder *updateGuildBuilder) {
+	builder = &updateGuildBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Guild{}
+	}
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
-	}
+	}, nil)
+	builder.r.cacheRegistry = GuildCache
+	builder.r.cacheItemID = id
+	builder.r.flags = flags
 
-	if err = unmarshal(body, &ret); err != nil {
-		return nil, err
-	}
-
-	// add guild id to roles
-	for _, role := range ret.Roles {
-		role.guildID = id
-	}
-
-	return ret, nil
+	return builder
 }
 
 // DeleteGuild [REST] Delete a guild permanently. User must be owner. Returns 204 No Content on success.
@@ -181,20 +162,15 @@ func ModifyGuild(client httd.Patcher, id Snowflake, params *UpdateGuildParams) (
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
-func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
-	}
+	_, err = r.Execute()
 	return
 }
 
@@ -205,18 +181,19 @@ func DeleteGuild(client httd.Deleter, id Snowflake) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
-func GetGuildChannels(client httd.Getter, id Snowflake) (ret []*Channel, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
+func (c *client) GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error) {
+	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.CacheRegistry = ChannelCache
+	r.factory = func() interface{} {
+		tmp := make([]*Channel, 0)
+		return &tmp
 	}
+	// TODO: update guild cache
 
-	err = unmarshal(body, &ret)
-	return
+	return getChannels(r.Execute)
 }
 
 // CreateGuildChannelParams https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
@@ -240,20 +217,35 @@ type CreateGuildChannelParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
-func CreateGuildChannel(client httd.Poster, id Snowflake, params *CreateGuildChannelParams) (ret *Channel, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
+func (c *client) CreateGuildChannel(id Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
+	if channelName == "" && (params == nil || params.Name == "") {
+		return nil, errors.New("channel name is required")
+	}
+	if l := len(channelName); !(2 <= l && l <= 100) {
+		return nil, errors.New("channel name must be 2 or more characters and no more than 100 characters")
+	}
+
+	if params == nil {
+		params = &CreateGuildChannelParams{}
+	}
+	if channelName != "" && params.Name == "" {
+		params.Name = channelName
+	}
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Channel{}
 	}
+	r.CacheRegistry = ChannelCache
+	// TODO: update guild cache
 
-	err = unmarshal(body, &ret)
-	return
+	return getChannel(r.Execute)
 }
 
 // UpdateGuildChannelPositionsParams ...
@@ -273,23 +265,52 @@ type UpdateGuildChannelPositionsParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
-func ModifyGuildChannelPositions(client httd.Patcher, id Snowflake, params []UpdateGuildChannelPositionsParams) (ret *Guild, err error) {
-	var resp *http.Response
-	resp, _, err = client.Patch(&httd.Request{
+func (c *client) UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildChannels(id),
 		Endpoint:    endpoint.GuildChannels(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+	// TODO: update ordering of guild channels in cache
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(http.StatusNoContent)
-		err = errors.New(msg)
+	_, err = r.Execute()
+	return err
+}
+
+// UpdateGuildRolePositionsParams ...
+// https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
+type UpdateGuildRolePositionsParams struct {
+	ID       Snowflake `json:"id"`
+	Position uint      `json:"position"`
+}
+
+// UpdateGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
+// Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
+// Fires multiple Guild Role Update Gateway events.
+//  Method                  PATCH
+//  Endpoint                /guilds/{guild.id}/roles
+//  Rate limiter            /guilds/{guild.id}/roles
+//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
+//  Reviewed                2018-08-18
+//  Comment                 -
+func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (roles []*Role, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
+		Ratelimiter: ratelimitGuildRoles(guildID),
+		Endpoint:    endpoint.GuildRoles(guildID),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Role, 0)
+		return &tmp
 	}
-	return
+	// TODO: update ordering of guild roles in cache
+
+	return getRoles(r.Execute)
 }
 
 // GetGuildMember [REST] Returns a guild member object for the specified user.
@@ -361,11 +382,11 @@ func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParam
 // AddGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
-	AccessToken string      `json:"access_token"`
+	AccessToken string      `json:"access_token"` // required
 	Nick        string      `json:"nick,omitempty"`
-	Roles       []Snowflake `json:"roles"`
-	Mute        bool        `json:"mute"`
-	Deaf        bool        `json:"deaf"`
+	Roles       []Snowflake `json:"roles,omitempty"`
+	Mute        bool        `json:"mute,omitempty"`
+	Deaf        bool        `json:"deaf,omitempty"`
 }
 
 // AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with
@@ -378,101 +399,39 @@ type AddGuildMemberParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 All parameters to this endpoint. except for access_token are optional.
-func AddGuildMember(client httd.Puter, guildID, userID Snowflake, params *AddGuildMemberParams) (ret *Member, err error) {
-	var resp *http.Response
-	var body []byte
-	resp, body, err = client.Put(&httd.Request{
+func (c *client) AddGuildMember(guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (member *Member, err error) {
+	if accessToken == "" && (params == nil || params.AccessToken == "") {
+		return nil, errors.New("access token is required")
+	}
+
+	if params == nil {
+		params = &AddGuildMemberParams{}
+	}
+	if accessToken != "" && params.AccessToken == "" {
+		params.AccessToken = accessToken
+	}
+
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.factory = func() interface{} {
+		return &Member{}
+	}
+	r.expectsStatusCode = http.StatusCreated
+
+	// TODO: update guild cache
+	if member, err = getMember(r.Execute); err != nil {
+		if errRest, ok := err.(*httd.ErrREST); ok && errRest.HTTPCode == http.StatusNoContent {
+			errRest.Msg = "member{" + userID.String() + "} is already in Guild{" + guildID.String() + "}"
+		}
 	}
 
-	if resp.StatusCode == http.StatusCreated {
-		err = unmarshal(body, &ret)
-		return
-	}
-
-	if resp.StatusCode == http.StatusNoContent {
-		msg := "User{id:" + userID.String() + "} already exists in guild{id:" + guildID.String() + "}"
-		err = errors.New(msg)
-	}
-
-	return
+	return member, err
 }
-
-// UpdateGuildMemberParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
-type UpdateGuildMemberParams struct {
-	data map[string]interface{}
-}
-
-func (m *UpdateGuildMemberParams) init() {
-	if m.data != nil {
-		return
-	}
-
-	m.data = map[string]interface{}{}
-}
-
-// SetNick set new nickname for user. Requires permission MANAGE_NICKNAMES
-func (m *UpdateGuildMemberParams) SetNick(name string) error {
-	if err := ValidateUsername(name); err != nil {
-		return err
-	}
-
-	m.init()
-	m.data["nick"] = name
-	return nil
-}
-
-// RemoveNick removes nickname for user. Requires permission MANAGE_NICKNAMES
-func (m *UpdateGuildMemberParams) RemoveNick() {
-	m.init()
-	m.data["nick"] = nil
-}
-
-// SetRoles updates the member with new roles. Requires permissions MANAGE_ROLES
-func (m *UpdateGuildMemberParams) SetRoles(roles []Snowflake) {
-	m.init()
-	m.data["roles"] = roles
-}
-
-// SetMute mutes a member. Requires permission MUTE_MEMBERS
-func (m *UpdateGuildMemberParams) SetMute(yes bool) {
-	m.init()
-	m.data["mute"] = yes
-}
-
-// SetDeaf deafens a member. Requires permission DEAFEN_MEMBERS
-func (m *UpdateGuildMemberParams) SetDeaf(yes bool) {
-	m.init()
-	m.data["deaf"] = yes
-}
-
-// SetChannelID moves a member from one channel to another. Requires permission MOVE_MEMBERS
-func (m *UpdateGuildMemberParams) SetChannelID(id Snowflake) error {
-	if id.Empty() {
-		return errors.New("empty snowflake")
-	}
-
-	m.init()
-	m.data["channel_id"] = id
-	return nil
-}
-
-func (m *UpdateGuildMemberParams) MarshalJSON() ([]byte, error) {
-	if len(m.data) == 0 {
-		return []byte(`{}`), nil
-	}
-
-	return httd.Marshal(m.data)
-}
-
-var _ json.Marshaler = (*UpdateGuildMemberParams)(nil)
 
 // ModifyGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
 // Fires a Guild Member Update Gateway event.
@@ -484,49 +443,46 @@ var _ json.Marshaler = (*UpdateGuildMemberParams)(nil)
 //  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
 //                          the API user must have permissions to both connect to the channel and have the
 //                          MOVE_MEMBERS permission.
-func ModifyGuildMember(client httd.Patcher, guildID, userID Snowflake, params *UpdateGuildMemberParams) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Patch(&httd.Request{
+func (c *client) UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
+	builder = &updateGuildMemberBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Member{}
+	}
+	builder.r.flags = flags
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+	}, func(resp *http.Response, body []byte, err error) error {
+		if resp.StatusCode != http.StatusNoContent {
+			msg := "could not change attributes of member. Does the member exist, and do you have permissions?"
+			return errors.New(msg)
+		}
+		return nil
 	})
-	if err != nil {
-		return
-	}
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "could not change attributes of member. Does the member exist, and do you have permissions?"
-		err = errors.New(msg)
-	}
-
-	return
+	// TODO: cache member changes
+	return builder
 }
 
 // AddGuildMemberRole [REST] Adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/members TODO: I don't know if this is correct
+//  Rate limiter            /guilds/{guild.id}/members/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func AddGuildMemberRole(client httd.Puter, guildID, userID, roleID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Put(&httd.Request{
+func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMemberRole(guildID, userID, roleID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not add role to user. Do you have the MANAGE_ROLES permission?"
-		err = errors.New(msg)
-	}
-
+	_, err = r.Execute()
 	return
 }
 
@@ -538,21 +494,15 @@ func AddGuildMemberRole(client httd.Puter, guildID, userID, roleID Snowflake) (e
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func RemoveGuildMemberRole(client httd.Deleter, guildID, userID, roleID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMemberRole(guildID, userID, roleID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not remove role from user. Do you have the MANAGE_ROLES permission?"
-		err = errors.New(msg)
-	}
-
+	_, err = r.Execute()
 	return
 }
 
@@ -564,21 +514,15 @@ func RemoveGuildMemberRole(client httd.Deleter, guildID, userID, roleID Snowflak
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 -
-func RemoveGuildMember(client httd.Deleter, guildID, userID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not remove user from guild. Do you have the KICK_MEMBERS permission?"
-		err = errors.New(msg)
-	}
-
+	_, err = r.Execute()
 	return
 }
 
@@ -703,14 +647,14 @@ type pruneMembersParams struct {
 	ComputePruneCount bool `urlparam:"compute_prune_count"`
 }
 
+var _ URLQueryStringer = (*pruneMembersParams)(nil)
+
 func (d *pruneMembersParams) FindErrors() (err error) {
 	if d.Days < 1 {
 		err = errors.New("days must be at least 1, got " + strconv.Itoa(d.Days))
 	}
 	return
 }
-
-var _ URLQueryStringer = (*pruneMembersParams)(nil)
 
 // GuildPruneCount ...
 type guildPruneCount struct {
@@ -824,7 +768,7 @@ func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, er
 
 // GetGuildIntegrations [REST] Returns a list of integration objects for the guild.
 // Requires the 'MANAGE_GUILD' permission.
-//  Method                  GET
+//  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/integrations
 //  Rate limiter             /guilds/{guild.id}/integrations
 //  Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
@@ -859,28 +803,23 @@ type CreateGuildIntegrationParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func CreateGuildIntegration(client httd.Poster, guildID Snowflake, params *CreateGuildIntegrationParams) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Post(&httd.Request{
+func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrations(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not create the integration object. Do you have the MANAGE_GUILD permission?"
-		err = errors.New(msg)
-	}
-
-	return
+	_, err = r.Execute()
+	return err
 }
 
 // UpdateGuildIntegrationParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
+// TODO: currently unsure which are required/optional params
 type UpdateGuildIntegrationParams struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
 	ExpireGracePeriod int  `json:"expire_grace_period"`
@@ -896,24 +835,18 @@ type UpdateGuildIntegrationParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func UpdateGuildIntegration(client httd.Patcher, guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Patch(&httd.Request{
+func (c *client) UpdateGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not modify the integration object. Do you have the MANAGE_GUILD permission?"
-		err = errors.New(msg)
-	}
-
-	return
+	_, err = r.Execute()
+	return err
 }
 
 // DeleteGuildIntegration [REST] Delete the attached integration object for the guild.
@@ -925,22 +858,16 @@ func UpdateGuildIntegration(client httd.Patcher, guildID, integrationID Snowflak
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegration(guildID, integrationID),
-	})
-	if err != nil {
-		return
-	}
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not remove the integration object for the guild. Do you have the MANAGE_GUILD permission?"
-		err = errors.New(msg)
-	}
-
-	return
+	_, err = r.Execute()
+	return err
 }
 
 // SyncGuildIntegration [REST] Sync an integration. Requires the 'MANAGE_GUILD' permission.
@@ -951,21 +878,54 @@ func DeleteGuildIntegration(client httd.Deleter, guildID, integrationID Snowflak
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func SyncGuildIntegration(client httd.Poster, guildID, integrationID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Post(&httd.Request{
+func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
 		Endpoint:    endpoint.GuildIntegrationSync(guildID, integrationID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
+}
+
+// updateCurrentUserNickParams ...
+// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
+type updateCurrentUserNickParams struct {
+	Nick string `json:"nick"` // :CHANGE_NICKNAME
+}
+
+type nickNameResponse struct {
+	Nickname string `json:"nickname"`
+}
+
+// SetCurrentUserNick [REST] Modifies the nickname of the current user in a guild. Returns a 200
+// with the nickname on success. Fires a Guild Member Update Gateway event.
+//  Method                  PATCH
+//  Endpoint                /guilds/{guild.id}/members/@me/nick
+//  Rate limiter            /guilds/{guild.id}/members/@me/nick
+//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
+//  Reviewed                2018-08-18
+//  Comment                 -
+func (c *client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error) {
+	params := &updateCurrentUserNickParams{
+		Nick: nick,
 	}
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "could not sync guild integrations. Do you have the MANAGE_GUILD permission?"
-		err = errors.New(msg)
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
+		Ratelimiter: ratelimitGuildMembers(id),
+		Endpoint:    endpoint.GuildMembersMeNick(id),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.expectsStatusCode = http.StatusOK
+	r.factory = func() interface{} {
+		return &nickNameResponse{}
 	}
-	return
+
+	return getNickName(r.Execute)
 }
 
 // GetGuildEmbed [REST] Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
@@ -987,7 +947,7 @@ func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEm
 	return getGuildEmbed(r.Execute)
 }
 
-// ModifyGuildEmbed [REST] Modify a guild embed object for the guild. All attributes may be passed in with JSON and
+// UpdateGuildEmbed [REST] Modify a guild embed object for the guild. All attributes may be passed in with JSON and
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/embed
@@ -995,20 +955,20 @@ func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEm
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
-func ModifyGuildEmbed(client httd.Patcher, guildID Snowflake, params *GuildEmbed) (ret *GuildEmbed, err error) {
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
+func (c *client) UpdateGuildEmbed(guildID Snowflake, flags ...Flag) (builder *updateGuildEmbedBuilder) {
+	builder = &updateGuildEmbedBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &GuildEmbed{}
+	}
+	builder.r.flags = flags
+	builder.r.setup(c.cache, c.req, &httd.Request{
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return
-	}
+	}, nil)
 
-	err = unmarshal(body, &ret)
-	return
+	return builder
 }
 
 // GetGuildVanityURL [REST] Returns a partial invite object for guilds with that feature enabled.
@@ -1029,4 +989,37 @@ func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *Parti
 	}
 
 	return getPartialInvite(r.Execute)
+}
+
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
+// updateGuildBuilder https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
+//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
+//generate-rest-basic-execute: guild:*Guild,
+type updateGuildBuilder struct {
+	r RESTBuilder
+}
+
+//generate-rest-params: enabled:bool, channel_id:Snowflake,
+//generate-rest-basic-execute: embed:*GuildEmbed,
+type updateGuildEmbedBuilder struct {
+	r RESTBuilder
+}
+
+// updateGuildMemberBuilder ...
+// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
+//generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
+//generate-rest-basic-execute: err:error,
+type updateGuildMemberBuilder struct {
+	r RESTBuilder
+}
+
+// RemoveNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+func (b *updateGuildMemberBuilder) SetDefaultNick() *updateGuildMemberBuilder {
+	b.r.param("nick", nil)
+	return b
 }

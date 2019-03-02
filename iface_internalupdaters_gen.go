@@ -106,6 +106,17 @@ func executeInternalUpdater(x interface{}) {
 		for i := range slice {
 			update(slice[i])
 		}
+	case *Guild:
+		update(t)
+	case []*Guild:
+		for i := range t {
+			update(t[i])
+		}
+	case *[]*Guild:
+		slice := *t
+		for i := range slice {
+			update(slice[i])
+		}
 	}
 }
 

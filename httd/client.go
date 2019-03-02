@@ -71,6 +71,8 @@ type ErrREST struct {
 	HTTPCode   int    `json:"-"`
 }
 
+var _ error = (*ErrREST)(nil)
+
 func (e *ErrREST) Error() string {
 	return e.Msg
 }

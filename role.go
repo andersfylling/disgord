@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -149,37 +148,11 @@ func (r *Role) deleteFromDiscord(session Session) (err error) {
 	return
 }
 
-//func (r *Role) Clear() {
-//}
-
-// GetGuildRoles [REST] Returns a list of role objects for the guild.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
-//  Reviewed                2018-08-18
-//  Comment                 -
-func GetGuildRoles(client httd.Getter, guildID Snowflake) (ret []*Role, err error) {
-	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/roles",
-	})
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &ret)
-	if err != nil {
-		return
-	}
-
-	// add guild id to roles
-	for _, role := range ret {
-		role.guildID = guildID
-	}
-	return
-}
+//////////////////////////////////////////////////////
+//
+// REST Methods
+//
+//////////////////////////////////////////////////////
 
 // CreateGuildRoleParams ...
 // https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
@@ -199,113 +172,25 @@ type CreateGuildRoleParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
-func CreateGuildRole(client httd.Poster, id Snowflake, params *CreateGuildRoleParams) (ret *Role, err error) {
-	var body []byte
-	_, body, err = client.Post(&httd.Request{
+func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildRoles(id),
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
+	}, flags)
+	r.CacheRegistry = GuildRoleCache
+	r.factory = func() interface{} {
+		return &Role{}
+	}
+	r.preUpdateCache = func(x interface{}) {
+		r := x.(*Role)
+		r.guildID = id
 	}
 
-	if err = unmarshal(body, &ret); err != nil {
-		return nil, err
-	}
-
-	// add guild id to roles
-	ret.guildID = id
-	return ret, nil
+	return getRole(r.Execute)
 }
-
-// UpdateGuildRolePositionsParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
-type UpdateGuildRolePositionsParams struct {
-	ID       Snowflake `json:"id"`
-	Position uint      `json:"position"`
-}
-
-// UpdateGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
-// Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
-// Fires multiple Guild Role Update Gateway events.
-//  Method                  PATCH
-//  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
-//  Reviewed                2018-08-18
-//  Comment                 -
-func UpdateGuildRolePositions(client httd.Patcher, guildID Snowflake, params []UpdateGuildRolePositionsParams) (ret []*Role, err error) {
-	var body []byte
-	_, body, err = client.Patch(&httd.Request{
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    endpoint.GuildRoles(guildID),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err = unmarshal(body, &ret); err != nil {
-		return nil, err
-	}
-
-	// add guild id to roles
-	for _, role := range ret {
-		role.guildID = guildID
-	}
-	return ret, nil
-}
-
-// UpdateGuildRoleParams JSON params for func ModifyGuildRole
-type UpdateGuildRoleParams struct {
-	data map[string]interface{}
-}
-
-func (p *UpdateGuildRoleParams) init() {
-	if p.data != nil {
-		return
-	}
-
-	p.data = map[string]interface{}{}
-}
-
-func (p *UpdateGuildRoleParams) SetName(name string) {
-	p.init()
-	p.data["name"] = name
-}
-
-func (p *UpdateGuildRoleParams) SetPermissions(permissions uint64) {
-	p.init()
-	p.data["permissions"] = permissions
-}
-
-func (p *UpdateGuildRoleParams) SetColor(color uint) {
-	p.init()
-	p.data["color"] = color
-}
-
-func (p *UpdateGuildRoleParams) SetHoist(hoist bool) {
-	p.init()
-	p.data["hoist"] = hoist
-}
-
-func (p *UpdateGuildRoleParams) SetMentionable(mentionable bool) {
-	p.init()
-	p.data["mentionable"] = mentionable
-}
-
-func (p *UpdateGuildRoleParams) MarshalJSON() ([]byte, error) {
-	if len(p.data) == 0 {
-		return []byte(`{}`), nil
-	}
-
-	return httd.Marshal(p.data)
-}
-
-var _ json.Marshaler = (*UpdateGuildRoleParams)(nil)
 
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
@@ -315,14 +200,14 @@ var _ json.Marshaler = (*UpdateGuildRoleParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *modifyGuildRoleBuilder) {
-	builder = &modifyGuildRoleBuilder{}
+func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
+	builder = &updateGuildRoleBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}
 	}
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
+		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
@@ -337,22 +222,6 @@ func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 	return builder
 }
 
-// modifyGuildRoleBuilder ...
-//generate-rest-params: name:string, permissions:uint64, color:uint, hoist:bool, mentionable:bool,
-type modifyGuildRoleBuilder struct {
-	r RESTBuilder
-}
-
-func (b *modifyGuildRoleBuilder) Execute() (role *Role, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return
-	}
-
-	role = v.(*Role)
-	return
-}
-
 // DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
@@ -361,20 +230,54 @@ func (b *modifyGuildRoleBuilder) Execute() (role *Role, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func DeleteGuildRole(client httd.Deleter, guildID, roleID Snowflake) (err error) {
-	var resp *http.Response
-	resp, _, err = client.Delete(&httd.Request{
+func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
-	})
-	if err != nil {
-		return
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err = r.Execute()
+	return err
+}
+
+// GetGuildRoles [REST] Returns a list of role objects for the guild.
+//  Method                  GET
+//  Endpoint                /guilds/{guild.id}/roles
+//  Rate limiter            /guilds/{guild.id}/roles
+//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
+//  Reviewed                2018-08-18
+//  Comment                 -
+func (c *client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
+	r := c.newRESTRequest(&httd.Request{
+		Ratelimiter: ratelimitGuildRoles(guildID),
+		Endpoint:    "/guilds/" + guildID.String() + "/roles",
+	}, flags)
+	r.CacheRegistry = GuildRolesCache
+	r.factory = func() interface{} {
+		tmp := make([]*Role, 0)
+		return &tmp
+	}
+	r.preUpdateCache = func(x interface{}) {
+		roles := *x.(*[]*Role)
+		for i := range roles {
+			roles[i].guildID = guildID
+		}
 	}
 
-	if resp.StatusCode != http.StatusNoContent {
-		msg := "Could not remove role. Do you have the MANAGE_ROLES permission?"
-		err = errors.New(msg)
-	}
+	return getRoles(r.Execute)
+}
 
-	return
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
+// updateGuildRoleBuilder ...
+//generate-rest-basic-execute: role:*Role,
+//generate-rest-params: name:string, permissions:uint64, color:uint, hoist:bool, mentionable:bool,
+type updateGuildRoleBuilder struct {
+	r RESTBuilder
 }

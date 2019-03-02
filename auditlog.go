@@ -342,6 +342,12 @@ func (c *client) GetGuildAuditLogs(guildID snowflake.ID, flags ...Flag) (builder
 	return builder
 }
 
+//////////////////////////////////////////////////////
+//
+// REST Builders
+//
+//////////////////////////////////////////////////////
+
 // guildAuditLogsBuilder for building the GetGuildAuditLogs request.
 // TODO: support caching of audit log entries. So we only fetch those we don't have.
 //generate-rest-params: user_id:Snowflake, action_type:uint, before:Snowflake, limit:int,

@@ -79,9 +79,7 @@ func main() {
 
 	// create
 	func() {
-		channel, err := c.CreateGuildChannel(keys.GuildAdmin, &disgord.CreateGuildChannelParams{
-			Name: "test",
-		})
+		channel, err := c.CreateGuildChannel(keys.GuildAdmin, "test", nil)
 		if err != nil {
 			panic("cannot create channel, therefore skipped")
 		} else if channel.ID.Empty() {

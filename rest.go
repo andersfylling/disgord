@@ -101,8 +101,6 @@ func (p paramHolder) URLQueryString() string {
 	return params
 }
 
-type astrixREST func(repo cacheRegistry, ids []Snowflake, req *httd.Request, flags ...Flag) (v interface{}, err error)
-
 type restStepCheckCache func() (v interface{}, err error)
 type restStepDoRequest func() (resp *http.Response, body []byte, err error)
 type restStepUpdateCache func(registry cacheRegistry, id Snowflake, x interface{}) (err error)
@@ -259,8 +257,10 @@ func (r *rest) Execute() (v interface{}, err error) {
 	}
 
 	if r.expectsStatusCode > 0 && resp.StatusCode != r.expectsStatusCode {
-		msg := "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(r.expectsStatusCode)
-		err = errors.New(msg)
+		err = &httd.ErrREST{
+			HTTPCode: resp.StatusCode,
+			Msg:      "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(r.expectsStatusCode),
+		}
 		return nil, err
 	}
 
@@ -387,6 +387,9 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 			return nil, err
 		}
 
+		executeInternalUpdater(v)
+		// executeInternalClientUpdater(disgord.client, v)
+
 		if b.cacheRegistry == NoCacheSpecified {
 			return v, err
 		}
@@ -508,6 +511,48 @@ func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 	}
 
 	return v.(*Channel), nil
+}
+
+// TODO: auto generate
+func getChannels(f func() (interface{}, error)) (channels []*Channel, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Channel), nil
+}
+
+// TODO: auto generate
+func getRole(f func() (interface{}, error)) (role *Role, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return v.(*Role), nil
+}
+
+// TODO: auto generate
+func getRoles(f func() (interface{}, error)) (roles []*Role, err error) {
+	var v interface{}
+	if v, err = f(); err != nil {
+		return nil, err
+	}
+
+	if v == nil {
+		return nil, errors.New("object was nil")
+	}
+
+	return *v.(*[]*Role), nil
 }
 
 // TODO: auto generate
