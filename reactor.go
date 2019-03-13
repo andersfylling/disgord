@@ -143,18 +143,18 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 
 	dead := make([]*handlerSpec, 0)
 
-	for i := range specs {
-		if alive := specs[i].next(); !alive {
-			dead = append(dead, specs[i])
+	for _, spec := range specs {
+		if alive := spec.next(); !alive {
+			dead = append(dead, spec)
 			continue
 		}
 
-		localEvt := specs[i].runMdlws(evt)
+		localEvt := spec.runMdlws(evt)
 		if localEvt == nil {
 			continue
 		}
 
-		for _, handler := range specs[i].handlers {
+		for _, handler := range spec.handlers {
 			d.trigger(handler, evt)
 		}
 	}
@@ -173,7 +173,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 			if spec == deadspec { // compare pointers
 				// delete the dead spec, but keep the ordering
 				copy(specs[i:], specs[i+1:])
-				specs[len(specs)-1] = nil // GC
+				//specs[len(specs)-1] = nil // GC, setting entries to nil requires locking
 				specs = specs[:len(specs)-1]
 				break
 			}

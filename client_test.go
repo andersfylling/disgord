@@ -27,9 +27,11 @@ func (d *dispatcher) nrOfAliveHandlers() (counter int) {
 
 	for k := range d.handlerSpecs {
 		for i := range d.handlerSpecs[k] {
+			d.handlerSpecs[k][i].Lock()
 			if d.handlerSpecs[k][i].ctrl.IsDead() == false {
 				counter++
 			}
+			d.handlerSpecs[k][i].Unlock()
 		}
 	}
 
