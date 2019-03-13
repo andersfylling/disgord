@@ -56,6 +56,7 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - VoiceRESTer => RESTVoice
  - WebhookRESTer => RESTWebhook
  - consts AuditLogChangeKey => AuditLogChange
+ - disgord.Event* => disgord.Evt*
 
 #### Removed / unexported
  - type BeginGuildPruneParams

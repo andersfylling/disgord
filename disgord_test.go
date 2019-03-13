@@ -24,45 +24,45 @@ func injectRandomEvents(t *testing.T, callback func(name string, evt interface{}
 
 	// first wave, just empty content
 	// looks for incorrect type casting
-	events[EventReady] = &Ready{
+	events[EvtReady] = &Ready{
 		User: NewUser(),
 	}
-	events[EventChannelCreate] = &ChannelCreate{
+	events[EvtChannelCreate] = &ChannelCreate{
 		Channel: NewChannel(),
 	}
-	events[EventChannelDelete] = &ChannelDelete{
+	events[EvtChannelDelete] = &ChannelDelete{
 		Channel: NewChannel(),
 	}
-	events[EventGuildCreate] = &GuildCreate{
+	events[EvtGuildCreate] = &GuildCreate{
 		Guild: NewGuild(),
 	}
-	events[EventGuildDelete] = &GuildDelete{
+	events[EvtGuildDelete] = &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{},
 	}
-	events[EventGuildBanRemove] = &GuildBanRemove{
+	events[EvtGuildBanRemove] = &GuildBanRemove{
 		User: NewUser(),
 	}
-	events[EventGuildIntegrationsUpdate] = &GuildIntegrationsUpdate{}
-	events[EventGuildMemberRemove] = &GuildMemberRemove{
+	events[EvtGuildIntegrationsUpdate] = &GuildIntegrationsUpdate{}
+	events[EvtGuildMemberRemove] = &GuildMemberRemove{
 		User: NewUser(),
 	}
-	events[EventGuildMembersChunk] = &GuildMembersChunk{}
-	events[EventGuildRoleUpdate] = &GuildRoleUpdate{
+	events[EvtGuildMembersChunk] = &GuildMembersChunk{}
+	events[EvtGuildRoleUpdate] = &GuildRoleUpdate{
 		Role: NewRole(),
 	}
-	events[EventMessageCreate] = &MessageCreate{
+	events[EvtMessageCreate] = &MessageCreate{
 		Message: NewMessage(),
 	}
-	events[EventMessageDelete] = &MessageDelete{}
-	events[EventMessageReactionAdd] = &MessageReactionAdd{
+	events[EvtMessageDelete] = &MessageDelete{}
+	events[EvtMessageReactionAdd] = &MessageReactionAdd{
 		PartialEmoji: &Emoji{},
 	}
-	events[EventMessageReactionRemoveAll] = &MessageReactionRemoveAll{}
-	events[EventTypingStart] = &TypingStart{}
-	events[EventVoiceStateUpdate] = &VoiceStateUpdate{
+	events[EvtMessageReactionRemoveAll] = &MessageReactionRemoveAll{}
+	events[EvtTypingStart] = &TypingStart{}
+	events[EvtVoiceStateUpdate] = &VoiceStateUpdate{
 		VoiceState: &VoiceState{},
 	}
-	events[EventWebhooksUpdate] = &WebhooksUpdate{}
+	events[EvtWebhooksUpdate] = &WebhooksUpdate{}
 	iterate(t, events)
 
 }
@@ -214,25 +214,25 @@ func TestCtrl(t *testing.T) {
 		t.Error("ctrl is marked dead even though no conditions for it's death was defined")
 	}
 
-	ctrl = newCtrl(&Ctrl{Remaining: -1})
+	ctrl = newCtrl(&Ctrl{Runs: -1})
 	if ctrl.IsDead() {
 		t.Error("ctrl is marked dead even though no conditions for it's death was defined")
 	}
 
 	t.Run("counter", func(t *testing.T) {
-		ctrl = newCtrl(&Ctrl{Remaining: 5})
+		ctrl = newCtrl(&Ctrl{Runs: 5})
 		if ctrl.IsDead() {
 			t.Error("ctrl is marked dead too early")
 		}
 		for i := 0; i < 4; i++ {
 			ctrl.Update()
 			if ctrl.IsDead() {
-				t.Errorf("ctrl is marked dead too early. Counter is %d", ctrl.Remaining)
+				t.Errorf("ctrl is marked dead too early. Counter is %d", ctrl.Runs)
 			}
 		}
 		ctrl.Update()
 		if !ctrl.IsDead() {
-			t.Errorf("ctrl was not marked dead. But was expected to be. Counter is %d", ctrl.Remaining)
+			t.Errorf("ctrl was not marked dead. But was expected to be. Counter is %d", ctrl.Runs)
 		}
 	})
 

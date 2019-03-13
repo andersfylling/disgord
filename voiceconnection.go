@@ -65,8 +65,8 @@ func newVoiceRepository(c *client) (voice *voiceRepository) {
 		pendingStates:  make(map[Snowflake]chan *VoiceStateUpdate),
 		pendingServers: make(map[Snowflake]chan *VoiceServerUpdate),
 	}
-	c.On(EventVoiceServerUpdate, voice.onVoiceServerUpdate)
-	c.On(EventVoiceStateUpdate, voice.onVoiceStateUpdate)
+	c.On(EvtVoiceServerUpdate, voice.onVoiceServerUpdate)
+	c.On(EvtVoiceStateUpdate, voice.onVoiceStateUpdate)
 
 	return voice
 }

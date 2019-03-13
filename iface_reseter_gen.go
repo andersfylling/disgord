@@ -49,52 +49,6 @@ func (m *MessageCreate) Reset() {
 	m.ShardID = 0
 }
 
-func (m *Message) Reset() {
-	m.ID = 0
-	m.ChannelID = 0
-	if m.Author != nil {
-		m.Author.Reset()
-	}
-	m.Content = ""
-	m.Timestamp = time.Unix(0, 0)
-	m.EditedTimestamp = time.Unix(0, 0)
-	m.Tts = false
-	m.MentionEveryone = false
-	m.Mentions = nil
-	m.MentionRoles = nil
-	m.Attachments = nil
-	m.Embeds = nil
-	m.Reactions = nil
-	m.Nonce = 0
-	m.Pinned = false
-	m.WebhookID = 0
-	m.Type = 0
-	m.Activity = MessageActivity{}
-	m.Application = MessageApplication{}
-	m.GuildID = 0
-	m.SpoilerTagContent = false
-	m.SpoilerTagAllAttachments = false
-	m.HasSpoilerImage = false
-}
-
-func (r *Reaction) Reset() {
-	r.Count = 0
-	r.Me = false
-	r.Emoji = nil
-}
-
-func (r *Role) Reset() {
-	r.ID = 0
-	r.Name = ""
-	r.Color = 0
-	r.Hoist = false
-	r.Position = 0
-	r.Permissions = 0
-	r.Managed = false
-	r.Mentionable = false
-	r.guildID = 0
-}
-
 func (g *Guild) Reset() {
 	g.ID = 0
 	g.ApplicationID = 0
@@ -140,6 +94,52 @@ func (m *Member) Reset() {
 	m.Deaf = false
 	m.Mute = false
 	m.userID = 0
+}
+
+func (m *Message) Reset() {
+	m.ID = 0
+	m.ChannelID = 0
+	if m.Author != nil {
+		m.Author.Reset()
+	}
+	m.Content = ""
+	m.Timestamp = time.Unix(0, 0)
+	m.EditedTimestamp = time.Unix(0, 0)
+	m.Tts = false
+	m.MentionEveryone = false
+	m.Mentions = nil
+	m.MentionRoles = nil
+	m.Attachments = nil
+	m.Embeds = nil
+	m.Reactions = nil
+	m.Nonce = 0
+	m.Pinned = false
+	m.WebhookID = 0
+	m.Type = 0
+	m.Activity = MessageActivity{}
+	m.Application = MessageApplication{}
+	m.GuildID = 0
+	m.SpoilerTagContent = false
+	m.SpoilerTagAllAttachments = false
+	m.HasSpoilerImage = false
+}
+
+func (r *Reaction) Reset() {
+	r.Count = 0
+	r.Me = false
+	r.Emoji = nil
+}
+
+func (r *Role) Reset() {
+	r.ID = 0
+	r.Name = ""
+	r.Color = 0
+	r.Hoist = false
+	r.Position = 0
+	r.Permissions = 0
+	r.Managed = false
+	r.Mentionable = false
+	r.guildID = 0
 }
 
 func (a *Activity) Reset() {

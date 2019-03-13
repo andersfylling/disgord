@@ -2,6 +2,8 @@ package disgord
 
 //go:generate go run generate/events/main.go
 
+// This file contains resource objects for the event reactor
+
 import (
 	"context"
 	"encoding/json"
@@ -10,29 +12,33 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
+// Resource represents an event since the only reactor DisGord has is for events.
+// This is used internally for readability only.
+type resource = interface{}
+
 func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage) (err error) {
 	// updates holds key and object to be cached
 	updates := map[cacheRegistry]([]interface{}){}
 
 	switch event {
-	case EventReady:
+	case EvtReady:
 		ready := v.(*Ready)
 		updates[UserCache] = append(updates[UserCache], ready.User)
 
 		for _, guild := range ready.Guilds {
 			updates[GuildCache] = append(updates[GuildCache], guild)
 		}
-	case EventVoiceStateUpdate:
+	case EvtVoiceStateUpdate:
 		update := v.(*VoiceStateUpdate)
 		updates[VoiceStateCache] = append(updates[VoiceStateCache], update.VoiceState)
-	case EventChannelCreate, EventChannelUpdate:
+	case EvtChannelCreate, EvtChannelUpdate:
 		var channel *Channel
-		if event == EventChannelCreate {
+		if event == EvtChannelCreate {
 			channel = (v.(*ChannelCreate)).Channel
 			if !channel.GuildID.Empty() {
 				cache.AddGuildChannel(channel.GuildID, channel.ID)
 			}
-		} else if event == EventChannelUpdate {
+		} else if event == EvtChannelUpdate {
 			channel = (v.(*ChannelUpdate)).Channel
 		}
 		if len(channel.Recipients) > 0 {
@@ -42,18 +48,18 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 		}
 
 		updates[ChannelCache] = append(updates[ChannelCache], channel)
-	case EventChannelDelete:
+	case EvtChannelDelete:
 		channel := (v.(*ChannelDelete)).Channel
 		cache.DeleteChannel(channel.ID)
 		cache.DeleteGuildChannel(channel.GuildID, channel.ID)
-	case EventChannelPinsUpdate:
+	case EvtChannelPinsUpdate:
 		evt := v.(*ChannelPinsUpdate)
 		cache.UpdateChannelPin(evt.ChannelID, evt.LastPinTimestamp)
-	case EventGuildCreate, EventGuildUpdate:
+	case EvtGuildCreate, EvtGuildUpdate:
 		var guild *Guild
-		if event == EventGuildCreate {
+		if event == EvtGuildCreate {
 			guild = (v.(*GuildCreate)).Guild
-		} else if event == EventGuildUpdate {
+		} else if event == EvtGuildUpdate {
 			guild = (v.(*GuildUpdate)).Guild
 		}
 		updates[GuildCache] = append(updates[GuildCache], guild)
@@ -72,22 +78,22 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 				updates[ChannelCache][i] = guild.Channels[i]
 			}
 		}
-	case EventGuildDelete:
+	case EvtGuildDelete:
 		uguild := (v.(*GuildDelete)).UnavailableGuild
 		cache.DeleteGuild(uguild.ID)
-	case EventGuildRoleDelete:
+	case EvtGuildRoleDelete:
 		evt := v.(*GuildRoleDelete)
 		cache.DeleteGuildRole(evt.GuildID, evt.RoleID)
-	case EventGuildEmojisUpdate:
+	case EvtGuildEmojisUpdate:
 		err = cacheEmoji_EventGuildEmojisUpdate(cache, v.(*GuildEmojisUpdate))
-	case EventUserUpdate:
+	case EvtUserUpdate:
 		usr := v.(*UserUpdate).User
 		updates[UserCache] = append(updates[UserCache], usr)
-	case EventMessageCreate:
+	case EvtMessageCreate:
 		// TODO: performance issues?
 		msg := (v.(*MessageCreate)).Message
 		cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
-	case EventGuildMembersChunk:
+	case EvtGuildMembersChunk:
 		evt := v.(*GuildMembersChunk)
 		updates[GuildMembersCache] = append(updates[GuildMembersCache], evt)
 
@@ -98,21 +104,21 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 				updates[UserCache][i] = evt.Members[i].User
 			}
 		}
-	case EventGuildMemberUpdate:
+	case EvtGuildMemberUpdate:
 		evt := v.(*GuildMemberUpdate)
 		cache.UpdateMemberAndUser(evt.GuildID, evt.User.ID, data)
-	case EventGuildMemberAdd:
+	case EvtGuildMemberAdd:
 		evt := v.(*GuildMemberAdd)
 		cache.AddGuildMember(evt.Member.GuildID, evt.Member)
 		updates[UserCache] = append(updates[UserCache], evt.Member.User)
-	case EventGuildMemberRemove:
+	case EvtGuildMemberRemove:
 		evt := v.(*GuildMemberRemove)
 		cache.RemoveGuildMember(evt.GuildID, evt.User.ID)
 	// TODO: mark user as free from guild...
-	case EventGuildRoleCreate:
+	case EvtGuildRoleCreate:
 		evt := v.(*GuildRoleCreate)
 		cache.AddGuildRole(evt.GuildID, evt.Role)
-	case EventGuildRoleUpdate:
+	case EvtGuildRoleUpdate:
 		evt := v.(*GuildRoleUpdate)
 		if updated := cache.UpdateGuildRole(evt.GuildID, evt.Role, data); !updated {
 			cache.AddGuildRole(evt.GuildID, evt.Role)

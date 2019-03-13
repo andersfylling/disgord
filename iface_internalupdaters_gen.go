@@ -95,17 +95,6 @@ func executeInternalUpdater(x interface{}) {
 		for i := range slice {
 			update(slice[i])
 		}
-	case *Message:
-		update(t)
-	case []*Message:
-		for i := range t {
-			update(t[i])
-		}
-	case *[]*Message:
-		slice := *t
-		for i := range slice {
-			update(slice[i])
-		}
 	case *Guild:
 		update(t)
 	case []*Guild:
@@ -113,6 +102,17 @@ func executeInternalUpdater(x interface{}) {
 			update(t[i])
 		}
 	case *[]*Guild:
+		slice := *t
+		for i := range slice {
+			update(slice[i])
+		}
+	case *Message:
+		update(t)
+	case []*Message:
+		for i := range t {
+			update(t[i])
+		}
+	case *[]*Message:
 		slice := *t
 		for i := range slice {
 			update(slice[i])

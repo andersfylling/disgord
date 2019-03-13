@@ -21,16 +21,27 @@ import (
 //
 //////////////////////////////////////////////////////
 
-func (d *evtDemultiplexer) nrOfAliveHandlers() (counter int) {
-	for k := range d.handlers {
-		for i := range d.handlers[k] {
-			if d.handlers[k][i].ctrl.IsDead() == false {
+func (d *dispatcher) nrOfAliveHandlers() (counter int) {
+	d.RLock()
+	defer d.RUnlock()
+
+	for k := range d.handlerSpecs {
+		for i := range d.handlerSpecs[k] {
+			if d.handlerSpecs[k][i].ctrl.IsDead() == false {
 				counter++
 			}
 		}
 	}
 
 	return
+}
+
+func ensure(inputs ...interface{}) {
+	for i := range inputs {
+		if err, ok := inputs[i].(error); ok && err != nil {
+			panic(err)
+		}
+	}
 }
 
 //////////////////////////////////////////////////////
@@ -48,10 +59,10 @@ func BenchmarkClient_On(b *testing.B) {
 	c.setupConnectEnv()
 
 	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
-	evt := &websocket.Event{Name: EventMessageCreate, Data: msgData}
+	evt := &websocket.Event{Name: EvtMessageCreate, Data: msgData}
 
 	wg := sync.WaitGroup{}
-	c.On(EventMessageCreate, func() {
+	c.On(EvtMessageCreate, func() {
 		wg.Done()
 	})
 
@@ -70,40 +81,46 @@ func BenchmarkClient_On(b *testing.B) {
 //////////////////////////////////////////////////////
 
 func TestClient_Once(t *testing.T) {
-	c, err := NewClient(&Config{
+	c := New(&Config{
 		BotToken:     "testing",
 		DisableCache: true,
+		Logger:       DefaultLogger(true),
 	})
-	if err != nil {
-		panic(err)
+	defer close(c.dispatcher.shutdown)
+
+	dispatcher := c.dispatcher
+	input := make(chan *websocket.Event)
+	go demultiplexer(dispatcher, input, nil)
+
+	trigger := func() {
+		input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
 	}
 
-	dispatcher := c.evtDemultiplexer
 	base := dispatcher.nrOfAliveHandlers()
-	if dispatcher.nrOfAliveHandlers() > base {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
-	}
-
 	wg := sync.WaitGroup{}
-	c.On(EventMessageCreate, func() {
+	c.On(EvtMessageCreate, func() {
 		wg.Done()
-	}, &Ctrl{Remaining: 1})
-	if dispatcher.nrOfAliveHandlers() != 1+base {
-		t.Errorf("expected dispatch to have 1 listener. Got %d", dispatcher.nrOfAliveHandlers())
+	}, &Ctrl{Runs: 1})
+	got := dispatcher.nrOfAliveHandlers() - base
+	if got != 1 {
+		t.Errorf("expected dispatch to have 1 listener. Got %d", got)
 	}
 	wg.Add(1) // only run once
 
-	// trigger the handler
-	box := &MessageCreate{}
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
-	if dispatcher.nrOfAliveHandlers() > 0+base {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
+	// make sure the handler is called
+	trigger()
+	<-time.After(100 * time.Millisecond)
+	got = dispatcher.nrOfAliveHandlers() - base
+	if got > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", got)
 	}
 
-	// trigger the handler, again
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, box)
-	if dispatcher.nrOfAliveHandlers() > 0+base {
-		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
+	// make sure it is not called once more
+	trigger()
+	<-time.After(100 * time.Millisecond)
+	got = dispatcher.nrOfAliveHandlers() - base
+	if got > 0 {
+		t.Errorf("expected dispatch to have 0 listeners. Got %d", got)
 	}
 
 	done := make(chan interface{})
@@ -124,15 +141,19 @@ func TestClient_On(t *testing.T) {
 		BotToken:     "testing",
 		DisableCache: true,
 	})
+	defer close(c.dispatcher.shutdown)
 
-	dispatcher := c.evtDemultiplexer
+	dispatcher := c.dispatcher
+	input := make(chan *websocket.Event)
+	go demultiplexer(dispatcher, input, nil)
+
 	base := dispatcher.nrOfAliveHandlers()
 	if dispatcher.nrOfAliveHandlers() > 0+base {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", dispatcher.nrOfAliveHandlers())
 	}
 
 	wg := sync.WaitGroup{}
-	c.On(EventMessageCreate, func() {
+	c.On(EvtMessageCreate, func() {
 		wg.Done()
 	})
 	if dispatcher.nrOfAliveHandlers() != 1+base {
@@ -141,10 +162,9 @@ func TestClient_On(t *testing.T) {
 	wg.Add(2)
 
 	// trigger the handler twice
-	evt := &MessageCreate{}
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
-	dispatcher.triggerHandlers(nil, EventReady, c, evt)
+	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+	input <- &websocket.Event{Name: EvtReady, Data: []byte(`{}`)}
 	wg.Wait()
 }
 
@@ -153,7 +173,10 @@ func TestClient_On_Middleware(t *testing.T) {
 		BotToken:     "testing",
 		DisableCache: true,
 	})
-	dispatcher := c.evtDemultiplexer
+	defer close(c.dispatcher.shutdown)
+	dispatcher := c.dispatcher
+	input := make(chan *websocket.Event)
+	go demultiplexer(dispatcher, input, nil)
 
 	const prefix = "this cool prefix"
 	var mdlwHasBotPrefix Middleware = func(evt interface{}) interface{} {
@@ -174,23 +197,19 @@ func TestClient_On_Middleware(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	c.On(EventMessageCreate, func() {
+	c.On(EvtMessageCreate, func() {
 		wg.Done()
 	})
-	c.On(EventMessageCreate, mdlwHasBotPrefix, func() {
+	c.On(EvtMessageCreate, mdlwHasBotPrefix, func() {
 		wg.Done()
 	})
-	c.On(EventMessageCreate, mdlwHasDifferentPrefix, func() {
+	c.On(EvtMessageCreate, mdlwHasDifferentPrefix, func() {
 		wg.Done()
 	})
 	wg.Add(2)
 
-	// trigger the handler twice
-	evt := &MessageCreate{
-		Message: &Message{Content: prefix + " testing"},
-	}
-	dispatcher.triggerHandlers(nil, EventMessageCreate, c, evt)
-	dispatcher.triggerHandlers(nil, EventReady, c, evt)
+	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"` + prefix + ` testing"}`)}
+	input <- &websocket.Event{Name: EvtReady}
 	wg.Wait()
 }
 
@@ -293,7 +312,7 @@ func TestClient_System(t *testing.T) {
 	//wg.Wait()
 
 	// cleanup
-	close(c.evtDemultiplexer.shutdown)
+	close(c.dispatcher.shutdown)
 	close(c.shutdownChan)
 }
 

@@ -17,7 +17,6 @@ import (
 	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/websocket"
 	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/event"
@@ -31,6 +30,7 @@ func NewRESTClient(conf *Config) (*httd.Client, error) {
 		BotToken:                     conf.BotToken,
 		UserAgentSourceURL:           constant.GitHubURL,
 		UserAgentVersion:             constant.Version,
+		UserAgentExtra:               conf.ProjectName,
 		HTTPClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
 	})
@@ -143,23 +143,23 @@ func NewClient(conf *Config) (c *client, err error) {
 
 	// event dispatcher
 	eventChanSize := 20
-	evtDemultiplexer := newEvtDemultiplexer(conf.ActivateEventChannels, eventChanSize)
+	dispatch := newDispatcher(conf.ActivateEventChannels, eventChanSize)
 
 	// create a disgord client/instance/session
 	c = &client{
-		shutdownChan:     conf.shutdownChan,
-		config:           conf,
-		shardManager:     sharding,
-		httpClient:       conf.HTTPClient,
-		Proxy:            conf.Proxy,
-		botToken:         conf.BotToken,
-		evtDemultiplexer: evtDemultiplexer,
-		req:              reqClient,
-		cache:            cacher,
-		log:              conf.Logger,
-		pool:             newPools(),
+		shutdownChan: conf.shutdownChan,
+		config:       conf,
+		shardManager: sharding,
+		httpClient:   conf.HTTPClient,
+		Proxy:        conf.Proxy,
+		botToken:     conf.BotToken,
+		dispatcher:   dispatch,
+		req:          reqClient,
+		cache:        cacher,
+		log:          conf.Logger,
+		pool:         newPools(),
 	}
-	c.evtDemultiplexer.session = c
+	c.dispatcher.addSessionInstance(c)
 	c.voiceRepository = newVoiceRepository(c)
 	sharding.client = c
 
@@ -219,7 +219,7 @@ type client struct {
 	permissions int
 
 	// reactor demultiplexer for events
-	evtDemultiplexer *evtDemultiplexer
+	dispatcher *dispatcher
 
 	// cancelRequestWhenRateLimited by default the client waits until either the HTTPClient.timeout or
 	// the rate limit ends before closing a request channel. If activated, in stead, requests will
@@ -384,9 +384,12 @@ func (c *client) setupConnectEnv() {
 	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
 	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
 
-	// setup event observer
-	go c.eventHandler()
-	//c.evtDispatch.start()
+	// start demultiplexer which also trigger dispatching
+	var cache *Cache
+	if !c.config.DisableCache {
+		cache = c.cache
+	}
+	go demultiplexer(c.dispatcher, c.shardManager.evtChan, cache)
 }
 
 // Connect establishes a websocket connection to the discord API
@@ -430,7 +433,7 @@ func (c *client) Connect() (err error) {
 func (c *client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.log.Info("Closing Discord gateway connection")
-	close(c.evtDemultiplexer.shutdown)
+	close(c.dispatcher.shutdown)
 	if err = c.shardManager.Disconnect(); err != nil {
 		c.log.Error(err)
 		return err
@@ -485,7 +488,7 @@ func (c *client) StayConnectedUntilInterrupted() (err error) {
 //
 //////////////////////////////////////////////////////
 
-// handlerGuildDelete update internal state when joining or creating a guild
+// handlerAddToConnectedGuilds update internal state when joining or creating a guild
 func (c *client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
@@ -502,7 +505,7 @@ func (c *client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
 	shard.guilds = append(shard.guilds, evt.Guild.ID)
 }
 
-// handlerGuildDelete update internal state when deleting or leaving a guild
+// handlerRemoveFromConnectedGuilds update internal state when deleting or leaving a guild
 func (c *client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
@@ -572,19 +575,9 @@ func (c *client) On(event string, inputs ...interface{}) {
 	}
 	c.shardManager.TrackEvent.Add(event)
 
-	// detect middleware then handlers. Ordering is important.
-	spec := &handlerSpec{}
-	if err := spec.populate(inputs...); err != nil { // TODO: improve redundant checking
-		panic(err) // if the pattern is wrong: (event,[ ...middlewares,] ...handlers[, controller])
-		// if you want to error check before you use the .On, you can use disgord.ValidateHandlerInputs(...)
+	if err := c.dispatcher.register(event, inputs...); err != nil {
+		panic(err)
 	}
-
-	c.evtDemultiplexer.Lock()
-	c.evtDemultiplexer.handlers[event] = append(c.evtDemultiplexer.handlers[event], spec)
-	if err := spec.ctrl.OnInsert(c); err != nil {
-		c.log.Error(err)
-	}
-	c.evtDemultiplexer.Unlock()
 }
 
 // Emit sends a socket command directly to Discord.
@@ -599,12 +592,12 @@ func (c *client) Emit(command SocketCommand, data interface{}) error {
 
 // EventChan get a event channel using the event name
 func (c *client) EventChan(event string) (channel interface{}, err error) {
-	return c.evtDemultiplexer.EventChan(event)
+	return c.dispatcher.EvtChan(event)
 }
 
 // EventChannels get access to all the event channels
 func (c *client) EventChannels() (channels EventChannels) {
-	return c.evtDemultiplexer
+	return c.dispatcher.dispatcherChans
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
@@ -741,127 +734,6 @@ func (c *client) UpdateStatusString(s string) error {
 	return c.UpdateStatus(updateData)
 }
 
-// eventHandler Takes a incoming event from the websocket package, parses it, and sends
-// trigger requests to the event dispatcher and state cacher.
-func (c *client) eventHandler() {
-	for {
-		var err error
-		var evt *websocket.Event
-		var alive bool
-
-		select {
-		case evt, alive = <-c.shardManager.evtChan:
-			if !alive {
-				return
-			}
-		case <-c.shutdownChan:
-			return
-		}
-
-		var box eventBox
-
-		switch evt.Name {
-		case EventReady:
-			box = &Ready{}
-		case EventResumed:
-			box = &Resumed{}
-		case EventChannelCreate:
-			box = &ChannelCreate{}
-		case EventChannelUpdate:
-			box = &ChannelUpdate{}
-		case EventChannelDelete:
-			box = &ChannelDelete{}
-		case EventChannelPinsUpdate:
-			box = &ChannelPinsUpdate{}
-		case EventGuildCreate:
-			box = &GuildCreate{}
-		case EventGuildUpdate:
-			box = &GuildUpdate{}
-		case EventGuildDelete:
-			box = &GuildDelete{}
-		case EventGuildBanAdd:
-			box = &GuildBanAdd{}
-		case EventGuildBanRemove:
-			box = &GuildBanRemove{}
-		case EventGuildEmojisUpdate:
-			box = &GuildEmojisUpdate{}
-		case EventGuildIntegrationsUpdate:
-			box = &GuildIntegrationsUpdate{}
-		case EventGuildMemberAdd:
-			box = &GuildMemberAdd{}
-		case EventGuildMemberRemove:
-			box = &GuildMemberRemove{}
-		case EventGuildMemberUpdate:
-			box = &GuildMemberUpdate{}
-		case EventGuildMembersChunk:
-			box = &GuildMembersChunk{}
-		case EventGuildRoleCreate:
-			box = &GuildRoleCreate{}
-		case EventGuildRoleUpdate:
-			box = &GuildRoleUpdate{}
-		case EventGuildRoleDelete:
-			box = &GuildRoleDelete{}
-		case EventMessageCreate:
-			//box = c.pool.msgCreate.Get().(*MessageCreate)
-			box = &MessageCreate{}
-		case EventMessageUpdate:
-			box = &MessageUpdate{}
-		case EventMessageDelete:
-			box = &MessageDelete{}
-		case EventMessageDeleteBulk:
-			box = &MessageDeleteBulk{}
-		case EventMessageReactionAdd:
-			box = &MessageReactionAdd{}
-		case EventMessageReactionRemove:
-			box = &MessageReactionRemove{}
-		case EventMessageReactionRemoveAll:
-			box = &MessageReactionRemoveAll{}
-		case EventPresenceUpdate:
-			box = &PresenceUpdate{}
-		case EventTypingStart:
-			box = &TypingStart{}
-		case EventUserUpdate:
-			box = &UserUpdate{}
-		case EventVoiceStateUpdate:
-			box = &VoiceStateUpdate{}
-		case EventVoiceServerUpdate:
-			box = &VoiceServerUpdate{}
-		case EventWebhooksUpdate:
-			box = &WebhooksUpdate{}
-		default:
-			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name, string(evt.Data))
-			continue // move on to next event
-		}
-
-		// populate box
-		ctx := context.Background()
-		box.registerContext(ctx)
-
-		// first unmarshal to get identifiers
-		//tmp := *box
-
-		// unmarshal into cacheLink
-		//err := c.cacheEvent2(evtName, box)
-
-		if err = httd.Unmarshal(evt.Data, box); err != nil {
-			c.log.Error(err)
-			continue // ignore event
-			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
-		}
-		executeInternalUpdater(evt)
-		executeInternalClientUpdater(c, evt)
-
-		// cache
-		if !c.config.DisableCache {
-			cacheEvent(c.cache, evt.Name, box, evt.Data)
-		}
-
-		// trigger listeners
-		c.evtDemultiplexer.triggerChan(ctx, evt.Name, c, box)
-		go c.evtDemultiplexer.triggerHandlers(ctx, evt.Name, c, box)
-	}
-}
-
 func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 	r := &rest{
 		c:    c,
@@ -871,165 +743,4 @@ func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 	r.flags = mergeFlags(flags)
 
 	return r
-}
-
-//////////////////////////////////////////////////////
-//
-// Deprecated / Legacy supported REST methods
-//
-// As I want to keep the method names simple, I
-// do not want to make it difficult to use
-// DisGord side by side with the documentation.
-//
-// Below I've added all the REST methods with
-// their names, as in, the discord documentation.
-//
-//////////////////////////////////////////////////////
-
-// Deprecated: use UpdateChannel
-func (c *client) ModifyChannel(id Snowflake, flags ...Flag) *updateChannelBuilder {
-	return c.UpdateChannel(id, flags...)
-}
-
-// Deprecated: use DeleteChannel
-func (c *client) CloseChannel(id Snowflake, flags ...Flag) (*Channel, error) {
-	return c.DeleteChannel(id, flags...)
-}
-
-// Deprecated: use DeleteMessages
-func (c *client) BulkDeleteMessages(id Snowflake, params *DeleteMessagesParams, flags ...Flag) error {
-	return c.DeleteMessages(id, params, flags...)
-}
-
-// Deprecated: use UpdateMessage
-func (c *client) EditMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder {
-	return c.UpdateMessage(chanID, msgID, flags...)
-}
-
-// Deprecated: use UpdateChannelPermissions
-func (c *client) EditChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) error {
-	return c.UpdateChannelPermissions(channelID, overwriteID, params, flags...)
-}
-
-// Deprecated: use PinMessage or PinMessageID
-func (c *client) AddPinnedChannelMessage(channelID, messageID Snowflake, flags ...Flag) (err error) {
-	return c.PinMessageID(channelID, messageID, flags...)
-}
-
-// Deprecated: use UnpinMessage or UnpinMessageID
-func (c *client) DeletePinnedChannelMessage(channelID, messageID Snowflake, flags ...Flag) (err error) {
-	return c.UnpinMessageID(channelID, messageID, flags...)
-}
-
-// Deprecated: use AddDMParticipant
-func (c *client) GroupDMAddRecipient(channelID Snowflake, recipient *GroupDMParticipant, flags ...Flag) (err error) {
-	return c.AddDMParticipant(channelID, recipient, flags...)
-}
-
-// Deprecated: use KickParticipant
-func (c *client) GroupDMRemoveRecipient(channelID, userID Snowflake, flags ...Flag) error {
-	return c.KickParticipant(channelID, userID, flags...)
-}
-
-// Deprecated: use GetGuildEmojis
-func (c *client) ListGuildEmojis(guildID Snowflake, flags ...Flag) ([]*Emoji, error) {
-	return c.GetGuildEmojis(guildID, flags...)
-}
-
-// Deprecated: use UpdateGuildEmoji
-func (c *client) ModifyGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) *updateGuildEmojiBuilder {
-	return c.UpdateGuildEmoji(guildID, emojiID, flags...)
-}
-
-// Deprecated: use UpdateGuild
-func (c *client) ModifyGuild(id Snowflake, flags ...Flag) *updateGuildBuilder {
-	return c.UpdateGuild(id, flags...)
-}
-
-// Deprecated: use UpdateGuildChannelPositions
-func (c *client) ModifyGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) error {
-	return c.UpdateGuildChannelPositions(id, params, flags...)
-}
-
-// Deprecated: use GetGuildMembers
-func (c *client) ListGuildMembers(id, after Snowflake, limit int, flags ...Flag) ([]*Member, error) {
-	return c.GetGuildMembers(id, &GetGuildMembersParams{
-		After: after,
-		Limit: limit,
-	}, flags...)
-}
-
-// TODO: AddGuildMember => CreateGuildMember
-
-// Deprecated: use UpdateGuildMember
-func (c *client) ModifyGuildMember(guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder {
-	return c.UpdateGuildMember(guildID, userID, flags...)
-}
-
-// Deprecated: use SetCurrentUserNick
-func (c *client) ModifyCurrentUserNick(guildID Snowflake, nick string, flags ...Flag) (string, error) {
-	return c.SetCurrentUserNick(guildID, nick, flags...)
-}
-
-// TODO: AddGuildMemberRole => UpdateGuildMember
-// TODO: RemoveGuildMemberRole => UpdateGuildMember
-
-// Deprecated: use KickMember
-func (c *client) RemoveGuildMember(guildID, userID Snowflake, flags ...Flag) error {
-	return c.KickMember(guildID, userID, flags...)
-}
-
-// Deprecated: use UnbanMember
-func (c *client) RemoveGuildBan(guildID, userID Snowflake, flags ...Flag) error {
-	return c.UnbanMember(guildID, userID, flags...)
-}
-
-// Deprecated: use UpdateGuildRolePositions
-func (c *client) ModifyGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (ret []*Role, err error) {
-	return c.UpdateGuildRolePositions(guildID, params, flags...)
-}
-
-// Deprecated: use DeleteGuildRole
-func (c *client) RemoveGuildRole(guildID, roleID Snowflake, flags ...Flag) error {
-	return c.DeleteGuildRole(guildID, roleID, flags...)
-}
-
-// Deprecated: use PruneMembers
-func (c *client) BeginGuildPrune(guildID Snowflake, nrOfDays int, flags ...Flag) error {
-	return c.PruneMembers(guildID, nrOfDays, flags...)
-}
-
-// Deprecated: use EstimatePruneMembersCount
-func (c *client) GetGuildPruneCount(guildID Snowflake, nrOfDays int, flags ...Flag) (int, error) {
-	return c.EstimatePruneMembersCount(guildID, nrOfDays, flags...)
-}
-
-// Deprecated: use UpdateGuildIntegration
-func (c *client) ModifyGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error {
-	return c.UpdateGuildIntegration(guildID, integrationID, params, flags...)
-}
-
-// Deprecated: use UpdateGuildEmbed
-func (c *client) ModifyGuildEmbed(guildID Snowflake, flags ...Flag) *updateGuildEmbedBuilder {
-	return c.UpdateGuildEmbed(guildID, flags...)
-}
-
-// Deprecated: use UpdateCurrentUser
-func (c *client) ModifyCurrentUser(flags ...Flag) *updateCurrentUserBuilder {
-	return c.UpdateCurrentUser(flags...)
-}
-
-// Deprecated: use LeaveGuild
-func (c *client) ListVoiceRegions(flags ...Flag) ([]*VoiceRegion, error) {
-	return c.GetVoiceRegions(flags...)
-}
-
-// Deprecated: use UpdateWebhook
-func (c *client) ModifyWebhook(id Snowflake, flags ...Flag) *updateWebhookBuilder {
-	return c.UpdateWebhook(id, flags...)
-}
-
-// Deprecated: use UpdateWebhookWithToken
-func (c *client) ModifyWebhookWithToken(newWebhook *Webhook, flags ...Flag) *updateWebhookBuilder {
-	return c.UpdateWebhookWithToken(newWebhook.ID, newWebhook.Token, flags...)
 }

@@ -187,3 +187,9 @@ Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-a
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```
+
+```Markdown
+4. Does this project re-use any code from DiscordGo?
+
+Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
+```
