@@ -361,7 +361,7 @@ func GetChannelInvites(client httd.Getter, id Snowflake) (ret []*Invite, err err
 	}
 
 	ret = []*Invite{}
-	err = unmarshal(body, ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
@@ -487,7 +487,7 @@ func GetPinnedMessages(client httd.Getter, channelID Snowflake) (ret []*Message,
 	}
 
 	ret = []*Message{}
-	err = unmarshal(body, ret)
+	err = unmarshal(body, &ret)
 	return
 }
 

@@ -383,7 +383,7 @@ func GetMessages(client httd.Getter, channelID Snowflake, params URLParameters) 
 	}
 
 	ret = []*Message{}
-	err = unmarshal(body, ret)
+	err = unmarshal(body, &ret)
 	for i := range ret {
 		ret[i].updateInternals()
 	}

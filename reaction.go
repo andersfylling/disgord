@@ -277,7 +277,7 @@ func GetReaction(client httd.Getter, channelID, messageID Snowflake, emoji inter
 	}
 
 	ret = []*User{}
-	err = unmarshal(body, ret)
+	err = unmarshal(body, &ret)
 	return
 }
 
