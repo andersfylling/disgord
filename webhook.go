@@ -297,12 +297,12 @@ type ExecuteWebhookParams struct {
 	WebhookID Snowflake `json:"-"`
 	Token     string    `json:"-"`
 
-	Content   string          `json:"content"`
-	Username  string          `json:"username"`
-	AvatarURL string          `json:"avatar_url"`
-	TTS       bool            `json:"tts"`
-	File      interface{}     `json:"file"`
-	Embeds    []*ChannelEmbed `json:"embeds"`
+	Content   string      `json:"content"`
+	Username  string      `json:"username"`
+	AvatarURL string      `json:"avatar_url"`
+	TTS       bool        `json:"tts"`
+	File      interface{} `json:"file"`
+	Embeds    []*Embed    `json:"embeds"`
 }
 
 type execWebhookParams struct {

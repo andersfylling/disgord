@@ -452,12 +452,12 @@ func (b *updateMessageBuilder) Set(name string, v interface{}) *updateMessageBui
 }
 
 func (b *updateMessageBuilder) SetContent(content string) *updateMessageBuilder {
-	b.r.param("Content", content)
+	b.r.param("content", content)
 	return b
 }
 
-func (b *updateMessageBuilder) SetEmbed(embed *ChannelEmbed) *updateMessageBuilder {
-	b.r.param("Embed", embed)
+func (b *updateMessageBuilder) SetEmbed(embed *Embed) *updateMessageBuilder {
+	b.r.param("embed", embed)
 	return b
 }
 

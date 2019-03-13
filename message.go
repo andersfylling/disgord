@@ -86,7 +86,7 @@ type Message struct {
 	Mentions        []*User            `json:"mentions"`
 	MentionRoles    []Snowflake        `json:"mention_roles"`
 	Attachments     []*Attachment      `json:"attachments"`
-	Embeds          []*ChannelEmbed    `json:"embeds"`
+	Embeds          []*Embed           `json:"embeds"`
 	Reactions       []*Reaction        `json:"reactions"`       // ?
 	Nonce           Snowflake          `json:"nonce,omitempty"` // ?, used for validating a message was sent
 	Pinned          bool               `json:"pinned"`
@@ -203,7 +203,7 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	}
 
 	for _, embed := range m.Embeds {
-		message.Embeds = append(message.Embeds, embed.DeepCopy().(*ChannelEmbed))
+		message.Embeds = append(message.Embeds, embed.DeepCopy().(*Embed))
 	}
 
 	for _, reaction := range m.Reactions {
@@ -430,10 +430,10 @@ func NewMessageByString(content string) *CreateMessageParams {
 
 // CreateMessageParams JSON params for CreateChannelMessage
 type CreateMessageParams struct {
-	Content string        `json:"content"`
-	Nonce   Snowflake     `json:"nonce,omitempty"`
-	Tts     bool          `json:"tts,omitempty"`
-	Embed   *ChannelEmbed `json:"embed,omitempty"` // embedded rich content
+	Content string    `json:"content"`
+	Nonce   Snowflake `json:"nonce,omitempty"`
+	Tts     bool      `json:"tts,omitempty"`
+	Embed   *Embed    `json:"embed,omitempty"` // embedded rich content
 
 	Files []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
@@ -826,7 +826,7 @@ func (c *client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (
 
 // updateMessageBuilder, params here
 //  https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
-//generate-rest-params: Content:string, Embed:*ChannelEmbed,
+//generate-rest-params: content:string, embed:*Embed,
 //generate-rest-basic-execute: message:*Message,
 type updateMessageBuilder struct {
 	r RESTBuilder

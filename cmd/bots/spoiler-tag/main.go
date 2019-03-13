@@ -40,9 +40,9 @@ func main() {
 			{Reader: f1, FileName: "myfavouriteimage.jpg", SpoilerTag: true},
 			{Reader: f2, FileName: "another.jpg"},
 		},
-		Embed: &disgord.ChannelEmbed{
+		Embed: &disgord.Embed{
 			Description: "Look here!",
-			Image: &disgord.ChannelEmbedImage{
+			Image: &disgord.EmbedImage{
 				URL: "attachment://another.jpg",
 			},
 		},
@@ -54,9 +54,9 @@ func main() {
 			{Reader: f1, FileName: "myfavouriteimage.jpg"},
 			{Reader: f2, FileName: "another.jpg", SpoilerTag: true},
 		},
-		Embed: &disgord.ChannelEmbed{
+		Embed: &disgord.Embed{
 			Description: "Look here!",
-			Image: &disgord.ChannelEmbedImage{
+			Image: &disgord.EmbedImage{
 				URL: "attachment://another.jpg",
 			},
 		},

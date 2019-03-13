@@ -57,6 +57,7 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - WebhookRESTer => RESTWebhook
  - consts AuditLogChangeKey => AuditLogChange
  - disgord.Event* => disgord.Evt*
+ - for every type with the prefix ChannelEmbed, now uses the prefix Embed instead. eg. ChannelEmbed => Embed
 
 #### Removed / unexported
  - type BeginGuildPruneParams
