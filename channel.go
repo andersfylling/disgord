@@ -443,19 +443,19 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 type ChannelEmbed struct {
 	Lockable `json:"-"`
 
-	Title       string                 `json:"title"`       // title of embed
-	Type        string                 `json:"type"`        // type of embed (always "rich" for webhook embeds)
-	Description string                 `json:"description"` // description of embed
-	URL         string                 `json:"url"`         // url of embed
-	Timestamp   time.Time              `json:"timestamp"`   // timestamp	timestamp of embed content
-	Color       int                    `json:"color"`       // color code of the embed
-	Footer      *ChannelEmbedFooter    `json:"footer"`      // embed footer object	footer information
-	Image       *ChannelEmbedImage     `json:"image"`       // embed image object	image information
-	Thumbnail   *ChannelEmbedThumbnail `json:"thumbnail"`   // embed thumbnail object	thumbnail information
-	Video       *ChannelEmbedVideo     `json:"video"`       // embed video object	video information
-	Provider    *ChannelEmbedProvider  `json:"provider"`    // embed provider object	provider information
-	Author      *ChannelEmbedAuthor    `json:"author"`      // embed author object	author information
-	Fields      []*ChannelEmbedField   `json:"fields"`      //	array of embed field objects	fields information
+	Title       string                 `json:"title,omitempty"`       // title of embed
+	Type        string                 `json:"type,omitempty"`        // type of embed (always "rich" for webhook embeds)
+	Description string                 `json:"description,omitempty"` // description of embed
+	URL         string                 `json:"url,omitempty"`         // url of embed
+	Timestamp   time.Time              `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
+	Color       int                    `json:"color"`                 // color code of the embed, black is default
+	Footer      *ChannelEmbedFooter    `json:"footer,omitempty"`      // embed footer object	footer information
+	Image       *ChannelEmbedImage     `json:"image,omitempty"`       // embed image object	image information
+	Thumbnail   *ChannelEmbedThumbnail `json:"thumbnail,omitempty"`   // embed thumbnail object	thumbnail information
+	Video       *ChannelEmbedVideo     `json:"video,omitempty"`       // embed video object	video information
+	Provider    *ChannelEmbedProvider  `json:"provider,omitempty"`    // embed provider object	provider information
+	Author      *ChannelEmbedAuthor    `json:"author,omitempty"`      // embed author object	author information
+	Fields      []*ChannelEmbedField   `json:"fields,omitempty"`      // array of embed field objects	fields information
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
