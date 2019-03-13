@@ -1,13 +1,1 @@
-{
-  "guild_id": "244200618854580224",
-  "role": {
-    "color": 15105570,
-    "hoist": true,
-    "id": "244241390555365376",
-    "managed": false,
-    "mentionable": true,
-    "name": "developers",
-    "permissions": 2138569855,
-    "position": 8
-  }
-}
+{"guild_id":"244200618854580224","role":{"color":15105570,"hoist":true,"id":"244241390555365376","managed":false,"mentionable":true,"name":"developers","permissions":2138569855,"position":8}}

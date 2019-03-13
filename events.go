@@ -12,7 +12,7 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-// Resource represents an event since the only reactor DisGord has is for events.
+// Resource represents a discord event.
 // This is used internally for readability only.
 type resource = interface{}
 
