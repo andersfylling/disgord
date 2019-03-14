@@ -105,7 +105,7 @@ type InviteMetadata struct {
 	Temporary bool `json:"temporary"`
 
 	// CreatedAt when this invite was created
-	CreatedAt Timestamp `json:"created_at"`
+	CreatedAt Time `json:"created_at"`
 
 	// Revoked whether this invite is revoked
 	Revoked bool `json:"revoked"`

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/andersfylling/disgord/httd"
+
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -187,6 +189,23 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Bot = v == "true"
 			}
 
+		}
+	})
+}
+
+func TestTime(t *testing.T) {
+	t.Run("omitempty", func(t *testing.T) {
+		b := struct {
+			T Time `json:"time,omitempty"`
+		}{}
+
+		bBytes, err := httd.Marshal(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if string(bBytes) != `{"time":""}` {
+			t.Errorf("did not get an 'omitted' field. Got %s", string(bBytes))
 		}
 	})
 }

@@ -1,8 +1,6 @@
 package disgord
 
 import (
-	"time"
-
 	"github.com/andersfylling/disgord/constant"
 )
 
@@ -17,7 +15,7 @@ type Embed struct {
 	Type        string          `json:"type,omitempty"`        // type of embed (always "rich" for webhook embeds)
 	Description string          `json:"description,omitempty"` // description of embed
 	URL         string          `json:"url,omitempty"`         // url of embed
-	Timestamp   time.Time       `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
+	Timestamp   Time            `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
 	Color       int             `json:"color"`                 // color code of the embed
 	Footer      *EmbedFooter    `json:"footer,omitempty"`      // embed footer object	footer information
 	Image       *EmbedImage     `json:"image,omitempty"`       // embed image object	image information

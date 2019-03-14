@@ -30,7 +30,7 @@ func (m *mockCacheEvent) UpdateGuildRole(guildID Snowflake, role *Role, messages
 func (m *mockCacheEvent) DeleteChannel(channelID snowflake.ID)                                      {}
 func (m *mockCacheEvent) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
 func (m *mockCacheEvent) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
-func (m *mockCacheEvent) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)       {}
+func (m *mockCacheEvent) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)            {}
 func (m *mockCacheEvent) DeleteGuild(guildID snowflake.ID)                                          {}
 func (m *mockCacheEvent) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
 func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                                {}

@@ -45,7 +45,7 @@ type Cacher interface {
 	AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
 	AddGuildMember(guildID snowflake.ID, member *Member)
 	RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)
-	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)
+	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)
 	UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)
 	DeleteGuild(guildID snowflake.ID)
 	DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)
@@ -72,7 +72,7 @@ func (c *emptyCache) DeleteGuildChannel(guildID snowflake.ID, channelID snowflak
 func (c *emptyCache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
 func (c *emptyCache) AddGuildMember(guildID snowflake.ID, member *Member)                       {}
 func (c *emptyCache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)             {}
-func (c *emptyCache) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Timestamp)       {}
+func (c *emptyCache) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)            {}
 func (c *emptyCache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)    {}
 func (c *emptyCache) DeleteGuild(guildID snowflake.ID)                                          {}
 func (c *emptyCache) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
@@ -1499,7 +1499,7 @@ func (c *Cache) SetChannel(new *Channel) {
 }
 
 // UpdateChannelPin ...
-func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Timestamp) {
+func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Time) {
 	if c.channels == nil || id.Empty() {
 		return
 	}

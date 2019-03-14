@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
@@ -79,8 +78,8 @@ type Message struct {
 	ChannelID       Snowflake          `json:"channel_id"`
 	Author          *User              `json:"author"`
 	Content         string             `json:"content"`
-	Timestamp       time.Time          `json:"timestamp"`
-	EditedTimestamp time.Time          `json:"edited_timestamp"` // ?
+	Timestamp       Time               `json:"timestamp"`
+	EditedTimestamp Time               `json:"edited_timestamp"` // ?
 	Tts             bool               `json:"tts"`
 	MentionEveryone bool               `json:"mention_everyone"`
 	Mentions        []*User            `json:"mentions"`

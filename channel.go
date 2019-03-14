@@ -115,7 +115,7 @@ type Channel struct {
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?
-	LastPinTimestamp     Timestamp             `json:"last_pin_timestamp,omitempty"`    // ?|
+	LastPinTimestamp     Time                  `json:"last_pin_timestamp,omitempty"`    // ?|
 
 	// set to true when the object is not incomplete. Used in situations
 	// like cacheLink to avoid overwriting correct information.

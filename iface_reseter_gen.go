@@ -2,8 +2,6 @@
 
 package disgord
 
-import "time"
-
 func (c *Channel) Reset() {
 	c.ID = 0
 	c.Type = 0
@@ -22,7 +20,7 @@ func (c *Channel) Reset() {
 	c.OwnerID = 0
 	c.ApplicationID = 0
 	c.ParentID = 0
-	c.LastPinTimestamp = Timestamp(time.Unix(0, 0))
+	c.LastPinTimestamp = Time{}
 	c.complete = false
 	c.recipientsIDs = nil
 }
@@ -90,7 +88,7 @@ func (m *Member) Reset() {
 	}
 	m.Nick = ""
 	m.Roles = nil
-	m.JoinedAt = Timestamp(time.Unix(0, 0))
+	m.JoinedAt = Time{}
 	m.Deaf = false
 	m.Mute = false
 	m.userID = 0
@@ -103,8 +101,8 @@ func (m *Message) Reset() {
 		m.Author.Reset()
 	}
 	m.Content = ""
-	m.Timestamp = time.Unix(0, 0)
-	m.EditedTimestamp = time.Unix(0, 0)
+	m.Timestamp = Time{}
+	m.EditedTimestamp = Time{}
 	m.Tts = false
 	m.MentionEveryone = false
 	m.Mentions = nil

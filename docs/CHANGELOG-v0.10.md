@@ -58,6 +58,7 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
  - consts AuditLogChangeKey => AuditLogChange
  - disgord.Event* => disgord.Evt*
  - for every type with the prefix ChannelEmbed, now uses the prefix Embed instead. eg. ChannelEmbed => Embed
+ - type Tiemstamp => Time
 
 #### Removed / unexported
  - type BeginGuildPruneParams
@@ -80,4 +81,5 @@ But, to make it easier for DisGord users, all the endpoint defined in the Discor
   - .On(event string, inputs ...interface{}) error => .On(event string, inputs ...interface{})
   - Majority of the REST methods. Please check their respective signature.
   - Some of the REST interfaces have been split up by sub-category
+  - type Timestamp is now a struct that embeds time.Time
   

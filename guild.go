@@ -201,7 +201,7 @@ type Guild struct {
 	SystemChannelID             Snowflake                     `json:"system_channel_id,omitempty"`  //   |?
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
-	JoinedAt    *Timestamp      `json:"joined_at,omitempty"`    // ?*|
+	JoinedAt    *Time           `json:"joined_at,omitempty"`    // ?*|
 	Large       bool            `json:"large,omitempty"`        // ?*|
 	Unavailable bool            `json:"unavailable"`            // ?*| omitempty?
 	MemberCount uint            `json:"member_count,omitempty"` // ?*|
@@ -1031,7 +1031,7 @@ type Member struct {
 	User     *User       `json:"user"`
 	Nick     string      `json:"nick,omitempty"` // ?|
 	Roles    []Snowflake `json:"roles"`
-	JoinedAt Timestamp   `json:"joined_at,omitempty"`
+	JoinedAt Time        `json:"joined_at,omitempty"`
 
 	// voice
 	Deaf bool `json:"deaf"`

@@ -255,7 +255,7 @@ type ChannelPinsUpdate struct {
 	ChannelID Snowflake `json:"channel_id"`
 
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
-	LastPinTimestamp Timestamp       `json:"last_pin_timestamp,omitempty"` // ?|
+	LastPinTimestamp Time            `json:"last_pin_timestamp,omitempty"` // ?|
 	Ctx              context.Context `json:"-"`
 	ShardID          uint            `json:"-"`
 }
