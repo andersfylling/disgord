@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VER="v0.0.0"
+VER="v1.0.0"
 
 echo "
 # # # # # # # # # # # # # # # # #
@@ -68,12 +68,12 @@ import (
 )
 
 // replyPongToPing is a handler that replies pong to ping messages
-func replyPongToPing(session disgord.Session, data *disgord.MessageCreate) {
+func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
     msg := data.Message
 
     // whenever the message written is "ping", the bot replies "pong"
     if msg.Content == "ping" {
-        msg.RespondString(session, "pong")
+        msg.Reply(s, "pong")
     }
 }
 
@@ -84,17 +84,17 @@ func main() {
     })
     defer client.StayConnectedUntilInterrupted()
 
-    filter, err := std.NewMsgFilter(client)
-	if err != nil {
-		panic(err)
-	}
+	log, _ := std.NewLogFilter(client)
+    filter, _ := std.NewMsgFilter(client)
 	filter.SetPrefix("'${BOT_PREFIX}'")
 
     // create a handler and bind it to new message events
     // tip: read the documentation for std.CopyMsgEvt and understand why it is used here.
-    _ = client.On(disgord.EventMessageCreate,
+    _ = client.On(disgord.EvtMessageCreate,
     	// middleware
+    	filter.NotByBot,    // ignore bot messages
     	filter.HasPrefix,   // read original
+    	log.LogMsg,         // log command message
     	std.CopyMsgEvt,     // read & copy original
     	filter.StripPrefix, // write copy
     	// handler
@@ -153,6 +153,7 @@ spec:
 " >> deployment.yaml
     echo "> remember to change *DOCKERHUBUSERNAME* in deployment.yaml with your actual username on hub.docker.com or other hosting site."
     echo "> note that deployment.yaml is just a suggestion. You will still need to manually edit it ot make it work."
+    # TODO: ask for docker repository url
 fi
 
 if [[ -z ${GO111MODULE} ]] || [[ ${GO111MODULE} == "off" ]]; then
@@ -168,4 +169,6 @@ if [[ ${GIT_SUPPORT} == "y" ]]; then
     git init
     git add .
     git status
+    # TODO: ask for git service, then username, create repository if it does not exist and set upstream,
+    #  commit changes and push.
 fi

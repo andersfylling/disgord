@@ -46,6 +46,14 @@ func (f *msgFilter) ContainsBotMention(evt interface{}) interface{} {
 	return evt
 }
 
+func (f *msgFilter) NotByBot(evt interface{}) interface{} {
+	msg := getMsg(evt)
+	if msg.Author != nil && msg.Author.Bot {
+		return nil
+	}
+	return evt
+}
+
 func (f *msgFilter) HasBotMentionPrefix(evt interface{}) interface{} {
 	return messageHasPrefix(evt, mentionString(f.botID))
 }

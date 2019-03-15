@@ -28,6 +28,33 @@ func TestNewMsgFilter(t *testing.T) {
 	}
 }
 
+func TestMsgFilter_NotByBot(t *testing.T) {
+	var botID disgord.Snowflake = 123
+	filter, _ := NewMsgFilter(&clientMock{botID})
+	evt := &disgord.MessageCreate{
+		Message: &disgord.Message{
+			Author: &disgord.User{Bot: true},
+		},
+	}
+
+	result := filter.NotByBot(evt)
+	if result != nil {
+		t.Error("expected a match")
+	}
+
+	evt.Message.Author.Bot = false
+	result = filter.NotByBot(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+
+	evt.Message.Author = nil
+	result = filter.NotByBot(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+}
+
 func TestMsgFilter_ContainsBotMention(t *testing.T) {
 	var botID disgord.Snowflake = 123
 	filter, _ := NewMsgFilter(&clientMock{botID})
