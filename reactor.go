@@ -19,6 +19,21 @@ import (
 //
 //////////////////////////////////////////////////////
 
+func populateResource(resource evtResource, ctx context.Context, evt *websocket.Event) (err error) {
+	resource.registerContext(ctx)
+
+	if err = httd.Unmarshal(evt.Data, resource); err != nil {
+		return err
+	}
+	executeInternalUpdater(resource)
+
+	// TODO: updating internal states should be independent of the public reactor?
+	//  But should the public handlers wait to be triggered until all the internals are updated?
+	//executeInternalClientUpdater(c, evt)
+
+	return nil
+}
+
 //////////////////////////////////////////////////////
 //
 // Demultiplexer
@@ -39,32 +54,18 @@ func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
 			return
 		}
 
-		var resource eventBox
+		var resource evtResource
 		if resource = defineResource(evt.Name); resource == nil {
 			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name, string(evt.Data))
 			continue // move on to next event
 		}
 
-		// populate resource
 		ctx := context.Background()
-		resource.registerContext(ctx)
-
-		// first unmarshal to get identifiers
-		//tmp := *resource
-
-		// unmarshal into cacheLink
-		//err := c.cacheEvent2(evtName, resource)
-
-		if err := httd.Unmarshal(evt.Data, resource); err != nil {
+		if err := populateResource(resource, ctx, evt); err != nil {
 			d.session.Logger().Error(err)
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
-		executeInternalUpdater(evt)
-
-		// TODO: updating internal states should be independent of the public reactor?
-		//  But should the public handlers wait to be triggered until all the internals are updated?
-		//executeInternalClientUpdater(c, evt)
 
 		// cache
 		if cache != nil {

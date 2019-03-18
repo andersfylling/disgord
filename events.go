@@ -150,7 +150,7 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 
 // ---------------------------
 
-type eventBox interface {
+type evtResource interface {
 	registerContext(ctx context.Context)
 }
 

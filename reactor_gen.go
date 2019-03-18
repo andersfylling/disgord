@@ -14,7 +14,7 @@ import (
 //
 //////////////////////////////////////////////////////
 
-func defineResource(evt string) (resource eventBox) {
+func defineResource(evt string) (resource evtResource) {
 	switch evt {
 
 	case EvtChannelCreate:

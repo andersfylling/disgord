@@ -238,12 +238,12 @@ type Session interface {
 	// To read object state such as guilds, State() should be used in stead. However some data
 	// might not exist in the state. If so it should be requested. Note that this only holds http
 	// CRUD operation and not the actual rest endpoints for discord (See Rest()).
-	// Deprecated: will be unexported in next breaking release
+	// Deprecated
 	Req() httd.Requester
 
 	// Cache reflects the latest changes received from Discord gateway.
 	// Should be used instead of requesting objects.
-	// Deprecated: will be unexported in next breaking release
+	// Deprecated
 	Cache() Cacher
 
 	Logger() logger.Logger
