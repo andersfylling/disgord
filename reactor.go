@@ -21,6 +21,7 @@ import (
 
 func populateResource(resource evtResource, ctx context.Context, evt *websocket.Event) (err error) {
 	resource.registerContext(ctx)
+	resource.setShardID(evt.ShardID)
 
 	if err = httd.Unmarshal(evt.Data, resource); err != nil {
 		return err
@@ -145,11 +146,14 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 	dead := make([]*handlerSpec, 0)
 
 	for _, spec := range specs {
-		if alive := spec.next(); !alive {
-			dead = append(dead, spec)
-			continue
-		}
-
+		// faster. But somewhat weird to check death before running the handler
+		// this can be used if we find a different way to write the client.Ready
+		// logic.
+		//if alive := spec.next(); !alive {
+		//	dead = append(dead, spec)
+		//	continue
+		//}
+		spec.Lock()
 		localEvt := spec.runMdlws(evt)
 		if localEvt == nil {
 			continue
@@ -158,6 +162,12 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		for _, handler := range spec.handlers {
 			d.trigger(handler, evt)
 		}
+
+		spec.ctrl.Update()
+		if spec.ctrl.IsDead() {
+			dead = append(dead, spec)
+		}
+		spec.Unlock()
 	}
 
 	// time to remove the dead
@@ -376,3 +386,39 @@ func (c *eternalHandlersCtrl) IsDead() bool { return false }
 
 // reused by handlers that have no ctrl defined
 var eternalCtrl = &eternalHandlersCtrl{}
+
+// rdyCtrl is used to trigger notify the user when all the websocket sessions have received their first READY event
+type rdyCtrl struct {
+	sync.Mutex
+	shardReady []bool
+	cb         func()
+}
+
+var _ HandlerCtrl = (*rdyCtrl)(nil)
+
+func (c *rdyCtrl) OnInsert(s Session) error {
+	return nil
+}
+
+func (c *rdyCtrl) OnRemove(s Session) error {
+	go c.cb()
+	return nil
+}
+
+func (c *rdyCtrl) IsDead() bool {
+	c.Lock()
+	defer c.Unlock()
+
+	ok := true
+	for _, v := range c.shardReady {
+		if !v {
+			ok = false
+		}
+	}
+
+	return ok
+}
+
+func (c *rdyCtrl) Update() {
+	// handled in the handler
+}

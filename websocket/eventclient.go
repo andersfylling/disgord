@@ -158,13 +158,6 @@ type EvtClient struct {
 	idMu     sync.RWMutex
 }
 
-func (c *EvtClient) ReceivedReadyOnce() bool {
-	c.RLock()
-	defer c.RUnlock()
-
-	return c.ReadyCounter > 0
-}
-
 func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	// marshalling is done to avoid race
 	var presence json.RawMessage

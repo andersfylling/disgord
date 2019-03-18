@@ -152,6 +152,7 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 
 type evtResource interface {
 	registerContext(ctx context.Context)
+	setShardID(id uint)
 }
 
 // ---------------------------

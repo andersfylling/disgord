@@ -17,6 +17,7 @@ import (
 const EvtChannelCreate = event.ChannelCreate
 
 func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -25,6 +26,7 @@ func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtChannelDelete = event.ChannelDelete
 
 func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -37,6 +39,7 @@ func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
 func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -45,6 +48,7 @@ func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtChannelUpdate = event.ChannelUpdate
 
 func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -53,6 +57,7 @@ func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildBanAdd = event.GuildBanAdd
 
 func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -61,6 +66,7 @@ func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildBanRemove = event.GuildBanRemove
 
 func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -73,6 +79,7 @@ func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildCreate = event.GuildCreate
 
 func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -83,6 +90,7 @@ func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildDelete = event.GuildDelete
 
 func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -94,6 +102,7 @@ func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
 func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -104,6 +113,7 @@ func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -116,6 +126,7 @@ func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx =
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
 func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -127,6 +138,7 @@ func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
 func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -140,6 +152,7 @@ func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
 func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -151,6 +164,7 @@ func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
 func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -162,6 +176,7 @@ func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
 func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -173,6 +188,7 @@ func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
 func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -184,6 +200,7 @@ func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
 func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -192,6 +209,7 @@ func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtGuildUpdate = event.GuildUpdate
 
 func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -200,6 +218,7 @@ func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtMessageCreate = event.MessageCreate
 
 func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -211,6 +230,7 @@ func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtMessageDelete = event.MessageDelete
 
 func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -222,6 +242,7 @@ func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
 func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -235,6 +256,7 @@ func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
 func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -248,6 +270,7 @@ func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx 
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
 func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -259,6 +282,7 @@ func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = c
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -269,6 +293,7 @@ func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx 
 const EvtMessageUpdate = event.MessageUpdate
 
 func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -283,6 +308,7 @@ func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtPresenceUpdate = event.PresenceUpdate
 
 func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -291,6 +317,7 @@ func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtPresencesReplace = event.PresencesReplace
 
 func (h *PresencesReplace) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *PresencesReplace) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -308,6 +335,7 @@ func (h *PresencesReplace) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtReady = event.Ready
 
 func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -319,6 +347,7 @@ func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtResumed = event.Resumed
 
 func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -331,6 +360,7 @@ func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtTypingStart = event.TypingStart
 
 func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -339,6 +369,7 @@ func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtUserUpdate = event.UserUpdate
 
 func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -352,6 +383,7 @@ func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
 func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -360,6 +392,7 @@ func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
 func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
@@ -371,5 +404,6 @@ func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 const EvtWebhooksUpdate = event.WebhooksUpdate
 
 func (h *WebhooksUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *WebhooksUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------

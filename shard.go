@@ -26,6 +26,7 @@ type WSShardManagerConfig struct {
 	FirstID    uint
 	ShardLimit uint
 
+	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit float64
 
 	// URL is fetched from the gateway before initialising a connection
@@ -226,20 +227,6 @@ func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
 	}
 
 	return
-}
-
-// InitialReadyReceived checks if each shard has gotten at least one Ready event
-func (s *WSShardManager) InitialReadyReceived() bool {
-	s.RLock()
-	defer s.RUnlock()
-
-	for i := 0; i < len(s.shards); i++ {
-		if !s.shards[i].ws.ReceivedReadyOnce() {
-			return false
-		}
-	}
-
-	return true
 }
 
 //

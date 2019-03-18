@@ -17,5 +17,6 @@ import (
 const Evt{{.}} = event.{{.}} {{end}}
 
 func (h *{{.}}) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
 // --------------------------- {{end}}

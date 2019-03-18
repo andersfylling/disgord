@@ -536,18 +536,22 @@ func (c *client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 // Warning: if you run client.Disconnect and want to run Connect again later, this will
 //  not work. The callback will be triggered instantly, as all the shards have already
 //  successfully connected once.
-// TODO: allow this method to be reused (see Warning paragraph)
 func (c *client) Ready(cb func()) {
-	// TODO: optimize..
-	go func() {
-		for {
-			<-time.After(1 * time.Second)
-			if c.shardManager.InitialReadyReceived() {
-				break
-			}
+	ctrl := &rdyCtrl{
+		cb: cb,
+	}
+
+	c.On(EvtReady, func(s Session, evt *Ready) {
+		ctrl.Lock()
+		defer ctrl.Unlock()
+
+		l := len(c.shardManager.shards)
+		if l != len(ctrl.shardReady) {
+			ctrl.shardReady = make([]bool, l)
 		}
-		cb()
-	}()
+
+		ctrl.shardReady[evt.ShardID] = true
+	}, ctrl)
 }
 
 // On binds a singular or multiple event handlers to the stated event, with the same middlewares.
