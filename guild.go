@@ -1510,14 +1510,14 @@ func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *
 
 type GetGuildMembersParams struct {
 	After Snowflake `urlparam:"after,omitempty"`
-	Limit int       `urlparam:"limit,omitempty"`
+	Limit int       `urlparam:"limit,omitempty"` // 1 is default. even if 0 is supplied.
 }
 
 var _ URLQueryStringer = (*GetGuildMembersParams)(nil)
 
 func (g *GetGuildMembersParams) FindErrors() error {
-	if g.Limit > 1000 || g.Limit < 0 {
-		return errors.New("limit value should be less than or equal to 1000, and non-negative")
+	if g.Limit > 1000 || g.Limit < 1 {
+		return errors.New("limit value should be less than or equal to 1000, and 1 or more")
 	}
 	return nil
 }
@@ -1551,6 +1551,42 @@ func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParam
 	}
 
 	return getMembers(r.Execute)
+}
+
+// GetAllGuildMembers get all guild members with a Snowflake ID higher than the after parameter. If after is 0
+// every guild member is returned.
+func (c *client) GetAllGuildMembers(guildID Snowflake, after Snowflake, flags ...Flag) (members []*Member, err error) {
+	params := &GetGuildMembersParams{}
+	params.Limit = 1000
+	params.After = after
+	if err = params.FindErrors(); err != nil {
+		return nil, err
+	}
+
+	highestSnowflake := func(ms []*Member) (highest Snowflake) {
+		for i := range ms {
+			if ms[i].User != nil && ms[i].User.ID > highest {
+				highest = ms[i].User.ID
+			}
+		}
+		return highest
+	}
+
+	for {
+		var ms []*Member
+		if ms, err = c.GetGuildMembers(guildID, params, flags...); err != nil {
+			members = append(members, ms...)
+			return members, err
+		}
+		members = append(members, ms...)
+
+		if len(ms) < 1000 {
+			break
+		}
+		params.After = highestSnowflake(ms)
+	}
+
+	return members, err
 }
 
 // AddGuildMemberParams ...
