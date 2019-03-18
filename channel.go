@@ -471,17 +471,17 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err error) {
-	if id.Empty() {
+func (c *client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
+	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannel(id),
-		Endpoint:    endpoint.Channel(id),
+		Ratelimiter: ratelimitChannel(channelID),
+		Endpoint:    endpoint.Channel(channelID),
 	}, flags)
 	r.CacheRegistry = ChannelCache
-	r.ID = id
+	r.ID = channelID
 	r.pool = c.pool.channel
 	r.factory = func() interface{} {
 		return &Channel{}
@@ -500,7 +500,7 @@ func (c *client) GetChannel(id Snowflake, flags ...Flag) (ret *Channel, err erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c *client) UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
+func (c *client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
 	builder = &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return c.pool.channel.Get()
@@ -508,12 +508,12 @@ func (c *client) UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChan
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitChannel(id),
-		Endpoint:    endpoint.Channel(id),
+		Ratelimiter: ratelimitChannel(channelID),
+		Endpoint:    endpoint.Channel(channelID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
 	builder.r.cacheRegistry = ChannelCache
-	builder.r.cacheItemID = id
+	builder.r.cacheItemID = channelID
 
 	return builder
 }
@@ -531,16 +531,16 @@ func (c *client) UpdateChannel(id Snowflake, flags ...Flag) (builder *updateChan
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func (c *client) DeleteChannel(id Snowflake, flags ...Flag) (channel *Channel, err error) {
-	if id.Empty() {
+func (c *client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
+	if channelID.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannel(id),
-		Endpoint:    endpoint.Channel(id),
+		Ratelimiter: ratelimitChannel(channelID),
+		Endpoint:    endpoint.Channel(channelID),
 	}, flags)
 	r.expectsStatusCode = http.StatusOK
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -570,8 +570,8 @@ type UpdateChannelPermissionsParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
-	if chanID.Empty() {
+func (c *client) UpdateChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
+	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
 	if overwriteID.Empty() {
@@ -580,8 +580,8 @@ func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params 
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPut,
-		Ratelimiter: ratelimitChannelPermissions(chanID),
-		Endpoint:    endpoint.ChannelPermission(chanID, overwriteID),
+		Ratelimiter: ratelimitChannelPermissions(channelID),
+		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
 	}, flags)
@@ -603,15 +603,15 @@ func (c *client) UpdateChannelPermissions(chanID, overwriteID Snowflake, params 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) GetChannelInvites(id Snowflake, flags ...Flag) (invites []*Invite, err error) {
-	if id.Empty() {
+func (c *client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
+	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelInvites(id),
-		Endpoint:    endpoint.ChannelInvites(id),
+		Ratelimiter: ratelimitChannelInvites(channelID),
+		Endpoint:    endpoint.ChannelInvites(channelID),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -647,8 +647,8 @@ type CreateChannelInvitesParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
-	if id.Empty() {
+func (c *client) CreateChannelInvites(channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
+	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return nil, err
 	}
@@ -658,8 +658,8 @@ func (c *client) CreateChannelInvites(id Snowflake, params *CreateChannelInvites
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelInvites(id),
-		Endpoint:    endpoint.ChannelInvites(id),
+		Ratelimiter: ratelimitChannelInvites(channelID),
+		Endpoint:    endpoint.ChannelInvites(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)

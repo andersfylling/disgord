@@ -1299,10 +1299,10 @@ func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *client) GetGuildChannels(id Snowflake, flags ...Flag) (ret []*Channel, err error) {
+func (c *client) GetGuildChannels(guildID Snowflake, flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitGuildChannels(id),
-		Endpoint:    endpoint.GuildChannels(id),
+		Ratelimiter: ratelimitGuildChannels(guildID),
+		Endpoint:    endpoint.GuildChannels(guildID),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -1336,7 +1336,7 @@ type CreateGuildChannelParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
-func (c *client) CreateGuildChannel(id Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
+func (c *client) CreateGuildChannel(guildID Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
 	if channelName == "" && (params == nil || params.Name == "") {
 		return nil, errors.New("channel name is required")
 	}
@@ -1353,8 +1353,8 @@ func (c *client) CreateGuildChannel(id Snowflake, channelName string, params *Cr
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
-		Ratelimiter: ratelimitGuild(id),
-		Endpoint:    endpoint.GuildChannels(id),
+		Ratelimiter: ratelimitGuild(guildID),
+		Endpoint:    endpoint.GuildChannels(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
@@ -1384,11 +1384,11 @@ type UpdateGuildChannelPositionsParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
-func (c *client) UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
+func (c *client) UpdateGuildChannelPositions(guildID Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitGuildChannels(id),
-		Endpoint:    endpoint.GuildChannels(id),
+		Ratelimiter: ratelimitGuildChannels(guildID),
+		Endpoint:    endpoint.GuildChannels(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)

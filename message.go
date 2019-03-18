@@ -840,6 +840,20 @@ func (c *client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (
 
 //////////////////////////////////////////////////////
 //
+// REST Wrappers
+//
+//////////////////////////////////////////////////////
+
+func (c *client) SetMsgContent(chanID, msgID Snowflake, content string) (*Message, error) {
+	return c.UpdateMessage(chanID, msgID).SetContent(content).Execute()
+}
+
+func (c *client) SetMsgEmbed(chanID, msgID Snowflake, embed *Embed) (*Message, error) {
+	return c.UpdateMessage(chanID, msgID).SetEmbed(embed).Execute()
+}
+
+//////////////////////////////////////////////////////
+//
 // REST Builders
 //
 //////////////////////////////////////////////////////
