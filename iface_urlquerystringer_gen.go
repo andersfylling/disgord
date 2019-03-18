@@ -2,7 +2,7 @@
 
 package disgord
 
-func (g *GetGuildMembersParams) URLQueryString() string {
+func (g *getGuildMembersParams) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.After == 0) {

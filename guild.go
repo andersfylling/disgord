@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -431,44 +432,20 @@ func (g *Guild) AddMember(member *Member) error {
 }
 
 // LoadAllMembers fetches all the members for this guild from the Discord REST API
-func (g *Guild) LoadAllMembers(session Session) (err error) {
+func (g *Guild) LoadAllMembers(s Session) (err error) {
 	if constant.LockedMethods {
 		g.Lock()
 		defer g.Unlock()
 	}
+	// TODO: what if members have already been loaded? use Guild.MembersCount?
 
-	// TODO-1: check cacheLink
-	// TODO-2: what if members have already been loaded? use Guild.MembersCount?
+	members, err := s.GetMembers(g.ID, nil)
+	if err != nil {
+		return err
+	}
 
-	var lastCount = 1000
-	var failsafe bool
-	// TODO-3: failsafe is set when the number of users returned is less
-	// than 1,000 two times
-	highestSnowflake := NewSnowflake(0)
-
-	for {
-		if lastCount == 0 || failsafe {
-			break
-		}
-		var members []*Member
-		members, err = session.GetGuildMembers(g.ID, &GetGuildMembersParams{
-			After: highestSnowflake,
-			Limit: 1000,
-		}, DisableCache)
-		if err != nil {
-			return
-		}
-
-		for _, member := range members {
-			g.addMember(member)
-
-			s := member.User.ID
-			if s > highestSnowflake {
-				highestSnowflake = s
-			}
-		}
-
-		lastCount = len(members)
+	for i := range members {
+		_ = g.addMember(members[i])
 	}
 
 	return nil
@@ -804,14 +781,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	}
 
 	return
-}
-
-// saveToDiscord creates a new Guild if ID is empty or updates an existing one
-func (g *Guild) saveToDiscord(s Session, flags ...Flag) (err error) {
-	return errors.New("not implemented")
-}
-func (g *Guild) deleteFromDiscord(s Session, flags ...Flag) (err error) {
-	return errors.New("not implemented")
 }
 
 // --------------
@@ -1508,14 +1477,14 @@ func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *
 	return getMember(r.Execute)
 }
 
-type GetGuildMembersParams struct {
+type getGuildMembersParams struct {
 	After Snowflake `urlparam:"after,omitempty"`
 	Limit int       `urlparam:"limit,omitempty"` // 1 is default. even if 0 is supplied.
 }
 
-var _ URLQueryStringer = (*GetGuildMembersParams)(nil)
+var _ URLQueryStringer = (*getGuildMembersParams)(nil)
 
-func (g *GetGuildMembersParams) FindErrors() error {
+func (g *getGuildMembersParams) FindErrors() error {
 	if g.Limit > 1000 || g.Limit < 1 {
 		return errors.New("limit value should be less than or equal to 1000, and 1 or more")
 	}
@@ -1532,9 +1501,9 @@ func (g *GetGuildMembersParams) FindErrors() error {
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
 //  Comment#3               https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
+func (c *client) getGuildMembers(guildID Snowflake, params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
 	if params == nil {
-		params = &GetGuildMembersParams{}
+		params = &getGuildMembersParams{}
 	}
 	if err = params.FindErrors(); err != nil {
 		return nil, err
@@ -1545,6 +1514,9 @@ func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParam
 		Endpoint:    endpoint.GuildMembers(guildID) + params.URLQueryString(),
 	}, flags)
 	r.CacheRegistry = GuildMembersCache
+	r.checkCache = func() (v interface{}, err error) {
+		return c.cache.GetGuildMembersAfter(guildID, params.After, params.Limit)
+	}
 	r.factory = func() interface{} {
 		tmp := make([]*Member, 0)
 		return &tmp
@@ -1553,14 +1525,23 @@ func (c *client) GetGuildMembers(guildID Snowflake, params *GetGuildMembersParam
 	return getMembers(r.Execute)
 }
 
-// GetAllGuildMembers get all guild members with a Snowflake ID higher than the after parameter. If after is 0
-// every guild member is returned.
-func (c *client) GetAllGuildMembers(guildID Snowflake, after Snowflake, flags ...Flag) (members []*Member, err error) {
-	params := &GetGuildMembersParams{}
-	params.Limit = 1000
-	params.After = after
-	if err = params.FindErrors(); err != nil {
-		return nil, err
+// GetMembersParams if Limit is 0, every member is fetched. This does not follow the Discord API where a 0
+// is converted into a 1. 0 = every member. The rest is exactly the same, you should be able to do everything
+// the Discord docs says with the addition that you can bypass a limit of 1,000.
+//
+// If you specify a limit of +1,000 DisGord will run N requests until that amount is met, or until you run
+// out of members to fetch.
+type GetMembersParams struct {
+	After Snowflake `urlparam:"after,omitempty"`
+	Limit uint32    `urlparam:"limit,omitempty"` // 0 will fetch everyone
+}
+
+// GetMembers uses the GetGuildMembers endpoint iteratively until the your restriction/query params are met.
+func (c *client) GetMembers(guildID Snowflake, params *GetMembersParams, flags ...Flag) (members []*Member, err error) {
+	if params == nil {
+		params = &GetMembersParams{
+			Limit: math.MaxUint32,
+		}
 	}
 
 	highestSnowflake := func(ms []*Member) (highest Snowflake) {
@@ -1572,17 +1553,40 @@ func (c *client) GetAllGuildMembers(guildID Snowflake, after Snowflake, flags ..
 		return highest
 	}
 
+	p := getGuildMembersParams{
+		After: params.After,
+	}
+	if params.Limit == 0 || params.Limit > 1000 {
+		p.Limit = 1000
+	} else {
+		p.Limit = int(params.Limit)
+	}
+
+	var ms []*Member
 	for {
-		var ms []*Member
-		if ms, err = c.GetGuildMembers(guildID, params, flags...); err != nil {
-			members = append(members, ms...)
+		ms, err = c.getGuildMembers(guildID, &p, flags...)
+		members = append(members, ms...)
+		if err != nil {
 			return members, err
 		}
-		members = append(members, ms...)
 
+		// stop if we're on the last page/block of members
 		if len(ms) < 1000 {
 			break
 		}
+
+		// set limit such that we don't retrieve redundant members
+		max := params.Limit << 1
+		max = max >> 1
+		lim := int(max) - len(members)
+		if lim < 1000 {
+			if lim <= 0 {
+				// should never be less than 0
+				break
+			}
+			p.Limit = lim
+		}
+
 		params.After = highestSnowflake(ms)
 	}
 

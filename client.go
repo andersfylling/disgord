@@ -536,6 +536,8 @@ func (c *client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 // Warning: if you run client.Disconnect and want to run Connect again later, this will
 //  not work. The callback will be triggered instantly, as all the shards have already
 //  successfully connected once.
+//
+// Warning: Do not call client.Connect before this.
 func (c *client) Ready(cb func()) {
 	ctrl := &rdyCtrl{
 		cb: cb,

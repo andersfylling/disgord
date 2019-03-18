@@ -22,18 +22,6 @@ func TestGuild_InterfaceImplementations(t *testing.T) {
 			t.Error("guild does not implement Copier")
 		}
 	})
-
-	t.Run("DiscordSaver", func(t *testing.T) {
-		if _, ok := c.(discordSaver); !ok {
-			t.Error("guild does not implement DiscordSaver")
-		}
-	})
-
-	t.Run("discordDeleter", func(t *testing.T) {
-		if _, ok := c.(discordDeleter); !ok {
-			t.Error("guild does not implement discordDeleter")
-		}
-	})
 }
 
 func TestGuildMarshal(t *testing.T) {

@@ -80,9 +80,9 @@ func (c *client) ModifyGuildChannelPositions(id Snowflake, params []UpdateGuildC
 
 // Deprecated: use GetGuildMembers
 func (c *client) ListGuildMembers(id, after Snowflake, limit int, flags ...Flag) ([]*Member, error) {
-	return c.GetGuildMembers(id, &GetGuildMembersParams{
+	return c.GetMembers(id, &GetMembersParams{
 		After: after,
-		Limit: limit,
+		Limit: uint32(limit),
 	}, flags...)
 }
 

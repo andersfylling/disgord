@@ -449,6 +449,20 @@ func (c *Cache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v int
 		}
 	case ChannelCache:
 		v, err = c.GetChannel(id)
+	case GuildCache:
+		v, err = c.GetGuild(id)
+	case GuildMembersCache:
+		// enables pagination
+		guildID := id
+		var limit int
+		var after Snowflake
+		if len(args) > 0 {
+			limit = args[0].(int)
+		}
+		if len(args) > 1 {
+			after = args[1].(Snowflake)
+		}
+		v, err = c.GetGuildMembersAfter(guildID, after, limit)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}

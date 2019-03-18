@@ -151,10 +151,6 @@ func (r *rest) stepCheckCache() (v interface{}, err error) {
 		return nil, nil
 	}
 
-	if r.flags.Ignorecache() {
-		return nil, nil
-	}
-
 	return r.c.cache.Get(r.CacheRegistry, r.ID)
 }
 
@@ -214,8 +210,10 @@ func (r *rest) stepUpdateContent(x interface{}) {
 }
 
 func (r *rest) Execute() (v interface{}, err error) {
-	if v, err = r.checkCache(); err == nil && v != nil {
-		return v, err
+	if !r.flags.Ignorecache() {
+		if v, err = r.checkCache(); err == nil && v != nil {
+			return v, err
+		}
 	}
 
 	var resp *http.Response
