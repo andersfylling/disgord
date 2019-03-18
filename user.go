@@ -587,9 +587,9 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	return
 }
 
-func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) {
+func (u *User) saveToDiscord(s Session, flags ...Flag) (err error) {
 	var myself *User
-	if myself, err = session.Myself(); err != nil {
+	if myself, err = s.GetCurrentUser(flags...); err != nil {
 		return
 	}
 	if myself == nil {
@@ -607,7 +607,7 @@ func (u *User) saveToDiscord(session Session, changes discordSaver) (err error) 
 		avatar = *u.Avatar
 	}
 
-	updated, err := session.UpdateCurrentUser().
+	updated, err := s.UpdateCurrentUser(flags...).
 		SetUsername(u.Username).
 		SetAvatar(avatar).
 		Execute()

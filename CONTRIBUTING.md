@@ -98,7 +98,9 @@ The only reason locking is provided with the Discord structures is to allow the 
 #### Handlers
 > Also known as listeners/callbacks. The event driven architecture of DisGord uses the reactor pattern and as such the handlers are triggered in sequence.
 
-DisGord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence and that will not change.
+DisGord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence and that will not change. 
+
+> Note! The handlers run in sequence per event. But events can run in parallel.
 
 ```go
 Session.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
@@ -160,6 +162,12 @@ If you create a PR that is not based on an issue. Please describe why you want D
 
 If your PR is not ready yet, make it a Draft.
 
+Deadlines:
+ - If you do not fix the required changes within 30 days your PR will be closed. 
+ - If you have created a PR before that was closed due to rule #1, the deadline is reduced from 30 days to 20 days (this only applies when you have 2 or more PR that are a victim to rule #1).
+ - Rule #1 and Rule #2 does not apply if you mark your PR as a draft. Such that if you forget about it for 29 days and mark it as a draft, it will not be closed on day 30 and the counter is reset.
+ - PR drafts have no deadline.
+
 ## Styleguides
 `go fmt ./...`
 
@@ -193,3 +201,4 @@ If your PR is not ready yet, make it a Draft.
 Add the following prefixes to your issues to help categorize them better:
 * [help] when asking a question about functionality.
 * [discussion] when starting a discussion about wanted or existing functionality
+* [proposal] when you have written a comprehensive suggestion with examples

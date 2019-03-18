@@ -111,10 +111,10 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 }
 
 // Missing GuildID...
-//func (e *Emoji) saveToDiscord(session Session) (err error) {
+//func (e *Emoji) saveToDiscord(s Session) (err error) {
 //	session.Emoji
 //}
-func (e *Emoji) deleteFromDiscord(session Session) (err error) {
+func (e *Emoji) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 	if e.guildID.Empty() {
 		err = errors.New("missing guild ID, call Emoji.LinkToGuild")
 		return
@@ -124,7 +124,7 @@ func (e *Emoji) deleteFromDiscord(session Session) (err error) {
 		return
 	}
 
-	return session.DeleteGuildEmoji(e.guildID, e.ID)
+	return s.DeleteGuildEmoji(e.guildID, e.ID, flags...)
 }
 
 //func (e *Emoji) createGuildEmoji(session Session) (err error) {

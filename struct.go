@@ -55,23 +55,16 @@ func (e *ErrorUnsupportedType) Error() string {
 //	UpdateFromCache(session Session)
 //}
 
-// DiscordSaver holds the SaveToDiscord method for sending changes to the
-// Discord API over REST.
-// If you change any of the values and want to notify Discord about your change,
-// use the Save method to send a REST request (assuming that the struct values
-// can be updated).
-//
-// NOTE! if the struct has an snowflake/ID, it will update content. But if the
-// snowflake is missing/not set, it will create content (if possible,
-// otherwise you will get an error)
+// DiscordSaver holds the method saveToDiscord that discord structs must implement
+// in order to use client.SaveToDiscord for saving and update content.
 type discordSaver interface {
-	saveToDiscord(session Session, changes discordSaver) error
+	saveToDiscord(session Session, flags ...Flag) error
 }
 
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.
 type discordDeleter interface {
-	deleteFromDiscord(session Session) error
+	deleteFromDiscord(session Session, flags ...Flag) error
 }
 
 // DeepCopier holds the DeepCopy method which creates and returns a deep copy of

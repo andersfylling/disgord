@@ -367,26 +367,34 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 		}
 
 		c.SetGuildRoles(guildID, roles)
-	//case GuildRoleCache:
-	//	var role *Role
-	//	var guildID Snowflake
-	//
-	//	switch t := v.(type) {
-	//	case *Role:
-	//		role = t
-	//		guildID = role.guildID
-	//	case Role:
-	//		role = &t
-	//		guildID = role.guildID
-	//	}
-	//
-	//	if guildID.Empty() {
-	//		return
-	//	}
-	//
-	//	c.GuildRole
-	//
-	//	c.SetGuildRoles(guildID, roles)
+	case GuildRoleCache:
+		var role *Role
+		var guildID Snowflake
+
+		switch t := v.(type) {
+		case *Role:
+			role = t
+			guildID = role.guildID
+		case Role:
+			role = &t
+			guildID = role.guildID
+		}
+
+		if role == nil || guildID.Empty() {
+			return
+		}
+
+		var roles []*Role
+		if roles, err = c.GetGuildRoles(guildID); err == nil {
+			for i := range roles {
+				if roles[i].ID == role.ID {
+					_ = role.CopyOverTo(roles[i])
+				}
+			}
+		} else {
+			roles = append(roles, role)
+		}
+		c.SetGuildRoles(guildID, roles)
 	default:
 		err = errors.New("caching for given type is not yet implemented")
 	}

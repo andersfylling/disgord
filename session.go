@@ -257,8 +257,8 @@ type Session interface {
 	HeartbeatLatency() (duration time.Duration, err error)
 
 	// Generic CRUD operations for Discord interaction
-	DeleteFromDiscord(obj discordDeleter) error
-	SaveToDiscord(original discordSaver, changes ...discordSaver) error
+	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error
+	SaveToDiscord(obj discordSaver, flags ...Flag) error
 
 	AddPermission(permission int) (updatedPermissions int)
 	GetPermissions() (permissions int)

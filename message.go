@@ -106,6 +106,8 @@ type Message struct {
 var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
+var _ discordSaver = (*Message)(nil)
+var _ discordDeleter = (*Message)(nil)
 
 func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
@@ -217,26 +219,37 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (m *Message) deleteFromDiscord(session Session) (err error) {
+func (m *Message) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 	if m.ID.Empty() {
 		err = newErrorMissingSnowflake("message is missing snowflake")
 		return
 	}
 
-	err = session.DeleteMessage(m.ChannelID, m.ID)
+	err = s.DeleteMessage(m.ChannelID, m.ID, flags...)
 	return
 }
-func (m *Message) saveToDiscord(session Session, changes discordSaver) (err error) {
+func (m *Message) saveToDiscord(s Session, flags ...Flag) (err error) {
 	var message *Message
-	if m.ID.Empty() {
-		message, err = m.Send(session)
-	} else {
-		return errors.New("updating discord objects are not yet implemented - only saving new ones")
-		message, err = m.update(session)
+
+	if constant.LockedMethods {
+		m.RLock()
+	}
+	id := m.ID
+	if constant.LockedMethods {
+		m.RUnlock()
 	}
 
-	message.CopyOverTo(m)
-	return
+	if id.Empty() {
+		message, err = m.Send(s, flags...)
+	} else {
+		message, err = m.update(s, flags...)
+	}
+	if err != nil {
+		return err
+	}
+
+	_ = message.CopyOverTo(m)
+	return nil
 }
 
 // MessageUpdater is a interface which only holds the message update method
@@ -245,13 +258,19 @@ type MessageUpdater interface {
 }
 
 // Update after changing the message object, call update to notify Discord about any changes made
-func (m *Message) update(client MessageUpdater) (msg *Message, err error) {
-	builder := client.UpdateMessage(m.ChannelID, msg.ID)
-	if len(msg.Embeds) > 0 {
-		builder.SetEmbed(msg.Embeds[0])
+func (m *Message) update(client MessageUpdater, flags ...Flag) (msg *Message, err error) {
+	if constant.LockedMethods {
+		m.RLock()
+	}
+	builder := client.UpdateMessage(m.ChannelID, m.ID, flags...).SetContent(m.Content)
+	if len(m.Embeds) > 0 {
+		builder.SetEmbed(m.Embeds[0])
+	}
+	if constant.LockedMethods {
+		m.RUnlock()
 	}
 
-	return builder.SetContent(m.Content).Execute()
+	return builder.Execute()
 }
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
@@ -260,11 +279,11 @@ type MessageSender interface {
 }
 
 // Send sends this message to discord.
-func (m *Message) Send(client MessageSender) (msg *Message, err error) {
-
+func (m *Message) Send(client MessageSender, flags ...Flag) (msg *Message, err error) {
 	if constant.LockedMethods {
 		m.RLock()
 	}
+	// TODO: attachments
 	params := &CreateMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
@@ -273,7 +292,8 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 		// Embed: ...
 	}
 	if len(m.Embeds) > 0 {
-		params.Embed = m.Embeds[0]
+		params.Embed = &Embed{}
+		_ = m.Embeds[0].CopyOverTo(params.Embed)
 	}
 	channelID := m.ChannelID
 
@@ -281,7 +301,7 @@ func (m *Message) Send(client MessageSender) (msg *Message, err error) {
 		m.RUnlock()
 	}
 
-	msg, err = client.CreateMessage(channelID, params)
+	msg, err = client.CreateMessage(channelID, params, flags...)
 	return
 }
 
@@ -289,6 +309,7 @@ type msgSender interface {
 	SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error)
 }
 
+// Reply input any type as an reply. int, string, an object, etc.
 func (m *Message) Reply(client msgSender, data ...interface{}) (*Message, error) {
 	return client.SendMsg(m.ChannelID, data...)
 }

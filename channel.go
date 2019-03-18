@@ -21,6 +21,8 @@ const (
 	ChannelTypeGuildVoice
 	ChannelTypeGroupDM
 	ChannelTypeGuildCategory
+	ChannelTypeGuildNews
+	ChannelTypeGuildStore
 )
 
 // Attachment https://discordapp.com/developers/docs/resources/channel#attachment-object
@@ -131,6 +133,8 @@ type Channel struct {
 
 var _ Reseter = (*Channel)(nil)
 var _ fmt.Stringer = (*Channel)(nil)
+var _ discordSaver = (*Channel)(nil)
+var _ discordDeleter = (*Channel)(nil)
 
 func (c *Channel) String() string {
 	return "channel{" + c.ID.String() + "}"
@@ -163,129 +167,163 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-func (c *Channel) saveToDiscord(session Session, changes discordSaver) (err error) {
+func (c *Channel) saveToDiscord(s Session, flags ...Flag) (err error) {
 	var updated *Channel
 
 	// verify discord request
 	defer func() {
-		if err != nil {
-			return
+		if err == nil && updated != nil {
+			_ = updated.CopyOverTo(c)
 		}
-
-		*c = *updated
 	}()
 
-	if c.ID.Empty() {
-		if c.Type != ChannelTypeDM && c.Type != ChannelTypeGroupDM {
-			// create
-			if c.Name == "" {
-				err = newErrorEmptyValue("must have a channel name before creating channel")
-			}
-			params := CreateGuildChannelParams{
-				Name:                 c.Name,
-				PermissionOverwrites: c.PermissionOverwrites,
-			}
+	// two processes:
+	// 1. create
+	// 2. update
 
-			// specific
-			if c.Type == ChannelTypeGuildText {
-				params.NSFW = c.NSFW
-				params.Topic = c.Topic
-				params.RateLimitPerUser = c.RateLimitPerUser
-			} else if c.Type == ChannelTypeGuildVoice {
-				params.Bitrate = c.Bitrate
-				params.UserLimit = c.UserLimit
-			}
+	if constant.LockedMethods {
+		c.RWMutex.RLock()
+	}
+	id := c.ID
+	if constant.LockedMethods {
+		c.RWMutex.RUnlock()
+	}
 
-			// shared
-			if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
-				params.ParentID = c.ParentID
-			}
-
-			updated, err = session.CreateGuildChannel(c.GuildID, params.Name, &params)
-		} else if c.Type == ChannelTypeDM {
+	// create
+	if id.Empty() {
+		if constant.LockedMethods {
+			c.RWMutex.RLock()
+		}
+		switch c.Type {
+		case ChannelTypeDM:
 			if len(c.Recipients) != 1 {
 				err = errors.New("must have only one recipient in Channel.Recipient (with ID) for creating a DM. Got " + strconv.Itoa(len(c.Recipients)))
 				return err
 			}
-			updated, err = session.CreateDM(c.Recipients[0].ID)
-		} else if c.Type == ChannelTypeGroupDM {
+			if constant.LockedMethods {
+				c.RWMutex.RUnlock()
+			}
+			updated, err = s.CreateDM(c.Recipients[0].ID)
+		case ChannelTypeGroupDM:
+			if constant.LockedMethods {
+				c.RWMutex.RUnlock()
+			}
 			err = errors.New("creating group DM using SaveToDiscord has not been implemented")
-			//if len(c.Recipients) == 0 {
-			//	err = errors.New("must have at least one recipient in Channel.Recipient (with access token) for creating a group DM. Got 0")
-			//	return
-			//}
-			//total := len(c.Recipients)
-			//params := CreateGroupDMParams{}
-			//params.AccessTokens = make([]string, total)
-			//params.Nicks = make(map[Snowflake]string, total)
-			//
-			//for i := 0; i < total; i++ {
-			//	params.AccessTokens[i] = c.Recipients[i].
-			//}
-			//
-			//updated, err = session.CreateGroupDM()
-		} else {
+		case ChannelTypeGuildText, ChannelTypeGuildVoice, ChannelTypeGuildNews, ChannelTypeGuildStore:
+			if c.Name == "" {
+				err = newErrorEmptyValue("must have a channel name before creating channel")
+			}
+			if c.GuildID.Empty() {
+				err = newErrorEmptyValue("guild ID must be set")
+			}
+			params := CreateGuildChannelParams{
+				Name:                 c.Name,
+				PermissionOverwrites: c.PermissionOverwrites,
+				ParentID:             c.ParentID,
+				NSFW:                 c.NSFW,
+				Topic:                c.Topic,
+				RateLimitPerUser:     c.RateLimitPerUser,
+				UserLimit:            c.UserLimit,
+				Position:             c.Position,
+			}
+
+			// channel specific
+			switch c.Type {
+			case ChannelTypeGuildVoice:
+				params.Bitrate = c.Bitrate
+				params.UserLimit = c.UserLimit
+			}
+
+			if constant.LockedMethods {
+				c.RWMutex.RUnlock()
+			}
+			updated, err = s.CreateGuildChannel(c.GuildID, params.Name, &params)
+		default:
 			err = errors.New("cannot save to discord. Does not recognise what needs to be saved")
 		}
+	} else {
+		// update
+		if constant.LockedMethods {
+			c.RWMutex.RLock()
+		}
+		builder := s.UpdateChannel(c.ID, flags...)
+		switch c.Type {
+		case ChannelTypeDM:
+			err = errors.New("can not change a DM channel")
+		case ChannelTypeGroupDM:
+			builder.SetName(c.Name)
+			// unable to set icon
+		case ChannelTypeGuildText, ChannelTypeGuildNews, ChannelTypeGuildStore:
+			builder.
+				SetName(c.Name).
+				SetTopic(c.Topic).
+				SetNsfw(c.NSFW).
+				SetPosition(c.Position).
+				SetPermissionOverwrites(c.PermissionOverwrites).
+				SetRateLimitPerUser(c.RateLimitPerUser)
+
+			if !c.ParentID.Empty() {
+				builder.SetParentID(c.ParentID)
+			}
+		case ChannelTypeGuildVoice:
+			builder.
+				SetName(c.Name).
+				SetTopic(c.Topic).
+				SetNsfw(c.NSFW).
+				SetPosition(c.Position).
+				SetPermissionOverwrites(c.PermissionOverwrites).
+				SetRateLimitPerUser(c.RateLimitPerUser).
+				SetUserLimit(c.UserLimit)
+
+			if !c.ParentID.Empty() {
+				builder.SetParentID(c.ParentID)
+			}
+			if c.Bitrate > 0 {
+				builder.SetBitrate(c.Bitrate)
+			}
+		default:
+			err = errors.New("cannot save to discord. Does not recognise what needs to be saved")
+		}
+		if constant.LockedMethods {
+			c.RWMutex.RUnlock()
+		}
+		if err == nil {
+			updated, err = builder.Execute()
+		}
+	}
+	if err != nil {
 		return err
 	}
-
-	return errors.New("updating discord objects are not yet implemented - only saving new ones")
-	//
-	//
-	//// modify / update channel
-	//changes := ModifyChannelParams{}
-	//
-	//// specific
-	//if c.Type == ChannelTypeDM {
-	//	// nothing to change
-	//} else if c.Type == ChannelTypeGroupDM {
-	//	// nothing to change
-	//} else if c.Type == ChannelTypeGuildText {
-	//	changes.SetNSFW(c.NSFW)
-	//	changes.SetTopic(c.Topic)
-	//	changes.SetRateLimitPerUser(c.RateLimitPerUser)
-	//} else if c.Type == ChannelTypeGuildVoice {
-	//	changes.SetBitrate(c.Bitrate)
-	//	changes.SetUserLimit(c.UserLimit)
-	//}
-	//
-	//// shared
-	//if c.Type == ChannelTypeGuildVoice || c.Type == ChannelTypeGuildText {
-	//	if c.ParentID.Empty() {
-	//		changes.RemoveParentID()
-	//	} else {
-	//		changes.SetParentID(c.ParentID)
-	//	}
-	//}
-	//
-	//// for all
-	//changes.SetName(c.Name)
-	//changes.SetPosition(c.Position)
-	//changes.SetPermissionOverwrites(c.PermissionOverwrites)
-	//
-	//updated, err = session.ModifyChannel(c.ID, &changes)
-	//return
+	return err
 }
 
-func (c *Channel) deleteFromDiscord(session Session) (err error) {
-	if c.ID.Empty() {
+func (c *Channel) deleteFromDiscord(s Session, flags ...Flag) (err error) {
+	var id Snowflake
+	if constant.LockedMethods {
+		c.RWMutex.RLock()
+	}
+	id = c.ID
+	if constant.LockedMethods {
+		c.RWMutex.RUnlock()
+	}
+
+	if id.Empty() {
 		err = newErrorMissingSnowflake("channel id/snowflake is empty or missing")
 		return
 	}
 	var deleted *Channel
-	if deleted, err = session.DeleteChannel(c.ID); err != nil {
+	if deleted, err = s.DeleteChannel(id, flags...); err != nil {
 		return
 	}
 
-	*c = *deleted
+	_ = deleted.CopyOverTo(c)
 	return
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (c *Channel) DeepCopy() (copy interface{}) {
 	copy = NewChannel()
-	c.CopyOverTo(copy)
+	_ = c.CopyOverTo(copy)
 
 	return
 }
@@ -324,6 +362,7 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	channel.LastMessageID = c.LastMessageID
 
 	// add recipients if it's a DM
+	channel.Recipients = make([]*User, 0, len(c.Recipients))
 	for _, recipient := range c.Recipients {
 		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
 	}
@@ -337,62 +376,7 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 }
 
 func (c *Channel) copyOverToCache(other interface{}) (err error) {
-	channel := other.(*Channel)
-
-	if constant.LockedMethods {
-		channel.Lock()
-		c.RLock()
-	}
-
-	channel.ID = c.ID
-	channel.Type = c.Type
-
-	if c.Type == ChannelTypeGroupDM || c.Type == ChannelTypeDM {
-		if c.Type == ChannelTypeGroupDM {
-			channel.Icon = c.Icon
-			channel.OwnerID = c.OwnerID
-			channel.Name = c.Name
-			channel.LastPinTimestamp = c.LastPinTimestamp
-		}
-		channel.LastMessageID = c.LastMessageID
-
-		if len(c.recipientsIDs) == len(c.Recipients) {
-			channel.recipientsIDs = c.recipientsIDs
-		} else {
-			channel.recipientsIDs = make([]Snowflake, len(c.Recipients))
-			for i := range c.Recipients {
-				channel.recipientsIDs[i] = c.Recipients[i].ID
-			}
-		}
-	} else if c.Type == ChannelTypeGuildText {
-		channel.NSFW = c.NSFW
-		channel.Name = c.Name
-		channel.Position = c.Position
-		channel.PermissionOverwrites = c.PermissionOverwrites
-		channel.Topic = c.Topic
-		channel.LastMessageID = c.LastMessageID
-		channel.RateLimitPerUser = c.RateLimitPerUser
-		channel.LastPinTimestamp = c.LastPinTimestamp
-		channel.ParentID = c.ParentID
-		channel.GuildID = c.GuildID
-	} else if c.Type == ChannelTypeGuildVoice {
-		channel.Name = c.Name
-		channel.Position = c.Position
-		channel.PermissionOverwrites = c.PermissionOverwrites
-		channel.ParentID = c.ParentID
-		channel.Bitrate = c.Bitrate
-		channel.UserLimit = c.UserLimit
-		channel.GuildID = c.GuildID
-	}
-
-	// TODO: evaluate
-	channel.ApplicationID = c.ApplicationID
-
-	if constant.LockedMethods {
-		channel.Unlock()
-		c.RUnlock()
-	}
-	return nil
+	return c.CopyOverTo(other)
 }
 
 //func (c *Channel) Clear() {
@@ -804,7 +788,7 @@ func (c *client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (er
 //////////////////////////////////////////////////////
 
 // updateChannelBuilder https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:int, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:uint, name:string,
+//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:uint, name:string,
 //generate-rest-basic-execute: channel:*Channel,
 type updateChannelBuilder struct {
 	r RESTBuilder

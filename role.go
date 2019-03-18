@@ -1,13 +1,91 @@
 package disgord
 
 import (
-	"errors"
 	"net/http"
+	"sort"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 )
+
+type roles []*Role
+
+func (r roles) Len() int {
+	return len(r)
+}
+
+// Less is reversed due to the visual ordering in Discord.
+func (r roles) Less(i, j int) bool {
+	a := r[i]
+	b := r[j]
+
+	if a.Position == b.Position {
+		return a.ID < b.ID
+	}
+
+	return a.Position > b.Position
+}
+
+func (r roles) Swap(i, j int) {
+	tmp := r[i]
+	r[i] = r[j]
+	r[j] = tmp
+}
+
+var _ discordSaver = (*roles)(nil)
+var _ sort.Interface = (roles)(nil)
+
+func (rp *roles) saveToDiscord(s Session, flags ...Flag) error {
+	r := *rp
+	var guildID Snowflake
+	for i := range r {
+		if !r[i].guildID.Empty() {
+			guildID = r[i].guildID
+			break
+		}
+	}
+	updated, err := s.UpdateGuildRolePositions(guildID, NewUpdateGuildRolePositionsParams(r), flags...)
+	if err != nil {
+		return err
+	}
+
+	// Since the updating guild role positions _requires_ you to send all the roles
+	// you should be given the exact same roles in return. We sort them such that we only need to iterate
+	// with a O(N) instead of a O(N*M). However, since I don't trust Discord (...) I keep the option open
+	// that more than the local number of roles might be returned.
+	SortRoles(r)
+	SortRoles(updated)
+	var newRoles []*Role
+	for j := range updated {
+		var handled bool
+		for i := range r {
+			if r[i].ID != updated[j].ID {
+				continue
+			}
+
+			_ = updated[j].CopyOverTo(r[i])
+			updated[j] = nil
+			updated[j] = updated[len(updated)-1]
+			updated = updated[:len(updated)-1]
+			handled = true
+			break
+		}
+
+		if !handled {
+			newRoles = append(newRoles, updated[j])
+		}
+	}
+	*rp = append(r, newRoles...)
+	SortRoles(*rp)
+
+	return err
+}
+
+// SortRoles sorts a slice of roles such that the first element is the top one in the Discord Guild Settings UI.
+func SortRoles(rs []*Role) {
+	sort.Sort(roles(rs))
+}
 
 // NewRole ...
 func NewRole() *Role {
@@ -39,7 +117,7 @@ func (r *Role) Mention() string {
 
 // SetGuildID link role to a guild before running session.SaveToDiscord(*Role)
 func (r *Role) SetGuildID(id Snowflake) {
-	r.ID = id
+	r.guildID = id
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -81,15 +159,28 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (r *Role) saveToDiscord(session Session, changes discordSaver) (err error) {
-	if r.guildID.Empty() {
-		err = newErrorMissingSnowflake("role has no guildID")
+func (r *Role) saveToDiscord(s Session, flags ...Flag) (err error) {
+	if constant.LockedMethods {
+		r.RLock()
+	}
+	guildID := r.guildID
+	id := r.ID
+	//pos := r.Position
+	if constant.LockedMethods {
+		r.RUnlock()
+	}
+
+	if guildID.Empty() {
+		err = newErrorMissingSnowflake("role has no guildID. Use Role.SetGuildID(..)")
 		return
 	}
 
 	var role *Role
-	if r.ID.Empty() {
+	if id.Empty() {
 		// create role
+		if constant.LockedMethods {
+			r.RLock()
+		}
 		params := CreateGuildRoleParams{
 			Name:        r.Name,
 			Permissions: r.Permissions,
@@ -97,55 +188,75 @@ func (r *Role) saveToDiscord(session Session, changes discordSaver) (err error) 
 			Hoist:       r.Hoist,
 			Mentionable: r.Mentionable,
 		}
-		role, err = session.CreateGuildRole(r.guildID, &params)
-		if err != nil {
-			return
+		if constant.LockedMethods {
+			r.RUnlock()
 		}
-		err = role.CopyOverTo(r)
+		role, err = s.CreateGuildRole(guildID, &params, flags...)
+	} else {
+		if constant.LockedMethods {
+			r.RLock()
+		}
+		builder := s.UpdateGuildRole(guildID, id, flags...).
+			SetName(r.Name).
+			SetColor(r.Color).
+			SetHoist(r.Hoist).
+			SetMentionable(r.Mentionable).
+			SetPermissions(r.Permissions)
+		if constant.LockedMethods {
+			r.RUnlock()
+		}
+		role, err = builder.Execute()
+		if err == nil {
+			// TODO: handle role position
+			//  this is a little tricky as a user might not want to change the positions
+
+			//if role != nil && role.Position != pos {
+			//
+			////var roles []*Role
+			////roles, err = s.GetGuildRoles(guildID, flags...)
+			////if err != nil {
+			////	err = errors.New("unable to update role position: " + err.Error())
+			////} else {
+			////	params := NewUpdateGuildRolePositionsParams(roles)
+			////	_, err = s.UpdateGuildRolePositions(guildID, params, flags...)
+			////	if err != nil {
+			////		err = errors.New("unable to update role position: " + err.Error())
+			////	} else {
+			////		err = role.CopyOverTo(r)
+			////	}
+			////}
+			//}
+
+		}
+	}
+
+	if err != nil {
 		return err
 	}
 
-	return errors.New("updating discord objects are not yet implemented - only saving new ones")
-	//
-	//// modify/update role
-	//params := UpdateGuildRoleParams{}
-	//params.SetName(r.Name)
-	//params.SetPermissions(r.Permissions)
-	//params.SetColor(r.Color)
-	//params.SetHoist(r.Hoist)
-	//params.SetMentionable(r.Mentionable)
-	//role, err = session.ModifyGuildRole(r.guildID, r.ID, &params)
-	//if err != nil {
-	//	return
-	//}
-	//if role.Position != r.Position {
-	//	// update the position
-	//	params := []UpdateGuildRolePositionsParams{{
-	//		ID:       r.ID,
-	//		Position: r.Position,
-	//	}}
-	//	_, err = session.UpdateGuildRolePositions(r.guildID, params)
-	//	if err != nil {
-	//		return
-	//	}
-	//	role.Position = r.Position
-	//}
-	//
-	//return
+	err = role.CopyOverTo(r)
+	return err
 }
 
-func (r *Role) deleteFromDiscord(session Session) (err error) {
-	if r.ID.Empty() {
-		err = newErrorMissingSnowflake("role has no ID")
-		return
+func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {
+	if constant.LockedMethods {
+		r.RLock()
 	}
-	if r.guildID.Empty() {
-		err = newErrorMissingSnowflake("role has no guildID")
-		return
+	guildID := r.guildID
+	id := r.ID
+	if constant.LockedMethods {
+		r.RUnlock()
 	}
 
-	err = session.DeleteGuildRole(r.guildID, r.ID)
-	return
+	if id.Empty() {
+		return newErrorMissingSnowflake("role has no ID")
+	}
+	if guildID.Empty() {
+		return newErrorMissingSnowflake("role has no guildID")
+	}
+
+	err = s.DeleteGuildRole(guildID, id, flags...)
+	return err
 }
 
 //////////////////////////////////////////////////////

@@ -807,10 +807,10 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 }
 
 // saveToDiscord creates a new Guild if ID is empty or updates an existing one
-func (g *Guild) saveToDiscord(session Session, changes discordSaver) (err error) {
+func (g *Guild) saveToDiscord(s Session, flags ...Flag) (err error) {
 	return errors.New("not implemented")
 }
-func (g *Guild) deleteFromDiscord(session Session) (err error) {
+func (g *Guild) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 	return errors.New("not implemented")
 }
 
@@ -1325,6 +1325,7 @@ type CreateGuildChannelParams struct {
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
 	ParentID             Snowflake             `json:"parent_id,omitempty"`
 	NSFW                 bool                  `json:"nsfw,omitempty"`
+	Position             uint                  `json:"position"` // can not omitempty in case position is 0
 }
 
 // CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
@@ -1398,6 +1399,18 @@ func (c *client) UpdateGuildChannelPositions(id Snowflake, params []UpdateGuildC
 	return err
 }
 
+func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositionsParams) {
+	p = make([]UpdateGuildRolePositionsParams, 0, len(rs))
+	for i := range rs {
+		p = append(p, UpdateGuildRolePositionsParams{
+			ID:       rs[i].ID,
+			Position: rs[i].Position,
+		})
+	}
+
+	return p
+}
+
 // UpdateGuildRolePositionsParams ...
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type UpdateGuildRolePositionsParams struct {
@@ -1430,6 +1443,49 @@ func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuil
 
 	return getRoles(r.Execute)
 }
+
+// UpdateGuildRolesPos "ensures" you have all the roles required,
+//func (c *client) UpdateGuildRolesPos(guildID Snowflake, rs []*Role, flags ...Flag) (updated []*Role, err error) {
+//	var current []*Role
+//	if current, err = c.GetGuildRoles(guildID, flags...); err != nil {
+//		return nil, err
+//	}
+//	SortRoles(current)
+//
+//	// add the changes / additions
+//	rsOld := rs
+//	for i := range current {
+//		var exist bool
+//		for j := range rs {
+//			if current[i].ID == rs[j].ID {
+//				exist = true
+//				_ = rs[j].CopyOverTo(current[i])
+//				break
+//			}
+//		}
+//		if exist {
+//			rs[i] = rs[len(rs)-1]
+//			rs[len(rs)-1] = nil
+//			rs = rs[:len(rs)-1]
+//		}
+//	}
+//	current = append(current, rs...)
+//	SortRoles(current)
+//
+//	// TODO: verify order
+//	for i := range rsOld {
+//
+//	}
+//
+//	params := make([]UpdateGuildRolePositionsParams, 0, len(current))
+//	for i := range current {
+//		params = append(params, UpdateGuildRolePositionsParams{
+//			ID:       current[i].ID,
+//			Position: current[i].Position,
+//		})
+//	}
+//	return c.UpdateGuildRolePositions(guildID, params, flags...)
+//}
 
 // GetGuildMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET

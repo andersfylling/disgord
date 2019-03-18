@@ -616,30 +616,23 @@ func (c *client) AcceptEvent(events ...string) {
 
 // DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
 // be used to delete said object.
-func (c *client) DeleteFromDiscord(obj discordDeleter) (err error) {
-	err = obj.deleteFromDiscord(c)
+func (c *client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error) {
+	if obj == nil {
+		return errors.New("object to save can not be nil")
+	}
+
+	err = obj.deleteFromDiscord(c, flags...)
 	return
 }
 
-// SaveToDiscord saves an object to the Discord servers. This supports creation of new objects. Given two arguments,
-// the original object before changes (that reflects the most recent known discord state) and the new object that
-// represents what the state should look like, the changes can be determined by a basic diff check and let DisGord
-// try to udpating/modify the object at Discord.
-//
-// client.SaveToDiscord(object) -> saves an entirely new object (must not have a discord id)
-// client.SaveToDiscord(original, new) -> updates an existing object (must have a discord id)
-// TODO: flag support
-func (c *client) SaveToDiscord(original discordSaver, changes ...discordSaver) (err error) {
-	if original == nil {
-		return errors.New("you must specify at least one discord object to be saved to Discord")
+// SaveToDiscord saves an object to the Discord servers. This supports creating and updating objects.
+// Note that an object is created when the ID field is empty, and update when set.
+func (c *client) SaveToDiscord(obj discordSaver, flags ...Flag) (err error) {
+	if obj == nil {
+		return errors.New("object to save can not be nil")
 	}
 
-	var updated discordSaver
-	if len(changes) > 1 {
-		updated = changes[1]
-	}
-
-	err = original.saveToDiscord(c, updated)
+	err = obj.saveToDiscord(c, flags...)
 	return
 }
 

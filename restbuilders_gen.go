@@ -99,7 +99,7 @@ func (b *updateChannelBuilder) SetPermissionOverwrites(permissionOverwrites []Pe
 	return b
 }
 
-func (b *updateChannelBuilder) SetUserLimit(userLimit int) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetUserLimit(userLimit uint) *updateChannelBuilder {
 	b.r.param("user_limit", userLimit)
 	return b
 }
