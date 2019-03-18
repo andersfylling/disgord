@@ -217,6 +217,8 @@ type Cache struct {
 	guilds      interfaces.CacheAlger
 }
 
+var _ Cacher = (*Cache)(nil)
+
 // Updates does the same as Update. But allows for a slice of entries instead.
 func (c *Cache) Updates(key cacheRegistry, vs []interface{}) (err error) {
 	for _, v := range vs {
@@ -1459,6 +1461,7 @@ func (c *channelCacheItem) build(cache *Cache) (channel *Channel) {
 	}
 
 	if channel.Type != ChannelTypeDM && channel.Type != ChannelTypeGroupDM {
+		channel.Recipients = nil
 		return
 	}
 
@@ -1608,5 +1611,3 @@ func (c *Cache) DeleteChannelPermissionOverwrite(channelID Snowflake, overwriteI
 
 // --------------------------------------------------------
 // Guild
-
-var _ Cacher = (*Cache)(nil)
