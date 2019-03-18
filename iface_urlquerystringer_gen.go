@@ -3,7 +3,7 @@
 package disgord
 
 func (g *GetGuildMembersParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(g.After == 0) {
 		params["after"] = g.After
@@ -17,7 +17,7 @@ func (g *GetGuildMembersParams) URLQueryString() string {
 }
 
 func (b *BanMemberParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(b.DeleteMessageDays == 0) {
 		params["delete_message_days"] = b.DeleteMessageDays
@@ -31,7 +31,7 @@ func (b *BanMemberParams) URLQueryString() string {
 }
 
 func (p *pruneMembersParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	params["days"] = p.Days
 
@@ -41,7 +41,7 @@ func (p *pruneMembersParams) URLQueryString() string {
 }
 
 func (g *GetInviteParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(g.WithMemberCount == false) {
 		params["with_count"] = g.WithMemberCount
@@ -51,7 +51,7 @@ func (g *GetInviteParams) URLQueryString() string {
 }
 
 func (g *GetMessagesParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(g.Around == 0) {
 		params["around"] = g.Around
@@ -73,7 +73,7 @@ func (g *GetMessagesParams) URLQueryString() string {
 }
 
 func (g *GetReactionURLParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(g.Before == 0) {
 		params["before"] = g.Before
@@ -91,7 +91,7 @@ func (g *GetReactionURLParams) URLQueryString() string {
 }
 
 func (g *GetCurrentUserGuildsParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	if !(g.Before == 0) {
 		params["before"] = g.Before
@@ -109,7 +109,7 @@ func (g *GetCurrentUserGuildsParams) URLQueryString() string {
 }
 
 func (e *execWebhookParams) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
 	params["wait"] = e.Wait
 

@@ -7,7 +7,7 @@ package disgord
 
 {{ range $struct := $enf.Structs }}
 func ({{ $struct.ShortName }} *{{ $struct.Name }}) URLQueryString() string {
-	params := make(paramHolder)
+	params := make(urlQuery)
 
     {{- range $i, $field := $struct.Fields }}
     {{ if $field.HasTag }}

@@ -2,8 +2,9 @@ package disgord
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"strconv"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -43,62 +44,29 @@ func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, m
 	return builder
 }
 
-type paramHolder map[string]interface{}
+type urlQuery map[string]interface{}
 
-var _ URLQueryStringer = (*paramHolder)(nil)
+var _ URLQueryStringer = (*urlQuery)(nil)
+var _ fmt.Stringer = (*urlQuery)(nil)
 
-func (p paramHolder) URLQueryString() string {
+func (p urlQuery) String() string {
+	return p.URLQueryString()
+}
+
+func (p urlQuery) URLQueryString() string {
 	if len(p) == 0 {
 		return ""
 	}
 
-	var params string
-	seperator := "?"
+	query := url.Values{}
 	for k, v := range p {
-		var str string
-		var uintHolder uint64
-		switch t := v.(type) {
-		case snowflake.ID:
-			str = t.String()
-		case int8:
-			uintHolder = uint64(t)
-		case int16:
-			uintHolder = uint64(t)
-		case int32:
-			uintHolder = uint64(t)
-		case int64:
-			uintHolder = uint64(t)
-		case int:
-			uintHolder = uint64(t)
-		case uint8:
-			uintHolder = uint64(t)
-		case uint16:
-			uintHolder = uint64(t)
-		case uint32:
-			uintHolder = uint64(t)
-		case uint:
-			uintHolder = uint64(t)
-		case uint64:
-			uintHolder = t
-		case bool:
-			if t {
-				str = "true"
-			} else {
-				str = "false"
-			}
-		case string:
-			str = t
-		}
-		// TODO float
-		if str == "" {
-			str = strconv.FormatUint(uintHolder, 10)
-		}
-
-		params += seperator + k + "=" + str
-		seperator = "&"
+		query.Add(k, fmt.Sprint(v))
 	}
 
-	return params
+	if len(query) > 0 {
+		return "?" + query.Encode()
+	}
+	return ""
 }
 
 type restStepCheckCache func() (v interface{}, err error)
@@ -300,7 +268,7 @@ type RESTBuilder struct {
 	cacheItemID     snowflake.ID
 
 	body              map[string]interface{}
-	urlParams         paramHolder
+	urlParams         urlQuery
 	ignoreCache       bool
 	cancelOnRatelimit bool
 }

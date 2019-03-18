@@ -58,3 +58,12 @@ var _ httd.Puter = (*reqMocker)(nil)
 var _ httd.Patcher = (*reqMocker)(nil)
 var _ httd.Deleter = (*reqMocker)(nil)
 var _ httd.Requester = (*reqMocker)(nil)
+
+func TestParamHolder_URLQueryString(t *testing.T) {
+	params := urlQuery{}
+	params["a"] = 45
+	verifyQueryString(t, params, "?a=45")
+
+	params = urlQuery{}
+	verifyQueryString(t, params, "")
+}
