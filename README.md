@@ -23,30 +23,32 @@
 </div>
 
 ## About
-Go module for interacting with the Discord API. Supports events, REST calls and voice (transmitting/sending).
+Go module for interacting with the Discord API. Supports events, REST calls and voice (sending only).
  
- and REST functionality. Discord object will also have implemented helper functions such as `Message.RespondString(session, "hello")`, or `Session.SaveToDiscord(&Emoji)` for simplicity/readability.
+Discord object comes with helper functions such as `Message.Reply(session, "hello")`, or `Session.SaveToDiscord(newRole)` for simplicity/readability.
 
-DisGord has complete implementation for Discord's documented REST API. It lacks comprehensive testing, hence the "contains technical debt" label, so any bug report/feedback is greatly appreciated!
+DisGord has complete implementation for Discord's documented REST API. It lacks battle testing testing, so any bug report/feedback is greatly appreciated!
 
 To get started see the examples in [docs](docs/examples)
 
 Some projects using DisGord can be found [here](docs/PROJECTS.md).
 
-Discord channel/server: [Discord Gophers#DisGord](https://discord.gg/qBVmnq9)
-You can find a live chats for DisGord in Discord. We exist in both the Gopher server and the Discord API server:
+Talk to us on Discord! We exist in both the Gopher server and the Discord API server:
  - [Discord Gophers](https://discord.gg/qBVmnq9)
  - [Discord API](https://discord.gg/HBTHbme)
 
 ## Warning
 The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. As soon as the issue #103 is finished, there should only be tweaking left before v1.0.0 is release.
 
-There might be bugs in the cache, or the cache processing might not exist yet for some REST methods.
+There might be bugs in the cache, or the cache processing might not exist yet for some REST methods. Bypass the cache for REST methods by supplying the flag argument `disgord.DisableCache`. eg. `client.GetCurrentUser(disgord.DisableCache)`.
+
+### Unexpected behavior
+ - Calling `client.SaveToDiscord`, or through Session, does not work for Role position.
 
 ## Starter guide (Linux)
 > Note! this is a Go module project, and Go module support should activated to properly use DisGord. It might work using only the GOPATH. But officially this is not supported: Read more about modules here: [https://github.com/golang/go/wiki/Modules](https://github.com/golang/go/wiki/Modules) 
 
-To create a new bot you can use the disgord.sh script to automate the boring copy/paste process:
+To create a new bot you can use the disgord.sh script to automate the boring copy/paste process. Paste the following into your terminal:
 
 ```bash
 bash <(curl -s -L https://git.io/disgord-script)
@@ -57,8 +59,7 @@ Starter guide as a gif: https://terminalizer.com/view/469961d0695
 
 
 ## Architecture & Behavior
-Discord provide communication in different forms. DisGord tackles the main ones, events (ws), voice (udp + ws), 
-and REST calls.
+Discord provide communication in different forms. DisGord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
 
 You can think of DisGord as layered, in which case it will look something like:
 ![Simple way to think about DisGord architecture from a layered perspective](docs/disgord-layered-version.png)
