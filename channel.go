@@ -137,7 +137,7 @@ var _ discordSaver = (*Channel)(nil)
 var _ discordDeleter = (*Channel)(nil)
 
 func (c *Channel) String() string {
-	return "channel{" + c.ID.String() + "}"
+	return "channel{name:'" + c.Name + "', id:" + c.ID.String() + "}"
 }
 
 func (c *Channel) valid() bool {
@@ -619,15 +619,7 @@ func (c *client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites 
 		return &tmp
 	}
 
-	var vs interface{}
-	if vs, err = r.Execute(); err != nil {
-		return nil, err
-	}
-
-	if tmp, ok := vs.(*[]*Invite); ok {
-		return *tmp, nil
-	}
-	return nil, errors.New("unable to cast Invite slice")
+	return getInvites(r.Execute)
 }
 
 // CreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params

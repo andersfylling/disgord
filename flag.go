@@ -26,9 +26,12 @@ const (
 	// sort options
 	SortByID
 	SortByName
+	SortByHoist
+	SortByGuildID
+	SortByChannelID
 
 	// ordering
-	OrderAscending
+	OrderAscending // default when sorting
 	OrderDescending
 )
 

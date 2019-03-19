@@ -3,6 +3,7 @@ package disgord
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 //////////////////////////////////////////////////////
@@ -11,40 +12,61 @@ import (
 //
 //////////////////////////////////////////////////////
 
-func Sort(s interface{}, f ...Flag) {
-    flags := mergeFlags(f)
+func Sort(v interface{}, fs ...Flag) {
+    if v == nil {
+        return
+    }
+
+    flags := mergeFlags(fs)
     {{- range $sorter := $.Sorters }}
     if (flags & SortBy{{ $sorter.Field }}) > 0 {
-        sortBy{{ $sorter.Field }}(s, f...)
-    }{{- end }} else if list, ok := s.(sort.Interface); ok {
+        sortBy{{ $sorter.Field }}(v, flags)
+    } else {{- end }} if list, ok := v.(sort.Interface); ok {
         sort.Sort(list) // TODO: asc/desc
+    } else if list, ok := v.([]*Role); ok {
+        sort.Sort(roles(list))
+    } else if list, ok := v.(*[]*Role); ok {
+        sort.Sort(roles(*list))
     } else {
         panic("type is missing sort.Interface implementation")
     }
 }
 
+func derefSliceP(v interface{}) (s interface{}) {
+    switch t := v.(type) {
+    {{- range $t := $.Types }}
+    case *[]*{{ $t.Name }}:
+        s = *t
+    {{- end }}
+    }
+
+    return s
+}
+
 
 {{- range $sorter := $.Sorters }}
-func sortBy{{ $sorter.Field }}(s interface{}, flags ...Flag) {
+func sortBy{{ $sorter.Field }}(v interface{}, flags Flag) {
     var descending bool
-    if (mergeFlags(flags) & OrderDescending) > 0 {
+    if (flags & OrderDescending) > 0 {
         descending = true
     }
 
+    v = derefSliceP(v)
+
     var less func(i, j int) bool
-    switch t := s.(type) {
+    switch s := v.(type) {
     {{- range $t := $sorter.Types }}
     case []*{{ $t.Name }}:
         if descending {
-            less = func(i, j int) bool { return t[i].{{ $sorter.Field }} {{ Descending $sorter.Field "t" }} }
+            less = func(i, j int) bool { return {{ Descending $sorter.Field "s" }} }
         } else {
-            less = func(i, j int) bool { return t[i].{{ $sorter.Field }} {{ Ascending $sorter.Field "t" }} }
+            less = func(i, j int) bool { return {{ Ascending $sorter.Field "s" }} }
         }
     {{- end }}
     default:
-        panic(fmt.Sprintf("type %+v does not support sorting", t))
+        panic(fmt.Sprintf("type %+v does not support sorting", s))
     }
 
-    sort.Slice(s, less)
+    sort.Slice(v, less)
 }
 {{- end }}

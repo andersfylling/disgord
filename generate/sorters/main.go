@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -24,25 +25,52 @@ func main() {
 	e := &env{}
 
 	for i := range files {
-		e.Types = append(e.Types, getTypes(files[i])...)
+		news := getTypes(files[i])
+		for x := range news {
+			var exists bool
+			for y := range e.Types {
+				if e.Types[y].Name == news[x].Name {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				e.Types = append(e.Types, news[x])
+			}
+		}
 	}
 
 	e.Sorters = []Sorter{
 		{
 			Field:      "ID", // TODO: check if the field type is correct. regression.
-			Ascending:  func(s string) string { return "<" + s },
-			Descending: func(s string) string { return ">" + s },
+			Ascending:  func(a, b string) string { return fmt.Sprintf("%s < %s", a, b) },
+			Descending: func(a, b string) string { return fmt.Sprintf("%s > %s", a, b) },
+		},
+		{
+			Field:      "GuildID",
+			Ascending:  func(a, b string) string { return fmt.Sprintf("%s < %s", a, b) },
+			Descending: func(a, b string) string { return fmt.Sprintf("%s > %s", a, b) },
+		},
+		{
+			Field:      "ChannelID",
+			Ascending:  func(a, b string) string { return fmt.Sprintf("%s < %s", a, b) },
+			Descending: func(a, b string) string { return fmt.Sprintf("%s > %s", a, b) },
 		},
 		{
 			Field:      "Name",
-			Ascending:  func(s string) string { return "<" + s },
-			Descending: func(s string) string { return ">" + s },
+			Ascending:  func(a, b string) string { return fmt.Sprintf("strings.ToLower(%s) < strings.ToLower(%s)", a, b) },
+			Descending: func(a, b string) string { return fmt.Sprintf("strings.ToLower(%s) > strings.ToLower(%s)", a, b) },
+		},
+		{
+			Field:      "Hoist",
+			Ascending:  func(a, b string) string { return fmt.Sprintf("!%s && %s", a, b) },
+			Descending: func(a, b string) string { return fmt.Sprintf("%s && !%s", a, b) },
 		},
 	}
 
 	for i := range e.Sorters {
 		for j := range e.Types {
-			if e.Types[j].HasFieldName(e.Sorters[i].Field) {
+			if e.Types[j].HasField(e.Sorters[i].Field, e.Sorters[i].Pointer) {
 				e.Sorters[i].Types = append(e.Sorters[i].Types, e.Types[j])
 			}
 		}
@@ -51,14 +79,19 @@ func main() {
 	makeFile(e, "generate/sorters/sorters.gotpl", "sort_gen.go")
 }
 
-type Type struct {
-	Name   string
-	Fields []string
+type Field struct {
+	Name    string
+	Pointer bool
 }
 
-func (t *Type) HasFieldName(name string) bool {
+type Type struct {
+	Name   string
+	Fields []Field
+}
+
+func (t *Type) HasField(name string, pointer bool) bool {
 	for i := range t.Fields {
-		if t.Fields[i] == name {
+		if t.Fields[i].Name == name && t.Fields[i].Pointer == pointer {
 			return true
 		}
 	}
@@ -69,9 +102,10 @@ func (t *Type) HasFieldName(name string) bool {
 type Sorter struct {
 	Type       string
 	Field      string
-	Ascending  func(s string) string // s is whatever to compare against: a[i].ID < b[j].ID => b[j].ID is s
-	Descending func(s string) string // s is whatever to compare against: a[i].ID > b[j].ID => b[j].ID is s
+	Ascending  func(a, b string) string
+	Descending func(a, b string) string
 	Types      []Type
+	Pointer    bool
 }
 
 type env struct {
@@ -104,7 +138,10 @@ func getTypes(filename string) (types []Type) {
 			if len(field.Names) == 0 {
 				continue
 			}
-			t.Fields = append(t.Fields, field.Names[0].Name)
+			t.Fields = append(t.Fields, Field{
+				Name:    field.Names[0].Name,
+				Pointer: strings.HasPrefix(fmt.Sprint(field.Type), "&{"),
+			})
 		}
 
 		types = append(types, t)
@@ -155,7 +192,7 @@ func makeFile(e *env, tplFile, target string) {
 		"Ascending": func(field, name string) string {
 			for i := range e.Sorters {
 				if e.Sorters[i].Field == field {
-					return e.Sorters[i].Ascending(name + "[j]." + field)
+					return e.Sorters[i].Ascending(name+"[i]."+field, name+"[j]."+field)
 				}
 			}
 			return ""
@@ -163,7 +200,7 @@ func makeFile(e *env, tplFile, target string) {
 		"Descending": func(field, name string) string {
 			for i := range e.Sorters {
 				if e.Sorters[i].Field == field {
-					return e.Sorters[i].Descending(name + "[j]." + field)
+					return e.Sorters[i].Descending(name+"[i]."+field, name+"[j]."+field)
 				}
 			}
 			return ""
