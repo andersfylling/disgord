@@ -1,0 +1,50 @@
+package disgord
+
+import (
+	"fmt"
+	"sort"
+)
+
+//////////////////////////////////////////////////////
+//
+// demultiplexer
+//
+//////////////////////////////////////////////////////
+
+func Sort(s interface{}, f ...Flag) {
+    flags := mergeFlags(f)
+    {{- range $sorter := $.Sorters }}
+    if (flags & SortBy{{ $sorter.Field }}) > 0 {
+        sortBy{{ $sorter.Field }}(s, f...)
+    }{{- end }} else if list, ok := s.(sort.Interface); ok {
+        sort.Sort(list) // TODO: asc/desc
+    } else {
+        panic("type is missing sort.Interface implementation")
+    }
+}
+
+
+{{- range $sorter := $.Sorters }}
+func sortBy{{ $sorter.Field }}(s interface{}, flags ...Flag) {
+    var descending bool
+    if (mergeFlags(flags) & OrderDescending) > 0 {
+        descending = true
+    }
+
+    var less func(i, j int) bool
+    switch t := s.(type) {
+    {{- range $t := $sorter.Types }}
+    case []*{{ $t.Name }}:
+        if descending {
+            less = func(i, j int) bool { return t[i].{{ $sorter.Field }} {{ Descending $sorter.Field "t" }} }
+        } else {
+            less = func(i, j int) bool { return t[i].{{ $sorter.Field }} {{ Ascending $sorter.Field "t" }} }
+        }
+    {{- end }}
+    default:
+        panic(fmt.Sprintf("type %+v does not support sorting", t))
+    }
+
+    sort.Slice(s, less)
+}
+{{- end }}
