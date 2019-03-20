@@ -87,7 +87,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Config:
 		s = *t
-	case *[]*client:
+	case *[]*Client:
 		s = *t
 	case *[]*RequestGuildMembersCommand:
 		s = *t

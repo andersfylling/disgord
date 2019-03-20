@@ -124,7 +124,7 @@ func main() {
 
 	// TestGetCurrentUser
 	func() {
-		_, err = c.GetCurrentUser(disgord.DisableCache)
+		_, err = c.GetCurrentUser(disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		}
@@ -132,7 +132,7 @@ func main() {
 	// TestGetUser
 	func() {
 		const userID = 140413331470024704
-		user, err := c.GetUser(userID, disgord.DisableCache)
+		user, err := c.GetUser(userID, disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		} else if user.ID != userID {

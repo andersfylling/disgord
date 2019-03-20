@@ -95,7 +95,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
+func (c *Client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
 	if params == nil {
 		return nil, errors.New("params was nil")
 	}
@@ -124,7 +124,7 @@ func (c *client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams,
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+func (c *Client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitChannelWebhooks(channelID),
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
@@ -144,7 +144,7 @@ func (c *client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
+func (c *Client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildWebhooks(guildID),
 		Endpoint:    endpoint.GuildWebhooks(guildID),
@@ -164,7 +164,7 @@ func (c *client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webh
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
+func (c *Client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.Webhook(id),
@@ -184,7 +184,7 @@ func (c *client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err erro
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
+func (c *Client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitWebhook(id),
 		Endpoint:    endpoint.WebhookToken(id, token),
@@ -204,7 +204,7 @@ func (c *client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (c *client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebhookBuilder) {
+func (c *Client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebhookBuilder) {
 	builder = &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
@@ -229,7 +229,7 @@ func (c *client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebh
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
-func (c *client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder) {
+func (c *Client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder) {
 	builder = &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
@@ -254,7 +254,7 @@ func (c *client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Fla
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) DeleteWebhook(id Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteWebhook(id Snowflake, flags ...Flag) (err error) {
 	return c.DeleteWebhookWithToken(id, "", flags...)
 }
 
@@ -265,7 +265,7 @@ func (c *client) DeleteWebhook(id Snowflake, flags ...Flag) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
+func (c *Client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Flag) (err error) {
 	var e string
 	if token != "" {
 		e = endpoint.WebhookToken(id, token)
@@ -325,7 +325,7 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
+func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
 	if params == nil {
 		return errors.New("params can not be nil")
 	}
@@ -366,7 +366,7 @@ func (c *client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuff
 //  Reviewed                2018-08-14
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+func (c *Client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	return c.ExecuteWebhook(params, wait, endpoint.Slack(), flags...)
 }
 
@@ -380,7 +380,7 @@ func (c *client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, fl
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-func (c *client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+func (c *Client) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
 	return c.ExecuteWebhook(params, wait, endpoint.GitHub(), flags...)
 }
 

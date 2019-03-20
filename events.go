@@ -399,7 +399,7 @@ func (g *GuildEmojisUpdate) updateInternals() {
 // GuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
-//	2. When a Guild becomes available again to the client.
+//	2. When a Guild becomes available again to the Client.
 // 	3. When the current user joins a new Guild.
 type GuildCreate struct {
 	Guild   *Guild          `json:"guild"`

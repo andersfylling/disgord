@@ -16,7 +16,7 @@ import (
 const DefaultShardRateLimit float64 = 5.5 // seconds
 
 type WSShardManagerConfig struct {
-	// FirstID and ShardLimit creates the shard id range for this client.
+	// FirstID and ShardLimit creates the shard id range for this Client.
 	// this can be useful if you have multiple clients and don't want to
 	// duplicate the sharded connections. But have unique ones on each machine.
 	//
@@ -77,7 +77,7 @@ type WSShardManager struct {
 
 	discordPktPool *sync.Pool
 
-	client *client // hacky - used to register handlers
+	client *Client // hacky - used to register handlers
 }
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
@@ -255,12 +255,12 @@ func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
 //			timeout := time.Now().Add(10 * time.Second)
 //			done := make(chan interface{})
 //
-//			_ = s.client.On(
+//			_ = s.Client.On(
 //				EventPresenceUpdate,
 //				// middleware
 //				func(evt interface{}) interface{} {
 //					e := evt.(*PresenceUpdate)
-//					if e.User.ID != s.client.myID {
+//					if e.User.ID != s.Client.myID {
 //						return nil // don't proceed if this regards another user
 //					}
 //					return evt
@@ -287,7 +287,7 @@ func (s *WSShardManager) Emit(cmd SocketCommand, data interface{}) (err error) {
 //
 //			// either continue when all the shards completed, or wait for a system interrupt or timeout
 //			select {
-//			case <-s.client.shutdownChan:
+//			case <-s.Client.shutdownChan:
 //				return
 //			case <-time.After(time.Now().Sub(timeout)):
 //			case <-done:

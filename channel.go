@@ -384,13 +384,13 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 //}
 
 // Fetch check if there are any updates to the channel values
-//func (c *Channel) Fetch(client ChannelFetcher) (err error) {
+//func (c *Channel) Fetch(Client ChannelFetcher) (err error) {
 //	if c.ID.Empty() {
 //		err = errors.New("missing channel ID")
 //		return
 //	}
 //
-//	client.GetChannel(c.ID)
+//	Client.GetChannel(c.ID)
 //}
 
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
@@ -471,7 +471,7 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	if channelID.Empty() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -500,7 +500,7 @@ func (c *client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, e
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c *client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
+func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
 	builder = &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return c.pool.channel.Get()
@@ -531,7 +531,7 @@ func (c *client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *upd
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func (c *client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
+func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
 	if channelID.Empty() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -570,7 +570,7 @@ type UpdateChannelPermissionsParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) UpdateChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
+func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -603,7 +603,7 @@ func (c *client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
+func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -639,7 +639,7 @@ type CreateChannelInvitesParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) CreateChannelInvites(channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
+func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return nil, err
@@ -671,7 +671,7 @@ func (c *client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -723,7 +723,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
+func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -754,7 +754,7 @@ func (c *client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}

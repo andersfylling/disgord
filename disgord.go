@@ -1,4 +1,4 @@
-// Package disgord provides Go bindings for the documented Discord API. And allows for a stateful client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
+// Package disgord provides Go bindings for the documented Discord API. And allows for a stateful Client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
 //
 // Getting started
 //

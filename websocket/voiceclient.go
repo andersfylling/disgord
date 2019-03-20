@@ -26,7 +26,7 @@ type VoiceConfig struct {
 	// Token to connect with the voice websocket
 	Token string
 
-	// Proxy allows for use of a custom proxy
+	// proxy allows for use of a custom proxy
 	Proxy proxy.Dialer
 
 	// Endpoint for establishing voice connection

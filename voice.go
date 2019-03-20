@@ -110,7 +110,7 @@ type VoiceRegion struct {
 	// VIP true if this is a vip-only server
 	VIP bool `json:"vip"`
 
-	// Optimal true for a single server that is closest to the current user's client
+	// Optimal true for a single server that is closest to the current user's Client
 	Optimal bool `json:"optimal"`
 
 	// Deprecated 	whether this is a deprecated voice region (avoid switching to these)
@@ -168,7 +168,7 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
-func (c *client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
+func (c *Client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimit.VoiceRegions(),
 		Endpoint:    endpoint.VoiceRegions(),

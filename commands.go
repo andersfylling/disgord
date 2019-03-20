@@ -15,7 +15,7 @@ type SocketCommand = string
 // CommandRequestGuildMembers Used to request offline members for a guild or
 // a list of guilds. When initially connecting, the gateway will only send
 // offline members if a guild has less than the large_threshold members
-// (value in the Gateway Identify). If a client wishes to receive additional
+// (value in the Gateway Identify). If a Client wishes to receive additional
 // members, they need to explicitly request them via this operation. The
 // server will send Guild Members Chunk events in response with up to 1000
 // members per chunk until all members that match the request have been sent.
@@ -40,7 +40,7 @@ func (u *RequestGuildMembersCommand) getGuildID() snowflake.ID {
 
 var _ guilder = (*RequestGuildMembersCommand)(nil)
 
-// CommandUpdateVoiceState Sent when a client wants to join, move, or
+// CommandUpdateVoiceState Sent when a Client wants to join, move, or
 // disconnect from a voice channel.
 const CommandUpdateVoiceState SocketCommand = cmd.UpdateVoiceState
 
@@ -50,14 +50,14 @@ type UpdateVoiceStateCommand struct {
 	// GuildID id of the guild
 	GuildID Snowflake `json:"guild_id"`
 
-	// ChannelID id of the voice channel client wants to join
+	// ChannelID id of the voice channel Client wants to join
 	// (null if disconnecting)
 	ChannelID *Snowflake `json:"channel_id"`
 
-	// SelfMute is the client mute
+	// SelfMute is the Client mute
 	SelfMute bool `json:"self_mute"`
 
-	// SelfDeaf is the client deafened
+	// SelfDeaf is the Client deafened
 	SelfDeaf bool `json:"self_deaf"`
 }
 
@@ -67,7 +67,7 @@ func (u *UpdateVoiceStateCommand) getGuildID() snowflake.ID {
 
 var _ guilder = (*UpdateVoiceStateCommand)(nil)
 
-// CommandUpdateStatus Sent by the client to indicate a presence or status
+// CommandUpdateStatus Sent by the Client to indicate a presence or status
 // update.
 const CommandUpdateStatus SocketCommand = cmd.UpdateStatus
 
@@ -75,7 +75,7 @@ const CommandUpdateStatus SocketCommand = cmd.UpdateStatus
 // see CommandUpdateStatus
 type UpdateStatusCommand struct {
 	mu sync.RWMutex
-	// Since unix time (in milliseconds) of when the client went idle, or null if the client is not idle
+	// Since unix time (in milliseconds) of when the Client went idle, or null if the Client is not idle
 	Since *uint `json:"since"`
 
 	// Game null, or the user's new activity
@@ -84,7 +84,7 @@ type UpdateStatusCommand struct {
 	// Status the user's new status
 	Status string `json:"status"`
 
-	// AFK whether or not the client is afk
+	// AFK whether or not the Client is afk
 	AFK bool `json:"afk"`
 }
 

@@ -5,7 +5,7 @@ package disgord
 type Flag uint32
 
 func (f Flag) Ignorecache() bool {
-	return (f & DisableCache) > 0
+	return (f & IgnoreCache) > 0
 }
 
 func (f Flag) IgnoreEmptyParams() bool {
@@ -20,7 +20,7 @@ func (f Flag) Sort() bool {
 }
 
 const (
-	DisableCache Flag = 1 << iota
+	IgnoreCache Flag = 1 << iota
 	IgnoreEmptyParams
 
 	// sort options

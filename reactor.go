@@ -94,7 +94,7 @@ type dispatcher struct {
 	// an event can have one or more handlers
 	handlerSpecs map[string][]*handlerSpec
 
-	// use session to allow mocking the client instance later on
+	// use session to allow mocking the Client instance later on
 	session  Session
 	shutdown chan struct{}
 }
@@ -147,7 +147,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 
 	for _, spec := range specs {
 		// faster. But somewhat weird to check death before running the handler
-		// this can be used if we find a different way to write the client.Ready
+		// this can be used if we find a different way to write the Client.Ready
 		// logic.
 		//if alive := spec.next(); !alive {
 		//	dead = append(dead, spec)
@@ -321,13 +321,13 @@ func (hs *handlerSpec) runMdlws(evt interface{}) interface{} {
 
 // Ctrl is a handler controller that supports lifetime and max number of execution for one or several handlers.
 //  // register only the first 6 votes
-//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Runs: 6})
+//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Runs: 6})
 //
 //  // Allow voting for only 10 minutes
-//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Duration: 10*time.Second})
+//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Duration: 10*time.Second})
 //
 //  // Allow voting until the month is over
-//  client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Until: time.Now().AddDate(0, 1, 0)})
+//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Until: time.Now().AddDate(0, 1, 0)})
 type Ctrl struct {
 	Runs     int
 	Until    time.Time

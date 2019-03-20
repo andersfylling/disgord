@@ -57,7 +57,7 @@ func (e *ErrorUnsupportedType) Error() string {
 //}
 
 // DiscordSaver holds the method saveToDiscord that discord structs must implement
-// in order to use client.SaveToDiscord for saving and update content.
+// in order to use Client.SaveToDiscord for saving and update content.
 type discordSaver interface {
 	saveToDiscord(session Session, flags ...Flag) error
 }
@@ -101,7 +101,7 @@ type internalUpdater interface {
 }
 
 type internalClientUpdater interface {
-	updateInternalsWithClient(*client)
+	updateInternalsWithClient(*Client)
 }
 
 // Discord types

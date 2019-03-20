@@ -283,7 +283,7 @@ type CreateGuildRoleParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
-func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
+func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildRoles(id),
@@ -311,7 +311,7 @@ func (c *client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, fl
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
+func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
 	builder = &updateGuildRoleBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}
@@ -341,7 +341,7 @@ func (c *client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildRoles(guildID),
@@ -360,7 +360,7 @@ func (c *client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
+func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildRoles(guildID),
 		Endpoint:    "/guilds/" + guildID.String() + "/roles",

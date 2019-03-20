@@ -616,7 +616,7 @@ func (u *User) saveToDiscord(s Session, flags ...Flag) (err error) {
 		return err
 	}
 
-	// TODO: remove once ModifyCurrentUser updates cache and the client var?
+	// TODO: remove once ModifyCurrentUser updates cache and the Client var?
 	_ = updated.copyOverToCache(u)
 	return
 }
@@ -770,7 +770,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *client) GetCurrentUser(flags ...Flag) (user *User, err error) {
+func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: "/users/@me",
 		Endpoint:    endpoint.UserMe(),
@@ -793,7 +793,7 @@ func (c *client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
+func (c *Client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.User(id),
@@ -806,14 +806,14 @@ func (c *client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
 	return getUser(r.Execute)
 }
 
-// ModifyCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
+// UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
 //  Rate limiter            /users
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
+func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
@@ -838,7 +838,7 @@ func (c *client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of users' guilds.
-func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: "/users/@me/guilds",
 		Endpoint:    endpoint.UserMeGuilds(),
@@ -866,7 +866,7 @@ func (c *client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
+func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: "/users/@me/guilds",
@@ -895,7 +895,7 @@ func (c *client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
 // Deprecated: Needs cache checking to get the actual list of channels
-func (c *client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
+func (c *Client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint:    endpoint.UserMeChannels(),
 		Ratelimiter: "/users/@me/channels",
@@ -929,7 +929,7 @@ type BodyUserCreateDM struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ratelimiter: ratelimitUsers(),
@@ -957,14 +957,14 @@ type CreateGroupDMParams struct {
 
 // CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
-// endpoint will not be shown in the Discord client
+// endpoint will not be shown in the Discord Client
 //  Method                  POST
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ratelimiter: "/users/@me/channels",
@@ -988,7 +988,7 @@ func (c *client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
+func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: "/users/@me/connections",
 		Endpoint:    endpoint.UserMeConnections(),
@@ -1031,7 +1031,7 @@ func newUserRESTBuilder(userID Snowflake) *getUserBuilder {
 // getUserBuilder ...
 type getUserBuilder struct {
 	r RESTBuilder
-	c *client
+	c *Client
 }
 
 func (b *getUserBuilder) Execute() (user *User, err error) {

@@ -171,7 +171,7 @@ var _ URLQueryStringer = (*GetInviteParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
-func (c *client) GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (invite *Invite, err error) {
+func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (invite *Invite, err error) {
 	if params == nil {
 		params = &GetInviteParams{}
 	}
@@ -192,7 +192,7 @@ func (c *client) GetInvite(inviteCode string, params URLQueryStringer, flags ...
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *client) DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error) {
+func (c *Client) DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimit.Invites(),

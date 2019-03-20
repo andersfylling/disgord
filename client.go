@@ -23,7 +23,7 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-// NewRESTClient creates a client for sending and handling Discord protocols such as rate limiting
+// NewRESTClient creates a Client for sending and handling Discord protocols such as rate limiting
 func NewRESTClient(conf *Config) (*httd.Client, error) {
 	return httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
@@ -36,8 +36,8 @@ func NewRESTClient(conf *Config) (*httd.Client, error) {
 	})
 }
 
-// New create a client. But panics on configuration/setup errors.
-func New(conf *Config) (c *client) {
+// New create a Client. But panics on configuration/setup errors.
+func New(conf *Config) (c *Client) {
 	var err error
 	if c, err = NewClient(conf); err != nil {
 		panic(err)
@@ -47,8 +47,8 @@ func New(conf *Config) (c *client) {
 
 }
 
-// NewClient creates a new DisGord client and returns an error on configuration issues
-func NewClient(conf *Config) (c *client, err error) {
+// NewClient creates a new DisGord Client and returns an error on configuration issues
+func NewClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
 		conf.HTTPClient = &http.Client{
 			Timeout: time.Second * 10,
@@ -72,7 +72,7 @@ func NewClient(conf *Config) (c *client, err error) {
 		conf.Logger = logger.Empty{}
 	}
 
-	// request client for REST requests
+	// request Client for REST requests
 	reqClient, err := NewRESTClient(conf)
 	if err != nil {
 		return nil, err
@@ -145,13 +145,13 @@ func NewClient(conf *Config) (c *client, err error) {
 	eventChanSize := 20
 	dispatch := newDispatcher(conf.ActivateEventChannels, eventChanSize)
 
-	// create a disgord client/instance/session
-	c = &client{
+	// create a disgord Client/instance/session
+	c = &Client{
 		shutdownChan: conf.shutdownChan,
 		config:       conf,
 		shardManager: sharding,
 		httpClient:   conf.HTTPClient,
-		Proxy:        conf.Proxy,
+		proxy:        conf.Proxy,
 		botToken:     conf.BotToken,
 		dispatcher:   dispatch,
 		req:          reqClient,
@@ -166,7 +166,7 @@ func NewClient(conf *Config) (c *client, err error) {
 	return c, err
 }
 
-// Config Configuration for the DisGord client
+// Config Configuration for the DisGord Client
 type Config struct {
 	BotToken   string
 	HTTPClient *http.Client
@@ -203,12 +203,12 @@ type Config struct {
 	Logger Logger
 }
 
-// client is the main disgord client to hold your state and data. You must always initiate it using the constructor
+// Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
 // methods (eg. New(..) or NewClient(..)).
 //
-// Note that this client holds all the REST methods, and is split across files, into whatever category
+// Note that this Client holds all the REST methods, and is split across files, into whatever category
 // the REST methods regards.
-type client struct {
+type Client struct {
 	sync.RWMutex
 
 	shutdownChan chan interface{}
@@ -221,7 +221,7 @@ type client struct {
 	// reactor demultiplexer for events
 	dispatcher *dispatcher
 
-	// cancelRequestWhenRateLimited by default the client waits until either the HTTPClient.timeout or
+	// cancelRequestWhenRateLimited by default the Client waits until either the HTTPClient.timeout or
 	// the rate limit ends before closing a request channel. If activated, in stead, requests will
 	// instantly be denied, and the process ended with a rate limited error.
 	cancelRequestWhenRateLimited bool
@@ -229,9 +229,9 @@ type client struct {
 	// req holds the rate limiting logic and error parsing unique for Discord
 	req *httd.Client
 
-	// http client used for connections
+	// http Client used for connections
 	httpClient *http.Client
-	Proxy      proxy.Dialer
+	proxy      proxy.Dialer
 
 	shardManager *WSShardManager
 
@@ -251,9 +251,9 @@ type client struct {
 // COMPLIANCE'S / IMPLEMENTATIONS
 //
 //////////////////////////////////////////////////////
-var _ fmt.Stringer = (*client)(nil)
-var _ Session = (*client)(nil)
-var _ Link = (*client)(nil)
+var _ fmt.Stringer = (*Client)(nil)
+var _ Session = (*Client)(nil)
+var _ Link = (*Client)(nil)
 
 //////////////////////////////////////////////////////
 //
@@ -261,7 +261,7 @@ var _ Link = (*client)(nil)
 //
 //////////////////////////////////////////////////////
 
-func (c *client) Pool() *pools {
+func (c *Client) Pool() *pools {
 	return c.pool
 }
 
@@ -269,7 +269,7 @@ func (c *client) Pool() *pools {
 // This is useful for creating the bot URL.
 //
 // At the moment, this holds no other effect than aesthetics.
-func (c *client) AddPermission(permission int) (updatedPermissions int) {
+func (c *Client) AddPermission(permission int) (updatedPermissions int) {
 	if permission < 0 {
 		permission = 0
 	}
@@ -279,18 +279,18 @@ func (c *client) AddPermission(permission int) (updatedPermissions int) {
 }
 
 // GetPermissions returns the minimum bot requirements.
-func (c *client) GetPermissions() (permissions int) {
+func (c *Client) GetPermissions() (permissions int) {
 	return c.permissions
 }
 
 // CreateBotURL creates a URL that can be used to invite this bot to a guild/server.
-// Note that it depends on the bot ID to be after the Discord update where the client ID
+// Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
 //
 // By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
 // for your bot to run successfully, you should utilise
-//  client.
-func (c *client) CreateBotURL() (u string, err error) {
+//  Client.
+func (c *Client) CreateBotURL() (u string, err error) {
 	_, _ = c.GetCurrentUser() // update c.myID
 
 	if c.myID.Empty() {
@@ -298,7 +298,7 @@ func (c *client) CreateBotURL() (u string, err error) {
 		return "", err
 	}
 
-	// make sure the snowflake is new enough to be used as a client ID
+	// make sure the snowflake is new enough to be used as a Client ID
 	t, err := time.Parse("2006-01-02 15:04:05", "2016-08-07 05:39:21.906")
 	if err != nil {
 		return "", err
@@ -319,19 +319,19 @@ func (c *client) CreateBotURL() (u string, err error) {
 
 // HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
-// way to measure delay between the client and Discord server
-func (c *client) HeartbeatLatency() (duration time.Duration, err error) {
+// way to measure delay between the Client and Discord server
+func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
 	return c.shardManager.GetAvgHeartbeatLatency()
 }
 
 // Myself get the current user / connected user
 // Deprecated: use GetCurrentUser instead
-func (c *client) Myself() (user *User, err error) {
+func (c *Client) Myself() (user *User, err error) {
 	return c.GetCurrentUser()
 }
 
-// GetConnectedGuilds get a list over guild IDs that this client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
-func (c *client) GetConnectedGuilds() []snowflake.ID {
+// GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
+func (c *Client) GetConnectedGuilds() []snowflake.ID {
 	c.shardManager.RLock()
 	defer c.shardManager.RUnlock()
 
@@ -347,27 +347,27 @@ func (c *client) GetConnectedGuilds() []snowflake.ID {
 // Note that this instance is never nil. When the conf.Logger is not assigned
 // an empty struct is used instead. Such that all calls are simply discarded at compile time
 // removing the need for nil checks.
-func (c *client) Logger() logger.Logger {
+func (c *Client) Logger() logger.Logger {
 	return c.log
 }
 
-func (c *client) String() string {
+func (c *Client) String() string {
 	return LibraryInfo()
 }
 
 // RateLimiter return the rate limiter object
-func (c *client) RateLimiter() httd.RateLimiter {
+func (c *Client) RateLimiter() httd.RateLimiter {
 	return c.req.RateLimiter()
 }
 
 // Req return the request object. Used in REST requests to handle rate limits,
 // wrong http responses, etc.
-func (c *client) Req() httd.Requester {
+func (c *Client) Req() httd.Requester {
 	return c.req
 }
 
 // Cache returns the cacheLink manager for the session
-func (c *client) Cache() Cacher {
+func (c *Client) Cache() Cacher {
 	return c.cache
 }
 
@@ -377,7 +377,7 @@ func (c *client) Cache() Cacher {
 //
 //////////////////////////////////////////////////////
 
-func (c *client) setupConnectEnv() {
+func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
 	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
@@ -393,7 +393,7 @@ func (c *client) setupConnectEnv() {
 }
 
 // Connect establishes a websocket connection to the discord API
-func (c *client) Connect() (err error) {
+func (c *Client) Connect() (err error) {
 	// set the user ID upon connection
 	// only works for socketing
 	//
@@ -430,7 +430,7 @@ func (c *client) Connect() (err error) {
 }
 
 // Disconnect closes the discord websocket connection
-func (c *client) Disconnect() (err error) {
+func (c *Client) Disconnect() (err error) {
 	fmt.Println() // to keep ^C on it's own line
 	c.log.Info("Closing Discord gateway connection")
 	close(c.dispatcher.shutdown)
@@ -446,7 +446,7 @@ func (c *client) Disconnect() (err error) {
 
 // Suspend in case you want to temporary disconnect from the Gateway. But plan on
 // connecting again without restarting your software/application, this should be used.
-func (c *client) Suspend() (err error) {
+func (c *Client) Suspend() (err error) {
 	c.log.Info("Closing Discord gateway connection")
 	if err = c.shardManager.Disconnect(); err != nil {
 		return err
@@ -457,7 +457,7 @@ func (c *client) Suspend() (err error) {
 }
 
 // DisconnectOnInterrupt wait until a termination signal is detected
-func (c *client) DisconnectOnInterrupt() (err error) {
+func (c *Client) DisconnectOnInterrupt() (err error) {
 	// create a channel to listen for termination signals (graceful shutdown)
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
@@ -468,7 +468,7 @@ func (c *client) DisconnectOnInterrupt() (err error) {
 
 // StayConnectedUntilInterrupted is a simple wrapper for connect, and disconnect that listens for system interrupts.
 // When a error happens you can terminate the application without worries.
-func (c *client) StayConnectedUntilInterrupted() (err error) {
+func (c *Client) StayConnectedUntilInterrupted() (err error) {
 	if err = c.Connect(); err != nil {
 		c.log.Error(err)
 		return err
@@ -489,7 +489,7 @@ func (c *client) StayConnectedUntilInterrupted() (err error) {
 //////////////////////////////////////////////////////
 
 // handlerAddToConnectedGuilds update internal state when joining or creating a guild
-func (c *client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
+func (c *Client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
 	shard, _ := c.shardManager.GetShard(evt.Guild.ID)
@@ -506,7 +506,7 @@ func (c *client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
 }
 
 // handlerRemoveFromConnectedGuilds update internal state when deleting or leaving a guild
-func (c *client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
+func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
 	//  meaning, you might have to add your own shards if you get a panic here
 	shard, _ := c.shardManager.GetShard(evt.UnavailableGuild.ID)
@@ -522,7 +522,7 @@ func (c *client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 	}
 }
 
-func (c *client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
+func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 	_ = c.cache.Update(UserCache, update.User)
 }
 
@@ -533,12 +533,8 @@ func (c *client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 //////////////////////////////////////////////////////
 
 // Ready triggers a given callback when all shards has gotten their first Ready event
-// Warning: if you run client.Disconnect and want to run Connect again later, this will
-//  not work. The callback will be triggered instantly, as all the shards have already
-//  successfully connected once.
-//
-// Warning: Do not call client.Connect before this.
-func (c *client) Ready(cb func()) {
+// Warning: Do not call Client.Connect before this.
+func (c *Client) Ready(cb func()) {
 	ctrl := &rdyCtrl{
 		cb: cb,
 	}
@@ -556,26 +552,36 @@ func (c *client) Ready(cb func()) {
 	}, ctrl)
 }
 
-// On binds a singular or multiple event handlers to the stated event, with the same middlewares.
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions)
-// the mdlwHasMentions is optional, as are any middleware and controller. But a handler must be specified.
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, &ctrl{remaining:3})
-// here ctrl is a custom struct that implements disgord.HandlerCtrl, and after 3 calls it is no longer callable.
+// On creates a specification to be executed on the given event. The specification
+// consists of, in order, 0 or more middlewares, 1 or more handlers, 0 or 1 controller.
+// On incorrect ordering, or types, the method will panic. See reactor.go for types.
 //
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveToDB, &ctrl{remaining:3})
-// the On statement takes all it's parameters as a unique definition. These are not two separate
-// handlers. But rather, two handler run in sequence after the middleware (3 times).
+// Each of the three sub-types of a specification is run in sequence, as well as the specifications
+// registered for a event. However, the slice of specifications are executed in a goroutine to avoid
+// blocking future events. The middlewares allows manipulating the event data before it reaches the
+// handlers. The handlers executes short-running logic based on the event data (use go routine if
+// you need a long running task). The controller dictates lifetime of the specification.
 //
-// Another example is to create a voting system where you specify a deadline instead of a remaining counter:
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveToDB, &ctrl{deadline:time.Now().Add(time.Hour)})
-// again, you specify the IsDead() method to comply with the disgord.HandlerCtrl interface, so you can do whatever
-// you want.
+//  // a handler that is executed on every Ready event
+//  Client.On(EvtReady, onReady)
 //
-// If the HandlerCtrl.OnInsert returns an error, the related handlers are still added to the demultiplexer reactor.
-// But the error is logged to the injected logger instance (.Error).
+//  // a handler that runs only the first three times a READY event is fired
+//  Client.On(EvtReady, onReady, &Ctrl{Runs: 3})
+//
+//  // a handler that only runs for events within the first 10 minutes
+//  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
+//
+// Another example is to create a voting system where you specify a deadline instead of a Runs counter:
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().Add(time.Hour)})
+//
+// You can use your own Ctrl struct, as long as it implements disgord.HandlerCtrl. Do not execute long running tasks
+// in the methods. Use a go routine instead.
+//
+// If the HandlerCtrl.OnInsert returns an error, the related handlers are still added to the dispatcher.
+// But the error is logged to the injected logger instance (log.Error).
 //
 // This ctrl feature was inspired by https://github.com/discordjs/discord.js
-func (c *client) On(event string, inputs ...interface{}) {
+func (c *Client) On(event string, inputs ...interface{}) {
 	if err := ValidateHandlerInputs(inputs...); err != nil {
 		panic(err)
 	}
@@ -587,7 +593,7 @@ func (c *client) On(event string, inputs ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *client) Emit(command SocketCommand, data interface{}) error {
+func (c *Client) Emit(command SocketCommand, data interface{}) error {
 	switch command {
 	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
 	default:
@@ -597,18 +603,18 @@ func (c *client) Emit(command SocketCommand, data interface{}) error {
 }
 
 // EventChan get a event channel using the event name
-func (c *client) EventChan(event string) (channel interface{}, err error) {
+func (c *Client) EventChan(event string) (channel interface{}, err error) {
 	return c.dispatcher.EvtChan(event)
 }
 
 // EventChannels get access to all the event channels
-func (c *client) EventChannels() (channels EventChannels) {
+func (c *Client) EventChannels() (channels EventChannels) {
 	return c.dispatcher.dispatcherChans
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
 // to reduce unnecessary marshalling and controls.
-func (c *client) AcceptEvent(events ...string) {
+func (c *Client) AcceptEvent(events ...string) {
 	for _, evt := range events {
 		c.shardManager.TrackEvent.Add(evt)
 	}
@@ -622,7 +628,7 @@ func (c *client) AcceptEvent(events ...string) {
 
 // DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
 // be used to delete said object.
-func (c *client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error) {
+func (c *Client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error) {
 	if obj == nil {
 		return errors.New("object to save can not be nil")
 	}
@@ -633,7 +639,7 @@ func (c *client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error
 
 // SaveToDiscord saves an object to the Discord servers. This supports creating and updating objects.
 // Note that an object is created when the ID field is empty, and update when set.
-func (c *client) SaveToDiscord(obj discordSaver, flags ...Flag) (err error) {
+func (c *Client) SaveToDiscord(obj discordSaver, flags ...Flag) (err error) {
 	if obj == nil {
 		return errors.New("object to save can not be nil")
 	}
@@ -649,7 +655,7 @@ func (c *client) SaveToDiscord(obj discordSaver, flags ...Flag) (err error) {
 //
 //////////////////////////////////////////////////////
 
-func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
+func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
 	// TODO: populate these partial guild objects
 	return c.GetCurrentUserGuilds(params)
 }
@@ -664,7 +670,7 @@ func (c *client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([
 //
 // If you want to affect the actual message data besides .Content; provide a
 // MessageCreateParams. The reply message will be updated by the last one provided.
-func (c *client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
+func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
 
 	var flags []Flag
 	params := &CreateMessageParams{}
@@ -710,17 +716,17 @@ func (c *client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 
 /* status updates */
 
-// UpdateStatus updates the client's game status
+// UpdateStatus updates the Client's game status
 // note: for simple games, check out UpdateStatusString
-func (c *client) UpdateStatus(s *UpdateStatusCommand) error {
+func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return c.shardManager.Emit(CommandUpdateStatus, s)
 }
 
-// UpdateStatusString sets the client's game activity to the provided string, status to online
+// UpdateStatusString sets the Client's game activity to the provided string, status to online
 // and type to Playing
-func (c *client) UpdateStatusString(s string) error {
+func (c *Client) UpdateStatusString(s string) error {
 	updateData := &UpdateStatusCommand{
 		Since: nil,
 		Game: &Activity{
@@ -733,7 +739,7 @@ func (c *client) UpdateStatusString(s string) error {
 	return c.UpdateStatus(updateData)
 }
 
-func (c *client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
+func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 	r := &rest{
 		c:    c,
 		conf: conf,

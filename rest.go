@@ -73,7 +73,7 @@ type restStepCheckCache func() (v interface{}, err error)
 type restStepDoRequest func() (resp *http.Response, body []byte, err error)
 type restStepUpdateCache func(registry cacheRegistry, id Snowflake, x interface{}) (err error)
 type rest struct {
-	c     *client
+	c     *Client
 	flags Flag // merge flags
 
 	// caching
@@ -358,7 +358,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		}
 
 		executeInternalUpdater(v)
-		// executeInternalClientUpdater(disgord.client, v)
+		// executeInternalClientUpdater(disgord.Client, v)
 
 		if b.cacheRegistry == NoCacheSpecified {
 			return v, err
@@ -425,7 +425,7 @@ type basicBuilder struct {
 	r RESTBuilder
 }
 
-// GetGateway [REST] Returns an object with a single valid WSS URL, which the client can use for Connecting.
+// GetGateway [REST] Returns an object with a single valid WSS URL, which the Client can use for Connecting.
 // Clients should cacheLink this value and only call this endpoint to retrieve a new URL if they are unable to
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET

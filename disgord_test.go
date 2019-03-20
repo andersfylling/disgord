@@ -161,12 +161,12 @@ var sink1 int = 1
 //	// starts receiver and operation handler
 //	wsClient, wsShutdownChan := websocket.NewTestClient(nil, 0, &mocker)
 //
-//	d := client{
+//	d := Client{
 //		shutdownChan: make(chan interface{}),
 //		config: &EvtConfig{
-//			DisableCache: true,
+//			IgnoreCache: true,
 //		},
-//		httpClient: &http.client{
+//		httpClient: &http.Client{
 //			Timeout: time.Second * 10,
 //		},
 //		evtDispatch: NewDispatch(false, 20),

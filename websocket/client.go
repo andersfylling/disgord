@@ -152,7 +152,7 @@ type client struct {
 	// useful in unit tests when you want to drop any actual timeouts
 	timeoutMultiplier int
 
-	// Proxy allows for use of a custom proxy
+	// proxy allows for use of a custom proxy
 	Proxy proxy.Dialer
 
 	// ChannelBuffer is used to set the event channel buffer

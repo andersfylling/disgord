@@ -120,5 +120,5 @@ func executeInternalUpdater(x interface{}) {
 	}
 }
 
-func executeInternalClientUpdater(client *client, x interface{}) {
+func executeInternalClientUpdater(client *Client, x interface{}) {
 }

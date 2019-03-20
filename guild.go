@@ -1163,7 +1163,7 @@ type CreateGuildParams struct {
 //  Comment                 This endpoint. can be used only by bots in less than 10 guilds. Creating channel
 //                          categories from this endpoint. is not supported.
 //							The params argument is optional.
-func (c *client) CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
+func (c *Client) CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 guilds?
 
@@ -1201,7 +1201,7 @@ func (c *client) CreateGuild(guildName string, params *CreateGuildParams, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error) {
+func (c *Client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuild(id),
 		Endpoint:    endpoint.Guild(id),
@@ -1223,7 +1223,7 @@ func (c *client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
-func (c *client) UpdateGuild(id Snowflake, flags ...Flag) (builder *updateGuildBuilder) {
+func (c *Client) UpdateGuild(id Snowflake, flags ...Flag) (builder *updateGuildBuilder) {
 	builder = &updateGuildBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
@@ -1249,7 +1249,7 @@ func (c *client) UpdateGuild(id Snowflake, flags ...Flag) (builder *updateGuildB
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuild(id),
@@ -1268,7 +1268,7 @@ func (c *client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *client) GetGuildChannels(guildID Snowflake, flags ...Flag) (ret []*Channel, err error) {
+func (c *Client) GetGuildChannels(guildID Snowflake, flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildChannels(guildID),
 		Endpoint:    endpoint.GuildChannels(guildID),
@@ -1305,7 +1305,7 @@ type CreateGuildChannelParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
-func (c *client) CreateGuildChannel(guildID Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateGuildChannel(guildID Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
 	if channelName == "" && (params == nil || params.Name == "") {
 		return nil, errors.New("channel name is required")
 	}
@@ -1343,7 +1343,7 @@ type UpdateGuildChannelPositionsParams struct {
 	Position int       `json:"position"`
 }
 
-// ModifyGuildChannelPositions [REST] Modify the positions of a set of channel objects for the guild.
+// UpdateGuildChannelPositions [REST] Modify the positions of a set of channel objects for the guild.
 // Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
 // Gateway events.
 //  Method                  PATCH
@@ -1353,7 +1353,7 @@ type UpdateGuildChannelPositionsParams struct {
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
-func (c *client) UpdateGuildChannelPositions(guildID Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
+func (c *Client) UpdateGuildChannelPositions(guildID Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildChannels(guildID),
@@ -1396,7 +1396,7 @@ type UpdateGuildRolePositionsParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (roles []*Role, err error) {
+func (c *Client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (roles []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildRoles(guildID),
@@ -1414,7 +1414,7 @@ func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuil
 }
 
 // UpdateGuildRolesPos "ensures" you have all the roles required,
-//func (c *client) UpdateGuildRolesPos(guildID Snowflake, rs []*Role, flags ...Flag) (updated []*Role, err error) {
+//func (c *Client) UpdateGuildRolesPos(guildID Snowflake, rs []*Role, flags ...Flag) (updated []*Role, err error) {
 //	var current []*Role
 //	if current, err = c.GetGuildRoles(guildID, flags...); err != nil {
 //		return nil, err
@@ -1456,14 +1456,14 @@ func (c *client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuil
 //	return c.UpdateGuildRolePositions(guildID, params, flags...)
 //}
 
-// GetGuildMember [REST] Returns a guild member object for the specified user.
+// GetMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
 //  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *client) GetGuildMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
+func (c *Client) GetMember(guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildMembers(guildID),
 		Endpoint:    endpoint.GuildMember(guildID, userID),
@@ -1501,7 +1501,7 @@ func (g *getGuildMembersParams) FindErrors() error {
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
 //  Comment#3               https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func (c *client) getGuildMembers(guildID Snowflake, params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
+func (c *Client) getGuildMembers(guildID Snowflake, params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
 	if params == nil {
 		params = &getGuildMembersParams{}
 	}
@@ -1537,7 +1537,7 @@ type GetMembersParams struct {
 }
 
 // GetMembers uses the GetGuildMembers endpoint iteratively until the your restriction/query params are met.
-func (c *client) GetMembers(guildID Snowflake, params *GetMembersParams, flags ...Flag) (members []*Member, err error) {
+func (c *Client) GetMembers(guildID Snowflake, params *GetMembersParams, flags ...Flag) (members []*Member, err error) {
 	if params == nil {
 		params = &GetMembersParams{
 			Limit: math.MaxUint32,
@@ -1613,7 +1613,7 @@ type AddGuildMemberParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 All parameters to this endpoint. except for access_token are optional.
-func (c *client) AddGuildMember(guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (member *Member, err error) {
+func (c *Client) AddGuildMember(guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (member *Member, err error) {
 	if accessToken == "" && (params == nil || params.AccessToken == "") {
 		return nil, errors.New("access token is required")
 	}
@@ -1657,7 +1657,7 @@ func (c *client) AddGuildMember(guildID, userID Snowflake, accessToken string, p
 //  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
 //                          the API user must have permissions to both connect to the channel and have the
 //                          MOVE_MEMBERS permission.
-func (c *client) UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
+func (c *Client) UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
 	builder = &updateGuildMemberBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Member{}
@@ -1688,7 +1688,7 @@ func (c *client) UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) (bu
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
+func (c *Client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPut,
 		Ratelimiter: ratelimitGuildMembers(guildID),
@@ -1708,7 +1708,7 @@ func (c *client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
+func (c *Client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildMembers(guildID),
@@ -1728,7 +1728,7 @@ func (c *client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildMembers(guildID),
@@ -1747,7 +1747,7 @@ func (c *client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-bans
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildBans(id Snowflake, flags ...Flag) (bans []*Ban, err error) {
+func (c *Client) GetGuildBans(id Snowflake, flags ...Flag) (bans []*Ban, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(id),
 		Endpoint:    endpoint.GuildBans(id),
@@ -1776,7 +1776,7 @@ func (c *client) GetGuildBans(id Snowflake, flags ...Flag) (bans []*Ban, err err
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildBan(guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error) {
+func (c *Client) GetGuildBan(guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildBans(guildID),
 		Endpoint:    endpoint.GuildBan(guildID, userID),
@@ -1812,7 +1812,7 @@ func (b *BanMemberParams) FindErrors() error {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error) {
+func (c *Client) BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error) {
 	if params == nil {
 		return errors.New("params was nil")
 	}
@@ -1839,7 +1839,7 @@ func (c *client) BanMember(guildID, userID Snowflake, params *BanMemberParams, f
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UnbanMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) UnbanMember(guildID, userID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildBans(guildID),
@@ -1883,7 +1883,7 @@ type guildPruneCount struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error) {
+func (c *Client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error) {
 	if id.Empty() {
 		return 0, errors.New("guildID can not be " + id.String())
 	}
@@ -1922,7 +1922,7 @@ func (c *client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error) {
+func (c *Client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error) {
 	params := pruneMembersParams{Days: days}
 	if err = params.FindErrors(); err != nil {
 		return err
@@ -1946,7 +1946,7 @@ func (c *client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-voice-regions
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
+func (c *Client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildRegions(id),
 		Endpoint:    endpoint.GuildRegions(id),
@@ -1967,7 +1967,7 @@ func (c *client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*Voice
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-invites
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
+func (c *Client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildInvites(id),
 		Endpoint:    endpoint.GuildInvites(id),
@@ -1988,7 +1988,7 @@ func (c *client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, er
 //  Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
 //  Reviewed                 2018-08-18
 //  Comment                  -
-func (c *client) GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error) {
+func (c *Client) GetGuildIntegrations(id Snowflake, flags ...Flag) (ret []*Integration, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildIntegrations(id),
 		Endpoint:    endpoint.GuildIntegrations(id),
@@ -2017,7 +2017,7 @@ type CreateGuildIntegrationParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
+func (c *Client) CreateGuildIntegration(guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
@@ -2049,7 +2049,7 @@ type UpdateGuildIntegrationParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UpdateGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error) {
+func (c *Client) UpdateGuildIntegration(guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
@@ -2072,7 +2072,7 @@ func (c *client) UpdateGuildIntegration(guildID, integrationID Snowflake, params
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
@@ -2092,7 +2092,7 @@ func (c *client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
+func (c *Client) SyncGuildIntegration(guildID, integrationID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ratelimiter: ratelimitGuildIntegrations(guildID),
@@ -2122,7 +2122,7 @@ type nickNameResponse struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error) {
+func (c *Client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (newNick string, err error) {
 	params := &updateCurrentUserNickParams{
 		Nick: nick,
 	}
@@ -2149,7 +2149,7 @@ func (c *client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (n
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEmbed, err error) {
+func (c *Client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEmbed, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildEmbed(guildID),
 		Endpoint:    endpoint.GuildEmbed(guildID),
@@ -2169,7 +2169,7 @@ func (c *client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEm
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) UpdateGuildEmbed(guildID Snowflake, flags ...Flag) (builder *updateGuildEmbedBuilder) {
+func (c *Client) UpdateGuildEmbed(guildID Snowflake, flags ...Flag) (builder *updateGuildEmbedBuilder) {
 	builder = &updateGuildEmbedBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &GuildEmbed{}
@@ -2193,7 +2193,7 @@ func (c *client) UpdateGuildEmbed(guildID Snowflake, flags ...Flag) (builder *up
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-vanity-url
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
+func (c *Client) GetGuildVanityURL(guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitGuildVanityURL(guildID),
 		Endpoint:    endpoint.GuildVanityURL(guildID),

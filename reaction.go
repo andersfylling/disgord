@@ -75,7 +75,7 @@ func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -119,7 +119,7 @@ func (c *client) CreateReaction(channelID, messageID Snowflake, emoji interface{
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -162,7 +162,7 @@ func (c *client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interfa
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -213,7 +213,7 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
+func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -262,7 +262,7 @@ func (c *client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
 	if channelID.Empty() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
