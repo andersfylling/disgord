@@ -386,6 +386,36 @@ func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, e
 	return getRoles(r.Execute)
 }
 
+// GetMemberPermissions populates a uint64 with all the permission flags
+func (c *Client) GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions uint64, err error) {
+	roles, err := c.GetGuildRoles(guildID, flags...)
+	if err != nil {
+		return 0, err
+	}
+
+	member, err := c.GetMember(guildID, userID, flags...)
+	if err != nil {
+		return 0, err
+	}
+
+	roleIDs := member.Roles
+	for i := range roles {
+		for j := range roleIDs {
+			if roles[i].ID == roleIDs[j] {
+				permissions |= roles[i].Permissions
+				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
+				break
+			}
+		}
+
+		if len(roleIDs) == 0 {
+			break
+		}
+	}
+
+	return permissions, nil
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders

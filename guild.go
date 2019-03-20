@@ -27,7 +27,7 @@ import (
 
 // Constants for the different bit offsets of text channel permissions
 const (
-	PermissionReadMessages = 1 << (iota + 10)
+	PermissionReadMessages uint64 = 1 << (iota + 10)
 	PermissionSendMessages
 	PermissionSendTTSMessages
 	PermissionManageMessages
@@ -40,18 +40,18 @@ const (
 
 // Constants for the different bit offsets of voice permissions
 const (
-	PermissionVoiceConnect = 1 << (iota + 20)
+	PermissionVoiceConnect uint64 = 1 << (iota + 20)
 	PermissionVoiceSpeak
 	PermissionVoiceMuteMembers
 	PermissionVoiceDeafenMembers
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
-	PermissionVoicePrioritySpeaker = 1 << (iota + 2)
+	PermissionVoicePrioritySpeaker uint64 = 1 << (iota + 2)
 )
 
 // Constants for general management.
 const (
-	PermissionChangeNickname = 1 << (iota + 26)
+	PermissionChangeNickname uint64 = 1 << (iota + 26)
 	PermissionManageNicknames
 	PermissionManageRoles
 	PermissionManageWebhooks
@@ -60,7 +60,7 @@ const (
 
 // Constants for the different bit offsets of general permissions
 const (
-	PermissionCreateInstantInvite = 1 << iota
+	PermissionCreateInstantInvite uint64 = 1 << iota
 	PermissionKickMembers
 	PermissionBanMembers
 	PermissionAdministrator
@@ -1022,6 +1022,18 @@ func (m *Member) String() string {
 		id = m.User.ID
 	}
 	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
+}
+
+func (m *Member) GetPermissions(s Session) (p uint64, err error) {
+	uID := m.userID
+	if uID.Empty() {
+		usr, err := m.GetUser(s)
+		if err != nil {
+			return 0, err
+		}
+		uID = usr.ID
+	}
+	return s.GetMemberPermissions(m.GuildID, uID)
 }
 
 // GetUser tries to ensure that you get a user object and not a nil. The user can be nil if the guild

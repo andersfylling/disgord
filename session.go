@@ -342,6 +342,8 @@ type RESTGuild interface {
 	// GetGuildRoles Returns a list of role objects for the guild.
 	GetGuildRoles(guildID Snowflake, flags ...Flag) ([]*Role, error)
 
+	GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions uint64, err error)
+
 	// CreateGuildRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 	// Returns the new role object on success. Fires a Guild Role Create Gateway event.
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
@@ -548,8 +550,8 @@ type Session interface {
 	SaveToDiscord(obj discordSaver, flags ...Flag) error
 
 	// AddPermission is to store the permissions required by the bot to function as intended.
-	AddPermission(permission int) (updatedPermissions int)
-	GetPermissions() (permissions int)
+	AddPermission(permission uint64) (updatedPermissions uint64)
+	GetPermissions() (permissions uint64)
 
 	// CreateBotURL
 	CreateBotURL() (url string, err error)
