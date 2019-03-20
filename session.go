@@ -132,6 +132,8 @@ type RESTMessage interface {
 	// UpdateMessage Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
 	UpdateMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
+	SetMsgContent(chanID, msgID Snowflake, content string) (*Message, error)
+	SetMsgEmbed(chanID, msgID Snowflake, embed *Embed) (*Message, error)
 
 	// DeleteMessage Delete a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
