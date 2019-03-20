@@ -6,12 +6,21 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-type msgFilterdg interface {
-	Myself() (*disgord.User, error)
+func NewMsgFilter(client disgord.Session) (filter *msgFilter, err error) {
+	if filter, err = newMsgFilter(client); err != nil {
+		return nil, err
+	}
+	filter.s = client
+
+	return filter, nil
 }
 
-func NewMsgFilter(client msgFilterdg) (filter *msgFilter, err error) {
-	usr, err := client.Myself()
+type msgFilterdg interface {
+	GetCurrentUser(flags ...disgord.Flag) (*disgord.User, error)
+}
+
+func newMsgFilter(client msgFilterdg) (filter *msgFilter, err error) {
+	usr, err := client.GetCurrentUser()
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +32,12 @@ func NewMsgFilter(client msgFilterdg) (filter *msgFilter, err error) {
 }
 
 type msgFilter struct {
+	s      disgord.Session
 	botID  disgord.Snowflake
 	prefix string
+
+	permissions       uint64
+	eitherPermissions uint64
 }
 
 // SetPrefix set the prefix attribute which is used in StripPrefix, HasPrefix.
@@ -78,4 +91,43 @@ func (f *msgFilter) StripPrefix(evt interface{}) interface{} {
 	msg := getMsg(evt)
 	msg.Content = msg.Content[len(f.prefix):]
 	return evt
+}
+
+func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
+	msg := getMsg(evt)
+	uID := msg.Author.ID
+	if uID.Empty() {
+		return nil
+	}
+
+	p, err := f.s.GetMemberPermissions(msg.GuildID, uID)
+	if err != nil {
+		return nil
+	}
+
+	if (p & f.permissions) != f.permissions {
+		return nil
+	}
+
+	if f.eitherPermissions > 0 && (p&f.eitherPermissions) == 0 {
+		return nil
+	}
+
+	return msg
+}
+
+// SetMinPermissions enforces message authors to have at least the given permission flags
+// for the HasPermissions method to succeed
+func (f *msgFilter) SetMinPermissions(min uint64) {
+	f.permissions = min
+}
+
+// SetAltPermissions enforces message authors to have at least one of the given permission flags for the
+// HasPermissions method to succeed
+func (f *msgFilter) SetAltPermissions(flags ...uint64) {
+	var permissions uint64
+	for i := range flags {
+		permissions |= flags[i]
+	}
+	f.eitherPermissions = permissions
 }

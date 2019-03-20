@@ -12,13 +12,13 @@ type clientMock struct {
 
 var _ msgFilterdg = (*clientMock)(nil)
 
-func (c *clientMock) Myself() (*disgord.User, error) {
+func (c *clientMock) GetCurrentUser(flags ...disgord.Flag) (*disgord.User, error) {
 	return &disgord.User{ID: c.id}, nil
 }
 
 func TestNewMsgFilter(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, err := NewMsgFilter(&clientMock{botID})
+	filter, err := newMsgFilter(&clientMock{botID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestNewMsgFilter(t *testing.T) {
 
 func TestMsgFilter_NotByBot(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := NewMsgFilter(&clientMock{botID})
+	filter, _ := newMsgFilter(&clientMock{botID})
 	evt := &disgord.MessageCreate{
 		Message: &disgord.Message{
 			Author: &disgord.User{Bot: true},
@@ -57,7 +57,7 @@ func TestMsgFilter_NotByBot(t *testing.T) {
 
 func TestMsgFilter_ContainsBotMention(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := NewMsgFilter(&clientMock{botID})
+	filter, _ := newMsgFilter(&clientMock{botID})
 	var evt interface{}
 	e := &disgord.MessageCreate{
 		Message: &disgord.Message{Content: "<@" + botID.String() + "> hello"},
@@ -84,7 +84,7 @@ func TestMsgFilter_ContainsBotMention(t *testing.T) {
 
 func TestMsgFilter_HasBotMentionPrefix(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := NewMsgFilter(&clientMock{botID})
+	filter, _ := newMsgFilter(&clientMock{botID})
 	var evt interface{}
 	e := &disgord.MessageCreate{
 		Message: &disgord.Message{Content: "<@" + botID.String() + "> hello"},
@@ -104,7 +104,7 @@ func TestMsgFilter_HasBotMentionPrefix(t *testing.T) {
 }
 
 func TestMsgFilter_SetPrefix(t *testing.T) {
-	filter, _ := NewMsgFilter(&clientMock{})
+	filter, _ := newMsgFilter(&clientMock{})
 	if filter.prefix != "" {
 		t.Fatal("expected prefix to be empty")
 	}
@@ -117,7 +117,7 @@ func TestMsgFilter_SetPrefix(t *testing.T) {
 
 func TestMsgFilter_HasPrefix(t *testing.T) {
 	prefix := "!!"
-	filter, _ := NewMsgFilter(&clientMock{})
+	filter, _ := newMsgFilter(&clientMock{})
 	filter.SetPrefix(prefix)
 
 	var evt interface{}
@@ -140,7 +140,7 @@ func TestMsgFilter_HasPrefix(t *testing.T) {
 
 func TestMsgFilter_StripPrefix(t *testing.T) {
 	prefix := "!!"
-	filter, _ := NewMsgFilter(&clientMock{})
+	filter, _ := newMsgFilter(&clientMock{})
 	filter.SetPrefix(prefix)
 
 	var evt interface{}
