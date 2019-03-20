@@ -29,11 +29,23 @@ func Sort(v interface{}, fs ...Flag) {
 	} else if (flags & SortByHoist) > 0 {
 		sortByHoist(v, flags)
 	} else if list, ok := v.(sort.Interface); ok {
-		sort.Sort(list) // TODO: asc/desc
+		if (flags & OrderDescending) > 0 {
+			sort.Sort(sort.Reverse(list))
+		} else {
+			sort.Sort(list)
+		}
 	} else if list, ok := v.([]*Role); ok {
-		sort.Sort(roles(list))
+		if (flags & OrderDescending) > 0 {
+			sort.Sort(sort.Reverse(roles(list)))
+		} else {
+			sort.Sort(roles(list))
+		}
 	} else if list, ok := v.(*[]*Role); ok {
-		sort.Sort(roles(*list))
+		if (flags & OrderDescending) > 0 {
+			sort.Sort(sort.Reverse(roles(*list)))
+		} else {
+			sort.Sort(roles(*list))
+		}
 	} else {
 		panic("type is missing sort.Interface implementation")
 	}
