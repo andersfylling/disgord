@@ -85,9 +85,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateChannelBuilder:
 		s = *t
-	case *[]*Config:
-		s = *t
 	case *[]*Client:
+		s = *t
+	case *[]*Config:
 		s = *t
 	case *[]*RequestGuildMembersCommand:
 		s = *t
@@ -369,6 +369,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateWebhookBuilder:
 		s = *t
+	default:
+		s = t
 	}
 
 	return s

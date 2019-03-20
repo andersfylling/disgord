@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 
@@ -109,6 +110,11 @@ type Role struct {
 }
 
 var _ Reseter = (*Role)(nil)
+var _ fmt.Stringer = (*Role)(nil)
+
+func (r *Role) String() string {
+	return r.Name
+}
 
 // Mention gives a formatted version of the role such that it can be parsed by Discord clients
 func (r *Role) Mention() string {

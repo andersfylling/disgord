@@ -5,7 +5,7 @@ package disgord
 import "strconv"
 
 const (
-	_Flag_name_0 = "DisableCacheIgnoreEmptyParams"
+	_Flag_name_0 = "IgnoreCacheIgnoreEmptyParams"
 	_Flag_name_1 = "SortByID"
 	_Flag_name_2 = "SortByName"
 	_Flag_name_3 = "SortByHoist"
@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	_Flag_index_0 = [...]uint8{0, 12, 29}
+	_Flag_index_0 = [...]uint8{0, 11, 28}
 )
 
 func (i Flag) String() string {

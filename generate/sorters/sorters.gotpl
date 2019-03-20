@@ -38,6 +38,8 @@ func derefSliceP(v interface{}) (s interface{}) {
     case *[]*{{ $t.Name }}:
         s = *t
     {{- end }}
+    default:
+        s = t
     }
 
     return s

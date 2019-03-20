@@ -73,7 +73,7 @@ func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
 // EventGuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
-// 	2. When a Guild becomes available again to the Client.
+// 	2. When a Guild becomes available again to the client.
 // 	3. When the current user joins a new Guild.
 //
 const EvtGuildCreate = event.GuildCreate
@@ -321,9 +321,9 @@ func (h *PresencesReplace) setShardID(id uint)                  { h.ShardID = id
 
 // ---------------------------
 
-// EventReady The ready event is dispatched when a Client has completed the initial handshake with the gateway (for new sessions).
+// EventReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
-// // required for a Client to begin interacting with the rest of the platform.
+// // required for a client to begin interacting with the rest of the platform.
 // //  Fields:
 // //  - V int
 // //  - User *User
@@ -339,7 +339,7 @@ func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
-// EventResumed The resumed event is dispatched when a Client has sent a resume payload to the gateway
+// EventResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
 //  Fields:
 //  - Trace []string

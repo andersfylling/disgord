@@ -31,7 +31,7 @@ func executeInternalUpdater(x interface{}) {
 {{ end }}
 {{ if eq $enf.Name "internalClientUpdater" }}
 
-func executeInternalClientUpdater(client *client, x interface{}) {
+func executeInternalClientUpdater(client *Client, x interface{}) {
     {{- if $enf.Structs }}
     update := func(u internalClientUpdater) {
         u.updateInternalsWithClient(client)
