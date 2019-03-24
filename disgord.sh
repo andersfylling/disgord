@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VER="v1.0.0"
+VER="v1.0.1"
 
 echo "
 # # # # # # # # # # # # # # # # #
@@ -90,7 +90,7 @@ func main() {
 
     // create a handler and bind it to new message events
     // tip: read the documentation for std.CopyMsgEvt and understand why it is used here.
-    _ = client.On(disgord.EvtMessageCreate,
+    client.On(disgord.EvtMessageCreate,
     	// middleware
     	filter.NotByBot,    // ignore bot messages
     	filter.HasPrefix,   // read original
@@ -102,7 +102,7 @@ func main() {
 }
 ' >> main.go
 
-echo "FROM golang:1.11.5 as builder
+echo "FROM andersfylling/disgord:v0.10 as builder
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY . /build
