@@ -424,6 +424,9 @@ type User struct {
 }
 
 var _ Reseter = (*User)(nil)
+var _ DeepCopier = (*User)(nil)
+var _ Copier = (*User)(nil)
+var _ discordSaver = (*User)(nil)
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {

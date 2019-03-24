@@ -39,6 +39,11 @@ type Emoji struct {
 }
 
 var _ Reseter = (*Emoji)(nil)
+var _ DeepCopier = (*Emoji)(nil)
+var _ Copier = (*Emoji)(nil)
+var _ discordDeleter = (*Emoji)(nil)
+
+// var _ discordSaver = (*Emoji)(nil) // TODO
 var _ fmt.Stringer = (*Emoji)(nil)
 
 func (e *Emoji) String() string {

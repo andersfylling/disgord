@@ -110,6 +110,10 @@ type Role struct {
 }
 
 var _ Reseter = (*Role)(nil)
+var _ DeepCopier = (*Role)(nil)
+var _ Copier = (*Role)(nil)
+var _ discordSaver = (*Role)(nil)
+var _ discordDeleter = (*Role)(nil)
 var _ fmt.Stringer = (*Role)(nil)
 
 func (r *Role) String() string {

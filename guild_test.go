@@ -8,22 +8,6 @@ import (
 	"github.com/andersfylling/disgord/httd"
 )
 
-func TestGuild_InterfaceImplementations(t *testing.T) {
-	var c interface{} = &Guild{}
-
-	t.Run("DeepCopier", func(t *testing.T) {
-		if _, ok := c.(DeepCopier); !ok {
-			t.Error("guild does not implement DeepCopier")
-		}
-	})
-
-	t.Run("Copier", func(t *testing.T) {
-		if _, ok := c.(Copier); !ok {
-			t.Error("guild does not implement Copier")
-		}
-	})
-}
-
 func TestGuildMarshal(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
 	check(err, t)

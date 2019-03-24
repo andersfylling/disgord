@@ -37,6 +37,9 @@ type Invite struct {
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
+var _ Copier = (*Invite)(nil)
+var _ DeepCopier = (*Invite)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
 func (i *Invite) DeepCopy() (copy interface{}) {
 	copy = &Invite{}
@@ -110,6 +113,9 @@ type InviteMetadata struct {
 	// Revoked whether this invite is revoked
 	Revoked bool `json:"revoked"`
 }
+
+var _ Copier = (*InviteMetadata)(nil)
+var _ DeepCopier = (*InviteMetadata)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (i *InviteMetadata) DeepCopy() (copy interface{}) {

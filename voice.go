@@ -45,6 +45,8 @@ type VoiceState struct {
 }
 
 var _ Reseter = (*VoiceState)(nil)
+var _ Copier = (*VoiceState)(nil)
+var _ DeepCopier = (*VoiceState)(nil)
 
 //func (vst *VoiceState) Clear() {
 //
@@ -121,6 +123,8 @@ type VoiceRegion struct {
 }
 
 var _ Reseter = (*VoiceRegion)(nil)
+var _ Copier = (*VoiceRegion)(nil)
+var _ DeepCopier = (*VoiceRegion)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (v *VoiceRegion) DeepCopy() (copy interface{}) {

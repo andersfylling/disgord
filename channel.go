@@ -134,6 +134,8 @@ type Channel struct {
 var _ Reseter = (*Channel)(nil)
 var _ fmt.Stringer = (*Channel)(nil)
 var _ discordSaver = (*Channel)(nil)
+var _ Copier = (*Channel)(nil)
+var _ DeepCopier = (*Channel)(nil)
 var _ discordDeleter = (*Channel)(nil)
 
 func (c *Channel) String() string {

@@ -5,56 +5,30 @@ import (
 	"testing"
 )
 
-func TestChannel_InterfaceImplementations(t *testing.T) {
-	var c interface{} = &Channel{}
-
-	t.Run("DeepCopier", func(t *testing.T) {
-		if _, ok := c.(DeepCopier); !ok {
-			t.Error("Channel does not implement DeepCopier")
-		}
-
-		test := NewChannel()
-		icon1 := "sdljfdsjf"
-		test.Icon = &icon1
-		test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-			Type: "first",
-		})
-		test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-			Type: "second",
-		})
-
-		copy := test.DeepCopy().(*Channel)
-		icon2 := "sfkjdsf"
-		test.Icon = &icon2
-		if *copy.Icon != icon1 {
-			t.Error("deep copy failed")
-		}
-
-		test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-			Type: "third",
-		})
-		if len(copy.PermissionOverwrites) != 2 {
-			t.Error("deep copy failed")
-		}
+func TestChannel_DeepCopy(t *testing.T) {
+	test := NewChannel()
+	icon1 := "sdljfdsjf"
+	test.Icon = &icon1
+	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
+		Type: "first",
+	})
+	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
+		Type: "second",
 	})
 
-	t.Run("Copier", func(t *testing.T) {
-		if _, ok := c.(Copier); !ok {
-			t.Error("Channel does not implement Copier")
-		}
-	})
+	copy := test.DeepCopy().(*Channel)
+	icon2 := "sfkjdsf"
+	test.Icon = &icon2
+	if *copy.Icon != icon1 {
+		t.Error("deep copy failed")
+	}
 
-	t.Run("discordSaver", func(t *testing.T) {
-		if _, ok := c.(discordSaver); !ok {
-			t.Error("Channel does not implement discordSaver")
-		}
+	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
+		Type: "third",
 	})
-
-	t.Run("discordDeleter", func(t *testing.T) {
-		if _, ok := c.(discordDeleter); !ok {
-			t.Error("Channel does not implement discordDeleter")
-		}
-	})
+	if len(copy.PermissionOverwrites) != 2 {
+		t.Error("deep copy failed")
+	}
 }
 
 func verifyChannelUnmarshal(t *testing.T, data []byte) {
