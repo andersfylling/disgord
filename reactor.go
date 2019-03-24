@@ -156,6 +156,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		spec.Lock()
 		localEvt := spec.runMdlws(evt)
 		if localEvt == nil {
+			spec.Unlock()
 			continue
 		}
 
