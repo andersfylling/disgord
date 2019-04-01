@@ -499,7 +499,12 @@ func getChannels(f func() (interface{}, error), flags ...Flag) (channels []*Chan
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Channel), nil
+	if list, ok := v.(*[]*Channel); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Channel); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -517,7 +522,12 @@ func getRoles(f func() (interface{}, error), flags ...Flag) (roles []*Role, err 
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Role), nil
+	if list, ok := v.(*[]*Role); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Role); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -535,7 +545,12 @@ func getMembers(f func() (interface{}, error), flags ...Flag) (members []*Member
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Member), nil
+	if list, ok := v.(*[]*Member); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Member); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -553,7 +568,12 @@ func getWebhooks(f func() (interface{}, error), flags ...Flag) (whs []*Webhook, 
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Webhook), nil
+	if list, ok := v.(*[]*Webhook); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Webhook); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -571,7 +591,12 @@ func getMessages(f func() (interface{}, error), flags ...Flag) (msgs []*Message,
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Message), nil
+	if list, ok := v.(*[]*Message); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Message); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -589,7 +614,12 @@ func getUsers(f func() (interface{}, error), flags ...Flag) (users []*User, err 
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*User), nil
+	if list, ok := v.(*[]*User); ok {
+		return *list, nil
+	} else if list, ok := v.([]*User); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -634,7 +664,12 @@ func getInvites(f func() (interface{}, error), flags ...Flag) (invite []*Invite,
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Invite), nil
+	if list, ok := v.(*[]*Invite); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Invite); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -652,7 +687,12 @@ func getIntegrations(f func() (interface{}, error), flags ...Flag) (integrations
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*Integration), nil
+	if list, ok := v.(*[]*Integration); ok {
+		return *list, nil
+	} else if list, ok := v.([]*Integration); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
@@ -661,7 +701,12 @@ func getVoiceRegions(f func() (interface{}, error), flags ...Flag) (regions []*V
 	if v, err = exec(f, flags...); err != nil {
 		return nil, err
 	}
-	return *v.(*[]*VoiceRegion), nil
+	if list, ok := v.(*[]*VoiceRegion); ok {
+		return *list, nil
+	} else if list, ok := v.([]*VoiceRegion); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
 // TODO: auto generate
