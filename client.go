@@ -337,7 +337,10 @@ func (c *Client) GetConnectedGuilds() []snowflake.ID {
 
 	var guilds []snowflake.ID
 	for i := range c.shardManager.shards {
-		guilds = append(guilds, c.shardManager.shards[i].guilds...)
+		shard := c.shardManager.shards[i]
+		shard.RLock()
+		guilds = append(guilds, shard.guilds...)
+		shard.RUnlock()
 	}
 
 	return guilds
