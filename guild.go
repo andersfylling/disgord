@@ -25,9 +25,12 @@ import (
 // Source code reference:
 //  https://github.com/bwmarrin/discordgo/blob/8325a6bf6dd6c91ed4040a1617b07287b8fb0eba/structs.go#L854
 
+type PermissionBit = uint64
+type PermissionBits = PermissionBit
+
 // Constants for the different bit offsets of text channel permissions
 const (
-	PermissionReadMessages uint64 = 1 << (iota + 10)
+	PermissionReadMessages PermissionBit = 1 << (iota + 10)
 	PermissionSendMessages
 	PermissionSendTTSMessages
 	PermissionManageMessages
@@ -40,18 +43,18 @@ const (
 
 // Constants for the different bit offsets of voice permissions
 const (
-	PermissionVoiceConnect uint64 = 1 << (iota + 20)
+	PermissionVoiceConnect PermissionBit = 1 << (iota + 20)
 	PermissionVoiceSpeak
 	PermissionVoiceMuteMembers
 	PermissionVoiceDeafenMembers
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
-	PermissionVoicePrioritySpeaker uint64 = 1 << (iota + 2)
+	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
 )
 
 // Constants for general management.
 const (
-	PermissionChangeNickname uint64 = 1 << (iota + 26)
+	PermissionChangeNickname PermissionBit = 1 << (iota + 26)
 	PermissionManageNicknames
 	PermissionManageRoles
 	PermissionManageWebhooks
@@ -60,7 +63,7 @@ const (
 
 // Constants for the different bit offsets of general permissions
 const (
-	PermissionCreateInstantInvite uint64 = 1 << iota
+	PermissionCreateInstantInvite PermissionBit = 1 << iota
 	PermissionKickMembers
 	PermissionBanMembers
 	PermissionAdministrator
@@ -184,7 +187,7 @@ type Guild struct {
 	Splash                      *string                       `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
 	OwnerID                     Snowflake                     `json:"owner_id"`
-	Permissions                 uint64                        `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
+	Permissions                 PermissionBits                `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
 	AfkChannelID                Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`

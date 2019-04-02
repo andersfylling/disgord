@@ -391,7 +391,7 @@ func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, e
 }
 
 // GetMemberPermissions populates a uint64 with all the permission flags
-func (c *Client) GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions uint64, err error) {
+func (c *Client) GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error) {
 	roles, err := c.GetGuildRoles(guildID, flags...)
 	if err != nil {
 		return 0, err
@@ -428,7 +428,7 @@ func (c *Client) GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) 
 
 // updateGuildRoleBuilder ...
 //generate-rest-basic-execute: role:*Role,
-//generate-rest-params: name:string, permissions:uint64, color:uint, hoist:bool, mentionable:bool,
+//generate-rest-params: name:string, permissions:PermissionBits, color:uint, hoist:bool, mentionable:bool,
 type updateGuildRoleBuilder struct {
 	r RESTBuilder
 }

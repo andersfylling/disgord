@@ -36,8 +36,8 @@ type msgFilter struct {
 	botID  disgord.Snowflake
 	prefix string
 
-	permissions       uint64
-	eitherPermissions uint64
+	permissions       disgord.PermissionBits
+	eitherPermissions disgord.PermissionBits
 }
 
 // SetPrefix set the prefix attribute which is used in StripPrefix, HasPrefix.
@@ -118,16 +118,16 @@ func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 
 // SetMinPermissions enforces message authors to have at least the given permission flags
 // for the HasPermissions method to succeed
-func (f *msgFilter) SetMinPermissions(min uint64) {
+func (f *msgFilter) SetMinPermissions(min disgord.PermissionBits) {
 	f.permissions = min
 }
 
 // SetAltPermissions enforces message authors to have at least one of the given permission flags for the
 // HasPermissions method to succeed
-func (f *msgFilter) SetAltPermissions(flags ...uint64) {
-	var permissions uint64
-	for i := range flags {
-		permissions |= flags[i]
+func (f *msgFilter) SetAltPermissions(bits ...disgord.PermissionBits) {
+	var permissions disgord.PermissionBits
+	for i := range bits {
+		permissions |= bits[i]
 	}
 	f.eitherPermissions = permissions
 }

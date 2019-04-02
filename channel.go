@@ -61,10 +61,10 @@ func (a *Attachment) DeepCopy() (copy interface{}) {
 
 // PermissionOverwrite https://discordapp.com/developers/docs/resources/channel#overwrite-object
 type PermissionOverwrite struct {
-	ID    Snowflake `json:"id"`    // role or user id
-	Type  string    `json:"type"`  // either `role` or `member`
-	Allow int       `json:"allow"` // permission bit set
-	Deny  int       `json:"deny"`  // permission bit set
+	ID    Snowflake      `json:"id"`    // role or user id
+	Type  string         `json:"type"`  // either `role` or `member`
+	Allow PermissionBits `json:"allow"` // permission bit set
+	Deny  PermissionBits `json:"deny"`  // permission bit set
 }
 
 // NewChannel ...
@@ -558,9 +558,9 @@ func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Cha
 
 // UpdateChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
 type UpdateChannelPermissionsParams struct {
-	Allow int    `json:"allow"` // the bitwise value of all allowed permissions
-	Deny  int    `json:"deny"`  // the bitwise value of all disallowed permissions
-	Type  string `json:"type"`  // "member" for a user or "role" for a role
+	Allow PermissionBits `json:"allow"` // the bitwise value of all allowed permissions
+	Deny  PermissionBits `json:"deny"`  // the bitwise value of all disallowed permissions
+	Type  string         `json:"type"`  // "member" for a user or "role" for a role
 }
 
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable

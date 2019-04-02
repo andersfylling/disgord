@@ -533,7 +533,7 @@ func (b *updateGuildRoleBuilder) SetName(name string) *updateGuildRoleBuilder {
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetPermissions(permissions uint64) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) *updateGuildRoleBuilder {
 	b.r.param("permissions", permissions)
 	return b
 }
