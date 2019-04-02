@@ -2247,8 +2247,14 @@ type updateGuildMemberBuilder struct {
 	r RESTBuilder
 }
 
-// RemoveNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+// SetDefaultNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+// deprecated: use DeleteNick()
 func (b *updateGuildMemberBuilder) SetDefaultNick() *updateGuildMemberBuilder {
-	b.r.param("nick", nil)
+	return b.DeleteNick()
+}
+
+// DeleteNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+func (b *updateGuildMemberBuilder) DeleteNick() *updateGuildMemberBuilder {
+	b.r.param("nick", "")
 	return b
 }
