@@ -56,6 +56,9 @@ type voiceImpl struct {
 	secretKey [32]byte
 	send      chan []byte
 	close     chan struct{}
+
+	guildID Snowflake
+	c       *Client
 }
 
 func newVoiceRepository(c *Client) (voice *voiceRepository) {
@@ -132,8 +135,10 @@ waiter:
 	}
 
 	voice := voiceImpl{
-		send:  make(chan []byte),
-		close: make(chan struct{}),
+		guildID: guildID,
+		c:       r.c,
+		send:    make(chan []byte),
+		close:   make(chan struct{}),
 	}
 	// Defer a cleanup just in case
 	defer func(v *voiceImpl) {
@@ -322,12 +327,32 @@ func (v *voiceImpl) Close() (err error) {
 		panic("Attempting to close a closed Voice Connection")
 	}
 
+	// Tell Discord we want to disconnect from channel/guild
+	_ = v.c.Emit(CommandUpdateVoiceState, UpdateVoiceStateCommand{
+		GuildID:   v.guildID,
+		ChannelID: nil,
+		SelfDeaf:  true,
+		SelfMute:  true,
+	})
+
 	close(v.close)
 	close(v.send)
-	_ = v.udp.Close()
-	_ = v.ws.Disconnect()
+	err1 := v.udp.Close()
+	err2 := v.ws.Disconnect()
 
-	return
+	if err1 != nil || err2 != nil {
+		var errMsg string
+		if err1 != nil {
+			errMsg += err1.Error()
+		}
+		if err2 != nil {
+			errMsg += err2.Error()
+		}
+
+		return errors.New(errMsg)
+	}
+
+	return nil
 }
 
 type voiceSpeakingData struct {
