@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.uber.org/atomic"
 )
 
 const SaveIncomingPackets = true
@@ -17,10 +19,10 @@ const SaveIncomingPackets = true
 const DiagnosePath = "diagnose-report"
 const DiagnosePath_packets = "diagnose-report/packets"
 
-var outgoingPacketSequence uint = 0 // TODO: this needs to support sharding
+var outgoingPacketSequence = atomic.NewUint64(0)
 var dirExists bool
 
-func formatFilename(incoming bool, clientType int, shardID, opCode, sequencenr uint, suffix string) (filename string) {
+func formatFilename(incoming bool, clientType int, shardID, opCode uint, sequencenr uint64, suffix string) (filename string) {
 
 	unix := strconv.FormatInt(time.Now().UnixNano(), 10)
 	shard := strconv.FormatUint(uint64(shardID), 10)
@@ -34,9 +36,13 @@ func formatFilename(incoming bool, clientType int, shardID, opCode, sequencenr u
 		direction = "OUT"
 	}
 
-	t := "E"
+	var t string
 	if clientType == clientTypeVoice {
 		t = "V"
+	} else if clientType == clientTypeEvent {
+		t = "E"
+	} else {
+		t = "-"
 	}
 
 	return unix + "_" + t + "_" + direction + "_id" + shard + "_op" + op + "_s" + seq + suffix + ".json"
@@ -71,8 +77,8 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 		c.Debug(err)
 	}
 
-	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, outgoingPacketSequence, "")
-	outgoingPacketSequence++
+	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, outgoingPacketSequence.Load(), "")
+	outgoingPacketSequence.Inc()
 
 	path := DiagnosePath_packets + "/" + filename
 	if err = ioutil.WriteFile(path, data, 0644); err != nil {
@@ -93,7 +99,7 @@ func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 		evtStr = "_EMPTY"
 	}
 
-	filename := formatFilename(true, c.clientType, c.ShardID, evt.Op, evt.SequenceNumber, evtStr)
+	filename := formatFilename(true, c.clientType, c.ShardID, evt.Op, uint64(evt.SequenceNumber), evtStr)
 	path := DiagnosePath_packets + "/" + filename
 
 	// pretty

@@ -126,6 +126,7 @@ github.com/andersfylling/disgord
 └──github.com/gorilla/websocket        :Default websocket client
 └──github.com/sergi/go-diff            :Unit testing for checking JSON encoding/decoding of structs
 └──github.com/uber-go/zap              :Logging (optional)
+└──go.uber.org/atomic                  
 ```
 
 
