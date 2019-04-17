@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/snowflake/v3"
 	jp "github.com/buger/jsonparser"
 )
 
@@ -45,7 +44,7 @@ func (c *usersCache) Cap() (cap uint) {
 
 	return
 }
-func (c *usersCache) ListIDs() (list []snowflake.ID) {
+func (c *usersCache) ListIDs() (list []Snowflake) {
 	c.items.RLock()
 	list = c.items.ListIDs()
 	c.items.RUnlock()
