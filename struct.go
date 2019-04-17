@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/httd"
+
 	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/constant"
@@ -86,6 +88,13 @@ type guilder interface {
 	getGuildID() snowflake.ID
 }
 
+// Loader loads the objects content into memory. From either the cache or the discord servers.
+// This can be useful in situations such as presence updates. The user object might be partial,
+// so calling user.Load(session), will do a get request if needed.
+type Loader interface {
+	Load(Session) error
+}
+
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
 // Used in the flyweight pattern.
 type zeroInitialiser interface {
@@ -104,6 +113,17 @@ type internalUpdater interface {
 
 type internalClientUpdater interface {
 	updateInternalsWithClient(*Client)
+}
+
+// Unmarshal is a wrapper for httd.Unmarshal that ensures the internals of a discord object
+// is correctly updated. For the root pkg, disgord, this should always be used instead of calling
+// httd.Unmarshal directly.
+func Unmarshal(data []byte, v interface{}) (err error) {
+	if err = httd.Unmarshal(data, v); err == nil {
+		executeInternalUpdater(v)
+	}
+
+	return
 }
 
 // Discord types
@@ -135,7 +155,7 @@ func (t Time) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON see json.Unmarshaler
 func (t *Time) UnmarshalJSON(data []byte) error {
 	var ts time.Time
-	if err := unmarshal(data, &ts); err != nil {
+	if err := Unmarshal(data, &ts); err != nil {
 		return err
 	}
 

@@ -16,7 +16,7 @@ func (c *Channel) Reset() {
 	c.UserLimit = 0
 	c.RateLimitPerUser = 0
 	c.Recipients = nil
-	c.Icon = nil
+	c.Icon = ""
 	c.OwnerID = 0
 	c.ApplicationID = 0
 	c.ParentID = 0
@@ -166,7 +166,6 @@ func (u *User) Reset() {
 	u.MFAEnabled = false
 	u.Bot = false
 	u.PremiumType = 0
-	u.overwritten = 0
 }
 
 func (v *VoiceState) Reset() {

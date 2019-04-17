@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
 )
 
@@ -23,10 +22,9 @@ func populateResource(resource evtResource, ctx context.Context, evt *websocket.
 	resource.registerContext(ctx)
 	resource.setShardID(evt.ShardID)
 
-	if err = httd.Unmarshal(evt.Data, resource); err != nil {
+	if err = Unmarshal(evt.Data, resource); err != nil {
 		return err
 	}
-	executeInternalUpdater(resource)
 
 	// TODO: updating internal states should be independent of the public reactor?
 	//  But should the public handlers wait to be triggered until all the internals are updated?

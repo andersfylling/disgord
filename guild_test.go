@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/disgord/httd"
 )
 
 func TestGuildMarshal(t *testing.T) {
@@ -13,7 +11,7 @@ func TestGuildMarshal(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = httd.Unmarshal(data, &v)
+	err = Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -22,7 +20,7 @@ func TestGuildMarshalUnavailable(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = httd.Unmarshal(data, &v)
+	err = Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -50,7 +48,7 @@ func TestGuildBanObject(t *testing.T) {
 	check(err, t)
 
 	ban := Ban{}
-	err = httd.Unmarshal(data, &ban)
+	err = Unmarshal(data, &ban)
 	check(err, t)
 }
 
@@ -61,7 +59,7 @@ func TestGuildEmbed(t *testing.T) {
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
-	err := unmarshal(res, &guildEmbed)
+	err := Unmarshal(res, &guildEmbed)
 	if err != nil {
 		t.Error(err)
 	}

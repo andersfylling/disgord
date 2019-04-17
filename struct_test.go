@@ -18,7 +18,7 @@ func validateJSONMarshalling(b []byte, v interface{}) error {
 	var err error
 
 	// convert to struct
-	err = unmarshal(b, &v)
+	err = Unmarshal(b, &v)
 	if err != nil {
 		return err
 	}
@@ -32,13 +32,13 @@ func validateJSONMarshalling(b []byte, v interface{}) error {
 	// sort the data by keys
 	// omg im getting lost in my own train of thought
 	omg := make(map[string]interface{})
-	err = unmarshal(prettyJSON, &omg)
+	err = Unmarshal(prettyJSON, &omg)
 	if err != nil {
 		return err
 	}
 
 	omgAgain := make(map[string]interface{})
-	err = unmarshal(b, &omgAgain)
+	err = Unmarshal(b, &omgAgain)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 	b.Run("using reflection", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			var user *User
-			unmarshal(data, &user)
+			Unmarshal(data, &user)
 		}
 	})
 
@@ -115,7 +115,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			user := &User{}
 			var m = make(map[string]interface{})
-			unmarshal(data, m)
+			Unmarshal(data, m)
 
 			var v interface{}
 			var ok bool
@@ -155,7 +155,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			user := &User{}
 			var m = make(map[string]string)
-			unmarshal(data, m)
+			Unmarshal(data, m)
 
 			var v string
 			var ok bool
@@ -251,7 +251,7 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '0', '0', '0', '1', '"',
 		}
-		err = unmarshal(data, &d)
+		err = Unmarshal(data, &d)
 		if err != nil {
 			t.Error(err)
 		}
@@ -262,7 +262,7 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '0', '2', '0', '1', '"',
 		}
-		err = unmarshal(data, &d)
+		err = Unmarshal(data, &d)
 		if err != nil {
 			t.Error(err)
 		}
@@ -273,7 +273,7 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '"',
 		}
-		err = unmarshal(data, &d)
+		err = Unmarshal(data, &d)
 		if err != nil {
 			t.Error(err)
 		}

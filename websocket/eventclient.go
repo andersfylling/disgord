@@ -67,7 +67,7 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
 		}{runtime.GOOS, client.conf.Browser, client.conf.Device},
-		LargeThreshold: client.conf.GuildLargeThreshold,
+		LargeThreshold: 0, // this field is just annoying. Users must fetch all members manually.
 		Shard:          &[2]uint{client.ShardID, client.conf.ShardCount},
 	}
 	if conf.Presence != nil {

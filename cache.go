@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
@@ -155,7 +154,7 @@ func newCache(conf *CacheConfig) (c *Cache, err error) {
 		return nil, err
 	}
 
-	return // success
+	return c, nil
 }
 
 func DefaultCacheConfig() *CacheConfig {
@@ -205,6 +204,8 @@ type CacheConfig struct {
 	GuildCacheMaxEntries uint
 	GuildCacheLifetime   time.Duration
 	GuildCacheAlgorithm  string
+
+	Log Logger
 }
 
 // Cache is the actual cacheLink. It holds the different systems which can be tweaked using the CacheConfig.
@@ -215,6 +216,24 @@ type Cache struct {
 	voiceStates interfaces.CacheAlger
 	channels    interfaces.CacheAlger
 	guilds      interfaces.CacheAlger
+
+	log Logger
+}
+
+func (c *Cache) Info(msg string) {
+	if c.log != nil {
+		c.log.Info(msg)
+	}
+}
+func (c *Cache) Debug(msg string) {
+	if c.log != nil {
+		c.log.Debug(msg)
+	}
+}
+func (c *Cache) Error(msg string) {
+	if c.log != nil {
+		c.log.Error(msg)
+	}
 }
 
 var _ Cacher = (*Cache)(nil)
@@ -424,7 +443,7 @@ func (c *Cache) DirectUpdate(registry cacheRegistry, id snowflake.ID, changes []
 			return err
 		}
 
-		err = httd.Unmarshal(changes, usr)
+		err = Unmarshal(changes, usr)
 		return err
 	}
 
@@ -497,9 +516,15 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 	if immutable {
 		g.guild = guild.DeepCopy().(*Guild)
 
-		for _, member := range g.guild.Members {
-			member.userID = member.User.ID
-			member.User = nil
+		for i := range g.guild.Members {
+			g.guild.Members[i].userID = g.guild.Members[i].User.ID
+			g.guild.Members[i].User = nil
+		}
+
+		g.channels = make([]snowflake.ID, len(g.guild.Channels))
+		for i := range g.guild.Channels {
+			g.channels[i] = g.guild.Channels[i].ID
+			g.guild.Channels[i] = nil
 		}
 
 		g.guild.Channels = nil
@@ -700,7 +725,7 @@ func (g *guildCacheItem) updateRole(role *Role, data json.RawMessage) bool {
 	for i := range g.guild.Roles {
 		if g.guild.Roles[i].ID == role.ID {
 			todo := &GuildRoleUpdate{Role: g.guild.Roles[i]}
-			err := httd.Unmarshal(data, todo)
+			err := Unmarshal(data, todo)
 			updated = err == nil
 			break
 		}
@@ -713,6 +738,14 @@ func (g *guildCacheItem) updateRole(role *Role, data json.RawMessage) bool {
 func (c *Cache) SetGuild(guild *Guild) {
 	if c.guilds == nil || guild == nil {
 		return
+	}
+
+	// TODO: racecondition
+	for i := range guild.Channels {
+		c.SetChannel(guild.Channels[i])
+	}
+	for i := range guild.Members {
+		c.SetUser(guild.Members[i].User)
 	}
 
 	c.guilds.Lock()
@@ -844,7 +877,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawM
 	}
 
 	member.User = tmpUser
-	if err := httd.Unmarshal(data, member); err != nil {
+	if err := Unmarshal(data, member); err != nil {
 		c.guilds.Unlock()
 		// TODO: logging
 		return
@@ -1503,13 +1536,20 @@ func (c *channelCacheItem) update(fresh *Channel, immutable bool) {
 		return
 	}
 
-	fresh.copyOverToCache(c.channel)
+	// fresh.copyOverToCache......
+	_ = fresh.CopyOverTo(c.channel)
 }
 
 // SetChannel adds a new channel to cacheLink or updates an existing one
 func (c *Cache) SetChannel(new *Channel) {
 	if c.channels == nil || new == nil {
 		return
+	}
+
+	if len(new.Recipients) > 0 {
+		for i := range new.Recipients {
+			c.SetUser(new.Recipients[i])
+		}
 	}
 
 	c.channels.Lock()

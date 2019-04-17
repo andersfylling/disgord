@@ -8,7 +8,7 @@ import (
 func TestChannel_DeepCopy(t *testing.T) {
 	test := NewChannel()
 	icon1 := "sdljfdsjf"
-	test.Icon = &icon1
+	test.Icon = icon1
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
 		Type: "first",
 	})
@@ -18,8 +18,8 @@ func TestChannel_DeepCopy(t *testing.T) {
 
 	copy := test.DeepCopy().(*Channel)
 	icon2 := "sfkjdsf"
-	test.Icon = &icon2
-	if *copy.Icon != icon1 {
+	test.Icon = icon2
+	if copy.Icon != icon1 {
 		t.Error("deep copy failed")
 	}
 
@@ -39,7 +39,7 @@ func verifyChannelUnmarshal(t *testing.T, data []byte) {
 
 func checkForChannelUnmarshalErr(t *testing.T, data []byte) {
 	v := Channel{}
-	if err := unmarshal(data, &v); err != nil {
+	if err := Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 }

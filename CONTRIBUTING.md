@@ -88,12 +88,21 @@ Technologies:
  * sharding
 
 ### Introduction
-Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation. DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, cache replacement algorithms, event channels, etc.
+Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation. DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and on top of that; helper functions, methods, cache replacement algorithms, event channels, etc.
 
 ### Design Decisions
 Utilises the Reactor pattern for handling incoming events. These runs in sequence, which eliminates the need for locking. But we also allow the use of channels to receive events.
 
-The only reason locking is provided with the Discord structures is to allow the developer to synchronie their objects in a natural way. DisGord used to have the pro-actor pattern which required the use of locking, and back when that was replaced with the reactor pattern I saw more benefits of keeping the locking option than leaving it. Developers that don't want locking at all, can completely disable them using build constraints for a more performant application.
+The only reason locking is provided with the Discord structures is to allow the developer to synchronize their objects in a natural way. DisGord used to have the pro-actor pattern which required the use of locking, and back when that was replaced with the reactor pattern I saw more benefits of keeping the locking option than leaving it. Developers that don't want locking at all, can completely disable them using build constraints for a more performance oriented application.
+
+#### Caching
+Caching in discord is happens behind the scenes and unless a user explicitly tells disgord to not check the cache before sending a request, disgord should always do so.
+
+The cache is split into repositories; users, channels, guilds, presences. This is to reduce wait time from locking and complex look ups when fetching data. If necessary, more repositories can be created if reports states the need.
+
+Each repository has their own demultiplexer for events and each handler is a unique method in the naming scheme of `onEventName(data []byte) (updated interface{}, err error)`. The handlers should do copying on their own to support immutability, this is to stop interacting with the object in cache as soon as possible such that new events can be handled. Each handler should also be able to run in parallel with other repositories for the same event and handle flags that lets the developer decide if heap allocations are necessary.
+
+Events should always be read from cache, not the actual raw data from discord. This is to ensure that the user has complete objects which gives them a better experience.
 
 #### Handlers
 > Also known as listeners/callbacks. The event driven architecture of DisGord uses the reactor pattern and as such the handlers are triggered in sequence.

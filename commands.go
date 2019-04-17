@@ -87,5 +87,3 @@ type UpdateStatusCommand struct {
 	// AFK whether or not the Client is afk
 	AFK bool `json:"afk"`
 }
-
-type Presence = UpdateStatusCommand

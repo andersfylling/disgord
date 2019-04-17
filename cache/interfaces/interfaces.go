@@ -26,6 +26,8 @@ type CacheAlger interface {
 	CreateCacheableItem(content interface{}) CacheableItem
 	RefreshAfterDiscordUpdate(item CacheableItem)
 	Efficiency() float64
+	Foreach(func(interface{}))
+	ListIDs() []snowflake.ID
 
 	// Size returns the number of actual elements in the list
 	Size() uint

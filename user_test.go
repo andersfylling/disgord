@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/disgord/httd"
 )
 
 func verifyUserMashaller(t *testing.T, file string) {
@@ -13,7 +11,7 @@ func verifyUserMashaller(t *testing.T, file string) {
 	check(err, t)
 
 	user := User{}
-	err = httd.Unmarshal(data, &user)
+	err = Unmarshal(data, &user)
 	check(err, t)
 }
 
@@ -81,7 +79,7 @@ func TestUser_copyOverToCache(t *testing.T) {
 	datas := make([]userCopyOverToCacheTestSets, 6)
 
 	user1 := User{}
-	unmarshal([]byte(`{"id": "133218433276182528","username":"alak","discriminator":"1149","avatar":"38d04eba240fa3cad581a947025644ad","verified":true}`), &user1)
+	Unmarshal([]byte(`{"id": "133218433276182528","username":"alak","discriminator":"1149","avatar":"38d04eba240fa3cad581a947025644ad","verified":true}`), &user1)
 	datas[0] = userCopyOverToCacheTestSets{user1, []byte(`{"id": "133218433276182528","username":"alak","discriminator":"1149","avatar":"38d04eba240fa3cad581a947025644ad","verified":true}`)}
 
 	user2 := User(user1)
@@ -113,7 +111,7 @@ func TestUser_copyOverToCache(t *testing.T) {
 		bytes := datas[i].bytes
 		expected := datas[i].user
 		var user User
-		err = unmarshal(bytes, &user)
+		err = Unmarshal(bytes, &user)
 		if err != nil {
 			t.Error(err)
 			return

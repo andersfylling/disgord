@@ -8,8 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-
-	"github.com/andersfylling/disgord/httd"
 )
 
 // Resource represents a discord event.
@@ -41,12 +39,6 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 		} else if event == EvtChannelUpdate {
 			channel = (v.(*ChannelUpdate)).Channel
 		}
-		if len(channel.Recipients) > 0 {
-			for i := range channel.Recipients {
-				updates[UserCache] = append(updates[UserCache], channel.Recipients[i])
-			}
-		}
-
 		updates[ChannelCache] = append(updates[ChannelCache], channel)
 	case EvtChannelDelete:
 		channel := (v.(*ChannelDelete)).Channel
@@ -213,7 +205,7 @@ type ChannelCreate struct {
 // UnmarshalJSON ...
 func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -228,7 +220,7 @@ type ChannelUpdate struct {
 // UnmarshalJSON ...
 func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -243,7 +235,7 @@ type ChannelDelete struct {
 // UnmarshalJSON ...
 func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -289,7 +281,7 @@ func (obj *MessageCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	return unmarshal(data, obj.Message)
+	return Unmarshal(data, obj.Message)
 }
 
 // ---------------------------
@@ -310,7 +302,7 @@ func (obj *MessageUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	return unmarshal(data, obj.Message)
+	return Unmarshal(data, obj.Message)
 }
 
 // ---------------------------
@@ -414,7 +406,7 @@ func (g *GuildCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	return unmarshal(data, obj.Guild)
+	return Unmarshal(data, obj.Guild)
 }
 
 // ---------------------------
@@ -435,7 +427,7 @@ func (g *GuildUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	return unmarshal(data, obj.Guild)
+	return Unmarshal(data, obj.Guild)
 }
 
 // ---------------------------
@@ -455,7 +447,7 @@ func (obj *GuildDelete) UserWasRemoved() bool {
 // UnmarshalJSON ...
 func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
 	obj.UnavailableGuild = &GuildUnavailable{}
-	return unmarshal(data, obj.UnavailableGuild)
+	return Unmarshal(data, obj.UnavailableGuild)
 }
 
 // ---------------------------
@@ -499,7 +491,7 @@ type GuildMemberAdd struct {
 // UnmarshalJSON ...
 func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
-	return httd.Unmarshal(data, obj.Member)
+	return Unmarshal(data, obj.Member)
 }
 
 // ---------------------------
@@ -579,6 +571,7 @@ type GuildRoleDelete struct {
 // ---------------------------
 
 // PresenceUpdate user's presence was updated in a guild
+// Note! the User might be Partial (ID only). Use User.Load(..) to fetch data.
 type PresenceUpdate struct {
 	User    *User       `json:"user"`
 	RoleIDs []Snowflake `json:"roles"`

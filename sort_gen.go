@@ -81,6 +81,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*guildVoiceStatesCache:
 		s = *t
+	case *[]*cache3:
+		s = *t
+	case *[]*usersCache:
+		s = *t
 	case *[]*Attachment:
 		s = *t
 	case *[]*Channel:
@@ -359,8 +363,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateCurrentUserBuilder:
 		s = *t
-	case *[]*userJSON:
-		s = *t
 	case *[]*VoiceRegion:
 		s = *t
 	case *[]*VoiceState:
@@ -518,12 +520,6 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*UserConnection:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*userJSON:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {

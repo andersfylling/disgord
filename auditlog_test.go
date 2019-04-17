@@ -17,7 +17,7 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = httd.Unmarshal(data, &v)
+	err = Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -249,7 +249,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := httd.Unmarshal(data, &v2); err != nil {
+	if err := Unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
 
@@ -260,7 +260,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := httd.Unmarshal(data, &v); err != nil {
+	if err := Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 

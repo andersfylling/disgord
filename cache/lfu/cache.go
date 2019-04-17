@@ -161,15 +161,18 @@ func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem)
 // Get get an content from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
 	var key int
-	if key, exists = list.table[id]; exists && key != -1 {
+	key, exists = list.table[id]
+	exists = exists && key != -1
+
+	if exists {
 		ret = &list.items[key]
 		list.items[key].increment()
 		list.hits++
 	} else {
-		exists = false // if key == -1, exists might still be true
 		list.misses++
 	}
-	return
+
+	return ret, exists
 }
 
 func (list *CacheList) deleteUnsafe(key int, id Snowflake) {
@@ -184,6 +187,23 @@ func (list *CacheList) Delete(id Snowflake) {
 	if key, exists := list.table[id]; exists && key != -1 {
 		list.deleteUnsafe(key, id)
 	}
+}
+
+func (list *CacheList) Foreach(cb func(interface{})) {
+	for k := range list.items {
+		cb(list.items[k])
+	}
+}
+
+func (list *CacheList) ListIDs() (ids []snowflake.ID) {
+	ids = make([]snowflake.ID, len(list.items))
+	var i int
+	for k := range list.items {
+		ids[i] = list.items[k].id
+		i++
+	}
+
+	return ids
 }
 
 // CreateCacheableItem ...

@@ -116,7 +116,7 @@ func NewGuild() *Guild {
 // NewGuildFromJSON ...
 func NewGuildFromJSON(data []byte) (guild *Guild) {
 	guild = NewGuild()
-	err := unmarshal(data, guild)
+	err := Unmarshal(data, guild)
 	if err != nil {
 		panic(err)
 	}
@@ -450,6 +450,9 @@ func (g *Guild) LoadAllMembers(s Session) (err error) {
 	for i := range members {
 		_ = g.addMember(members[i])
 	}
+
+	// s.Cache().Update(GuildCache, g)
+	// TODO-cache
 
 	return nil
 }

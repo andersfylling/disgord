@@ -2,6 +2,7 @@ module github.com/andersfylling/disgord
 
 require (
 	github.com/andersfylling/snowflake/v3 v3.0.2
+	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/json-iterator/go v1.1.5

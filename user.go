@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -357,53 +356,6 @@ func NewUser() *User {
 	return &User{}
 }
 
-func newUserJSON() *userJSON {
-	d := "-"
-	return &userJSON{
-		Avatar: &d,
-	}
-}
-
-type userJSON struct {
-	/*-*/ ID Snowflake `json:"id,omitempty"`
-	/*-*/ Username string `json:"username,omitempty"`
-	/*-*/ Discriminator Discriminator `json:"discriminator,omitempty"`
-	/*1*/ Email *string `json:"email"`
-	/*2*/ Avatar *string `json:"avatar"`
-	/*3*/ Token *string `json:"token"`
-	/*4*/ Verified *bool `json:"verified"`
-	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
-	/*6*/ Bot *bool `json:"bot"`
-	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
-}
-
-func (u *userJSON) extractMap() uint8 {
-	var overwritten uint8
-	if u.Email != nil {
-		overwritten |= userOEmail
-	}
-	if u.Avatar == nil || *u.Avatar != "-" {
-		overwritten |= userOAvatar
-	}
-	if u.Token != nil {
-		overwritten |= userOToken
-	}
-	if u.Verified != nil {
-		overwritten |= userOVerified
-	}
-	if u.MFAEnabled != nil {
-		overwritten |= userOMFAEnabled
-	}
-	if u.Bot != nil {
-		overwritten |= userOBot
-	}
-	if u.PremiumType != nil {
-		overwritten |= userOPremiumType
-	}
-
-	return overwritten
-}
-
 // User the Discord user object which is reused in most other data structures.
 type User struct {
 	Lockable `json:"-"`
@@ -418,14 +370,31 @@ type User struct {
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
 	PremiumType   PremiumType   `json:"premium_type,omitempty"`
-
-	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
-	overwritten uint8 // map. see number left of field in userJSON struct.
 }
 
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
 var _ Copier = (*User)(nil)
+
+// Load fetches the content from cache or discord servers
+func (u *User) Load(s Session) error {
+	usr, err := s.GetUser(u.ID)
+	if err != nil {
+		return err
+	}
+
+	return usr.CopyOverTo(u)
+}
+
+// IsEmpty checks if the user object has any content
+func (u *User) IsEmpty() bool {
+	return u.ID.Empty()
+}
+
+// Partial checks if only the ID is set
+func (u *User) Partial() bool {
+	return !u.ID.Empty() && u.Username == ""
+}
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
@@ -436,62 +405,20 @@ func (u *User) String() string {
 	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
 }
 
-// UnmarshalJSON see interface json.Unmarshaler
-func (u *User) UnmarshalJSON(data []byte) (err error) {
-	j := userJSON{}
-	err = json.Unmarshal(data, &j)
-	if err != nil {
-		return
-	}
-
-	changes := j.extractMap()
-	u.ID = j.ID
-	if j.Username != "" {
-		u.Username = j.Username
-	}
-	if j.Discriminator != 0 {
-		u.Discriminator = j.Discriminator
-	}
-	if (changes & userOEmail) > 0 {
-		u.Email = *j.Email
-	}
-	if (changes & userOAvatar) > 0 {
-		u.Avatar = j.Avatar
-	}
-	if (changes & userOToken) > 0 {
-		u.Token = *j.Token
-	}
-	if (changes & userOVerified) > 0 {
-		u.Verified = *j.Verified
-	}
-	if (changes & userOMFAEnabled) > 0 {
-		u.MFAEnabled = *j.MFAEnabled
-	}
-	if (changes & userOBot) > 0 {
-		u.Bot = *j.Bot
-	}
-	if (changes & userOPremiumType) > 0 {
-		u.PremiumType = *j.PremiumType
-	}
-	u.overwritten |= changes
-
-	return
-}
-
 // SendMsg send a message to a user where you utilize a Message object instead of a string
-func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg *Message, err error) {
-	channel, err = session.CreateDM(u.ID)
+func (u *User) SendMsg(s Session, message *Message) (channel *Channel, msg *Message, err error) {
+	channel, err = s.CreateDM(u.ID)
 	if err != nil {
 		return
 	}
 
-	msg, err = session.SendMsg(channel.ID, message)
+	msg, err = s.SendMsg(channel.ID, message)
 	return
 }
 
 // SendMsgString send a message to given user where the message is in the form of a string.
-func (u *User) SendMsgString(session Session, content string) (channel *Channel, msg *Message, err error) {
-	channel, msg, err = u.SendMsg(session, &Message{
+func (u *User) SendMsgString(s Session, content string) (channel *Channel, msg *Message, err error) {
+	channel, msg, err = u.SendMsg(s, &Message{
 		Content: content,
 	})
 	return
@@ -528,7 +455,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Verified = u.Verified
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
-	user.overwritten = u.overwritten
 
 	if u.Avatar != nil {
 		avatar := *u.Avatar
@@ -547,43 +473,19 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
 
-	if constant.LockedMethods {
-		u.RLock()
-		user.Lock()
-	}
+	user.ID = u.ID
+	user.Username = u.Username
+	user.Discriminator = u.Discriminator
+	user.Email = u.Email
+	user.Token = u.Token
 
-	if !u.ID.Empty() {
-		user.ID = u.ID
-	}
-	if u.Username != "" {
-		user.Username = u.Username
-	}
-	if u.Discriminator != 0 {
-		user.Discriminator = u.Discriminator
-	}
-	if (u.overwritten & userOEmail) > 0 {
-		user.Email = u.Email
-	}
-	if (u.overwritten & userOAvatar) > 0 {
-		user.Avatar = u.Avatar
-	}
-	if (u.overwritten & userOToken) > 0 {
-		user.Token = u.Token
-	}
-	if (u.overwritten & userOVerified) > 0 {
-		user.Verified = u.Verified
-	}
-	if (u.overwritten & userOMFAEnabled) > 0 {
-		user.MFAEnabled = u.MFAEnabled
-	}
-	if (u.overwritten & userOBot) > 0 {
-		user.Bot = u.Bot
-	}
-	user.overwritten = u.overwritten
+	user.Verified = u.Verified
+	user.MFAEnabled = u.MFAEnabled
+	user.Bot = u.Bot
 
-	if constant.LockedMethods {
-		u.RUnlock()
-		user.Unlock()
+	if u.Avatar != nil {
+		avatar := *u.Avatar
+		user.Avatar = &avatar
 	}
 
 	return
@@ -599,7 +501,8 @@ func (u *User) Valid() bool {
 // NewUserPresence creates a new user presence instance
 func NewUserPresence() *UserPresence {
 	return &UserPresence{
-		Roles: []Snowflake{},
+		Roles:        []Snowflake{},
+		ClientStatus: map[string]string{},
 	}
 }
 
@@ -607,12 +510,24 @@ func NewUserPresence() *UserPresence {
 type UserPresence struct {
 	Lockable `json:"-"`
 
-	User    *User       `json:"user"`
-	Roles   []Snowflake `json:"roles"`
-	Game    *Activity   `json:"activity"`
-	GuildID Snowflake   `json:"guild_id"`
-	Nick    string      `json:"nick"`
-	Status  string      `json:"status"`
+	User         *User             `json:"user"`
+	Roles        []Snowflake       `json:"roles"`
+	Game         *Activity         `json:"activity"`
+	GuildID      Snowflake         `json:"guild_id"`
+	Nick         string            `json:"nick"`
+	Status       string            `json:"status"`
+	Activities   []*Activity       `json:"activities"`
+	ClientStatus map[string]string `json:"client_status"`
+
+	userID Snowflake `json:"-"` // caching
+}
+
+var _ internalUpdater = (*UserPresence)(nil)
+
+func (p *UserPresence) updateInternals() {
+	if p.User != nil {
+		p.userID = p.User.ID
+	}
 }
 
 func (p *UserPresence) String() string {
