@@ -19,7 +19,7 @@ func main() {
     defer client.StayConnectedUntilInterrupted()
     
     // create a handler and bind it to new message events
-    client.On(disgord.EventMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+    client.On(disgord.EvtMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
         msg := evt.Message
         if msg.Content == "ping" {
             _, _ = msg.RespondString(session, "pong")
@@ -41,7 +41,7 @@ import (
 	"os"
 )
 
-const NewMessage = disgord.EventMessageCreate
+const NewMessage = disgord.EvtMessageCreate
 
 func main() {
     // configure a DisGord client
