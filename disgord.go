@@ -36,7 +36,7 @@
 // Listen for events using channels
 //
 // Disgord also provides the option to listen for events using a channel, instead of registering a handler. However, before using the event channel, you must notify disgord that you care about the event (this is done automatically in the event handler registration).
-//  session.AcceptEvent(event.MessageCreate) // alternative: disgord.EventMessageCreate
+//  session.AcceptEvent(event.MessageCreate) // alternative: disgord.EvtMessageCreate
 //  session.AcceptEvent(event.MessageUpdate)
 //  for {
 //      var message *disgord.Message

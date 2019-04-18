@@ -49,7 +49,7 @@ func main() {
 		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
 
-	client.On(disgord.EventMessageCreate, autoDeleteNewMessages)
+	client.On(disgord.EvtMessageCreate, autoDeleteNewMessages)
 
 	// connect to the discord gateway to receive events
 	if err = client.Connect(); err != nil {

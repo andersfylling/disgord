@@ -12,7 +12,7 @@ client := disgord.New(&disgord.Config{
 // handlers/listener are run in sequence if you register more than one
 // so you should not need to worry about locking your objects unless you do any
 // parallel computing with said objects
-client.On(disgord.EventMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
+client.On(disgord.EvtMessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
 })
 
@@ -26,7 +26,7 @@ if err != nil {
 client.DisconnectOnInterrupt()
 ```
 
-Note that if you dislike the long `disgord.EventMessageCreate` name. You can use the sub package `event`. However, the `event` package will only hold valid Discord events.
+Note that if you dislike the long `disgord.EvtMessageCreate` name. You can use the sub package `event`. However, the `event` package will only hold valid Discord events.
 ```go 
 session.On(event.MessageCreate, func(session disgord.Session, data *disgord.MessageCreate) {
     fmt.Println(data.Message.Content)
