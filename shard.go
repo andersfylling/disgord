@@ -13,7 +13,10 @@ import (
 	"github.com/andersfylling/snowflake/v3"
 )
 
-const DefaultShardRateLimit float64 = 5.5 // seconds
+const (
+	FakeShardID                   = -1
+	DefaultShardRateLimit float64 = 5.5 // seconds
+)
 
 type WSShardManagerConfig struct {
 	// FirstID and ShardLimit creates the shard id range for this Client.

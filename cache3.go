@@ -59,10 +59,10 @@ func jsonNumberOfKeys(data []byte) (nrOfKeys uint) {
 	return
 }
 
-func jsonArrayLen(data []byte) (len int) {
+func jsonArrayLen(data []byte, keys ...string) (len int) {
 	_, _ = jp.ArrayEach(data, func(b []byte, _ jp.ValueType, _ int, _ error) {
 		len++
-	})
+	}, keys...)
 
 	return
 }

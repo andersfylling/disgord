@@ -81,10 +81,12 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 
 // Event is dispatched by the socket layer after parsing and extracting Discord data from a incoming packet.
 // This is the data structure used by Disgord for triggering handlers and channels with an event.
+//
+// ShardID is -1 when the event created is a custom one.
 type Event struct {
 	Name    string
 	Data    []byte
-	ShardID uint
+	ShardID int
 }
 
 // EvtConfig ws
@@ -328,7 +330,7 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 	c.eventChan <- &Event{
 		Name:    p.EventName,
 		Data:    p.Data,
-		ShardID: c.ShardID,
+		ShardID: int(c.ShardID),
 	}
 
 	return nil

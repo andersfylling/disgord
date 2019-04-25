@@ -17,7 +17,8 @@ import (
 const EvtChannelCreate = event.ChannelCreate
 
 func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelCreate) setShardID(id int)                   { h.ShardID = id }
+func (h *ChannelCreate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -26,7 +27,8 @@ func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
 const EvtChannelDelete = event.ChannelDelete
 
 func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelDelete) setShardID(id int)                   { h.ShardID = id }
+func (h *ChannelDelete) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -39,7 +41,8 @@ func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
 func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelPinsUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *ChannelPinsUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -48,7 +51,8 @@ func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = i
 const EvtChannelUpdate = event.ChannelUpdate
 
 func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *ChannelUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -57,7 +61,8 @@ func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildBanAdd = event.GuildBanAdd
 
 func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildBanAdd) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildBanAdd) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -66,7 +71,8 @@ func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildBanRemove = event.GuildBanRemove
 
 func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildBanRemove) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildBanRemove) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -79,7 +85,8 @@ func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildCreate = event.GuildCreate
 
 func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildCreate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildCreate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -90,7 +97,8 @@ func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildDelete = event.GuildDelete
 
 func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildDelete) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildDelete) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -102,7 +110,8 @@ func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
 func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildEmojisUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildEmojisUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -113,7 +122,8 @@ func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = i
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildIntegrationsUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildIntegrationsUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -126,7 +136,8 @@ func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.Shard
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
 func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberAdd) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildMemberAdd) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -138,7 +149,8 @@ func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
 func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberRemove) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildMemberRemove) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -152,7 +164,8 @@ func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = i
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
 func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildMemberUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -164,7 +177,8 @@ func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = i
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
 func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMembersChunk) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildMembersChunk) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -176,7 +190,8 @@ func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = i
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
 func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleCreate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildRoleCreate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -188,7 +203,8 @@ func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id 
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
 func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleDelete) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildRoleDelete) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -200,7 +216,8 @@ func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id 
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
 func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildRoleUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -209,7 +226,8 @@ func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id 
 const EvtGuildUpdate = event.GuildUpdate
 
 func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *GuildUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -218,7 +236,8 @@ func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
 const EvtMessageCreate = event.MessageCreate
 
 func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageCreate) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageCreate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -230,7 +249,8 @@ func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
 const EvtMessageDelete = event.MessageDelete
 
 func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageDelete) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageDelete) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -242,7 +262,8 @@ func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
 func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageDeleteBulk) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageDeleteBulk) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -256,7 +277,8 @@ func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = i
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
 func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionAdd) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageReactionAdd) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -270,7 +292,8 @@ func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = 
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
 func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionRemove) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageReactionRemove) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -282,7 +305,8 @@ func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionRemoveAll) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageReactionRemoveAll) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -293,7 +317,8 @@ func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.Shar
 const EvtMessageUpdate = event.MessageUpdate
 
 func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *MessageUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -308,7 +333,8 @@ func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
 const EvtPresenceUpdate = event.PresenceUpdate
 
 func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *PresenceUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *PresenceUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -317,7 +343,8 @@ func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
 const EvtPresencesReplace = event.PresencesReplace
 
 func (h *PresencesReplace) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *PresencesReplace) setShardID(id uint)                  { h.ShardID = id }
+func (h *PresencesReplace) setShardID(id int)                   { h.ShardID = id }
+func (h *PresencesReplace) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -335,7 +362,8 @@ func (h *PresencesReplace) setShardID(id uint)                  { h.ShardID = id
 const EvtReady = event.Ready
 
 func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
+func (h *Ready) setShardID(id int)                   { h.ShardID = id }
+func (h *Ready) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -347,7 +375,8 @@ func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
 const EvtResumed = event.Resumed
 
 func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
+func (h *Resumed) setShardID(id int)                   { h.ShardID = id }
+func (h *Resumed) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -360,7 +389,8 @@ func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
 const EvtTypingStart = event.TypingStart
 
 func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
+func (h *TypingStart) setShardID(id int)                   { h.ShardID = id }
+func (h *TypingStart) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -369,7 +399,8 @@ func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
 const EvtUserUpdate = event.UserUpdate
 
 func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *UserUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *UserUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -383,7 +414,8 @@ func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
 func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *VoiceServerUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *VoiceServerUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -392,7 +424,8 @@ func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = i
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
 func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *VoiceStateUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *VoiceStateUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
 
@@ -404,6 +437,7 @@ func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id
 const EvtWebhooksUpdate = event.WebhooksUpdate
 
 func (h *WebhooksUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *WebhooksUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *WebhooksUpdate) setShardID(id int)                   { h.ShardID = id }
+func (h *WebhooksUpdate) CustomEvt() bool                     { return h.ShardID == FakeShardID }
 
 // ---------------------------
