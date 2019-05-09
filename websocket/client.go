@@ -79,13 +79,13 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 		log:               conf.Logger,
 		behaviors:         map[string]*behavior{},
 		poolDiscordPkt:    conf.DiscordPktPool,
+		onceChannels:      newOnceChannels(),
+		waitForOpCode:     opcode.NoOPCode,
 
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
 	}
 	c.connectPermit = &emptyConnectPermit{}
-	c.preCon = func() {}
-	c.postCon = func() {}
 
 	return
 }
@@ -117,8 +117,8 @@ type client struct {
 	sync.RWMutex
 	clientType   int
 	conf         *config
-	lastRestart  int64 //unix
-	restartMutex sync.Mutex
+	lastRestart  int64      //unix
+	restartMutex sync.Mutex // TODO: atomic bool
 
 	pulsating          uint8
 	pulseMutex         sync.Mutex
@@ -130,10 +130,11 @@ type client struct {
 	ShardID uint
 
 	// sending and receiving data
-	ratelimit   ratelimiter
-	receiveChan chan *DiscordPacket
-	emitChan    chan *clientPacket
-	conn        Conn
+	ratelimit     ratelimiter
+	receiveChan   chan *DiscordPacket
+	emitChan      chan *clientPacket
+	conn          Conn
+	waitForOpCode uint
 
 	// states
 	disconnected      bool
@@ -142,11 +143,9 @@ type client struct {
 	isReceiving       bool // has the go routine started
 	isEmitting        bool // has the go routine started
 	recEmitMutex      sync.Mutex
+	onceChannels      onceChannels
 
 	isRestarting bool
-
-	preCon  func()
-	postCon func()
 
 	// identify timeout on invalid session
 	// useful in unit tests when you want to drop any actual timeouts
@@ -267,20 +266,15 @@ var _ logger.Logger = (*client)(nil)
 // LINKING: CONNECTING / DISCONNECTING / RECONNECTING
 //
 //////////////////////////////////////////////////////
-
-func (c *client) preConnect(cb func()) {
-	c.preCon = cb
-}
-func (c *client) postConnect(cb func()) {
-	c.postCon = cb
-}
-
-func (c *client) connect() (err error) {
+func (c *client) connect() (evt interface{}, err error) {
+	c.Lock()
+	op := c.waitForOpCode
+	c.Unlock()
 	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
 	// certainty say if we are connected
 	if !c.disconnected {
 		err = errors.New("cannot Connect while a connection already exist")
-		return
+		return nil, err
 	}
 
 	if c.conf.Endpoint == "" {
@@ -293,8 +287,15 @@ func (c *client) connect() (err error) {
 
 	if err = c.connectPermit.requestConnectPermit(); err != nil {
 		err = errors.New("unable to get permission to Connect. Err: " + err.Error())
-		return
+		return nil, err
 	}
+
+	waitingChan := make(chan interface{}, 2)
+	c.onceChannels.Add(op, waitingChan)
+	defer func() {
+		c.onceChannels.Acquire(op)
+		close(waitingChan)
+	}()
 
 	// establish ws connection
 	if err = c.conn.Open(c.conf.Endpoint, nil); err != nil {
@@ -307,7 +308,7 @@ func (c *client) connect() (err error) {
 		if err3 := c.connectPermit.releaseConnectPermit(); err3 != nil {
 			c.Info("unable to release connection permission. Err: ", err3)
 		}
-		return
+		return nil, err
 	}
 
 	var ctx context.Context
@@ -328,32 +329,25 @@ func (c *client) connect() (err error) {
 		}
 	}()
 
-	return
-}
-
-func (c *client) _connect() (err error) {
-	c.preCon()
-
-	c.Lock()
-	if err = c.connect(); err != nil {
-		c.Unlock()
-		return err
+	if op != opcode.NoOPCode {
+		timeout := time.After(5 * time.Second)
+		select {
+		case evt = <-waitingChan:
+		case <-timeout:
+			err = errors.New("did not receive voice ready in time")
+		}
 	}
-	c.Unlock()
-
-	c.postCon()
-
-	c.Info("connected")
-	return nil
+	return evt, err
 }
 
 // Connect establishes a socket connection with the Discord API
-func (c *client) Connect() (err error) {
+func (c *client) Connect( /*ctx context.Context, */ waitForOpCode uint) (evt interface{}, err error) {
 	c.Lock()
 	c.requestedDisconnect = false
+	c.waitForOpCode = waitForOpCode
 	c.Unlock()
 
-	return c._connect()
+	return c.connect()
 }
 
 func (c *client) disconnect() (err error) {
@@ -438,7 +432,7 @@ func (c *client) reconnect() (err error) {
 	var delay = 3 * time.Second
 	for {
 		c.Debug("reconnect attempt", try)
-		if err = c._connect(); err == nil {
+		if _, err = c.connect(); err == nil {
 			break
 		}
 
@@ -461,8 +455,6 @@ func (c *client) reconnect() (err error) {
 
 	return
 }
-
-var _ Link = (*client)(nil)
 
 //////////////////////////////////////////////////////
 //

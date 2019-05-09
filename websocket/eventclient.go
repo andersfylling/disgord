@@ -295,6 +295,11 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 	c.ReadyCounter++
 	c.Unlock()
 
+	if ch := c.onceChannels.Acquire(opcode.EventReady); ch != nil {
+		ch <- ready
+	} else {
+		panic("once channel for Ready was missing")
+	}
 	return nil
 }
 
@@ -406,6 +411,13 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 // GENERAL: unique to event
 //
 //////////////////////////////////////////////////////
+
+func (c *EvtClient) Connect() (err error) {
+	//timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	//_, err = c.client.Connect(timeout, opcode.EventReady)
+	_, err = c.client.Connect(opcode.EventReady)
+	return
+}
 
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
 // will be discarded once the socket info is extracted from the event.

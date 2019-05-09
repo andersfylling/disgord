@@ -44,9 +44,6 @@ type VoiceClient struct {
 	haveConnectedOnce  bool
 	haveIdentifiedOnce bool
 
-	onceChannels map[uint]chan interface{}
-	ready        *VoiceReady
-
 	SystemShutdown chan interface{}
 }
 
@@ -56,8 +53,7 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 	}
 
 	client = &VoiceClient{
-		conf:         conf,
-		onceChannels: make(map[uint]chan interface{}),
+		conf: conf,
 	}
 	client.client, err = newClient(&config{
 		Logger:   conf.Logger,
@@ -87,6 +83,7 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 
 func (c *VoiceClient) setupBehaviors() {
 	// operation handlers
+	// we manually link event methods instead of using reflection
 	c.addBehavior(&behavior{
 		addresses: discordOperations,
 		actions: behaviorActions{
@@ -104,21 +101,6 @@ func (c *VoiceClient) setupBehaviors() {
 			sendHeartbeat: c.sendHeartbeat,
 		},
 	})
-
-	ch := make(chan interface{}, 1)
-	c.preConnect(func() {
-		c.ready = nil
-		c.onceChannels[opcode.VoiceReady] = ch
-	})
-	c.postConnect(func() {
-		timeout := time.After(5 * time.Second)
-		select {
-		case d := <-ch:
-			c.ready = d.(*VoiceReady)
-		case <-timeout:
-			c.Error("did not receive voice ready in time")
-		}
-	})
 }
 
 //////////////////////////////////////////////////////
@@ -135,12 +117,11 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 		return err
 	}
 
-	c.Lock()
-	if ch, ok := c.onceChannels[opcode.VoiceReady]; ok {
-		delete(c.onceChannels, opcode.VoiceReady)
+	if ch := c.onceChannels.Acquire(opcode.VoiceReady); ch != nil {
 		ch <- readyPk
+	} else {
+		panic("once channel for Ready was missing")
 	}
-	c.Unlock()
 	return nil
 }
 
@@ -187,12 +168,9 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 		return err
 	}
 
-	c.Lock()
-	if ch, ok := c.onceChannels[opcode.VoiceSessionDescription]; ok {
-		delete(c.onceChannels, opcode.VoiceSessionDescription)
+	if ch := c.onceChannels.Acquire(opcode.VoiceSessionDescription); ch != nil {
 		ch <- sessionPk
 	}
-	c.Unlock()
 	return nil
 }
 
@@ -214,14 +192,12 @@ func (c *VoiceClient) sendHeartbeat(i interface{}) error {
 
 // Connect establishes a socket connection with the Discord API
 func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
-	if err = c.client.Connect(); err != nil {
-		return nil, err
+	var rdyI interface{}
+	if rdyI, err = c.client.Connect(opcode.VoiceReady); rdyI != nil && err == nil {
+		return rdyI.(*VoiceReady), nil
 	}
 
-	// TODO: plausible race condition
-	c.Lock()
-	defer c.Unlock()
-	return c.ready, nil
+	return nil, err
 }
 
 func (c *VoiceClient) sendVoiceHelloPacket() {
@@ -255,22 +231,21 @@ func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 
 func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSessionDescription, err error) {
 	ch := make(chan interface{}, 1)
-	c.onceChannels[opcode.VoiceSessionDescription] = ch
+	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
 	err = c.Emit(cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
 	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	timeout := time.After(5 * time.Second)
 	select {
 	case d := <-ch:
 		ret = d.(*VoiceSessionDescription)
 		return
-	case <-timeout:
+	case <-time.After(5 * time.Second):
 		err = errors.New("did not receive voice session description in time")
 		return
 	}

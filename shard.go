@@ -113,7 +113,7 @@ func (s *WSShardManager) Prepare(conf *Config) error {
 			case b, ok := <-a:
 				if !ok {
 					s.log.Error("b is closed")
-					continue
+					return
 				}
 
 				releaser := make(websocket.B)
