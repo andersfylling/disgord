@@ -1399,7 +1399,7 @@ func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions
 // https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type UpdateGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
-	Position uint      `json:"position"`
+	Position int       `json:"position"`
 }
 
 // UpdateGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.

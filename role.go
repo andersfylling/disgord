@@ -101,7 +101,7 @@ type Role struct {
 	Name        string    `json:"name"`
 	Color       uint      `json:"color"`
 	Hoist       bool      `json:"hoist"`
-	Position    uint      `json:"position"`
+	Position    int       `json:"position"` // can be -1
 	Permissions uint64    `json:"permissions"`
 	Managed     bool      `json:"managed"`
 	Mentionable bool      `json:"mentionable"`
