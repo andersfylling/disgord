@@ -522,6 +522,7 @@ func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 		}
 		shard.guilds[i] = shard.guilds[len(shard.guilds)-1]
 		shard.guilds = shard.guilds[:len(shard.guilds)-1]
+		break
 	}
 }
 
