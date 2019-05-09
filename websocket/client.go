@@ -337,6 +337,9 @@ func (c *client) connect() (evt interface{}, err error) {
 			err = errors.New("did not receive voice ready in time")
 		}
 	}
+	if err == nil {
+		c.Info("connected")
+	}
 	return evt, err
 }
 
