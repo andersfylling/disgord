@@ -124,7 +124,7 @@ func (b *updateChannelBuilder) SetTopic(topic string) *updateChannelBuilder {
 	return b
 }
 
-func (b *updateChannelBuilder) SetPosition(position uint) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetPosition(position int) *updateChannelBuilder {
 	b.r.param("position", position)
 	return b
 }
@@ -533,7 +533,7 @@ func (b *updateGuildRoleBuilder) SetName(name string) *updateGuildRoleBuilder {
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBits) *updateGuildRoleBuilder {
 	b.r.param("permissions", permissions)
 	return b
 }

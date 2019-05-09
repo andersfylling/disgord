@@ -103,7 +103,7 @@ type Channel struct {
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
 	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
-	Position             uint                  `json:"position,omitempty"`              // ?|
+	Position             int                   `json:"position,omitempty"`              // ?| can be less than 0
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
 	Name                 string                `json:"name,omitempty"`                  // ?|
 	Topic                string                `json:"topic,omitempty"`                 // ?|?
@@ -782,7 +782,7 @@ func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (er
 //////////////////////////////////////////////////////
 
 // updateChannelBuilder https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:uint, name:string,
+//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
 //generate-rest-basic-execute: channel:*Channel,
 type updateChannelBuilder struct {
 	r RESTBuilder

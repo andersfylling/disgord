@@ -1309,7 +1309,7 @@ type CreateGuildChannelParams struct {
 	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
 	ParentID             Snowflake             `json:"parent_id,omitempty"`
 	NSFW                 bool                  `json:"nsfw,omitempty"`
-	Position             uint                  `json:"position"` // can not omitempty in case position is 0
+	Position             int                   `json:"position"` // can not omitempty in case position is 0
 }
 
 // CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.

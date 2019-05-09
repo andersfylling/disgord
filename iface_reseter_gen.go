@@ -55,7 +55,7 @@ func (g *Guild) Reset() {
 	g.Splash = nil
 	g.Owner = false
 	g.OwnerID = 0
-	g.Permissions = 0
+	g.Permissions = PermissionBits{}
 	g.Region = ""
 	g.AfkChannelID = 0
 	g.AfkTimeout = 0
