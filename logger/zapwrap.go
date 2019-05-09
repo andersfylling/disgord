@@ -15,7 +15,7 @@ func DefaultLogger(debug bool) *LoggerZap {
 		conf.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 
-	log, err := conf.Build()
+	log, err := conf.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		panic(err)
 	}
