@@ -289,7 +289,7 @@ func getZeroVal(s string) (result string, success bool) {
 	case "nil":
 		result = s
 		// TODO: find out what the original data type is
-	case "VerificationLvl", "DefaultMessageNotificationLvl", "ExplicitContentFilterLvl", "MFALvl", "Discriminator", "PremiumType":
+	case "VerificationLvl", "DefaultMessageNotificationLvl", "ExplicitContentFilterLvl", "MFALvl", "Discriminator", "PremiumType", "PermissionBits", "PermissionBit":
 		result = "0"
 	}
 

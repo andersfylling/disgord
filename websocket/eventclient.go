@@ -295,11 +295,12 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 	c.ReadyCounter++
 	c.Unlock()
 
-	if ch := c.onceChannels.Acquire(opcode.EventReady); ch != nil {
+	if ch := c.onceChannels.Acquire(opcode.EventReadyResumed); ch != nil {
 		ch <- ready
 	} else {
 		panic("once channel for Ready was missing")
 	}
+
 	return nil
 }
 
@@ -313,6 +314,14 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 	if p.EventName == event.Ready {
 		if err = c.onReady(p); err != nil {
 			return err
+		}
+	} else if p.EventName == event.Resumed {
+		if ch := c.onceChannels.Acquire(opcode.EventReadyResumed); ch != nil {
+			// WARNING! does not return a ready event on resume!
+			// TODO: clean up
+			ch <- event.Resumed
+		} else {
+			panic("once channel for Resumed/Ready was missing")
 		}
 	}
 
@@ -414,8 +423,8 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 
 func (c *EvtClient) Connect() (err error) {
 	//timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	//_, err = c.client.Connect(timeout, opcode.EventReady)
-	_, err = c.client.Connect(opcode.EventReady)
+	//_, err = c.client.Connect(timeout, opcode.EventReadyResumed)
+	_, err = c.client.Connect(opcode.EventReadyResumed)
 	return
 }
 

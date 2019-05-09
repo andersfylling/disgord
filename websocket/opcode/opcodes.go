@@ -4,10 +4,10 @@ import "math"
 
 // custom op codes used by DisGord internally
 const (
-	Shutdown   uint = 100
-	Close      uint = 101
-	EventReady uint = 102 // Discord use 0 here, but that is a shared op code
-	NoOPCode   uint = math.MaxUint16
+	Shutdown          uint = 100
+	Close             uint = 101
+	EventReadyResumed uint = 102 // Discord use 0 here, but that is a shared op code
+	NoOPCode          uint = math.MaxUint16
 )
 
 // operation codes for the event client

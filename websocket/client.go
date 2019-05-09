@@ -333,11 +333,14 @@ func (c *client) connect() (evt interface{}, err error) {
 		timeout := time.After(5 * time.Second)
 		select {
 		case evt = <-waitingChan:
+			c.Info("connected")
+		case <-ctx.Done():
+			c.disconnected = true
 		case <-timeout:
-			err = errors.New("did not receive voice ready in time")
+			c.disconnected = true
+			err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(op)))
 		}
-	}
-	if err == nil {
+	} else {
 		c.Info("connected")
 	}
 	return evt, err
