@@ -1083,6 +1083,7 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 	var result interfaces.CacheableItem
 	if result, exists = c.guilds.Get(guildID); !exists {
 		err = newErrorCacheItemNotFound(guildID)
+		c.guilds.RUnlock()
 		return
 	}
 
