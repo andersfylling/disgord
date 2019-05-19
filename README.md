@@ -27,7 +27,7 @@ Go module for interacting with the Discord API. Supports events, REST calls and 
  
 Discord object comes with helper functions such as `Message.Reply(session, "hello")`, or `Session.SaveToDiscord(newRole)` for simplicity/readability.
 
-DisGord has complete implementation for Discord's documented REST API. It lacks battle testing testing, so any bug report/feedback is greatly appreciated!
+DisGord has complete implementation for Discord's documented REST API. It lacks battle testing, so any bug report/feedback is greatly appreciated!
 
 To get started see the examples in [docs](docs/examples)
 
