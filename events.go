@@ -173,8 +173,7 @@ type Ready struct {
 	Guilds     []*GuildUnavailable `json:"guilds"`
 
 	// not really needed, as it is handled on the socket layer.
-	SessionID string   `json:"session_id"`
-	Trace     []string `json:"_trace"`
+	SessionID string `json:"session_id"`
 
 	// private_channels will be an empty array. As bots receive private messages,
 	// they will be notified via Channel Create events.
@@ -198,7 +197,6 @@ type Ready struct {
 
 // Resumed response to Resume
 type Resumed struct {
-	Trace   []string        `json:"_trace"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
 }

@@ -145,7 +145,6 @@ type EvtClient struct {
 	trackedEvents *UniqueStringSlice
 
 	sessionID      string
-	trace          []string
 	sequenceNumber uint
 
 	// synchronization and rate limiting
@@ -283,7 +282,7 @@ func (c *EvtClient) virginConnection() bool {
 func (c *EvtClient) onReady(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
-	// always store the session id & update the trace content
+	// always store the session id
 	ready := evtReadyPacket{}
 	if err = httd.Unmarshal(p.Data, &ready); err != nil {
 		return err
@@ -291,7 +290,6 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	c.Lock()
 	c.sessionID = ready.SessionID
-	c.trace = ready.Trace
 	c.ReadyCounter++
 	c.Unlock()
 
