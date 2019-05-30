@@ -291,7 +291,6 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	c.Lock()
 	c.sessionID = ready.SessionID
-	c.trace = ready.Trace
 	c.ReadyCounter++
 	c.Unlock()
 

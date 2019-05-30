@@ -91,7 +91,6 @@ type voiceIdentify struct {
 
 type evtReadyPacket struct {
 	SessionID string `json:"session_id"`
-	traceData
 }
 
 type evtIdentity struct {
@@ -115,13 +114,8 @@ type clientPacket struct {
 	Data interface{} `json:"d"`
 }
 
-type traceData struct {
-	Trace []string `json:"_trace"`
-}
-
 type helloPacket struct {
 	HeartbeatInterval uint `json:"heartbeat_interval"`
-	traceData
 }
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic
