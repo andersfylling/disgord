@@ -454,6 +454,48 @@ func (g *Guild) LoadAllMembers(s Session) (err error) {
 	return nil
 }
 
+// GetMembersCountEstimate estimates the number of members in a guild without fetching everyone.
+// There is no proper way to get this number, so a invite is created and the estimate
+// is read from there. The invite is then deleted again.
+func (g *Guild) GetMembersCountEstimate(s Session) (estimate int, err error) {
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
+
+	var channelID Snowflake
+	if len(g.Channels) == 0 {
+		channels, err := s.GetGuildChannels(g.ID)
+		if err != nil {
+			return 0, err
+		}
+
+		for i := range channels {
+			channelID = channels[i].ID
+
+			// prefer the main channel
+			if channelID == g.ID {
+				break
+			}
+		}
+
+		// TODO: update g.Channels
+	}
+	if channelID.Empty() {
+		return 0, errors.New("unable to decide which channel to create invite for")
+	}
+
+	invite, err := s.CreateChannelInvites(channelID, &CreateChannelInvitesParams{
+		MaxAge: 1,
+	})
+	if err != nil {
+		return 0, err
+	}
+	_ = s.DeleteFromDiscord(invite) // delete if possible
+
+	return invite.ApproximateMemberCount, nil
+}
+
 // AddRole adds a role to the Guild object. Note that this does not interact with Discord.
 func (g *Guild) AddRole(role *Role) error {
 	if constant.LockedMethods {
