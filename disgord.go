@@ -5,37 +5,29 @@
 // Create a DisGord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
-//  discord, err := disgord.NewClient(&disgord.Config{
-//    BotToken: "my-secret-bot-token",
+//  discord := disgord.New(&disgord.Config{
+//    Token: "my-secret-bot-token",
 //  })
-//  if err != nil {
-//    panic(err)
-//  }
+//  defer discord.StayConnectedUntilInterrupt()
 //
 //  // listen for incoming messages and reply with a "hello"
-//  discord.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
-//      evt.Message.RespondString("hello")
+//  discord.On(event.MessageCreate, func(s disgord.Session, evt *disgord.MessageCreate) {
+//      msg := evt.Message
+//      msg.Reply(s, "hello")
 //  })
 //
-//  // connect to the socket API to receive events
-//  err = discord.Connect()
-//  if err != nil {
-//      panic(err)
-//  }
-//  discord.DisconnectOnInterrupt()
-//
-// If you want some logic to fire when the bot is ready (all shards has received their ready event), please use the Ready method.
-//  // ...
+// // If you want some logic to fire when the bot is ready
+// // (all shards has received their ready event), please use the Ready method.
 //  discord.Ready(func() {
 //  	fmt.Println("READY NOW!")
 //  })
-//  // ...
 //
 //
 //
 // Listen for events using channels
 //
 // Disgord also provides the option to listen for events using a channel, instead of registering a handler. However, before using the event channel, you must notify disgord that you care about the event (this is done automatically in the event handler registration).
+// Note that this will be removed in the future (maybe v0.12), and you have to register your channels in the .On method as you do with event handlers.
 //  session.AcceptEvent(event.MessageCreate) // alternative: disgord.EvtMessageCreate
 //  session.AcceptEvent(event.MessageUpdate)
 //  for {
@@ -116,35 +108,28 @@
 // Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
 //
 //
-// Immutable and concurrent accessible cache
+// Immutable cache
 //
-// The option CacheConfig.Immutable can greatly improve performance or break your system. If you utilize channels or you need concurrent access, the safest bet is to set immutable to `true`. While this is slower (as you create deep copies and don't share the same memory space with variables outside the cache), it increases reliability that the cache always reflects the last known Discord state.
-// If you are uncertain, just set it to `true`. The default setting is `true` if `disgord.Cache.CacheConfig` is `nil`.
+// To keep it safe and reliable, you can not directly affect the contents of the cache. Unlike discordgo where everything is mutable, the caching in disgord is immutable. This does reduce performance as a copy must be made (only on new cache entries), but as a performance freak, I can tell you right now that a simple struct copy is not that expensive. This also means that, as long as discord sends their events properly, the caching will always reflect the true state of discord.
 //
+// If there is a bug in the cache and you keep getting the incorrect data, please file an issue at github.com/andersfylling/disgord so it can quickly be resolved(!)
 //
 // Bypass the built-in REST cache
 //
-// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using the REST functions directly. Remember that this will not update the cache for you, and this needs to be done manually if you depend on the cache.
+// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using disgord flags.
 //  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
 //  user, err := session.GetUser(userID)
 //
-//  // bypass the cache checking. Same function name, but is found in the disgord package, not the session interface.
-//  user, err := disgord.GetUser(userID)
+//  // bypass the cache checking. Same as before, but we insert a disgord.Flag type.
+//  user, err := session.GetUser(userID, disgord.IgnoreCache)
+//
+// DisGord Flags
+//
+// In addition to disgord.IgnoreCache, as shown above, you can pass in other flags such as: disgord.SortByID, disgord.OrderAscending, etc. You can find these flags in the flag.go file.
 //
 // Manually updating the cache
 //
-// If required, you can access the cache and update it by hand. Note that this should not be required when you use the Session interface.
-//  user, err := disgord.GetUser(userID)
-//  if err != nil {
-//      return err
-//  }
-//
-//  // update the cache
-//  cache := discord.Cache()
-//  err = cache.Update(disgord.UserCache, user)
-//  if err != nil {
-//      return err
-//  }
+// Currently not supported. Should it ever be?
 //
 //
 // Build tags
@@ -158,21 +143,9 @@
 // `disgord_parallelism` activates built-in locking in discord structure methods. Eg. Guild.AddChannel(*Channel) does not do locking by default. But if you find yourself using these discord data structures in parallel environment, you can activate the internal locking to reduce race conditions. Note that activating `disgord_parallelism` and `disgord_removeDiscordMutex` at the same time, will cause you to have no locking as `disgord_removeDiscordMutex` affects the same mutexes.
 //
 //
-// Saving and Deleting Discord data
+// Deleting Discord data
 //
-// > Note: when using SaveToDiscord(...) make sure the object reflects the Discord state. Calling Save on default values might overwrite or reset the object at Discord, causing literally.. Hell.
-//
-// You might have seen the two methods in the session interface: SaveToDiscord(...) and DeleteFromDiscord(...).
-// This are as straight forward as they sound. Passing a discord data structure into one of them executes their obvious behavior; to either save it to Discord, or delete it.
-//  // create a new role and give it certain permissions
-//  role := disgord.Role{}
-//  role.Name = "Giraffes"
-//  role.GuildID = guild.ID // required, for an obvious reason
-//  role.Permissions = disgord.ManageChannelsPermission | disgord.ViewAuditLogsPermission
-//  err := session.SaveToDiscord(&role)
-//
-// You know what.. Let's just remove the role
-//  err := session.DeleteFromDiscord(&role)
+// In addition to the typical REST endpoints for deleting data, you can also use Client/Session.DeleteFromDiscord(...) for basic deletions. If you need to delete a specific range of messages, or anything complex as that; you can't use .DeleteFromDiscord(...). Not every struct has implemented the interface that allows you to call DeleteFromDiscord. Do not fret, if you try to pass a type that doesn't qualify, you get a compile error.
 //
 package disgord
 

@@ -2,11 +2,10 @@ package disgord
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/pkg/errors"
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/snowflake/v3"
