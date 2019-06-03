@@ -59,9 +59,10 @@ func (e *ErrorUnsupportedType) Error() string {
 
 // DiscordSaver holds the method saveToDiscord that discord structs must implement
 // in order to use Client.SaveToDiscord for saving and update content.
-type discordSaver interface {
-	saveToDiscord(session Session, flags ...Flag) error
-}
+// WARNING! this was removed as it was too ambiguous.
+//type discordSaver interface {
+//	saveToDiscord(session Session, flags ...Flag) error
+//}
 
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.

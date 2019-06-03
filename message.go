@@ -106,7 +106,6 @@ type Message struct {
 var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
-var _ discordSaver = (*Message)(nil)
 var _ discordDeleter = (*Message)(nil)
 
 func (m *Message) String() string {
@@ -227,29 +226,6 @@ func (m *Message) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 
 	err = s.DeleteMessage(m.ChannelID, m.ID, flags...)
 	return
-}
-func (m *Message) saveToDiscord(s Session, flags ...Flag) (err error) {
-	var message *Message
-
-	if constant.LockedMethods {
-		m.RLock()
-	}
-	id := m.ID
-	if constant.LockedMethods {
-		m.RUnlock()
-	}
-
-	if id.Empty() {
-		message, err = m.Send(s, flags...)
-	} else {
-		message, err = m.update(s, flags...)
-	}
-	if err != nil {
-		return err
-	}
-
-	_ = message.CopyOverTo(m)
-	return nil
 }
 
 // MessageUpdater is a interface which only holds the message update method

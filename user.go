@@ -426,7 +426,6 @@ type User struct {
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
 var _ Copier = (*User)(nil)
-var _ discordSaver = (*User)(nil)
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
@@ -587,40 +586,6 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 		user.Unlock()
 	}
 
-	return
-}
-
-func (u *User) saveToDiscord(s Session, flags ...Flag) (err error) {
-	var myself *User
-	if myself, err = s.GetCurrentUser(flags...); err != nil {
-		return
-	}
-	if myself == nil {
-		err = errors.New("can't get information about current user")
-		return
-	}
-
-	if myself.ID != u.ID {
-		err = errors.New("can only update current user")
-		return
-	}
-
-	avatar := ""
-	if u.Avatar != nil {
-		avatar = *u.Avatar
-	}
-
-	updated, err := s.UpdateCurrentUser(flags...).
-		SetUsername(u.Username).
-		SetAvatar(avatar).
-		Execute()
-
-	if err != nil {
-		return err
-	}
-
-	// TODO: remove once ModifyCurrentUser updates cache and the Client var?
-	_ = updated.copyOverToCache(u)
 	return
 }
 

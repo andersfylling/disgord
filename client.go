@@ -641,17 +641,6 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error
 	return
 }
 
-// SaveToDiscord saves an object to the Discord servers. This supports creating and updating objects.
-// Note that an object is created when the ID field is empty, and update when set.
-func (c *Client) SaveToDiscord(obj discordSaver, flags ...Flag) (err error) {
-	if obj == nil {
-		return errors.New("object to save can not be nil")
-	}
-
-	err = obj.saveToDiscord(c, flags...)
-	return
-}
-
 //////////////////////////////////////////////////////
 //
 // REST Methods

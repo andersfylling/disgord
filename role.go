@@ -12,6 +12,8 @@ import (
 
 type roles []*Role
 
+var _ sort.Interface = (roles)(nil)
+
 func (r roles) Len() int {
 	return len(r)
 }
@@ -32,55 +34,6 @@ func (r roles) Swap(i, j int) {
 	tmp := r[i]
 	r[i] = r[j]
 	r[j] = tmp
-}
-
-var _ discordSaver = (*roles)(nil)
-var _ sort.Interface = (roles)(nil)
-
-func (rp *roles) saveToDiscord(s Session, flags ...Flag) error {
-	r := *rp
-	var guildID Snowflake
-	for i := range r {
-		if !r[i].guildID.Empty() {
-			guildID = r[i].guildID
-			break
-		}
-	}
-	updated, err := s.UpdateGuildRolePositions(guildID, NewUpdateGuildRolePositionsParams(r), flags...)
-	if err != nil {
-		return err
-	}
-
-	// Since the updating guild role positions _requires_ you to send all the roles
-	// you should be given the exact same roles in return. We sort them such that we only need to iterate
-	// with a O(N) instead of a O(N*M). However, since I don't trust Discord (...) I keep the option open
-	// that more than the local number of roles might be returned.
-	SortRoles(r)
-	SortRoles(updated)
-	var newRoles []*Role
-	for j := range updated {
-		var handled bool
-		for i := range r {
-			if r[i].ID != updated[j].ID {
-				continue
-			}
-
-			_ = updated[j].CopyOverTo(r[i])
-			updated[j] = nil
-			updated[j] = updated[len(updated)-1]
-			updated = updated[:len(updated)-1]
-			handled = true
-			break
-		}
-
-		if !handled {
-			newRoles = append(newRoles, updated[j])
-		}
-	}
-	*rp = append(r, newRoles...)
-	SortRoles(*rp)
-
-	return err
 }
 
 // SortRoles sorts a slice of roles such that the first element is the top one in the Discord Guild Settings UI.
@@ -112,7 +65,6 @@ type Role struct {
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
 var _ Copier = (*Role)(nil)
-var _ discordSaver = (*Role)(nil)
 var _ discordDeleter = (*Role)(nil)
 var _ fmt.Stringer = (*Role)(nil)
 
@@ -167,85 +119,6 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	}
 
 	return
-}
-
-func (r *Role) saveToDiscord(s Session, flags ...Flag) (err error) {
-	if constant.LockedMethods {
-		r.RLock()
-	}
-	guildID := r.guildID
-	id := r.ID
-	//pos := r.Position
-	if constant.LockedMethods {
-		r.RUnlock()
-	}
-
-	if guildID.Empty() {
-		err = newErrorMissingSnowflake("role has no guildID. Use Role.SetGuildID(..)")
-		return
-	}
-
-	var role *Role
-	if id.Empty() {
-		// create role
-		if constant.LockedMethods {
-			r.RLock()
-		}
-		params := CreateGuildRoleParams{
-			Name:        r.Name,
-			Permissions: r.Permissions,
-			Color:       r.Color,
-			Hoist:       r.Hoist,
-			Mentionable: r.Mentionable,
-		}
-		if constant.LockedMethods {
-			r.RUnlock()
-		}
-		role, err = s.CreateGuildRole(guildID, &params, flags...)
-	} else {
-		if constant.LockedMethods {
-			r.RLock()
-		}
-		builder := s.UpdateGuildRole(guildID, id, flags...).
-			SetName(r.Name).
-			SetColor(r.Color).
-			SetHoist(r.Hoist).
-			SetMentionable(r.Mentionable).
-			SetPermissions(r.Permissions)
-		if constant.LockedMethods {
-			r.RUnlock()
-		}
-		role, err = builder.Execute()
-		if err == nil {
-			// TODO: handle role position
-			//  this is a little tricky as a user might not want to change the positions
-
-			//if role != nil && role.Position != pos {
-			//
-			////var roles []*Role
-			////roles, err = s.GetGuildRoles(guildID, flags...)
-			////if err != nil {
-			////	err = errors.New("unable to update role position: " + err.Error())
-			////} else {
-			////	params := NewUpdateGuildRolePositionsParams(roles)
-			////	_, err = s.UpdateGuildRolePositions(guildID, params, flags...)
-			////	if err != nil {
-			////		err = errors.New("unable to update role position: " + err.Error())
-			////	} else {
-			////		err = role.CopyOverTo(r)
-			////	}
-			////}
-			//}
-
-		}
-	}
-
-	if err != nil {
-		return err
-	}
-
-	err = role.CopyOverTo(r)
-	return err
 }
 
 func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {

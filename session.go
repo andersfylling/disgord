@@ -547,7 +547,6 @@ type Session interface {
 
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error
-	SaveToDiscord(obj discordSaver, flags ...Flag) error
 
 	// AddPermission is to store the permissions required by the bot to function as intended.
 	AddPermission(permission PermissionBit) (updatedPermissions PermissionBits)
