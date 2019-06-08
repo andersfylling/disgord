@@ -10,4 +10,4 @@ const UserAgent = "DiscordBot (" + GitHubURL + ", " + Version + ") " // "Discord
 // Version project version
 // TODO: git hook which creates a new git tag after a commit, given that
 //        the version here has changed or does not exist as a git tag yet.
-const Version = "v0.10.3"
+const Version = "v0.10.5"
