@@ -161,7 +161,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		}
 
 		for _, handler := range spec.handlers {
-			d.trigger(handler, evt)
+			d.trigger(handler, localEvt)
 		}
 
 		spec.ctrl.Update()
