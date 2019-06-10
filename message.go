@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/bits"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -352,7 +353,7 @@ type GetMessagesParams struct {
 
 var _ URLQueryStringer = (*GetMessagesParams)(nil)
 
-// GetMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
+// getMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
@@ -363,7 +364,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func (c *Client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
+func (c *Client) getMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -384,6 +385,76 @@ func (c *Client) GetMessages(channelID Snowflake, params URLQueryStringer, flags
 	}
 
 	return getMessages(r.Execute)
+}
+
+// GetMessages bypasses discord limitations and iteratively fetches messages until the set filters are met.
+func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, flags ...Flag) (messages []*Message, err error) {
+	// discord values
+	const filterLimit = 100
+	const filterDefault = 50
+
+	if filter.Limit == 0 {
+		filter.Limit = filterDefault
+		// we hardcode it here in case discord goes dumb and decided to randomly change it
+		// such that bot do not experience a new behaviour
+	}
+
+	// control checks:
+	// only one of "around", "before" and "after" can be set at the time.
+	var keys uint8
+	if filter.After > 0 {
+		keys |= 1 << 0
+	}
+	if filter.Before > 0 {
+		keys |= 1 << 1
+	}
+	if filter.Around > 0 {
+		keys |= 1 << 2
+	}
+
+	if bits.OnesCount8(keys) > 1 {
+		return nil, errors.New(`only one of the keys "around", "before" and "after" can be set at the time`)
+	}
+
+	if filter.Limit <= filterLimit {
+		return c.getMessages(channelID, filter, flags...)
+	}
+
+	// scenario#1: filter.Around is not 0 AND filter.Limit is above 100
+	//  divide the limit by half and use .Before and .After tags on each quotient limit.
+	//  Use the .After on potential remainder.
+	//  Note! This method can be used recursively
+	if filter.Around > 0 {
+		beforeParams := *filter
+		beforeParams.Before = beforeParams.Around
+		befores, err := c.getMessages(channelID, &beforeParams, flags...)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, befores...)
+
+		afterParams := *filter
+		afterParams.After = afterParams.Around
+		afters, err := c.getMessages(channelID, &afterParams, flags...)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, afters...)
+
+		// filter.Around includes the given ID, so should .Before and .After iterations do as well
+		if msg, _ := c.GetMessage(channelID, filter.Around, flags...); msg != nil {
+			// assumption: error here can be caused by the message ID not actually being a real message
+			//             and that it was used to get messages in the vicinity. Therefore the err is ignored.
+			// TODO: const discord errors.
+			messages = append(messages, msg)
+		}
+	}
+
+	// scenario#2: filter.? is not 0 AND filter.Limit is above 100, where ? is either .After or .Before
+	//
+
+	// duplicates should not exist as we use snowflakes and a range to fetch messages.
+	return messages, nil
 }
 
 // GetMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints

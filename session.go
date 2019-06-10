@@ -115,7 +115,7 @@ type RESTMessage interface {
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) ([]*Message, error)
+	GetMessages(channelID Snowflake, params *GetMessagesParams, flags ...Flag) ([]*Message, error)
 
 	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
 	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
