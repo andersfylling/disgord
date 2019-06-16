@@ -395,8 +395,8 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 
 	if filter.Limit == 0 {
 		filter.Limit = filterDefault
-		// we hardcode it here in case discord goes dumb and decided to randomly change it
-		// such that bot do not experience a new behaviour
+		// we hardcode it here in case discord goes dumb and decided to randomly change it.
+		// This avoids that the bot do not experience a new, random, behaviour
 	}
 
 	// control checks:
@@ -448,12 +448,47 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 			// TODO: const discord errors.
 			messages = append(messages, msg)
 		}
+	} else if filter.Before > 0 {
+		// scenario#2: filter.Before is not 0 AND filter.Limit is above 100
+		//
+		panic("TODO")
+	} else if filter.After > 0 {
+		// scenario#3: filter.After is not 0 AND filter.Limit is above 100
+		//
+		panic("TODO")
+	} else {
+		// scenario#4: filter.Limit is above 100
+		//
+		for {
+			if filter.Limit <= 0 {
+				break
+			}
+
+			f := *filter
+			if f.Limit > 100 {
+				f.Limit = 100
+			}
+			filter.Limit -= f.Limit
+			msgs, err := c.getMessages(channelID, &f, flags...)
+			if err != nil {
+				return nil, err
+			}
+			messages = append(messages, msgs...)
+
+			var earliest Snowflake
+			for i := range msgs {
+				if msgs[i].ID < earliest {
+					earliest = msgs[i].ID
+				}
+			}
+			filter.Before = earliest
+		}
 	}
 
-	// scenario#2: filter.? is not 0 AND filter.Limit is above 100, where ? is either .After or .Before
+	// scenario#3: filter.Before is not 0 AND filter.Limit is above 100
 	//
 
-	// duplicates should not exist as we use snowflakes and a range to fetch messages.
+	// duplicates should not exist as we use snowflakes to fetch unique segments in time
 	return messages, nil
 }
 
