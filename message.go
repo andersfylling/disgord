@@ -426,7 +426,8 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 
 	latestSnowflake := func(msgs []*Message) (latest Snowflake) {
 		for i := range msgs {
-			if msgs[i].ID.Date().After(latest.Date()) {
+			// if msgs[i].ID.Date().After(latest.Date()) {
+			if msgs[i].ID > latest {
 				latest = msgs[i].ID
 			}
 		}
@@ -434,7 +435,8 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 	}
 	earliestSnowflake := func(msgs []*Message) (earliest Snowflake) {
 		for i := range msgs {
-			if msgs[i].ID.Date().Before(earliest.Date()) {
+			// if msgs[i].ID.Date().Before(earliest.Date()) {
+			if msgs[i].ID < earliest {
 				earliest = msgs[i].ID
 			}
 		}
