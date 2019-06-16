@@ -369,6 +369,11 @@ func (c *client) disconnect() (err error) {
 	c.cancel()
 	c.cancel = nil
 
+	// just in case ... a disconnect is called unexpectedly
+	if err2 := c.connectPermit.releaseConnectPermit(); err2 != nil {
+		c.Debug("disconnect called releaseConnectPermit", err2.Error())
+	}
+
 	// use the emitter to dispatch the close message
 	err = c.conn.Close()
 	// a typical err here is that the pipe is closed. Err is returned later
