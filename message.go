@@ -420,14 +420,33 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 		return c.getMessages(channelID, filter, flags...)
 	}
 
+	latestSnowflake := func(msgs []*Message) (latest Snowflake) {
+		for i := range msgs {
+			if msgs[i].ID.Date().After(latest.Date()) {
+				latest = msgs[i].ID
+			}
+		}
+		return
+	}
+	earliestSnowflake := func(msgs []*Message) (earliest Snowflake) {
+		for i := range msgs {
+			if msgs[i].ID.Date().Before(earliest.Date()) {
+				earliest = msgs[i].ID
+			}
+		}
+		return
+	}
+
 	// scenario#1: filter.Around is not 0 AND filter.Limit is above 100
 	//  divide the limit by half and use .Before and .After tags on each quotient limit.
 	//  Use the .After on potential remainder.
 	//  Note! This method can be used recursively
-	if filter.Around > 0 {
+	if !filter.Around.Empty() {
 		beforeParams := *filter
 		beforeParams.Before = beforeParams.Around
-		befores, err := c.getMessages(channelID, &beforeParams, flags...)
+		beforeParams.Around = 0
+		beforeParams.Limit = filter.Limit / 2
+		befores, err := c.GetMessages(channelID, &beforeParams, flags...)
 		if err != nil {
 			return nil, err
 		}
@@ -435,7 +454,9 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 
 		afterParams := *filter
 		afterParams.After = afterParams.Around
-		afters, err := c.getMessages(channelID, &afterParams, flags...)
+		afterParams.Around = 0
+		afterParams.Limit = filter.Limit / 2
+		afters, err := c.GetMessages(channelID, &afterParams, flags...)
 		if err != nil {
 			return nil, err
 		}
@@ -448,16 +469,9 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 			// TODO: const discord errors.
 			messages = append(messages, msg)
 		}
-	} else if filter.Before > 0 {
-		// scenario#2: filter.Before is not 0 AND filter.Limit is above 100
-		//
-		panic("TODO")
-	} else if filter.After > 0 {
-		// scenario#3: filter.After is not 0 AND filter.Limit is above 100
-		//
-		panic("TODO")
 	} else {
-		// scenario#4: filter.Limit is above 100
+		// scenario#3: filter.After or filter.Before is set.
+		// note that none might be set, which will cause filter.Before to be set after the first 100 messages.
 		//
 		for {
 			if filter.Limit <= 0 {
@@ -474,19 +488,14 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 				return nil, err
 			}
 			messages = append(messages, msgs...)
-
-			var earliest Snowflake
-			for i := range msgs {
-				if msgs[i].ID < earliest {
-					earliest = msgs[i].ID
-				}
+			if !filter.After.Empty() {
+				filter.After = latestSnowflake(msgs)
+			} else {
+				// no snowflake or filter.Before
+				filter.Before = earliestSnowflake(msgs)
 			}
-			filter.Before = earliest
 		}
 	}
-
-	// scenario#3: filter.Before is not 0 AND filter.Limit is above 100
-	//
 
 	// duplicates should not exist as we use snowflakes to fetch unique segments in time
 	return messages, nil
