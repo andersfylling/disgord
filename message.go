@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/bits"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -348,7 +347,25 @@ type GetMessagesParams struct {
 	Around Snowflake `urlparam:"around,omitempty"`
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
-	Limit  int       `urlparam:"limit,omitempty"`
+	Limit  uint      `urlparam:"limit,omitempty"`
+}
+
+func (p *GetMessagesParams) Validate() error {
+	var mutuallyExclusives int
+	if !p.Around.Empty() {
+		mutuallyExclusives++
+	}
+	if !p.Before.Empty() {
+		mutuallyExclusives++
+	}
+	if !p.After.Empty() {
+		mutuallyExclusives++
+	}
+
+	if mutuallyExclusives > 1 {
+		return errors.New(`only one of the keys "around", "before" and "after" can be set at the time`)
+	}
+	return nil
 }
 
 var _ URLQueryStringer = (*GetMessagesParams)(nil)
@@ -393,27 +410,14 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 	const filterLimit = 100
 	const filterDefault = 50
 
+	if err = filter.Validate(); err != nil {
+		return nil, err
+	}
+
 	if filter.Limit == 0 {
 		filter.Limit = filterDefault
 		// we hardcode it here in case discord goes dumb and decided to randomly change it.
-		// This avoids that the bot do not experience a new, random, behaviour
-	}
-
-	// control checks:
-	// only one of "around", "before" and "after" can be set at the time.
-	var keys uint8
-	if filter.After > 0 {
-		keys |= 1 << 0
-	}
-	if filter.Before > 0 {
-		keys |= 1 << 1
-	}
-	if filter.Around > 0 {
-		keys |= 1 << 2
-	}
-
-	if bits.OnesCount8(keys) > 1 {
-		return nil, errors.New(`only one of the keys "around", "before" and "after" can be set at the time`)
+		// This avoids that the bot do not experience a new, random, behaviour on API changes
 	}
 
 	if filter.Limit <= filterLimit {
