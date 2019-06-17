@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/websocket"
 
 	"github.com/andersfylling/snowflake/v3"
 
@@ -177,6 +178,7 @@ type Config struct {
 	DisableCache         bool
 	CacheConfig          *CacheConfig
 	WSShardManagerConfig *WSShardManagerConfig
+	ShardConfig *websocket.ShardConfig
 	Presence             *UpdateStatusCommand
 
 	//ImmutableCache bool
@@ -407,16 +409,8 @@ func (c *Client) Connect() (err error) {
 	}
 	c.myID = me.ID
 
-	url, shardCount, err := c.shardManager.GetConnectionDetails(c.req)
-	if err != nil {
+	if err = websocket.ConfigureShardConfig(c, c.config.ShardConfig); err != nil {
 		return err
-	}
-
-	if c.config.WSShardManagerConfig.URL == "" {
-		c.config.WSShardManagerConfig.URL = url
-	}
-	if c.config.WSShardManagerConfig.ShardLimit == 0 {
-		c.config.WSShardManagerConfig.ShardLimit = shardCount
 	}
 
 	_ = c.shardManager.Prepare(c.config)
@@ -696,6 +690,8 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 			params.Content += " " + s
 		}
 	}
+
+	// wtf?
 	if data == nil {
 		if mergeFlags(flags).IgnoreEmptyParams() {
 			params.Content = ""
