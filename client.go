@@ -142,8 +142,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 	sharding.TrackEvent.Add(event.VoiceServerUpdate)
 
 	// event dispatcher
-	eventChanSize := 20
-	dispatch := newDispatcher(conf.ActivateEventChannels, eventChanSize)
+	dispatch := newDispatcher()
 
 	// create a disgord Client/instance/session
 	c = &Client{
@@ -191,12 +190,6 @@ type Config struct {
 
 	// your project name, name of bot, or application
 	ProjectName string
-
-	// ActivateEventChannels signifies that the developer will use channels to handle incoming events. May it be
-	// in addition to handlers or not. This forces the use of a scheduler to empty the buffered channels when they
-	// reach their capacity. Since it requires extra resources, others who have no interest in utilizing channels
-	// should not experience any performance penalty (even though it might be unnoticeable).
-	ActivateEventChannels bool
 
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
@@ -604,16 +597,6 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 		return errors.New("command is not supported")
 	}
 	return c.shardManager.Emit(command, data)
-}
-
-// EventChan get a event channel using the event name
-func (c *Client) EventChan(event string) (channel interface{}, err error) {
-	return c.dispatcher.EvtChan(event)
-}
-
-// EventChannels get access to all the event channels
-func (c *Client) EventChannels() (channels EventChannels) {
-	return c.dispatcher.dispatcherChans
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
