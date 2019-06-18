@@ -88,9 +88,6 @@ func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
 type dispatcher struct {
 	sync.RWMutex
 
-	*dispatcherChans
-	activateEventChannels bool
-
 	// an event can have one or more handlers
 	handlerSpecs map[string][]*handlerSpec
 
@@ -101,9 +98,6 @@ type dispatcher struct {
 
 func (d *dispatcher) addSessionInstance(s Session) {
 	d.session = s
-	if d.activateEventChannels {
-		d.dispatcherChans.session = s
-	}
 }
 
 // register registers handlers.
@@ -133,11 +127,6 @@ func (d *dispatcher) register(evt string, inputs ...interface{}) error {
 }
 
 func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource) {
-	// channels
-	if d.activateEventChannels {
-		go d.dispatcherChans.trigger(ctx, evtName, evt)
-	}
-
 	// handlers
 	d.RLock()
 	specs := d.handlerSpecs[evtName]
@@ -155,7 +144,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		//}
 		spec.Lock()
 		localEvt := spec.runMdlws(evt)
-		if localEvt == nil {
+		if len(spec.middlewares) > 0 && localEvt == nil {
 			spec.Unlock()
 			continue
 		}
@@ -276,7 +265,7 @@ func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 
 	// handlers
 	for ; i < len(inputs)-1; i++ {
-		if handler, ok := inputs[i].(Handler); ok {
+		if handler, ok := inputs[i].(Handler); ok && isHandler(handler) {
 			hs.handlers = append(hs.handlers, handler)
 		} else {
 			break
