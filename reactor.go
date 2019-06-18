@@ -144,7 +144,7 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		//}
 		spec.Lock()
 		localEvt := spec.runMdlws(evt)
-		if len(spec.middlewares) > 0 && localEvt == nil {
+		if localEvt == nil {
 			spec.Unlock()
 			continue
 		}
