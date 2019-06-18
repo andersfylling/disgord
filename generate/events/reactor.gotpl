@@ -37,6 +37,17 @@ func isHandler(h Handler) (ok bool) {
     return ok
 }
 
+func closeChannel(channel interface{}) {
+	switch t := channel.(type) {
+    case chan interface{}:
+        close(t)
+    {{- range .}} {{if .IsDiscordEvent}}
+    case chan *{{.}}:
+        close(t)
+    {{- end}}{{- end}}
+    }
+}
+
 //////////////////////////////////////////////////////
 //
 // Dispatcher: contructor + repetitive methods
