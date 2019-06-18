@@ -143,17 +143,20 @@ func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource)
 		//	continue
 		//}
 		spec.Lock()
-		localEvt := spec.runMdlws(evt)
-		if localEvt == nil {
-			spec.Unlock()
-			continue
+		if dead := spec.ctrl.IsDead(); !dead {
+			localEvt := spec.runMdlws(evt)
+			if localEvt == nil {
+				spec.Unlock()
+				continue
+			}
+
+			for _, handler := range spec.handlers {
+				d.trigger(handler, localEvt)
+			}
+
+			spec.ctrl.Update()
 		}
 
-		for _, handler := range spec.handlers {
-			d.trigger(handler, localEvt)
-		}
-
-		spec.ctrl.Update()
 		if spec.ctrl.IsDead() {
 			dead = append(dead, spec)
 		}
@@ -322,11 +325,15 @@ type Ctrl struct {
 	Runs     int
 	Until    time.Time
 	Duration time.Duration
+	Channel  interface{}
 }
 
 var _ HandlerCtrl = (*Ctrl)(nil)
 
 func (c *Ctrl) OnInsert(Session) error {
+	if c.Channel != nil && !isHandler(c.Channel) {
+		panic("Ctrl.Channel is not a valid disgord event channel")
+	}
 	if c.Runs == 0 {
 		c.Runs = -1
 	}
@@ -356,6 +363,13 @@ func (c *Ctrl) Update() {
 	if c.Runs > 0 {
 		c.Runs--
 	}
+}
+
+// CloseChannel must be called instead of closing an event channel directly.
+// This is to make sure DisGord does not go into a deadlock
+func (c *Ctrl) CloseChannel() {
+	c.Runs = 0
+	closeChannel(c.Channel)
 }
 
 //////////////////////////////////////////////////////

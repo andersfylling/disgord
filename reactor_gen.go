@@ -233,6 +233,81 @@ func isHandler(h Handler) (ok bool) {
 	return ok
 }
 
+func closeChannel(channel interface{}) {
+	switch t := channel.(type) {
+	case chan interface{}:
+		close(t)
+	case chan *ChannelCreate:
+		close(t)
+	case chan *ChannelDelete:
+		close(t)
+	case chan *ChannelPinsUpdate:
+		close(t)
+	case chan *ChannelUpdate:
+		close(t)
+	case chan *GuildBanAdd:
+		close(t)
+	case chan *GuildBanRemove:
+		close(t)
+	case chan *GuildCreate:
+		close(t)
+	case chan *GuildDelete:
+		close(t)
+	case chan *GuildEmojisUpdate:
+		close(t)
+	case chan *GuildIntegrationsUpdate:
+		close(t)
+	case chan *GuildMemberAdd:
+		close(t)
+	case chan *GuildMemberRemove:
+		close(t)
+	case chan *GuildMemberUpdate:
+		close(t)
+	case chan *GuildMembersChunk:
+		close(t)
+	case chan *GuildRoleCreate:
+		close(t)
+	case chan *GuildRoleDelete:
+		close(t)
+	case chan *GuildRoleUpdate:
+		close(t)
+	case chan *GuildUpdate:
+		close(t)
+	case chan *MessageCreate:
+		close(t)
+	case chan *MessageDelete:
+		close(t)
+	case chan *MessageDeleteBulk:
+		close(t)
+	case chan *MessageReactionAdd:
+		close(t)
+	case chan *MessageReactionRemove:
+		close(t)
+	case chan *MessageReactionRemoveAll:
+		close(t)
+	case chan *MessageUpdate:
+		close(t)
+	case chan *PresenceUpdate:
+		close(t)
+	case chan *PresencesReplace:
+		close(t)
+	case chan *Ready:
+		close(t)
+	case chan *Resumed:
+		close(t)
+	case chan *TypingStart:
+		close(t)
+	case chan *UserUpdate:
+		close(t)
+	case chan *VoiceServerUpdate:
+		close(t)
+	case chan *VoiceStateUpdate:
+		close(t)
+	case chan *WebhooksUpdate:
+		close(t)
+	}
+}
+
 //////////////////////////////////////////////////////
 //
 // Dispatcher: contructor + repetitive methods
