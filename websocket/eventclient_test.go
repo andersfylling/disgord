@@ -76,45 +76,6 @@ func (g *testWS) Disconnected() bool {
 
 var _ Conn = (*testWS)(nil)
 
-func TestManager_RegisterEvent(t *testing.T) {
-	m := EvtClient{
-		trackedEvents: &UniqueStringSlice{},
-	}
-	t1 := "test"
-	m.RegisterEvent(t1)
-
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RegisterEvent(t1)
-	if m.trackedEvents.Len() == 2 {
-		t.Error("expected length to be 1, got 2")
-	}
-}
-
-func TestManager_RemoveEvent(t *testing.T) {
-	m := EvtClient{
-		trackedEvents: &UniqueStringSlice{},
-	}
-	t1 := "test"
-	m.RegisterEvent(t1)
-
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RemoveEvent("sdfsdf")
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RemoveEvent(t1)
-	if m.trackedEvents.Len() == 1 {
-		t.Error("expected length to be 0, got 1")
-	}
-}
-
 // TODO: rewrite. EventClient now waits for a Ready event in the Connect method
 func TestEvtClient_communication(t *testing.T) {
 	deadline := 1 * time.Second

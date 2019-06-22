@@ -138,7 +138,7 @@ type ShardManagerConfig struct {
 	conn         Conn
 
 	// ...
-	TrackedEvents *UniqueStringSlice
+	IgnoreEvents []string
 
 	// sync ---
 	EventChan chan<- *Event
@@ -177,7 +177,7 @@ func (s *shardMngr) initializeShards() error {
 		Encoding:       constant.JSONEncoding,
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
-		TrackedEvents:  s.conf.TrackedEvents,
+		IgnoreEvents:   s.conf.IgnoreEvents,
 		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization

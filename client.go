@@ -77,8 +77,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		return nil, err
 	}
 
-	eventTracker := &websocket.UniqueStringSlice{}
-
 	// caching
 	var cacher *Cache
 	if !conf.DisableCache {
@@ -88,32 +86,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		cacher, err = newCache(conf.CacheConfig)
 		if err != nil {
 			return nil, err
-		}
-
-		// register for events for activate caches
-		if !conf.CacheConfig.DisableUserCaching {
-			eventTracker.Add(event.Ready)
-			eventTracker.Add(event.UserUpdate)
-		}
-		if !conf.CacheConfig.DisableChannelCaching {
-			eventTracker.Add(event.ChannelCreate)
-			eventTracker.Add(event.ChannelUpdate)
-			eventTracker.Add(event.ChannelPinsUpdate)
-			eventTracker.Add(event.ChannelDelete)
-		}
-		if !conf.CacheConfig.DisableGuildCaching {
-			eventTracker.Add(event.GuildCreate)
-			eventTracker.Add(event.GuildDelete)
-			eventTracker.Add(event.GuildUpdate)
-			eventTracker.Add(event.GuildEmojisUpdate)
-			eventTracker.Add(event.GuildMemberAdd)
-			eventTracker.Add(event.GuildMemberRemove)
-			eventTracker.Add(event.GuildMembersChunk)
-			eventTracker.Add(event.GuildMemberUpdate)
-			eventTracker.Add(event.GuildRoleCreate)
-			eventTracker.Add(event.GuildRoleDelete)
-			eventTracker.Add(event.GuildRoleUpdate)
-			eventTracker.Add(event.GuildIntegrationsUpdate)
 		}
 	} else {
 		// create an empty cache to avoid nil panics
@@ -127,10 +99,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 			return nil, err
 		}
 	}
-
-	// Required for voice operation
-	eventTracker.Add(event.VoiceStateUpdate)
-	eventTracker.Add(event.VoiceServerUpdate)
 
 	// websocket sharding
 	evtChan := make(chan *websocket.Event, 2) // TODO: higher value when more shards?
@@ -151,7 +119,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		log:          conf.Logger,
 		pool:         newPools(),
 		eventChan:    evtChan,
-		eventTracker: eventTracker,
 	}
 	c.dispatcher.addSessionInstance(c)
 	c.voiceRepository = newVoiceRepository(c)
@@ -174,16 +141,13 @@ type Config struct {
 	ShardConfig  ShardConfig
 	Presence     *UpdateStatusCommand
 
-	// DisableGuildSubscriptions is fairly ambiguous, thanks to Discord, so I assume the behaviour might change later..
-	// Setting to true will cause Discord to not dispatch Typing and Presence updates, per 2019-09-15.
-	DisableGuildSubscriptions bool
-
-	//ImmutableCache bool
-
-	//LoadAllMembers   bool
-	//LoadAllChannels  bool
-	//LoadAllRoles     bool
-	//LoadAllPresences bool
+	// IgnoreEvents will skip events that matches the given event names.
+	// WARNING! This can break your caching, so be careful about what you want to ignore.
+	//
+	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
+	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
+	// them at all due to how the identify command was defined. eg. guildS_subscriptions
+	IgnoreEvents []string
 
 	// for cancellation
 	shutdownChan chan interface{}
@@ -228,7 +192,6 @@ type Client struct {
 
 	shardManager websocket.ShardManager
 	eventChan    chan *websocket.Event
-	eventTracker *websocket.UniqueStringSlice
 
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
@@ -416,17 +379,33 @@ func (c *Client) Connect() (err error) {
 		return err
 	}
 
+	// if both typing event and presence event are to be ignore, we can disable GuildSubscription
+	// https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
+	guildSubRequirements := []string{
+		EvtTypingStart, EvtPresenceUpdate,
+	}
+	for i := range c.config.IgnoreEvents {
+		evt := c.config.IgnoreEvents[i]
+		for j := range guildSubRequirements {
+			if evt == guildSubRequirements[j] {
+				// remove matched requirements
+				guildSubRequirements = append(guildSubRequirements[:j], guildSubRequirements[j+1:]...)
+				break
+			}
+		}
+	}
+
 	sharding := websocket.NewShardMngr(websocket.ShardManagerConfig{
 		ShardConfig:        c.config.ShardConfig,
 		Logger:             c.config.Logger,
 		ShutdownChan:       c.config.shutdownChan,
 		DefaultBotPresence: c.config.Presence,
-		TrackedEvents:      c.eventTracker,
+		IgnoreEvents:       c.config.IgnoreEvents,
 		EventChan:          c.eventChan,
 		DisgordInfo:        LibraryInfo(),
 		ProjectName:        c.config.ProjectName,
 		BotToken:           c.config.BotToken,
-		GuildSubscriptions: !c.config.DisableGuildSubscriptions,
+		GuildSubscriptions: len(guildSubRequirements) != 0,
 	})
 
 	c.setupConnectEnv()
@@ -597,7 +576,6 @@ func (c *Client) On(event string, inputs ...interface{}) {
 	if err := ValidateHandlerInputs(inputs...); err != nil {
 		panic(err)
 	}
-	c.eventTracker.Add(event)
 
 	if err := c.dispatcher.register(event, inputs...); err != nil {
 		panic(err)
@@ -620,14 +598,6 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 
 	// otherwise it is sent through every shard
 	return c.shardManager.Emit(command, data, guildID)
-}
-
-// AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
-// to reduce unnecessary marshalling and controls.
-func (c *Client) AcceptEvent(events ...string) {
-	for _, evt := range events {
-		c.eventTracker.Add(evt)
-	}
 }
 
 //////////////////////////////////////////////////////

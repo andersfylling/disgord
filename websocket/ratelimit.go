@@ -17,17 +17,17 @@ func (s *UniqueStringSlice) Len() int {
 	return len(s.ids)
 }
 
-func (s *UniqueStringSlice) Exists(id string) bool {
+func (s *UniqueStringSlice) Contains(id string) (exists bool) {
 	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	for i := range s.ids {
 		if id == s.ids[i] {
-			return true
+			exists = true
+			break
 		}
 	}
+	s.mu.RUnlock()
 
-	return false
+	return exists
 }
 func (s *UniqueStringSlice) Add(id string) {
 	s.mu.Lock()

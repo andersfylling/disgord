@@ -53,11 +53,6 @@ type SocketHandler interface {
 	On(event string, inputs ...interface{})
 
 	Emitter
-
-	// event register (which events to accept)
-	// events which are not registered are discarded at socket level
-	// to increase performance
-	AcceptEvent(events ...string)
 }
 
 // AuditLogsRESTer REST interface for all audit-logs endpoints
