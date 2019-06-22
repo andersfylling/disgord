@@ -107,6 +107,8 @@ var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
 var _ discordDeleter = (*Message)(nil)
+var _ Copier = (*Message)(nil)
+var _ DeepCopier = (*Message)(nil)
 
 func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
@@ -185,6 +187,11 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Type = m.Type
 	message.Activity = m.Activity
 	message.Application = m.Application
+	message.GuildID = m.GuildID
+	message.HasSpoilerImage = m.HasSpoilerImage
+	message.Nonce = m.Nonce
+	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
+	message.SpoilerTagContent = m.SpoilerTagContent
 
 	if m.Author != nil {
 		message.Author = m.Author.DeepCopy().(*User)
