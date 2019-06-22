@@ -10,18 +10,19 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord/std"
 )
 
 const MessageLifeTime = 5 // seconds
 
 func deleteDeadMessage(session disgord.Session, message *disgord.Message, lifetime time.Duration) {
 	<-time.After(lifetime)
-	err := session.DeleteFromDiscord(message)
-	if err != nil {
+	if err := session.DeleteFromDiscord(message); err != nil {
 		fmt.Println(err)
 	}
 }
 
+// please consider using a que instead
 func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) {
 	lifetime := time.Duration(MessageLifeTime) * time.Second
 	go deleteDeadMessage(session, evt.Message, lifetime)
@@ -32,16 +33,11 @@ func main() {
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
+    defer client.StayConnectedUntilInterrupted()
+	
+	filter, _ := std.NewMsgFilter(client)
+    filter.SetMinPermissions(disgord.PermissionManageMessages) // make sure u can actually delete messages
 
-	client.On(disgord.EvtMessageCreate, autoDeleteNewMessages)
-
-	// connect to the discord gateway to receive events
-	err = client.Connect()
-	if err != nil {
-		panic(err)
-	}
-
-	// graceful shutdown
-	client.DisconnectOnInterrupt()
+	client.On(disgord.EvtMessageCreate, filter.HasPermissions, autoDeleteNewMessages)
 }
 ```

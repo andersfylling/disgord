@@ -22,7 +22,7 @@ func main() {
     client.On(disgord.EvtMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
         msg := evt.Message
         if msg.Content == "ping" {
-            _, _ = msg.RespondString(session, "pong")
+            _, _ = msg.Reply(session, "pong")
         }
     })
 }
@@ -60,7 +60,7 @@ func main() {
     // we add a middleware/filter to ensure that the message content 
     // starts with "ping".
     client.On(NewMessage, content.HasPrefix, func(s disgord.Session, evt *disgord.MessageCreate) {
-        _, _ = evt.Message.RespondString(s, "pong")
+        _, _ = evt.Message.Reply(s, "pong")
     })
 }
 ```
