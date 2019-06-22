@@ -186,6 +186,11 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Type = m.Type
 	message.Activity = m.Activity
 	message.Application = m.Application
+	message.GuildID = m.GuildID
+	message.HasSpoilerImage = m.HasSpoilerImage
+	message.Nonce = m.Nonce
+	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
+	message.SpoilerTagContent = m.SpoilerTagContent
 
 	if m.Author != nil {
 		message.Author = m.Author.DeepCopy().(*User)
