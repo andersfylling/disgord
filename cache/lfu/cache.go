@@ -160,8 +160,7 @@ func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem)
 
 // Get get an content from the list.
 func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
-	var key int
-	key, exists = list.table[id]
+	key, exists := list.table[id]
 	exists = exists && key != -1
 
 	if exists {
