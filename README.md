@@ -174,7 +174,8 @@ level bindings for Discord, while DisGord wants to provide a more configurable s
 features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
 Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
 future, for now the biggest difference is that DisGord does not support self bots (as they aren't 
-in the official documentation).
+in the official documentation and could result in account termination - see
+[this blog post](https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-)).
 ```
 
 ```Markdown
