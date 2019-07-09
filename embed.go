@@ -348,7 +348,7 @@ type EmbedField struct {
 
 	Name   string `json:"name"`           //  | , name of the field
 	Value  string `json:"value"`          //  | , value of the field
-	Inline bool   `json:"bool,omitempty"` // ?| , whether or not this field should display inline
+	Inline bool   `json:"inline,omitempty"` // ?| , whether or not this field should display inline
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
