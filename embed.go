@@ -346,8 +346,8 @@ func (c *EmbedFooter) CopyOverTo(other interface{}) (err error) {
 type EmbedField struct {
 	Lockable `json:"-"`
 
-	Name   string `json:"name"`           //  | , name of the field
-	Value  string `json:"value"`          //  | , value of the field
+	Name   string `json:"name"`             //  | , name of the field
+	Value  string `json:"value"`            //  | , value of the field
 	Inline bool   `json:"inline,omitempty"` // ?| , whether or not this field should display inline
 }
 
