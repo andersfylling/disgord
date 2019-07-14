@@ -60,11 +60,11 @@ func (f *msgFilter) ContainsBotMention(evt interface{}) interface{} {
 }
 
 func (f *msgFilter) NotByBot(evt interface{}) interface{} {
-	msg := getMsg(evt)
-	if msg.Author != nil && msg.Author.Bot {
-		return nil
-	}
-	return evt
+	return messageIsBot(evt, false)
+}
+
+func (f *msgFilter) IsByBot(evt interface{}) interface{} {
+	return messageIsBot(evt, true)
 }
 
 func (f *msgFilter) HasBotMentionPrefix(evt interface{}) interface{} {

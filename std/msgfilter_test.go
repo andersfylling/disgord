@@ -55,6 +55,33 @@ func TestMsgFilter_NotByBot(t *testing.T) {
 	}
 }
 
+func TestMsgFilter_IsByBot(t *testing.T) {
+	var botID disgord.Snowflake = 123
+	filter, _ := newMsgFilter(&clientMock{botID})
+	evt := &disgord.MessageCreate{
+		Message: &disgord.Message{
+			Author: &disgord.User{Bot: false},
+		},
+	}
+
+	result := filter.IsByBot(evt)
+	if result != nil {
+		t.Error("expected a match")
+	}
+
+	evt.Message.Author.Bot = true
+	result = filter.IsByBot(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+
+	evt.Message.Author = nil
+	result = filter.IsByBot(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+}
+
 func TestMsgFilter_ContainsBotMention(t *testing.T) {
 	var botID disgord.Snowflake = 123
 	filter, _ := newMsgFilter(&clientMock{botID})
