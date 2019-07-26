@@ -167,21 +167,19 @@ Please see the [CONTRIBUTING.md file](CONTRIBUTING.md) (Note that it can be usef
 See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
 
 ```Markdown
-1. Is there an alternative Go package?
+1. How do I find my bot token and/or add my bot to a server?
 
-Yes, it's called Discordgo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
-level bindings for Discord, while DisGord wants to provide a more configurable system with more 
-features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
-Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
-future, for now the biggest difference is that DisGord does not support self bots (as they aren't 
-in the official documentation and could result in account termination - see
-[this blog post](https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-)).
+Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
 ```
 
 ```Markdown
-2. How do I find my bot token and/or add my bot to a server?
+2. Is there an alternative Go package?
 
-Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
+Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
+level bindings for Discord, while DisGord wants to provide a more configurable system with more 
+features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
+Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
+future, for now the biggest difference is that DisGord does not support self bots.
 ```
 
 ```Markdown
@@ -195,3 +193,10 @@ I'm trying to take over the world and then become a intergalactic war lord. Have
 
 Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
 ```
+
+```Markdown
+5. Will DisGord support self bots?
+
+No. Self bots are againts ToS and could result in account termination (see https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). In addition, self bots aren't a part of the official Discord API, meaning support could change at any time and DisGord could break unexpectedly if this feature were added.
+```
+
