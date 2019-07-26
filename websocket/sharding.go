@@ -65,7 +65,7 @@ func (s *shardMngr) Disconnect() error {
 	panic("implement me")
 }
 
-func (s *shardMngr) HeatbeatLatencies() (latencies map[shardID]time.Duration, err error) {
+func (s *shardMngr) HeartbeatLatencies() (latencies map[shardID]time.Duration, err error) {
 	latencies = make(map[shardID]time.Duration)
 	for id := range s.shards {
 		latencies[id], err = s.shards[id].HeartbeatLatency()
