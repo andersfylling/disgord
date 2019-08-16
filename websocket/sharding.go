@@ -5,8 +5,6 @@ import (
 )
 
 const defaultShardRateLimit float64 = 5.1 // seconds
-
-type shard = EvtClient
 type shardID = uint
 
 func NewShardMngr(conf *ShardConfig) *shardMngr {
@@ -15,22 +13,25 @@ func NewShardMngr(conf *ShardConfig) *shardMngr {
 	}
 }
 
+// ShardManager regards websocket shards.
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
-	HeatbeatLatencies() (latencies map[shardID]time.Duration, err error)
+	HeartbeatLatencies() (latencies map[shardID]time.Duration, err error)
 }
 
 type ShardConfig struct {
-	// FirstID and ShardLimit creates the shard id range for this Client.
-	// this can be useful if you have multiple clients and don't want to
-	// duplicate the sharded connections. But have unique ones on each machine.
+	// Specify the shard ids that can be used by this instance.
+	//  eg. ShardIds = []uint{0,1,2,3,11,12,13,14,32}
 	//
-	// NrOfShards overrides the recommended shards sent by Discord if specified.
-	// If you do not understand sharding, and your bot is not considered "large" according
-	// to the documentation, then just don't touch these and let DisGord configure them.
-	FirstID    uint
-	NrOfShards uint
+	// This control is only useful if you have more than once instance of your bot duo to
+	// high traffic or whatever reason you might possess.
+	//
+	// This also allows you to manually specify the number of shards, you just have to
+	// specify their ID as well. You start from 0 until the number of shards you desire.
+	//
+	// Default value is populated by discord if this slice is nil.
+	ShardIDs []uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit float64
@@ -41,13 +42,12 @@ type ShardConfig struct {
 
 type shardMngr struct {
 	conf   *ShardConfig
-	shards map[shardID]*shard
+	shards map[shardID]*EvtClient
 }
 
 var _ ShardManager = (*shardMngr)(nil)
 
 func (s *shardMngr) initializeShards() error {
-
 	panic("implement me")
 }
 

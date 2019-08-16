@@ -81,8 +81,8 @@ type WSShardManager struct {
 }
 
 func (s *WSShardManager) GetConnectionDetails(c httd.Getter) (url string, shardCount uint, err error) {
-	var d *GatewayBot
-	if d, err = GetGatewayBot(c); err != nil {
+	var d *websocket.GatewayBot
+	if d, err = s.client.GetGatewayBot(); err != nil {
 		return
 	}
 
