@@ -71,6 +71,9 @@ func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
 			cacheEvent(cache, evt.Name, resource, evt.Data)
 		}
 
+		if evt.ShardID == MockedShardID && !cache.conf.clientConf.AcceptCustomEvents {
+			return
+		}
 		go d.dispatch(ctx, evt.Name, resource)
 	}
 }

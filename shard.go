@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	FakeShardID                   = -1
+	MockedShardID                 = -1
 	DefaultShardRateLimit float64 = 5.5 // seconds
 )
 

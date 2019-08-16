@@ -162,7 +162,6 @@ func DefaultCacheConfig() *CacheConfig {
 		UserCacheAlgorithm:       CacheAlgLFU,
 		VoiceStateCacheAlgorithm: CacheAlgLFU,
 		ChannelCacheAlgorithm:    CacheAlgLFU,
-		GuildCacheAlgorithm:      CacheAlgLFU,
 	}
 }
 
@@ -175,9 +174,6 @@ func ensureBasicCacheConfig(conf *CacheConfig) {
 	}
 	if conf.ChannelCacheAlgorithm == "" {
 		conf.ChannelCacheAlgorithm = CacheAlgLFU
-	}
-	if conf.GuildCacheAlgorithm == "" {
-		conf.GuildCacheAlgorithm = CacheAlgLFU
 	}
 }
 
@@ -200,12 +196,8 @@ type CacheConfig struct {
 	ChannelCacheLifetime   time.Duration
 	ChannelCacheAlgorithm  string
 
-	DisableGuildCaching  bool
-	GuildCacheMaxEntries uint
-	GuildCacheLifetime   time.Duration
-	GuildCacheAlgorithm  string
-
-	Log Logger
+	clientConf *Config
+	Log        Logger
 }
 
 // Cache is the actual cacheLink. It holds the different systems which can be tweaked using the CacheConfig.

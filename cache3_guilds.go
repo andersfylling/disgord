@@ -82,6 +82,7 @@ var _ BasicCacheRepo = (*usersCache)(nil)
 //////////////////////////////////////////////////////
 
 func (c *guildsCache) triggerChannelDelete(channelID Snowflake) {
+	// need a way to ensure that onChannelDelete methods only cares about ID
 	info := Channel{
 		ID: channelID,
 	}
@@ -94,7 +95,7 @@ func (c *guildsCache) triggerChannelDelete(channelID Snowflake) {
 	c.evt <- &websocket.Event{
 		Name:    EvtChannelDelete,
 		Data:    data,
-		ShardID: FakeShardID,
+		ShardID: MockedShardID,
 	}
 }
 
@@ -107,6 +108,8 @@ func (c *guildsCache) triggerChannelDelete(channelID Snowflake) {
 func (c *guildsCache) evtDemultiplexer(evt string, data []byte, flags Flag) (updated interface{}, err error) {
 	var f func(data []byte, flag Flag) (interface{}, error)
 	switch evt {
+	case EvtGuildCreate:
+		f = c.onGuildCreate
 	case EvtGuildDelete:
 		f = c.onGuildDelete
 	}
@@ -115,6 +118,58 @@ func (c *guildsCache) evtDemultiplexer(evt string, data []byte, flags Flag) (upd
 	}
 
 	return f(data, flags)
+}
+
+func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{}, err error) {
+	guildID, err := jsonGetSnowflake(data, "id")
+	if err != nil {
+		return nil, errors.New("missing guild id")
+	}
+
+	// check if it already exists
+	// it should _not_. But that's not an excuse.
+	if entry, exists := c.items.Get(guildID); exists {
+		return entry.update(data, flags)
+	}
+
+	// notify that channels were deleted
+	channels := c.Channels(guildID)
+	if len(channels) == 0 {
+		return nil, nil
+	}
+	for _, channelID := range channels {
+		go c.triggerChannelDelete(channelID)
+	}
+
+	return nil, nil
+}
+
+func (c *guildsCache) onGuildUpdate(data []byte, flags Flag) (updated interface{}, err error) {
+	guildID, err := jsonGetSnowflake(data, "id")
+	if err != nil {
+		return nil, errors.New("missing guild id")
+	}
+
+	// check if it already exists
+	if entry, exists := c.items.Get(guildID); exists {
+		return entry.update(data, flags)
+	} else {
+
+	}
+	if _, exists := c.items.Get(guildID); !exists {
+		return c.onGuildUpdate(data, flags)
+	}
+
+	// notify that channels were deleted
+	channels := c.Channels(guildID)
+	if len(channels) == 0 {
+		return nil, nil
+	}
+	for _, channelID := range channels {
+		go c.triggerChannelDelete(channelID)
+	}
+
+	return nil, nil
 }
 
 func (c *guildsCache) onGuildDelete(data []byte, flags Flag) (updated interface{}, err error) {

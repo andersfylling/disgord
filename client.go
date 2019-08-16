@@ -137,6 +137,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 			return nil, err
 		}
 	}
+	cacher.conf.clientConf = conf
 
 	// Required for voice operation
 	sharding.TrackEvent.Add(event.VoiceStateUpdate)
@@ -179,6 +180,14 @@ type Config struct {
 	CacheConfig          *CacheConfig
 	WSShardManagerConfig *WSShardManagerConfig
 	Presence             *UpdateStatusCommand
+
+	// DisGord triggers custom events to handle caching in a simpler manner.
+	// eg. on guild delete, all the channels should be deleted too. to make this simple
+	// disgord dispatches a channel delete event for all channels owned by the guild.
+	//
+	// Setting AcceptCustomEvents to true, will allow you to receive these. Note that
+	// they can be detected with evt.ShardID == disgord.MockedShardID or evt.ShardID < 0.
+	AcceptCustomEvents bool
 
 	//ImmutableCache bool
 
