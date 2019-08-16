@@ -331,7 +331,7 @@ func (c *Client) AvgHeartbeatLatency() (duration time.Duration, err error) {
 	return time.Duration(average) * time.Nanosecond, nil
 }
 
-// HeatbeatLatencies returns latencies mapped to each shard, by their respective ID. shardID => latency.
+// HeartbeatLatencies returns latencies mapped to each shard, by their respective ID. shardID => latency.
 func (c *Client) HeartbeatLatencies() (latencies map[uint]time.Duration, err error) {
 	return c.shardManager.HeartbeatLatencies()
 }
@@ -618,10 +618,10 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 			return err
 		}
 		return shard.Emit(command, data)
-	} else {
-		// otherwise it is sent through every shard
-		return c.shardManager.Emit(command, data)
 	}
+
+	// otherwise it is sent through every shard
+	return c.shardManager.Emit(command, data)
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
