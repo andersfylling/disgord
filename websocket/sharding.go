@@ -1,16 +1,16 @@
 package websocket
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/logger"
 
 	"golang.org/x/net/proxy"
-
-	"github.com/andersfylling/disgord/constant"
 )
 
 const defaultShardRateLimit float64 = 5.1 // seconds
@@ -19,6 +19,12 @@ type shardID = uint
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	return &shardMngr{
 		conf: conf,
+		A:    make(A, len(conf.ShardIDs)+1),
+		DiscordPktPool: &sync.Pool{
+			New: func() interface{} {
+				return &DiscordPacket{}
+			},
+		},
 	}
 }
 
@@ -26,6 +32,9 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
+	Emit(string, interface{}) error
+	NrOfShards() uint
+	GetShard(shardID shardID) (shard *EvtClient, err error)
 	HeartbeatLatencies() (latencies map[shardID]time.Duration, err error)
 }
 
@@ -52,19 +61,17 @@ type ShardConfig struct {
 // ShardManagerConfig all fields, except proxy.Dialer, is required
 type ShardManagerConfig struct {
 	ShardConfig
-	DisgordInfo    string
-	BotToken       string
-	Proxy          proxy.Dialer
-	Logger         logger.Logger
-	DiscordPktPool *sync.Pool
-	ShutdownChan   chan interface{}
+	DisgordInfo  string
+	BotToken     string
+	Proxy        proxy.Dialer
+	Logger       logger.Logger
+	ShutdownChan chan interface{}
 
 	// ...
 	TrackedEvents *UniqueStringSlice
 
 	// sync ---
 	EventChan chan<- *Event
-	A         A
 
 	// user specific
 	DefaultBotPresence interface{}
@@ -72,9 +79,11 @@ type ShardManagerConfig struct {
 }
 
 type shardMngr struct {
-	mu     sync.RWMutex
-	conf   ShardManagerConfig
-	shards map[shardID]*EvtClient
+	mu             sync.RWMutex
+	conf           ShardManagerConfig
+	shards         map[shardID]*EvtClient
+	DiscordPktPool *sync.Pool
+	A              A
 }
 
 var _ ShardManager = (*shardMngr)(nil)
@@ -94,11 +103,11 @@ func (s *shardMngr) initializeShards() error {
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
 		TrackedEvents:  s.conf.TrackedEvents,
-		DiscordPktPool: s.conf.DiscordPktPool,
+		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization
 		EventChan: s.conf.EventChan,
-		A:         s.conf.A,
+		A:         s.A,
 
 		// user settings
 		BotToken: s.conf.BotToken,
@@ -120,6 +129,39 @@ func (s *shardMngr) initializeShards() error {
 	return nil
 }
 
+func (s *shardMngr) runSynchronizer() {
+	for {
+		select {
+		case <-s.conf.ShutdownChan:
+			s.conf.Logger.Info("shutdown signal was used to stop shard synchronizing")
+			return
+		case b, ok := <-s.A:
+			if !ok {
+				s.conf.Logger.Error("b is closed")
+				return
+			}
+
+			releaser := make(B)
+			b <- &K{
+				Release: releaser,
+				Key:     412, // random
+				// TODO: store shard info for better error handling and potential metrics
+			}
+
+			select {
+			case <-releaser:
+				// apply rate limit
+				delay := time.Duration(s.conf.ShardRateLimit) * time.Second
+				s.conf.Logger.Debug("shard synchronizer is resting for", delay)
+				<-time.After(delay)
+			case <-s.conf.ShutdownChan:
+				s.conf.Logger.Debug("shard synchronizer got shutdown signal while resting")
+				return
+			}
+		}
+	}
+}
+
 func (s *shardMngr) Connect() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -132,6 +174,9 @@ func (s *shardMngr) Connect() (err error) {
 		if err = s.initializeShards(); err != nil {
 			return err
 		}
+
+		// handle shards asking for permission to connect (rate limiting)
+		go s.runSynchronizer()
 	}
 
 	for _, shard := range s.shards {
@@ -153,6 +198,33 @@ func (s *shardMngr) Disconnect() error {
 		}
 	}
 	return nil
+}
+
+func (s *shardMngr) NrOfShards() uint {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return uint(len(s.shards))
+}
+
+func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, shard := range s.shards {
+		err = shard.Emit(cmd, data)
+	}
+	return err
+}
+
+func (s *shardMngr) GetShard(shardID shardID) (shard *EvtClient, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if shard, ok := s.shards[shardID]; ok {
+		return shard, nil
+	}
+
+	return nil, errors.New("no shard with given id " + fmt.Sprint(shardID))
 }
 
 func (s *shardMngr) HeartbeatLatencies() (latencies map[shardID]time.Duration, err error) {

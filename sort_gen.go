@@ -309,12 +309,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateGuildRoleBuilder:
 		s = *t
-	case *[]*WSShard:
-		s = *t
-	case *[]*WSShardManager:
-		s = *t
-	case *[]*WSShardManagerConfig:
-		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
 	case *[]*Time:

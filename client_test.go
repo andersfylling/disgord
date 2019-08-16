@@ -57,7 +57,7 @@ func BenchmarkClient_On(b *testing.B) {
 		BotToken:     "testing",
 		DisableCache: true,
 	})
-	c.shardManager.evtChan = make(chan *websocket.Event)
+	c.eventChan = make(chan *websocket.Event)
 	c.setupConnectEnv()
 
 	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
@@ -70,7 +70,7 @@ func BenchmarkClient_On(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
-		c.shardManager.evtChan <- evt
+		c.eventChan <- evt
 		wg.Wait()
 	}
 
@@ -225,9 +225,8 @@ func TestClient_System(t *testing.T) {
 		panic(err)
 	}
 
-	c.shardManager.evtChan = make(chan *websocket.Event, 1)
-	c.shardManager.shards = append(c.shardManager.shards, &WSShard{})
-	input := c.shardManager.evtChan
+	input := make(chan *websocket.Event, 1)
+	c.eventChan = input
 	c.setupConnectEnv()
 
 	var files []string
@@ -325,7 +324,6 @@ func TestInternalStateHandlers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.shardManager.shards = append(c.shardManager.shards, &WSShard{}) // don't remove
 
 	id := Snowflake(123)
 

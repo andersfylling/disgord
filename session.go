@@ -543,7 +543,9 @@ type Session interface {
 	// 4. avg = (avg + latency) / 2
 	//
 	// This feature was requested. But should never be used as a proof for delay between client and Discord.
-	HeartbeatLatency() (duration time.Duration, err error)
+	AvgHeartbeatLatency() (duration time.Duration, err error)
+	// returns the latency for each given shard id. shardID => latency
+	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
 
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error
