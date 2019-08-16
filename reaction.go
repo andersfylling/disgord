@@ -3,7 +3,6 @@ package disgord
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
@@ -58,13 +57,6 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func reactionEndpointRLAdjuster(d time.Duration) time.Duration {
-	if d.Seconds() <= 2 { // the time diff is not accurate at all.. might be 1s or 2s.
-		d = time.Duration(250) * time.Millisecond // 1/250ms
-	}
-	return d
-}
-
 // CreateReaction [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 // permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
@@ -100,10 +92,9 @@ func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:            http.MethodPut,
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
-		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
-		RateLimitAdjuster: reactionEndpointRLAdjuster,
+		Method:      http.MethodPut,
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -143,10 +134,9 @@ func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interfa
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:            http.MethodDelete,
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
-		Endpoint:          endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
-		RateLimitAdjuster: reactionEndpointRLAdjuster,
+		Method:      http.MethodDelete,
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:    endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -186,10 +176,9 @@ func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoj
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:            http.MethodDelete,
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
-		Endpoint:          endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
-		RateLimitAdjuster: reactionEndpointRLAdjuster,
+		Method:      http.MethodDelete,
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:    endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -242,9 +231,8 @@ func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter:       ratelimitChannelMessages(channelID) + "/reactions",
-		Endpoint:          endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
-		RateLimitAdjuster: reactionEndpointRLAdjuster,
+		Ratelimiter: ratelimitChannelMessages(channelID) + "/reactions",
+		Endpoint:    endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*User, 0)
