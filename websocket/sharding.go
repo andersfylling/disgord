@@ -139,10 +139,9 @@ func (s *shardMngr) connectQueue(shardID uint, cb func() error) error {
 		delay = s.nextAllowedIdentity.Sub(now)
 	} else {
 		delay = time.Duration(0)
-		s.nextAllowedIdentity = time.Now()
 	}
 	offset := time.Duration(int64(defaultShardRateLimit*1000)) * time.Millisecond
-	s.nextAllowedIdentity = s.nextAllowedIdentity.Add(offset)
+	s.nextAllowedIdentity = time.Now().Add(offset)
 	s.nextAllowedIdentityMutex.Unlock()
 
 	s.conf.Logger.Debug("shard", shardID, "will wait in connect queue for", delay)
