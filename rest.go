@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/websocket"
 	"github.com/andersfylling/snowflake/v3"
 )
 
@@ -423,7 +424,7 @@ type basicBuilder struct {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
+func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err error) {
 	var body []byte
 	_, body, err = client.Get(&httd.Request{
 		Ratelimiter: "/gateway",
@@ -447,9 +448,9 @@ func GetGateway(client httd.Getter) (gateway *Gateway, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
-func GetGatewayBot(client httd.Getter) (gateway *GatewayBot, err error) {
+func (c *Client) GetGatewayBot() (gateway *websocket.GatewayBot, err error) {
 	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	_, body, err = c.req.Get(&httd.Request{
 		Ratelimiter: "/gateway/bot",
 		Endpoint:    "/gateway/bot",
 	})

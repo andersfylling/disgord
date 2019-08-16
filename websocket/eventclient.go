@@ -99,9 +99,6 @@ type EvtConfig struct {
 	// for testing only
 	conn Conn
 
-	// ChannelBuffer is used to set the event channel buffer
-	ChannelBuffer uint
-
 	// TrackedEvents holds a list of predetermined events that should not be ignored.
 	// This is especially useful for creating multiple shards, to reuse the same slice
 	TrackedEvents *UniqueStringSlice

@@ -107,6 +107,8 @@ var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
 var _ discordDeleter = (*Message)(nil)
+var _ Copier = (*Message)(nil)
+var _ DeepCopier = (*Message)(nil)
 
 func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
@@ -185,6 +187,11 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Type = m.Type
 	message.Activity = m.Activity
 	message.Application = m.Application
+	message.GuildID = m.GuildID
+	message.HasSpoilerImage = m.HasSpoilerImage
+	message.Nonce = m.Nonce
+	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
+	message.SpoilerTagContent = m.SpoilerTagContent
 
 	if m.Author != nil {
 		message.Author = m.Author.DeepCopy().(*User)
@@ -347,12 +354,30 @@ type GetMessagesParams struct {
 	Around Snowflake `urlparam:"around,omitempty"`
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
-	Limit  int       `urlparam:"limit,omitempty"`
+	Limit  uint      `urlparam:"limit,omitempty"`
+}
+
+func (p *GetMessagesParams) Validate() error {
+	var mutuallyExclusives int
+	if !p.Around.Empty() {
+		mutuallyExclusives++
+	}
+	if !p.Before.Empty() {
+		mutuallyExclusives++
+	}
+	if !p.After.Empty() {
+		mutuallyExclusives++
+	}
+
+	if mutuallyExclusives > 1 {
+		return errors.New(`only one of the keys "around", "before" and "after" can be set at the time`)
+	}
+	return nil
 }
 
 var _ URLQueryStringer = (*GetMessagesParams)(nil)
 
-// GetMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
+// getMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
@@ -363,7 +388,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func (c *Client) GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
+func (c *Client) getMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
 	if channelID.Empty() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -384,6 +409,109 @@ func (c *Client) GetMessages(channelID Snowflake, params URLQueryStringer, flags
 	}
 
 	return getMessages(r.Execute)
+}
+
+// GetMessages bypasses discord limitations and iteratively fetches messages until the set filters are met.
+func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, flags ...Flag) (messages []*Message, err error) {
+	// discord values
+	const filterLimit = 100
+	const filterDefault = 50
+
+	if err = filter.Validate(); err != nil {
+		return nil, err
+	}
+
+	if filter.Limit == 0 {
+		filter.Limit = filterDefault
+		// we hardcode it here in case discord goes dumb and decided to randomly change it.
+		// This avoids that the bot do not experience a new, random, behaviour on API changes
+	}
+
+	if filter.Limit <= filterLimit {
+		return c.getMessages(channelID, filter, flags...)
+	}
+
+	latestSnowflake := func(msgs []*Message) (latest Snowflake) {
+		for i := range msgs {
+			// if msgs[i].ID.Date().After(latest.Date()) {
+			if msgs[i].ID > latest {
+				latest = msgs[i].ID
+			}
+		}
+		return
+	}
+	earliestSnowflake := func(msgs []*Message) (earliest Snowflake) {
+		for i := range msgs {
+			// if msgs[i].ID.Date().Before(earliest.Date()) {
+			if msgs[i].ID < earliest {
+				earliest = msgs[i].ID
+			}
+		}
+		return
+	}
+
+	// scenario#1: filter.Around is not 0 AND filter.Limit is above 100
+	//  divide the limit by half and use .Before and .After tags on each quotient limit.
+	//  Use the .After on potential remainder.
+	//  Note! This method can be used recursively
+	if !filter.Around.Empty() {
+		beforeParams := *filter
+		beforeParams.Before = beforeParams.Around
+		beforeParams.Around = 0
+		beforeParams.Limit = filter.Limit / 2
+		befores, err := c.GetMessages(channelID, &beforeParams, flags...)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, befores...)
+
+		afterParams := *filter
+		afterParams.After = afterParams.Around
+		afterParams.Around = 0
+		afterParams.Limit = filter.Limit / 2
+		afters, err := c.GetMessages(channelID, &afterParams, flags...)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, afters...)
+
+		// filter.Around includes the given ID, so should .Before and .After iterations do as well
+		if msg, _ := c.GetMessage(channelID, filter.Around, flags...); msg != nil {
+			// assumption: error here can be caused by the message ID not actually being a real message
+			//             and that it was used to get messages in the vicinity. Therefore the err is ignored.
+			// TODO: const discord errors.
+			messages = append(messages, msg)
+		}
+	} else {
+		// scenario#3: filter.After or filter.Before is set.
+		// note that none might be set, which will cause filter.Before to be set after the first 100 messages.
+		//
+		for {
+			if filter.Limit <= 0 {
+				break
+			}
+
+			f := *filter
+			if f.Limit > 100 {
+				f.Limit = 100
+			}
+			filter.Limit -= f.Limit
+			msgs, err := c.getMessages(channelID, &f, flags...)
+			if err != nil {
+				return nil, err
+			}
+			messages = append(messages, msgs...)
+			if !filter.After.Empty() {
+				filter.After = latestSnowflake(msgs)
+			} else {
+				// no snowflake or filter.Before
+				filter.Before = earliestSnowflake(msgs)
+			}
+		}
+	}
+
+	// duplicates should not exist as we use snowflakes to fetch unique segments in time
+	return messages, nil
 }
 
 // GetMessage [REST] Returns a specific message in the channel. If operating on a guild channel, this endpoints

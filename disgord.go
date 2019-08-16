@@ -26,26 +26,37 @@
 //
 // Listen for events using channels
 //
-// Disgord also provides the option to listen for events using a channel, instead of registering a handler. However, before using the event channel, you must notify disgord that you care about the event (this is done automatically in the event handler registration).
-// Note that this will be removed in the future (maybe v0.12), and you have to register your channels in the .On method as you do with event handlers.
-//  session.AcceptEvent(event.MessageCreate) // alternative: disgord.EvtMessageCreate
-//  session.AcceptEvent(event.MessageUpdate)
+// Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a handler.
+// Simply define your channel, add buffering if you need it, and register it as a handler in the .On method.
+//
+//  msgCreateChan := make(chan *disgord.MessageCreate, 10)
+//  session.On(disgord.EvtMessageCreate, msgCreateChan)
+//
+// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you can
+// inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will not
+// close it for you.
+//
+//  ctrl := &disgord.Ctrl{Channel: msgCreateChan}
+//  go func() {
+//    // close the channel after 20 seconds and safely remove it from disgord
+//    // without disgord trying to send data through it after it has closed
+//    <- time.After(20 * time.Second)
+//    ctrl.CloseChannel()
+//  }
+//
+// Here is what it would look like to use the channel for handling events. Please run this in a go routine unless
+// you know what you are doing.
+//
 //  for {
 //      var message *disgord.Message
 //      var status string
 //      select {
-//      case evt, alive := <- session.EventChannels().MessageCreate()
+//      case evt, alive := <- msgCreateChan
 //          if !alive {
 //              return
 //          }
 //          message = evt.Message
 //          status = "created"
-//      case evt, alive := <- session.EventChannels().MessageUpdate()
-//          if !alive {
-//              return
-//          }
-//          message = evt.Message
-//          status = "updated"
 //      }
 //
 //      fmt.Printf("A message from %s was %s\n", message.Author.Mention(), status)
@@ -158,7 +169,7 @@ import (
 
 // LibraryInfo returns name + version
 func LibraryInfo() string {
-	return fmt.Sprint(constant.Name, constant.Version)
+	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
 
 // Wrapper for github.com/andersfylling/snowflake

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/websocket"
 
 	"github.com/andersfylling/snowflake/v3"
 
@@ -78,13 +79,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 		return nil, err
 	}
 
-	if conf.WSShardManagerConfig == nil {
-		conf.WSShardManagerConfig = &WSShardManagerConfig{}
-	}
-	if conf.WSShardManagerConfig.ShardRateLimit == 0 {
-		conf.WSShardManagerConfig.ShardRateLimit = DefaultShardRateLimit
-	}
-	sharding := NewShardManager(conf)
+	eventTracker := &websocket.UniqueStringSlice{}
 
 	// caching
 	var cacher *Cache
@@ -102,28 +97,28 @@ func NewClient(conf *Config) (c *Client, err error) {
 
 		// register for events for activate caches
 		if !conf.CacheConfig.DisableUserCaching {
-			sharding.TrackEvent.Add(event.Ready)
-			sharding.TrackEvent.Add(event.UserUpdate)
+			eventTracker.Add(event.Ready)
+			eventTracker.Add(event.UserUpdate)
 		}
 		if !conf.CacheConfig.DisableChannelCaching {
-			sharding.TrackEvent.Add(event.ChannelCreate)
-			sharding.TrackEvent.Add(event.ChannelUpdate)
-			sharding.TrackEvent.Add(event.ChannelPinsUpdate)
-			sharding.TrackEvent.Add(event.ChannelDelete)
+			eventTracker.Add(event.ChannelCreate)
+			eventTracker.Add(event.ChannelUpdate)
+			eventTracker.Add(event.ChannelPinsUpdate)
+			eventTracker.Add(event.ChannelDelete)
 		}
 		if !conf.CacheConfig.DisableGuildCaching {
-			sharding.TrackEvent.Add(event.GuildCreate)
-			sharding.TrackEvent.Add(event.GuildDelete)
-			sharding.TrackEvent.Add(event.GuildUpdate)
-			sharding.TrackEvent.Add(event.GuildEmojisUpdate)
-			sharding.TrackEvent.Add(event.GuildMemberAdd)
-			sharding.TrackEvent.Add(event.GuildMemberRemove)
-			sharding.TrackEvent.Add(event.GuildMembersChunk)
-			sharding.TrackEvent.Add(event.GuildMemberUpdate)
-			sharding.TrackEvent.Add(event.GuildRoleCreate)
-			sharding.TrackEvent.Add(event.GuildRoleDelete)
-			sharding.TrackEvent.Add(event.GuildRoleUpdate)
-			sharding.TrackEvent.Add(event.GuildIntegrationsUpdate)
+			eventTracker.Add(event.GuildCreate)
+			eventTracker.Add(event.GuildDelete)
+			eventTracker.Add(event.GuildUpdate)
+			eventTracker.Add(event.GuildEmojisUpdate)
+			eventTracker.Add(event.GuildMemberAdd)
+			eventTracker.Add(event.GuildMemberRemove)
+			eventTracker.Add(event.GuildMembersChunk)
+			eventTracker.Add(event.GuildMemberUpdate)
+			eventTracker.Add(event.GuildRoleCreate)
+			eventTracker.Add(event.GuildRoleDelete)
+			eventTracker.Add(event.GuildRoleUpdate)
+			eventTracker.Add(event.GuildIntegrationsUpdate)
 		}
 	} else {
 		// create an empty cache to avoid nil panics
@@ -140,18 +135,19 @@ func NewClient(conf *Config) (c *Client, err error) {
 	cacher.conf.clientConf = conf
 
 	// Required for voice operation
-	sharding.TrackEvent.Add(event.VoiceStateUpdate)
-	sharding.TrackEvent.Add(event.VoiceServerUpdate)
+	eventTracker.Add(event.VoiceStateUpdate)
+	eventTracker.Add(event.VoiceServerUpdate)
+
+	// websocket sharding
+	evtChan := make(chan *websocket.Event, 2) // TODO: higher value when more shards?
 
 	// event dispatcher
-	eventChanSize := 20
-	dispatch := newDispatcher(conf.ActivateEventChannels, eventChanSize)
+	dispatch := newDispatcher()
 
 	// create a disgord Client/instance/session
 	c = &Client{
 		shutdownChan: conf.shutdownChan,
 		config:       conf,
-		shardManager: sharding,
 		httpClient:   conf.HTTPClient,
 		proxy:        conf.Proxy,
 		botToken:     conf.BotToken,
@@ -160,10 +156,11 @@ func NewClient(conf *Config) (c *Client, err error) {
 		cache:        cacher,
 		log:          conf.Logger,
 		pool:         newPools(),
+		eventChan:    evtChan,
+		eventTracker: eventTracker,
 	}
 	c.dispatcher.addSessionInstance(c)
 	c.voiceRepository = newVoiceRepository(c)
-	sharding.client = c
 
 	return c, err
 }
@@ -176,10 +173,10 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
-	DisableCache         bool
-	CacheConfig          *CacheConfig
-	WSShardManagerConfig *WSShardManagerConfig
-	Presence             *UpdateStatusCommand
+	DisableCache bool
+	CacheConfig  *CacheConfig
+	ShardConfig  websocket.ShardConfig
+	Presence     *UpdateStatusCommand
 
 	// DisGord triggers custom events to handle caching in a simpler manner.
 	// eg. on guild delete, all the channels should be deleted too. to make this simple
@@ -201,12 +198,6 @@ type Config struct {
 
 	// your project name, name of bot, or application
 	ProjectName string
-
-	// ActivateEventChannels signifies that the developer will use channels to handle incoming events. May it be
-	// in addition to handlers or not. This forces the use of a scheduler to empty the buffered channels when they
-	// reach their capacity. Since it requires extra resources, others who have no interest in utilizing channels
-	// should not experience any performance penalty (even though it might be unnoticeable).
-	ActivateEventChannels bool
 
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
@@ -243,7 +234,12 @@ type Client struct {
 	httpClient *http.Client
 	proxy      proxy.Dialer
 
-	shardManager *WSShardManager
+	shardManager websocket.ShardManager
+	eventChan    chan *websocket.Event
+	eventTracker *websocket.UniqueStringSlice
+
+	connectedGuilds      []Snowflake
+	connectedGuildsMutex sync.RWMutex
 
 	cache *Cache
 
@@ -327,11 +323,27 @@ func (c *Client) CreateBotURL() (u string, err error) {
 	return u, nil
 }
 
-// HeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
+// AvgHeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
 // way to measure delay between the Client and Discord server
-func (c *Client) HeartbeatLatency() (duration time.Duration, err error) {
-	return c.shardManager.GetAvgHeartbeatLatency()
+func (c *Client) AvgHeartbeatLatency() (duration time.Duration, err error) {
+	latencies, err := c.shardManager.HeartbeatLatencies()
+	if err != nil {
+		return 0, err
+	}
+
+	var average int64
+	for _, v := range latencies {
+		average += v.Nanoseconds()
+	}
+	average /= int64(len(latencies))
+
+	return time.Duration(average) * time.Nanosecond, nil
+}
+
+// HeartbeatLatencies returns latencies mapped to each shard, by their respective ID. shardID => latency.
+func (c *Client) HeartbeatLatencies() (latencies map[uint]time.Duration, err error) {
+	return c.shardManager.HeartbeatLatencies()
 }
 
 // Myself get the current user / connected user
@@ -342,18 +354,9 @@ func (c *Client) Myself() (user *User, err error) {
 
 // GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
 func (c *Client) GetConnectedGuilds() []snowflake.ID {
-	c.shardManager.RLock()
-	defer c.shardManager.RUnlock()
-
-	var guilds []snowflake.ID
-	for i := range c.shardManager.shards {
-		shard := c.shardManager.shards[i]
-		shard.RLock()
-		guilds = append(guilds, shard.guilds...)
-		shard.RUnlock()
-	}
-
-	return guilds
+	c.connectedGuildsMutex.RLock()
+	defer c.connectedGuildsMutex.RUnlock()
+	return c.connectedGuilds
 }
 
 // Logger returns the log instance of DisGord.
@@ -402,7 +405,7 @@ func (c *Client) setupConnectEnv() {
 	if !c.config.DisableCache {
 		cache = c.cache
 	}
-	go demultiplexer(c.dispatcher, c.shardManager.evtChan, cache)
+	go demultiplexer(c.dispatcher, c.eventChan, cache)
 }
 
 // Connect establishes a websocket connection to the discord API
@@ -417,28 +420,32 @@ func (c *Client) Connect() (err error) {
 	}
 	c.myID = me.ID
 
-	url, shardCount, err := c.shardManager.GetConnectionDetails(c.req)
-	if err != nil {
+	if err = websocket.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
 		return err
 	}
 
-	if c.config.WSShardManagerConfig.URL == "" {
-		c.config.WSShardManagerConfig.URL = url
-	}
-	if c.config.WSShardManagerConfig.ShardLimit == 0 {
-		c.config.WSShardManagerConfig.ShardLimit = shardCount
-	}
+	sharding := websocket.NewShardMngr(websocket.ShardManagerConfig{
+		ShardConfig:        c.config.ShardConfig,
+		Logger:             c.config.Logger,
+		ShutdownChan:       c.config.shutdownChan,
+		DefaultBotPresence: c.config.Presence,
+		TrackedEvents:      c.eventTracker,
+		EventChan:          c.eventChan,
+		DisgordInfo:        LibraryInfo(),
+		ProjectName:        c.config.ProjectName,
+		BotToken:           c.config.BotToken,
+	})
 
-	_ = c.shardManager.Prepare(c.config)
-	c.setupConnectEnv() // calling this before the c.ShardManager.Prepare will cause a evtChan deadlock
+	c.setupConnectEnv()
 
 	c.log.Info("Connecting to discord Gateway")
-	if err = c.shardManager.Connect(); err != nil {
+	if err = sharding.Connect(); err != nil {
 		c.log.Info(err)
 		return err
 	}
 
 	c.log.Info("Connected")
+	c.shardManager = sharding
 	return nil
 }
 
@@ -503,37 +510,35 @@ func (c *Client) StayConnectedUntilInterrupted() (err error) {
 
 // handlerAddToConnectedGuilds update internal state when joining or creating a guild
 func (c *Client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
-	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
-	//  meaning, you might have to add your own shards if you get a panic here
-	shard, _ := c.shardManager.GetShard(evt.Guild.ID)
-	shard.Lock()
-	defer shard.Unlock()
+	c.connectedGuildsMutex.Lock()
+	defer c.connectedGuildsMutex.Unlock()
 
 	// don't add an entry if there already is one
-	for i := range shard.guilds {
-		if shard.guilds[i] == evt.Guild.ID {
+	for i := range c.connectedGuilds {
+		if c.connectedGuilds[i] == evt.Guild.ID {
 			return
 		}
 	}
-	shard.guilds = append(shard.guilds, evt.Guild.ID)
+
+	c.connectedGuilds = append(c.connectedGuilds, evt.Guild.ID)
 }
 
 // handlerRemoveFromConnectedGuilds update internal state when deleting or leaving a guild
 func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
-	// NOTE: during unit tests, you must remember that shards are usually added dynamically at runtime
-	//  meaning, you might have to add your own shards if you get a panic here
-	shard, _ := c.shardManager.GetShard(evt.UnavailableGuild.ID)
-	shard.Lock()
-	defer shard.Unlock()
+	c.connectedGuildsMutex.Lock()
+	defer c.connectedGuildsMutex.Unlock()
 
-	for i := range shard.guilds {
-		if shard.guilds[i] != evt.UnavailableGuild.ID {
+	guilds := c.connectedGuilds
+	for i := range guilds {
+		if guilds[i] != evt.UnavailableGuild.ID {
 			continue
 		}
-		shard.guilds[i] = shard.guilds[len(shard.guilds)-1]
-		shard.guilds = shard.guilds[:len(shard.guilds)-1]
+		guilds[i] = guilds[len(guilds)-1]
+		guilds = guilds[:len(guilds)-1]
 		break
 	}
+
+	c.connectedGuilds = guilds
 }
 
 func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
@@ -557,8 +562,8 @@ func (c *Client) Ready(cb func()) {
 		ctrl.Lock()
 		defer ctrl.Unlock()
 
-		l := len(c.shardManager.shards)
-		if l != len(ctrl.shardReady) {
+		l := c.shardManager.NrOfShards()
+		if l != uint(len(ctrl.shardReady)) {
 			ctrl.shardReady = make([]bool, l)
 		}
 
@@ -599,7 +604,7 @@ func (c *Client) On(event string, inputs ...interface{}) {
 	if err := ValidateHandlerInputs(inputs...); err != nil {
 		panic(err)
 	}
-	c.shardManager.TrackEvent.Add(event)
+	c.eventTracker.Add(event)
 
 	if err := c.dispatcher.register(event, inputs...); err != nil {
 		panic(err)
@@ -613,24 +618,27 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 	default:
 		return errors.New("command is not supported")
 	}
+
+	if g, ok := data.(guilder); ok {
+		// if this is guild specific, then only send data through the related shard
+		guildID := g.getGuildID()
+		shardID := GetShardForGuildID(guildID, c.shardManager.NrOfShards())
+		shard, err := c.shardManager.GetShard(shardID)
+		if err != nil {
+			return err
+		}
+		return shard.Emit(command, data)
+	}
+
+	// otherwise it is sent through every shard
 	return c.shardManager.Emit(command, data)
-}
-
-// EventChan get a event channel using the event name
-func (c *Client) EventChan(event string) (channel interface{}, err error) {
-	return c.dispatcher.EvtChan(event)
-}
-
-// EventChannels get access to all the event channels
-func (c *Client) EventChannels() (channels EventChannels) {
-	return c.dispatcher.dispatcherChans
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
 // to reduce unnecessary marshalling and controls.
 func (c *Client) AcceptEvent(events ...string) {
 	for _, evt := range events {
-		c.shardManager.TrackEvent.Add(evt)
+		c.eventTracker.Add(evt)
 	}
 }
 
@@ -706,6 +714,8 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 			params.Content += " " + s
 		}
 	}
+
+	// wtf?
 	if data == nil {
 		if mergeFlags(flags).IgnoreEmptyParams() {
 			params.Content = ""

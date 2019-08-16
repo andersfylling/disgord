@@ -7,44 +7,6 @@ import (
 	"github.com/andersfylling/snowflake/v3"
 )
 
-// EventChannels all methods for retrieving event channels
-type EventChannels interface {
-	Ready() <-chan *Ready
-	Resumed() <-chan *Resumed
-	ChannelCreate() <-chan *ChannelCreate
-	ChannelUpdate() <-chan *ChannelUpdate
-	ChannelDelete() <-chan *ChannelDelete
-	ChannelPinsUpdate() <-chan *ChannelPinsUpdate
-	GuildCreate() <-chan *GuildCreate
-	GuildUpdate() <-chan *GuildUpdate
-	GuildDelete() <-chan *GuildDelete
-	GuildBanAdd() <-chan *GuildBanAdd
-	GuildBanRemove() <-chan *GuildBanRemove
-	GuildEmojisUpdate() <-chan *GuildEmojisUpdate
-	GuildIntegrationsUpdate() <-chan *GuildIntegrationsUpdate
-	GuildMemberAdd() <-chan *GuildMemberAdd
-	GuildMemberRemove() <-chan *GuildMemberRemove
-	GuildMemberUpdate() <-chan *GuildMemberUpdate
-	GuildMembersChunk() <-chan *GuildMembersChunk
-	GuildRoleUpdate() <-chan *GuildRoleUpdate
-	GuildRoleCreate() <-chan *GuildRoleCreate
-	GuildRoleDelete() <-chan *GuildRoleDelete
-	MessageCreate() <-chan *MessageCreate
-	MessageUpdate() <-chan *MessageUpdate
-	MessageDelete() <-chan *MessageDelete
-	MessageDeleteBulk() <-chan *MessageDeleteBulk
-	MessageReactionAdd() <-chan *MessageReactionAdd
-	MessageReactionRemove() <-chan *MessageReactionRemove
-	MessageReactionRemoveAll() <-chan *MessageReactionRemoveAll
-	PresenceUpdate() <-chan *PresenceUpdate
-	PresencesReplace() <-chan *PresencesReplace
-	TypingStart() <-chan *TypingStart
-	UserUpdate() <-chan *UserUpdate
-	VoiceStateUpdate() <-chan *VoiceStateUpdate
-	VoiceServerUpdate() <-chan *VoiceServerUpdate
-	WebhooksUpdate() <-chan *WebhooksUpdate
-}
-
 // Emitter for emitting data from A to B. Used in websocket connection
 type Emitter interface {
 	Emit(command SocketCommand, dataPointer interface{}) error
@@ -93,10 +55,6 @@ type SocketHandler interface {
 
 	Emitter
 
-	// event channels
-	EventChan(event string) (channel interface{}, err error)
-	EventChannels() EventChannels
-
 	// event register (which events to accept)
 	// events which are not registered are discarded at socket level
 	// to increase performance
@@ -115,7 +73,7 @@ type RESTMessage interface {
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) ([]*Message, error)
+	GetMessages(channelID Snowflake, params *GetMessagesParams, flags ...Flag) ([]*Message, error)
 
 	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
 	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
@@ -543,7 +501,9 @@ type Session interface {
 	// 4. avg = (avg + latency) / 2
 	//
 	// This feature was requested. But should never be used as a proof for delay between client and Discord.
-	HeartbeatLatency() (duration time.Duration, err error)
+	AvgHeartbeatLatency() (duration time.Duration, err error)
+	// returns the latency for each given shard id. shardID => latency
+	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
 
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error

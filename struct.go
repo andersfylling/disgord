@@ -330,22 +330,6 @@ func (d Discriminator) MarshalJSON() (data []byte, err error) {
 	return []byte("\"" + d.String() + "\""), nil
 }
 
-// Gateway is for parsing the Gateway endpoint response
-type Gateway struct {
-	URL string `json:"url"`
-}
-
-// GatewayBot is for parsing the Gateway Bot endpoint response
-type GatewayBot struct {
-	Gateway
-	Shards            uint `json:"shards"`
-	SessionStartLimit struct {
-		Total      uint `json:"total"`
-		Remaining  uint `json:"remaining"`
-		ResetAfter uint `json:"reset_after"`
-	} `json:"session_start_limit"`
-}
-
 // extractAttribute extracts the snowflake value from a JSON string given a attribute filter. For extracting the root ID of an JSON byte array,
 // set filter to `"id":"` and scope to `0`. Note that the filter holds the last character before the value starts.
 func extractAttribute(filter []byte, scope int, data []byte) (id Snowflake, err error) {
