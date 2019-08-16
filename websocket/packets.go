@@ -49,8 +49,10 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 	if conf.URL == "" {
 		conf.URL = data.URL
 	}
-	if conf.NrOfShards == 0 {
-		conf.NrOfShards = data.Shards
+	if len(conf.ShardIDs) == 0 {
+		for i := uint(0); i < data.Shards; i++ {
+			conf.ShardIDs = append(conf.ShardIDs, i)
+		}
 	}
 	if conf.ShardRateLimit == 0 {
 		conf.ShardRateLimit = defaultShardRateLimit

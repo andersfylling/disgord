@@ -317,10 +317,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
-	case *[]*Gateway:
-		s = *t
-	case *[]*GatewayBot:
-		s = *t
 	case *[]*Time:
 		s = *t
 	case *[]*Activity:
