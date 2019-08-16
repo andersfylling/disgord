@@ -169,7 +169,7 @@ import (
 
 // LibraryInfo returns name + version
 func LibraryInfo() string {
-	return fmt.Sprint(constant.Name, constant.Version)
+	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
 
 // Wrapper for github.com/andersfylling/snowflake
