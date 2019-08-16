@@ -103,3 +103,16 @@ func messageHasPrefix(evt interface{}, prefix string) interface{} {
 
 	return evt
 }
+
+func messageIsBot(evt interface{}, isBot bool) interface{} {
+	var msg *disgord.Message
+	if msg = getMsg(evt); msg == nil {
+		return nil
+	}
+
+	if msg.Author != nil && msg.Author.Bot != isBot {
+		return nil
+	}
+
+	return evt
+}
