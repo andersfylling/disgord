@@ -134,11 +134,10 @@ func TestEvtClient_reconnect(t *testing.T) {
 		GuildLargeThreshold: 250,
 
 		// lib specific
-		Endpoint:      "sfkjsdlfsf",
-		Version:       constant.DiscordVersion,
-		Encoding:      constant.JSONEncoding,
-		ChannelBuffer: 3,
-		Logger:        logger.DefaultLogger(false),
+		Endpoint: "sfkjsdlfsf",
+		Version:  constant.DiscordVersion,
+		Encoding: constant.JSONEncoding,
+		Logger:   logger.DefaultLogger(false),
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",

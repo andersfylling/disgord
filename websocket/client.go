@@ -439,15 +439,24 @@ func (c *client) reconnect() (err error) {
 		c.RUnlock()
 	}
 
+	return c.reconnectLoop()
+}
+
+func (c *client) reconnectLoop() (err error) {
 	var try uint
 	var delay = 3 * time.Second
 	for {
-		c.Debug("reconnect attempt", try)
+		if try == 0 {
+			c.Debug("trying to connect")
+		} else {
+			c.Debug("reconnect attempt", try)
+		}
 		if _, err = c.connect(); err == nil {
+			c.Debug("establishing connection succeeded")
 			break
 		}
 
-		c.Info("reconnect failed, trying again in ", delay)
+		c.Info("establishing connection failed, trying again in ", delay)
 		c.Info(err)
 
 		// wait N seconds
@@ -455,7 +464,7 @@ func (c *client) reconnect() (err error) {
 		case <-time.After(delay):
 			delay += (4 + time.Duration(try*2)) * time.Second
 		case <-c.SystemShutdown:
-			c.Debug("stopping reconnect")
+			c.Debug("stopping reconnect attempt", try)
 			return
 		}
 

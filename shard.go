@@ -338,7 +338,6 @@ func (s *WSShard) Prepare(conf *Config, discordPktPool *sync.Pool, evtChan chan 
 		// lib specific
 		Version:        constant.DiscordVersion,
 		Encoding:       constant.JSONEncoding,
-		ChannelBuffer:  3,
 		Endpoint:       conf.WSShardManagerConfig.URL,
 		EventChan:      evtChan,
 		TrackedEvents:  trackEvents,
