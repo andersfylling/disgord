@@ -122,7 +122,6 @@ func TestEvtClient_reconnect(t *testing.T) {
 	}
 
 	eChan := make(chan *Event)
-	aChan := make(A)
 
 	shutdown := make(chan interface{})
 	done := make(chan interface{})
@@ -147,8 +146,12 @@ func TestEvtClient_reconnect(t *testing.T) {
 			},
 		},
 
+		connectQueue: func(shardID uint, cb func() error) error {
+			<-time.After(time.Duration(10) * time.Millisecond)
+			return cb()
+		},
+
 		// injected for testing
-		A:         aChan,
 		EventChan: eChan,
 		conn:      conn,
 
@@ -183,17 +186,6 @@ func TestEvtClient_reconnect(t *testing.T) {
 			select {
 			case <-eChan:
 				continue
-			case b, ok := <-aChan:
-				if !ok {
-					continue
-				}
-				<-time.After(10 * time.Millisecond)
-				releaser := make(B)
-				b <- &K{
-					Release: releaser,
-					Key:     412, // random
-				}
-				<-releaser
 			}
 		}
 	}()

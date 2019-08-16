@@ -38,6 +38,9 @@ func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
 
 	// establish ws connection
 	g.c, _, err = dialer.Dial(endpoint, requestHeader)
+	if err != nil && !g.Disconnected() {
+		_ = g.Close()
+	}
 	return
 }
 

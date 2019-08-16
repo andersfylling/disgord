@@ -67,6 +67,13 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 		ws = conf.conn
 	}
 
+	if conf.connectQueue == nil {
+		// connectQueue without a delay
+		conf.connectQueue = func(shardID uint, cb func() error) error {
+			return cb()
+		}
+	}
+
 	c = &client{
 		conf:              conf,
 		ShardID:           shardID,
@@ -95,6 +102,8 @@ type config struct {
 
 	// for testing only
 	conn Conn
+
+	connectQueue func(shardID uint, cb func() error) error
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
 	// a valid socket endpoint from Discord
@@ -285,11 +294,6 @@ func (c *client) connect() (evt interface{}, err error) {
 		//}
 	}
 
-	if err = c.connectPermit.requestConnectPermit(); err != nil {
-		err = errors.New("unable to get permission to Connect. Err: " + err.Error())
-		return nil, err
-	}
-
 	waitingChan := make(chan interface{}, 2)
 	c.onceChannels.Add(op, waitingChan)
 	defer func() {
@@ -298,16 +302,10 @@ func (c *client) connect() (evt interface{}, err error) {
 	}()
 
 	// establish ws connection
-	if err = c.conn.Open(c.conf.Endpoint, nil); err != nil {
-		if !c.conn.Disconnected() {
-			if err2 := c.conn.Close(); err2 != nil {
-				c.Error(err2)
-			}
-		}
-
-		if err3 := c.connectPermit.releaseConnectPermit(); err3 != nil {
-			c.Info("unable to release connection permission. Err: ", err3)
-		}
+	err = c.conf.connectQueue(c.ShardID, func() error {
+		return c.conn.Open(c.conf.Endpoint, nil)
+	})
+	if err != nil {
 		return nil, err
 	}
 

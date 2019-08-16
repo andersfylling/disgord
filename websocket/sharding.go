@@ -20,7 +20,6 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	return &shardMngr{
 		shards: map[shardID]*EvtClient{},
 		conf:   conf,
-		A:      make(A, len(conf.ShardIDs)+1),
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}
@@ -80,11 +79,12 @@ type ShardManagerConfig struct {
 }
 
 type shardMngr struct {
-	mu             sync.RWMutex
-	conf           ShardManagerConfig
-	shards         map[shardID]*EvtClient
-	DiscordPktPool *sync.Pool
-	A              A
+	mu                       sync.RWMutex
+	conf                     ShardManagerConfig
+	shards                   map[shardID]*EvtClient
+	DiscordPktPool           *sync.Pool
+	nextAllowedIdentity      time.Time
+	nextAllowedIdentityMutex sync.Mutex
 }
 
 var _ ShardManager = (*shardMngr)(nil)
@@ -107,8 +107,8 @@ func (s *shardMngr) initializeShards() error {
 		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization
-		EventChan: s.conf.EventChan,
-		A:         s.A,
+		EventChan:    s.conf.EventChan,
+		connectQueue: s.connectQueue,
 
 		// user settings
 		BotToken: s.conf.BotToken,
@@ -130,36 +130,29 @@ func (s *shardMngr) initializeShards() error {
 	return nil
 }
 
-func (s *shardMngr) runSynchronizer() {
-	for {
-		select {
-		case <-s.conf.ShutdownChan:
-			s.conf.Logger.Info("shutdown signal was used to stop shard synchronizing")
-			return
-		case b, ok := <-s.A:
-			if !ok {
-				s.conf.Logger.Error("b is closed")
-				return
-			}
+// connectQueue blocks until it can execute a given callback with respect to the identify rate limit
+func (s *shardMngr) connectQueue(shardID uint, cb func() error) error {
+	var delay time.Duration
+	now := time.Now()
+	s.nextAllowedIdentityMutex.Lock()
+	if s.nextAllowedIdentity.After(now) {
+		delay = s.nextAllowedIdentity.Sub(now)
+	} else {
+		delay = time.Duration(0)
+		s.nextAllowedIdentity = time.Now()
+	}
+	offset := time.Duration(int64(defaultShardRateLimit*1000)) * time.Millisecond
+	s.nextAllowedIdentity = s.nextAllowedIdentity.Add(offset)
+	s.nextAllowedIdentityMutex.Unlock()
 
-			releaser := make(B)
-			b <- &K{
-				Release: releaser,
-				Key:     412, // random
-				// TODO: store shard info for better error handling and potential metrics
-			}
-
-			select {
-			case <-releaser:
-				// apply rate limit
-				delay := time.Duration(s.conf.ShardRateLimit) * time.Second
-				s.conf.Logger.Debug("shard synchronizer is resting for", delay)
-				<-time.After(delay)
-			case <-s.conf.ShutdownChan:
-				s.conf.Logger.Debug("shard synchronizer got shutdown signal while resting")
-				return
-			}
-		}
+	s.conf.Logger.Debug("shard", shardID, "will wait in connect queue for", delay)
+	select {
+	case <-time.After(delay):
+		s.conf.Logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
+		return cb()
+	case <-s.conf.ShutdownChan:
+		s.conf.Logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
+		return errors.New("shutting down")
 	}
 }
 
@@ -175,9 +168,6 @@ func (s *shardMngr) Connect() (err error) {
 		if err = s.initializeShards(); err != nil {
 			return err
 		}
-
-		// handle shards asking for permission to connect (rate limiting)
-		go s.runSynchronizer()
 	}
 
 	for _, shard := range s.shards {

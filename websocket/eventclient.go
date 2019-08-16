@@ -43,7 +43,6 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 		conf:          conf,
 		trackedEvents: conf.TrackedEvents,
 		eventChan:     eChan,
-		a:             conf.A,
 	}
 	client.client, err = newClient(&config{
 		Logger:         conf.Logger,
@@ -51,13 +50,13 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 		DiscordPktPool: conf.DiscordPktPool,
 		Proxy:          conf.Proxy,
 		conn:           conf.conn,
+		connectQueue:   conf.connectQueue,
 
 		SystemShutdown: conf.SystemShutdown,
 	}, shardID)
 	if err != nil {
 		return nil, err
 	}
-	client.connectPermit = client // adds  rate limiting for shards
 	client.setupBehaviors()
 
 	client.identity = &evtIdentity{
@@ -105,7 +104,7 @@ type EvtConfig struct {
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
 
-	A A
+	connectQueue func(shardID uint, cb func() error) error
 
 	Presence interface{}
 
@@ -144,10 +143,6 @@ type EvtClient struct {
 	sessionID      string
 	sequenceNumber uint
 
-	// synchronization and rate limiting
-	K *K
-	a A
-
 	rdyPool *sync.Pool
 
 	identity *evtIdentity
@@ -174,43 +169,6 @@ func (c *EvtClient) Emit(command string, data interface{}) (err error) {
 		}
 	}
 	return c.client.Emit(command, data)
-}
-
-//////////////////////////////////////////////////////
-//
-// SHARD synchronization & rate limiting
-//
-//////////////////////////////////////////////////////
-
-func (c *EvtClient) requestConnectPermit() (err error) {
-	c.Debug("trying to get Connect permission")
-	b := make(B)
-	defer close(b)
-	c.a <- b
-	c.Debug("waiting")
-	var ok bool
-	select {
-	case c.K, ok = <-b:
-		if !ok || c.K == nil {
-			c.Debug("unable to get Connect permission")
-			return errors.New("channel closed or K was nil")
-		}
-		c.Debug("got Connect permission")
-	case <-c.SystemShutdown:
-		err = errors.New("shutting down")
-	}
-
-	return nil
-}
-
-func (c *EvtClient) releaseConnectPermit() error {
-	if c.K == nil {
-		return errors.New("K has not been granted yet")
-	}
-
-	c.K.Release <- c.K
-	c.K = nil
-	return nil
 }
 
 //////////////////////////////////////////////////////
