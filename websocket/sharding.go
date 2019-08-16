@@ -40,7 +40,7 @@ type ShardConfig struct {
 }
 
 type shardMngr struct {
-	conf *ShardConfig
+	conf   *ShardConfig
 	shards map[shardID]*shard
 }
 
@@ -50,7 +50,6 @@ func (s *shardMngr) initializeShards() error {
 
 	panic("implement me")
 }
-
 
 func (s *shardMngr) Connect() (err error) {
 	if len(s.shards) == 0 {

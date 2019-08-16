@@ -178,7 +178,7 @@ type Config struct {
 	DisableCache         bool
 	CacheConfig          *CacheConfig
 	WSShardManagerConfig *WSShardManagerConfig
-	ShardConfig *websocket.ShardConfig
+	ShardConfig          *websocket.ShardConfig
 	Presence             *UpdateStatusCommand
 
 	//ImmutableCache bool

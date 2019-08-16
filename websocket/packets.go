@@ -36,8 +36,6 @@ func decompressBytes(input []byte) (output []byte, err error) {
 	return
 }
 
-
-
 type GatewayBotGetter interface {
 	GetGatewayBot() (gateway *GatewayBot, err error)
 }
