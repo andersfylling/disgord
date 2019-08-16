@@ -18,8 +18,9 @@ type shardID = uint
 
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	return &shardMngr{
-		conf: conf,
-		A:    make(A, len(conf.ShardIDs)+1),
+		shards: map[shardID]*EvtClient{},
+		conf:   conf,
+		A:      make(A, len(conf.ShardIDs)+1),
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}

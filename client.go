@@ -421,6 +421,9 @@ func (c *Client) Connect() (err error) {
 		DefaultBotPresence: c.config.Presence,
 		TrackedEvents:      c.eventTracker,
 		EventChan:          c.eventChan,
+		DisgordInfo:        LibraryInfo(),
+		ProjectName:        c.config.ProjectName,
+		BotToken:           c.config.BotToken,
 	})
 
 	c.setupConnectEnv()
