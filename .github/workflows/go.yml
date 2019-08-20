@@ -32,7 +32,7 @@ jobs:
 
     - name: Setup code climate test-reporter
       env:
-        GITHUB_TOKEN: ${{ secrets.CC_TEST_REPORTER_ID }}
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
       run: |
         curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         chmod +x ./cc-test-reporter
@@ -40,7 +40,7 @@ jobs:
 
     - name: Upload test coverage
       env:
-        GITHUB_TOKEN: ${{ secrets.CC_TEST_REPORTER_ID }}
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
       run: |
         for pkg in $(go list ./...); do
             go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
