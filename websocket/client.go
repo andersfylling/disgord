@@ -132,6 +132,7 @@ type client struct {
 	heartbeatLatency   time.Duration
 	heartbeatInterval  uint
 	lastHeartbeatAck   time.Time
+	lastHeartbeatSent  time.Time
 	activateHeartbeats chan interface{}
 
 	ShardID uint
@@ -632,7 +633,10 @@ func (c *client) prepareHeartbeating(ctx context.Context) {
 
 func (c *client) pulsate(ctx context.Context) {
 	c.RLock()
-	ticker := time.NewTicker(time.Millisecond * time.Duration(c.heartbeatInterval))
+	c.lastHeartbeatAck = time.Now()
+	c.lastHeartbeatSent = time.Now()
+	interval := time.Millisecond * time.Duration(c.heartbeatInterval)
+	ticker := time.NewTicker(interval)
 	c.RUnlock()
 	defer ticker.Stop()
 
@@ -642,35 +646,26 @@ func (c *client) pulsate(ctx context.Context) {
 		last = c.lastHeartbeatAck
 		c.RUnlock()
 
+		// make sure that the last heartbeat signal was received and responded to by discord (heartbeat ack)
+		if time.Now().Sub(last) > interval {
+			c.Info("heartbeat ACK was not received, forcing reconnect")
+			if err := c.reconnect(); err != nil {
+				c.Error(err)
+			}
+		}
+
+		// update heartbeat latency record
+		c.RLock()
+		c.heartbeatLatency = c.lastHeartbeatAck.Sub(c.lastHeartbeatSent)
+		c.RUnlock()
+
+		// send new heartbeat signal
+		c.Lock()
+		c.lastHeartbeatSent = time.Now()
+		c.Unlock()
 		if err := c.behaviors[heartbeating].actions[sendHeartbeat](nil); err != nil {
 			c.Error(err)
 		}
-
-		stopChan := make(chan interface{})
-
-		// verify the heartbeat ACK
-		go func(m *client, last time.Time, sent time.Time, cancel chan interface{}) {
-			select {
-			case <-cancel:
-				return
-			case <-time.After(3 * time.Second): // deadline for Discord to respond
-			}
-
-			c.RLock()
-			receivedHeartbeatAck := c.lastHeartbeatAck.After(last)
-			c.RUnlock()
-
-			if !receivedHeartbeatAck {
-				c.Info("heartbeat ACK was not received, forcing reconnect")
-				if err := c.reconnect(); err != nil {
-					c.Error(err)
-				}
-			} else {
-				c.RLock()
-				m.heartbeatLatency = m.lastHeartbeatAck.Sub(sent)
-				c.RUnlock()
-			}
-		}(c, last, time.Now(), stopChan)
 
 		select {
 		case <-ticker.C:
@@ -679,7 +674,6 @@ func (c *client) pulsate(ctx context.Context) {
 		}
 
 		c.Debug("Stopping pulse")
-		close(stopChan)
 		return
 	}
 }

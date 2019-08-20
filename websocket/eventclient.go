@@ -402,7 +402,12 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 		}
 
 		c.Debug("waiting to send identify/resume")
-		<-sentIdentifyResume
+		select {
+		case <-sentIdentifyResume:
+		case <-time.After(5 * time.Minute):
+			c.Error("discord timeout during connect (5 minutes). No idea what went wrong..")
+			return errors.New("websocket connected but was not able to send identify packet within 5 minutes")
+		}
 		c.Debug("sent identify/resume")
 		return nil
 	})
