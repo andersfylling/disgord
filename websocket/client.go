@@ -392,7 +392,7 @@ func (c *client) reconnectLoop() (err error) {
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
 func (c *client) Emit(command string, data interface{}) (err error) {
 	if !c.haveConnectedOnce {
-		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands")
+		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
 
 	noMatch := ^uint(0)

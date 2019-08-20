@@ -74,7 +74,7 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 	ensureDir()
 	data, err := json.MarshalIndent(packet, "", "\t")
 	if err != nil {
-		c.Debug(err)
+		c.log.Debug(c.getLogPrefix(), err)
 	}
 
 	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, outgoingPacketSequence.Load(), "")
@@ -82,7 +82,7 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 
 	path := DiagnosePath_packets + "/" + filename
 	if err = ioutil.WriteFile(path, data, 0644); err != nil {
-		c.Debug(err)
+		c.log.Debug(c.getLogPrefix(), err)
 	}
 }
 
@@ -105,10 +105,10 @@ func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 	// pretty
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, packet, "", "\t"); err != nil {
-		c.Debug(err)
+		c.log.Debug(c.getLogPrefix(), err)
 	}
 
 	if err := ioutil.WriteFile(path, prettyJSON.Bytes(), 0644); err != nil {
-		c.Debug(err)
+		c.log.Debug(c.getLogPrefix(), err)
 	}
 }

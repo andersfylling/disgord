@@ -43,7 +43,6 @@ type VoiceClient struct {
 	*client
 	conf *VoiceConfig
 
-	haveConnectedOnce  bool
 	haveIdentifiedOnce bool
 
 	SystemShutdown chan interface{}
