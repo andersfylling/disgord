@@ -1704,7 +1704,7 @@ func (c *Client) AddGuildMember(guildID, userID Snowflake, accessToken string, p
 	return member, err
 }
 
-// ModifyGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
+// UpdateGuildMember [REST] Modify attributes of a guild member. Returns a 204 empty response on success.
 // Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
@@ -2289,10 +2289,10 @@ type updateGuildMemberBuilder struct {
 	r RESTBuilder
 }
 
-// SetDefaultNick removes nickname for user. Requires permission MANAGE_NICKNAMES
-// deprecated: use DeleteNick()
-func (b *updateGuildMemberBuilder) SetDefaultNick() *updateGuildMemberBuilder {
-	return b.DeleteNick()
+// KickFromVoice kicks member out of voice channel. Assuming he/she/it is in one.
+func (b *updateGuildMemberBuilder) KickFromVoice() *updateGuildMemberBuilder {
+	b.r.param("channel_id", 0)
+	return b
 }
 
 // DeleteNick removes nickname for user. Requires permission MANAGE_NICKNAMES

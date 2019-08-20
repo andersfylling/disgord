@@ -661,6 +661,10 @@ func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([
 	return c.GetCurrentUserGuilds(params)
 }
 
+func (c *Client) KickVoiceParticipant(guildID, userID Snowflake) error {
+	return c.UpdateGuildMember(guildID, userID).KickFromVoice().Execute()
+}
+
 // SendMsg Input anything and it will be converted to a message and sent. If you
 // supply it with multiple data's, it will simply merge them. Even if they are multiple Message objects.
 // However, if you supply multiple CreateMessageParams objects, you will face issues. But at this point
