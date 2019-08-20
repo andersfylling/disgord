@@ -1,15 +1,9 @@
 name: Go
-on:
-  push:
-    branches:
-      - !docs/*
-  pull_request:
-    branches:
-      - !docs/*
+on: [push, pull_request]
 jobs:
 
-  build:
-    name: Build
+  test:
+    name: Verify code quality
     runs-on: ubuntu-latest
     steps:
 
@@ -30,8 +24,8 @@ jobs:
             dep ensure
         fi
 
-    - name: code formatting
-      run: go fmt ./... 2>&1 | read
+    - name: Correctly formatted files
+      run: test -z $(gofmt -s -l $(find . -type f -iname '*.go'))
 
     - name: Run tests
       run: go test -race -v -coverprofile=coverage.txt -covermode=atomic ./...
