@@ -17,7 +17,7 @@ const defaultShardRateLimit float64 = 5.1 // seconds
 type shardID = uint
 
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
-	return &shardMngr{
+	mngr := &shardMngr{
 		shards: map[shardID]*EvtClient{},
 		conf:   conf,
 		DiscordPktPool: &sync.Pool{
@@ -26,6 +26,10 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 			},
 		},
 	}
+	mngr.sync.logger = conf.Logger
+	mngr.sync.timeoutMs = time.Duration(int64(conf.ShardRateLimit*1000)) * time.Millisecond
+
+	return mngr
 }
 
 // ShardManager regards websocket shards.
@@ -85,6 +89,8 @@ type shardMngr struct {
 	DiscordPktPool           *sync.Pool
 	nextAllowedIdentity      time.Time
 	nextAllowedIdentityMutex sync.Mutex
+
+	sync shardSync
 }
 
 var _ ShardManager = (*shardMngr)(nil)
@@ -108,7 +114,7 @@ func (s *shardMngr) initializeShards() error {
 
 		// synchronization
 		EventChan:    s.conf.EventChan,
-		connectQueue: s.connectQueue,
+		connectQueue: s.sync.queueShard,
 
 		// user settings
 		BotToken: s.conf.BotToken,
@@ -128,32 +134,6 @@ func (s *shardMngr) initializeShards() error {
 		s.shards[id] = shard
 	}
 	return nil
-}
-
-// connectQueue blocks until it can execute a given callback with respect to the identify rate limit
-func (s *shardMngr) connectQueue(shardID uint, cb func() error) error {
-	var delay time.Duration
-	now := time.Now()
-	s.nextAllowedIdentityMutex.Lock()
-	if s.nextAllowedIdentity.After(now) {
-		delay = s.nextAllowedIdentity.Sub(now)
-	} else {
-		delay = time.Duration(0)
-		s.nextAllowedIdentity = time.Now()
-	}
-	offset := time.Duration(int64(defaultShardRateLimit*1000)) * time.Millisecond
-	s.nextAllowedIdentity = s.nextAllowedIdentity.Add(offset)
-	s.nextAllowedIdentityMutex.Unlock()
-
-	s.conf.Logger.Debug("shard", shardID, "will wait in connect queue for", delay)
-	select {
-	case <-time.After(delay):
-		s.conf.Logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
-		return cb()
-	case <-s.conf.ShutdownChan:
-		s.conf.Logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
-		return errors.New("shutting down")
-	}
 }
 
 func (s *shardMngr) Connect() (err error) {
