@@ -75,11 +75,11 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 }
 
 func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error) {
-	if guildID.Empty() {
+	if guildID.IsZero() {
 		err = errors.New("guildID must be set to connect to a voice channel")
 		return
 	}
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to connect to a voice channel")
 		return
 	}

@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/constant"
 )
 
@@ -83,7 +81,7 @@ type hasher interface {
 }
 
 type guilder interface {
-	getGuildID() snowflake.ID
+	getGuildID() Snowflake
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.

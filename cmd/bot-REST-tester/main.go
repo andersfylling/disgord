@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord"
 )
@@ -65,7 +64,7 @@ func main() {
 	// -------------------
 	// CHANNELS
 	// -------------------
-	channelID := snowflake.ID(486833611564253186)
+	channelID := disgord.Snowflake(486833611564253186)
 	func() {
 		channel, err := c.GetChannel(channelID)
 		if err != nil {
@@ -82,7 +81,7 @@ func main() {
 		channel, err := c.CreateGuildChannel(keys.GuildAdmin, "test", nil)
 		if err != nil {
 			panic("cannot create channel, therefore skipped")
-		} else if channel.ID.Empty() {
+		} else if channel.ID.IsZero() {
 			panic("channel ID of created channel was empty")
 		}
 
@@ -233,7 +232,7 @@ func main() {
 	func() {
 		emojiIDStr := os.Getenv(constant.DisgordTestGuildDefaultEmojiSnowflake)
 		//fmt.Println(emojiIDStr)
-		emojiID, err := snowflake.GetSnowflake(emojiIDStr)
+		emojiID, err := disgord.GetSnowflake(emojiIDStr)
 		if err != nil {
 			panic("snowflake makes no sense")
 			return
@@ -266,7 +265,7 @@ func main() {
 				panic(err)
 			}
 
-			if emoji.ID.Empty() && notARateLimitIssue(err) {
+			if emoji.ID.IsZero() && notARateLimitIssue(err) {
 				panic("emoji ID missing")
 			}
 		}()
@@ -296,7 +295,7 @@ func main() {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
 				panic(err)
-			} else if emoji.ID.Empty() && notARateLimitIssue(err) {
+			} else if emoji.ID.IsZero() && notARateLimitIssue(err) {
 				panic("emoji ID missing")
 			}
 		}()

@@ -6,10 +6,10 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/snowflake/v3"
+	"github.com/andersfylling/disgord/depalias"
 )
 
-type Snowflake = snowflake.Snowflake
+type Snowflake = depalias.Snowflake
 
 // NewCacheItem ...
 func NewCacheItem(content interface{}) *CacheItem {

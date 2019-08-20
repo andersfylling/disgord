@@ -39,7 +39,7 @@ func (b *{{$builder.Name}}) Set{{ $p.MethodName }}({{ $p.MethodName | Decapitali
     b.{{ $builder.FieldName }}.addPrereq{{ $p.MethodName | Decapitalize | $p.Cond.Render }}
     {{end}}
     {{- if eq $p.Type "Snowflake" -}}
-    b.{{ $builder.FieldName }}.addPrereq({{ $p.MethodName | Decapitalize }}.Empty(), "{{ $p.MethodName | Decapitalize }} can not be 0")
+    b.{{ $builder.FieldName }}.addPrereq({{ $p.MethodName | Decapitalize }}.IsZero(), "{{ $p.MethodName | Decapitalize }} can not be 0")
     {{- end }}
     b.{{ $builder.FieldName }}.param("{{ $p.Name }}", {{ $p.MethodName | Decapitalize }})
     return b
