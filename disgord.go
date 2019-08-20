@@ -181,18 +181,17 @@ type Snowflake = depalias.Snowflake
 
 // GetSnowflake see snowflake.GetSnowflake
 func GetSnowflake(v interface{}) (Snowflake, error) {
-	s, err := depalias.GetSnowflake(v)
-	return Snowflake(s), err
+	return depalias.GetSnowflake(v)
 }
 
 // NewSnowflake see snowflake.NewSnowflake
 func NewSnowflake(id uint64) Snowflake {
-	return Snowflake(depalias.NewSnowflake(id))
+	return depalias.NewSnowflake(id)
 }
 
 // ParseSnowflakeString see snowflake.ParseSnowflakeString
 func ParseSnowflakeString(v string) Snowflake {
-	return Snowflake(depalias.ParseSnowflakeString(v))
+	return depalias.ParseSnowflakeString(v)
 }
 
 func newErrorMissingSnowflake(message string) *ErrorMissingSnowflake {
