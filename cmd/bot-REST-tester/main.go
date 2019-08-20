@@ -81,7 +81,7 @@ func main() {
 		channel, err := c.CreateGuildChannel(keys.GuildAdmin, "test", nil)
 		if err != nil {
 			panic("cannot create channel, therefore skipped")
-		} else if channel.ID.Empty() {
+		} else if channel.ID.IsZero() {
 			panic("channel ID of created channel was empty")
 		}
 
@@ -265,7 +265,7 @@ func main() {
 				panic(err)
 			}
 
-			if emoji.ID.Empty() && notARateLimitIssue(err) {
+			if emoji.ID.IsZero() && notARateLimitIssue(err) {
 				panic("emoji ID missing")
 			}
 		}()
@@ -295,7 +295,7 @@ func main() {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
 				panic(err)
-			} else if emoji.ID.Empty() && notARateLimitIssue(err) {
+			} else if emoji.ID.IsZero() && notARateLimitIssue(err) {
 				panic("emoji ID missing")
 			}
 		}()

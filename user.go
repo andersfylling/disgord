@@ -551,7 +551,7 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 		user.Lock()
 	}
 
-	if !u.ID.Empty() {
+	if !u.ID.IsZero() {
 		user.ID = u.ID
 	}
 	if u.Username != "" {

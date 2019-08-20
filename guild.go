@@ -270,7 +270,7 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild.MemberCount = g.MemberCount
 
 	// pointers
-	if !g.ApplicationID.Empty() {
+	if !g.ApplicationID.IsZero() {
 		guild.ApplicationID = g.ApplicationID
 	}
 	if g.Splash != nil {
@@ -281,10 +281,10 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 		icon := *g.Icon
 		guild.Icon = &icon
 	}
-	if !g.AfkChannelID.Empty() {
+	if !g.AfkChannelID.IsZero() {
 		guild.AfkChannelID = g.AfkChannelID
 	}
-	if !g.SystemChannelID.Empty() {
+	if !g.SystemChannelID.IsZero() {
 		guild.SystemChannelID = g.SystemChannelID
 	}
 	if g.JoinedAt != nil {
@@ -479,7 +479,7 @@ func (g *Guild) GetMembersCountEstimate(s Session) (estimate int, err error) {
 
 		// TODO: update g.Channels
 	}
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return 0, errors.New("unable to decide which channel to create invite for")
 	}
 
@@ -758,7 +758,7 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.MemberCount = g.MemberCount
 
 	// pointers
-	if !g.ApplicationID.Empty() {
+	if !g.ApplicationID.IsZero() {
 		guild.ApplicationID = g.ApplicationID
 	}
 	if g.Splash != nil {
@@ -769,10 +769,10 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		icon := *g.Icon
 		guild.Icon = &icon
 	}
-	if !g.AfkChannelID.Empty() {
+	if !g.AfkChannelID.IsZero() {
 		guild.AfkChannelID = g.AfkChannelID
 	}
-	if !g.SystemChannelID.Empty() {
+	if !g.SystemChannelID.IsZero() {
 		guild.SystemChannelID = g.SystemChannelID
 	}
 	if g.JoinedAt != nil {
@@ -1061,7 +1061,7 @@ func (m *Member) String() string {
 		usrname = m.User.Username
 	}
 	id := m.userID
-	if m.userID.Empty() && m.User != nil {
+	if m.userID.IsZero() && m.User != nil {
 		id = m.User.ID
 	}
 	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
@@ -1069,7 +1069,7 @@ func (m *Member) String() string {
 
 func (m *Member) GetPermissions(s Session) (p uint64, err error) {
 	uID := m.userID
-	if uID.Empty() {
+	if uID.IsZero() {
 		usr, err := m.GetUser(s)
 		if err != nil {
 			return 0, err
@@ -1092,7 +1092,7 @@ func (m *Member) GetUser(session Session) (usr *User, err error) {
 // Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
 	var id Snowflake
-	if !m.userID.Empty() {
+	if !m.userID.IsZero() {
 		id = m.userID
 	} else if m.User != nil {
 		id = m.User.ID
@@ -1939,7 +1939,7 @@ type guildPruneCount struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag) (estimate int, err error) {
-	if id.Empty() {
+	if id.IsZero() {
 		return 0, errors.New("guildID can not be " + id.String())
 	}
 	params := pruneMembersParams{Days: days}

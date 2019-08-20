@@ -203,7 +203,7 @@ func TestMessageDelete_UnmarshalJSON(t *testing.T) {
 		t.Error("different channel ID")
 	}
 
-	if evt.GuildID.Empty() {
+	if evt.GuildID.IsZero() {
 		t.Error("expected guild id to be set")
 	}
 }

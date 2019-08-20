@@ -1,6 +1,8 @@
 package depalias
 
-import "github.com/andersfylling/snowflake/v3"
+import (
+	"github.com/andersfylling/snowflake/v4"
+)
 
 type Snowflake = snowflake.Snowflake
 

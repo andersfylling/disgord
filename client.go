@@ -287,7 +287,7 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 func (c *Client) CreateBotURL() (u string, err error) {
 	_, _ = c.GetCurrentUser() // update c.myID
 
-	if c.myID.Empty() {
+	if c.myID.IsZero() {
 		err = errors.New("unable to get bot id")
 		return "", err
 	}

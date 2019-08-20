@@ -146,7 +146,7 @@ func (r *rest) stepCheckCache() (v interface{}, err error) {
 		return nil, nil
 	}
 
-	if r.ID.Empty() {
+	if r.ID.IsZero() {
 		return nil, nil
 	}
 
@@ -326,7 +326,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		return nil, errors.New(b.prerequisites[i])
 	}
 
-	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.Empty() {
+	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.IsZero() {
 		// cacheLink lookup. return on cacheLink hit
 		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
 		if v != nil && err == nil {

@@ -119,11 +119,11 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 //	session.Emoji
 //}
 func (e *Emoji) deleteFromDiscord(s Session, flags ...Flag) (err error) {
-	if e.guildID.Empty() {
+	if e.guildID.IsZero() {
 		err = errors.New("missing guild ID, call Emoji.LinkToGuild")
 		return
 	}
-	if e.ID.Empty() {
+	if e.ID.IsZero() {
 		err = errors.New("missing emoji ID, cannot delete a not identified emoji")
 		return
 	}
@@ -266,7 +266,7 @@ type CreateGuildEmojiParams struct {
 //                          an emoji larger than this limit will fail and return 400 Bad Request and an
 //                          error message, but not a JSON status code.
 func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (emoji *Emoji, err error) {
-	if guildID.Empty() {
+	if guildID.IsZero() {
 		return nil, errors.New("guildID must be set, was " + guildID.String())
 	}
 

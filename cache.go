@@ -304,7 +304,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 		if len(emojis) == 0 {
 			return nil
 		}
-		if guildID.Empty() {
+		if guildID.IsZero() {
 			// try to recover..
 			guildID = emojis[0].guildID
 		}
@@ -341,7 +341,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			return
 		}
 
-		if len(members) == 0 || guildID.Empty() {
+		if len(members) == 0 || guildID.IsZero() {
 			return
 		}
 		c.UpdateOrAddGuildMembers(guildID, members)
@@ -363,7 +363,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 		case *Role:
 			// DO NOT HANDLE SINGLE ROLES HERE
 		}
-		if guildID.Empty() || len(roles) == 0 {
+		if guildID.IsZero() || len(roles) == 0 {
 			return
 		}
 
@@ -381,7 +381,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 			guildID = role.guildID
 		}
 
-		if role == nil || guildID.Empty() {
+		if role == nil || guildID.IsZero() {
 			return
 		}
 
@@ -659,7 +659,7 @@ func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 			}
 		}
 
-		if !userID.Empty() {
+		if !userID.IsZero() {
 			newMembers = append(newMembers, members[i])
 		}
 	}
@@ -1339,7 +1339,7 @@ func (g *guildVoiceStatesCache) sessionPosition(state *VoiceState) int {
 
 func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 	pos := g.sessionPosition(state)
-	if state.ChannelID.Empty() {
+	if state.ChannelID.IsZero() {
 		// someone left
 		if pos > -1 {
 			g.sessions[pos] = g.sessions[len(g.sessions)-1]
@@ -1525,7 +1525,7 @@ func (c *Cache) SetChannel(new *Channel) {
 
 // UpdateChannelPin ...
 func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Time) {
-	if c.channels == nil || id.Empty() {
+	if c.channels == nil || id.IsZero() {
 		return
 	}
 
@@ -1545,7 +1545,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Time) {
 
 // UpdateChannelLastMessageID ...
 func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {
-	if c.channels == nil || channelID.Empty() || messageID.Empty() {
+	if c.channels == nil || channelID.IsZero() || messageID.IsZero() {
 		return
 	}
 

@@ -19,7 +19,7 @@ import (
 type tagInfo struct {
 	Name         string
 	Omitempty    bool
-	ZeroValCheck string // " == 0", ".Empty()", etc.
+	ZeroValCheck string // " == 0", ".IsZero()", etc.
 }
 
 type fieldInfo struct {
