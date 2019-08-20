@@ -63,6 +63,8 @@ jobs:
       run: |
         go get -u golang.org/x/tools/cmd/stringer
         PATH="${PATH}:$GOPATH/bin"
+        echo $PATH
+        ls $GOPATH/bin
       
     - name: create sha1 sum of current files
       run: OLD=$(find . -type f -name "*.go" -print0 | sort -z | xargs -0 sha1sum | sha1sum)
