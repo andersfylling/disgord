@@ -60,7 +60,9 @@ jobs:
       run: go get -v -t -d ./...
       
     - name: install stringer
-      run: go get -u golang.org/x/tools/cmd/stringer
+      run: |
+        go get -u golang.org/x/tools/cmd/stringer
+        PATH="${PATH}:$GOPATH/bin"
       
     - name: create sha1 sum of current files
       run: OLD=$(find . -type f -name "*.go" -print0 | sort -z | xargs -0 sha1sum | sha1sum)
