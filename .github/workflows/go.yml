@@ -59,6 +59,9 @@ jobs:
     - name: Get dependencies
       run: go get -v -t -d ./...
       
+    - name: install stringer
+      run: go get -u golang.org/x/tools/cmd/stringer
+      
     - name: create sha1 sum of current files
       run: OLD=$(find . -type f -name "*.go" -print0 | sort -z | xargs -0 sha1sum | sha1sum)
 
