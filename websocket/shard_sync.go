@@ -16,11 +16,14 @@ type shardSync struct {
 	shutdownChan chan interface{}
 }
 
-func (s *shardSync) acquireTimestamp() time.Time {
+func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 	var delay time.Duration
 	now := time.Now()
+	start := now
 
 	s.Lock()
+	defer s.Unlock()
+
 	if s.next.After(now) {
 		delay = s.next.Sub(now)
 	} else {
@@ -28,23 +31,21 @@ func (s *shardSync) acquireTimestamp() time.Time {
 		s.next = now
 	}
 	s.next = s.next.Add(s.timeoutMs)
-	s.Unlock()
-
-	return now.Add(delay)
-}
-
-func (s *shardSync) queueShard(shardID uint, cb func() error) error {
-	now := time.Now()
-	execTimestamp := s.acquireTimestamp()
-	delay := execTimestamp.Sub(now)
 
 	s.logger.Debug("shard", shardID, "will wait in connect queue for", delay)
 	select {
 	case <-time.After(delay):
 		s.logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
-		return cb()
+		if err := cb(); err != nil {
+			return err
+		}
+		execDuration := time.Now().Sub(start)
+		s.next = s.next.Add(execDuration)
+
 	case <-s.shutdownChan:
 		s.logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
 		return errors.New("shutting down")
 	}
+
+	return nil
 }
