@@ -25,7 +25,7 @@ jobs:
         fi
 
     - name: Correctly formatted files
-      run: test -z $(gofmt -s -l $(find . -type f -iname '*.go'))
+      run: test -z $(go fmt ./...)
 
     - name: Run tests
       run: go test -race -v -coverprofile=coverage.txt -covermode=atomic ./...
