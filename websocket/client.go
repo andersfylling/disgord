@@ -665,16 +665,12 @@ func (c *client) pulsate(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "sent heartbeat")
 		}
 
-		var stop bool
 		select {
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			stop = true
 		}
-		if stop {
-			break
-		}
+		break
 	}
 	c.log.Debug(c.getLogPrefix(), "stopping pulse")
 }
