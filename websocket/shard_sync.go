@@ -19,7 +19,6 @@ type shardSync struct {
 func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 	var delay time.Duration
 	now := time.Now()
-	start := now
 
 	s.Lock()
 	defer s.Unlock()
@@ -36,6 +35,7 @@ func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 	select {
 	case <-time.After(delay):
 		s.logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
+		start := time.Now()
 		if err := cb(); err != nil {
 			return err
 		}
