@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,7 +23,7 @@ import (
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
-func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error) {
+func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error) {
 	if conf.TrackedEvents == nil {
 		conf.TrackedEvents = &UniqueStringSlice{}
 	}
@@ -40,34 +41,33 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 	}
 
 	client = &EvtClient{
-		conf:          conf,
+		evtConf:       conf,
 		trackedEvents: conf.TrackedEvents,
 		eventChan:     eChan,
 	}
-	client.client, err = newClient(&config{
+	client.client, err = newClient(shardID, &config{
 		Logger:         conf.Logger,
 		Endpoint:       conf.Endpoint,
 		DiscordPktPool: conf.DiscordPktPool,
 		Proxy:          conf.Proxy,
 		conn:           conf.conn,
-		connectQueue:   conf.connectQueue,
 
 		SystemShutdown: conf.SystemShutdown,
-	}, shardID)
+	}, client.internalConnect)
 	if err != nil {
 		return nil, err
 	}
 	client.setupBehaviors()
 
 	client.identity = &evtIdentity{
-		Token: client.conf.BotToken,
+		Token: conf.BotToken,
 		Properties: struct {
 			OS      string `json:"$os"`
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
-		}{runtime.GOOS, client.conf.Browser, client.conf.Device},
-		LargeThreshold: client.conf.GuildLargeThreshold,
-		Shard:          &[2]uint{client.ShardID, client.conf.ShardCount},
+		}{runtime.GOOS, conf.Browser, conf.Device},
+		LargeThreshold: conf.GuildLargeThreshold,
+		Shard:          &[2]uint{client.ShardID, conf.ShardCount},
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {
@@ -87,7 +87,6 @@ type Event struct {
 }
 
 // EvtConfig ws
-// TODO: remove shardID, such that this struct can be reused for every shard
 type EvtConfig struct {
 	// BotToken Discord bot token
 	BotToken string
@@ -132,7 +131,7 @@ type EvtConfig struct {
 }
 
 type EvtClient struct {
-	conf *EvtConfig
+	evtConf *EvtConfig
 
 	*client
 	ReadyCounter uint
@@ -370,12 +369,71 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 // GENERAL: unique to event
 //
 //////////////////////////////////////////////////////
-
 func (c *EvtClient) Connect() (err error) {
-	//timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	//_, err = c.client.Connect(timeout, opcode.EventReadyResumed)
-	_, err = c.client.Connect(opcode.NoOPCode)
+	_, err = c.internalConnect()
 	return
+}
+
+func (c *EvtClient) internalConnect() (evt interface{}, err error) {
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// certainty say if we are connected
+	if !c.disconnected {
+		err = errors.New("cannot Connect while a connection already exist")
+		return nil, err
+	}
+
+	if c.conf.Endpoint == "" {
+		err = errors.New("missing websocket endpoint. Must be set before constructing the sockets")
+		return nil, err
+	}
+
+	err = c.evtConf.connectQueue(c.ShardID, func() error {
+		sentIdentifyResume := make(chan interface{})
+		c.onceChannels.Add(opcode.EventIdentify, sentIdentifyResume)
+		c.onceChannels.Add(opcode.EventResume, sentIdentifyResume)
+		defer func() {
+			// cleanup once channels
+			c.onceChannels.Acquire(opcode.EventIdentify)
+			c.onceChannels.Acquire(opcode.EventResume)
+		}()
+
+		if err := c.openConnection(); err != nil {
+			return err
+		}
+
+		c.Debug("waiting to send identify/resume")
+		<-sentIdentifyResume
+		c.Debug("sent identify/resume")
+		return nil
+	})
+	return nil, err
+}
+
+func (c *EvtClient) openConnection() error {
+	// establish ws connection
+	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {
+		return err
+	}
+
+	var ctx context.Context
+	ctx, c.cancel = context.WithCancel(context.Background())
+
+	// we can now interact with Discord
+	c.haveConnectedOnce = true
+	c.disconnected = false
+	go c.receiver(ctx)
+	go c.emitter(ctx)
+	go c.startBehaviors(ctx)
+	go c.prepareHeartbeating(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.SystemShutdown:
+			_ = c.Disconnect()
+		}
+	}()
+
+	return nil
 }
 
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
@@ -396,7 +454,7 @@ func (c *EvtClient) eventOfInterest(name string) bool {
 
 func (c *EvtClient) sendHelloPacket() {
 	c.RLock()
-	token := c.conf.BotToken
+	token := c.evtConf.BotToken
 	session := c.sessionID
 	sequence := c.sequenceNumber
 	c.RUnlock()
@@ -410,9 +468,11 @@ func (c *EvtClient) sendHelloPacket() {
 		c.Error(err)
 	}
 
-	if err = c.connectPermit.releaseConnectPermit(); err != nil {
-		c.Error("unable to release connection permission. Err: ", err)
-	}
+	c.Debug("sendHelloPacket is acquiring once channel")
+	channel := c.onceChannels.Acquire(opcode.EventResume)
+	c.Debug("writing to once channel", channel)
+	channel <- true
+	c.Debug("finished writing to once channel", channel)
 }
 
 func sendIdentityPacket(c *EvtClient) (err error) {
@@ -423,12 +483,11 @@ func sendIdentityPacket(c *EvtClient) (err error) {
 	c.idMu.RUnlock()
 	err = c.Emit(event.Identify, id)
 
-	// ignore the error as identify can be called when the session is invalidated, DisGord
-	// does not try to reconnect cause Discord is just asking for a simple identification packet.
-	// Aka it doesn't need a connect permit and the error will always return, saying the
-	// connect permit has not yet been granted.
-	_ = c.connectPermit.releaseConnectPermit()
-
+	c.Debug("sendIdentityPacket is acquiring once channel")
+	channel := c.onceChannels.Acquire(opcode.EventIdentify)
+	c.Debug("writing to once channel", channel)
+	channel <- true
+	c.Debug("finished writing to once channel", channel)
 	return
 }
 

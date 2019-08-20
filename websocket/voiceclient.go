@@ -1,7 +1,9 @@
 package websocket
 
 import (
+	"context"
 	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -55,7 +57,7 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 	client = &VoiceClient{
 		conf: conf,
 	}
-	client.client, err = newClient(&config{
+	client.client, err = newClient(0, &config{
 		Logger:   conf.Logger,
 		Endpoint: conf.Endpoint,
 		DiscordPktPool: &sync.Pool{
@@ -63,9 +65,8 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 				return &DiscordPacket{}
 			},
 		},
-
 		SystemShutdown: conf.SystemShutdown,
-	}, 0)
+	}, client.internalConnect)
 	if err != nil {
 		return nil, err
 	}
@@ -193,11 +194,65 @@ func (c *VoiceClient) sendHeartbeat(i interface{}) error {
 // Connect establishes a socket connection with the Discord API
 func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
 	var rdyI interface{}
-	if rdyI, err = c.client.Connect(opcode.VoiceReady); rdyI != nil && err == nil {
+	if rdyI, err = c.internalConnect(); rdyI != nil && err == nil {
 		return rdyI.(*VoiceReady), nil
 	}
 
 	return nil, err
+}
+
+func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// certainty say if we are connected
+	if !c.disconnected {
+		err = errors.New("cannot Connect while a connection already exist")
+		return nil, err
+	}
+
+	if c.conf.Endpoint == "" {
+		panic("missing websocket endpoint. Must be set before constructing the sockets")
+	}
+
+	waitingChan := make(chan interface{}, 2)
+	c.onceChannels.Add(opcode.VoiceReady, waitingChan)
+	defer func() {
+		c.onceChannels.Acquire(opcode.VoiceReady)
+		close(waitingChan)
+	}()
+
+	// establish ws connection
+	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {
+		return nil, err
+	}
+
+	var ctx context.Context
+	ctx, c.cancel = context.WithCancel(context.Background())
+
+	// we can now interact with Discord
+	c.haveConnectedOnce = true
+	c.disconnected = false
+	go c.receiver(ctx)
+	go c.emitter(ctx)
+	go c.startBehaviors(ctx)
+	go c.prepareHeartbeating(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.SystemShutdown:
+			_ = c.Disconnect()
+		}
+	}()
+
+	select {
+	case evt = <-waitingChan:
+		c.Info("connected")
+	case <-ctx.Done():
+		c.disconnected = true
+	case <-time.After(5 * time.Second):
+		c.disconnected = true
+		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
+	}
+	return evt, err
 }
 
 func (c *VoiceClient) sendVoiceHelloPacket() {

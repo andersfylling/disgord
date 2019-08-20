@@ -55,8 +55,10 @@ func (emptyConnectPermit) releaseConnectPermit() error {
 
 var _ connectPermit = (*emptyConnectPermit)(nil)
 
+type connectSignature = func() (evt interface{}, err error)
+
 // newClient ...
-func newClient(conf *config, shardID uint) (c *client, err error) {
+func newClient(shardID uint, conf *config, connect connectSignature) (c *client, err error) {
 	var ws Conn
 	if conf.conn == nil {
 		ws, err = newConn(conf.Proxy)
@@ -65,13 +67,6 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 		}
 	} else {
 		ws = conf.conn
-	}
-
-	if conf.connectQueue == nil {
-		// connectQueue without a delay
-		conf.connectQueue = func(shardID uint, cb func() error) error {
-			return cb()
-		}
 	}
 
 	c = &client{
@@ -87,12 +82,11 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 		behaviors:         map[string]*behavior{},
 		poolDiscordPkt:    conf.DiscordPktPool,
 		onceChannels:      newOnceChannels(),
-		waitForOpCode:     opcode.NoOPCode,
+		connect:           connect,
 
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
 	}
-	c.connectPermit = &emptyConnectPermit{}
 
 	return
 }
@@ -103,7 +97,11 @@ type config struct {
 	// for testing only
 	conn Conn
 
-	connectQueue func(shardID uint, cb func() error) error
+	// connect is blocking until a websocket connection has completed it's setup.
+	// eg. Normal shards that handles events are considered connected once the
+	// identity/resume has been sent. While for voice we wait until a ready event
+	// is returned.
+	connect connectSignature
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
 	// a valid socket endpoint from Discord
@@ -139,11 +137,12 @@ type client struct {
 	ShardID uint
 
 	// sending and receiving data
-	ratelimit     ratelimiter
-	receiveChan   chan *DiscordPacket
-	emitChan      chan *clientPacket
-	conn          Conn
-	waitForOpCode uint
+	ratelimit   ratelimiter
+	receiveChan chan *DiscordPacket
+	emitChan    chan *clientPacket
+	conn        Conn
+
+	connect connectSignature
 
 	// states
 	disconnected      bool
@@ -167,9 +166,6 @@ type client struct {
 	ChannelBuffer uint
 
 	log logger.Logger
-
-	// choreographic programming to handle rate limit, reconnects, and connects
-	connectPermit connectPermit
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -275,85 +271,6 @@ var _ logger.Logger = (*client)(nil)
 // LINKING: CONNECTING / DISCONNECTING / RECONNECTING
 //
 //////////////////////////////////////////////////////
-func (c *client) connect() (evt interface{}, err error) {
-	c.Lock()
-	op := c.waitForOpCode
-	c.Unlock()
-	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
-	// certainty say if we are connected
-	if !c.disconnected {
-		err = errors.New("cannot Connect while a connection already exist")
-		return nil, err
-	}
-
-	if c.conf.Endpoint == "" {
-		panic("missing websocket endpoint. Must be set before constructing the sockets")
-		//c.conf.Endpoint, err = getGatewayRoute(c.conf.HTTPClient, c.conf.Version)
-		//if err != nil {
-		//	return
-		//}
-	}
-
-	waitingChan := make(chan interface{}, 2)
-	c.onceChannels.Add(op, waitingChan)
-	defer func() {
-		c.onceChannels.Acquire(op)
-		close(waitingChan)
-	}()
-
-	// establish ws connection
-	err = c.conf.connectQueue(c.ShardID, func() error {
-		return c.conn.Open(c.conf.Endpoint, nil)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var ctx context.Context
-	ctx, c.cancel = context.WithCancel(context.Background())
-
-	// we can now interact with Discord
-	c.haveConnectedOnce = true
-	c.disconnected = false
-	go c.receiver(ctx)
-	go c.emitter(ctx)
-	go c.startBehaviors(ctx)
-	go c.prepareHeartbeating(ctx)
-	go func() {
-		select {
-		case <-ctx.Done():
-		case <-c.SystemShutdown:
-			_ = c.Disconnect()
-		}
-	}()
-
-	if op != opcode.NoOPCode {
-		timeout := time.After(5 * time.Second)
-		select {
-		case evt = <-waitingChan:
-			c.Info("connected")
-		case <-ctx.Done():
-			c.disconnected = true
-		case <-timeout:
-			c.disconnected = true
-			err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(op)))
-		}
-	} else {
-		c.Info("connected")
-	}
-	return evt, err
-}
-
-// Connect establishes a socket connection with the Discord API
-func (c *client) Connect( /*ctx context.Context, */ waitForOpCode uint) (evt interface{}, err error) {
-	c.Lock()
-	c.requestedDisconnect = false
-	c.waitForOpCode = waitForOpCode
-	c.Unlock()
-
-	return c.connect()
-}
-
 func (c *client) disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
@@ -366,11 +283,6 @@ func (c *client) disconnect() (err error) {
 	// stop emitter, receiver and behaviors
 	c.cancel()
 	c.cancel = nil
-
-	// just in case ... a disconnect is called unexpectedly
-	if err2 := c.connectPermit.releaseConnectPermit(); err2 != nil {
-		c.Debug("disconnect called releaseConnectPermit", err2.Error())
-	}
 
 	// use the emitter to dispatch the close message
 	err = c.conn.Close()

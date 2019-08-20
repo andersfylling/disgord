@@ -125,8 +125,8 @@ func (s *shardMngr) initializeShards() error {
 	}
 
 	for _, id := range s.conf.ShardIDs {
-		uniqueConfig := baseConfig // create copy
-		shard, err := NewEventClient(&uniqueConfig, id)
+		uniqueConfig := baseConfig // create copy, review requirement
+		shard, err := NewEventClient(id, &uniqueConfig)
 		if err != nil {
 			return err
 		}
