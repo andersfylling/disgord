@@ -649,9 +649,8 @@ func (c *client) pulsate(ctx context.Context) {
 		// make sure that the last heartbeat signal was received and responded to by discord (heartbeat ack)
 		if time.Now().Sub(last) > interval {
 			c.Info("heartbeat ACK was not received, forcing reconnect")
-			if err := c.reconnect(); err != nil {
-				c.Error(err)
-			}
+			go c.reconnect()
+			return
 		}
 
 		// update heartbeat latency record
