@@ -68,11 +68,11 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		err = errors.New("messageID must be set to target the specific channel message")
 		return
 	}
@@ -111,11 +111,11 @@ func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		err = errors.New("messageID must be set to target the specific channel message")
 		return
 	}
@@ -153,16 +153,16 @@ func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interfa
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 	if emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
-	if userID.Empty() {
+	if userID.IsZero() {
 		return errors.New("userID must be set to target the specific user reaction")
 	}
 
@@ -203,11 +203,11 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		err = errors.New("messageID must be set to target the specific channel message")
 		return
 	}
@@ -251,10 +251,10 @@ func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 

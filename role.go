@@ -131,10 +131,10 @@ func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 		r.RUnlock()
 	}
 
-	if id.Empty() {
+	if id.IsZero() {
 		return newErrorMissingSnowflake("role has no ID")
 	}
-	if guildID.Empty() {
+	if guildID.IsZero() {
 		return newErrorMissingSnowflake("role has no guildID")
 	}
 

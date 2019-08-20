@@ -9,7 +9,6 @@ import (
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 type keys struct {
@@ -50,8 +49,8 @@ func main() {
 		panic(err)
 	}
 
-	msgID := snowflake.ID(540519319814275089)
-	chanID := snowflake.ID(540519296640614416)
+	msgID := disgord.Snowflake(540519319814275089)
+	chanID := disgord.Snowflake(540519296640614416)
 
 	e, err := c.GetGuildEmojis(486833041486905345)
 	if err != nil {

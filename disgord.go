@@ -163,8 +163,9 @@ package disgord
 import (
 	"fmt"
 
+	"github.com/andersfylling/disgord/depalias"
+
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 // LibraryInfo returns name + version
@@ -176,22 +177,21 @@ func LibraryInfo() string {
 // ------------------
 
 // Snowflake twitter snowflake identification for Discord
-type Snowflake = snowflake.Snowflake
+type Snowflake = depalias.Snowflake
 
 // GetSnowflake see snowflake.GetSnowflake
 func GetSnowflake(v interface{}) (Snowflake, error) {
-	s, err := snowflake.GetSnowflake(v)
-	return Snowflake(s), err
+	return depalias.GetSnowflake(v)
 }
 
 // NewSnowflake see snowflake.NewSnowflake
 func NewSnowflake(id uint64) Snowflake {
-	return Snowflake(snowflake.NewSnowflake(id))
+	return depalias.NewSnowflake(id)
 }
 
 // ParseSnowflakeString see snowflake.ParseSnowflakeString
 func ParseSnowflakeString(v string) Snowflake {
-	return Snowflake(snowflake.ParseSnowflakeString(v))
+	return depalias.ParseSnowflakeString(v)
 }
 
 func newErrorMissingSnowflake(message string) *ErrorMissingSnowflake {

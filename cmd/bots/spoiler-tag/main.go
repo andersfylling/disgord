@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord"
 )
 
@@ -17,7 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	chanID := snowflake.ID(540519296640614416)
+	chanID := disgord.Snowflake(540519296640614416)
 	_, err = c.CreateMessage(chanID, &disgord.CreateMessageParams{
 		Content:           "testing",
 		SpoilerTagContent: true,

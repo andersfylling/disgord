@@ -177,7 +177,7 @@ func (c *Channel) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 		c.RWMutex.RUnlock()
 	}
 
-	if id.Empty() {
+	if id.IsZero() {
 		err = newErrorMissingSnowflake("channel id/snowflake is empty or missing")
 		return
 	}
@@ -255,7 +255,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 
 // Fetch check if there are any updates to the channel values
 //func (c *Channel) Fetch(Client ChannelFetcher) (err error) {
-//	if c.ID.Empty() {
+//	if c.ID.IsZero() {
 //		err = errors.New("missing channel ID")
 //		return
 //	}
@@ -265,7 +265,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
 func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Message, err error) {
-	if c.ID.Empty() {
+	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
@@ -279,7 +279,7 @@ func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Mess
 
 // SendMsg sends a message to a channel
 func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message, err error) {
-	if c.ID.Empty() {
+	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
@@ -342,7 +342,7 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 //  Reviewed                2018-06-07
 //  Comment                 -
 func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
@@ -402,7 +402,7 @@ func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *upd
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
 func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
@@ -441,10 +441,10 @@ type UpdateChannelPermissionsParams struct {
 //  Reviewed                2018-06-07
 //  Comment                 -
 func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if overwriteID.Empty() {
+	if overwriteID.IsZero() {
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
@@ -474,7 +474,7 @@ func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 //  Reviewed                2018-06-07
 //  Comment                 -
 func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
 	}
@@ -510,7 +510,7 @@ type CreateChannelInvitesParams struct {
 //  Reviewed                2018-06-07
 //  Comment                 -
 func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return nil, err
 	}
@@ -542,10 +542,10 @@ func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 //  Reviewed                2018-06-07
 //  Comment                 -
 func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if overwriteID.Empty() {
+	if overwriteID.IsZero() {
 		return errors.New("overwriteID must be set to target the specific channel permissions")
 	}
 
@@ -572,7 +572,7 @@ type GroupDMParticipant struct {
 }
 
 func (g *GroupDMParticipant) FindErrors() error {
-	if g.UserID.Empty() {
+	if g.UserID.IsZero() {
 		return errors.New("missing userID")
 	}
 	if g.AccessToken == "" {
@@ -594,7 +594,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
 	if participant == nil {
@@ -625,10 +625,10 @@ func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if userID.Empty() {
+	if userID.IsZero() {
 		return errors.New("userID must be set to target the specific recipient")
 	}
 

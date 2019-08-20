@@ -32,7 +32,7 @@ func (b *guildAuditLogsBuilder) Set(name string, v interface{}) *guildAuditLogsB
 }
 
 func (b *guildAuditLogsBuilder) SetUserID(userID Snowflake) *guildAuditLogsBuilder {
-	b.r.addPrereq(userID.Empty(), "userID can not be 0")
+	b.r.addPrereq(userID.IsZero(), "userID can not be 0")
 	b.r.param("user_id", userID)
 	return b
 }
@@ -43,7 +43,7 @@ func (b *guildAuditLogsBuilder) SetActionType(actionType uint) *guildAuditLogsBu
 }
 
 func (b *guildAuditLogsBuilder) SetBefore(before Snowflake) *guildAuditLogsBuilder {
-	b.r.addPrereq(before.Empty(), "before can not be 0")
+	b.r.addPrereq(before.IsZero(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
@@ -89,7 +89,7 @@ func (b *updateChannelBuilder) Set(name string, v interface{}) *updateChannelBui
 }
 
 func (b *updateChannelBuilder) SetParentID(parentID Snowflake) *updateChannelBuilder {
-	b.r.addPrereq(parentID.Empty(), "parentID can not be 0")
+	b.r.addPrereq(parentID.IsZero(), "parentID can not be 0")
 	b.r.param("parent_id", parentID)
 	return b
 }
@@ -280,7 +280,7 @@ func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter Expl
 }
 
 func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) *updateGuildBuilder {
-	b.r.addPrereq(afkChannelID.Empty(), "afkChannelID can not be 0")
+	b.r.addPrereq(afkChannelID.IsZero(), "afkChannelID can not be 0")
 	b.r.param("afk_channel_id", afkChannelID)
 	return b
 }
@@ -296,7 +296,7 @@ func (b *updateGuildBuilder) SetIcon(icon string) *updateGuildBuilder {
 }
 
 func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) *updateGuildBuilder {
-	b.r.addPrereq(ownerID.Empty(), "ownerID can not be 0")
+	b.r.addPrereq(ownerID.IsZero(), "ownerID can not be 0")
 	b.r.param("owner_id", ownerID)
 	return b
 }
@@ -307,7 +307,7 @@ func (b *updateGuildBuilder) SetSplash(splash string) *updateGuildBuilder {
 }
 
 func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) *updateGuildBuilder {
-	b.r.addPrereq(systemChannelID.Empty(), "systemChannelID can not be 0")
+	b.r.addPrereq(systemChannelID.IsZero(), "systemChannelID can not be 0")
 	b.r.param("system_channel_id", systemChannelID)
 	return b
 }
@@ -353,7 +353,7 @@ func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) *updateGuildEmbedBuil
 }
 
 func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) *updateGuildEmbedBuilder {
-	b.r.addPrereq(channelID.Empty(), "channelID can not be 0")
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b
 }
@@ -414,7 +414,7 @@ func (b *updateGuildMemberBuilder) SetDeaf(deaf bool) *updateGuildMemberBuilder 
 }
 
 func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) *updateGuildMemberBuilder {
-	b.r.addPrereq(channelID.Empty(), "channelID can not be 0")
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b
 }
@@ -659,13 +659,13 @@ func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) *getCurren
 }
 
 func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) *getCurrentUserGuildsBuilder {
-	b.r.addPrereq(before.Empty(), "before can not be 0")
+	b.r.addPrereq(before.IsZero(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
 
 func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) *getCurrentUserGuildsBuilder {
-	b.r.addPrereq(after.Empty(), "after can not be 0")
+	b.r.addPrereq(after.IsZero(), "after can not be 0")
 	b.r.param("after", after)
 	return b
 }
@@ -866,7 +866,7 @@ func (b *updateWebhookBuilder) SetAvatar(avatar string) *updateWebhookBuilder {
 }
 
 func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) *updateWebhookBuilder {
-	b.r.addPrereq(channelID.Empty(), "channelID can not be 0")
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b
 }

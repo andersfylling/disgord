@@ -11,16 +11,15 @@ import (
 	"github.com/andersfylling/disgord/logger"
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/opcode"
-	"github.com/andersfylling/snowflake/v3"
 	"golang.org/x/net/proxy"
 )
 
 type VoiceConfig struct {
 	// Guild ID to connect to
-	GuildID snowflake.Snowflake
+	GuildID Snowflake
 
 	// User ID that is connecting
-	UserID snowflake.Snowflake
+	UserID Snowflake
 
 	// Session ID
 	SessionID string
@@ -264,9 +263,9 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 	}
 
 	_ = c.Emit(cmd.VoiceResume, struct {
-		GuildID   snowflake.Snowflake `json:"server_id"`
-		SessionID string              `json:"session_id"`
-		Token     string              `json:"token"`
+		GuildID   Snowflake `json:"server_id"`
+		SessionID string    `json:"session_id"`
+		Token     string    `json:"token"`
 	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token})
 }
 

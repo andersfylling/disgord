@@ -3,10 +3,10 @@ package websocket
 import (
 	"net/http"
 
-	"github.com/andersfylling/snowflake/v3"
+	"github.com/andersfylling/disgord/depalias"
 )
 
-type Snowflake = snowflake.ID
+type Snowflake = depalias.Snowflake
 
 type Conn interface {
 	Close() error

@@ -9,7 +9,6 @@ import (
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/ratelimit"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -89,7 +88,7 @@ func TestAuditLogParams(t *testing.T) {
 	verifyQueryString(t, params.r.urlParams, wants)
 
 	s := "438543957"
-	ss, _ := snowflake.GetSnowflake(s)
+	ss, _ := GetSnowflake(s)
 	params.SetUserID(ss)
 	wants = "?user_id=" + s
 	verifyQueryString(t, params.r.urlParams, wants)
@@ -126,7 +125,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
+			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -159,7 +158,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
+			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -195,7 +194,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
+			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -221,7 +220,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:      http.MethodGet,
 			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(snowflake.ID(7)),
+			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()

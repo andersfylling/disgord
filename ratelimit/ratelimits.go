@@ -1,8 +1,10 @@
 package ratelimit
 
 import (
-	"github.com/andersfylling/snowflake/v3"
+	"github.com/andersfylling/disgord/depalias"
 )
+
+type Snowflake = depalias.Snowflake
 
 func GetB() *b {
 	return &b{}
@@ -53,53 +55,53 @@ const (
 // --------------------
 // Audit Log
 
-func GuildAuditLogs(id snowflake.ID) string {
+func GuildAuditLogs(id Snowflake) string {
 	return Guild(id) + ":a-l"
 }
 
 // --------------------
 // Guild
 
-func Guild(id snowflake.ID) string {
+func Guild(id Snowflake) string {
 	return "g:" + id.String()
 }
-func GuildEmoji(guildID, emojiID snowflake.ID) string {
+func GuildEmoji(guildID, emojiID Snowflake) string {
 	return GuildEmojis(guildID) + ":" + emojiID.String()
 }
-func GuildEmojis(guildID snowflake.ID) string {
+func GuildEmojis(guildID Snowflake) string {
 	return "g:" + guildID.String() + ":emojis"
 }
-func GuildEmbed(id snowflake.ID) string {
+func GuildEmbed(id Snowflake) string {
 	return Guild(id) + ":e"
 }
-func GuildVanityURL(id snowflake.ID) string {
+func GuildVanityURL(id Snowflake) string {
 	return Guild(id) + ":vurl"
 }
-func GuildChannels(id snowflake.ID) string {
+func GuildChannels(id Snowflake) string {
 	return Guild(id) + ":c"
 }
-func GuildMembers(id snowflake.ID) string {
+func GuildMembers(id Snowflake) string {
 	return Guild(id) + ":m"
 }
-func GuildBans(id snowflake.ID) string {
+func GuildBans(id Snowflake) string {
 	return Guild(id) + ":b"
 }
-func GuildRoles(id snowflake.ID) string {
+func GuildRoles(id Snowflake) string {
 	return Guild(id) + ":r"
 }
-func GuildRegions(id snowflake.ID) string {
+func GuildRegions(id Snowflake) string {
 	return Guild(id) + ":regions"
 }
-func GuildIntegrations(id snowflake.ID) string {
+func GuildIntegrations(id Snowflake) string {
 	return Guild(id) + ":i"
 }
-func GuildInvites(id snowflake.ID) string {
+func GuildInvites(id Snowflake) string {
 	return Guild(id) + ":inv"
 }
-func GuildPrune(id snowflake.ID) string {
+func GuildPrune(id Snowflake) string {
 	return Guild(id) + ":p"
 }
-func GuildWebhooks(id snowflake.ID) string {
+func GuildWebhooks(id Snowflake) string {
 	return Guild(id) + ":w"
 }
 
