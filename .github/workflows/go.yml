@@ -30,6 +30,12 @@ jobs:
     - name: Run tests
       run: go test -race -v -coverprofile=coverage.txt -covermode=atomic ./...
 
+    - name: Setup code climate test-reporter
+      run: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+        ./cc-test-reporter before-build
+
     - name: Upload test coverage
       run: |
         for pkg in $(go list ./...); do
