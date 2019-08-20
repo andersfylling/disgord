@@ -279,7 +279,7 @@ func getZeroVal(s string) (result string, success bool) {
 		result = "0"
 	case "float32", "float64":
 		result = "0"
-	case "Snowflake", "snowflake.ID", "snowflake.Snowflake":
+	case "Snowflake", "snowflake.ID", "snowflake.Snowflake", "depalias.Snowflake":
 		result = "0"
 	case "string":
 		result = ""

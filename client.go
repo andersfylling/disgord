@@ -15,8 +15,6 @@ import (
 	"github.com/andersfylling/disgord/logger"
 	"github.com/andersfylling/disgord/websocket"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/constant"
 	"golang.org/x/net/proxy"
 
@@ -343,7 +341,7 @@ func (c *Client) Myself() (user *User, err error) {
 }
 
 // GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
-func (c *Client) GetConnectedGuilds() []snowflake.ID {
+func (c *Client) GetConnectedGuilds() []Snowflake {
 	c.connectedGuildsMutex.RLock()
 	defer c.connectedGuildsMutex.RUnlock()
 	return c.connectedGuilds

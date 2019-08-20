@@ -10,7 +10,6 @@ import (
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/ratelimit"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 func validEmojiName(name string) bool {
@@ -68,7 +67,7 @@ func (e *Emoji) Mention() string {
 	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
-func (e *Emoji) LinkToGuild(guildID snowflake.ID) {
+func (e *Emoji) LinkToGuild(guildID Snowflake) {
 	e.guildID = guildID
 }
 
@@ -166,7 +165,7 @@ func cacheEmoji_EventGuildEmojisUpdate(cache Cacher, evt *GuildEmojisUpdate) err
 	return cacheEmoji_SetAll(cache, evt.GuildID, evt.Emojis)
 }
 
-func cacheEmoji_SetAll(cache Cacher, guildID snowflake.ID, emojis []*Emoji) error {
+func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 	cache.SetGuildEmojis(guildID, emojis)
 	return nil
 }
@@ -214,7 +213,7 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoj
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetGuildEmojis(guildID snowflake.ID, flags ...Flag) (emojis []*Emoji, err error) {
+func (c *Client) GetGuildEmojis(guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimit.GuildEmojis(guildID),
 		Endpoint:    endpoint.GuildEmojis(guildID),

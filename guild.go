@@ -12,8 +12,6 @@ import (
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/constant"
 )
 
@@ -1093,7 +1091,7 @@ func (m *Member) GetUser(session Session) (usr *User, err error) {
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
-	var id snowflake.ID
+	var id Snowflake
 	if !m.userID.Empty() {
 		id = m.userID
 	} else if m.User != nil {

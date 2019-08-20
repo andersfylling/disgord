@@ -3,8 +3,6 @@ package disgord
 import (
 	"sync"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/websocket/cmd"
 )
 
@@ -34,7 +32,7 @@ type RequestGuildMembersCommand struct {
 	Limit uint `json:"limit"`
 }
 
-func (u *RequestGuildMembersCommand) getGuildID() snowflake.ID {
+func (u *RequestGuildMembersCommand) getGuildID() Snowflake {
 	return u.GuildID
 }
 
@@ -61,7 +59,7 @@ type UpdateVoiceStateCommand struct {
 	SelfDeaf bool `json:"self_deaf"`
 }
 
-func (u *UpdateVoiceStateCommand) getGuildID() snowflake.ID {
+func (u *UpdateVoiceStateCommand) getGuildID() Snowflake {
 	return u.GuildID
 }
 

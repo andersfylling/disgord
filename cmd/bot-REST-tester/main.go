@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord"
 )
@@ -65,7 +64,7 @@ func main() {
 	// -------------------
 	// CHANNELS
 	// -------------------
-	channelID := snowflake.ID(486833611564253186)
+	channelID := disgord.Snowflake(486833611564253186)
 	func() {
 		channel, err := c.GetChannel(channelID)
 		if err != nil {
@@ -233,7 +232,7 @@ func main() {
 	func() {
 		emojiIDStr := os.Getenv(constant.DisgordTestGuildDefaultEmojiSnowflake)
 		//fmt.Println(emojiIDStr)
-		emojiID, err := snowflake.GetSnowflake(emojiIDStr)
+		emojiID, err := disgord.GetSnowflake(emojiIDStr)
 		if err != nil {
 			panic("snowflake makes no sense")
 			return

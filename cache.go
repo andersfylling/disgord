@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake/v3"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
 	"github.com/andersfylling/disgord/cache/lfu"
@@ -40,16 +39,16 @@ const (
 type Cacher interface {
 	Update(key cacheRegistry, v interface{}) (err error)
 	Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error)
-	DeleteChannel(channelID snowflake.ID)
-	DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
-	AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)
-	AddGuildMember(guildID snowflake.ID, member *Member)
-	RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)
-	UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)
-	UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)
-	DeleteGuild(guildID snowflake.ID)
-	DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)
-	UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID)
+	DeleteChannel(channelID Snowflake)
+	DeleteGuildChannel(guildID Snowflake, channelID Snowflake)
+	AddGuildChannel(guildID Snowflake, channelID Snowflake)
+	AddGuildMember(guildID Snowflake, member *Member)
+	RemoveGuildMember(guildID Snowflake, memberID Snowflake)
+	UpdateChannelPin(channelID Snowflake, lastPinTimestamp Time)
+	UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage)
+	DeleteGuild(guildID Snowflake)
+	DeleteGuildRole(guildID Snowflake, roleID Snowflake)
+	UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake)
 	SetGuildEmojis(guildID Snowflake, emojis []*Emoji)
 	Updates(key cacheRegistry, vs []interface{}) error
 	AddGuildRole(guildID Snowflake, role *Role)
@@ -67,17 +66,17 @@ func (c *emptyCache) Update(key cacheRegistry, v interface{}) (err error) {
 func (c *emptyCache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
 	return nil, c.err
 }
-func (c *emptyCache) DeleteChannel(channelID snowflake.ID)                                      {}
-func (c *emptyCache) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
-func (c *emptyCache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
-func (c *emptyCache) AddGuildMember(guildID snowflake.ID, member *Member)                       {}
-func (c *emptyCache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)             {}
-func (c *emptyCache) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)            {}
-func (c *emptyCache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)    {}
-func (c *emptyCache) DeleteGuild(guildID snowflake.ID)                                          {}
-func (c *emptyCache) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
-func (c *emptyCache) UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID) {}
-func (c *emptyCache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                         {}
+func (c *emptyCache) DeleteChannel(channelID Snowflake)                                   {}
+func (c *emptyCache) DeleteGuildChannel(guildID Snowflake, channelID Snowflake)           {}
+func (c *emptyCache) AddGuildChannel(guildID Snowflake, channelID Snowflake)              {}
+func (c *emptyCache) AddGuildMember(guildID Snowflake, member *Member)                    {}
+func (c *emptyCache) RemoveGuildMember(guildID Snowflake, memberID Snowflake)             {}
+func (c *emptyCache) UpdateChannelPin(channelID Snowflake, lastPinTimestamp Time)         {}
+func (c *emptyCache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage) {}
+func (c *emptyCache) DeleteGuild(guildID Snowflake)                                       {}
+func (c *emptyCache) DeleteGuildRole(guildID Snowflake, roleID Snowflake)                 {}
+func (c *emptyCache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {}
+func (c *emptyCache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                   {}
 func (c *emptyCache) Updates(key cacheRegistry, vs []interface{}) error {
 	return c.err
 }
@@ -416,7 +415,7 @@ func (c *Cache) Update(key cacheRegistry, v interface{}) (err error) {
 //  }
 //
 // TODO-optimize: for bulk changes
-func (c *Cache) DirectUpdate(registry cacheRegistry, id snowflake.ID, changes []byte) error {
+func (c *Cache) DirectUpdate(registry cacheRegistry, id Snowflake, changes []byte) error {
 	switch registry {
 	case UserCache:
 		usr, err := c.PeekUser(id)
@@ -503,7 +502,7 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 		}
 
 		g.guild.Channels = nil
-		g.channels = make([]snowflake.ID, len(guild.Channels))
+		g.channels = make([]Snowflake, len(guild.Channels))
 		for i := range guild.Channels {
 			g.channels[i] = guild.Channels[i].ID
 		}
@@ -687,7 +686,7 @@ func (g *guildCacheItem) deleteChannel(id Snowflake) {
 	}
 }
 
-func (g *guildCacheItem) addChannel(channelID snowflake.ID) {
+func (g *guildCacheItem) addChannel(channelID Snowflake) {
 	g.channels = append(g.channels, channelID)
 }
 
@@ -820,7 +819,7 @@ func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 	}
 }
 
-func (c *Cache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage) {
+func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage) {
 	var tmpUser = &User{
 		ID: userID,
 	}
@@ -858,7 +857,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawM
 	c.SetUser(tmpUser)
 }
 
-func (c *Cache) AddGuildMember(guildID snowflake.ID, member *Member) {
+func (c *Cache) AddGuildMember(guildID Snowflake, member *Member) {
 	guild, err := c.PeekGuild(guildID)
 	if err != nil {
 		return
@@ -875,7 +874,7 @@ func (c *Cache) AddGuildMember(guildID snowflake.ID, member *Member) {
 	c.guilds.Unlock()
 }
 
-func (c *Cache) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID) {
+func (c *Cache) RemoveGuildMember(guildID Snowflake, memberID Snowflake) {
 	guild, err := c.PeekGuild(guildID)
 	if err != nil {
 		return
@@ -917,7 +916,7 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	return
 }
 
-func (c *Cache) PeekGuild(id snowflake.ID) (guild *Guild, err error) {
+func (c *Cache) PeekGuild(id Snowflake) (guild *Guild, err error) {
 	if c.guilds == nil {
 		err = newErrorUsingDeactivatedCache("guilds")
 		return
@@ -1174,7 +1173,7 @@ func (c *Cache) AddGuildRole(guildID Snowflake, role *Role) {
 	c.guilds.Unlock()
 }
 
-func (c *Cache) UpdateGuildRole(guildID snowflake.ID, role *Role, data json.RawMessage) bool {
+func (c *Cache) UpdateGuildRole(guildID Snowflake, role *Role, data json.RawMessage) bool {
 	if c.guilds == nil {
 		return false
 	}
@@ -1190,7 +1189,7 @@ func (c *Cache) UpdateGuildRole(guildID snowflake.ID, role *Role, data json.RawM
 	return updated
 }
 
-func (c *Cache) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID) {
+func (c *Cache) AddGuildChannel(guildID Snowflake, channelID Snowflake) {
 	if c.guilds == nil {
 		return
 	}
@@ -1282,7 +1281,7 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	return
 }
 
-func (c *Cache) PeekUser(id snowflake.ID) (*User, error) {
+func (c *Cache) PeekUser(id Snowflake) (*User, error) {
 	if c.users == nil {
 		return nil, newErrorUsingDeactivatedCache("users")
 	}

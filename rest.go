@@ -9,7 +9,6 @@ import (
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 type ErrRest = httd.ErrREST
@@ -267,7 +266,7 @@ type RESTBuilder struct {
 	cache           *Cache
 	cacheRegistry   cacheRegistry
 	cacheMiddleware fRESTCacheMiddleware
-	cacheItemID     snowflake.ID
+	cacheItemID     Snowflake
 
 	body              map[string]interface{}
 	urlParams         urlQuery

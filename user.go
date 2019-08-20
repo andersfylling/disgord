@@ -9,7 +9,6 @@ import (
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 const (
@@ -761,7 +760,7 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
+func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.User(id),

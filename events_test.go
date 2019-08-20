@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/snowflake/v3"
 )
 
 func TestPrepareBox(t *testing.T) {
@@ -27,18 +25,18 @@ func (m *mockCacheEvent) Get(key cacheRegistry, id Snowflake, args ...interface{
 func (m *mockCacheEvent) UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool {
 	return false
 }
-func (m *mockCacheEvent) DeleteChannel(channelID snowflake.ID)                                      {}
-func (m *mockCacheEvent) DeleteGuildChannel(guildID snowflake.ID, channelID snowflake.ID)           {}
-func (m *mockCacheEvent) AddGuildChannel(guildID snowflake.ID, channelID snowflake.ID)              {}
-func (m *mockCacheEvent) UpdateChannelPin(channelID snowflake.ID, lastPinTimestamp Time)            {}
-func (m *mockCacheEvent) DeleteGuild(guildID snowflake.ID)                                          {}
-func (m *mockCacheEvent) DeleteGuildRole(guildID snowflake.ID, roleID snowflake.ID)                 {}
-func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                                {}
-func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID snowflake.ID, messageID snowflake.ID) {}
-func (m *mockCacheEvent) AddGuildMember(guildID snowflake.ID, member *Member)                       {}
-func (m *mockCacheEvent) RemoveGuildMember(guildID snowflake.ID, memberID snowflake.ID)             {}
-func (m *mockCacheEvent) UpdateMemberAndUser(guildID, userID snowflake.ID, data json.RawMessage)    {}
-func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                         {}
+func (m *mockCacheEvent) DeleteChannel(channelID Snowflake)                                   {}
+func (m *mockCacheEvent) DeleteGuildChannel(guildID Snowflake, channelID Snowflake)           {}
+func (m *mockCacheEvent) AddGuildChannel(guildID Snowflake, channelID Snowflake)              {}
+func (m *mockCacheEvent) UpdateChannelPin(channelID Snowflake, lastPinTimestamp Time)         {}
+func (m *mockCacheEvent) DeleteGuild(guildID Snowflake)                                       {}
+func (m *mockCacheEvent) DeleteGuildRole(guildID Snowflake, roleID Snowflake)                 {}
+func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                          {}
+func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {}
+func (m *mockCacheEvent) AddGuildMember(guildID Snowflake, member *Member)                    {}
+func (m *mockCacheEvent) RemoveGuildMember(guildID Snowflake, memberID Snowflake)             {}
+func (m *mockCacheEvent) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage) {}
+func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                   {}
 func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
 	return nil
 }
