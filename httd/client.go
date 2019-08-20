@@ -161,9 +161,10 @@ func NewClient(conf *Config) (*Client, error) {
 	authorization := fmt.Sprintf(AuthorizationFormat, conf.BotToken)
 	userAgent := fmt.Sprintf(UserAgentFormat, conf.UserAgentSourceURL, conf.UserAgentVersion, conf.UserAgentExtra)
 	header := map[string][]string{
-		"Authorization":   {authorization},
-		"User-Agent":      {userAgent},
-		"Accept-Encoding": {"gzip"},
+		XRateLimitPrecision: {"millisecond"},
+		"Authorization":     {authorization},
+		"User-Agent":        {userAgent},
+		"Accept-Encoding":   {"gzip"},
 	}
 
 	return &Client{
@@ -205,7 +206,7 @@ type RateLimitAdjuster func(timeout time.Duration) time.Duration
 type Request struct {
 	Method            string
 	Ratelimiter       string
-	RateLimitAdjuster RateLimitAdjuster
+	RateLimitAdjuster RateLimitAdjuster // TODO: is this now redundant?
 	Endpoint          string
 	Body              interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType       string
