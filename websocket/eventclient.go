@@ -187,7 +187,7 @@ func (c *EvtClient) setupBehaviors() {
 			opcode.EventHello:          c.onHello,
 			opcode.EventInvalidSession: c.onSessionInvalidated,
 			opcode.EventReconnect: func(i interface{}) error {
-				c.Info("Discord requested a reconnect")
+				c.log.Info(c.getLogPrefix(), "Discord requested a reconnect")
 				// There might be duplicate EventReconnect requests from Discord
 				// this is therefore a goroutine such that reconnect requests that takes
 				// place at the same time as the current one is discarded
@@ -325,7 +325,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 
 func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 	// invalid session. Must respond with a identify packet
-	c.Info("Discord invalidated session")
+	c.log.Info(c.getLogPrefix(), "Discord invalidated session")
 
 	// session is invalidated, reset the sequence number
 	c.Lock()
@@ -401,14 +401,14 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 			return err
 		}
 
-		c.Debug("waiting to send identify/resume")
+		c.log.Debug(c.getLogPrefix(), "waiting to send identify/resume")
 		select {
 		case <-sentIdentifyResume:
 		case <-time.After(5 * time.Minute):
-			c.Error("discord timeout during connect (5 minutes). No idea what went wrong..")
+			c.log.Error(c.getLogPrefix(), "discord timeout during connect (5 minutes). No idea what went wrong..")
 			return errors.New("websocket connected but was not able to send identify packet within 5 minutes")
 		}
-		c.Debug("sent identify/resume")
+		c.log.Debug(c.getLogPrefix(), "sent identify/resume")
 		return nil
 	})
 	return nil, err
@@ -470,14 +470,14 @@ func (c *EvtClient) sendHelloPacket() {
 		SequenceNr uint   `json:"seq"`
 	}{token, session, sequence})
 	if err != nil {
-		c.Error(err)
+		c.log.Error(c.getLogPrefix(), err)
 	}
 
-	c.Debug("sendHelloPacket is acquiring once channel")
+	c.log.Debug(c.getLogPrefix(), "sendHelloPacket is acquiring once channel")
 	channel := c.onceChannels.Acquire(opcode.EventResume)
-	c.Debug("writing to once channel", channel)
+	c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
 	channel <- true
-	c.Debug("finished writing to once channel", channel)
+	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
 }
 
 func sendIdentityPacket(c *EvtClient) (err error) {
@@ -488,11 +488,11 @@ func sendIdentityPacket(c *EvtClient) (err error) {
 	c.idMu.RUnlock()
 	err = c.Emit(event.Identify, id)
 
-	c.Debug("sendIdentityPacket is acquiring once channel")
+	c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
 	channel := c.onceChannels.Acquire(opcode.EventIdentify)
-	c.Debug("writing to once channel", channel)
+	c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
 	channel <- true
-	c.Debug("finished writing to once channel", channel)
+	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
 	return
 }
 

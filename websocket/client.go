@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/httd"
 
 	"github.com/andersfylling/disgord/logger"
@@ -166,7 +168,8 @@ type client struct {
 	// ChannelBuffer is used to set the event channel buffer
 	ChannelBuffer uint
 
-	log logger.Logger
+	log         logger.Logger
+	logSequence atomic.Uint64
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -209,25 +212,27 @@ func (c *client) startBehaviors(ctx context.Context) {
 
 // operation handler de-multiplexer
 func (c *client) operationHandlers(ctx context.Context) {
-	c.Debug("Ready to receive operation codes...")
+	c.log.Debug(c.getLogPrefix(), "Ready to receive operation codes...")
 	for {
 		var p *DiscordPacket
 		var open bool
 		select {
 		case p, open = <-c.Receive():
 			if !open {
-				c.Debug("operationChan is dead..")
+				c.log.Debug(c.getLogPrefix(), "operationChan is dead..")
 				return
 			}
 		case <-ctx.Done():
-			c.Debug("closing operations handler")
+			c.log.Debug(c.getLogPrefix(), "closing operations handler")
 			return
 		}
 
 		if action, defined := c.behaviors[discordOperations].actions[p.Op]; defined {
 			if err := action(p); err != nil {
-				c.Error(err)
+				c.log.Error(c.getLogPrefix(), err)
 			}
+		} else {
+			c.log.Debug(c.getLogPrefix(), "tried calling undefined discord operation", p.Op)
 		}
 
 		// see receiver() for creation/Get()
@@ -242,30 +247,21 @@ func (c *client) operationHandlers(ctx context.Context) {
 //////////////////////////////////////////////////////
 
 func (c *client) getLogPrefix() string {
+	t := "ws-"
 	if c.clientType == clientTypeVoice {
-		return "[ws, voice] "
+		t += "v"
+	} else if c.clientType == clientTypeEvent {
+		t += "e"
+	} else {
+		t += "?"
 	}
 
-	// [ws, event, shard:0]
-	return "" +
-		"[ws, " +
-		"event, " +
-		"shard:" +
-		strconv.FormatUint(uint64(c.ShardID), 10) +
-		"] "
-}
+	s := "s:" + strconv.FormatUint(c.logSequence.Inc(), 10)
+	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
-func (c *client) Info(v ...interface{}) {
-	c.log.Info(c.getLogPrefix(), v)
+	// [ws-?, s:0, shard:0]
+	return "[" + t + "," + s + "," + shardID + "]"
 }
-func (c *client) Debug(v ...interface{}) {
-	c.log.Debug(c.getLogPrefix(), v)
-}
-func (c *client) Error(v ...interface{}) {
-	c.log.Error(c.getLogPrefix(), v)
-}
-
-var _ logger.Logger = (*client)(nil)
 
 //////////////////////////////////////////////////////
 //
@@ -293,7 +289,7 @@ func (c *client) disconnect() (err error) {
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.disconnected = true
 
-	c.Info("disconnected")
+	c.log.Info(c.getLogPrefix(), "disconnected")
 
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
@@ -334,17 +330,17 @@ func (c *client) unlockReconnect() {
 func (c *client) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
 	if !c.lockReconnect() {
-		c.Debug("tried to start reconnect when already reconnecting")
+		c.log.Debug(c.getLogPrefix(), "tried to start reconnect when already reconnecting")
 		return
 	}
 	defer c.unlockReconnect()
 
-	c.Debug("is reconnecting")
+	c.log.Debug(c.getLogPrefix(), "is reconnecting")
 	if err := c.disconnect(); err != nil {
 		c.RLock()
 		if c.requestedDisconnect {
 			c.RUnlock()
-			c.Debug(err)
+			c.log.Debug(c.getLogPrefix(), err)
 			return errors.New("already disconnected, cannot reconnect")
 		}
 		c.RUnlock()
@@ -358,24 +354,24 @@ func (c *client) reconnectLoop() (err error) {
 	var delay = 3 * time.Second
 	for {
 		if try == 0 {
-			c.Debug("trying to connect")
+			c.log.Debug(c.getLogPrefix(), "trying to connect")
 		} else {
-			c.Debug("reconnect attempt", try)
+			c.log.Debug(c.getLogPrefix(), "reconnect attempt", try)
 		}
 		if _, err = c.connect(); err == nil {
-			c.Debug("establishing connection succeeded")
+			c.log.Debug(c.getLogPrefix(), "establishing connection succeeded")
 			break
 		}
 
-		c.Info("establishing connection failed, trying again in ", delay)
-		c.Info(err)
+		c.log.Info(c.getLogPrefix(), "establishing connection failed, trying again in ", delay)
+		c.log.Info(c.getLogPrefix(), err)
 
 		// wait N seconds
 		select {
 		case <-time.After(delay):
 			delay += (4 + time.Duration(try*2)) * time.Second
 		case <-c.SystemShutdown:
-			c.Debug("stopping reconnect attempt", try)
+			c.log.Debug(c.getLogPrefix(), "stopping reconnect attempt", try)
 			return
 		}
 
@@ -476,11 +472,11 @@ func (c *client) unlockEmitter() {
 // client#Emit depends on this.
 func (c *client) emitter(ctx context.Context) {
 	if !c.lockEmitter() {
-		c.Debug("tried to startBehaviors another websocket emitter go routine")
+		c.log.Debug(c.getLogPrefix(), "tried to startBehaviors another websocket emitter go routine")
 		return
 	}
 	defer c.unlockEmitter()
-	c.Debug("starting emitter")
+	c.log.Debug(c.getLogPrefix(), "starting emitter")
 
 	for {
 		var msg *clientPacket
@@ -488,14 +484,14 @@ func (c *client) emitter(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
-			c.Debug("closing emitter")
+			c.log.Debug(c.getLogPrefix(), "closing emitter")
 			return
 		case msg, open = <-c.emitChan:
 			if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
 				if err := c.Disconnect(); err != nil {
-					c.Error(err)
+					c.log.Error(c.getLogPrefix(), err)
 				}
-				c.Debug("closing emitter")
+				c.log.Debug(c.getLogPrefix(), "closing emitter")
 				return
 			}
 		}
@@ -506,7 +502,7 @@ func (c *client) emitter(ctx context.Context) {
 		saveOutgoingPacket(c, msg)
 
 		if err = c.conn.WriteJSON(msg); err != nil {
-			c.Error(err)
+			c.log.Error(c.getLogPrefix(), err)
 		}
 	}
 }
@@ -543,17 +539,17 @@ func (c *client) unlockReceiver() {
 
 func (c *client) receiver(ctx context.Context) {
 	if !c.lockReceiver() {
-		c.Debug("tried to start another receiver")
+		c.log.Debug(c.getLogPrefix(), "tried to start another receiver")
 		return
 	}
 	defer c.unlockReceiver()
-	c.Debug("starting receiver")
+	c.log.Debug(c.getLogPrefix(), "starting receiver")
 
 	for {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(); err != nil {
-			c.Debug("closing receiver", err)
+			c.log.Debug(c.getLogPrefix(), "closing receiver", err)
 			// TODO: should be able to tag c.conn as disconnected at this stage
 			return
 		}
@@ -564,7 +560,7 @@ func (c *client) receiver(ctx context.Context) {
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
 		if err = httd.Unmarshal(packet, evt); err != nil {
-			c.Error(err)
+			c.log.Error(c.getLogPrefix(), err)
 			continue
 		}
 
@@ -578,7 +574,7 @@ func (c *client) receiver(ctx context.Context) {
 		// check if application has closed
 		select {
 		case <-ctx.Done():
-			c.Debug("closing receiver")
+			c.log.Debug(c.getLogPrefix(), "closing receiver")
 			return
 		default:
 		}
@@ -616,14 +612,14 @@ func (c *client) StopPulsating(serviceID uint8) {
 func (c *client) prepareHeartbeating(ctx context.Context) {
 	serviceID := uint8(rand.Intn(254) + 1) // uint8 cap
 	if !c.AllowedToStartPulsating(serviceID) {
-		c.Debug("tried to start an additional pulse")
+		c.log.Debug(c.getLogPrefix(), "tried to start an additional pulse")
 		return
 	}
 	defer c.StopPulsating(serviceID)
 
 	select {
 	case <-ctx.Done():
-		c.Debug("heartbeat preparations cancelled")
+		c.log.Debug(c.getLogPrefix(), "heartbeat preparations cancelled")
 		return
 	case <-c.activateHeartbeats:
 	}
@@ -633,48 +629,54 @@ func (c *client) prepareHeartbeating(ctx context.Context) {
 
 func (c *client) pulsate(ctx context.Context) {
 	c.RLock()
-	c.lastHeartbeatAck = time.Now()
 	c.lastHeartbeatSent = time.Now()
+	c.lastHeartbeatAck = time.Now()
 	interval := time.Millisecond * time.Duration(c.heartbeatInterval)
-	ticker := time.NewTicker(interval)
 	c.RUnlock()
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	var last time.Time
+	var lastAck time.Time
+	var lastSent time.Time
 	for {
 		c.RLock()
-		last = c.lastHeartbeatAck
+		lastAck = c.lastHeartbeatAck
+		lastSent = c.lastHeartbeatSent
 		c.RUnlock()
 
-		// make sure that the last heartbeat signal was received and responded to by discord (heartbeat ack)
-		if time.Now().Sub(last) > interval {
-			c.Info("heartbeat ACK was not received, forcing reconnect")
+		// make sure that Discord replied to the last heartbeat signal (heartbeat ack)
+		if lastSent.After(lastAck) {
+			c.log.Info(c.getLogPrefix(), "heartbeat ACK was not received, forcing reconnect")
 			go c.reconnect()
-			return
+			break
+		} else {
+			c.log.Debug(c.getLogPrefix(), "heartbeat ACK ok")
 		}
 
-		// update heartbeat latency record
-		c.RLock()
-		c.heartbeatLatency = c.lastHeartbeatAck.Sub(c.lastHeartbeatSent)
-		c.RUnlock()
-
-		// send new heartbeat signal
+		// update heartbeat latency record & send new heartbeat signal
 		c.Lock()
+		c.heartbeatLatency = lastAck.Sub(lastSent)
 		c.lastHeartbeatSent = time.Now()
 		c.Unlock()
 		if err := c.behaviors[heartbeating].actions[sendHeartbeat](nil); err != nil {
-			c.Error(err)
+			c.log.Error(c.getLogPrefix(), err)
+		} else {
+			c.log.Debug(c.getLogPrefix(), "sent heartbeat")
 		}
 
+		var stop bool
 		select {
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
+			stop = true
 		}
-
-		c.Debug("Stopping pulse")
-		return
+		if stop {
+			break
+		}
 	}
+	c.log.Debug(c.getLogPrefix(), "stopping pulse")
 }
 
 // HeartbeatLatency get the time diff between sending a heartbeat and Discord replying with a heartbeat ack

@@ -245,7 +245,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 
 	select {
 	case evt = <-waitingChan:
-		c.Info("connected")
+		c.log.Info(c.getLogPrefix(), "connected")
 	case <-ctx.Done():
 		c.disconnected = true
 	case <-time.After(5 * time.Second):
@@ -259,7 +259,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 	// if this is a new connection we can drop the resume packet
 	if !c.haveIdentifiedOnce {
 		if err := sendVoiceIdentityPacket(c); err != nil {
-			c.Error(err)
+			c.log.Error(c.getLogPrefix(), err)
 		}
 		return
 	}
