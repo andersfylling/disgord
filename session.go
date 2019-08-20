@@ -522,6 +522,8 @@ type Session interface {
 	// Custom REST functions
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 
+	KickVoiceParticipant(guildID, userID Snowflake) error
+
 	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) error
 	UpdateStatusString(s string) error
