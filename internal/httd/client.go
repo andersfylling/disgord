@@ -212,11 +212,8 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.httpClient.Timeout))
-	defer cancel()
-
 	// create request
-	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
+	req, err := http.NewRequestWithContext(r.Ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +222,7 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 
 	// send request
 	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
-		resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
+		resp, body, err = bucket.Transaction(r.Ctx, func() (*http.Response, []byte, error) {
 			resp, err := c.httpClient.Do(req)
 			if err != nil {
 				return nil, nil, err

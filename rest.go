@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -286,7 +287,8 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 
 	if b.config == nil {
 		b.config = &httd.Request{
-			Method: httd.MethodGet,
+			Ctx:    context.Background(),
+			Method: http.MethodGet,
 		}
 	}
 }

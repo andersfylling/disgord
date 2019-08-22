@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"sync"
@@ -65,7 +66,7 @@ func (e *ErrorUnsupportedType) Error() string {
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.
 type discordDeleter interface {
-	deleteFromDiscord(session Session, flags ...Flag) error
+	deleteFromDiscord(ctx context.Context, session Session, flags ...Flag) error
 }
 
 // DeepCopier holds the DeepCopy method which creates and returns a deep copy of

@@ -1,13 +1,14 @@
 package std
 
 import (
+	"context"
 	"strings"
 
 	"github.com/andersfylling/disgord"
 )
 
-func NewMsgFilter(client disgord.Session) (filter *msgFilter, err error) {
-	if filter, err = newMsgFilter(client); err != nil {
+func NewMsgFilter(ctx context.Context, client disgord.Session) (filter *msgFilter, err error) {
+	if filter, err = newMsgFilter(ctx, client); err != nil {
 		return nil, err
 	}
 	filter.s = client
@@ -16,11 +17,11 @@ func NewMsgFilter(client disgord.Session) (filter *msgFilter, err error) {
 }
 
 type msgFilterdg interface {
-	GetCurrentUser(flags ...disgord.Flag) (*disgord.User, error)
+	GetCurrentUser(ctx context.Context, flags ...disgord.Flag) (*disgord.User, error)
 }
 
-func newMsgFilter(client msgFilterdg) (filter *msgFilter, err error) {
-	usr, err := client.GetCurrentUser()
+func newMsgFilter(ctx context.Context, client msgFilterdg) (filter *msgFilter, err error) {
+	usr, err := client.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 		return nil
 	}
 
-	p, err := f.s.GetMemberPermissions(msg.GuildID, uID)
+	p, err := f.s.GetMemberPermissions(context.Background(), msg.GuildID, uID)
 	if err != nil {
 		return nil
 	}
