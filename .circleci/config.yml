@@ -74,7 +74,7 @@ jobs:
 
 workflows:
   version: 2.1
-  build:
+  build-workflow:
     jobs:
       - build
       - "code-format"
