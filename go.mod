@@ -1,5 +1,7 @@
 module github.com/andersfylling/disgord
 
+go 1.12
+
 require (
 	github.com/andersfylling/snowflake/v4 v4.0.1
 	github.com/gorilla/websocket v1.4.0
