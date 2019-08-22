@@ -1,22 +1,17 @@
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+version: 2.1
+
+executors:
+  base-executor:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: ~/disgord
+
 jobs:
-  "code-format":
-    docker:
-      - image: circleci/golang:1.12
-    working_directory: /home/circleci/project/
-    steps:
-      - checkout
-      - run: go get -v -t -d ./...
-      - run:
-          name: "Enforce Go Formatted Code"
-          command: "! go fmt ./... 2>&1 | read"
-  "go-generate":
-    docker:
-      - image: circleci/golang:1.12
-    working_directory: /home/circleci/project/
+  build:
+    executor: base-executor
     steps:
       - checkout
       - run: go get -v -t -d ./...
@@ -26,6 +21,17 @@ jobs:
             go get -u golang.org/x/tools/cmd/stringer
             PATH="${PATH}:$GOPATH/bin"
             echo $GOPATH
+      
+  "code-format":
+    executor: base-executor
+    steps:
+      - run:
+          name: "Enforce Go Formatted Code"
+          command: "! go fmt ./... 2>&1 | read"
+          
+  "go-generate":
+    executor: base-executor
+    steps:
       - run:
           name: create sha1 sum of current files
           command: OLD=$(sh sha1sum.sh)
@@ -39,25 +45,15 @@ jobs:
             test ${OLD} = ${NEW}
 
   "unit-tests":
-    docker:
-      - image: circleci/golang:1.12
-    working_directory: /home/circleci/project/
+    executor: base-executor
     steps:
-      - checkout
-      - run: go get -v -t -d ./...
-      - run:
-          name: "Enforce Go Formatted Code"
-          command: "! go fmt ./... 2>&1 | read"
       - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      
   "test-coverage":
     environment:
       CC_TEST_REPORTER_ID: 95ae2f4637431f6211841eb4abb9aa2f65855b7bef65b653064d436315743165
-    docker:
-      - image: circleci/golang:1.12
-    working_directory: /home/circleci/project/
+    executor: base-executor
     steps:
-      - checkout
-      - run: go get -v -t -d ./...
       - run: bash <(curl -s https://codecov.io/bash)
       - run:
           name: Setup Code Climate test-reporter
@@ -77,10 +73,19 @@ jobs:
             ./cc-test-reporter after-build --debug --exit-code $? --prefix github.com/andersfylling/disgord/
 
 workflows:
-  version: 2
+  version: 2.1
   build:
     jobs:
+      - build
       - "code-format"
+        requires:
+          - build
       - "go-generate"
+        requires:
+          - build
       - "unit-tests"
+        requires:
+          - build
       - "test-coverage"
+        requires:
+          - build
