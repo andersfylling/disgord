@@ -223,7 +223,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	}()
 
 	// establish ws connection
-	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {
+	if err := c.conn.Open(context.Background(), c.conf.Endpoint, nil); err != nil {
 		return nil, err
 	}
 

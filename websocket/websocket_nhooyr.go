@@ -24,9 +24,9 @@ type nhooyr struct {
 	httpClient *http.Client
 }
 
-func (g *nhooyr) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	// establish ws connection
-	g.c, _, err = websocket.Dial(context.Background(), endpoint, websocket.DialOptions{
+	g.c, _, err = websocket.Dial(ctx, endpoint, websocket.DialOptions{
 		HTTPClient: g.httpClient,
 		HTTPHeader: requestHeader,
 	})

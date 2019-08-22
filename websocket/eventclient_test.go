@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,7 +24,7 @@ type testWS struct {
 	sync.RWMutex
 }
 
-func (g *testWS) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *testWS) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	g.opening <- 1
 	g.Lock()
 	g.disconnected = false

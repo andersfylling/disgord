@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/andersfylling/disgord/depalias"
@@ -10,7 +11,7 @@ type Snowflake = depalias.Snowflake
 
 type Conn interface {
 	Close() error
-	Open(endpoint string, requestHeader http.Header) error
+	Open(ctx context.Context, endpoint string, requestHeader http.Header) error
 	WriteJSON(v interface{}) error
 	Read() (packet []byte, err error)
 

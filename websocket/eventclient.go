@@ -390,6 +390,9 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 		return nil, err
 	}
 
+	var sessionCtx context.Context
+	sessionCtx, c.cancel = context.WithCancel(context.Background())
+
 	err = c.evtConf.connectQueue(c.ShardID, func() error {
 		sentIdentifyResume := make(chan interface{})
 		c.onceChannels.Add(opcode.EventIdentify, sentIdentifyResume)
@@ -400,32 +403,31 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 			c.onceChannels.Acquire(opcode.EventResume)
 		}()
 
-		if err := c.openConnection(); err != nil {
+		if err := c.openConnection(sessionCtx); err != nil {
 			return err
 		}
 
 		c.log.Debug(c.getLogPrefix(), "waiting to send identify/resume")
 		select {
+		case <-sessionCtx.Done():
+			c.log.Info(c.getLogPrefix(), "session context was closed")
 		case <-sentIdentifyResume:
+			c.log.Debug(c.getLogPrefix(), "sent identify/resume")
 		case <-time.After(3 * time.Minute):
 			c.log.Error(c.getLogPrefix(), "discord timeout during connect (3 minutes). No idea what went wrong..")
 			go c.reconnect()
 			return errors.New("websocket connected but was not able to send identify packet within 3 minutes")
 		}
-		c.log.Debug(c.getLogPrefix(), "sent identify/resume")
 		return nil
 	})
 	return nil, err
 }
 
-func (c *EvtClient) openConnection() error {
+func (c *EvtClient) openConnection(ctx context.Context) error {
 	// establish ws connection
-	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {
+	if err := c.conn.Open(ctx, c.conf.Endpoint, nil); err != nil {
 		return err
 	}
-
-	var ctx context.Context
-	ctx, c.cancel = context.WithCancel(context.Background())
 
 	// we can now interact with Discord
 	c.haveConnectedOnce = true

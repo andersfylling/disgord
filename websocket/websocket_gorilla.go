@@ -3,6 +3,7 @@
 package websocket
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -26,7 +27,7 @@ type gorilla struct {
 	proxy proxy.Dialer
 }
 
-func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *gorilla) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
 	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
 	dialer := websocket.DefaultDialer
