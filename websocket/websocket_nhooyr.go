@@ -31,6 +31,7 @@ func (g *nhooyr) Open(endpoint string, requestHeader http.Header) (err error) {
 		HTTPClient: g.httpClient,
 		HTTPHeader: requestHeader,
 	})
+	g.c.SetReadLimit(32768 * 10)
 	return
 }
 
