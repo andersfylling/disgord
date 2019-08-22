@@ -1,50 +1,43 @@
+// +build !disgord_websocket_gorilla
+
 package websocket
 
-// TODO: if we add any other websocket packages, add build constraints to this file.
-
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
 
-	"github.com/andersfylling/disgord/httd"
-	"github.com/gorilla/websocket"
 	"golang.org/x/net/proxy"
+
+	"github.com/andersfylling/disgord/httd"
+	"nhooyr.io/websocket"
 )
 
-func newConn(proxy proxy.Dialer) (Conn, error) {
-	return &gorilla{
-		proxy: proxy,
+func newConn(proxy proxy.Dialer, httpClient *http.Client) (Conn, error) {
+	return &nhooyr{
+		httpClient: httpClient,
 	}, nil
 }
 
-// rwc is a wrapper for the Conn interface (not net.Conn).
-// Interface can be found at https://golang.org/pkg/net/#Conn
-// See original code at https://github.com/gorilla/websocket/issues/282
-type gorilla struct {
-	c     *websocket.Conn
-	proxy proxy.Dialer
+type nhooyr struct {
+	c          *websocket.Conn
+	httpClient *http.Client
 }
 
-func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
-	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
-	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
-	dialer := websocket.DefaultDialer
-	if g.proxy != nil {
-		dialer = &websocket.Dialer{
-			NetDial: g.proxy.Dial,
-		}
-	}
-
+func (g *nhooyr) Open(endpoint string, requestHeader http.Header) (err error) {
 	// establish ws connection
-	g.c, _, err = dialer.Dial(endpoint, requestHeader)
+	g.c, _, err = websocket.Dial(context.Background(), endpoint, websocket.DialOptions{
+		HTTPClient: g.httpClient,
+		HTTPHeader: requestHeader,
+	})
 	return
 }
 
-func (g *gorilla) WriteJSON(v interface{}) (err error) {
+func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 	// TODO: move unmarshalling out of here?
 	var w io.WriteCloser
-	w, err = g.c.NextWriter(websocket.TextMessage)
+	w, err = g.c.Writer(context.Background(), websocket.MessageText)
 	if err != nil {
 		return err
 	}
@@ -52,45 +45,45 @@ func (g *gorilla) WriteJSON(v interface{}) (err error) {
 	return
 }
 
-func (g *gorilla) Close() (err error) {
-	err = g.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	err2 := g.c.Close()
+func (g *nhooyr) Close() (err error) {
+	err = g.c.Close(websocket.StatusNormalClosure, "Bot is shutting down")
 	g.c = nil
-
-	if err == nil && err2 != nil {
-		return err2
-	}
 	return err
 }
 
-func (g *gorilla) Read() (packet []byte, err error) {
-	if g.Disconnected() {
+func (g *nhooyr) Read() (packet []byte, err error) {
+	if g.disconnected() {
 		// this gets triggered when losing internet connection -> trying to reconnect for a while -> re-establishing a connection
 		// as discord then sends a invalid session package and disgord tries to reconnect again, a panic takes place.
 		// this check is a tmp hack to fix that, as the actual issue is not clearly understood/defined yet.
 		err = errors.New("no connection is established. Can not read new messages")
 		return
 	}
-	var messageType int
-	messageType, packet, err = g.c.ReadMessage()
+	var messageType websocket.MessageType
+	messageType, packet, err = g.c.Read(context.Background())
 	if err != nil {
-		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		if closeErr, ok := err.(*websocket.CloseError); ok {
 			err = &ErrorUnexpectedClose{
-				info: err.Error(),
+				info: closeErr.Error(),
 			}
 		}
-
-		return
+		return nil, err
 	}
 
-	if messageType == websocket.BinaryMessage {
+	if messageType == websocket.MessageBinary {
 		packet, err = decompressBytes(packet)
 	}
-	return
+	return packet, nil
 }
 
-func (g *gorilla) Disconnected() bool {
+func (g *nhooyr) Disconnected() bool {
+	status := g.disconnected()
+
+	return status
+}
+
+func (g *nhooyr) disconnected() bool {
 	return g.c == nil
 }
 
-var _ Conn = (*gorilla)(nil)
+var _ Conn = (*nhooyr)(nil)

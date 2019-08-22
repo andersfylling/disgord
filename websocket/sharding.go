@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -65,6 +66,7 @@ type ShardManagerConfig struct {
 	DisgordInfo  string
 	BotToken     string
 	Proxy        proxy.Dialer
+	HTTPClient   *http.Client
 	Logger       logger.Logger
 	ShutdownChan chan interface{}
 
@@ -111,8 +113,9 @@ func (s *shardMngr) initializeShards() error {
 		A:         s.A,
 
 		// user settings
-		BotToken: s.conf.BotToken,
-		Proxy:    s.conf.Proxy,
+		BotToken:   s.conf.BotToken,
+		Proxy:      s.conf.Proxy,
+		HTTPClient: s.conf.HTTPClient,
 
 		// other
 		SystemShutdown: s.conf.ShutdownChan,

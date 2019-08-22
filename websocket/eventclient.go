@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"runtime"
 	"sync"
 	"time"
@@ -50,6 +51,7 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 		Endpoint:       conf.Endpoint,
 		DiscordPktPool: conf.DiscordPktPool,
 		Proxy:          conf.Proxy,
+		HTTPClient:     conf.HTTPClient,
 		conn:           conf.conn,
 
 		SystemShutdown: conf.SystemShutdown,
@@ -91,8 +93,9 @@ type Event struct {
 // TODO: remove shardID, such that this struct can be reused for every shard
 type EvtConfig struct {
 	// BotToken Discord bot token
-	BotToken string
-	Proxy    proxy.Dialer
+	BotToken   string
+	Proxy      proxy.Dialer
+	HTTPClient *http.Client
 
 	// for testing only
 	conn Conn

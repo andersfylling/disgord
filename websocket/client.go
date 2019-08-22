@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -59,7 +60,7 @@ var _ connectPermit = (*emptyConnectPermit)(nil)
 func newClient(conf *config, shardID uint) (c *client, err error) {
 	var ws Conn
 	if conf.conn == nil {
-		ws, err = newConn(conf.Proxy)
+		ws, err = newConn(conf.Proxy, conf.HTTPClient)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +92,8 @@ func newClient(conf *config, shardID uint) (c *client, err error) {
 }
 
 type config struct {
-	Proxy proxy.Dialer
+	Proxy      proxy.Dialer
+	HTTPClient *http.Client
 
 	// for testing only
 	conn Conn

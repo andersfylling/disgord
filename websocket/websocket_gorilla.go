@@ -1,6 +1,6 @@
-package websocket
+// +build disgord_websocket_gorilla
 
-// TODO: if we add any other websocket packages, add build constraints to this file.
+package websocket
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-func newConn(proxy proxy.Dialer) (Conn, error) {
+func newConn(proxy proxy.Dialer, httpClient *http.Client) (Conn, error) {
 	return &gorilla{
 		proxy: proxy,
 	}, nil
@@ -80,13 +80,13 @@ func (g *gorilla) Read() (packet []byte, err error) {
 			}
 		}
 
-		return
+		return nil, err
 	}
 
 	if messageType == websocket.BinaryMessage {
 		packet, err = decompressBytes(packet)
 	}
-	return
+	return packet, nil
 }
 
 func (g *gorilla) Disconnected() bool {
