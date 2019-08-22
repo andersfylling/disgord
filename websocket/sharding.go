@@ -16,6 +16,32 @@ import (
 const defaultShardRateLimit float64 = 5.1 // seconds
 type shardID = uint
 
+func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+	data, err := client.GetGatewayBot()
+	if err != nil {
+		return err
+	}
+
+	if conf.URL == "" {
+		conf.URL = data.URL
+	}
+
+	if len(conf.ShardIDs) == 0 {
+		conf.TotalNumberOfShards = data.Shards
+		for i := uint(0); i < data.Shards; i++ {
+			conf.ShardIDs = append(conf.ShardIDs, i)
+		}
+	} else {
+		conf.TotalNumberOfShards = uint(len(conf.ShardIDs))
+	}
+
+	if conf.ShardRateLimit == 0 {
+		conf.ShardRateLimit = defaultShardRateLimit
+	}
+
+	return nil
+}
+
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	mngr := &shardMngr{
 		shards: map[shardID]*EvtClient{},
@@ -54,6 +80,14 @@ type ShardConfig struct {
 	//
 	// Default value is populated by discord if this slice is nil.
 	ShardIDs []uint
+
+	// TotalNumberOfShards should reflect the "total number of shards" across all
+	// instances for your bot. If you run 3 containers with 2 shards each, then
+	// the TotalNumberOfShards should be 6, while the length of ShardIDs would be
+	// two on each container.
+	//
+	// defaults to len(ShardIDs) if 0
+	TotalNumberOfShards uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit float64
@@ -174,7 +208,7 @@ func (s *shardMngr) Disconnect() error {
 func (s *shardMngr) NrOfShards() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return uint(len(s.shards))
+	return s.conf.TotalNumberOfShards
 }
 
 func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
