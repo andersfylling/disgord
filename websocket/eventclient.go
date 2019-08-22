@@ -400,6 +400,10 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 			c.onceChannels.Acquire(opcode.EventResume)
 		}()
 
+		// setup com chans
+		c.emitChan = make(chan *clientPacket, 50)
+		c.receiveChan = make(chan *DiscordPacket, 50)
+
 		if err := c.openConnection(); err != nil {
 			return err
 		}

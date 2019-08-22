@@ -75,8 +75,8 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 	c = &client{
 		conf:              conf,
 		ShardID:           shardID,
-		receiveChan:       make(chan *DiscordPacket, 100),
-		emitChan:          make(chan *clientPacket, 100),
+		receiveChan:       make(chan *DiscordPacket, 50),
+		emitChan:          make(chan *clientPacket, 50),
 		conn:              ws,
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
@@ -294,11 +294,9 @@ func (c *client) disconnect() (err error) {
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
 
-	// drain message channels
-	for range c.emitChan {
-	}
-	for range c.receiveChan {
-	}
+	// close com chans
+	close(c.emitChan)
+	close(c.receiveChan)
 
 	return
 }
@@ -515,7 +513,6 @@ func (c *client) emitter(ctx context.Context) {
 		if err = c.conn.WriteJSON(msg); err != nil {
 			c.log.Error(c.getLogPrefix(), err)
 			cancel()
-			go c.reconnect()
 		}
 	}
 }
