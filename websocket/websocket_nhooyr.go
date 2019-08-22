@@ -59,6 +59,7 @@ func (g *nhooyr) Read() (packet []byte, err error) {
 		err = errors.New("no connection is established. Can not read new messages")
 		return
 	}
+
 	var messageType websocket.MessageType
 	messageType, packet, err = g.c.Read(context.Background())
 	if err != nil {
