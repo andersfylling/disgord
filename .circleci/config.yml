@@ -77,15 +77,15 @@ workflows:
   build-workflow:
     jobs:
       - build
-      - "code-format"
+      - "code-format":
         requires:
           - build
-      - "go-generate"
+      - "go-generate":
         requires:
           - build
-      - "unit-tests"
+      - "unit-tests":
         requires:
           - build
-      - "test-coverage"
+      - "test-coverage":
         requires:
           - build
