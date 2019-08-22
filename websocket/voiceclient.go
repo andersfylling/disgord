@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -28,7 +29,8 @@ type VoiceConfig struct {
 	Token string
 
 	// proxy allows for use of a custom proxy
-	Proxy proxy.Dialer
+	Proxy      proxy.Dialer
+	HTTPClient *http.Client
 
 	// Endpoint for establishing voice connection
 	Endpoint string
@@ -56,8 +58,10 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 		conf: conf,
 	}
 	client.client, err = newClient(0, &config{
-		Logger:   conf.Logger,
-		Endpoint: conf.Endpoint,
+		Logger:     conf.Logger,
+		Endpoint:   conf.Endpoint,
+		Proxy:      conf.Proxy,
+		HTTPClient: conf.HTTPClient,
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}

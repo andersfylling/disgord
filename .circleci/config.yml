@@ -1,0 +1,89 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2.1
+executors:
+  base-executor:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: ~/disgord
+jobs:
+  build:
+    executor: base-executor
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run:
+          name: install stringer
+          command: |
+            go get -u golang.org/x/tools/cmd/stringer
+            PATH="${PATH}:$GOPATH/bin"
+            echo $GOPATH
+      
+  "code-format":
+    executor: base-executor
+    steps:
+      - run:
+          name: "Enforce Go Formatted Code"
+          command: "! go fmt ./... 2>&1 | read"
+          
+  "go-generate":
+    executor: base-executor
+    steps:
+      - run:
+          name: create sha1 sum of current files
+          command: OLD=$(sh sha1sum.sh)
+      - run:
+          name: "go generate"
+          command: go generate
+      - run:
+          name: "check if sha1 sum has changed"
+          command: |
+            NEW=$(sh sha1sum.sh)
+            test ${OLD} = ${NEW}
+
+  "unit-tests":
+    executor: base-executor
+    steps:
+      - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      
+  "test-coverage":
+    environment:
+      CC_TEST_REPORTER_ID: 95ae2f4637431f6211841eb4abb9aa2f65855b7bef65b653064d436315743165
+    executor: base-executor
+    steps:
+      - run: bash <(curl -s https://codecov.io/bash)
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+            ./cc-test-reporter before-build
+      - run:
+          name: Run tests
+          command: |
+            for pkg in $(go list ./...); do
+              go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
+            done
+            echo "mode: set" > c.out
+            grep -h -v "^mode:" ./*.cover >> c.out
+            rm -f *.cover
+            ./cc-test-reporter after-build --debug --exit-code $? --prefix github.com/andersfylling/disgord/
+
+workflows:
+  version: 2.1
+  build-workflow:
+    jobs:
+      - build
+      - "code-format":
+        requires:
+          - build
+      - "go-generate":
+        requires:
+          - build
+      - "unit-tests":
+        requires:
+          - build
+      - "test-coverage":
+        requires:
+          - build

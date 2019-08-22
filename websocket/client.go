@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -63,7 +64,7 @@ type connectSignature = func() (evt interface{}, err error)
 func newClient(shardID uint, conf *config, connect connectSignature) (c *client, err error) {
 	var ws Conn
 	if conf.conn == nil {
-		ws, err = newConn(conf.Proxy)
+		ws, err = newConn(conf.Proxy, conf.HTTPClient)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +95,8 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 }
 
 type config struct {
-	Proxy proxy.Dialer
+	Proxy      proxy.Dialer
+	HTTPClient *http.Client
 
 	// for testing only
 	conn Conn
