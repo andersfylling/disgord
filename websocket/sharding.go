@@ -117,12 +117,10 @@ type ShardManagerConfig struct {
 }
 
 type shardMngr struct {
-	mu                       sync.RWMutex
-	conf                     ShardManagerConfig
-	shards                   map[shardID]*EvtClient
-	DiscordPktPool           *sync.Pool
-	nextAllowedIdentity      time.Time
-	nextAllowedIdentityMutex sync.Mutex
+	mu             sync.RWMutex
+	conf           ShardManagerConfig
+	shards         map[shardID]*EvtClient
+	DiscordPktPool *sync.Pool
 
 	sync shardSync
 }

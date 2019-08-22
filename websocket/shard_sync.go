@@ -39,7 +39,7 @@ func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 		if err := cb(); err != nil {
 			return err
 		}
-		execDuration := time.Now().Sub(start)
+		execDuration := time.Since(start)
 		s.next = s.next.Add(execDuration)
 
 	case <-s.shutdownChan:

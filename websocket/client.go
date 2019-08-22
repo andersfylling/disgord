@@ -99,12 +99,6 @@ type config struct {
 	// for testing only
 	conn Conn
 
-	// connect is blocking until a websocket connection has completed it's setup.
-	// eg. Normal shards that handles events are considered connected once the
-	// identity/resume has been sent. While for voice we wait until a ready event
-	// is returned.
-	connect connectSignature
-
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
 	// a valid socket endpoint from Discord
 	Endpoint string
@@ -145,6 +139,10 @@ type client struct {
 	emitChan    chan *clientPacket
 	conn        Conn
 
+	// connect is blocking until a websocket connection has completed it's setup.
+	// eg. Normal shards that handles events are considered connected once the
+	// identity/resume has been sent. While for voice we wait until a ready event
+	// is returned.
 	connect connectSignature
 
 	// states
