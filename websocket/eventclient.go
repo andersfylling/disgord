@@ -164,13 +164,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(internal bool, command string, data interface{}) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.Emit(command, data)
+	return c.client.Emit(internal, command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -319,7 +319,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 
 	// if this is a new connection we can drop the resume packet
 	if c.virginConnection() {
-		return sendIdentityPacket(c)
+		return sendIdentityPacket(false, c)
 	}
 
 	c.sendHelloPacket()
@@ -350,7 +350,7 @@ func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 		return errors.New("system is shutting down")
 	}
 
-	return sendIdentityPacket(c)
+	return sendIdentityPacket(true, c)
 }
 
 //////////////////////////////////////////////////////
@@ -364,7 +364,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.Emit(event.Heartbeat, snr)
+	return c.Emit(true, event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -400,11 +400,6 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 			c.onceChannels.Acquire(opcode.EventResume)
 		}()
 
-		// setup com chans
-		c.emitChan = make(chan *clientPacket, 50)
-		c.receiveChan = make(chan *DiscordPacket, 50)
-		c.emitChanMutex.Unlock()
-
 		if err := c.openConnection(); err != nil {
 			return err
 		}
@@ -412,9 +407,10 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 		c.log.Debug(c.getLogPrefix(), "waiting to send identify/resume")
 		select {
 		case <-sentIdentifyResume:
-		case <-time.After(5 * time.Minute):
-			c.log.Error(c.getLogPrefix(), "discord timeout during connect (5 minutes). No idea what went wrong..")
-			return errors.New("websocket connected but was not able to send identify packet within 5 minutes")
+		case <-time.After(3 * time.Minute):
+			c.log.Error(c.getLogPrefix(), "discord timeout during connect (3 minutes). No idea what went wrong..")
+			go c.reconnect()
+			return errors.New("websocket connected but was not able to send identify packet within 3 minutes")
 		}
 		c.log.Debug(c.getLogPrefix(), "sent identify/resume")
 		return nil
@@ -472,7 +468,7 @@ func (c *EvtClient) sendHelloPacket() {
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.Emit(event.Resume, struct {
+	err := c.Emit(true, event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
@@ -488,19 +484,21 @@ func (c *EvtClient) sendHelloPacket() {
 	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
 }
 
-func sendIdentityPacket(c *EvtClient) (err error) {
+func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	c.idMu.RLock()
 	var id = &evtIdentity{}
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.Emit(event.Identify, id)
+	err = c.Emit(true, event.Identify, id)
 
-	c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
-	channel := c.onceChannels.Acquire(opcode.EventIdentify)
-	c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
-	channel <- true
-	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
+	if !invalidSession {
+		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
+		channel := c.onceChannels.Acquire(opcode.EventIdentify)
+		c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
+		channel <- true
+		c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
+	}
 	return
 }
 

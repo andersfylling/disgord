@@ -130,7 +130,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.Emit(cmd.VoiceHeartbeat, nil)
+	return c.Emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -184,7 +184,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.Emit(cmd.VoiceHeartbeat, nil)
+	return c.Emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 //////////////////////////////////////////////////////
@@ -221,11 +221,6 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 		c.onceChannels.Acquire(opcode.VoiceReady)
 		close(waitingChan)
 	}()
-
-	// setup com chans
-	c.emitChan = make(chan *clientPacket, 10)
-	c.receiveChan = make(chan *DiscordPacket, 10)
-	c.emitChanMutex.Unlock()
 
 	// establish ws connection
 	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {
@@ -271,7 +266,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		return
 	}
 
-	_ = c.Emit(cmd.VoiceResume, struct {
+	_ = c.Emit(true, cmd.VoiceResume, struct {
 		GuildID   Snowflake `json:"server_id"`
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
@@ -280,7 +275,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	err = m.Emit(cmd.VoiceIdentify, &voiceIdentify{
+	err = m.Emit(true, cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
@@ -295,7 +290,7 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 	ch := make(chan interface{}, 1)
 	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
-	err = c.Emit(cmd.VoiceSelectProtocol, &voiceSelectProtocol{
+	err = c.Emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
 	})

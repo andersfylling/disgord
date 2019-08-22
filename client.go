@@ -615,7 +615,7 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 		if err != nil {
 			return err
 		}
-		return shard.Emit(command, data)
+		return shard.Emit(false, command, data)
 	}
 
 	// otherwise it is sent through every shard

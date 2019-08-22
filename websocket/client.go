@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -76,6 +77,7 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		conf:              conf,
 		ShardID:           shardID,
 		receiveChan:       make(chan *DiscordPacket, 50),
+		internalEmitChan:  make(chan *clientPacket, 50),
 		emitChan:          make(chan *clientPacket, 50),
 		conn:              ws,
 		ratelimit:         newRatelimiter(),
@@ -137,11 +139,12 @@ type client struct {
 	ShardID uint
 
 	// sending and receiving data
-	ratelimit     ratelimiter
-	receiveChan   chan *DiscordPacket
-	emitChan      chan *clientPacket
-	emitChanMutex sync.Mutex
-	conn          Conn
+	ratelimit        ratelimiter
+	receiveChan      chan *DiscordPacket
+	internalEmitChan chan *clientPacket
+	emitChan         chan *clientPacket
+	emitChanMutex    sync.Mutex
+	conn             Conn
 
 	// connect is blocking until a websocket connection has completed it's setup.
 	// eg. Normal shards that handles events are considered connected once the
@@ -296,11 +299,6 @@ func (c *client) disconnect() (err error) {
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
 
-	// close com chans
-	c.emitChanMutex.Lock()
-	close(c.emitChan)
-	close(c.receiveChan)
-
 	return
 }
 
@@ -398,7 +396,7 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(command string, data interface{}) (err error) {
+func (c *client) Emit(internal bool, command string, data interface{}) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
@@ -449,13 +447,15 @@ func (c *client) Emit(command string, data interface{}) (err error) {
 	}
 
 	// TODO: que messages when disconnected( or suspended)
-
-	c.emitChanMutex.Lock()
-	c.emitChan <- &clientPacket{
+	p := &clientPacket{
 		Op:   op,
 		Data: data,
 	}
-	c.emitChanMutex.Unlock()
+	if internal {
+		c.internalEmitChan <- p
+	} else {
+		c.emitChan <- p
+	}
 	return
 }
 
@@ -500,14 +500,15 @@ func (c *client) emitter(ctx context.Context) {
 		case <-internal.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			return
+		case msg, open = <-c.internalEmitChan:
 		case msg, open = <-c.emitChan:
-			if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
-				if err := c.Disconnect(); err != nil {
-					c.log.Error(c.getLogPrefix(), err)
-				}
-				c.log.Debug(c.getLogPrefix(), "closing emitter after read")
-				return
+		}
+		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
+			if err := c.Disconnect(); err != nil {
+				c.log.Error(c.getLogPrefix(), err)
 			}
+			c.log.Debug(c.getLogPrefix(), "closing emitter after read")
+			return
 		}
 		var err error
 
@@ -516,7 +517,7 @@ func (c *client) emitter(ctx context.Context) {
 		saveOutgoingPacket(c, msg)
 
 		if err = c.conn.WriteJSON(msg); err != nil {
-			c.log.Error(c.getLogPrefix(), err)
+			c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
 			cancel()
 		}
 	}
