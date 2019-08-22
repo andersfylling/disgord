@@ -75,8 +75,8 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 	c = &client{
 		conf:              conf,
 		ShardID:           shardID,
-		receiveChan:       make(chan *DiscordPacket),
-		emitChan:          make(chan *clientPacket),
+		receiveChan:       make(chan *DiscordPacket, 100),
+		emitChan:          make(chan *clientPacket, 100),
 		conn:              ws,
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
@@ -293,6 +293,13 @@ func (c *client) disconnect() (err error) {
 
 	// close connection
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
+
+	// drain message channels
+	for range c.emitChan {
+	}
+	for range c.receiveChan {
+	}
+
 	return
 }
 
@@ -478,6 +485,7 @@ func (c *client) emitter(ctx context.Context) {
 	defer c.unlockEmitter()
 	c.log.Debug(c.getLogPrefix(), "starting emitter")
 
+	internal, cancel := context.WithCancel(context.Background())
 	for {
 		var msg *clientPacket
 		var open bool
@@ -486,12 +494,15 @@ func (c *client) emitter(ctx context.Context) {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter")
 			return
+		case <-internal.Done():
+			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
+			return
 		case msg, open = <-c.emitChan:
 			if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
 				if err := c.Disconnect(); err != nil {
 					c.log.Error(c.getLogPrefix(), err)
 				}
-				c.log.Debug(c.getLogPrefix(), "closing emitter")
+				c.log.Debug(c.getLogPrefix(), "closing emitter after read")
 				return
 			}
 		}
@@ -503,6 +514,8 @@ func (c *client) emitter(ctx context.Context) {
 
 		if err = c.conn.WriteJSON(msg); err != nil {
 			c.log.Error(c.getLogPrefix(), err)
+			cancel()
+			go c.reconnect()
 		}
 	}
 }
