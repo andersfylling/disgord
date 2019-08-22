@@ -225,6 +225,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	// setup com chans
 	c.emitChan = make(chan *clientPacket, 10)
 	c.receiveChan = make(chan *DiscordPacket, 10)
+	c.emitChanMutex.Unlock()
 
 	// establish ws connection
 	if err := c.conn.Open(c.conf.Endpoint, nil); err != nil {

@@ -90,6 +90,7 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
 	}
+	c.emitChanMutex.Lock()
 
 	return
 }
@@ -136,10 +137,11 @@ type client struct {
 	ShardID uint
 
 	// sending and receiving data
-	ratelimit   ratelimiter
-	receiveChan chan *DiscordPacket
-	emitChan    chan *clientPacket
-	conn        Conn
+	ratelimit     ratelimiter
+	receiveChan   chan *DiscordPacket
+	emitChan      chan *clientPacket
+	emitChanMutex sync.Mutex
+	conn          Conn
 
 	// connect is blocking until a websocket connection has completed it's setup.
 	// eg. Normal shards that handles events are considered connected once the
@@ -295,6 +297,7 @@ func (c *client) disconnect() (err error) {
 	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
 
 	// close com chans
+	c.emitChanMutex.Lock()
 	close(c.emitChan)
 	close(c.receiveChan)
 
@@ -447,10 +450,12 @@ func (c *client) Emit(command string, data interface{}) (err error) {
 
 	// TODO: que messages when disconnected( or suspended)
 
+	c.emitChanMutex.Lock()
 	c.emitChan <- &clientPacket{
 		Op:   op,
 		Data: data,
 	}
+	c.emitChanMutex.Unlock()
 	return
 }
 

@@ -403,6 +403,7 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 		// setup com chans
 		c.emitChan = make(chan *clientPacket, 50)
 		c.receiveChan = make(chan *DiscordPacket, 50)
+		c.emitChanMutex.Unlock()
 
 		if err := c.openConnection(); err != nil {
 			return err
