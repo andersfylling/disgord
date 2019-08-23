@@ -92,7 +92,6 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
 	}
-	c.emitChanMutex.Lock()
 
 	return
 }
@@ -143,7 +142,6 @@ type client struct {
 	receiveChan      chan *DiscordPacket
 	internalEmitChan chan *clientPacket
 	emitChan         chan *clientPacket
-	emitChanMutex    sync.Mutex
 	conn             Conn
 
 	// connect is blocking until a websocket connection has completed it's setup.
@@ -243,6 +241,10 @@ func (c *client) operationHandlers(ctx context.Context) {
 		// see receiver() for creation/Get()
 		c.poolDiscordPkt.Put(p)
 	}
+}
+
+func (c *client) inactivityDetector() {
+	// make sure that websocket is connecting, connect or reconnecting.
 }
 
 //////////////////////////////////////////////////////
@@ -498,6 +500,7 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter")
 			return
 		case <-internal.Done():
+			go c.reconnect()
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			return
 		case msg, open = <-c.internalEmitChan:
@@ -561,13 +564,26 @@ func (c *client) receiver(ctx context.Context) {
 	defer c.unlockReceiver()
 	c.log.Debug(c.getLogPrefix(), "starting receiver")
 
+	internal, cancel := context.WithCancel(context.Background())
 	for {
+		// check if application has closed
+		select {
+		case <-ctx.Done():
+			c.log.Debug(c.getLogPrefix(), "closing receiver")
+			return
+		case <-internal.Done():
+			go c.reconnect()
+			c.log.Debug(c.getLogPrefix(), "closing receiver after read error")
+			return
+		default:
+		}
+
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(); err != nil {
-			c.log.Debug(c.getLogPrefix(), "closing receiver", err)
-			// TODO: should be able to tag c.conn as disconnected at this stage
-			return
+			cancel()
+			c.log.Debug(c.getLogPrefix(), err)
+			continue
 		}
 
 		// parse to gateway payload object
@@ -586,14 +602,6 @@ func (c *client) receiver(ctx context.Context) {
 
 		// notify listeners
 		c.receiveChan <- evt
-
-		// check if application has closed
-		select {
-		case <-ctx.Done():
-			c.log.Debug(c.getLogPrefix(), "closing receiver")
-			return
-		default:
-		}
 	}
 }
 

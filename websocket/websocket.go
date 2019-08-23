@@ -39,14 +39,3 @@ func (e *WebsocketErr) Error() string {
 const (
 	encodingJSON = "json"
 )
-
-// Choreographic programming.. TODO: rename channels and structs
-
-type A chan B
-type B chan *K
-
-// K is used to get the Connect permission from the shard manager
-type K struct {
-	Release B
-	Key     interface{}
-}

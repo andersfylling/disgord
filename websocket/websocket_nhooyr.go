@@ -30,6 +30,13 @@ func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.H
 		HTTPClient: g.httpClient,
 		HTTPHeader: requestHeader,
 	})
+	if err != nil {
+		if g.c != nil {
+			_ = g.Close()
+		}
+		return err
+	}
+
 	g.c.SetReadLimit(32768 * 10000) // discord.. Can we add stream support?
 	return
 }
