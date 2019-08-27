@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -127,7 +128,7 @@ type mockerWSReceiveOnly struct {
 	reading chan []byte
 }
 
-func (g *mockerWSReceiveOnly) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *mockerWSReceiveOnly) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	return
 }
 

@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +24,7 @@ import (
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
-func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error) {
+func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error) {
 	if conf.TrackedEvents == nil {
 		conf.TrackedEvents = &UniqueStringSlice{}
 	}
@@ -41,12 +42,11 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 	}
 
 	client = &EvtClient{
-		conf:          conf,
+		evtConf:       conf,
 		trackedEvents: conf.TrackedEvents,
 		eventChan:     eChan,
-		a:             conf.A,
 	}
-	client.client, err = newClient(&config{
+	client.client, err = newClient(shardID, &config{
 		Logger:         conf.Logger,
 		Endpoint:       conf.Endpoint,
 		DiscordPktPool: conf.DiscordPktPool,
@@ -55,22 +55,21 @@ func NewEventClient(conf *EvtConfig, shardID uint) (client *EvtClient, err error
 		conn:           conf.conn,
 
 		SystemShutdown: conf.SystemShutdown,
-	}, shardID)
+	}, client.internalConnect)
 	if err != nil {
 		return nil, err
 	}
-	client.connectPermit = client // adds  rate limiting for shards
 	client.setupBehaviors()
 
 	client.identity = &evtIdentity{
-		Token: client.conf.BotToken,
+		Token: conf.BotToken,
 		Properties: struct {
 			OS      string `json:"$os"`
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
-		}{runtime.GOOS, client.conf.Browser, client.conf.Device},
-		LargeThreshold: client.conf.GuildLargeThreshold,
-		Shard:          &[2]uint{client.ShardID, client.conf.ShardCount},
+		}{runtime.GOOS, conf.Browser, conf.Device},
+		LargeThreshold: conf.GuildLargeThreshold,
+		Shard:          &[2]uint{client.ShardID, conf.ShardCount},
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {
@@ -90,7 +89,6 @@ type Event struct {
 }
 
 // EvtConfig ws
-// TODO: remove shardID, such that this struct can be reused for every shard
 type EvtConfig struct {
 	// BotToken Discord bot token
 	BotToken   string
@@ -108,7 +106,7 @@ type EvtConfig struct {
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
 
-	A A
+	connectQueue func(shardID uint, cb func() error) error
 
 	Presence interface{}
 
@@ -136,7 +134,7 @@ type EvtConfig struct {
 }
 
 type EvtClient struct {
-	conf *EvtConfig
+	evtConf *EvtConfig
 
 	*client
 	ReadyCounter uint
@@ -146,10 +144,6 @@ type EvtClient struct {
 
 	sessionID      string
 	sequenceNumber uint
-
-	// synchronization and rate limiting
-	K *K
-	a A
 
 	rdyPool *sync.Pool
 
@@ -170,50 +164,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(internal bool, command string, data interface{}) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.Emit(command, data)
-}
-
-//////////////////////////////////////////////////////
-//
-// SHARD synchronization & rate limiting
-//
-//////////////////////////////////////////////////////
-
-func (c *EvtClient) requestConnectPermit() (err error) {
-	c.Debug("trying to get Connect permission")
-	b := make(B)
-	defer close(b)
-	c.a <- b
-	c.Debug("waiting")
-	var ok bool
-	select {
-	case c.K, ok = <-b:
-		if !ok || c.K == nil {
-			c.Debug("unable to get Connect permission")
-			return errors.New("channel closed or K was nil")
-		}
-		c.Debug("got Connect permission")
-	case <-c.SystemShutdown:
-		err = errors.New("shutting down")
-	}
-
-	return nil
-}
-
-func (c *EvtClient) releaseConnectPermit() error {
-	if c.K == nil {
-		return errors.New("K has not been granted yet")
-	}
-
-	c.K.Release <- c.K
-	c.K = nil
-	return nil
+	return c.client.Emit(internal, command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -233,7 +190,7 @@ func (c *EvtClient) setupBehaviors() {
 			opcode.EventHello:          c.onHello,
 			opcode.EventInvalidSession: c.onSessionInvalidated,
 			opcode.EventReconnect: func(i interface{}) error {
-				c.Info("Discord requested a reconnect")
+				c.log.Info(c.getLogPrefix(), "Discord requested a reconnect")
 				// There might be duplicate EventReconnect requests from Discord
 				// this is therefore a goroutine such that reconnect requests that takes
 				// place at the same time as the current one is discarded
@@ -362,7 +319,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 
 	// if this is a new connection we can drop the resume packet
 	if c.virginConnection() {
-		return sendIdentityPacket(c)
+		return sendIdentityPacket(false, c)
 	}
 
 	c.sendHelloPacket()
@@ -371,7 +328,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 
 func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 	// invalid session. Must respond with a identify packet
-	c.Info("Discord invalidated session")
+	c.log.Info(c.getLogPrefix(), "Discord invalidated session")
 
 	// session is invalidated, reset the sequence number
 	c.Lock()
@@ -393,7 +350,7 @@ func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 		return errors.New("system is shutting down")
 	}
 
-	return sendIdentityPacket(c)
+	return sendIdentityPacket(true, c)
 }
 
 //////////////////////////////////////////////////////
@@ -407,7 +364,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.Emit(event.Heartbeat, snr)
+	return c.Emit(true, event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -415,12 +372,79 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 // GENERAL: unique to event
 //
 //////////////////////////////////////////////////////
-
 func (c *EvtClient) Connect() (err error) {
-	//timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	//_, err = c.client.Connect(timeout, opcode.EventReadyResumed)
-	_, err = c.client.Connect(opcode.NoOPCode)
+	_, err = c.internalConnect()
 	return
+}
+
+func (c *EvtClient) internalConnect() (evt interface{}, err error) {
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// certainty say if we are connected
+	if !c.disconnected {
+		err = errors.New("cannot Connect while a connection already exist")
+		return nil, err
+	}
+
+	if c.conf.Endpoint == "" {
+		err = errors.New("missing websocket endpoint. Must be set before constructing the sockets")
+		return nil, err
+	}
+
+	var sessionCtx context.Context
+	sessionCtx, c.cancel = context.WithCancel(context.Background())
+
+	err = c.evtConf.connectQueue(c.ShardID, func() error {
+		sentIdentifyResume := make(chan interface{})
+		c.onceChannels.Add(opcode.EventIdentify, sentIdentifyResume)
+		c.onceChannels.Add(opcode.EventResume, sentIdentifyResume)
+		defer func() {
+			// cleanup once channels
+			c.onceChannels.Acquire(opcode.EventIdentify)
+			c.onceChannels.Acquire(opcode.EventResume)
+		}()
+
+		if err := c.openConnection(sessionCtx); err != nil {
+			return err
+		}
+
+		c.log.Debug(c.getLogPrefix(), "waiting to send identify/resume")
+		select {
+		case <-sessionCtx.Done():
+			c.log.Info(c.getLogPrefix(), "session context was closed")
+		case <-sentIdentifyResume:
+			c.log.Debug(c.getLogPrefix(), "sent identify/resume")
+		case <-time.After(3 * time.Minute):
+			c.log.Error(c.getLogPrefix(), "discord timeout during connect (3 minutes). No idea what went wrong..")
+			go c.reconnect()
+			return errors.New("websocket connected but was not able to send identify packet within 3 minutes")
+		}
+		return nil
+	})
+	return nil, err
+}
+
+func (c *EvtClient) openConnection(ctx context.Context) error {
+	// establish ws connection
+	if err := c.conn.Open(ctx, c.conf.Endpoint, nil); err != nil {
+		return err
+	}
+
+	// we can now interact with Discord
+	c.haveConnectedOnce = true
+	c.disconnected = false
+	go c.receiver(ctx)
+	go c.emitter(ctx)
+	go c.startBehaviors(ctx)
+	go c.prepareHeartbeating(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.SystemShutdown:
+			_ = c.Disconnect()
+		}
+	}()
+
+	return nil
 }
 
 // RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
@@ -441,39 +465,42 @@ func (c *EvtClient) eventOfInterest(name string) bool {
 
 func (c *EvtClient) sendHelloPacket() {
 	c.RLock()
-	token := c.conf.BotToken
+	token := c.evtConf.BotToken
 	session := c.sessionID
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.Emit(event.Resume, struct {
+	err := c.Emit(true, event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
 	}{token, session, sequence})
 	if err != nil {
-		c.Error(err)
+		c.log.Error(c.getLogPrefix(), err)
 	}
 
-	if err = c.connectPermit.releaseConnectPermit(); err != nil {
-		c.Error("unable to release connection permission. Err: ", err)
-	}
+	c.log.Debug(c.getLogPrefix(), "sendHelloPacket is acquiring once channel")
+	channel := c.onceChannels.Acquire(opcode.EventResume)
+	c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
+	channel <- true
+	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
 }
 
-func sendIdentityPacket(c *EvtClient) (err error) {
+func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	c.idMu.RLock()
 	var id = &evtIdentity{}
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.Emit(event.Identify, id)
+	err = c.Emit(true, event.Identify, id)
 
-	// ignore the error as identify can be called when the session is invalidated, DisGord
-	// does not try to reconnect cause Discord is just asking for a simple identification packet.
-	// Aka it doesn't need a connect permit and the error will always return, saying the
-	// connect permit has not yet been granted.
-	_ = c.connectPermit.releaseConnectPermit()
-
+	if !invalidSession {
+		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
+		channel := c.onceChannels.Acquire(opcode.EventIdentify)
+		c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
+		channel <- true
+		c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
+	}
 	return
 }
 

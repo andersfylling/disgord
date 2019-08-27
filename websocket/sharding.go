@@ -17,17 +17,46 @@ import (
 const defaultShardRateLimit float64 = 5.1 // seconds
 type shardID = uint
 
+func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+	data, err := client.GetGatewayBot()
+	if err != nil {
+		return err
+	}
+
+	if conf.URL == "" {
+		conf.URL = data.URL
+	}
+
+	if len(conf.ShardIDs) == 0 {
+		conf.TotalNumberOfShards = data.Shards
+		for i := uint(0); i < data.Shards; i++ {
+			conf.ShardIDs = append(conf.ShardIDs, i)
+		}
+	} else {
+		conf.TotalNumberOfShards = uint(len(conf.ShardIDs))
+	}
+
+	if conf.ShardRateLimit == 0 {
+		conf.ShardRateLimit = defaultShardRateLimit
+	}
+
+	return nil
+}
+
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
-	return &shardMngr{
+	mngr := &shardMngr{
 		shards: map[shardID]*EvtClient{},
 		conf:   conf,
-		A:      make(A, len(conf.ShardIDs)+1),
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}
 			},
 		},
 	}
+	mngr.sync.logger = conf.Logger
+	mngr.sync.timeoutMs = time.Duration(int64(conf.ShardRateLimit*1000)) * time.Millisecond
+
+	return mngr
 }
 
 // ShardManager regards websocket shards.
@@ -52,6 +81,14 @@ type ShardConfig struct {
 	//
 	// Default value is populated by discord if this slice is nil.
 	ShardIDs []uint
+
+	// TotalNumberOfShards should reflect the "total number of shards" across all
+	// instances for your bot. If you run 3 containers with 2 shards each, then
+	// the TotalNumberOfShards should be 6, while the length of ShardIDs would be
+	// two on each container.
+	//
+	// defaults to len(ShardIDs) if 0
+	TotalNumberOfShards uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit float64
@@ -86,7 +123,8 @@ type shardMngr struct {
 	conf           ShardManagerConfig
 	shards         map[shardID]*EvtClient
 	DiscordPktPool *sync.Pool
-	A              A
+
+	sync shardSync
 }
 
 var _ ShardManager = (*shardMngr)(nil)
@@ -109,8 +147,8 @@ func (s *shardMngr) initializeShards() error {
 		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization
-		EventChan: s.conf.EventChan,
-		A:         s.A,
+		EventChan:    s.conf.EventChan,
+		connectQueue: s.sync.queueShard,
 
 		// user settings
 		BotToken:   s.conf.BotToken,
@@ -122,8 +160,8 @@ func (s *shardMngr) initializeShards() error {
 	}
 
 	for _, id := range s.conf.ShardIDs {
-		uniqueConfig := baseConfig // create copy
-		shard, err := NewEventClient(&uniqueConfig, id)
+		uniqueConfig := baseConfig // create copy, review requirement
+		shard, err := NewEventClient(id, &uniqueConfig)
 		if err != nil {
 			return err
 		}
@@ -131,39 +169,6 @@ func (s *shardMngr) initializeShards() error {
 		s.shards[id] = shard
 	}
 	return nil
-}
-
-func (s *shardMngr) runSynchronizer() {
-	for {
-		select {
-		case <-s.conf.ShutdownChan:
-			s.conf.Logger.Info("shutdown signal was used to stop shard synchronizing")
-			return
-		case b, ok := <-s.A:
-			if !ok {
-				s.conf.Logger.Error("b is closed")
-				return
-			}
-
-			releaser := make(B)
-			b <- &K{
-				Release: releaser,
-				Key:     412, // random
-				// TODO: store shard info for better error handling and potential metrics
-			}
-
-			select {
-			case <-releaser:
-				// apply rate limit
-				delay := time.Duration(s.conf.ShardRateLimit) * time.Second
-				s.conf.Logger.Debug("shard synchronizer is resting for", delay)
-				<-time.After(delay)
-			case <-s.conf.ShutdownChan:
-				s.conf.Logger.Debug("shard synchronizer got shutdown signal while resting")
-				return
-			}
-		}
-	}
 }
 
 func (s *shardMngr) Connect() (err error) {
@@ -178,9 +183,6 @@ func (s *shardMngr) Connect() (err error) {
 		if err = s.initializeShards(); err != nil {
 			return err
 		}
-
-		// handle shards asking for permission to connect (rate limiting)
-		go s.runSynchronizer()
 	}
 
 	for _, shard := range s.shards {
@@ -207,7 +209,7 @@ func (s *shardMngr) Disconnect() error {
 func (s *shardMngr) NrOfShards() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return uint(len(s.shards))
+	return s.conf.TotalNumberOfShards
 }
 
 func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
@@ -215,7 +217,7 @@ func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
 	defer s.mu.RUnlock()
 
 	for _, shard := range s.shards {
-		err = shard.Emit(cmd, data)
+		err = shard.Emit(false, cmd, data)
 	}
 	return err
 }

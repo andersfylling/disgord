@@ -38,27 +38,6 @@ type GatewayBotGetter interface {
 	GetGatewayBot() (gateway *GatewayBot, err error)
 }
 
-func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
-	data, err := client.GetGatewayBot()
-	if err != nil {
-		return err
-	}
-
-	if conf.URL == "" {
-		conf.URL = data.URL
-	}
-	if len(conf.ShardIDs) == 0 {
-		for i := uint(0); i < data.Shards; i++ {
-			conf.ShardIDs = append(conf.ShardIDs, i)
-		}
-	}
-	if conf.ShardRateLimit == 0 {
-		conf.ShardRateLimit = defaultShardRateLimit
-	}
-
-	return nil
-}
-
 //////////////////////////////////////////////////////
 //
 // VOICE SPECIFIC

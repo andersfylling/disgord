@@ -283,7 +283,7 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 		panic("Attempting to interact with a closed voice connection")
 	}
 
-	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
+	return v.ws.Emit(false, cmd.VoiceSpeaking, &voiceSpeakingData{
 		Speaking: b,
 		SSRC:     v.ssrc,
 	})
