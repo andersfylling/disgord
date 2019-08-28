@@ -200,6 +200,6 @@ Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
 No. Self bots are againts ToS and could result in account termination (see
 https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
 In addition, self bots aren't a part of the official Discord API, meaning support could change at any 
-time and DisGord could break unexpectedly if this feature were added.
+time and DisGord could break unexpectedly if this feature were to be added.
 ```
 
