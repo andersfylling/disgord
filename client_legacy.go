@@ -4,13 +4,13 @@ package disgord
 //
 // Deprecated / Legacy supported REST methods
 //
-// The main REST method names are renamed by a standard 
-// operation (ModifyChannel => UpdateChannel, 
-//            EditMessage => UpdateMessage, 
+// The main REST method names are renamed by a standard
+// operation (ModifyChannel => UpdateChannel,
+//            EditMessage => UpdateMessage,
 //            etc.).
 //
-// However, to avoid confusion when developing 
-// with the discord docs as aid; this file holds 
+// However, to avoid confusion when developing
+// with the discord docs as aid; this file holds
 // the original names for the REST methods.
 // (This might be deleted in the future)
 //
