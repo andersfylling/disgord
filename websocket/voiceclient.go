@@ -35,6 +35,9 @@ type VoiceConfig struct {
 	// Endpoint for establishing voice connection
 	Endpoint string
 
+	// MessageQueueLimit number of outgoing messages that can be queued and sent correctly.
+	MessageQueueLimit uint
+
 	Logger logger.Logger
 
 	SystemShutdown chan interface{}
@@ -67,7 +70,8 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 				return &DiscordPacket{}
 			},
 		},
-		SystemShutdown: conf.SystemShutdown,
+		messageQueueLimit: conf.MessageQueueLimit,
+		SystemShutdown:    conf.SystemShutdown,
 	}, client.internalConnect)
 	if err != nil {
 		return nil, err
@@ -130,7 +134,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.Emit(true, cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -184,7 +188,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.Emit(true, cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 //////////////////////////////////////////////////////
@@ -266,7 +270,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		return
 	}
 
-	_ = c.Emit(true, cmd.VoiceResume, struct {
+	_ = c.emit(true, cmd.VoiceResume, struct {
 		GuildID   Snowflake `json:"server_id"`
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
@@ -275,7 +279,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	err = m.Emit(true, cmd.VoiceIdentify, &voiceIdentify{
+	err = m.emit(true, cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
@@ -290,7 +294,7 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 	ch := make(chan interface{}, 1)
 	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
-	err = c.Emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
+	err = c.emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
 	})

@@ -47,12 +47,13 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		eventChan:     eChan,
 	}
 	client.client, err = newClient(shardID, &config{
-		Logger:         conf.Logger,
-		Endpoint:       conf.Endpoint,
-		DiscordPktPool: conf.DiscordPktPool,
-		Proxy:          conf.Proxy,
-		HTTPClient:     conf.HTTPClient,
-		conn:           conf.conn,
+		Logger:            conf.Logger,
+		Endpoint:          conf.Endpoint,
+		DiscordPktPool:    conf.DiscordPktPool,
+		Proxy:             conf.Proxy,
+		HTTPClient:        conf.HTTPClient,
+		conn:              conf.conn,
+		messageQueueLimit: conf.MessageQueueLimit,
 
 		SystemShutdown: conf.SystemShutdown,
 	}, client.internalConnect)
@@ -128,6 +129,9 @@ type EvtConfig struct {
 
 	DiscordPktPool *sync.Pool
 
+	// MessageQueueLimit number of outgoing messages that can be queued and sent correctly.
+	MessageQueueLimit uint
+
 	Logger logger.Logger
 
 	SystemShutdown chan interface{}
@@ -164,13 +168,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(internal bool, command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(command string, data interface{}) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.Emit(internal, command, data)
+	return c.client.emit(false, command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -364,7 +368,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.Emit(true, event.Heartbeat, snr)
+	return c.emit(true, event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -470,7 +474,7 @@ func (c *EvtClient) sendHelloPacket() {
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.Emit(true, event.Resume, struct {
+	err := c.emit(true, event.Resume, struct {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
@@ -492,7 +496,7 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.Emit(true, event.Identify, id)
+	err = c.emit(true, event.Identify, id)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")

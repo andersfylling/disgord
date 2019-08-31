@@ -73,6 +73,13 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		ws = conf.conn
 	}
 
+	var queueLimit int
+	if conf.messageQueueLimit == 0 {
+		queueLimit = 20
+	} else {
+		queueLimit = int(conf.messageQueueLimit)
+	}
+
 	c = &client{
 		conf:              conf,
 		ShardID:           shardID,
@@ -88,6 +95,7 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		poolDiscordPkt:    conf.DiscordPktPool,
 		onceChannels:      newOnceChannels(),
 		connect:           connect,
+		messageQueue:      newClientPktQueue(queueLimit),
 
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
@@ -110,6 +118,9 @@ type config struct {
 	DiscordPktPool *sync.Pool
 
 	Logger logger.Logger
+
+	// messageQueueLimit number of outgoing messages that can be queued and sent correctly.
+	messageQueueLimit uint
 
 	SystemShutdown chan interface{}
 }
@@ -143,6 +154,7 @@ type client struct {
 	internalEmitChan chan *clientPacket
 	emitChan         chan *clientPacket
 	conn             Conn
+	messageQueue     clientPktQueue
 
 	// connect is blocking until a websocket connection has completed it's setup.
 	// eg. Normal shards that handles events are considered connected once the
@@ -398,7 +410,10 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(internal bool, command string, data interface{}) (err error) {
+func (c *client) Emit(command string, data interface{}) (err error) {
+	return c.emit(false, command, data)
+}
+func (c *client) emit(internal bool, command string, data interface{}) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
@@ -435,26 +450,30 @@ func (c *client) Emit(internal bool, command string, data interface{}) (err erro
 			op = opcode.EventStatusUpdate
 		}
 	}
-
 	if op == noMatch {
 		return errors.New("unsupported command: " + command)
 	}
 
-	if accepted := c.ratelimit.Request(command); !accepted {
-		return errors.New("rate limited")
-	}
-
-	// TODO: que messages when disconnected( or suspended)
 	p := &clientPacket{
 		Op:   op,
 		Data: data,
 	}
+
+	if accepted := c.ratelimit.Request(command); !accepted {
+		// we might be rate limited.. but lets see if there is another
+		// presence update in the queue; then it can be overwritten
+		if err := c.messageQueue.AddByOverwrite(p); err != nil {
+			return errors.New("rate limited")
+		} else {
+			return nil
+		}
+	}
+
 	if internal {
 		c.internalEmitChan <- p
-	} else {
-		c.emitChan <- p
+		return
 	}
-	return
+	return c.messageQueue.Add(p)
 }
 
 func (c *client) lockEmitter() bool {
@@ -487,9 +506,24 @@ func (c *client) emitter(ctx context.Context) {
 	c.log.Debug(c.getLogPrefix(), "starting emitter")
 
 	internal, cancel := context.WithCancel(context.Background())
+
+	write := func(msg *clientPacket) error {
+		// save to file
+		// build tag: disgord_diagnosews
+		saveOutgoingPacket(c, msg)
+
+		err := c.conn.WriteJSON(msg)
+		if err != nil {
+			cancel()
+			c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
+		}
+		return err
+	}
+
 	for {
 		var msg *clientPacket
 		var open bool
+		var internalMsg bool
 
 		select {
 		case <-ctx.Done():
@@ -499,22 +533,21 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
+		case _, open = <-c.messageQueue.HasContent():
 		case msg, open = <-c.internalEmitChan:
-		case msg, open = <-c.emitChan:
+			internalMsg = true
 		}
 		if !open {
-			c.log.Debug(c.getLogPrefix(), "emitChan closed")
+			c.log.Debug(c.getLogPrefix(), "emitter channel closed")
 			continue
 		}
-		var err error
 
-		// save to file
-		// build tag: disgord_diagnosews
-		saveOutgoingPacket(c, msg)
-
-		if err = c.conn.WriteJSON(msg); err != nil {
-			c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
-			cancel()
+		if internalMsg {
+			_ = write(msg)
+		} else {
+			// try to write the message
+			// on failure the message is stored until next time
+			_ = c.messageQueue.Try(write)
 		}
 	}
 }

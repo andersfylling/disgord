@@ -217,7 +217,7 @@ func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
 	defer s.mu.RUnlock()
 
 	for _, shard := range s.shards {
-		err = shard.Emit(false, cmd, data)
+		err = shard.Emit(cmd, data)
 	}
 	return err
 }

@@ -161,6 +161,8 @@ func NewClient(conf *Config) (c *Client, err error) {
 	return c, err
 }
 
+type ShardConfig = websocket.ShardConfig
+
 // Config Configuration for the DisGord Client
 type Config struct {
 	BotToken   string
@@ -171,7 +173,7 @@ type Config struct {
 
 	DisableCache bool
 	CacheConfig  *CacheConfig
-	ShardConfig  websocket.ShardConfig
+	ShardConfig  ShardConfig
 	Presence     *UpdateStatusCommand
 
 	//ImmutableCache bool
@@ -615,7 +617,7 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 		if err != nil {
 			return err
 		}
-		return shard.Emit(false, command, data)
+		return shard.Emit(command, data)
 	}
 
 	// otherwise it is sent through every shard
