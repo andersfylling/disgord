@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/metrics"
+
 	"go.uber.org/atomic"
 
 	"github.com/andersfylling/disgord/httd"
@@ -80,6 +82,13 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		queueLimit = int(conf.messageQueueLimit)
 	}
 
+	var identifyTmLimit uint
+	if conf.SentIdentifyTimestampLimit == 0 {
+		identifyTmLimit = 30
+	} else {
+		identifyTmLimit = conf.SentIdentifyTimestampLimit
+	}
+
 	c = &client{
 		conf:              conf,
 		ShardID:           shardID,
@@ -96,6 +105,7 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		onceChannels:      newOnceChannels(),
 		connect:           connect,
 		messageQueue:      newClientPktQueue(queueLimit),
+		sentIdentifies:    metrics.NewTimestampLogger(identifyTmLimit),
 
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
@@ -122,6 +132,9 @@ type config struct {
 	// messageQueueLimit number of outgoing messages that can be queued and sent correctly.
 	messageQueueLimit uint
 
+	// metrics
+	SentIdentifyTimestampLimit uint
+
 	SystemShutdown chan interface{}
 }
 
@@ -145,6 +158,8 @@ type client struct {
 	lastHeartbeatAck   time.Time
 	lastHeartbeatSent  time.Time
 	activateHeartbeats chan interface{}
+
+	sentIdentifies metrics.TimestampLogger
 
 	ShardID uint
 
@@ -542,12 +557,20 @@ func (c *client) emitter(ctx context.Context) {
 			continue
 		}
 
+		var err error
 		if internalMsg {
-			_ = write(msg)
+			err = write(msg)
 		} else {
 			// try to write the message
 			// on failure the message is stored until next time
-			_ = c.messageQueue.Try(write)
+			err = c.messageQueue.Try(write)
+		}
+
+		if err != nil {
+			continue
+		}
+		if msg.Op == opcode.EventIdentify {
+			c.sentIdentifies.LogTimestamp()
 		}
 	}
 }
