@@ -421,10 +421,6 @@ func (c *client) Emit(internal bool, command string, data interface{}) (err erro
 		}
 	} else if c.clientType == clientTypeEvent {
 		switch command {
-		case event.Shutdown:
-			op = opcode.Shutdown
-		case event.Close:
-			op = opcode.Close
 		case event.Heartbeat:
 			op = opcode.EventHeartbeat
 		case event.Identify:
@@ -500,18 +496,15 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter")
 			return
 		case <-internal.Done():
-			go c.reconnect()
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
+			go c.reconnect()
 			return
 		case msg, open = <-c.internalEmitChan:
 		case msg, open = <-c.emitChan:
 		}
-		if !open || (msg.Data == nil && (msg.Op == opcode.Shutdown || msg.Op == opcode.Close)) {
-			if err := c.Disconnect(); err != nil {
-				c.log.Error(c.getLogPrefix(), err)
-			}
-			c.log.Debug(c.getLogPrefix(), "closing emitter after read")
-			return
+		if !open {
+			c.log.Debug(c.getLogPrefix(), "emitChan closed")
+			continue
 		}
 		var err error
 
@@ -581,8 +574,8 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(); err != nil {
-			cancel()
 			c.log.Debug(c.getLogPrefix(), err)
+			cancel()
 			continue
 		}
 
@@ -592,7 +585,8 @@ func (c *client) receiver(ctx context.Context) {
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
 		if err = httd.Unmarshal(packet, evt); err != nil {
-			c.log.Error(c.getLogPrefix(), err)
+			c.log.Error(c.getLogPrefix(), err, "ERRONEOUS PACKET CONTENT:", string(packet))
+			cancel() // sometimes a CDN or some VPN might send a HTML string..
 			continue
 		}
 
