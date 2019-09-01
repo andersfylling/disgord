@@ -127,7 +127,7 @@ func (list *LFU) Get(id Snowflake) (ret *LFUItem, exists bool) {
 	var key int
 	if key, exists = list.table[id]; exists && key != -1 {
 		ret = &list.items[key]
-		list.items[key].increment()
+		ret.increment()
 		list.hits++
 	} else {
 		exists = false // if key == -1, exists might still be true

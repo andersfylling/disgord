@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func BenchmarkAllCacheReplacementStrategies(b *testing.B) {
+func BenchmarkCRS(b *testing.B) {
 	// lfu
 	lfuCache := New(0)
 	benchmarkCacheSet(b, "lfu-unlimited", lfuCache)
