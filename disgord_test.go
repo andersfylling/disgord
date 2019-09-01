@@ -140,7 +140,7 @@ func (g *mockerWSReceiveOnly) Close() (err error) {
 	return
 }
 
-func (g *mockerWSReceiveOnly) Read() (packet []byte, err error) {
+func (g *mockerWSReceiveOnly) Read(ctx context.Context) (packet []byte, err error) {
 	packet = <-g.reading
 	return
 }

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"golang.org/x/xerrors"
+
 	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/httd"
@@ -58,12 +60,13 @@ func (g *nhooyr) Close() (err error) {
 	return err
 }
 
-func (g *nhooyr) Read() (packet []byte, err error) {
+func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	var messageType websocket.MessageType
-	messageType, packet, err = g.c.Read(context.Background())
+	messageType, packet, err = g.c.Read(ctx)
 	if err != nil {
-		if closeErr, ok := err.(*websocket.CloseError); ok {
-			err = &ErrorUnexpectedClose{
+		var closeErr *websocket.CloseError
+		if xerrors.As(err, &closeErr) {
+			err = &CloseErr{
 				info: closeErr.Error(),
 			}
 		}

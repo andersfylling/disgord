@@ -67,7 +67,7 @@ func (g *gorilla) Close() (err error) {
 	return err
 }
 
-func (g *gorilla) Read() (packet []byte, err error) {
+func (g *gorilla) Read(ctx context.Context) (packet []byte, err error) {
 	if g.Disconnected() {
 		// this gets triggered when losing internet connection -> trying to reconnect for a while -> re-establishing a connection
 		// as discord then sends a invalid session package and disgord tries to reconnect again, a panic takes place.
@@ -79,7 +79,7 @@ func (g *gorilla) Read() (packet []byte, err error) {
 	messageType, packet, err = g.c.ReadMessage()
 	if err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			err = &ErrorUnexpectedClose{
+			err = &CloseErr{
 				info: err.Error(),
 			}
 		}

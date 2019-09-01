@@ -13,16 +13,16 @@ type Conn interface {
 	Close() error
 	Open(ctx context.Context, endpoint string, requestHeader http.Header) error
 	WriteJSON(v interface{}) error
-	Read() (packet []byte, err error)
+	Read(ctx context.Context) (packet []byte, err error)
 
 	Disconnected() bool
 }
 
-type ErrorUnexpectedClose struct {
+type CloseErr struct {
 	info string
 }
 
-func (e *ErrorUnexpectedClose) Error() string {
+func (e *CloseErr) Error() string {
 	return e.info
 }
 

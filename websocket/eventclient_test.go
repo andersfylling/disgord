@@ -45,10 +45,12 @@ func (g *testWS) Close() (err error) {
 	return
 }
 
-func (g *testWS) Read() (packet []byte, err error) {
+func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
 	for {
 		select {
 		case packet = <-g.reading:
+		case <-ctx.Done():
+			break
 		case <-time.After(1 * time.Millisecond):
 			g.RLock()
 			dis := g.disconnected
