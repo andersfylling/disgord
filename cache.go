@@ -132,10 +132,6 @@ func newCache(conf *CacheConfig) (c *Cache, err error) {
 	return // success
 }
 
-func DefaultCacheConfig() *CacheConfig {
-	return &CacheConfig{}
-}
-
 // CacheConfig allows for tweaking the cacheLink system on a personal need
 type CacheConfig struct {
 	Mutable bool // Must be immutable to support concurrent access and long-running tasks(!)

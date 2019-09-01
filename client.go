@@ -83,7 +83,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 	var cacher *Cache
 	if !conf.DisableCache {
 		if conf.CacheConfig == nil {
-			conf.CacheConfig = DefaultCacheConfig()
+			conf.CacheConfig = &CacheConfig{}
 		}
 		cacher, err = newCache(conf.CacheConfig)
 		if err != nil {
