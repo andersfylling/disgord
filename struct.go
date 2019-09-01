@@ -8,8 +8,6 @@ import (
 
 	"github.com/andersfylling/disgord/httd"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/constant"
 )
 
@@ -85,7 +83,7 @@ type hasher interface {
 }
 
 type guilder interface {
-	getGuildID() snowflake.ID
+	getGuildID() Snowflake
 }
 
 // Loader loads the objects content into memory. From either the cache or the discord servers.

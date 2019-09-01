@@ -1,7 +1,10 @@
 package websocket
 
 import (
+	"context"
 	"errors"
+	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -9,16 +12,15 @@ import (
 	"github.com/andersfylling/disgord/logger"
 	"github.com/andersfylling/disgord/websocket/cmd"
 	"github.com/andersfylling/disgord/websocket/opcode"
-	"github.com/andersfylling/snowflake/v3"
 	"golang.org/x/net/proxy"
 )
 
 type VoiceConfig struct {
 	// Guild ID to connect to
-	GuildID snowflake.Snowflake
+	GuildID Snowflake
 
 	// User ID that is connecting
-	UserID snowflake.Snowflake
+	UserID Snowflake
 
 	// Session ID
 	SessionID string
@@ -27,10 +29,14 @@ type VoiceConfig struct {
 	Token string
 
 	// proxy allows for use of a custom proxy
-	Proxy proxy.Dialer
+	Proxy      proxy.Dialer
+	HTTPClient *http.Client
 
 	// Endpoint for establishing voice connection
 	Endpoint string
+
+	// MessageQueueLimit number of outgoing messages that can be queued and sent correctly.
+	MessageQueueLimit uint
 
 	Logger logger.Logger
 
@@ -41,7 +47,6 @@ type VoiceClient struct {
 	*client
 	conf *VoiceConfig
 
-	haveConnectedOnce  bool
 	haveIdentifiedOnce bool
 
 	SystemShutdown chan interface{}
@@ -55,17 +60,19 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 	client = &VoiceClient{
 		conf: conf,
 	}
-	client.client, err = newClient(&config{
-		Logger:   conf.Logger,
-		Endpoint: conf.Endpoint,
+	client.client, err = newClient(0, &config{
+		Logger:     conf.Logger,
+		Endpoint:   conf.Endpoint,
+		Proxy:      conf.Proxy,
+		HTTPClient: conf.HTTPClient,
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}
 			},
 		},
-
-		SystemShutdown: conf.SystemShutdown,
-	}, 0)
+		messageQueueLimit: conf.MessageQueueLimit,
+		SystemShutdown:    conf.SystemShutdown,
+	}, client.internalConnect)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +134,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.Emit(cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -181,7 +188,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.Emit(cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil)
 }
 
 //////////////////////////////////////////////////////
@@ -193,32 +200,86 @@ func (c *VoiceClient) sendHeartbeat(i interface{}) error {
 // Connect establishes a socket connection with the Discord API
 func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
 	var rdyI interface{}
-	if rdyI, err = c.client.Connect(opcode.VoiceReady); rdyI != nil && err == nil {
+	if rdyI, err = c.internalConnect(); rdyI != nil && err == nil {
 		return rdyI.(*VoiceReady), nil
 	}
 
 	return nil, err
 }
 
+func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
+	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// certainty say if we are connected
+	if !c.disconnected {
+		err = errors.New("cannot Connect while a connection already exist")
+		return nil, err
+	}
+
+	if c.conf.Endpoint == "" {
+		panic("missing websocket endpoint. Must be set before constructing the sockets")
+	}
+
+	waitingChan := make(chan interface{}, 2)
+	c.onceChannels.Add(opcode.VoiceReady, waitingChan)
+	defer func() {
+		c.onceChannels.Acquire(opcode.VoiceReady)
+		close(waitingChan)
+	}()
+
+	// establish ws connection
+	if err := c.conn.Open(context.Background(), c.conf.Endpoint, nil); err != nil {
+		return nil, err
+	}
+
+	var ctx context.Context
+	ctx, c.cancel = context.WithCancel(context.Background())
+
+	// we can now interact with Discord
+	c.haveConnectedOnce = true
+	c.disconnected = false
+	go c.receiver(ctx)
+	go c.emitter(ctx)
+	go c.startBehaviors(ctx)
+	go c.prepareHeartbeating(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.SystemShutdown:
+			_ = c.Disconnect()
+		}
+	}()
+
+	select {
+	case evt = <-waitingChan:
+		c.log.Info(c.getLogPrefix(), "connected")
+	case <-ctx.Done():
+		c.disconnected = true
+	case <-time.After(5 * time.Second):
+		c.disconnected = true
+		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
+	}
+	return evt, err
+}
+
 func (c *VoiceClient) sendVoiceHelloPacket() {
 	// if this is a new connection we can drop the resume packet
 	if !c.haveIdentifiedOnce {
 		if err := sendVoiceIdentityPacket(c); err != nil {
-			c.Error(err)
+			c.log.Error(c.getLogPrefix(), err)
 		}
 		return
 	}
 
-	_ = c.Emit(cmd.VoiceResume, struct {
-		GuildID   snowflake.Snowflake `json:"server_id"`
-		SessionID string              `json:"session_id"`
-		Token     string              `json:"token"`
+	_ = c.emit(true, cmd.VoiceResume, struct {
+		GuildID   Snowflake `json:"server_id"`
+		SessionID string    `json:"session_id"`
+		Token     string    `json:"token"`
 	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token})
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	err = m.Emit(cmd.VoiceIdentify, &voiceIdentify{
+	err = m.emit(true, cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
@@ -233,7 +294,7 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 	ch := make(chan interface{}, 1)
 	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
-	err = c.Emit(cmd.VoiceSelectProtocol, &voiceSelectProtocol{
+	err = c.emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
 	})

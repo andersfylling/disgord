@@ -10,6 +10,7 @@ import (
 
 // http rate limit identifiers
 const (
+	XRateLimitPrecision  = "X-RateLimit-Precision"
 	XRateLimitLimit      = "X-RateLimit-Limit"
 	XRateLimitRemaining  = "X-RateLimit-Remaining"
 	XRateLimitReset      = "X-RateLimit-Reset" // is converted from seconds to milliseconds!
@@ -85,11 +86,12 @@ func ExtractRateLimitInfo(resp *http.Response, body []byte) (info *RateLimitInfo
 	}
 	if resetStr != "" {
 		info.Empty = false
-		info.Reset, err = strconv.ParseInt(resetStr, 10, 64)
+		var seconds float64
+		seconds, err = strconv.ParseFloat(resetStr, 64)
 		if err != nil {
 			return
 		}
-		info.Reset *= 1000 // second => milliseconds
+		info.Reset = int64(seconds * 1000) // second => milliseconds: 3,453.234 => 3,453,234
 	}
 	if retryAfterStr != "" {
 		info.Empty = false

@@ -19,7 +19,7 @@ import (
 type tagInfo struct {
 	Name         string
 	Omitempty    bool
-	ZeroValCheck string // " == 0", ".Empty()", etc.
+	ZeroValCheck string // " == 0", ".IsZero()", etc.
 }
 
 type fieldInfo struct {
@@ -279,6 +279,8 @@ func getZeroVal(s string) (result string, success bool) {
 		result = "0"
 	case "float32", "float64":
 		result = "0.0"
+	case "Snowflake", "snowflake.ID", "snowflake.Snowflake", "depalias.Snowflake":
+		result = "0"
 	case "string":
 		result = ""
 		success = true

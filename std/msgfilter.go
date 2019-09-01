@@ -96,7 +96,7 @@ func (f *msgFilter) StripPrefix(evt interface{}) interface{} {
 func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 	msg := getMsg(evt)
 	uID := msg.Author.ID
-	if uID.Empty() {
+	if uID.IsZero() {
 		return nil
 	}
 

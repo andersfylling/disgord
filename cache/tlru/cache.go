@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/depalias"
+
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/snowflake/v3"
 )
 
-type Snowflake = snowflake.Snowflake
+type Snowflake = depalias.Snowflake
 
 func NewCacheItem(content interface{}, lifetime time.Duration) *CacheItem {
 	return &CacheItem{

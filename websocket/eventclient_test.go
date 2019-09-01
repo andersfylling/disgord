@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,7 +24,7 @@ type testWS struct {
 	sync.RWMutex
 }
 
-func (g *testWS) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *testWS) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	g.opening <- 1
 	g.Lock()
 	g.disconnected = false
@@ -122,12 +123,11 @@ func TestEvtClient_reconnect(t *testing.T) {
 	}
 
 	eChan := make(chan *Event)
-	aChan := make(A)
 
 	shutdown := make(chan interface{})
 	done := make(chan interface{})
 
-	m, err := NewEventClient(&EvtConfig{
+	m, err := NewEventClient(0, &EvtConfig{
 		// identity
 		Browser:             "disgord",
 		Device:              "disgord",
@@ -137,7 +137,7 @@ func TestEvtClient_reconnect(t *testing.T) {
 		Endpoint: "sfkjsdlfsf",
 		Version:  constant.DiscordVersion,
 		Encoding: constant.JSONEncoding,
-		Logger:   logger.DefaultLogger(false),
+		Logger:   logger.DefaultLogger(true),
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",
@@ -147,13 +147,17 @@ func TestEvtClient_reconnect(t *testing.T) {
 			},
 		},
 
+		connectQueue: func(shardID uint, cb func() error) error {
+			<-time.After(time.Duration(10) * time.Millisecond)
+			return cb()
+		},
+
 		// injected for testing
-		A:         aChan,
 		EventChan: eChan,
 		conn:      conn,
 
 		SystemShutdown: shutdown,
-	}, 0)
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,17 +187,6 @@ func TestEvtClient_reconnect(t *testing.T) {
 			select {
 			case <-eChan:
 				continue
-			case b, ok := <-aChan:
-				if !ok {
-					continue
-				}
-				<-time.After(10 * time.Millisecond)
-				releaser := make(B)
-				b <- &K{
-					Release: releaser,
-					Key:     412, // random
-				}
-				<-releaser
 			}
 		}
 	}()
@@ -250,16 +243,22 @@ func TestEvtClient_reconnect(t *testing.T) {
 		t.Error("timeout")
 	}(t)
 
+	wg2 := sync.WaitGroup{}
+	wg2.Add(1)
+	go func() {
+		// send hello packet
+		wg[heartbeat].Add(1)
+		wg[identify].Add(1)
+		conn.reading <- []byte(`{"t":null,"s":null,"op":10,"d":{"heartbeat_interval":45000,"_trace":["discord-gateway-prd-1-99"]}}`)
+		wg[heartbeat].Wait()
+		wg[identify].Wait()
+		wg2.Done()
+	}()
+
 	wg[connecting].Add(1)
 	_ = m.Connect()
+	wg2.Wait()
 	wg[connecting].Wait()
-
-	// send hello packet
-	wg[heartbeat].Add(1)
-	wg[identify].Add(1)
-	conn.reading <- []byte(`{"t":null,"s":null,"op":10,"d":{"heartbeat_interval":45000,"_trace":["discord-gateway-prd-1-99"]}}`)
-	wg[heartbeat].Wait()
-	wg[identify].Wait()
 
 	// connection is established, now force a reconnect
 	wg[connecting].Add(1)
@@ -294,4 +293,5 @@ func TestEvtClient_reconnect(t *testing.T) {
 
 	// wait for identify
 	wg[identify].Wait()
+	<-time.After(10 * time.Millisecond)
 }

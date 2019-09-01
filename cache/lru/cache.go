@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/snowflake/v3"
+	"github.com/andersfylling/disgord/depalias"
 )
 
-type Snowflake = snowflake.Snowflake
+type Snowflake = depalias.Snowflake
 
 func NewCacheItem(content interface{}) *CacheItem {
 	return &CacheItem{

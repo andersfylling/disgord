@@ -3,7 +3,7 @@
 The following is a set of guidelines for contributing to DisGord.
 These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
-> **Note:** This CONTRIBUTIONS guideline is heavily inspired by the one created by the [Atom Organization](https://github.com/atom) on GitHub.
+> This was inspired by the [Atom Organization](https://github.com/atom) GitHub guideline.
 
 #### Table Of Contents
 
@@ -23,11 +23,10 @@ These are mostly guidelines, not rules. Use your best judgment, and feel free to
   * [Unit Tests](#unit-tests)
   * [Pull Requests](#pull-requests)
 
-[Styleguides](#styleguides)
+[Styleguide](#styleguide)
   * [Git Commit Messages](#git-commit-messages)
 
 [Additional Notes](#additional-notes)
-  * [Issue and Pull Request Labels](#issue-and-pull-request-labels)
 
 ## Code of Conduct
 Use the GoLang formatter tool. Regarding commenting on REST functionality, do follow the commenting guide, which should include:
@@ -49,23 +48,13 @@ Example (use spaces):
 //                          categories from this endpoint is not supported.
 ```
 
-#### Functions and param interfaces
-When creating a function, make sure that it has one purpose. It shouldn't hold any hidden functionality, and it could be wise to take dependencies as a parameter:
-```go
-func CreateGuild(client httd.Poster, params *CreateGuildParams) (ret *Guild, err error) {
-    ...
-}
-```
-
-When you use a dependency as a parameter, either use an existing interface which holds all the methods you require. Or create a new interface for the functions needs (again, keep it purposeful such that other can reuse the interface. Don't throw a bunch of random methods into a interface, it's okay to add more methods than you need as long as it makes sense for the interface you've designed).
-
 #### Mutex
-Struct's that utlises mutex must handle locking in their public methods. However, avoid locking in private methods such that they can be reused. eg. by public methods. The mutex should also be embedded (public accessible), such that developers can lock the object by their own needs.
+For discord specific structs (Message, User, etc.) use Lockable. This is to allow deactivating/activating the mutex in public methods.
 
-Since DisGord handles concurrency through events, it is important to use a normal `sync.RWMutex` and not the `Lockable` provided with DisGord. The reason `Lockable` exists, is such that developers/users can deactivate those mutexes using build constraints. This improves the performance and memory usage, although marginal, I don't see a reason to force mutexes on those that understand when they don't need locking. `Lockable` is used in every Discord data structure (Message, User, etc.).
+If the mutex does not need to be publicly accessible, then use the `mu` prefix.
 
 #### Singletons
-I won't accept pull requests where the author has created a singleton structure. I do not want package singletons either, as I'm worried it might cause technical debt. If you disagree you are welcome to create a discussion (not about the pattern, but why your implementation requires a singleton).
+Nope. But discussions are welcome.
 
 ## I don't want to read this whole thing I just have a question!!!
 
@@ -78,20 +67,22 @@ You can find a support channel for DisGord in Discord. We exist in both the Goph
 Using the live chat application will most likely give you a result quicker.
 
 ## What Should I Know Before I Get Started?
-Technologies:
+Depending on what you want to contribute to, here's a few:
  * Event driven architecture
  * Reactor pattern
  * build constraints
  * golang modules
- * layout of discord docs
+ * discord docs
  * concurrency and channels
  * sharding
+ * caching
 
 ### Introduction
 Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation. DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and on top of that; helper functions, methods, cache replacement algorithms, event channels, etc.
 
+
 ### Design Decisions
-Utilises the Reactor pattern for handling incoming events. These runs in sequence, which eliminates the need for locking. But we also allow the use of channels to receive events.
+DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoiming events should go through the cache before the dev/user gets access to the data.
 
 The only reason locking is provided with the Discord structures is to allow the developer to synchronize their objects in a natural way. DisGord used to have the pro-actor pattern which required the use of locking, and back when that was replaced with the reactor pattern I saw more benefits of keeping the locking option than leaving it. Developers that don't want locking at all, can completely disable them using build constraints for a more performance oriented application.
 
@@ -104,28 +95,44 @@ Each repository has their own demultiplexer for events and each handler is a uni
 
 Events should always be read from cache, not the actual raw data from discord. This is to ensure that the user has complete objects which gives them a better experience.
 
-#### Handlers
-> Also known as listeners/callbacks. The event driven architecture of DisGord uses the reactor pattern and as such the handlers are triggered in sequence.
+#### Event Handlers (functions and channels)
+> Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
 
-DisGord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence and that will not change. 
 
-> Note! The handlers run in sequence per event. But events can run in parallel.
+> Handlers are both functions and channels in DisGord.
+
+DisGord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence.
+
+> Note! The handlers run in sequence per event. But events execute concurrently.
 
 ```go
-Session.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+session.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
     // ...
 })
 ```
 
-#### Channels
-> An alternative way to listen for events
+```go
+session.On(event.MessageCreate, messageChan)
+```
 
-While handlers are the common approach to handle events, DisGord also support channels. It is important to mark that having multiple observers on one event type channel will cause only one of them to receive the event (this is just how channels work, which allows for a simple load balancing system if you benefit from it).
+#### Event Middlewares
+Middlewares are executed in sequence and can manipulate the event content directly. Once all have executed, and none returns nil, the handler(s) are executed. Middlewares only applies on a par-registration basis, meaning they only apply to the handlers/middlewares that are arguments in the same registration as them.
+
+```go
+session.On(event.MessageCreate, middleware1, middleware2, messageChan)
+```
+
+It's an alternative way of doing fail-fast are specifying requirements that can be reused. Or directly manipulate the incoming events before a handler process it, to ensure certain values are added/specified.
+
+#### Event Handlers lifetime
+DisGord allows a controller that dictates the lifetime of the handlers. Such that the handler(s) run only once, five time, or only within five minutes, or whatever kind of behaviour is desired. These are optional and are injected at the end of the registration function.
+
+```go
+session.On(event.MessageCreate, messageChan, &disgord.Ctrl{Deadline:5*time.Second})
+```
 
 #### Mutex
-
 Every Discord object will hold a read/write mutex. You can also disabled the mutexes by build constraints. See the main README file.
-
 
 #### Go Generate
 
@@ -167,46 +174,25 @@ Remember to run go fmt to properly format your code and add unit tests if you pr
 Make them readable. And don't have external dependencies (eg. Discord API).
 
 ### Pull Requests
-If you create a PR that is not based on an issue. Please describe why you want DisGord to support it. Also add examples in both the docs/examples and a shorter version in the go doc (comments).
-
 If your PR is not ready yet, make it a Draft.
 
 Deadlines:
  - If you do not fix the required changes within 30 days your PR will be closed. 
- - If you have created a PR before that was closed due to rule #1, the deadline is reduced from 30 days to 20 days (this only applies when you have 2 or more PR that are a victim to rule #1).
+ - If you have created a PR before that was closed due to rule #1, the deadline is reduced from 30 days to 20 days (this only applies when you have 2 or more PR in a row that are a victim to rule #1).
  - Rule #1 and Rule #2 does not apply if you mark your PR as a draft. Such that if you forget about it for 29 days and mark it as a draft, it will not be closed on day 30 and the counter is reset.
  - PR drafts have no deadline.
 
-## Styleguides
+## Styleguide
 `go fmt ./...`
 
 ### Git Commit Messages
-
 * Use the present tense ("Adds feature" not "Added feature")
 * Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 * Limit the first line to 72 characters or less
 * Reference issues and pull requests liberally after the first line
 * When only changing documentation, include `[ci skip]` in the commit title
-* Consider starting the commit message with an applicable emoji:
-    * :art: `:art:` when improving the format/structure of the code
-    * :racehorse: `:racehorse:` when improving performance
-    * :non-potable_water: `:non-potable_water:` when plugging memory leaks
-    * :memo: `:memo:` when writing docs
-    * :penguin: `:penguin:` when fixing something on Linux
-    * :apple: `:apple:` when fixing something on macOS
-    * :checkered_flag: `:checkered_flag:` when fixing something on Windows
-    * :bug: `:bug:` when fixing a bug
-    * :fire: `:fire:` when removing code or files
-    * :green_heart: `:green_heart:` when fixing the CI build
-    * :white_check_mark: `:white_check_mark:` when adding tests
-    * :lock: `:lock:` when dealing with security
-    * :arrow_up: `:arrow_up:` when upgrading dependencies
-    * :arrow_down: `:arrow_down:` when downgrading dependencies
-    * :shirt: `:shirt:` when removing linter warnings
-
 
 ## Additional notes
-
 Add the following prefixes to your issues to help categorize them better:
 * [help] when asking a question about functionality.
 * [discussion] when starting a discussion about wanted or existing functionality

@@ -133,9 +133,17 @@ func (m *Message) updateInternals() {
 	}
 }
 
+// DirectMessage checks if the message is from a direct message channel.
+//
+// WARNING! Note that, when fetching messages using the REST API the
+// guildID might be empty -> giving a false positive.
+func (m *Message) DirectMessage() bool {
+	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
+}
+
 // TODO: why is this method needed?
 //func (m *Message) MarshalJSON() ([]byte, error) {
-//	if m.ID.Empty() {
+//	if m.ID.IsZero() {
 //		return []byte("{}"), nil
 //	}
 //
@@ -197,7 +205,7 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		message.Author = m.Author.DeepCopy().(*User)
 	}
 
-	if !m.Nonce.Empty() {
+	if !m.Nonce.IsZero() {
 		message.Nonce = m.Nonce
 	}
 
@@ -226,7 +234,7 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 }
 
 func (m *Message) deleteFromDiscord(s Session, flags ...Flag) (err error) {
-	if m.ID.Empty() {
+	if m.ID.IsZero() {
 		err = newErrorMissingSnowflake("message is missing snowflake")
 		return
 	}
@@ -359,13 +367,13 @@ type GetMessagesParams struct {
 
 func (p *GetMessagesParams) Validate() error {
 	var mutuallyExclusives int
-	if !p.Around.Empty() {
+	if !p.Around.IsZero() {
 		mutuallyExclusives++
 	}
-	if !p.Before.Empty() {
+	if !p.Before.IsZero() {
 		mutuallyExclusives++
 	}
-	if !p.After.Empty() {
+	if !p.After.IsZero() {
 		mutuallyExclusives++
 	}
 
@@ -389,7 +397,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
 func (c *Client) getMessages(channelID Snowflake, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
 	}
@@ -454,7 +462,7 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 	//  divide the limit by half and use .Before and .After tags on each quotient limit.
 	//  Use the .After on potential remainder.
 	//  Note! This method can be used recursively
-	if !filter.Around.Empty() {
+	if !filter.Around.IsZero() {
 		beforeParams := *filter
 		beforeParams.Before = beforeParams.Around
 		beforeParams.Around = 0
@@ -501,7 +509,7 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 				return nil, err
 			}
 			messages = append(messages, msgs...)
-			if !filter.After.Empty() {
+			if !filter.After.IsZero() {
 				filter.After = latestSnowflake(msgs)
 			} else {
 				// no snowflake or filter.Before
@@ -524,11 +532,11 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (message *Message, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		err = errors.New("messageID must be set to get a specific message from a channel")
 		return
 	}
@@ -669,7 +677,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func (c *Client) CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
 	}
@@ -717,8 +725,8 @@ func (c *Client) UpdateMessage(chanID, msgID Snowflake, flags ...Flag) (builder 
 		return &Message{}
 	}
 	builder.r.flags = flags
-	builder.r.addPrereq(chanID.Empty(), "channelID must be set to get channel messages")
-	builder.r.addPrereq(msgID.Empty(), "msgID must be set to edit the message")
+	builder.r.addPrereq(chanID.IsZero(), "channelID must be set to get channel messages")
+	builder.r.addPrereq(msgID.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitChannelMessages(chanID),
@@ -739,11 +747,11 @@ func (c *Client) UpdateMessage(chanID, msgID Snowflake, flags ...Flag) (builder 
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
 	}
-	if msgID.Empty() {
+	if msgID.IsZero() {
 		err = errors.New("msgID must be set to delete the message")
 		return
 	}
@@ -822,7 +830,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
 func (c *Client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error) {
-	if chanID.Empty() {
+	if chanID.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return err
 	}
@@ -924,10 +932,10 @@ func (c *Client) UnpinMessage(message *Message, flags ...Flag) error {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (err error) {
-	if channelID.Empty() {
+	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
-	if messageID.Empty() {
+	if messageID.IsZero() {
 		return errors.New("messageID must be set to target the specific channel message")
 	}
 

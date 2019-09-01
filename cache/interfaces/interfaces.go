@@ -1,11 +1,11 @@
 package interfaces
 
 import (
-	"github.com/andersfylling/snowflake/v3"
+	"github.com/andersfylling/disgord/depalias"
 )
 
 // Snowflake ...
-type Snowflake = snowflake.Snowflake
+type Snowflake = depalias.Snowflake
 
 // CacheableItem an item that can be cached
 type CacheableItem interface {

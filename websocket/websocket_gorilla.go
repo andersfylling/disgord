@@ -1,8 +1,9 @@
+// +build disgord_websocket_gorilla
+
 package websocket
 
-// TODO: if we add any other websocket packages, add build constraints to this file.
-
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-func newConn(proxy proxy.Dialer) (Conn, error) {
+func newConn(proxy proxy.Dialer, httpClient *http.Client) (Conn, error) {
 	return &gorilla{
 		proxy: proxy,
 	}, nil
@@ -26,7 +27,7 @@ type gorilla struct {
 	proxy proxy.Dialer
 }
 
-func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
+func (g *gorilla) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	// by default we use gorilla's websocket dialer here, but if the passed http client uses a custom transport
 	// we make sure we open the websocket over the same transport/proxy, in case the user uses this
 	dialer := websocket.DefaultDialer
@@ -38,6 +39,9 @@ func (g *gorilla) Open(endpoint string, requestHeader http.Header) (err error) {
 
 	// establish ws connection
 	g.c, _, err = dialer.Dial(endpoint, requestHeader)
+	if err != nil && !g.Disconnected() {
+		_ = g.Close()
+	}
 	return
 }
 
@@ -80,13 +84,13 @@ func (g *gorilla) Read() (packet []byte, err error) {
 			}
 		}
 
-		return
+		return nil, err
 	}
 
 	if messageType == websocket.BinaryMessage {
 		packet, err = decompressBytes(packet)
 	}
-	return
+	return packet, nil
 }
 
 func (g *gorilla) Disconnected() bool {

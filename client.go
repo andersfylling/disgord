@@ -15,8 +15,6 @@ import (
 	"github.com/andersfylling/disgord/logger"
 	"github.com/andersfylling/disgord/websocket"
 
-	"github.com/andersfylling/snowflake/v3"
-
 	"github.com/andersfylling/disgord/constant"
 	"golang.org/x/net/proxy"
 
@@ -165,6 +163,8 @@ func NewClient(conf *Config) (c *Client, err error) {
 	return c, err
 }
 
+type ShardConfig = websocket.ShardConfig
+
 // Config Configuration for the DisGord Client
 type Config struct {
 	BotToken   string
@@ -175,7 +175,7 @@ type Config struct {
 
 	DisableCache bool
 	CacheConfig  *CacheConfig
-	ShardConfig  websocket.ShardConfig
+	ShardConfig  ShardConfig
 	Presence     *UpdateStatusCommand
 
 	// DisGord triggers custom events to handle caching in a simpler manner.
@@ -299,7 +299,7 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 func (c *Client) CreateBotURL() (u string, err error) {
 	_, _ = c.GetCurrentUser() // update c.myID
 
-	if c.myID.Empty() {
+	if c.myID.IsZero() {
 		err = errors.New("unable to get bot id")
 		return "", err
 	}
@@ -353,7 +353,7 @@ func (c *Client) Myself() (user *User, err error) {
 }
 
 // GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
-func (c *Client) GetConnectedGuilds() []snowflake.ID {
+func (c *Client) GetConnectedGuilds() []Snowflake {
 	c.connectedGuildsMutex.RLock()
 	defer c.connectedGuildsMutex.RUnlock()
 	return c.connectedGuilds
@@ -669,6 +669,10 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error
 func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
 	// TODO: populate these partial guild objects
 	return c.GetCurrentUserGuilds(params)
+}
+
+func (c *Client) KickVoiceParticipant(guildID, userID Snowflake) error {
+	return c.UpdateGuildMember(guildID, userID).KickFromVoice().Execute()
 }
 
 // SendMsg Input anything and it will be converted to a message and sent. If you

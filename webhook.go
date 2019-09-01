@@ -210,7 +210,7 @@ func (c *Client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebh
 		return &Webhook{}
 	}
 	builder.r.flags = flags
-	builder.r.addPrereq(id.Empty(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
 		Ratelimiter: ratelimitWebhook(id),
@@ -235,7 +235,7 @@ func (c *Client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Fla
 		return &Webhook{}
 	}
 	builder.r.flags = flags
-	builder.r.addPrereq(id.Empty(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(token == "", "given webhook token was not set")
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      http.MethodPatch,
@@ -330,7 +330,7 @@ func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuff
 		return errors.New("params can not be nil")
 	}
 
-	if params.WebhookID.Empty() {
+	if params.WebhookID.IsZero() {
 		return errors.New("webhook id is required")
 	}
 	if params.Token == "" {

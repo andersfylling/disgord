@@ -33,7 +33,7 @@ func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage)
 		var channel *Channel
 		if event == EvtChannelCreate {
 			channel = (v.(*ChannelCreate)).Channel
-			if !channel.GuildID.Empty() {
+			if !channel.GuildID.IsZero() {
 				cache.AddGuildChannel(channel.GuildID, channel.ID)
 			}
 		} else if event == EvtChannelUpdate {

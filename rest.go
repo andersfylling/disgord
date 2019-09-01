@@ -9,7 +9,6 @@ import (
 
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 type ErrRest = httd.ErrREST
@@ -139,7 +138,7 @@ func (r *rest) stepCheckCache() (v interface{}, err error) {
 		return nil, nil
 	}
 
-	if r.ID.Empty() {
+	if r.ID.IsZero() {
 		return nil, nil
 	}
 
@@ -258,7 +257,7 @@ type RESTBuilder struct {
 	cache           *Cache
 	cacheRegistry   cacheRegistry
 	cacheMiddleware fRESTCacheMiddleware
-	cacheItemID     snowflake.ID
+	cacheItemID     Snowflake
 
 	body              map[string]interface{}
 	urlParams         urlQuery
@@ -318,7 +317,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		return nil, errors.New(b.prerequisites[i])
 	}
 
-	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.Empty() {
+	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.IsZero() {
 		// cacheLink lookup. return on cacheLink hit
 		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
 		if v != nil && err == nil {

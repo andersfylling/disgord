@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/logger"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 // Emitter for emitting data from A to B. Used in websocket connection
@@ -522,12 +521,14 @@ type Session interface {
 	// Custom REST functions
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 
+	KickVoiceParticipant(guildID, userID Snowflake) error
+
 	// Status update functions
 	UpdateStatus(s *UpdateStatusCommand) error
 	UpdateStatusString(s string) error
 
 	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error)
-	GetConnectedGuilds() []snowflake.ID
+	GetConnectedGuilds() []Snowflake
 
 	// Voice handler, responsible for opening up new voice channel connections
 	VoiceHandler

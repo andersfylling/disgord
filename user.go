@@ -8,7 +8,6 @@ import (
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/snowflake/v3"
 )
 
 const (
@@ -388,12 +387,12 @@ func (u *User) Load(s Session) error {
 
 // IsEmpty checks if the user object has any content
 func (u *User) IsEmpty() bool {
-	return u.ID.Empty()
+	return u.ID.IsZero()
 }
 
 // Partial checks if only the ID is set
 func (u *User) Partial() bool {
-	return !u.ID.Empty() && u.Username == ""
+	return !u.ID.IsZero() && u.Username == ""
 }
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
@@ -479,9 +478,34 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	user.Email = u.Email
 	user.Token = u.Token
 
-	user.Verified = u.Verified
-	user.MFAEnabled = u.MFAEnabled
-	user.Bot = u.Bot
+	if !u.ID.IsZero() {
+		user.ID = u.ID
+	}
+	if u.Username != "" {
+		user.Username = u.Username
+	}
+	if u.Discriminator != 0 {
+		user.Discriminator = u.Discriminator
+	}
+	if (u.overwritten & userOEmail) > 0 {
+		user.Email = u.Email
+	}
+	if (u.overwritten & userOAvatar) > 0 {
+		user.Avatar = u.Avatar
+	}
+	if (u.overwritten & userOToken) > 0 {
+		user.Token = u.Token
+	}
+	if (u.overwritten & userOVerified) > 0 {
+		user.Verified = u.Verified
+	}
+	if (u.overwritten & userOMFAEnabled) > 0 {
+		user.MFAEnabled = u.MFAEnabled
+	}
+	if (u.overwritten & userOBot) > 0 {
+		user.Bot = u.Bot
+	}
+	user.overwritten = u.overwritten
 
 	if u.Avatar != nil {
 		avatar := *u.Avatar
@@ -676,7 +700,7 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetUser(id snowflake.ID, flags ...Flag) (*User, error) {
+func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Ratelimiter: ratelimitUsers(),
 		Endpoint:    endpoint.User(id),
