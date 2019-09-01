@@ -1,6 +1,6 @@
 goos: linux
 goarch: amd64
-pkg: github.com/andersfylling/disgord/cache
+pkg: github.com/andersfylling/disgord/crs
 BenchmarkCRS/set-lfu-unlimited-8         	 5000000	       238 ns/op
 BenchmarkCRS/set-lfu-unlimited-8         	10000000	       212 ns/op
 BenchmarkCRS/set-lfu-unlimited-8         	10000000	       136 ns/op
