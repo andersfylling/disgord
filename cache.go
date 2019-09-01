@@ -5,11 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/crs"
 
-	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/disgord/cache/lfu"
-	"github.com/andersfylling/disgord/cache/lru"
+	"github.com/andersfylling/disgord/httd"
 )
 
 type cacheRegistry uint
@@ -26,13 +24,6 @@ const (
 	GuildMembersCache
 	GuildRolesCache // warning: deletes previous roles
 	GuildRoleCache  // updates or adds a new role
-)
-
-// the different cacheLink replacement algorithms
-const (
-	CacheAlgLRU  = "lru"
-	CacheAlgLFU  = "lfu"
-	CacheAlgTLRU = "tlru"
 )
 
 // Cacher gives basic cacheLink interaction options, and won't require changes when adding more cacheLink systems
@@ -118,22 +109,6 @@ func (e *ErrorUsingDeactivatedCache) Error() string {
 	return e.info
 }
 
-func constructSpecificCacher(alg string, limit uint, lifetime time.Duration) (cacher interfaces.CacheAlger, err error) {
-	switch alg {
-	case CacheAlgTLRU:
-		//cacher = tlru.NewCacheList(limit, lifetime)
-		err = errors.New("TLRU is missing schedulerer for clearing dead/timed out objects and is therefore deactivated")
-	case CacheAlgLRU:
-		cacher = lru.NewCacheList(limit)
-	case CacheAlgLFU:
-		cacher = lfu.NewCacheList(limit)
-	default:
-		err = errors.New("unsupported caching algorithm")
-	}
-
-	return
-}
-
 func newCache(conf *CacheConfig) (c *Cache, err error) {
 	c = &Cache{
 		immutable: !conf.Mutable,
@@ -158,27 +133,7 @@ func newCache(conf *CacheConfig) (c *Cache, err error) {
 }
 
 func DefaultCacheConfig() *CacheConfig {
-	return &CacheConfig{
-		UserCacheAlgorithm:       CacheAlgLFU,
-		VoiceStateCacheAlgorithm: CacheAlgLFU,
-		ChannelCacheAlgorithm:    CacheAlgLFU,
-		GuildCacheAlgorithm:      CacheAlgLFU,
-	}
-}
-
-func ensureBasicCacheConfig(conf *CacheConfig) {
-	if conf.UserCacheAlgorithm == "" {
-		conf.UserCacheAlgorithm = CacheAlgLFU
-	}
-	if conf.VoiceStateCacheAlgorithm == "" {
-		conf.VoiceStateCacheAlgorithm = CacheAlgLFU
-	}
-	if conf.ChannelCacheAlgorithm == "" {
-		conf.ChannelCacheAlgorithm = CacheAlgLFU
-	}
-	if conf.GuildCacheAlgorithm == "" {
-		conf.GuildCacheAlgorithm = CacheAlgLFU
-	}
+	return &CacheConfig{}
 }
 
 // CacheConfig allows for tweaking the cacheLink system on a personal need
@@ -188,32 +143,37 @@ type CacheConfig struct {
 	DisableUserCaching  bool
 	UserCacheMaxEntries uint
 	UserCacheLifetime   time.Duration
-	UserCacheAlgorithm  string
 
 	DisableVoiceStateCaching  bool
 	VoiceStateCacheMaxEntries uint
 	VoiceStateCacheLifetime   time.Duration
-	VoiceStateCacheAlgorithm  string
 
 	DisableChannelCaching  bool
 	ChannelCacheMaxEntries uint
 	ChannelCacheLifetime   time.Duration
-	ChannelCacheAlgorithm  string
 
 	DisableGuildCaching  bool
 	GuildCacheMaxEntries uint
 	GuildCacheLifetime   time.Duration
-	GuildCacheAlgorithm  string
+
+	// Deprecated
+	UserCacheAlgorithm string
+	// Deprecated
+	VoiceStateCacheAlgorithm string
+	// Deprecated
+	ChannelCacheAlgorithm string
+	// Deprecated
+	GuildCacheAlgorithm string
 }
 
 // Cache is the actual cacheLink. It holds the different systems which can be tweaked using the CacheConfig.
 type Cache struct {
 	conf        *CacheConfig
 	immutable   bool
-	users       interfaces.CacheAlger
-	voiceStates interfaces.CacheAlger
-	channels    interfaces.CacheAlger
-	guilds      interfaces.CacheAlger
+	users       *crs.LFU
+	voiceStates *crs.LFU
+	channels    *crs.LFU
+	guilds      *crs.LFU
 }
 
 var _ Cacher = (*Cache)(nil)
@@ -477,13 +437,12 @@ func (c *Cache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v int
 // --------------------------------------------------------
 // Guild
 
-func createGuildCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+func createGuildCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 	if conf.DisableGuildCaching {
 		return nil, nil
 	}
 
-	var limit uint = conf.GuildCacheMaxEntries
-	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
+	cacher = crs.New(conf.GuildCacheMaxEntries)
 	return
 }
 
@@ -717,7 +676,7 @@ func (c *Cache) SetGuild(guild *Guild) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guild.ID); exists {
-		item.Object().(*guildCacheItem).update(guild, c.immutable)
+		item.Val.(*guildCacheItem).update(guild, c.immutable)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
 		content := &guildCacheItem{}
@@ -735,7 +694,7 @@ func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		guild := item.Object().(*guildCacheItem).guild
+		guild := item.Val.(*guildCacheItem).guild
 		if c.immutable {
 			emojisCopy := make([]*Emoji, len(emojis))
 			for i := range emojis {
@@ -776,7 +735,7 @@ func (c *Cache) SetGuildMembers(guildID Snowflake, members []*Member) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		item.Object().(*guildCacheItem).updateMembers(members, c.immutable)
+		item.Val.(*guildCacheItem).updateMembers(members, c.immutable)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
 		content := &guildCacheItem{}
@@ -797,7 +756,7 @@ func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		guild := item.Object().(*guildCacheItem).guild
+		guild := item.Val.(*guildCacheItem).guild
 		var newRoles []*Role
 		if c.immutable {
 			newRoles = make([]*Role, len(roles))
@@ -827,7 +786,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	var newMember bool
 	c.guilds.Lock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		guild := item.Object().(*guildCacheItem)
+		guild := item.Val.(*guildCacheItem)
 		for i := range guild.guild.Members {
 			if guild.guild.Members[i].userID == userID {
 				member = guild.guild.Members[i]
@@ -905,14 +864,13 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	c.guilds.RLock()
 	defer c.guilds.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(id); !exists {
+	result, exists := c.guilds.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
-	guild = result.Object().(*guildCacheItem).build(c)
+	guild = result.Val.(*guildCacheItem).build(c)
 	return
 }
 
@@ -925,14 +883,13 @@ func (c *Cache) PeekGuild(id Snowflake) (guild *Guild, err error) {
 	c.guilds.RLock()
 	defer c.guilds.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(id); !exists {
+	result, exists := c.guilds.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
-	guild = result.Object().(*guildCacheItem).guild
+	guild = result.Val.(*guildCacheItem).guild
 	return
 }
 
@@ -946,14 +903,13 @@ func (c *Cache) GetGuildRoles(id Snowflake) (roles []*Role, err error) {
 	c.guilds.RLock()
 	defer c.guilds.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(id); !exists {
+	result, exists := c.guilds.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
-	rolePs := result.Object().(*guildCacheItem).guild.Roles
+	rolePs := result.Val.(*guildCacheItem).guild.Roles
 	if c.immutable {
 		roles = make([]*Role, len(rolePs))
 		for i := range rolePs {
@@ -976,14 +932,13 @@ func (c *Cache) GetGuildEmojis(id Snowflake) (emojis []*Emoji, err error) {
 	c.guilds.RLock()
 	defer c.guilds.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(id); !exists {
+	result, exists := c.guilds.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
-	emojiPs := result.Object().(*guildCacheItem).guild.Emojis
+	emojiPs := result.Val.(*guildCacheItem).guild.Emojis
 	if c.immutable {
 		emojis = make([]*Emoji, len(emojiPs))
 		for i := range emojiPs {
@@ -1040,14 +995,13 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 
 	c.guilds.RLock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(guildID); !exists {
+	result, exists := c.guilds.Get(guildID)
+	if !exists {
 		err = newErrorCacheItemNotFound(guildID)
 		return
 	}
 
-	guild := result.Object().(*guildCacheItem).guild
+	guild := result.Val.(*guildCacheItem).guild
 	for i := range guild.Members {
 		if guild.Members[i].userID == userID {
 			member = guild.Members[i]
@@ -1078,15 +1032,14 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 
 	c.guilds.RLock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.guilds.Get(guildID); !exists {
+	result, exists := c.guilds.Get(guildID)
+	if !exists {
 		err = newErrorCacheItemNotFound(guildID)
 		c.guilds.RUnlock()
 		return
 	}
 
-	guild := result.Object().(*guildCacheItem).guild
+	guild := result.Val.(*guildCacheItem).guild
 	for i := range guild.Members {
 		if guild.Members[i].userID > after && len(members) <= limit {
 			member := guild.Members[i]
@@ -1128,7 +1081,7 @@ func (c *Cache) DeleteGuildChannel(guildID, channelID Snowflake) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		item.Object().(*guildCacheItem).deleteChannel(channelID)
+		item.Val.(*guildCacheItem).deleteChannel(channelID)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 }
@@ -1141,7 +1094,7 @@ func (c *Cache) DeleteGuildEmoji(guildID, emojiID Snowflake) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		guild := item.Object().(*guildCacheItem).guild
+		guild := item.Val.(*guildCacheItem).guild
 		for i := range guild.Emojis {
 			if guild.Emojis[i].ID != emojiID {
 				continue
@@ -1167,7 +1120,7 @@ func (c *Cache) AddGuildRole(guildID Snowflake, role *Role) {
 
 	c.guilds.Lock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		item.Object().(*guildCacheItem).addRole(role)
+		item.Val.(*guildCacheItem).addRole(role)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 	c.guilds.Unlock()
@@ -1182,7 +1135,7 @@ func (c *Cache) UpdateGuildRole(guildID Snowflake, role *Role, data json.RawMess
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		updated = item.Object().(*guildCacheItem).updateRole(role, data)
+		updated = item.Val.(*guildCacheItem).updateRole(role, data)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 
@@ -1197,7 +1150,7 @@ func (c *Cache) AddGuildChannel(guildID Snowflake, channelID Snowflake) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		item.Object().(*guildCacheItem).addChannel(channelID)
+		item.Val.(*guildCacheItem).addChannel(channelID)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 }
@@ -1211,7 +1164,7 @@ func (c *Cache) DeleteGuildRole(guildID, roleID Snowflake) {
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	if item, exists := c.guilds.Get(guildID); exists {
-		item.Object().(*guildCacheItem).guild.DeleteRoleByID(roleID)
+		item.Val.(*guildCacheItem).guild.DeleteRoleByID(roleID)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	}
 }
@@ -1219,13 +1172,12 @@ func (c *Cache) DeleteGuildRole(guildID, roleID Snowflake) {
 // --------------------------------------------------------
 // Users
 
-func createUserCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+func createUserCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 	if conf.DisableUserCaching {
 		return nil, nil
 	}
 
-	var limit uint = conf.UserCacheMaxEntries
-	cacher, err = constructSpecificCacher(conf.UserCacheAlgorithm, limit, conf.UserCacheLifetime)
+	cacher = crs.New(conf.UserCacheMaxEntries)
 	return
 }
 
@@ -1239,9 +1191,9 @@ func (c *Cache) SetUser(new *User) {
 	defer c.users.Unlock()
 	if item, exists := c.users.Get(new.ID); exists {
 		if c.immutable {
-			new.copyOverToCache(item.Object())
+			new.copyOverToCache(item.Val)
 		} else {
-			item.Set(new)
+			item.Val = new
 		}
 		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
@@ -1265,17 +1217,16 @@ func (c *Cache) GetUser(id Snowflake) (user *User, err error) {
 	c.users.RLock()
 	defer c.users.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.users.Get(id); !exists {
+	result, exists := c.users.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
 	if c.immutable {
-		user = result.Object().(*User).DeepCopy().(*User)
+		user = result.Val.(*User).DeepCopy().(*User)
 	} else {
-		user = result.Object().(*User)
+		user = result.Val.(*User)
 	}
 
 	return
@@ -1289,24 +1240,23 @@ func (c *Cache) PeekUser(id Snowflake) (*User, error) {
 	c.users.RLock()
 	defer c.users.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.users.Get(id); !exists {
+	result, exists := c.users.Get(id)
+	if !exists {
 		return nil, newErrorCacheItemNotFound(id)
 	}
 
-	return result.Object().(*User), nil
+	return result.Val.(*User), nil
 }
 
 // --------------------------------------------------------
 // Voice States
 
-func createVoiceStateCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+func createVoiceStateCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 	if conf.DisableVoiceStateCaching {
 		return nil, nil
 	}
 
-	cacher, err = constructSpecificCacher(conf.VoiceStateCacheAlgorithm, conf.VoiceStateCacheMaxEntries, conf.VoiceStateCacheLifetime)
+	cacher = crs.New(conf.VoiceStateCacheMaxEntries)
 	return
 }
 
@@ -1382,7 +1332,7 @@ func (c *Cache) SetVoiceState(state *VoiceState) {
 
 	id := state.GuildID
 	if item, exists := c.voiceStates.Get(id); exists {
-		states := item.Object().(*guildVoiceStatesCache)
+		states := item.Val.(*guildVoiceStatesCache)
 		states.update(state, c.immutable)
 		c.users.RefreshAfterDiscordUpdate(item)
 	} else {
@@ -1408,14 +1358,13 @@ func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCachePar
 	c.voiceStates.RLock()
 	defer c.voiceStates.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.voiceStates.Get(guildID); !exists {
+	result, exists := c.voiceStates.Get(guildID)
+	if !exists {
 		err = newErrorCacheItemNotFound(guildID)
 		return
 	}
 
-	states := result.Object().(*guildVoiceStatesCache)
+	states := result.Val.(*guildVoiceStatesCache)
 	filter := &VoiceState{
 		ChannelID: params.channelID,
 		UserID:    params.userID,
@@ -1440,12 +1389,12 @@ func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCachePar
 // --------------------------------------------------------
 // Channels
 
-func createChannelCacher(conf *CacheConfig) (cacher interfaces.CacheAlger, err error) {
+func createChannelCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 	if conf.DisableChannelCaching {
 		return nil, nil
 	}
-	var limit uint = conf.ChannelCacheMaxEntries
-	cacher, err = constructSpecificCacher(conf.ChannelCacheAlgorithm, limit, conf.ChannelCacheLifetime)
+
+	cacher = crs.New(conf.ChannelCacheMaxEntries)
 	return
 }
 
@@ -1514,7 +1463,7 @@ func (c *Cache) SetChannel(new *Channel) {
 	c.channels.Lock()
 	defer c.channels.Unlock()
 	if item, exists := c.channels.Get(new.ID); exists {
-		item.Object().(*channelCacheItem).update(new, c.immutable)
+		item.Val.(*channelCacheItem).update(new, c.immutable)
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		content := &channelCacheItem{}
@@ -1532,7 +1481,7 @@ func (c *Cache) UpdateChannelPin(id Snowflake, timestamp Time) {
 	c.channels.Lock()
 	defer c.channels.Unlock()
 	if item, exists := c.channels.Get(id); exists {
-		item.Object().(*channelCacheItem).channel.LastPinTimestamp = timestamp
+		item.Val.(*channelCacheItem).channel.LastPinTimestamp = timestamp
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		// channel does not exist in cacheLink, create a partial channel
@@ -1552,7 +1501,7 @@ func (c *Cache) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowfl
 	c.channels.Lock()
 	defer c.channels.Unlock()
 	if item, exists := c.channels.Get(channelID); exists {
-		item.Object().(*channelCacheItem).channel.LastMessageID = messageID
+		item.Val.(*channelCacheItem).channel.LastMessageID = messageID
 		c.channels.RefreshAfterDiscordUpdate(item)
 	} else {
 		// channel does not exist in cacheLink, create a partial channel
@@ -1574,14 +1523,13 @@ func (c *Cache) GetChannel(id Snowflake) (channel *Channel, err error) {
 	c.channels.RLock()
 	defer c.channels.RUnlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.channels.Get(id); !exists {
+	result, exists := c.channels.Get(id)
+	if !exists {
 		err = newErrorCacheItemNotFound(id)
 		return
 	}
 
-	channel = result.Object().(*channelCacheItem).build(c)
+	channel = result.Val.(*channelCacheItem).build(c)
 	return
 }
 
@@ -1601,13 +1549,12 @@ func (c *Cache) DeleteChannelPermissionOverwrite(channelID Snowflake, overwriteI
 	c.channels.Lock()
 	defer c.channels.Unlock()
 
-	var exists bool
-	var result interfaces.CacheableItem
-	if result, exists = c.channels.Get(channelID); !exists {
+	result, exists := c.channels.Get(channelID)
+	if !exists {
 		return newErrorCacheItemNotFound(channelID)
 	}
 
-	item := result.Object().(*channelCacheItem)
+	item := result.Val.(*channelCacheItem)
 	overwrites := item.channel.PermissionOverwrites
 	for i := range overwrites {
 		if overwrites[i].ID == overwriteID {

@@ -1,37 +1,19 @@
-package cache
+package crs
 
 import (
 	"testing"
-
-	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/disgord/cache/lfu"
-	"github.com/andersfylling/disgord/cache/lru"
 )
 
-type Snowflake = interfaces.Snowflake
-
-type randomStruct struct {
-	ID Snowflake
-}
-
 func BenchmarkAllCacheReplacementStrategies(b *testing.B) {
-
 	// lfu
-	lfuCache := lfu.NewCacheList(0)
+	lfuCache := New(0)
 	benchmarkCacheSet(b, "lfu-unlimited", lfuCache)
-	benchmarkCacheSet(b, "lfu-limited", lfu.NewCacheList(10000))
+	benchmarkCacheSet(b, "lfu-limited", New(10000))
 	benchmarkCacheUpdate(b, "lfu", lfuCache)
 	benchmarkCacheGet(b, "lfu", lfuCache) // should output 1
-
-	// lru
-	lruCache := lru.NewCacheList(0)
-	benchmarkCacheSet(b, "lru-unlimited", lruCache)
-	benchmarkCacheSet(b, "lru-limited", lru.NewCacheList(10000))
-	benchmarkCacheUpdate(b, "lru", lruCache)
-	benchmarkCacheGet(b, "lru", lruCache) // should output 1
 }
 
-func benchmarkCacheSet(b *testing.B, name string, cache interfaces.CacheAlger) {
+func benchmarkCacheSet(b *testing.B, name string, cache *LFU) {
 	b.Run("set-"+name, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			id := Snowflake(uint64(i))
@@ -40,7 +22,7 @@ func benchmarkCacheSet(b *testing.B, name string, cache interfaces.CacheAlger) {
 	})
 }
 
-func benchmarkCacheUpdate(b *testing.B, name string, cache interfaces.CacheAlger) {
+func benchmarkCacheUpdate(b *testing.B, name string, cache *LFU) {
 	b.Run("update-"+name, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			id := Snowflake(uint64(i))
@@ -49,7 +31,7 @@ func benchmarkCacheUpdate(b *testing.B, name string, cache interfaces.CacheAlger
 	})
 }
 
-func benchmarkCacheGet(b *testing.B, name string, cache interfaces.CacheAlger) {
+func benchmarkCacheGet(b *testing.B, name string, cache *LFU) {
 	once := false
 	b.Run("get-"+name, func(b *testing.B) {
 		for i := 0; i < b.N && i < int(cache.Size()); i++ {

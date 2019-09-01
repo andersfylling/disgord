@@ -1,47 +1,13 @@
-// lfu (least frequently counter) will overwrite cached items that have been counter the least when the cache limit is reached.
-package lfu
+package crs
 
 import (
 	"runtime"
 	"sync"
-
-	"github.com/andersfylling/disgord/cache/interfaces"
-	"github.com/andersfylling/disgord/depalias"
 )
 
-type Snowflake = depalias.Snowflake
-
-// NewCacheItem ...
-func NewCacheItem(content interface{}) *CacheItem {
-	return &CacheItem{
-		content: content,
-	}
-}
-
-// CacheItem ...
-type CacheItem struct {
-	id      Snowflake
-	content interface{}
-	counter uint64
-}
-
-// Object ...
-func (i *CacheItem) Object() interface{} {
-	return i.content
-}
-
-// Set ...
-func (i *CacheItem) Set(v interface{}) {
-	i.content = v
-}
-
-func (i *CacheItem) increment() {
-	i.counter++
-}
-
-// NewCacheList ...
-func NewCacheList(size uint) *CacheList {
-	list := &CacheList{
+// New ...
+func New(size uint) *LFU {
+	list := &LFU{
 		limit: size,
 	}
 
@@ -50,9 +16,9 @@ func NewCacheList(size uint) *CacheList {
 	return list
 }
 
-type CacheList struct {
+type LFU struct {
 	sync.RWMutex
-	items    []CacheItem
+	items    []LFUItem
 	table    map[Snowflake]int
 	nilTable []int
 	limit    uint // 0 == unlimited
@@ -62,29 +28,29 @@ type CacheList struct {
 	hits   uint64
 }
 
-func (list *CacheList) Size() uint {
+func (list *LFU) Size() uint {
 	return list.size
 }
 
-func (list *CacheList) Cap() uint {
+func (list *LFU) Cap() uint {
 	return list.limit
 }
 
-func (list *CacheList) ClearSoft() {
+func (list *LFU) ClearSoft() {
 	for i := range list.items {
 		// TODO: is this needed?
-		list.items[i].content = nil
+		list.items[i].Val = nil
 	}
-	list.items = make([]CacheItem, list.limit)
+	list.items = make([]LFUItem, list.limit)
 	list.ClearTables()
 }
 
-func (list *CacheList) ClearHard() {
+func (list *LFU) ClearHard() {
 	list.ClearSoft()
 	runtime.GC()
 }
 
-func (list *CacheList) ClearTableNils() {
+func (list *LFU) ClearTableNils() {
 	size := 0
 	for key := range list.table {
 		if list.table[key] != -1 {
@@ -101,7 +67,7 @@ func (list *CacheList) ClearTableNils() {
 	list.table = newTable
 }
 
-func (list *CacheList) ClearTables() {
+func (list *LFU) ClearTables() {
 	list.table = make(map[Snowflake]int)
 	list.nilTable = make([]int, list.limit)
 
@@ -111,11 +77,10 @@ func (list *CacheList) ClearTables() {
 }
 
 // Set set adds a new content to the list or returns false if the content already exists
-func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
-	newItem := newItemI.(*CacheItem)
-	newItem.id = id
+func (list *LFU) Set(id Snowflake, newItem *LFUItem) {
+	newItem.ID = id
 	if key, exists := list.table[id]; exists && key != -1 {
-		list.items[key].content = newItem.content
+		list.items[key].Val = newItem.Val
 		return
 	}
 
@@ -137,7 +102,7 @@ func (list *CacheList) Set(id Snowflake, newItemI interfaces.CacheableItem) {
 	list.size++
 }
 
-func (list *CacheList) removeLFU() {
+func (list *LFU) removeLFU() {
 	lfuKey := 0
 	lfu := list.items[lfuKey]
 	var i int
@@ -149,17 +114,16 @@ func (list *CacheList) removeLFU() {
 		}
 	}
 
-	list.deleteUnsafe(lfuKey, lfu.id)
+	list.deleteUnsafe(lfuKey, lfu.ID)
 }
 
 // RefreshAfterDiscordUpdate ...
-func (list *CacheList) RefreshAfterDiscordUpdate(itemI interfaces.CacheableItem) {
-	item := itemI.(*CacheItem)
+func (list *LFU) RefreshAfterDiscordUpdate(item *LFUItem) {
 	item.increment()
 }
 
 // Get get an content from the list.
-func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists bool) {
+func (list *LFU) Get(id Snowflake) (ret *LFUItem, exists bool) {
 	var key int
 	if key, exists = list.table[id]; exists && key != -1 {
 		ret = &list.items[key]
@@ -172,32 +136,29 @@ func (list *CacheList) Get(id Snowflake) (ret interfaces.CacheableItem, exists b
 	return
 }
 
-func (list *CacheList) deleteUnsafe(key int, id Snowflake) {
+func (list *LFU) deleteUnsafe(key int, id Snowflake) {
 	list.table[id] = -1
-	list.items[key].content = nil // prepare for GC
+	list.items[key].Val = nil // prepare for GC
 	list.nilTable = append(list.nilTable, key)
 	list.size--
 }
 
 // Delete ...
-func (list *CacheList) Delete(id Snowflake) {
+func (list *LFU) Delete(id Snowflake) {
 	if key, exists := list.table[id]; exists && key != -1 {
 		list.deleteUnsafe(key, id)
 	}
 }
 
 // CreateCacheableItem ...
-func (list *CacheList) CreateCacheableItem(content interface{}) interfaces.CacheableItem {
-	return NewCacheItem(content)
+func (list *LFU) CreateCacheableItem(content interface{}) *LFUItem {
+	return newLFUItem(content)
 }
 
 // Efficiency ...
-func (list *CacheList) Efficiency() float64 {
+func (list *LFU) Efficiency() float64 {
 	if list.hits == 0 {
 		return 0.0
 	}
 	return float64(list.hits) / float64(list.misses+list.hits)
 }
-
-var _ interfaces.CacheAlger = (*CacheList)(nil)
-var _ interfaces.CacheableItem = (*CacheItem)(nil)
