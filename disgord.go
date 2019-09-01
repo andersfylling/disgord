@@ -65,54 +65,31 @@
 //
 // Optimizing your cache logic
 //
-// > Note: if you create a CacheConfig you don't have to set every field. All the CacheAlgorithms are default to LFU when left blank.
+// > Note: if you create a CacheConfig you don't have to set every field.
+//
+// > Note: Only LFU is supported.
+//
+// > Note: Lifetime options does not currently work/do anything (yet).
 //
 // A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
-// Here we pass the cache config when creating the session to access to the different cache replacement algorithms, lifetime settings, and the option to disable different cache systems.
+// Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //    Cache: &disgord.CacheConfig{
 //              Mutable: false, // everything going in and out of the cache is deep copied
-//				// setting Mutable to true, might break your program as this is experimental.
+//				// setting Mutable to true, might break your program as this is experimental and not supported.
 //
 //              DisableUserCaching: false, // activates caching for users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
-//              UserCacheAlgorithm: disgord.CacheAlgLFU,
 //
 //              DisableVoiceStateCaching: true, // don't cache voice states
-//              // VoiceStateCacheLifetime  time.Duration
-//              // VoiceStateCacheAlgorithm string
 //
 //              DisableChannelCaching: false,
-//              ChannelCacheLifetime: 0, // lives forever
-//              ChannelCacheAlgorithm: disgord.CacheAlgLFU, // lfu (Least Frequently Used)
-//
-//				GuildCacheAlgorithm: disgord.CacheAlgLFU, // no limit set, so the strategy to replace entries is not used
+//              ChannelCacheLifetime: 0, // lives forever unless cache replacement strategy kicks in
 //           },
 //  })
 //
-// If you just want to change a specific field, you can do so. By either calling the disgord.DefaultCacheConfig which gives you a Cache configuration designed by DisGord. Or you can set specific fields in a new CacheConfig since the different Cache Strategies are automatically set to LFU if missing.
-// 	&disgord.Config{}
-// Will automatically become
-//  &disgord.Config{
-//  	UserCacheAlgorithm: disgord.CacheAlgLFU,
-//		VoiceStateCacheAlgorithm disgord.CacheAlgLFU,
-//		ChannelCacheAlgorithm: disgord.CacheAlgLFU,
-//		GuildCacheAlgorithm: disgord.CacheAlgLFU,
-//  }
-//
-// And writing
-//  &disgord.Config{
-//  	UserCacheAlgorithm: disgord.CacheAlgLRU,
-//		VoiceStateCacheAlgorithm disgord.CacheAlgLRU,
-//  }
-// Becomes
-//  &disgord.Config{
-//  	UserCacheAlgorithm: disgord.CacheAlgLRU, // unchanged
-//		VoiceStateCacheAlgorithm disgord.CacheAlgLRU,  // unchanged
-//		ChannelCacheAlgorithm: disgord.CacheAlgLFU,
-//		GuildCacheAlgorithm: disgord.CacheAlgLFU,
-//  }
+// If you just want to change a specific field, you can do so. The fields are always default values.
 //
 // > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //

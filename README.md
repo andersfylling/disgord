@@ -101,7 +101,7 @@ github.com/andersfylling/disgord
 └──.circleci    :CircleCI configuration
 └──.githooks    :Hooks that can help speed up development for DisGord contributors
 └──.github      :GitHub templates, issues, PR, etc.
-└──cache        :Different cache replacement algorithms
+└──crs          :Cache Replacement Algorithm
 └──cmd          :Private content for live testing
 └──constant     :Constants such as version, GitHub URL, etc.
 └──docs         :Examples, templates, (documentation)
@@ -177,7 +177,7 @@ Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-a
 
 Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
 level bindings for Discord, while DisGord wants to provide a more configurable system with more 
-features (channels, cache replacement strategies, build constraints, tailored unmarshal methods, etc.). 
+features (channels, build constraints, tailored unmarshal methods, etc.). 
 Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
 future, for now the biggest difference is that DisGord does not support self bots.
 ```

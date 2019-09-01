@@ -260,7 +260,7 @@ type DiscordPacket struct {
 //		return
 //	}
 //	i += 3 // skip `d":`
-//	p.Data = data[i : len(data)-1]
+//	p.Val = data[i : len(data)-1]
 //
 //	return
 //}

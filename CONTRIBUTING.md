@@ -78,10 +78,10 @@ Depending on what you want to contribute to, here's a few:
  * caching
 
 ### Introduction
-Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests). DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, cache replacement algorithms, event channels, etc.
+Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests). DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
 
 ### Design Decisions
-DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoiming events should go through the cache before the dev/user gets access to the data.
+DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoming events should go through the cache before the dev/user gets access to the data.
 
 #### Event Handlers (functions and channels)
 > Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
