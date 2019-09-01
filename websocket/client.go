@@ -606,7 +606,7 @@ func (c *client) receiver(ctx context.Context) {
 
 		var packet []byte
 		var err error
-		if packet, err = c.conn.Read(); err != nil {
+		if packet, err = c.conn.Read(context.Background()); err != nil {
 			c.log.Debug(c.getLogPrefix(), err)
 			cancel()
 			continue
