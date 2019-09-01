@@ -1,8 +1,11 @@
 package disgord
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func TestChannel_DeepCopy(t *testing.T) {
@@ -75,4 +78,14 @@ func TestChannel_UnmarshalJSON(t *testing.T) {
 
 func TestChannel_saveToDiscord(t *testing.T) {
 
+}
+
+func TestChannel_JSONIconNull(t *testing.T) {
+	data := []byte(`{"id":"324234235","type":1,"icon":null}`)
+	var c *Channel
+	if err := httd.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println(c.Icon)
 }

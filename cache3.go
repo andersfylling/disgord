@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"time"
+
 	jp "github.com/buger/jsonparser"
 )
 
@@ -23,6 +25,27 @@ type BasicCacheRepo interface {
 	// Get returns nil when no match was found
 	Get(id Snowflake) interface{}
 	Del(id Snowflake)
+}
+
+// CacheConfig allows for tweaking the cacheLink system on a personal need
+type CacheConfig struct {
+	Mutable bool // Must be immutable to support concurrent access and long-running tasks(!)
+
+	DisableUserCaching  bool
+	UserCacheMaxEntries uint
+	UserCacheLifetime   time.Duration
+
+	DisableVoiceStateCaching  bool
+	VoiceStateCacheMaxEntries uint
+	VoiceStateCacheLifetime   time.Duration
+
+	DisableChannelCaching  bool
+	ChannelCacheMaxEntries uint
+	ChannelCacheLifetime   time.Duration
+
+	DisableGuildCaching  bool
+	GuildCacheMaxEntries uint
+	GuildCacheLifetime   time.Duration
 }
 
 type cache3 struct {
