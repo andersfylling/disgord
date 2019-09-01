@@ -1,5 +1,5 @@
 workflow "Code quality" {
-  on = ["pull_request", "push"]
+  on = "push"
   resolves = [
     "go imports",
     "staticcheck",
