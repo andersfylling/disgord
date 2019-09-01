@@ -1,5 +1,5 @@
-workflow "PR check" {
-  on = "pull_request"
+workflow "Code quality" {
+  on = ["pull_request", "push"]
   resolves = [
     "go imports",
     "staticcheck",
