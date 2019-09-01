@@ -22,7 +22,7 @@ func NewCacheItem(content interface{}) *CacheItem {
 type CacheItem struct {
 	item     interface{}
 	lastUsed int64
-	id       snowflake.ID
+	id       Snowflake
 }
 
 func (i *CacheItem) Object() interface{} {
@@ -161,12 +161,10 @@ func (list *CacheList) Foreach(cb func(interface{})) {
 	}
 }
 
-func (list *CacheList) ListIDs() (ids []snowflake.ID) {
-	ids = make([]snowflake.ID, len(list.items))
-	var i int
-	for k := range list.items {
-		ids[i] = list.items[k].id
-		i++
+func (list *CacheList) ListIDs() (ids []Snowflake) {
+	ids = make([]Snowflake, len(list.items))
+	for i := range list.items {
+		ids[i] = list.items[i].id
 	}
 
 	return ids

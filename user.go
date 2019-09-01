@@ -363,7 +363,7 @@ type User struct {
 	Username      string        `json:"username,omitempty"`
 	Discriminator Discriminator `json:"discriminator,omitempty"`
 	Email         string        `json:"email,omitempty"`
-	Avatar        *string       `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
+	Avatar        string        `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA
 	Token         string        `json:"token,omitempty"`
 	Verified      bool          `json:"verified,omitempty"`
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
@@ -454,11 +454,7 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Verified = u.Verified
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
-
-	if u.Avatar != nil {
-		avatar := *u.Avatar
-		user.Avatar = &avatar
-	}
+	user.Avatar = u.Avatar
 
 	if constant.LockedMethods {
 		u.RUnlock()
@@ -477,40 +473,10 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	user.Discriminator = u.Discriminator
 	user.Email = u.Email
 	user.Token = u.Token
-
-	if !u.ID.IsZero() {
-		user.ID = u.ID
-	}
-	if u.Username != "" {
-		user.Username = u.Username
-	}
-	if u.Discriminator != 0 {
-		user.Discriminator = u.Discriminator
-	}
-	if (u.overwritten & userOEmail) > 0 {
-		user.Email = u.Email
-	}
-	if (u.overwritten & userOAvatar) > 0 {
-		user.Avatar = u.Avatar
-	}
-	if (u.overwritten & userOToken) > 0 {
-		user.Token = u.Token
-	}
-	if (u.overwritten & userOVerified) > 0 {
-		user.Verified = u.Verified
-	}
-	if (u.overwritten & userOMFAEnabled) > 0 {
-		user.MFAEnabled = u.MFAEnabled
-	}
-	if (u.overwritten & userOBot) > 0 {
-		user.Bot = u.Bot
-	}
-	user.overwritten = u.overwritten
-
-	if u.Avatar != nil {
-		avatar := *u.Avatar
-		user.Avatar = &avatar
-	}
+	user.MFAEnabled = u.MFAEnabled
+	user.Bot = u.Bot
+	user.Verified = u.Verified
+	user.Avatar = u.Avatar
 
 	return
 }

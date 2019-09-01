@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"github.com/andersfylling/snowflake/v3"
 	jp "github.com/buger/jsonparser"
 )
 
@@ -20,7 +19,7 @@ type restCacher interface {
 type BasicCacheRepo interface {
 	Size() uint
 	Cap() uint
-	ListIDs() []snowflake.ID
+	ListIDs() []Snowflake
 	// Get returns nil when no match was found
 	Get(id Snowflake) interface{}
 	Del(id Snowflake)

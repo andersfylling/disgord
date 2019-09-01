@@ -80,11 +80,8 @@ Depending on what you want to contribute to, here's a few:
 ### Introduction
 Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation. DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and on top of that; helper functions, methods, cache replacement algorithms, event channels, etc.
 
-
 ### Design Decisions
-DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoiming events should go through the cache before the dev/user gets access to the data.
-
-The only reason locking is provided with the Discord structures is to allow the developer to synchronize their objects in a natural way. DisGord used to have the pro-actor pattern which required the use of locking, and back when that was replaced with the reactor pattern I saw more benefits of keeping the locking option than leaving it. Developers that don't want locking at all, can completely disable them using build constraints for a more performance oriented application.
+DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoming events should go through the cache before the dev/user gets access to the data.
 
 #### Caching
 Caching in discord is happens behind the scenes and unless a user explicitly tells disgord to not check the cache before sending a request, disgord should always do so.
@@ -97,7 +94,6 @@ Events should always be read from cache, not the actual raw data from discord. T
 
 #### Event Handlers (functions and channels)
 > Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
-
 
 > Handlers are both functions and channels in DisGord.
 

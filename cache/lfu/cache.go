@@ -194,8 +194,8 @@ func (list *CacheList) Foreach(cb func(interface{})) {
 	}
 }
 
-func (list *CacheList) ListIDs() (ids []snowflake.ID) {
-	ids = make([]snowflake.ID, 0, len(list.items))
+func (list *CacheList) ListIDs() (ids []Snowflake) {
+	ids = make([]Snowflake, 0, len(list.items))
 	for i := range list.items {
 		ids = append(ids, list.items[i].id)
 	}
