@@ -239,11 +239,11 @@ type Activity struct {
 
 	Name          string             `json:"name"`                     // the activity's name
 	Type          int                `json:"type"`                     // activity type
-	URL           *string            `json:"url,omitempty"`            //stream url, is validated when type is 1
+	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
 	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
 	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
-	Details       *string            `json:"details,omitempty"`        //?	?string	what the player is currently doing
-	State         *string            `json:"state,omitempty"`          //state?	?string	the user's current party status
+	Details       string             `json:"details,omitempty"`        //?	?string	what the player is currently doing
+	State         string             `json:"state,omitempty"`          //state?	?string	the user's current party status
 	Party         *ActivityParty     `json:"party,omitempty"`          //party?	party object	information for the current party of the player
 	Assets        *ActivityAssets    `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
 	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
@@ -280,21 +280,12 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	activity.ApplicationID = a.ApplicationID
 	activity.Instance = a.Instance
 	activity.Flags = a.Flags
+	activity.URL = a.URL
+	activity.Details = a.Details
+	activity.State = a.State
 
-	if a.URL != nil {
-		url := *a.URL
-		activity.URL = &url
-	}
 	if a.Timestamps != nil {
 		activity.Timestamps = a.Timestamps.DeepCopy().(*ActivityTimestamp)
-	}
-	if a.Details != nil {
-		details := *a.Details
-		activity.Details = &details
-	}
-	if a.State != nil {
-		state := *a.State
-		activity.State = &state
 	}
 	if a.Party != nil {
 		activity.Party = a.Party.DeepCopy().(*ActivityParty)
@@ -411,7 +402,7 @@ type User struct {
 	Username      string        `json:"username,omitempty"`
 	Discriminator Discriminator `json:"discriminator,omitempty"`
 	Email         string        `json:"email,omitempty"`
-	Avatar        *string       `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
+	Avatar        string        `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
 	Token         string        `json:"token,omitempty"`
 	Verified      bool          `json:"verified,omitempty"`
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
@@ -454,8 +445,8 @@ func (u *User) UnmarshalJSON(data []byte) (err error) {
 	if (changes & userOEmail) > 0 {
 		u.Email = *j.Email
 	}
-	if (changes & userOAvatar) > 0 {
-		u.Avatar = j.Avatar
+	if (changes&userOAvatar) > 0 && j.Avatar != nil {
+		u.Avatar = *j.Avatar
 	}
 	if (changes & userOToken) > 0 {
 		u.Token = *j.Token
@@ -527,12 +518,8 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Verified = u.Verified
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
+	user.Avatar = u.Avatar
 	user.overwritten = u.overwritten
-
-	if u.Avatar != nil {
-		avatar := *u.Avatar
-		user.Avatar = &avatar
-	}
 
 	if constant.LockedMethods {
 		u.RUnlock()

@@ -58,18 +58,7 @@ func TestUserPresence_InterfaceImplementations(t *testing.T) {
 }
 
 func equals(a, b *User) bool {
-	ok := a.ID == b.ID && a.Username == b.Username && a.Discriminator == b.Discriminator && a.Email == b.Email && a.Token == b.Token && a.Verified == b.Verified && a.MFAEnabled == b.MFAEnabled && a.Bot == b.Bot
-	if a.Avatar == nil && b.Avatar != a.Avatar {
-		ok = false
-	}
-	if b.Avatar == nil && b.Avatar != a.Avatar {
-		ok = false
-	}
-	if a.Avatar != nil && b.Avatar != nil && *a.Avatar != *b.Avatar {
-		ok = false
-	}
-
-	return ok
+	return a.ID == b.ID && a.Username == b.Username && a.Discriminator == b.Discriminator && a.Email == b.Email && a.Token == b.Token && a.Verified == b.Verified && a.MFAEnabled == b.MFAEnabled && a.Bot == b.Bot && b.Avatar == a.Avatar
 }
 
 type userCopyOverToCacheTestSets struct {
@@ -93,7 +82,7 @@ func TestUser_copyOverToCache(t *testing.T) {
 	datas[2] = userCopyOverToCacheTestSets{user3, []byte(`{"id": "133218433276182528","username":"alak","discriminator":"1849","avatar":"38d04eba240fa3cad581a947025644ad"}`)}
 
 	user4 := User(user3)
-	user4.Avatar = nil
+	user4.Avatar = ""
 	datas[3] = userCopyOverToCacheTestSets{user4, []byte(`{"id": "133218433276182528","username":"alak","discriminator":"1849","avatar":null}`)}
 
 	user5 := User(user4)
@@ -102,7 +91,7 @@ func TestUser_copyOverToCache(t *testing.T) {
 	user6 := User(user5)
 	user6.Username = "sdfsd"
 	a := "aaaaaaaaa"
-	user6.Avatar = &a
+	user6.Avatar = a
 	user6.Discriminator = Discriminator(1249)
 	user6.Verified = false
 	datas[5] = userCopyOverToCacheTestSets{user6, []byte(`{"id": "133218433276182528","username":"sdfsd","discriminator":"1249","avatar":"aaaaaaaaa","verified":false}`)}

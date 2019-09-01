@@ -83,6 +83,8 @@ Compared to DiscordGo, DisGord does not focus on having a minimalistic implement
 ### Design Decisions
 DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoiming events should go through the cache before the dev/user gets access to the data.
 
+None of the discord data structures can be used to marshal json data for REST request. REST requests must have dedicated structures. E.g. the message struct can not be used to create a new message, one must utilise the MessageCreateParam struct. Otherwise we end up worrying about both marshalling and unmarshalling of these structures, which creates weird/unecessary custom marshallers and string pointers. (Structures are those of Guild, Channel, Message, AuditLog, etc.)
+
 #### Event Handlers (functions and channels)
 > Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
 

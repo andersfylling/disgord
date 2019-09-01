@@ -3,12 +3,14 @@ package disgord
 import (
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/httd"
 )
 
 func TestChannel_DeepCopy(t *testing.T) {
 	test := NewChannel()
 	icon1 := "sdljfdsjf"
-	test.Icon = &icon1
+	test.Icon = icon1
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
 		Type: "first",
 	})
@@ -18,8 +20,8 @@ func TestChannel_DeepCopy(t *testing.T) {
 
 	copy := test.DeepCopy().(*Channel)
 	icon2 := "sfkjdsf"
-	test.Icon = &icon2
-	if *copy.Icon != icon1 {
+	test.Icon = icon2
+	if copy.Icon != icon1 {
 		t.Error("deep copy failed")
 	}
 
@@ -75,4 +77,20 @@ func TestChannel_UnmarshalJSON(t *testing.T) {
 
 func TestChannel_saveToDiscord(t *testing.T) {
 
+}
+func TestChannel_JSONIconNull(t *testing.T) {
+	// check if null's in json are parsed as an empty string
+	data := []byte(`{"id":"324234235","type":1,"icon":null}`)
+	var c *struct {
+		ID   Snowflake `json:"id"`
+		Type int       `json:"type"`
+		Icon string    `json:"icon"`
+	}
+	if err := httd.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Icon != "" {
+		t.Error(c.Icon, "was not empty")
+	}
 }

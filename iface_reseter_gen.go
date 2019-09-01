@@ -16,7 +16,7 @@ func (c *Channel) Reset() {
 	c.UserLimit = 0
 	c.RateLimitPerUser = 0
 	c.Recipients = nil
-	c.Icon = nil
+	c.Icon = ""
 	c.OwnerID = 0
 	c.ApplicationID = 0
 	c.ParentID = 0
@@ -51,8 +51,8 @@ func (g *Guild) Reset() {
 	g.ID = 0
 	g.ApplicationID = 0
 	g.Name = ""
-	g.Icon = nil
-	g.Splash = nil
+	g.Icon = ""
+	g.Splash = ""
 	g.Owner = false
 	g.OwnerID = 0
 	g.Permissions = 0
@@ -143,11 +143,11 @@ func (r *Role) Reset() {
 func (a *Activity) Reset() {
 	a.Name = ""
 	a.Type = 0
-	a.URL = nil
+	a.URL = ""
 	a.Timestamps = nil
 	a.ApplicationID = 0
-	a.Details = nil
-	a.State = nil
+	a.Details = ""
+	a.State = ""
 	a.Party = nil
 	a.Assets = nil
 	a.Secrets = nil
@@ -160,7 +160,7 @@ func (u *User) Reset() {
 	u.Username = ""
 	u.Discriminator = 0
 	u.Email = ""
-	u.Avatar = nil
+	u.Avatar = ""
 	u.Token = ""
 	u.Verified = false
 	u.MFAEnabled = false

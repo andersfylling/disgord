@@ -73,8 +73,8 @@ func ratelimitWebhook(id Snowflake) string {
 // CreateWebhookParams json params for the create webhook rest request avatar string
 // https://discordapp.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
-	Name   string  `json:"name"`   // name of the webhook (2-32 characters)
-	Avatar *string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+	Name   string `json:"name"`   // name of the webhook (2-32 characters)
+	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 }
 
 func (c *CreateWebhookParams) FindErrors() error {

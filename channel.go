@@ -112,7 +112,7 @@ type Channel struct {
 	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
 	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
 	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM/GroupDM
-	Icon                 *string               `json:"icon,omitempty"`                  // ?|?
+	Icon                 string                `json:"icon,omitempty"`                  // ?|?
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
 	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?
