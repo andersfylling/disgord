@@ -3,6 +3,8 @@ package disgord
 import (
 	"time"
 
+	"github.com/pkg/errors"
+
 	jp "github.com/buger/jsonparser"
 )
 
@@ -59,6 +61,48 @@ type CacheConfig struct {
 
 type cache struct {
 }
+
+func (c *cache) onPresencesReplace(data []byte, flags Flag) (updated interface{}, err error) {
+	return nil, errors.New("not implemented")
+}
+func (c *cache) onReady(data []byte, flags Flag) (updated interface{}, err error) {
+	return nil, errors.New("not implemented")
+}
+func (c *cache) onResumed(data []byte, flags Flag) (updated interface{}, err error) {
+	return nil, errors.New("not implemented")
+}
+
+func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onChannelDelete(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onChannelPinsUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onGuildCreate(data []byte, flags Flag) (updated interface{}, err error)              {}
+func (c *cache) onGuildUpdate(data []byte, flags Flag) (updated interface{}, err error)              {}
+func (c *cache) onGuildDelete(data []byte, flags Flag) (updated interface{}, err error)              {}
+func (c *cache) onGuildBanAdd(data []byte, flags Flag) (updated interface{}, err error)              {}
+func (c *cache) onGuildBanRemove(data []byte, flags Flag) (updated interface{}, err error)           {}
+func (c *cache) onGuildEmojisUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onGuildIntegrationsUpdate(data []byte, flags Flag) (updated interface{}, err error)  {}
+func (c *cache) onGuildMemberAdd(data []byte, flags Flag) (updated interface{}, err error)           {}
+func (c *cache) onGuildMemberRemove(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onGuildMemberUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onGuildMembersChunk(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onGuildRoleCreate(data []byte, flags Flag) (updated interface{}, err error)          {}
+func (c *cache) onGuildRoleUpdate(data []byte, flags Flag) (updated interface{}, err error)          {}
+func (c *cache) onGuildRoleDelete(data []byte, flags Flag) (updated interface{}, err error)          {}
+func (c *cache) onMessageCreate(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onMessageUpdate(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onMessageDelete(data []byte, flags Flag) (updated interface{}, err error)            {}
+func (c *cache) onMessageDeleteBulk(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onMessageReactionAdd(data []byte, flags Flag) (updated interface{}, err error)       {}
+func (c *cache) onMessageReactionRemove(data []byte, flags Flag) (updated interface{}, err error)    {}
+func (c *cache) onMessageReactionRemoveAll(data []byte, flags Flag) (updated interface{}, err error) {}
+func (c *cache) onPresenceUpdate(data []byte, flags Flag) (updated interface{}, err error)           {}
+func (c *cache) onTypingStart(data []byte, flags Flag) (updated interface{}, err error)              {}
+func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error)               {}
+func (c *cache) onVoiceStateUpdate(data []byte, flags Flag) (updated interface{}, err error)         {}
+func (c *cache) onVoiceServerUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onWebhooksUpdate(data []byte, flags Flag) (updated interface{}, err error)           {}
 
 //////////////////////////////////////////////////////
 //
