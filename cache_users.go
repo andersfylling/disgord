@@ -1,12 +1,12 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/cache/interfaces"
+	"github.com/andersfylling/disgord/crs"
 	jp "github.com/buger/jsonparser"
 )
 
 type usersCache struct {
-	items  interfaces.CacheAlger
+	items  *crs.LFU
 	config *CacheConfig
 	pool   Pool // must never be nil !
 }
@@ -20,7 +20,7 @@ func (c *usersCache) Get(userID Snowflake) (user interface{}) {
 	usr := c.pool.Get().(*User)
 	c.items.RLock()
 	if item, exists := c.items.Get(userID); exists {
-		_ = item.Object().(*User).copyOverToCache(usr)
+		_ = item.Val.(*User).copyOverToCache(usr)
 	}
 	c.items.RUnlock()
 
@@ -83,7 +83,7 @@ func (c *usersCache) handleUserData(data []byte, flags Flag) (updated *User, err
 	c.items.Lock()
 	defer c.items.Unlock()
 	if item, exists := c.items.Get(id); exists {
-		usr = item.Object().(*User)
+		usr = item.Val.(*User)
 		err = Unmarshal(data, usr)
 	} else {
 		usr = c.pool.Get().(*User)
@@ -274,7 +274,7 @@ func (c *usersCache) onGuildMembersChunk(data []byte, flags Flag) (updated inter
 		// update-user
 		var usr *User
 		if item, exists := c.items.Get(id); exists {
-			usr = item.Object().(*User)
+			usr = item.Val.(*User)
 			err = Unmarshal(data, usr)
 		} else {
 			usr = c.pool.Get().(*User)

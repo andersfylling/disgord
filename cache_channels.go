@@ -1,12 +1,12 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/cache/interfaces"
+	"github.com/andersfylling/disgord/crs"
 	jp "github.com/buger/jsonparser"
 )
 
 type channelsCache struct {
-	items  interfaces.CacheAlger
+	items  *crs.LFU
 	users  *usersCache
 	config *CacheConfig
 	pool   Pool
@@ -49,7 +49,7 @@ func (c *channelsCache) Peek(channelID Snowflake, cb func(*Channel)) (exists boo
 	}
 	c.items.RLock()
 	if item, exists := c.items.Get(channelID); exists {
-		cb(item.Object().(*Channel))
+		cb(item.Val.(*Channel))
 		exists = true
 	}
 	c.items.RUnlock()
@@ -62,7 +62,7 @@ func (c *channelsCache) Edit(channelID Snowflake, cb func(*Channel)) (exists boo
 	}
 	c.items.Lock()
 	if item, exists := c.items.Get(channelID); exists {
-		cb(item.Object().(*Channel))
+		cb(item.Val.(*Channel))
 		exists = true
 	}
 	c.items.Unlock()

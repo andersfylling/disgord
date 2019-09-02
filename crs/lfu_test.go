@@ -1,8 +1,6 @@
-package lfu
+package crs
 
-import (
-	"testing"
-)
+import "testing"
 
 type randomStruct struct {
 	ID Snowflake
@@ -11,7 +9,7 @@ type randomStruct struct {
 func TestCacheList(t *testing.T) {
 	t.Run("size limit", func(t *testing.T) {
 		limit := uint(10)
-		list := NewCacheList(limit)
+		list := New(limit)
 		if list.size != 0 {
 			t.Error("size if not 0")
 		}
@@ -19,7 +17,7 @@ func TestCacheList(t *testing.T) {
 			usr := &randomStruct{}
 			usr.ID = Snowflake(i)
 
-			item := NewCacheItem(usr)
+			item := newLFUItem(usr)
 			list.Set(usr.ID, item)
 		}
 
@@ -29,11 +27,11 @@ func TestCacheList(t *testing.T) {
 	})
 	t.Run("replaces only LFU", func(t *testing.T) {
 		ids := []Snowflake{1, 3, 5, 7, 9}
-		list := NewCacheList(uint(len(ids)))
+		list := New(uint(len(ids)))
 		for i := 0; i < 256; i++ {
 			usr := &randomStruct{}
 			usr.ID = Snowflake(i)
-			item := NewCacheItem(usr)
+			item := newLFUItem(usr)
 
 			for _, id := range ids {
 				if usr.ID == id {

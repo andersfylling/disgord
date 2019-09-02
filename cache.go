@@ -46,9 +46,18 @@ type CacheConfig struct {
 	DisableGuildCaching  bool
 	GuildCacheMaxEntries uint
 	GuildCacheLifetime   time.Duration
+
+	// Deprecated
+	UserCacheAlgorithm string
+	// Deprecated
+	VoiceStateCacheAlgorithm string
+	// Deprecated
+	ChannelCacheAlgorithm string
+	// Deprecated
+	GuildCacheAlgorithm string
 }
 
-type cache3 struct {
+type cache struct {
 }
 
 //////////////////////////////////////////////////////

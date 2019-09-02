@@ -181,8 +181,8 @@ type Guild struct {
 	ID                          Snowflake                     `json:"id"`
 	ApplicationID               Snowflake                     `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
-	Icon                        *string                       `json:"icon"`            //  |?, icon hash
-	Splash                      *string                       `json:"splash"`          //  |?, image hash
+	Icon                        string                        `json:"icon"`            //  |?, icon hash
+	Splash                      string                        `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
 	OwnerID                     Snowflake                     `json:"owner_id"`
 	Permissions                 PermissionBits                `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
@@ -268,18 +268,12 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild.Large = g.Large
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
+	guild.Splash = g.Splash
+	g.Icon = g.Icon
 
 	// pointers
 	if !g.ApplicationID.IsZero() {
 		guild.ApplicationID = g.ApplicationID
-	}
-	if g.Splash != nil {
-		splash := *g.Splash
-		guild.Splash = &splash
-	}
-	if g.Icon != nil {
-		icon := *g.Icon
-		guild.Icon = &icon
 	}
 	if !g.AfkChannelID.IsZero() {
 		guild.AfkChannelID = g.AfkChannelID
@@ -759,18 +753,12 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.Large = g.Large
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
+	guild.Splash = g.Splash
+	g.Icon = g.Icon
 
 	// pointers
 	if !g.ApplicationID.IsZero() {
 		guild.ApplicationID = g.ApplicationID
-	}
-	if g.Splash != nil {
-		splash := *g.Splash
-		guild.Splash = &splash
-	}
-	if g.Icon != nil {
-		icon := *g.Icon
-		guild.Icon = &icon
 	}
 	if !g.AfkChannelID.IsZero() {
 		guild.AfkChannelID = g.AfkChannelID

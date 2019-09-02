@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -79,13 +78,19 @@ func TestChannel_UnmarshalJSON(t *testing.T) {
 func TestChannel_saveToDiscord(t *testing.T) {
 
 }
-
 func TestChannel_JSONIconNull(t *testing.T) {
+	// check if null's in json are parsed as an empty string
 	data := []byte(`{"id":"324234235","type":1,"icon":null}`)
-	var c *Channel
+	var c *struct {
+		ID   Snowflake `json:"id"`
+		Type int       `json:"type"`
+		Icon string    `json:"icon"`
+	}
 	if err := httd.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Println(c.Icon)
+	if c.Icon != "" {
+		t.Error(c.Icon, "was not empty")
+	}
 }

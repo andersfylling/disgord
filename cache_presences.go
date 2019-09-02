@@ -3,13 +3,14 @@ package disgord
 import (
 	"sync"
 
-	"github.com/andersfylling/disgord/cache/interfaces"
+	"github.com/andersfylling/disgord/crs"
+
 	jp "github.com/buger/jsonparser"
 )
 
 // the guild should nil their presence field, and fetch them from here on build
 type presencesCache struct {
-	items  interfaces.CacheAlger
+	items  *crs.LFU
 	users  *usersCache
 	config *CacheConfig
 	pool   Pool // must never be nil !
@@ -96,7 +97,7 @@ func (c *presencesCache) Del(guildID Snowflake) {
 func (c *presencesCache) Get(guildID Snowflake) (presences interface{}) {
 	c.items.RLock()
 	if item, exists := c.items.Get(guildID); exists {
-		presences = item.Object().(*cachedGuildPresences)
+		presences = item.Val.(*cachedGuildPresences)
 	}
 	c.items.RUnlock()
 	if presences == nil {
@@ -165,7 +166,7 @@ func (c *presencesCache) onPresenceUpdate(data []byte, flags Flag) (updated inte
 	var ps *cachedGuildPresences
 	c.items.RLock()
 	if item, exists := c.items.Get(guildID); exists {
-		ps = item.Object().(*cachedGuildPresences)
+		ps = item.Val.(*cachedGuildPresences)
 	}
 	c.items.RUnlock()
 	if ps == nil {
@@ -194,7 +195,7 @@ func (c *presencesCache) onGuildMemberRemove(data []byte, flags Flag) (updated i
 	var ps *cachedGuildPresences
 	c.items.RLock()
 	if item, exists := c.items.Get(guildID); exists {
-		ps = item.Object().(*cachedGuildPresences)
+		ps = item.Val.(*cachedGuildPresences)
 	}
 	c.items.RUnlock()
 	if ps == nil {
@@ -231,7 +232,7 @@ func (c *presencesCache) onGuildCreate(data []byte, flags Flag) (updated interfa
 		// it's discord after all, a presence update might be sent before
 		// a guild create event. I don't know if this is true. But I see
 		// no reason to risk it.
-		ps = item.Object().(*cachedGuildPresences)
+		ps = item.Val.(*cachedGuildPresences)
 	}
 	c.items.RUnlock()
 	if ps == nil {

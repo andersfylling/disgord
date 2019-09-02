@@ -1,14 +1,14 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/cache/interfaces"
+	"github.com/andersfylling/disgord/crs"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
 	"github.com/pkg/errors"
 )
 
 type guildsCache struct {
-	items    interfaces.CacheAlger
+	items    *crs.LFU
 	users    *usersCache
 	channels *channelsCache
 	config   *CacheConfig
@@ -30,7 +30,7 @@ func (c *guildsCache) Get(guildID Snowflake) (guild interface{}) {
 	g := c.pool.Get().(*Guild)
 	c.items.RLock()
 	if item, exists := c.items.Get(guildID); exists {
-		_ = item.Object().(*Guild).copyOverToCache(g)
+		_ = item.Val.(*Guild).copyOverToCache(g)
 	}
 	c.items.RUnlock()
 
@@ -39,7 +39,7 @@ func (c *guildsCache) Get(guildID Snowflake) (guild interface{}) {
 func (c *guildsCache) Channels(guildID Snowflake) (channels []Snowflake) {
 	c.items.RLock()
 	if item, exists := c.items.Get(guildID); exists {
-		tmp := item.Object().(*cachedGuild).channels
+		tmp := item.Val.(*cachedGuild).channels
 		channels = make([]Snowflake, 0, len(tmp))
 		copy(channels, tmp)
 	}

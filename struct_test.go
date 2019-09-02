@@ -133,7 +133,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Email = v.(string)
 			}
 			if v, ok = m["avatar"]; ok {
-				user.Avatar = v.(*string)
+				user.Avatar = v.(string)
 			}
 			if v, ok = m["token"]; ok {
 				user.Token = v.(string)
@@ -174,7 +174,7 @@ func BenchmarkUnmarshalReflection(b *testing.B) {
 				user.Email = v
 			}
 			if vv, ok := m["avatar"]; ok {
-				user.Avatar = &vv
+				user.Avatar = vv
 			}
 			if v, ok = m["token"]; ok {
 				user.Token = v
