@@ -41,24 +41,6 @@ type Link interface {
 //
 //////////////////////////////////////////////////////
 
-type connectPermit interface {
-	requestConnectPermit() error
-	releaseConnectPermit() error
-}
-
-type emptyConnectPermit struct {
-}
-
-func (emptyConnectPermit) requestConnectPermit() error {
-	return nil
-}
-
-func (emptyConnectPermit) releaseConnectPermit() error {
-	return nil
-}
-
-var _ connectPermit = (*emptyConnectPermit)(nil)
-
 type connectSignature = func() (evt interface{}, err error)
 
 // newClient ...
