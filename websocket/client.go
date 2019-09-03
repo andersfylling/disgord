@@ -246,7 +246,7 @@ func (c *client) inactivityDetector(sessionCtx context.Context) {
 	for {
 		select {
 		case <-sessionCtx.Done():
-			break
+			return
 		case <-time.After(2 * time.Minute):
 			if c.lastActivity.OlderThan(longestDelay) && !c.reconnecting() {
 				c.log.Error(c.getLogPrefix(), "noticed shard was inactive, reconnecting. Inactive since", c.lastActivity.Time())
