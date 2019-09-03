@@ -8,16 +8,15 @@ type Snowflake = snowflake.Snowflake
 
 // GetSnowflake see snowflake.GetSnowflake
 func GetSnowflake(v interface{}) (Snowflake, error) {
-	s, err := snowflake.GetSnowflake(v)
-	return Snowflake(s), err
+	return snowflake.GetSnowflake(v)
 }
 
 // NewSnowflake see snowflake.NewSnowflake
 func NewSnowflake(id uint64) Snowflake {
-	return Snowflake(snowflake.NewSnowflake(id))
+	return snowflake.NewSnowflake(id)
 }
 
 // ParseSnowflakeString see snowflake.ParseSnowflakeString
 func ParseSnowflakeString(v string) Snowflake {
-	return Snowflake(snowflake.ParseSnowflakeString(v))
+	return snowflake.ParseSnowflakeString(v)
 }
