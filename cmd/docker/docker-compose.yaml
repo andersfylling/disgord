@@ -2,4 +2,4 @@ version: '3'
 services:
   disgord:
     build: .
-    image: andersfylling/disgord:v0.12
+    image: andersfylling/disgord:v0.11.3
