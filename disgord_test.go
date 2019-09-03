@@ -128,6 +128,14 @@ type mockerWSReceiveOnly struct {
 	reading chan []byte
 }
 
+func (g *mockerWSReceiveOnly) Inactive() bool {
+	return false
+}
+
+func (g *mockerWSReceiveOnly) InactiveSince() time.Time {
+	return time.Now()
+}
+
 func (g *mockerWSReceiveOnly) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	return
 }

@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/andersfylling/disgord/depalias"
 )
@@ -16,6 +17,8 @@ type Conn interface {
 	Read(ctx context.Context) (packet []byte, err error)
 
 	Disconnected() bool
+	Inactive() bool
+	InactiveSince() time.Time
 }
 
 type CloseErr struct {

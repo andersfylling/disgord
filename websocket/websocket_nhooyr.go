@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"golang.org/x/xerrors"
 
@@ -15,18 +16,23 @@ import (
 	"nhooyr.io/websocket"
 )
 
-func newConn(proxy proxy.Dialer, httpClient *http.Client) (Conn, error) {
-	return &nhooyr{
+func newConn(proxy proxy.Dialer, httpClient *http.Client) (*connection, error) {
+	return &connection{
 		httpClient: httpClient,
 	}, nil
 }
 
-type nhooyr struct {
-	c          *websocket.Conn
-	httpClient *http.Client
+type connection struct {
+	c            *websocket.Conn
+	httpClient   *http.Client
+	lastActivity lastActivity
 }
 
-func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
+var _ Conn = (*connection)(nil)
+
+func (g *connection) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
+	defer g.lastActivity.Update()
+
 	// establish ws connection
 	g.c, _, err = websocket.Dial(ctx, endpoint, websocket.DialOptions{
 		HTTPClient: g.httpClient,
@@ -43,7 +49,9 @@ func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.H
 	return
 }
 
-func (g *nhooyr) WriteJSON(v interface{}) (err error) {
+func (g *connection) WriteJSON(v interface{}) (err error) {
+	defer g.lastActivity.Update()
+
 	// TODO: move unmarshalling out of here?
 	var w io.WriteCloser
 	w, err = g.c.Writer(context.Background(), websocket.MessageText)
@@ -54,13 +62,17 @@ func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 	return
 }
 
-func (g *nhooyr) Close() (err error) {
+func (g *connection) Close() (err error) {
+	defer g.lastActivity.Update()
+
 	err = g.c.Close(websocket.StatusNormalClosure, "Bot is shutting down")
 	g.c = nil
 	return err
 }
 
-func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
+func (g *connection) Read(ctx context.Context) (packet []byte, err error) {
+	defer g.lastActivity.Update()
+
 	var messageType websocket.MessageType
 	messageType, packet, err = g.c.Read(ctx)
 	if err != nil {
@@ -79,14 +91,20 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	return packet, nil
 }
 
-func (g *nhooyr) Disconnected() bool {
+func (g *connection) Disconnected() bool {
 	status := g.disconnected()
 
 	return status
 }
 
-func (g *nhooyr) disconnected() bool {
+func (g *connection) Inactive() bool {
+	return g.lastActivity.OlderThan(MaxReconnectDelay + 2*time.Minute)
+}
+
+func (g *connection) disconnected() bool {
 	return g.c == nil
 }
 
-var _ Conn = (*nhooyr)(nil)
+func (g *connection) InactiveSince() time.Time {
+	return g.lastActivity.Time()
+}

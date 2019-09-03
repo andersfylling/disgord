@@ -22,6 +22,15 @@ type testWS struct {
 	reading      chan []byte
 	disconnected bool
 	sync.RWMutex
+	lastActivity lastActivity
+}
+
+func (g *testWS) Inactive() bool {
+	return g.lastActivity.OlderThan(time.Minute)
+}
+
+func (g *testWS) InactiveSince() time.Time {
+	return g.lastActivity.Time()
 }
 
 func (g *testWS) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
