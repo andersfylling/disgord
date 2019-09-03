@@ -1,0 +1,45 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/disgord/crs
+BenchmarkCRS/set-lfu-unlimited-8         	10628239	       152 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12415581	       106 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12566304	       104 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12663960	       112 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12593421	       105 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12637676	       105 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12857505	       106 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12464899	       105 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12773424	       105 ns/op
+BenchmarkCRS/set-lfu-unlimited-8         	12558734	       106 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8226 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8228 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8156 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8069 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8088 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      7967 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8067 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      7994 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8069 ns/op
+BenchmarkCRS/set-lfu-limited-8           	 1000000	      8120 ns/op
+BenchmarkCRS/update-lfu-8                	12822370	       106 ns/op
+BenchmarkCRS/update-lfu-8                	12737880	       105 ns/op
+BenchmarkCRS/update-lfu-8                	12603754	       105 ns/op
+BenchmarkCRS/update-lfu-8                	12889476	       105 ns/op
+BenchmarkCRS/update-lfu-8                	12796602	       105 ns/op
+BenchmarkCRS/update-lfu-8                	12307273	       107 ns/op
+BenchmarkCRS/update-lfu-8                	12426570	       106 ns/op
+BenchmarkCRS/update-lfu-8                	12793765	       104 ns/op
+BenchmarkCRS/update-lfu-8                	12892797	       104 ns/op
+BenchmarkCRS/update-lfu-8                	12429322	       104 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.756 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.764 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.766 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.755 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.766 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.756 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.761 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.764 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.783 ns/op
+BenchmarkCRS/get-lfu-8                   	1000000000	         0.778 ns/op
+PASS
+ok  	github.com/andersfylling/disgord/crs	228.294s
