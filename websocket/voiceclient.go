@@ -241,6 +241,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	go c.emitter(ctx)
 	go c.startBehaviors(ctx)
 	go c.prepareHeartbeating(ctx)
+	go c.inactivityDetector(ctx)
 	go func() {
 		select {
 		case <-ctx.Done():

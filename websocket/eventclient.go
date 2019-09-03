@@ -440,6 +440,7 @@ func (c *EvtClient) openConnection(ctx context.Context) error {
 	go c.emitter(ctx)
 	go c.startBehaviors(ctx)
 	go c.prepareHeartbeating(ctx)
+	go c.inactivityDetector(ctx)
 	go func() {
 		select {
 		case <-ctx.Done():

@@ -25,6 +25,8 @@ import (
 const (
 	clientTypeEvent = iota
 	clientTypeVoice
+
+	MaxReconnectDelay = 5 * 60 * time.Second
 )
 
 // Link is used to establish basic commands to create and destroy a link.
@@ -152,6 +154,7 @@ type client struct {
 	isEmitting        bool // has the go routine started
 	recEmitMutex      sync.Mutex
 	onceChannels      onceChannels
+	lastActivity      lastActivity
 
 	isRestarting bool
 
@@ -237,8 +240,20 @@ func (c *client) operationHandlers(ctx context.Context) {
 	}
 }
 
-func (c *client) inactivityDetector() {
+func (c *client) inactivityDetector(sessionCtx context.Context) {
 	// make sure that websocket is connecting, connect or reconnecting.
+	longestDelay := MaxReconnectDelay + 2*time.Minute
+	for {
+		select {
+		case <-sessionCtx.Done():
+			break
+		case <-time.After(2 * time.Minute):
+			if c.lastActivity.OlderThan(longestDelay) && !c.reconnecting() {
+				c.log.Error(c.getLogPrefix(), "noticed shard was inactive, reconnecting. Inactive since", c.lastActivity.Time())
+				go c.reconnect()
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////
@@ -285,6 +300,7 @@ func (c *client) disconnect() (err error) {
 	// use the emitter to dispatch the close message
 	err = c.conn.Close()
 	// a typical err here is that the pipe is closed. Err is returned later
+	c.lastActivity.Update()
 
 	// c.Emit(event.Close, nil)
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
@@ -329,6 +345,12 @@ func (c *client) unlockReconnect() {
 	c.isReconnecting = false
 }
 
+func (c *client) reconnecting() bool {
+	c.restartMutex.Lock()
+	defer c.restartMutex.Unlock()
+	return c.isReconnecting
+}
+
 func (c *client) reconnect() (err error) {
 	// make sure there aren't multiple reconnect processes running
 	if !c.lockReconnect() {
@@ -336,6 +358,7 @@ func (c *client) reconnect() (err error) {
 		return
 	}
 	defer c.unlockReconnect()
+	c.lastActivity.Update()
 
 	c.log.Debug(c.getLogPrefix(), "is reconnecting")
 	if err := c.disconnect(); err != nil {
@@ -355,15 +378,18 @@ func (c *client) reconnectLoop() (err error) {
 	var try uint
 	var delay = 3 * time.Second
 	for {
+		c.lastActivity.Update()
 		if try == 0 {
 			c.log.Debug(c.getLogPrefix(), "trying to connect")
 		} else {
 			c.log.Debug(c.getLogPrefix(), "reconnect attempt", try)
 		}
 		if _, err = c.connect(); err == nil {
+			c.lastActivity.Update()
 			c.log.Debug(c.getLogPrefix(), "establishing connection succeeded")
 			break
 		}
+		c.lastActivity.Update()
 
 		c.log.Info(c.getLogPrefix(), "establishing connection failed, trying again in ", delay)
 		c.log.Info(c.getLogPrefix(), err)
@@ -377,7 +403,7 @@ func (c *client) reconnectLoop() (err error) {
 			return
 		}
 
-		if delay > 5*60*time.Second {
+		if delay > MaxReconnectDelay {
 			delay = 60 * time.Second
 		}
 	}
@@ -519,6 +545,7 @@ func (c *client) emitter(ctx context.Context) {
 		case msg, open = <-c.internalEmitChan:
 			internalMsg = true
 		}
+		c.lastActivity.Update()
 		if !open {
 			c.log.Debug(c.getLogPrefix(), "emitter channel closed")
 			continue
@@ -589,10 +616,12 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(context.Background()); err != nil {
+			c.lastActivity.Update()
 			c.log.Debug(c.getLogPrefix(), err)
 			cancel()
 			continue
 		}
+		c.lastActivity.Update()
 
 		// parse to gateway payload object
 		// see operationHandler for return/Put()
@@ -673,6 +702,7 @@ func (c *client) pulsate(ctx context.Context) {
 	var lastAck time.Time
 	var lastSent time.Time
 	for {
+		c.lastActivity.Update()
 		c.RLock()
 		lastAck = c.lastHeartbeatAck
 		lastSent = c.lastHeartbeatSent
