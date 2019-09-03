@@ -1,5 +1,5 @@
 module docker
 
-go 1.12
+go 1.13
 
-require github.com/andersfylling/disgord v0.10.0
+require github.com/andersfylling/disgord v0.11.3
