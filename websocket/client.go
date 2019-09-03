@@ -26,7 +26,7 @@ const (
 	clientTypeEvent = iota
 	clientTypeVoice
 
-	MaxReconnectDelay = 5 * 60 * time.Second
+	MaxReconnectDelay = 5 * time.Minute
 )
 
 // Link is used to establish basic commands to create and destroy a link.
