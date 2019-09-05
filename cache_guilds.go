@@ -1,24 +1,57 @@
 package disgord
 
 import (
+	"sync"
+
+	"github.com/buger/jsonparser"
+
 	"github.com/andersfylling/disgord/crs"
 	"github.com/andersfylling/disgord/httd"
 	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/djp"
 	"github.com/pkg/errors"
 )
 
+type cachedGuild struct {
+	guild    *Guild
+	channels []Snowflake
+}
+
+func (c *cachedGuild) transform() {
+	// channels to ids
+	if len(c.guild.Channels) > 0 {
+		channelIDs := make([]Snowflake, 0, len(c.guild.Channels))
+		for i := range c.guild.Channels {
+			channelIDs = append(channelIDs, c.guild.Channels[i].ID)
+		}
+		c.guild.Channels = nil
+
+		var unique bool
+		for i := range channelIDs {
+			unique = true
+			for j := range c.channels {
+				if channelIDs[i] == c.channels[j] {
+					unique = false
+					break
+				}
+			}
+
+			if unique {
+				c.channels = append(c.channels, channelIDs[i])
+			}
+		}
+	}
+}
+
 type guildsCache struct {
+	sync.RWMutex
+
 	items    *crs.LFU
 	users    *usersCache
 	channels *channelsCache
 	config   *CacheConfig
 	pool     Pool
 	evt      chan<- *websocket.Event
-}
-
-type cachedGuild struct {
-	guild    *Guild
-	channels []Snowflake
 }
 
 func (c *guildsCache) Del(guildID Snowflake) {
@@ -126,22 +159,45 @@ func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{
 		return nil, errors.New("missing guild id")
 	}
 
+	c.Lock()
+	defer c.Unlock()
+
+	var cg *cachedGuild
 	// check if it already exists
-	// it should _not_. But that's not an excuse.
-	if entry, exists := c.items.Get(guildID); exists {
-		return entry.update(data, flags)
+	// it should _not_. But that's not an excuse in the discord realm.
+	if item, exists := c.items.Get(guildID); exists {
+		cg = item.Val.(*cachedGuild)
+	} else {
+		cg = &cachedGuild{
+			guild: NewGuild(),
+		}
 	}
 
-	// notify that channels were deleted
-	channels := c.Channels(guildID)
-	if len(channels) == 0 {
-		return nil, nil
-	}
-	for _, channelID := range channels {
-		go c.triggerChannelDelete(channelID)
-	}
+	// extract channel ids
+	var channelIDs []Snowflake
+	_, _ = jsonparser.ArrayEach(data, func(d []byte, _ jsonparser.ValueType, _ int, _ error) {
+		id, err := jsonparser.GetUnsafeString(d, "id")
+		if err != nil {
+			return
+		}
+		var s Snowflake
+		if err = s.UnmarshalJSON(jsonparser.StringToBytes(id)); err != nil {
+			return
+		}
+		channelIDs = append(channelIDs, s)
+	}, "channels")
+	data = jsonparser.Delete(data, "channels")
 
-	return nil, nil
+	// avoid allocating N redundant user objects to the heap
+	data = djp.MemberReplaceUserWithID(data, "members")
+
+	if err := Unmarshal(data, cg.guild); err != nil {
+		return nil, err
+	}
+	updated = cg.guild.DeepCopy()
+	cg.transform()
+
+	return updated, nil
 }
 
 func (c *guildsCache) onGuildUpdate(data []byte, flags Flag) (updated interface{}, err error) {

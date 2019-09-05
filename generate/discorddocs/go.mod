@@ -16,3 +16,5 @@ require (
 )
 
 replace github.com/andersfylling/disgord => ../../
+
+go 1.13
