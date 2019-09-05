@@ -1,9 +1,9 @@
 package crs
 
 // newLFUItem ...
-func newLFUItem(v interface{}) LFUItem {
-	return LFUItem{
-		Val: v,
+func newLFUItem(content interface{}) *LFUItem {
+	return &LFUItem{
+		Val: content,
 	}
 }
 

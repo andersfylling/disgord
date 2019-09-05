@@ -77,7 +77,7 @@ func (list *LFU) ClearTables() {
 }
 
 // Set set adds a new content to the list or returns false if the content already exists
-func (list *LFU) Set(id Snowflake, newItem LFUItem) {
+func (list *LFU) Set(id Snowflake, newItem *LFUItem) {
 	newItem.ID = id
 	if key, exists := list.table[id]; exists && key != -1 {
 		list.items[key].Val = newItem.Val
@@ -123,10 +123,11 @@ func (list *LFU) RefreshAfterDiscordUpdate(item *LFUItem) {
 }
 
 // Get get an content from the list.
-func (list *LFU) Get(id Snowflake) (ret LFUItem, exists bool) {
+
+func (list *LFU) Get(id Snowflake) (ret *LFUItem, exists bool) {
 	var key int
 	if key, exists = list.table[id]; exists && key != -1 {
-		ret = list.items[key]
+		ret = &list.items[key]
 		ret.increment()
 		list.hits++
 	} else {
@@ -166,7 +167,7 @@ func (list *LFU) ListIDs() (ids []Snowflake) {
 }
 
 // CreateCacheableItem ...
-func (list *LFU) CreateCacheableItem(content interface{}) LFUItem {
+func (list *LFU) CreateCacheableItem(content interface{}) *LFUItem {
 	return newLFUItem(content)
 }
 

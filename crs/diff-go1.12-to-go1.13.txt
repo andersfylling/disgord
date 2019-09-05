@@ -1,0 +1,5 @@
+name                     old time/op  new time/op  delta
+CRS/set-lfu-unlimited-8   105ns ± 1%   105ns ± 1%     ~     (p=0.307 n=8+8)
+CRS/set-lfu-limited-8    8.19µs ± 3%  8.10µs ± 2%     ~     (p=0.138 n=10+10)
+CRS/update-lfu-8          104ns ± 1%   105ns ± 2%     ~     (p=0.135 n=9+10)
+CRS/get-lfu-8            38.1ns ± 2%   0.8ns ± 2%  -97.99%  (p=0.000 n=9+10)

@@ -4,10 +4,9 @@ package websocket
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
-
-	"golang.org/x/xerrors"
 
 	"golang.org/x/net/proxy"
 
@@ -28,7 +27,7 @@ type nhooyr struct {
 
 func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	// establish ws connection
-	g.c, _, err = websocket.Dial(ctx, endpoint, websocket.DialOptions{
+	g.c, _, err = websocket.Dial(ctx, endpoint, &websocket.DialOptions{
 		HTTPClient: g.httpClient,
 		HTTPHeader: requestHeader,
 	})
@@ -65,7 +64,7 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	messageType, packet, err = g.c.Read(ctx)
 	if err != nil {
 		var closeErr *websocket.CloseError
-		if xerrors.As(err, &closeErr) {
+		if errors.As(err, &closeErr) {
 			err = &CloseErr{
 				info: closeErr.Error(),
 			}

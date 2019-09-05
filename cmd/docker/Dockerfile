@@ -1,4 +1,4 @@
-FROM golang:1.12.1
+FROM golang:1.13
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY . /build
