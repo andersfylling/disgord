@@ -239,7 +239,7 @@ type Client struct {
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
 
-	cache *Cache
+	cache *cache
 
 	log Logger
 

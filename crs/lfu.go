@@ -18,7 +18,7 @@ func New(size uint) *LFU {
 
 type LFU struct {
 	sync.RWMutex
-	items    []LFUItem
+	items    []*LFUItem
 	table    map[Snowflake]int
 	nilTable []int
 	limit    uint // 0 == unlimited
@@ -41,7 +41,7 @@ func (list *LFU) ClearSoft() {
 		// TODO: is this needed?
 		list.items[i].Val = nil
 	}
-	list.items = make([]LFUItem, list.limit)
+	list.items = make([]*LFUItem, list.limit)
 	list.ClearTables()
 }
 
@@ -77,7 +77,7 @@ func (list *LFU) ClearTables() {
 }
 
 // Set set adds a new content to the list or returns false if the content already exists
-func (list *LFU) Set(id Snowflake, newItem LFUItem) {
+func (list *LFU) Set(id Snowflake, newItem *LFUItem) {
 	newItem.ID = id
 	if key, exists := list.table[id]; exists && key != -1 {
 		list.items[key].Val = newItem.Val
@@ -123,7 +123,7 @@ func (list *LFU) RefreshAfterDiscordUpdate(item *LFUItem) {
 }
 
 // Get get an content from the list.
-func (list *LFU) Get(id Snowflake) (ret LFUItem, exists bool) {
+func (list *LFU) Get(id Snowflake) (ret *LFUItem, exists bool) {
 	var key int
 	if key, exists = list.table[id]; exists && key != -1 {
 		ret = list.items[key]
@@ -150,7 +150,7 @@ func (list *LFU) Delete(id Snowflake) {
 	}
 }
 
-func (list *LFU) Foreach(cb func(LFUItem)) {
+func (list *LFU) Foreach(cb func(*LFUItem)) {
 	for k := range list.items {
 		cb(list.items[k])
 	}
@@ -166,7 +166,7 @@ func (list *LFU) ListIDs() (ids []Snowflake) {
 }
 
 // CreateCacheableItem ...
-func (list *LFU) CreateCacheableItem(content interface{}) LFUItem {
+func (list *LFU) CreateCacheableItem(content interface{}) *LFUItem {
 	return newLFUItem(content)
 }
 

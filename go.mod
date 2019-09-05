@@ -1,8 +1,9 @@
 module github.com/andersfylling/disgord
 
-go 1.12
+go 1.13
 
 require (
+	github.com/andersfylling/djp v0.0.0-20190905201336-9b7731b744ac
 	github.com/andersfylling/snowflake/v4 v4.0.1
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/gorilla/websocket v1.4.1
@@ -21,3 +22,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	nhooyr.io/websocket v1.5.1
 )
+
+replace github.com/andersfylling/djp => ../djp

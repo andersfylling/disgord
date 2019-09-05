@@ -1,3 +1,3 @@
 #!/bin/bash
 docker-compose build
-docker-compose push andersfylling/disgord
+docker push andersfylling/disgord

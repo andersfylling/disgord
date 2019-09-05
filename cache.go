@@ -3,9 +3,8 @@ package disgord
 import (
 	"time"
 
-	"github.com/pkg/errors"
-
 	jp "github.com/buger/jsonparser"
+	"github.com/pkg/errors"
 )
 
 // gatewayCacher allows cache repositories to handle event content.
