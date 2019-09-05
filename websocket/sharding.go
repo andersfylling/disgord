@@ -1,12 +1,11 @@
 package websocket
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/logger"

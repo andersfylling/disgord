@@ -1,11 +1,10 @@
 package websocket
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/andersfylling/disgord/websocket/opcode"
-
-	"github.com/pkg/errors"
 )
 
 func newClientPktQueue(limit int) clientPktQueue {
