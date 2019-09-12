@@ -275,6 +275,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateMessageBuilder:
 		s = *t
+	case *[]*bottomlessPool:
+		s = *t
 	case *[]*pool:
 		s = *t
 	case *[]*pools:

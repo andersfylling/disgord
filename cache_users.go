@@ -6,8 +6,8 @@ import (
 )
 
 type usersCache struct {
-	items  *crs.LFU
 	config *CacheConfig
+	items  *crs.LFU
 	pool   Pool // must never be nil !
 }
 
@@ -307,7 +307,7 @@ func (c *usersCache) onChannelUpdate(data []byte, flags Flag) (updated interface
 	// if the channel is a DM/GroupDM the recipients field is populated
 	usersData, _, _, err := jp.Get(data, "recipients")
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	var users []*User

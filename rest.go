@@ -295,7 +295,7 @@ func (b *RESTBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMid
 }
 
 func (b *RESTBuilder) prepare() {
-	// update the config
+	// update the conf
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
 	}

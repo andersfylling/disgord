@@ -504,6 +504,7 @@ type UserPresence struct {
 }
 
 var _ internalUpdater = (*UserPresence)(nil)
+var _ Reseter = (*UserPresence)(nil)
 
 func (p *UserPresence) updateInternals() {
 	if p.User != nil {
