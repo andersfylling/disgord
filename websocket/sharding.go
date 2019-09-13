@@ -324,7 +324,6 @@ func (s *shardMngr) scale(code int, reason string) {
 	_ = s.Disconnect()
 
 	s.conf.URL = data.URL
-	s.conf.ShardIDs = s.conf.ShardIDs[:0]
 	for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
 		s.conf.ShardIDs = append(s.conf.ShardIDs, i)
 	}
