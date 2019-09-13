@@ -607,19 +607,14 @@ func (c *Client) Emit(command SocketCommand, data interface{}) error {
 		return errors.New("command is not supported")
 	}
 
+	var guildID Snowflake
 	if g, ok := data.(guilder); ok {
 		// if this is guild specific, then only send data through the related shard
-		guildID := g.getGuildID()
-		shardID := GetShardForGuildID(guildID, c.shardManager.NrOfShards())
-		shard, err := c.shardManager.GetShard(shardID)
-		if err != nil {
-			return err
-		}
-		return shard.Emit(command, data)
+		guildID = g.getGuildID()
 	}
 
 	// otherwise it is sent through every shard
-	return c.shardManager.Emit(command, data)
+	return c.shardManager.Emit(command, data, guildID)
 }
 
 // AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
@@ -726,7 +721,7 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return c.shardManager.Emit(CommandUpdateStatus, s)
+	return c.Emit(CommandUpdateStatus, s)
 }
 
 // UpdateStatusString sets the Client's game activity to the provided string, status to online

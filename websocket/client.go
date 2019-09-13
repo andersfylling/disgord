@@ -42,6 +42,7 @@ type Link interface {
 //////////////////////////////////////////////////////
 
 type connectSignature = func() (evt interface{}, err error)
+type discordErrListener = func(code int, reason string)
 
 // newClient ...
 func newClient(shardID uint, conf *config, connect connectSignature) (c *client, err error) {
@@ -100,6 +101,8 @@ type config struct {
 	DiscordPktPool *sync.Pool
 
 	Logger logger.Logger
+
+	discordErrListener discordErrListener
 
 	// messageQueueLimit number of outgoing messages that can be queued and sent correctly.
 	messageQueueLimit uint
@@ -302,7 +305,8 @@ func (c *client) disconnect() (err error) {
 func (c *client) Disconnect() (err error) {
 	c.Lock()
 	c.requestedDisconnect = true
-	c.Unlock()
+	c.
+		c.Unlock()
 	return c.disconnect()
 }
 
@@ -392,10 +396,10 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(command string, data interface{}) (err error) {
-	return c.emit(false, command, data)
+func (c *client) Emit(command string, data interface{}, guildID Snowflake) (err error) {
+	return c.emit(false, command, data, guildID)
 }
-func (c *client) emit(internal bool, command string, data interface{}) (err error) {
+func (c *client) emit(internal bool, command string, data interface{}, guildID Snowflake) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
@@ -437,8 +441,10 @@ func (c *client) emit(internal bool, command string, data interface{}) (err erro
 	}
 
 	p := &clientPacket{
-		Op:   op,
-		Data: data,
+		Op:      op,
+		Data:    data,
+		guildID: guildID,
+		cmd:     command,
 	}
 
 	if accepted := c.ratelimit.Request(command); !accepted {
@@ -497,7 +503,6 @@ func (c *client) emitter(ctx context.Context) {
 		err := c.conn.WriteJSON(msg)
 		if err != nil {
 			cancel()
-			c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
 		}
 		return err
 	}
@@ -505,7 +510,7 @@ func (c *client) emitter(ctx context.Context) {
 	for {
 		var msg *clientPacket
 		var open bool
-		var internalMsg bool
+		var err error
 
 		select {
 		case <-ctx.Done():
@@ -515,22 +520,24 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
-		case _, open = <-c.messageQueue.HasContent():
-		case msg, open = <-c.internalEmitChan:
-			internalMsg = true
-		}
-		if !open {
-			c.log.Debug(c.getLogPrefix(), "emitter channel closed")
-			continue
-		}
+		case <-time.After(100 * time.Millisecond):
+			// TODO-race: potential race in case of shard scaling
+			if c.messageQueue.IsEmpty() {
+				continue
+			}
 
-		if internalMsg {
-			_ = write(msg)
-		} else {
 			// try to write the message
 			// on failure the message is stored until next time
-			_ = c.messageQueue.Try(write)
+			err = c.messageQueue.Try(write)
+		case msg, open = <-c.internalEmitChan:
+			if !open {
+				c.log.Debug(c.getLogPrefix(), "emitter channel is closed")
+				continue
+			}
+			err = write(msg)
 		}
+
+		c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
 	}
 }
 
@@ -589,6 +596,9 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(context.Background()); err != nil {
+			if e, ok := err.(*CloseErr); ok && c.conf.discordErrListener != nil && e.code >= 4000 && e.code < 5000 {
+				go c.conf.discordErrListener(e.code, e.info)
+			}
 			c.log.Debug(c.getLogPrefix(), err)
 			cancel()
 			continue

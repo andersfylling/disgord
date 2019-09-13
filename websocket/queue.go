@@ -9,8 +9,7 @@ import (
 
 func newClientPktQueue(limit int) clientPktQueue {
 	return clientPktQueue{
-		notifier: make(chan bool, limit),
-		limit:    limit,
+		limit: limit,
 	}
 }
 
@@ -18,15 +17,14 @@ func newClientPktQueue(limit int) clientPktQueue {
 type clientPktQueue struct {
 	sync.RWMutex
 	messages []*clientPacket
-	notifier chan bool
 	limit    int
 }
 
-func (c *clientPktQueue) HasContent() chan bool {
+func (c *clientPktQueue) IsEmpty() bool {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.notifier
+	return len(c.messages) == 0
 }
 func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 	c.Lock()
@@ -54,7 +52,6 @@ func (c *clientPktQueue) Add(msg *clientPacket) error {
 	}
 
 	c.messages = append(c.messages, msg)
-	c.notifier <- true
 	return nil
 }
 func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
@@ -75,4 +72,11 @@ func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	}
 	c.messages = c.messages[:len(c.messages)-1]
 	return nil
+}
+func (c *clientPktQueue) Steal() (m []*clientPacket) {
+	c.Lock()
+	defer c.Unlock()
+
+	m = c.messages
+	c.messages = c.messages[:0]
 }

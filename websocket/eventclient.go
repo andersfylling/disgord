@@ -109,6 +109,8 @@ type EvtConfig struct {
 
 	connectQueue func(shardID uint, cb func() error) error
 
+	discordErrListener discordErrListener
+
 	Presence interface{}
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
@@ -168,13 +170,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(command string, data interface{}, guildID Snowflake) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.emit(false, command, data)
+	return c.client.emit(false, command, data, guildID)
 }
 
 //////////////////////////////////////////////////////

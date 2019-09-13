@@ -5,11 +5,6 @@ import (
 	"strings"
 )
 
-// GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
-func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
-	return uint(guildID>>22) % shardCount
-}
-
 //////////////////////////////////////////////////////
 //
 // Validators

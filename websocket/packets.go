@@ -130,6 +130,10 @@ type GatewayBot struct {
 type clientPacket struct {
 	Op   uint        `json:"op"`
 	Data interface{} `json:"d"`
+
+	// allows restocking pkts on shard scaling
+	guildID Snowflake `json:"-"`
+	cmd     string    `json:"-"`
 }
 
 type helloPacket struct {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -14,12 +15,23 @@ import (
 )
 
 const defaultShardRateLimit float64 = 5.1 // seconds
+const discordErrShardScalingRequired = 4011
+
 type shardID = uint
+
+// GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
+func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
+	return uint(guildID>>22) % shardCount
+}
 
 func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 	data, err := client.GetGatewayBot()
 	if err != nil {
 		return err
+	}
+
+	if len(conf.ShardIDs) > 0 || conf.TotalNumberOfShards > 0 {
+		conf.DisableAutoScaling = true
 	}
 
 	if conf.URL == "" {
@@ -62,7 +74,7 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
-	Emit(string, interface{}) error
+	Emit(string, interface{}, Snowflake) error
 	NrOfShards() uint
 	GetShard(shardID shardID) (shard *EvtClient, err error)
 	HeartbeatLatencies() (latencies map[shardID]time.Duration, err error)
@@ -92,6 +104,19 @@ type ShardConfig struct {
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit float64
 
+	// DisableAutoScaling is triggered when at least one shard gets a 4011 websocket
+	// error from Discord. This causes all the shards to disconnect and new ones are created.
+	//
+	// default value is false unless ShardIDs or TotalNumberOfShards is set.
+	DisableAutoScaling bool
+
+	// OnScalingRequired is triggered when Discord closes the websocket connection
+	// with a 4011 websocket error. It may run multiple times per session. You should
+	// immediately call disconnect and scale your shards, unless you know what you're doing.
+	//
+	// This is triggered regardless of the DisableAutoScaling value.
+	OnScalingRequired func()
+
 	// URL is fetched from the gateway before initialising a connection
 	URL string
 }
@@ -111,6 +136,8 @@ type ShardManagerConfig struct {
 
 	// sync ---
 	EventChan chan<- *Event
+
+	RESTClient GatewayBotGetter
 
 	// user specific
 	DefaultBotPresence interface{}
@@ -155,10 +182,16 @@ func (s *shardMngr) initializeShards() error {
 		HTTPClient: s.conf.HTTPClient,
 
 		// other
-		SystemShutdown: s.conf.ShutdownChan,
+		SystemShutdown:     s.conf.ShutdownChan,
+		discordErrListener: s.scale,
 	}
 
 	for _, id := range s.conf.ShardIDs {
+		if shard, alreadyConfigured := s.shards[id]; alreadyConfigured {
+			shard.evtConf.ShardCount = uint(len(s.conf.ShardIDs))
+			continue
+		}
+
 		uniqueConfig := baseConfig // create copy, review requirement
 		shard, err := NewEventClient(id, &uniqueConfig)
 		if err != nil {
@@ -201,6 +234,9 @@ func (s *shardMngr) Disconnect() error {
 		if err != nil {
 			s.conf.Logger.Error("Disconnect error (trivial):", err)
 		}
+		shard.sessionID = ""
+		shard.sequenceNumber = 0
+		shard.haveConnectedOnce = false
 	}
 	return nil
 }
@@ -211,13 +247,23 @@ func (s *shardMngr) NrOfShards() uint {
 	return s.conf.TotalNumberOfShards
 }
 
-func (s *shardMngr) Emit(cmd string, data interface{}) (err error) {
+func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	for _, shard := range s.shards {
-		err = shard.Emit(cmd, data)
+	if id.IsZero() {
+		for _, shard := range s.shards {
+			err = shard.Emit(cmd, data, id)
+		}
+	} else {
+		shardID := GetShardForGuildID(id, uint(len(s.shards)))
+		if shard, exists := s.shards[shardID]; exists {
+			err = shard.Emit(cmd, data, id)
+		} else {
+			err = errors.New("no shard with id " + strconv.FormatUint(uint64(shardID), 10))
+		}
 	}
+
 	return err
 }
 
@@ -241,4 +287,52 @@ func (s *shardMngr) HeartbeatLatencies() (latencies map[shardID]time.Duration, e
 		}
 	}
 	return
+}
+
+func (s *shardMngr) scale(code int, reason string) {
+	if code != discordErrShardScalingRequired {
+		return
+	}
+	if s.conf.OnScalingRequired != nil {
+		go s.conf.OnScalingRequired()
+	}
+	if s.conf.DisableAutoScaling {
+		s.conf.Logger.Debug("discord require websocket shards to scale up but auto scaling is disabled - did not handle scaling internally")
+		return
+	}
+
+	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
+
+	var messages []*clientPacket
+	for _, shard := range s.shards {
+		messages = append(messages, shard.messageQueue.Steal()...)
+	}
+	defer func() {
+		for i := len(messages) - 1; i >= 0; i-- {
+			// reverse such that injected order stays the same
+			m := messages[i]
+			_ = s.Emit(m.cmd, m.Data, m.guildID)
+		}
+	}()
+
+	data, err := s.conf.RESTClient.GetGatewayBot()
+	if err != nil {
+		s.conf.Logger.Error("autoscaling", err)
+		return
+	}
+
+	_ = s.Disconnect()
+
+	s.conf.URL = data.URL
+	s.conf.ShardIDs = s.conf.ShardIDs[:0]
+	for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
+		s.conf.ShardIDs = append(s.conf.ShardIDs, i)
+	}
+	if err := s.initializeShards(); err != nil {
+		s.conf.Logger.Error("autoscaling", "init-shards", err)
+		return
+	}
+	if err := s.Connect(); err != nil {
+		s.conf.Logger.Error("autoscaling", "connect", err)
+	}
 }
