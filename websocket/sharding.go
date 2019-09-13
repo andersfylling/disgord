@@ -256,7 +256,7 @@ func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error)
 			err = shard.Emit(cmd, data, id)
 		}
 	} else {
-		shardID := GetShardForGuildID(id, uint(len(s.shards)))
+		shardID := GetShardForGuildID(id, s.conf.TotalNumberOfShards)
 		if shard, exists := s.shards[shardID]; exists {
 			err = shard.Emit(cmd, data, id)
 		} else {
