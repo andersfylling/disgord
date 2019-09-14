@@ -114,8 +114,13 @@ type ShardConfig struct {
 	// with a 4011 websocket error. It may run multiple times per session. You should
 	// immediately call disconnect and scale your shards, unless you know what you're doing.
 	//
-	// This is triggered regardless of the DisableAutoScaling value.
-	OnScalingRequired func()
+	// This is triggered when DisableAutoScaling is true. If DisableAutoScaling is true and
+	// OnScalingRequired is nil, this is considered an user error and will panic.
+	//
+	// You must return the new number of total shards and additional shard ids this instance
+	// should setup. If you do not want this instance to gain extra shards, set AdditionalShardIDs
+	// to nil.
+	OnScalingRequired func() (TotalNrOfShards uint, AdditionalShardIDs []uint)
 
 	// URL is fetched from the gateway before initialising a connection
 	URL string
@@ -183,9 +188,21 @@ func (s *shardMngr) initializeShards() error {
 		HTTPClient: s.conf.HTTPClient,
 
 		// other
-		SystemShutdown:     s.conf.ShutdownChan,
-		discordErrListener: s.scale,
-		conn:               s.conf.conn,
+		SystemShutdown: s.conf.ShutdownChan,
+		discordErrListener: func(code int, reason string) {
+			if code != discordErrShardScalingRequired {
+				return
+			}
+			if s.conf.DisableAutoScaling {
+				s.scale(code, reason)
+			} else {
+				if s.conf.OnScalingRequired == nil {
+					panic("ShardConfig.OnScalingRequired must be set")
+				}
+				s.conf.OnScalingRequired()
+			}
+		},
+		conn: s.conf.conn,
 	}
 
 	for _, id := range s.conf.ShardIDs {
@@ -292,12 +309,6 @@ func (s *shardMngr) HeartbeatLatencies() (latencies map[shardID]time.Duration, e
 }
 
 func (s *shardMngr) scale(code int, reason string) {
-	if code != discordErrShardScalingRequired {
-		return
-	}
-	if s.conf.OnScalingRequired != nil {
-		go s.conf.OnScalingRequired()
-	}
 	if s.conf.DisableAutoScaling {
 		s.conf.Logger.Debug("discord require websocket shards to scale up but auto scaling is disabled - did not handle scaling internally")
 		return
