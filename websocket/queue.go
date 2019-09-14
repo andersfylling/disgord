@@ -26,6 +26,7 @@ func (c *clientPktQueue) IsEmpty() bool {
 
 	return len(c.messages) == 0
 }
+
 func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 	c.Lock()
 	defer c.Unlock()
@@ -38,6 +39,7 @@ func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 	}
 	return errors.New("no entry with existing operation code")
 }
+
 func (c *clientPktQueue) Add(msg *clientPacket) error {
 	if msg.Op == opcode.EventStatusUpdate {
 		if err := c.AddByOverwrite(msg); err == nil {
@@ -54,6 +56,7 @@ func (c *clientPktQueue) Add(msg *clientPacket) error {
 	c.messages = append(c.messages, msg)
 	return nil
 }
+
 func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	c.Lock()
 	defer c.Unlock()
@@ -73,6 +76,7 @@ func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	c.messages = c.messages[:len(c.messages)-1]
 	return nil
 }
+
 func (c *clientPktQueue) Steal() (m []*clientPacket) {
 	c.Lock()
 	defer c.Unlock()
