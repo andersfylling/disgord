@@ -507,8 +507,7 @@ func (c *client) emitter(ctx context.Context) {
 	}
 
 	for {
-		var msg *clientPacket
-		var open bool
+		var insight string
 		var err error
 
 		select {
@@ -528,15 +527,16 @@ func (c *client) emitter(ctx context.Context) {
 			// try to write the message
 			// on failure the message is stored until next time
 			err = c.messageQueue.Try(write)
-		case msg, open = <-c.internalEmitChan:
+		case msg, open := <-c.internalEmitChan:
 			if !open {
 				c.log.Debug(c.getLogPrefix(), "emitter channel is closed")
 				continue
 			}
 			err = write(msg)
+			insight = fmt.Sprintf("%v", *msg)
 		}
 
-		c.log.Error(c.getLogPrefix(), err, fmt.Sprintf("%+v", *msg))
+		c.log.Error(c.getLogPrefix(), err, insight)
 	}
 }
 
