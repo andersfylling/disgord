@@ -425,12 +425,17 @@ func (u *User) Mention() string {
 
 // AvatarURL returns a link to the users avatar with the given size.
 func (u *User) AvatarURL(size int) (url string) {
+	if size > 2048 || size < 16 {
+		url = ""
+		return
+	}
+
 	if u.Avatar == "" {
-		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png", u.Discriminator%5)
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
 	} else if strings.HasPrefix(u.Avatar, "a_") {
-		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif", u.ID, u.Avatar)
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
 	} else {
-		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.webp", u.ID, u.Avatar)
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.webp?size=%d", u.ID, u.Avatar, size)
 	}
 
 	return
