@@ -56,9 +56,9 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 	return nil
 }
 
-// ignoreGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
+// enableGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
 // https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
-func ignoreGuildSubscriptions(ignore []string) bool {
+func enableGuildSubscriptions(ignore []string) (updatedIgnores []string, ok bool) {
 	requires := []string{
 		event.TypingStart, event.PresenceUpdate,
 	}
@@ -74,12 +74,14 @@ func ignoreGuildSubscriptions(ignore []string) bool {
 			break
 		}
 	}
+	ok = len(requires) > 0
+	// TODO: remove unnecessary events from the ignore slice
 
-	return len(requires) == 0
+	return ignore, ok
 }
 
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
-	conf.GuildSubscriptions = ignoreGuildSubscriptions(conf.IgnoreEvents)
+	conf.IgnoreEvents, conf.GuildSubscriptions = enableGuildSubscriptions(conf.IgnoreEvents)
 
 	mngr := &shardMngr{
 		conf:   conf,
