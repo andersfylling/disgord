@@ -69,8 +69,9 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
 		}{runtime.GOOS, conf.Browser, conf.Device},
-		LargeThreshold: conf.GuildLargeThreshold,
-		Shard:          &[2]uint{client.ShardID, conf.ShardCount},
+		LargeThreshold:     conf.GuildLargeThreshold,
+		Shard:              &[2]uint{client.ShardID, conf.ShardCount},
+		GuildSubscriptions: conf.GuildSubscriptions,
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {
@@ -128,6 +129,7 @@ type EvtConfig struct {
 	Device              string
 	GuildLargeThreshold uint
 	ShardCount          uint
+	GuildSubscriptions  bool
 
 	DiscordPktPool *sync.Pool
 

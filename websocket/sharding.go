@@ -148,6 +148,7 @@ type ShardManagerConfig struct {
 	// user specific
 	DefaultBotPresence interface{}
 	ProjectName        string
+	GuildSubscriptions bool
 }
 
 type shardMngr struct {
@@ -169,6 +170,7 @@ func (s *shardMngr) initializeShards() error {
 		GuildLargeThreshold: 0, // let's not sometimes load partial guilds info. Either load everything or nothing.
 		ShardCount:          uint(len(s.conf.ShardIDs)),
 		Presence:            s.conf.DefaultBotPresence,
+		GuildSubscriptions:  s.conf.GuildSubscriptions,
 
 		// lib specific
 		Version:        constant.DiscordVersion,

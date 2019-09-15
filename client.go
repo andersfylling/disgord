@@ -174,6 +174,10 @@ type Config struct {
 	ShardConfig  ShardConfig
 	Presence     *UpdateStatusCommand
 
+	// DisableGuildSubscriptions is fairly ambiguous, thanks to Discord, so I assume the behaviour might change later..
+	// Setting to true will cause Discord to not dispatch Typing and Presence updates, per 2019-09-15.
+	DisableGuildSubscriptions bool
+
 	//ImmutableCache bool
 
 	//LoadAllMembers   bool
@@ -422,6 +426,7 @@ func (c *Client) Connect() (err error) {
 		DisgordInfo:        LibraryInfo(),
 		ProjectName:        c.config.ProjectName,
 		BotToken:           c.config.BotToken,
+		GuildSubscriptions: !c.config.DisableGuildSubscriptions,
 	})
 
 	c.setupConnectEnv()
