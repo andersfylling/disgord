@@ -64,7 +64,8 @@
 //      // output: "A message from @Anders was created"
 //  }
 //
-// Websockets (sharding)
+//
+// Websockets and sharding
 //
 // DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord, and limit the number of shards per instance (in these cases you must handle scaling yourself as DisGord can not).
 //
