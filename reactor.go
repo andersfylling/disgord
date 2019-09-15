@@ -63,7 +63,7 @@ func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
 
 		ctx := context.Background()
 		if err := populateResource(resource, ctx, evt); err != nil {
-			d.session.Logger().Error(err)
+			d.session.Logger().Error(err, "EVENT DATA: ", string(evt.Data))
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}

@@ -2,6 +2,8 @@ package websocket
 
 import (
 	"testing"
+
+	"github.com/andersfylling/disgord/event"
 )
 
 type GatewayBotGetterMock struct {
@@ -59,6 +61,34 @@ func TestConfigureShardConfig(t *testing.T) {
 	}
 	if !conf.DisableAutoScaling {
 		t.Error("DisableAutoScaling should be true")
+	}
+}
+
+func TestEnableGuildSubscriptions(t *testing.T) {
+	ignore := []string{
+		event.TypingStart, event.PresenceUpdate,
+	}
+	if _, ok := enableGuildSubscriptions(ignore); ok {
+		t.Error("guild sub should be disabled")
+	}
+
+	ignore = []string{
+		event.TypingStart, event.PresenceUpdate, event.Ready,
+	}
+	if _, ok := enableGuildSubscriptions(ignore); ok {
+		t.Error("guild sub should be disabled")
+	}
+
+	ignore = []string{
+		event.TypingStart, event.Ready,
+	}
+	if _, ok := enableGuildSubscriptions(ignore); !ok {
+		t.Error("guild sub should be enabled")
+	}
+
+	ignore = []string{}
+	if _, ok := enableGuildSubscriptions(ignore); !ok {
+		t.Error("guild sub should be enabled")
 	}
 }
 
