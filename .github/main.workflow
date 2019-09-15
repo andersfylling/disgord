@@ -2,7 +2,7 @@ workflow "Code quality" {
   on = "push"
   resolves = [
     "go imports",
-    "go lint",
+    //"go lint",
     "go vet",
     "staticcheck",
     "errcheck",
