@@ -424,7 +424,7 @@ func (u *User) Mention() string {
 }
 
 // AvatarURL returns a link to the users avatar with the given size.
-func (u *User) AvatarURL(size int) (url string) {
+func (u *User) AvatarURL(size int, preferGIF bool) (url string) {
 	if size > 2048 || size < 16 {
 		url = ""
 		return
@@ -432,7 +432,7 @@ func (u *User) AvatarURL(size int) (url string) {
 
 	if u.Avatar == "" {
 		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
-	} else if strings.HasPrefix(u.Avatar, "a_") {
+	} else if strings.HasPrefix(u.Avatar, "a_") && preferGIF {
 		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
 	} else {
 		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.webp?size=%d", u.ID, u.Avatar, size)
