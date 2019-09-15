@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
@@ -420,6 +421,19 @@ var _ Copier = (*User)(nil)
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
 	return "<@" + u.ID.String() + ">"
+}
+
+// AvatarURL returns a link to the users avatar with the given size.
+func (u *User) AvatarURL(size int) (url string) {
+	if u.Avatar == "" {
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png", u.Discriminator%5)
+	} else if strings.HasPrefix(u.Avatar, "a_") {
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif", u.ID, u.Avatar)
+	} else {
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.webp", u.ID, u.Avatar)
+	}
+
+	return
 }
 
 func (u *User) String() string {
