@@ -447,8 +447,14 @@ func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
 	return
 }
 
+// Tag formats the user to Anders#1234
+func (u *User) Tag() string {
+	return u.Username + "#" + u.Discriminator.String()
+}
+
+// String formats the user to Anders#1234{1234567890}
 func (u *User) String() string {
-	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
+	return u.Tag() + "{" + u.ID.String() + "}"
 }
 
 // UnmarshalJSON see interface json.Unmarshaler
