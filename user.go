@@ -424,10 +424,9 @@ func (u *User) Mention() string {
 }
 
 // AvatarURL returns a link to the users avatar with the given size.
-func (u *User) AvatarURL(size int, preferGIF bool) (url string) {
-	if size > 2048 || size < 16 {
-		url = ""
-		return
+func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
+	if size > 2048 || size < 16 || (size&(size-1)) == 0 {
+		return "", errors.New("image size can be any power of two between 16 and 2048")
 	}
 
 	if u.Avatar == "" {
