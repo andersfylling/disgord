@@ -109,6 +109,8 @@ type EvtConfig struct {
 
 	connectQueue func(shardID uint, cb func() error) error
 
+	discordErrListener discordErrListener
+
 	Presence interface{}
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
@@ -168,13 +170,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(command string, data interface{}, guildID Snowflake) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.emit(false, command, data)
+	return c.client.emit(false, command, data, guildID)
 }
 
 //////////////////////////////////////////////////////
@@ -368,7 +370,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.emit(true, event.Heartbeat, snr)
+	return c.emit(true, event.Heartbeat, snr, 0)
 }
 
 //////////////////////////////////////////////////////
@@ -478,7 +480,7 @@ func (c *EvtClient) sendHelloPacket() {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
-	}{token, session, sequence})
+	}{token, session, sequence}, 0)
 	if err != nil {
 		c.log.Error(c.getLogPrefix(), err)
 	}
@@ -496,7 +498,7 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.emit(true, event.Identify, id)
+	err = c.emit(true, event.Identify, id, 0)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")

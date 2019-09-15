@@ -4,6 +4,21 @@ package disgord
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[IgnoreCache-1]
+	_ = x[IgnoreEmptyParams-2]
+	_ = x[SortByID-4]
+	_ = x[SortByName-8]
+	_ = x[SortByHoist-16]
+	_ = x[SortByGuildID-32]
+	_ = x[SortByChannelID-64]
+	_ = x[OrderAscending-128]
+	_ = x[OrderDescending-256]
+}
+
 const (
 	_Flag_name_0 = "IgnoreCacheIgnoreEmptyParams"
 	_Flag_name_1 = "SortByID"

@@ -286,7 +286,7 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
 		Speaking: b,
 		SSRC:     v.ssrc,
-	})
+	}, v.guildID)
 }
 
 func (v *voiceImpl) SendOpusFrame(data []byte) {

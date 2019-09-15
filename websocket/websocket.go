@@ -19,6 +19,7 @@ type Conn interface {
 }
 
 type CloseErr struct {
+	code int
 	info string
 }
 

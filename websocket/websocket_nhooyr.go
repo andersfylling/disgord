@@ -66,6 +66,7 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 		var closeErr *websocket.CloseError
 		if errors.As(err, &closeErr) {
 			err = &CloseErr{
+				code: int(closeErr.Code),
 				info: closeErr.Error(),
 			}
 		}
