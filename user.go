@@ -33,6 +33,13 @@ const (
 	ActivityFlagPlay        = 1 << 5
 )
 
+// Activity types https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+const (
+	ActivityTypeGame = iota
+	ActivityTypeStreaming
+	ActivityTypeListening
+)
+
 //type UserInterface interface {
 //	Mention() string
 //	MentionNickname() string
