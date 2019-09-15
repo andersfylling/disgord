@@ -379,22 +379,6 @@ func (c *Client) Connect() (err error) {
 		return err
 	}
 
-	// if both typing event and presence event are to be ignore, we can disable GuildSubscription
-	// https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
-	guildSubRequirements := []string{
-		EvtTypingStart, EvtPresenceUpdate,
-	}
-	for i := range c.config.IgnoreEvents {
-		evt := c.config.IgnoreEvents[i]
-		for j := range guildSubRequirements {
-			if evt == guildSubRequirements[j] {
-				// remove matched requirements
-				guildSubRequirements = append(guildSubRequirements[:j], guildSubRequirements[j+1:]...)
-				break
-			}
-		}
-	}
-
 	sharding := websocket.NewShardMngr(websocket.ShardManagerConfig{
 		ShardConfig:        c.config.ShardConfig,
 		Logger:             c.config.Logger,
@@ -405,7 +389,6 @@ func (c *Client) Connect() (err error) {
 		DisgordInfo:        LibraryInfo(),
 		ProjectName:        c.config.ProjectName,
 		BotToken:           c.config.BotToken,
-		GuildSubscriptions: len(guildSubRequirements) != 0,
 	})
 
 	c.setupConnectEnv()

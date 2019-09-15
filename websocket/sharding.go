@@ -8,13 +8,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/event"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/logger"
 
 	"golang.org/x/net/proxy"
 )
 
-const defaultShardRateLimit float64 = 5.1 // seconds
+const defaultShardRateLimit time.Duration = 5*time.Second + 100*time.Millisecond
 const discordErrShardScalingRequired = 4011
 
 type shardID = uint
@@ -54,10 +56,34 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 	return nil
 }
 
+// ignoreGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
+// https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
+func ignoreGuildSubscriptions(ignore []string) bool {
+	requires := []string{
+		event.TypingStart, event.PresenceUpdate,
+	}
+	for i := range ignore {
+		for j := range requires {
+			if ignore[i] == requires[j] {
+				// remove matched requirements
+				requires = append(requires[:j], requires[j+1:]...)
+				break
+			}
+		}
+		if len(requires) == 0 {
+			break
+		}
+	}
+
+	return len(requires) == 0
+}
+
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
+	conf.GuildSubscriptions = ignoreGuildSubscriptions(conf.IgnoreEvents)
+
 	mngr := &shardMngr{
-		shards: map[shardID]*EvtClient{},
 		conf:   conf,
+		shards: map[shardID]*EvtClient{},
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
 				return &DiscordPacket{}
@@ -65,7 +91,7 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 		},
 	}
 	mngr.sync.logger = conf.Logger
-	mngr.sync.timeoutMs = time.Duration(int64(conf.ShardRateLimit*1000)) * time.Millisecond
+	mngr.sync.timeoutMs = conf.ShardRateLimit
 
 	return mngr
 }
@@ -102,7 +128,7 @@ type ShardConfig struct {
 	TotalNumberOfShards uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
-	ShardRateLimit float64
+	ShardRateLimit time.Duration
 
 	// DisableAutoScaling is triggered when at least one shard gets a 4011 websocket
 	// error from Discord. This causes all the shards to disconnect and new ones are created.
