@@ -95,10 +95,10 @@ type ShardConfig struct {
 
 	// TotalNumberOfShards should reflect the "total number of shards" across all
 	// instances for your bot. If you run 3 containers with 2 shards each, then
-	// the TotalNumberOfShards should be 6, while the length of ShardIDs would be
+	// the TotalNumberOfShards should be 6, while the length of shardIDs would be
 	// two on each container.
 	//
-	// defaults to len(ShardIDs) if 0
+	// defaults to len(shardIDs) if 0
 	TotalNumberOfShards uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
@@ -107,7 +107,7 @@ type ShardConfig struct {
 	// DisableAutoScaling is triggered when at least one shard gets a 4011 websocket
 	// error from Discord. This causes all the shards to disconnect and new ones are created.
 	//
-	// default value is false unless ShardIDs or TotalNumberOfShards is set.
+	// default value is false unless shardIDs or TotalNumberOfShards is set.
 	DisableAutoScaling bool
 
 	// OnScalingRequired is triggered when Discord closes the websocket connection
@@ -120,7 +120,7 @@ type ShardConfig struct {
 	// You must return the new number of total shards and additional shard ids this instance
 	// should setup. If you do not want this instance to gain extra shards, set AdditionalShardIDs
 	// to nil.
-	OnScalingRequired func() (TotalNrOfShards uint, AdditionalShardIDs []uint)
+	OnScalingRequired func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint)
 
 	// URL is fetched from the gateway before initialising a connection
 	URL string
@@ -193,13 +193,30 @@ func (s *shardMngr) initializeShards() error {
 			if code != discordErrShardScalingRequired {
 				return
 			}
-			if s.conf.DisableAutoScaling {
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			s.conf.Logger.Info("scaling")
+
+			if !s.conf.DisableAutoScaling {
 				s.scale(code, reason)
 			} else {
 				if s.conf.OnScalingRequired == nil {
 					panic("ShardConfig.OnScalingRequired must be set")
 				}
-				s.conf.OnScalingRequired()
+				var newShards []uint
+				s.conf.TotalNumberOfShards, newShards = s.conf.OnScalingRequired(s.shardIDs())
+				s.conf.ShardIDs = append(s.conf.ShardIDs, newShards...)
+
+				_ = s.Disconnect()
+				if err := s.initializeShards(); err != nil {
+					s.conf.Logger.Error("scaling", "init-shards", err)
+					return
+				}
+				s.conf.Logger.Info("scaling", "connecting shards")
+				if err := s.Connect(); err != nil {
+					s.conf.Logger.Error("scaling", "connect", err)
+				}
+				s.conf.Logger.Info("scaling", "connected")
 			}
 		},
 		conn: s.conf.conn,
@@ -264,6 +281,13 @@ func (s *shardMngr) NrOfShards() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.conf.TotalNumberOfShards
+}
+
+func (s *shardMngr) shardIDs() (shardIDs []uint) {
+	for id := range s.shards {
+		shardIDs = append(shardIDs, id)
+	}
+	return shardIDs
 }
 
 func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error) {

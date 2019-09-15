@@ -82,7 +82,7 @@ func TestConfigureShardConfig(t *testing.T) {
 //
 //	mngr := NewShardMngr(ShardManagerConfig{
 //		ShardConfig: ShardConfig{
-//			ShardIDs: []uint{0, 1},
+//			shardIDs: []uint{0, 1},
 //		},
 //		DisgordInfo:   "",
 //		BotToken:      "",

@@ -6,7 +6,7 @@
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
 //  discord := disgord.New(&disgord.Config{
-//    Token: "my-secret-bot-token",
+//    BotToken: "my-secret-bot-token",
 //  })
 //  defer discord.StayConnectedUntilInterrupt()
 //
@@ -16,8 +16,8 @@
 //      msg.Reply(s, "hello")
 //  })
 //
-// // If you want some logic to fire when the bot is ready
-// // (all shards has received their ready event), please use the Ready method.
+//  // If you want some logic to fire when the bot is ready
+//  // (all shards has received their ready event), please use the Ready method.
 //  discord.Ready(func() {
 //  	fmt.Println("READY NOW!")
 //  })
@@ -26,17 +26,18 @@
 //
 // Listen for events using channels
 //
-// Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a handler.
-// Simply define your channel, add buffering if you need it, and register it as a handler in the .On method.
+// Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a function.
+// Simply define your channel, add buffering if you need it, and register it as a handler in the `.On` method.
 //
 //  msgCreateChan := make(chan *disgord.MessageCreate, 10)
 //  session.On(disgord.EvtMessageCreate, msgCreateChan)
 //
-// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you can
-// inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will not
+// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you
+// inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will never
 // close it for you.
 //
 //  ctrl := &disgord.Ctrl{Channel: msgCreateChan}
+//  session.On(disgord.EvtMessageCreate, msgCreateChan, ctrl)
 //  go func() {
 //    // close the channel after 20 seconds and safely remove it from disgord
 //    // without disgord trying to send data through it after it has closed
@@ -55,15 +56,48 @@
 //          if !alive {
 //              return
 //          }
-//          message = evt.Message
+//          msg = evt.Message
 //          status = "created"
 //      }
 //
-//      fmt.Printf("A message from %s was %s\n", message.Author.Mention(), status)
-//      // output example: "A message from @Anders was created"
+//      fmt.Printf("A message from %s was %s\n", msg.Author.Mention(), status)
+//      // output: "A message from @Anders was created"
 //  }
 //
-// Optimizing your cache logic
+// Websockets (sharding)
+//
+// DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord, and limit the number of shards per instance (in these cases you must handle scaling yourself as DisGord can not).
+//
+// Sharding is done behind the scenes, so you do not need to worry about any settings. DisGord will simply ask Discord for the recommended amount of shards for your bot on startup. However, to set specific amount of shards you can use the `disgord.ShardConfig` to specify a range of valid shard IDs (starts from 0).
+//
+// starting a bot with exactly 5 shards
+//  client := disgord.New(&disgord.Config{
+//  	ShardConfig: disgord.ShardConfig{
+//			// this is a copy so u can't manipulate it later on
+//          shardIDs: []uint{0,1,2,3,4},
+//  	},
+//  })
+//
+// Handle scaling options yourself
+//  client := disgord.New(&disgord.Config{
+//  	ShardConfig: disgord.ShardConfig{
+//			// this is a copy so u can't manipulate it later on
+//          DisableAutoScaling: true,
+//          OnScalingRequired: func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint) {
+//				// instead of asking discord for exact number of shards recommended
+//				// this is increased by 50% every time discord complains you don't have enough shards
+// 				// to reduce the number of times you have to scale
+//              TotalNrOfShards := uint(len(shardIDs) * 1.5)
+//				for i := len(shardIDs) - 1; i < TotalNrOfShards; i++ {
+//					AdditionalShardIDs = append(AdditionalShardIDs, i)
+//				}
+//				return
+//          },
+//  	},
+//  })
+//
+//
+// Caching
 //
 // > Note: if you create a CacheConfig you don't have to set every field.
 //
@@ -114,10 +148,6 @@
 // DisGord Flags
 //
 // In addition to disgord.IgnoreCache, as shown above, you can pass in other flags such as: disgord.SortByID, disgord.OrderAscending, etc. You can find these flags in the flag.go file.
-//
-// Manually updating the cache
-//
-// Currently not supported. Should it ever be?
 //
 //
 // Build tags

@@ -24,8 +24,8 @@
 
 ## About
 Go module for interacting with the Discord API. Supports events, REST calls and voice (sending only).
- 
-Discord object comes with helper functions such as `Message.Reply(session, "hello")`, or `Session.DeleteFromDiscord(role)` for simplicity/readability.
+
+The goal is to make bot development easy and handle some nastiness internally; sharding, auto-scaling of shards, caching, provide helper functions, middlewares for events, allow concurrent use of rate limiters, etc.
 
 DisGord has complete implementation for Discord's documented REST API. It lacks battle testing, so any bug report/feedback is greatly appreciated!
 
@@ -38,7 +38,7 @@ Talk to us on Discord! We exist in both the Gopher server and the Discord API se
  - [Discord API](https://discord.gg/HBTHbme)
 
 ## Warning
-The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. As soon as the issue #103 is finished, there should only be tweaking left before v1.0.0 is release.
+The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
 
 There might be bugs in the cache, or the cache processing might not exist yet for some REST methods. Bypass the cache for REST methods by supplying the flag argument `disgord.IgnoreCache`. eg. `client.GetCurrentUser(disgord.IgnoreCache)`.
 
