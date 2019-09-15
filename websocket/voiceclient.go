@@ -134,7 +134,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.emit(true, cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil, 0)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -188,7 +188,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.emit(true, cmd.VoiceHeartbeat, nil)
+	return c.emit(true, cmd.VoiceHeartbeat, nil, 0)
 }
 
 //////////////////////////////////////////////////////
@@ -274,7 +274,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		GuildID   Snowflake `json:"server_id"`
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
-	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token})
+	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token}, 0)
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
@@ -284,7 +284,7 @@ func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
 		Token:     m.conf.Token,
-	})
+	}, 0)
 
 	m.haveIdentifiedOnce = true
 	return
@@ -297,7 +297,7 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 	err = c.emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
-	})
+	}, 0)
 	if err != nil {
 		return nil, err
 	}

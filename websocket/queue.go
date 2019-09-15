@@ -79,4 +79,5 @@ func (c *clientPktQueue) Steal() (m []*clientPacket) {
 
 	m = c.messages
 	c.messages = c.messages[:0]
+	return m
 }

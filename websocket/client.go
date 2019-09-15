@@ -305,8 +305,7 @@ func (c *client) disconnect() (err error) {
 func (c *client) Disconnect() (err error) {
 	c.Lock()
 	c.requestedDisconnect = true
-	c.
-		c.Unlock()
+	c.Unlock()
 	return c.disconnect()
 }
 

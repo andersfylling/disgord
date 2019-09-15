@@ -130,6 +130,7 @@ type ShardManagerConfig struct {
 	HTTPClient   *http.Client
 	Logger       logger.Logger
 	ShutdownChan chan interface{}
+	conn         Conn
 
 	// ...
 	TrackedEvents *UniqueStringSlice
@@ -184,6 +185,7 @@ func (s *shardMngr) initializeShards() error {
 		// other
 		SystemShutdown:     s.conf.ShutdownChan,
 		discordErrListener: s.scale,
+		conn:               s.conf.conn,
 	}
 
 	for _, id := range s.conf.ShardIDs {

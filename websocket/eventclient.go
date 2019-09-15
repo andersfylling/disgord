@@ -370,7 +370,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.emit(true, event.Heartbeat, snr)
+	return c.emit(true, event.Heartbeat, snr, 0)
 }
 
 //////////////////////////////////////////////////////
@@ -480,7 +480,7 @@ func (c *EvtClient) sendHelloPacket() {
 		Token      string `json:"token"`
 		SessionID  string `json:"session_id"`
 		SequenceNr uint   `json:"seq"`
-	}{token, session, sequence})
+	}{token, session, sequence}, 0)
 	if err != nil {
 		c.log.Error(c.getLogPrefix(), err)
 	}
@@ -498,7 +498,7 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.emit(true, event.Identify, id)
+	err = c.emit(true, event.Identify, id, 0)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
