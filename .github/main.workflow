@@ -1,9 +1,9 @@
 workflow "Code quality" {
-  on = "push"
+  on = "pull_request"
   resolves = [
     "go imports",
     //"go lint",
-    "go vet",
+    //"go vet",
     "staticcheck",
     "errcheck",
     "go sec",
