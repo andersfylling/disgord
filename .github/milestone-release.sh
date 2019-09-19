@@ -17,8 +17,8 @@ rm gith
 rm "closed_milestones.txt"
 
 # setup git env
-git config user.email "anders@nordic.email"
-git config user.name "Anders Fylling (bot)"
+git config user.email "${GITHUB_EMAIL}"
+git config user.name "https://github.com/andersfylling"
 git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 git checkout develop
 
@@ -35,4 +35,4 @@ github_changelog_generator --release-branch develop -u andersfylling -p disgord
 git add .
 git commit -m "gen changelog & set version to ${VERSION}"
 git tag "${VERSION}" -m "DisGord ${VERSION}"
-(git diff --quiet && git diff --staged --quiet) || (git commit -m "${COMMIT_MSG}"; git push origin develop --tags)
+git push origin develop --tags

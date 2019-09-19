@@ -13,6 +13,7 @@ jobs:
       - name: Update disgord version
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          GITHUB_EMAIL: ${{ secrets.GITHUB_EMAIL }}
         run: sh .github/milestone-release.sh
       - name: goreleaser
         uses: docker://goreleaser/goreleaser
