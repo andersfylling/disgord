@@ -1,8 +1,7 @@
 FROM golang:1.13
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
-COPY . /build
-RUN export GO111MODULE=on
+COPY cmd/docker /build
+RUN go mod download
 RUN go test ./...
 RUN rm -rf /build
-

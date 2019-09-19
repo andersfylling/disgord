@@ -1,0 +1,26 @@
+on:
+  milestone:
+    types: [closed]
+name: GoReleaser
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    #needs: [ test ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@develop
+      - name: Update disgord version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          GITHUB_EMAIL: ${{ secrets.GITHUB_EMAIL }}
+        run: sh .github/milestone-release.sh
+      - name: goreleaser
+        uses: docker://goreleaser/goreleaser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          args: release
+        if: success()
