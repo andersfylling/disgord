@@ -33,9 +33,6 @@ dockers:
       - "--label=com.github.actions.description=DisGord is a Go module for interacting with Discord"
       - "--label=repository=http://github.com/andersfylling/disgord"
       - "--label=maintainer=Anders Fylling <anders@nordic.email>"
-
-    extra_files:
-      - scripts/entrypoint.sh
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     format_overrides:
