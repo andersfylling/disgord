@@ -1060,6 +1060,12 @@ type Member struct {
 }
 
 var _ Reseter = (*Member)(nil)
+var _ fmt.Stringer = (*Member)(nil)
+var _ internalUpdater = (*Member)(nil)
+
+func (m *Member) updateInternals() {
+	m.userID = m.User.ID
+}
 
 func (m *Member) String() string {
 	usrname := m.Nick
