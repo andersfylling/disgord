@@ -394,12 +394,34 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 	return nil
 }
 
-func (g *Guild) addMember(member *Member) error {
-	if member == nil {
-		return errors.New("member was nil")
+func (g *Guild) hasMember(id Snowflake) bool {
+	for i := len(g.Members) - 1; i >= 0; i-- {
+		if g.Members[i].userID == id {
+			return true
+		}
 	}
+
+	return false
+}
+
+func (g *Guild) addMembers(members ...*Member) error {
+	if members == nil {
+		return errors.New("members was nil")
+	}
+
+	// Reduces allocations
+	membersToAdd := members[:0]
+
+	for _, member := range members {
+		if !g.hasMember(member.userID) {
+			// Could maybe be replaced by
+			// g.Members = append(g.Members, member)
+			membersToAdd = append(membersToAdd, member)
+		}
+	}
+
 	// TODO: implement sorting for faster searching later
-	g.Members = append(g.Members, member)
+	g.Members = append(g.Members, membersToAdd...)
 
 	return nil
 }
@@ -411,9 +433,7 @@ func (g *Guild) AddMembers(members []*Member) {
 		defer g.Unlock()
 	}
 
-	for _, member := range members {
-		g.addMember(member)
-	}
+	g.addMembers(members...)
 }
 
 // AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
@@ -423,7 +443,7 @@ func (g *Guild) AddMember(member *Member) error {
 		defer g.Unlock()
 	}
 
-	return g.addMember(member)
+	return g.addMembers(member)
 }
 
 // LoadAllMembers fetches all the members for this guild from the Discord REST API
@@ -434,14 +454,12 @@ func (g *Guild) LoadAllMembers(s Session) (err error) {
 	}
 	// TODO: what if members have already been loaded? use Guild.MembersCount?
 
-	members, err := s.GetMembers(g.ID, nil)
+	members, err := s.GetMembers(g.ID, nil, IgnoreCache)
 	if err != nil {
 		return err
 	}
 
-	for i := range members {
-		_ = g.addMember(members[i])
-	}
+	g.addMembers(members...)
 
 	return nil
 }
