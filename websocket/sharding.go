@@ -310,7 +310,9 @@ func (s *shardMngr) Disconnect() error {
 func (s *shardMngr) NrOfShards() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.conf.TotalNumberOfShards
+
+	// ShardIDs will always reflect the number of shards for this instance
+	return uint(len(s.conf.ShardIDs))
 }
 
 func (s *shardMngr) shardIDs() (shardIDs []uint) {
