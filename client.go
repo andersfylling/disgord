@@ -71,6 +71,9 @@ func NewClient(conf *Config) (c *Client, err error) {
 		conf.Logger = logger.Empty{}
 	}
 
+	// ignore PRESENCES_REPLACE: https://github.com/discordapp/discord-api-docs/issues/683
+	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
+
 	// request Client for REST requests
 	reqClient, err := NewRESTClient(conf)
 	if err != nil {
@@ -513,13 +516,14 @@ func (c *Client) Ready(cb func()) {
 		cb: cb,
 	}
 
-	c.On(EvtReady, func(s Session, evt *Ready) {
+	c.On(EvtReady, func(_ Session, evt *Ready) {
 		ctrl.Lock()
 		defer ctrl.Unlock()
 
-		l := c.shardManager.NrOfShards()
+		l := c.shardManager.NrOfTotalShards()
 		if l != uint(len(ctrl.shardReady)) {
 			ctrl.shardReady = make([]bool, l)
+			ctrl.localShardIDs = c.shardManager.ShardIDs()
 		}
 
 		ctrl.shardReady[evt.ShardID] = true

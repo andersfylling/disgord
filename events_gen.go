@@ -312,15 +312,6 @@ func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 // ---------------------------
 
-// EvtPresencesReplace Holds and array of presence update objects
-//
-const EvtPresencesReplace = event.PresencesReplace
-
-func (h *PresencesReplace) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *PresencesReplace) setShardID(id uint)                  { h.ShardID = id }
-
-// ---------------------------
-
 // EvtReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.

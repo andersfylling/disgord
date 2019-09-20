@@ -187,8 +187,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*PresenceUpdate:
 		s = *t
-	case *[]*PresencesReplace:
-		s = *t
 	case *[]*Ready:
 		s = *t
 	case *[]*Resumed:

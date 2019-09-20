@@ -157,15 +157,6 @@ type evtResource interface {
 
 // ---------------------------
 
-// PresencesReplace holds the event content
-type PresencesReplace struct {
-	Presnces []*PresenceUpdate `json:"presences_replace"` // TODO: verify json tag
-	Ctx      context.Context   `json:"-"`
-	ShardID  uint              `json:"-"`
-}
-
-// ---------------------------
-
 // Ready contains the initial state information
 type Ready struct {
 	APIVersion int                 `json:"v"`

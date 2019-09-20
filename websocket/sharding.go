@@ -27,6 +27,10 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 }
 
 func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+	if len(conf.ShardIDs) == 0 && conf.TotalNumberOfShards != 0 {
+		return errors.New("TotalNumberOfShards should only be set when you use distributed bots and have set the ShardIDs field - TotalNumberOfShards is an optional field")
+	}
+
 	data, err := client.GetGatewayBot()
 	if err != nil {
 		return err
@@ -45,7 +49,7 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 		for i := uint(0); i < data.Shards; i++ {
 			conf.ShardIDs = append(conf.ShardIDs, i)
 		}
-	} else {
+	} else if conf.TotalNumberOfShards == 0 {
 		conf.TotalNumberOfShards = uint(len(conf.ShardIDs))
 	}
 
@@ -104,6 +108,8 @@ type ShardManager interface {
 	Disconnect() error
 	Emit(string, interface{}, Snowflake) error
 	NrOfShards() uint
+	NrOfTotalShards() uint
+	ShardIDs() (shardIDs []uint)
 	GetShard(shardID shardID) (shard *EvtClient, err error)
 	HeartbeatLatencies() (latencies map[shardID]time.Duration, err error)
 }
@@ -196,7 +202,7 @@ func (s *shardMngr) initializeShards() error {
 		Browser:             s.conf.DisgordInfo,
 		Device:              s.conf.ProjectName,
 		GuildLargeThreshold: 0, // let's not sometimes load partial guilds info. Either load everything or nothing.
-		ShardCount:          uint(len(s.conf.ShardIDs)),
+		ShardCount:          s.conf.TotalNumberOfShards,
 		Presence:            s.conf.DefaultBotPresence,
 		GuildSubscriptions:  s.conf.GuildSubscriptions,
 
@@ -234,7 +240,7 @@ func (s *shardMngr) initializeShards() error {
 					panic("ShardConfig.OnScalingRequired must be set")
 				}
 				var newShards []uint
-				s.conf.TotalNumberOfShards, newShards = s.conf.OnScalingRequired(s.shardIDs())
+				s.conf.TotalNumberOfShards, newShards = s.conf.OnScalingRequired(s.ShardIDs())
 				s.conf.ShardIDs = append(s.conf.ShardIDs, newShards...)
 
 				_ = s.Disconnect()
@@ -254,7 +260,7 @@ func (s *shardMngr) initializeShards() error {
 
 	for _, id := range s.conf.ShardIDs {
 		if shard, alreadyConfigured := s.shards[id]; alreadyConfigured {
-			shard.evtConf.ShardCount = uint(len(s.conf.ShardIDs))
+			shard.evtConf.ShardCount = s.conf.TotalNumberOfShards
 			continue
 		}
 
@@ -315,7 +321,13 @@ func (s *shardMngr) NrOfShards() uint {
 	return uint(len(s.conf.ShardIDs))
 }
 
-func (s *shardMngr) shardIDs() (shardIDs []uint) {
+func (s *shardMngr) NrOfTotalShards() uint {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.conf.TotalNumberOfShards
+}
+
+func (s *shardMngr) ShardIDs() (shardIDs []uint) {
 	for id := range s.shards {
 		shardIDs = append(shardIDs, id)
 	}
