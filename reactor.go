@@ -63,7 +63,7 @@ func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
 
 		ctx := context.Background()
 		if err := populateResource(resource, ctx, evt); err != nil {
-			d.session.Logger().Error(err, "EVENT DATA: ", string(evt.Data))
+			d.session.Logger().Error(err, "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
 		}
@@ -394,8 +394,9 @@ var eternalCtrl = &eternalHandlersCtrl{}
 // rdyCtrl is used to trigger notify the user when all the websocket sessions have received their first READY event
 type rdyCtrl struct {
 	sync.Mutex
-	shardReady []bool
-	cb         func()
+	shardReady    []bool
+	localShardIDs []uint
+	cb            func()
 }
 
 var _ HandlerCtrl = (*rdyCtrl)(nil)
@@ -414,9 +415,10 @@ func (c *rdyCtrl) IsDead() bool {
 	defer c.Unlock()
 
 	ok := true
-	for _, v := range c.shardReady {
-		if !v {
+	for _, id := range c.localShardIDs {
+		if !c.shardReady[id] {
 			ok = false
+			break
 		}
 	}
 
