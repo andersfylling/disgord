@@ -114,12 +114,12 @@
 //              Mutable: false, // everything going in and out of the cache is deep copied
 //				// setting Mutable to true, might break your program as this is experimental and not supported.
 //
-//              DisableUserCaching: false, // activates caching for users
+//              DisableUserTracking: false, // activates caching for users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
 //
-//              DisableVoiceStateCaching: true, // don't cache voice states
+//              DisableVoiceStateTracking: true, // don't cache voice states
 //
-//              DisableChannelCaching: false,
+//              DisableChannelTracking: false,
 //              ChannelCacheLifetime: 0, // lives forever unless cache replacement strategy kicks in
 //           },
 //  })

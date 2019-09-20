@@ -90,10 +90,10 @@ func NewClient(conf *Config) (c *Client, err error) {
 	} else {
 		// create an empty cache to avoid nil panics
 		cacher, err = newCache(&CacheConfig{
-			DisableUserCaching:       true,
-			DisableChannelCaching:    true,
-			DisableGuildCaching:      true,
-			DisableVoiceStateCaching: true,
+			DisableUserTracking:       true,
+			DisableChannelTracking:    true,
+			DisableGuildTracking:      true,
+			DisableVoiceStateTracking: true,
 		})
 		if err != nil {
 			return nil, err
@@ -351,9 +351,13 @@ func (c *Client) Cache() Cacher {
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
-	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
-	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
-	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
+	c.On(event.UserUpdate,
+		c.handlerUpdateSelfBot)
+	c.On(event.GuildCreate,
+		c.handlerAddToConnectedGuilds,
+		c.handlerLoadAllGuildMembers)
+	c.On(event.GuildDelete,
+		c.handlerRemoveFromConnectedGuilds)
 
 	// start demultiplexer which also trigger dispatching
 	var cache *Cache
@@ -476,6 +480,16 @@ func (c *Client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
 	}
 
 	c.connectedGuilds = append(c.connectedGuilds, evt.Guild.ID)
+}
+
+// handlerAddToConnectedGuilds update internal state when joining or creating a guild
+func (c *Client) handlerLoadAllGuildMembers(s Session, evt *GuildCreate) {
+	if c.config.CacheConfig.DisableMemberTracking {
+		return
+	}
+	if err := evt.Guild.LoadAllMembers(s); err != nil {
+		c.log.Error(err)
+	}
 }
 
 // handlerRemoveFromConnectedGuilds update internal state when deleting or leaving a guild

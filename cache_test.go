@@ -5,9 +5,9 @@ import "testing"
 func TestCache_ChannelCreate(t *testing.T) {
 	t.Run("immutable", func(t *testing.T) {
 		cache, _ := newCache(&CacheConfig{
-			DisableGuildCaching:      true,
-			DisableUserCaching:       true,
-			DisableVoiceStateCaching: true,
+			DisableGuildTracking:      true,
+			DisableUserTracking:       true,
+			DisableVoiceStateTracking: true,
 		})
 
 		c1 := NewChannel()
@@ -24,10 +24,10 @@ func TestCache_ChannelCreate(t *testing.T) {
 
 	t.Run("mutable", func(t *testing.T) {
 		cache, _ := newCache(&CacheConfig{
-			Mutable:                  true,
-			DisableGuildCaching:      true,
-			DisableUserCaching:       true,
-			DisableVoiceStateCaching: true,
+			Mutable:                   true,
+			DisableGuildTracking:      true,
+			DisableUserTracking:       true,
+			DisableVoiceStateTracking: true,
 		})
 
 		c1 := NewChannel()

@@ -136,21 +136,22 @@ func newCache(conf *CacheConfig) (c *Cache, err error) {
 type CacheConfig struct {
 	Mutable bool // Must be immutable to support concurrent access and long-running tasks(!)
 
-	DisableUserCaching  bool
+	DisableUserTracking bool
 	UserCacheMaxEntries uint
 	UserCacheLifetime   time.Duration
 
-	DisableVoiceStateCaching  bool
+	DisableVoiceStateTracking bool
 	VoiceStateCacheMaxEntries uint
 	VoiceStateCacheLifetime   time.Duration
 
-	DisableChannelCaching  bool
+	DisableChannelTracking bool
 	ChannelCacheMaxEntries uint
 	ChannelCacheLifetime   time.Duration
 
-	DisableGuildCaching  bool
-	GuildCacheMaxEntries uint
-	GuildCacheLifetime   time.Duration
+	DisableMemberTracking bool
+	DisableGuildTracking  bool
+	GuildCacheMaxEntries  uint
+	GuildCacheLifetime    time.Duration
 
 	// Deprecated
 	UserCacheAlgorithm string
@@ -434,7 +435,7 @@ func (c *Cache) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v int
 // Guild
 
 func createGuildCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
-	if conf.DisableGuildCaching {
+	if conf.DisableGuildTracking {
 		return nil, nil
 	}
 
@@ -443,17 +444,22 @@ func createGuildCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 }
 
 type guildCacheItem struct {
-	guild    *Guild
-	channels []Snowflake
+	guild        *Guild
+	TrackMembers bool
+	channels     []Snowflake
 }
 
 func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 	if immutable {
 		g.guild = guild.DeepCopy().(*Guild)
 
-		for _, member := range g.guild.Members {
-			member.userID = member.User.ID
-			member.User = nil
+		if g.TrackMembers {
+			for _, member := range g.guild.Members {
+				member.userID = member.User.ID
+				member.User = nil
+			}
+		} else {
+			g.guild.Members = nil
 		}
 
 		g.guild.Channels = nil
@@ -464,8 +470,10 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 	} else {
 		g.guild = guild
 
-		for _, member := range g.guild.Members {
-			member.userID = member.User.ID
+		if g.TrackMembers {
+			for _, member := range g.guild.Members {
+				member.userID = member.User.ID
+			}
 		}
 	}
 
@@ -484,9 +492,11 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 				}
 			}
 		}
-		for i, member := range guild.Members {
-			guild.Members[i].User, _ = cache.GetUser(member.userID)
-			// member has a GetUser method to handle nil users
+		if g.TrackMembers {
+			for i, member := range guild.Members {
+				guild.Members[i].User, _ = cache.GetUser(member.userID)
+				// member has a GetUser method to handle nil users
+			}
 		}
 
 		// TODO: voice state
@@ -503,6 +513,7 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 			}
 		}
 		guild.Channels = channels
+		guild.Members = nil
 	}
 
 	return
@@ -542,16 +553,18 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 			g.guild.VoiceStates[i] = state.DeepCopy().(*VoiceState)
 		}
 		// members
-		if len(fresh.Members) > 0 {
-			g.guild.Members = make([]*Member, len(fresh.Members))
-		}
-		for i, m := range fresh.Members {
-			if m == nil {
-				continue
+		if g.TrackMembers {
+			if len(fresh.Members) > 0 {
+				g.guild.Members = make([]*Member, len(fresh.Members))
 			}
-			m.userID = m.User.ID
-			m.User = nil
-			g.guild.Members[i] = m.DeepCopy().(*Member)
+			for i, m := range fresh.Members {
+				if m == nil {
+					continue
+				}
+				m.userID = m.User.ID
+				m.User = nil
+				g.guild.Members[i] = m.DeepCopy().(*Member)
+			}
 		}
 		// presences
 		if len(fresh.Presences) > 0 {
@@ -597,6 +610,9 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 }
 
 func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
+	if !g.TrackMembers {
+		return
+	}
 	newMembers := []*Member{}
 
 	g.guild.Lock()
@@ -675,7 +691,7 @@ func (c *Cache) SetGuild(guild *Guild) {
 		item.Val.(*guildCacheItem).update(guild, c.immutable)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
-		content := &guildCacheItem{}
+		content := &guildCacheItem{TrackMembers: !c.conf.DisableMemberTracking}
 		content.process(guild, c.immutable)
 		c.guilds.Set(guild.ID, c.guilds.CreateCacheableItem(content))
 	}
@@ -704,7 +720,7 @@ func (c *Cache) SetGuildEmojis(guildID Snowflake, emojis []*Emoji) {
 		}
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
-		content := &guildCacheItem{}
+		content := &guildCacheItem{TrackMembers: !c.conf.DisableMemberTracking}
 		content.process(&Guild{
 			ID:     guildID,
 			Emojis: emojis,
@@ -734,7 +750,7 @@ func (c *Cache) SetGuildMembers(guildID Snowflake, members []*Member) {
 		item.Val.(*guildCacheItem).updateMembers(members, c.immutable)
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
-		content := &guildCacheItem{}
+		content := &guildCacheItem{TrackMembers: !c.conf.DisableMemberTracking}
 		content.process(&Guild{
 			ID:      guildID,
 			Members: members,
@@ -765,7 +781,7 @@ func (c *Cache) SetGuildRoles(guildID Snowflake, roles []*Role) {
 		guild.Roles = newRoles
 		c.guilds.RefreshAfterDiscordUpdate(item)
 	} else {
-		content := &guildCacheItem{}
+		content := &guildCacheItem{TrackMembers: !c.conf.DisableMemberTracking}
 		content.process(&Guild{
 			ID:    guildID,
 			Roles: roles,
@@ -1169,7 +1185,7 @@ func (c *Cache) DeleteGuildRole(guildID, roleID Snowflake) {
 // Users
 
 func createUserCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
-	if conf.DisableUserCaching {
+	if conf.DisableUserTracking {
 		return nil, nil
 	}
 
@@ -1248,7 +1264,7 @@ func (c *Cache) PeekUser(id Snowflake) (*User, error) {
 // Voice States
 
 func createVoiceStateCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
-	if conf.DisableVoiceStateCaching {
+	if conf.DisableVoiceStateTracking {
 		return nil, nil
 	}
 
@@ -1386,7 +1402,7 @@ func (c *Cache) GetVoiceState(guildID Snowflake, params *guildVoiceStateCachePar
 // Channels
 
 func createChannelCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
-	if conf.DisableChannelCaching {
+	if conf.DisableChannelTracking {
 		return nil, nil
 	}
 
