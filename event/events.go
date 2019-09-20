@@ -1,9 +1,6 @@
 // Package event is a universal discord package that holds all the event types one can receive (currently only bot events).
 package event
 
-// PresencesReplace Holds and array of presence update objects
-const PresencesReplace = "PRESENCES_REPLACE"
-
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 //// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 //// required for a client to begin interacting with the rest of the platform.
