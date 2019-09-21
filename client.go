@@ -530,6 +530,7 @@ func (c *Client) Ready(cb func()) {
 	}, ctrl)
 }
 
+// GuildsReady is triggered once all unavailable guilds given in the READY event has loaded from their respective GUILD_CREATE events.
 func (c *Client) GuildsReady(cb func()) {
 	ctrl := &guildsRdyCtrl{
 		status: make(map[Snowflake]bool),
