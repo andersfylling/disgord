@@ -530,6 +530,33 @@ func (c *Client) Ready(cb func()) {
 	}, ctrl)
 }
 
+func (c *Client) GuildsReady(cb func()) {
+	ctrl := &guildsRdyCtrl{
+		status: make(map[Snowflake]bool),
+	}
+	ctrl.cb = cb
+	ctrl.status[0] = false
+
+	c.On(EvtReady, func(_ Session, evt *Ready) {
+		ctrl.Lock()
+		defer ctrl.Unlock()
+
+		for _, g := range evt.Guilds {
+			if _, ok := ctrl.status[g.ID]; !ok {
+				ctrl.status[g.ID] = false
+			}
+		}
+
+		delete(ctrl.status, 0)
+	}, ctrl)
+
+	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
+		ctrl.Lock()
+		defer ctrl.Unlock()
+		ctrl.status[evt.Guild.ID] = true
+	}, ctrl)
+}
+
 // On creates a specification to be executed on the given event. The specification
 // consists of, in order, 0 or more middlewares, 1 or more handlers, 0 or 1 controller.
 // On incorrect ordering, or types, the method will panic. See reactor.go for types.
