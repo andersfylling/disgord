@@ -289,6 +289,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*eternalHandlersCtrl:
 		s = *t
+	case *[]*guildsRdyCtrl:
+		s = *t
 	case *[]*handlerSpec:
 		s = *t
 	case *[]*rdyCtrl:

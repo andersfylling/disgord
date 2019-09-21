@@ -155,11 +155,17 @@
 //
 // `disgord_diagnosews` will store all the incoming and outgoing json data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
 //
-// `json-std` switches out jsoniter with the json package from the std libs.
+// `json_std` switches out jsoniter with the json package from the std libs.
 //
 // `disgord_removeDiscordMutex` replaces mutexes in discord structures with a empty mutex; removes locking behaviour and any mutex code when compiled.
 //
 // `disgord_parallelism` activates built-in locking in discord structure methods. Eg. Guild.AddChannel(*Channel) does not do locking by default. But if you find yourself using these discord data structures in parallel environment, you can activate the internal locking to reduce race conditions. Note that activating `disgord_parallelism` and `disgord_removeDiscordMutex` at the same time, will cause you to have no locking as `disgord_removeDiscordMutex` affects the same mutexes.
+//
+// `disgord_legacy` adds wrapper methods with the original discord naming. eg. For REST requests you will notice DisGord uses a consistency between update/create/get/delete/set while discord uses edit/update/modify/close/delete/remove/etc. So if you struggle find a REST method, you can enable this build tag to gain access to mentioned wrappers.
+//
+// `disgordperf` does some low level tweaking that can help boost json unmarshalling and drops json validation from Discord responses/events. Other optimizations might take place as well.
+//
+// `disgord_websocket_gorilla` replaces nhooyr/websocket dependency with gorilla/websocket for gateway communication.
 //
 //
 // Deleting Discord data
