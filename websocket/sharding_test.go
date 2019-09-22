@@ -35,7 +35,7 @@ func TestConfigureShardConfig(t *testing.T) {
 	if conf.URL != u {
 		t.Error("url was not set")
 	}
-	if len(conf.ShardIDs) != int(conf.TotalNumberOfShards) && conf.TotalNumberOfShards != nrOfShards {
+	if len(conf.ShardIDs) != int(conf.ShardCount) && conf.ShardCount != nrOfShards {
 		t.Error("incorrectly set number of shards")
 	}
 	if conf.DisableAutoScaling {
@@ -53,8 +53,8 @@ func TestConfigureShardConfig(t *testing.T) {
 	}
 
 	conf = ShardConfig{
-		ShardIDs:            []uint{34, 7, 2},
-		TotalNumberOfShards: 34,
+		ShardIDs:   []uint{34, 7, 2},
+		ShardCount: 34,
 	}
 	if err := ConfigureShardConfig(mock, &conf); err != nil {
 		t.Error(err)
