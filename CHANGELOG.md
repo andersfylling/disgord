@@ -1,29 +1,43 @@
 # Change Log
 
-## [Unreleased](https://github.com/andersfylling/disgord/tree/HEAD)
-
-[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc4...HEAD)
+## [v0.12.0-rc5](https://github.com/andersfylling/disgord/tree/v0.12.0-rc5) (2019-09-22)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc4...v0.12.0-rc5)
 
 **Implemented enhancements:**
 
 - Enhanced ready event for guild loading. [\#198](https://github.com/andersfylling/disgord/issues/198)
+- refactor websocket logic [\#162](https://github.com/andersfylling/disgord/issues/162)
+- Clarify if a message event is from a guild or a direct message [\#153](https://github.com/andersfylling/disgord/issues/153)
+- Initiate reconnect instead of stopping when Client.Connect\(\) fails [\#141](https://github.com/andersfylling/disgord/issues/141)
+- Allow using channels instead of just handlers in .On method [\#131](https://github.com/andersfylling/disgord/issues/131)
+- Internal loop for GetMessages [\#130](https://github.com/andersfylling/disgord/issues/130)
+- helper functions for v0.12 [\#126](https://github.com/andersfylling/disgord/issues/126)
 - Feature/integration tests [\#205](https://github.com/andersfylling/disgord/pull/205) ([andersfylling](https://github.com/andersfylling))
 - rename ShardConfig.TotalNrOfShards to ShardConfig.ShardCount [\#204](https://github.com/andersfylling/disgord/pull/204) ([andersfylling](https://github.com/andersfylling))
 - auto release on milestone close [\#192](https://github.com/andersfylling/disgord/pull/192) ([andersfylling](https://github.com/andersfylling))
+- Use millisecond precision header [\#165](https://github.com/andersfylling/disgord/pull/165) ([andersfylling](https://github.com/andersfylling))
 - specify events to ignore rather than handle [\#149](https://github.com/andersfylling/disgord/pull/149) ([andersfylling](https://github.com/andersfylling))
 
 **Fixed bugs:**
 
 - Update dockerfile [\#191](https://github.com/andersfylling/disgord/issues/191)
 - Deadlock during reconnect phase [\#132](https://github.com/andersfylling/disgord/issues/132)
+- Deadline for heartbeat ack is too low [\#168](https://github.com/andersfylling/disgord/issues/168)
+- refactor websocket logic [\#162](https://github.com/andersfylling/disgord/issues/162)
 - fixes issue with identify for distributed bots doing sharding [\#199](https://github.com/andersfylling/disgord/pull/199) ([andersfylling](https://github.com/andersfylling))
 - fixes client.Ready for distributed bots [\#197](https://github.com/andersfylling/disgord/pull/197) ([andersfylling](https://github.com/andersfylling))
+
+**Closed issues:**
+
+- Add option to disable listening for presence\_updates and typing events [\#160](https://github.com/andersfylling/disgord/issues/160)
 
 **Merged pull requests:**
 
 - document build tags + introduce legacy build tag for REST method… [\#202](https://github.com/andersfylling/disgord/pull/202) ([andersfylling](https://github.com/andersfylling))
 - remove short events pkg [\#201](https://github.com/andersfylling/disgord/pull/201) ([andersfylling](https://github.com/andersfylling))
 - add GuildsReady method \(fixes \#198\) [\#200](https://github.com/andersfylling/disgord/pull/200) ([andersfylling](https://github.com/andersfylling))
+- Allow registering event channels as if they are handlers [\#147](https://github.com/andersfylling/disgord/pull/147) ([andersfylling](https://github.com/andersfylling))
+- Refactor sharding [\#146](https://github.com/andersfylling/disgord/pull/146) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.12.0-rc4](https://github.com/andersfylling/disgord/tree/v0.12.0-rc4) (2019-09-15)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc3...v0.12.0-rc4)
@@ -43,27 +57,18 @@
 
 **Implemented enhancements:**
 
-- refactor websocket logic [\#162](https://github.com/andersfylling/disgord/issues/162)
-- Clarify if a message event is from a guild or a direct message [\#153](https://github.com/andersfylling/disgord/issues/153)
-- Initiate reconnect instead of stopping when Client.Connect\(\) fails [\#141](https://github.com/andersfylling/disgord/issues/141)
 - Implement voice-kicking [\#133](https://github.com/andersfylling/disgord/issues/133)
-- Allow using channels instead of just handlers in .On method [\#131](https://github.com/andersfylling/disgord/issues/131)
-- helper functions for v0.12 [\#126](https://github.com/andersfylling/disgord/issues/126)
 - use LFU as crs \(breaking\) [\#181](https://github.com/andersfylling/disgord/pull/181) ([andersfylling](https://github.com/andersfylling))
-- Use millisecond precision header [\#165](https://github.com/andersfylling/disgord/pull/165) ([andersfylling](https://github.com/andersfylling))
 
 **Fixed bugs:**
 
 - How to handle gateway error 4011? [\#184](https://github.com/andersfylling/disgord/issues/184)
-- Deadline for heartbeat ack is too low [\#168](https://github.com/andersfylling/disgord/issues/168)
-- refactor websocket logic [\#162](https://github.com/andersfylling/disgord/issues/162)
 
 **Closed issues:**
 
 - discord invite links invalid? [\#187](https://github.com/andersfylling/disgord/issues/187)
 - Allow setting number of total shards [\#177](https://github.com/andersfylling/disgord/issues/177)
 - add internal alias pkg [\#163](https://github.com/andersfylling/disgord/issues/163)
-- Add option to disable listening for presence\_updates and typing events [\#160](https://github.com/andersfylling/disgord/issues/160)
 - support ms precision in ratelimit headers [\#158](https://github.com/andersfylling/disgord/issues/158)
 - Unknown import path "zeromod" [\#156](https://github.com/andersfylling/disgord/issues/156)
 
@@ -79,7 +84,6 @@
 - add DM check to Message [\#166](https://github.com/andersfylling/disgord/pull/166) ([andersfylling](https://github.com/andersfylling))
 - add IsByBot middleware + refactored logic into utils [\#155](https://github.com/andersfylling/disgord/pull/155) ([jfoster](https://github.com/jfoster))
 - clarify self-bot support \(resolves \#150\) [\#151](https://github.com/andersfylling/disgord/pull/151) ([nikkelma](https://github.com/nikkelma))
-- Refactor sharding [\#146](https://github.com/andersfylling/disgord/pull/146) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.11.3](https://github.com/andersfylling/disgord/tree/v0.11.3) (2019-07-10)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.11.2...v0.11.3)
@@ -92,14 +96,9 @@
 **Merged pull requests:**
 
 - correct the json key name for inline field [\#154](https://github.com/andersfylling/disgord/pull/154) ([victionn](https://github.com/victionn))
-- Allow registering event channels as if they are handlers [\#147](https://github.com/andersfylling/disgord/pull/147) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.11.2](https://github.com/andersfylling/disgord/tree/v0.11.2) (2019-06-22)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.10.5...v0.11.2)
-
-**Implemented enhancements:**
-
-- Internal loop for GetMessages [\#130](https://github.com/andersfylling/disgord/issues/130)
 
 **Merged pull requests:**
 
