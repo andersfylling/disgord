@@ -519,7 +519,7 @@ func (c *client) emitter(ctx context.Context) {
 			go c.reconnect()
 			return
 		case <-time.After(100 * time.Millisecond):
-			// TODO-race: potential race in case of shard scaling
+			// TODO-race: potential race condition in the case of shard scaling
 			if c.messageQueue.IsEmpty() {
 				continue
 			}

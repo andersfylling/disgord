@@ -13,7 +13,7 @@ func newClientPktQueue(limit int) clientPktQueue {
 	}
 }
 
-// clientPktQueue is a ordered queue. Entries are not removed unless they are successfully written to the websocket.
+// clientPktQueue is an ordered queue. Entries are not removed unless they are successfully written to the websocket.
 type clientPktQueue struct {
 	sync.RWMutex
 	messages []*clientPacket
