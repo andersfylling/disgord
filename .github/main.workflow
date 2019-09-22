@@ -7,6 +7,7 @@ workflow "Code quality" {
     "staticcheck",
     "errcheck",
     "go sec",
+    "shadow",
   ]
 }
 
