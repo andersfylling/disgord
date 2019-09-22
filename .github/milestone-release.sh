@@ -18,7 +18,7 @@ rm "closed_milestones.txt"
 
 # setup git env
 git config user.email "${GITHUB_EMAIL}"
-git config user.name "andersfylling (bot)"
+git config user.name "disgord (bot)"
 git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 git checkout develop
 
