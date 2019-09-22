@@ -520,7 +520,7 @@ func (c *Client) Ready(cb func()) {
 		ctrl.Lock()
 		defer ctrl.Unlock()
 
-		l := c.shardManager.NrOfTotalShards()
+		l := c.shardManager.ShardCount()
 		if l != uint(len(ctrl.shardReady)) {
 			ctrl.shardReady = make([]bool, l)
 			ctrl.localShardIDs = c.shardManager.ShardIDs()

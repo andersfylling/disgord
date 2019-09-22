@@ -27,8 +27,8 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 }
 
 func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
-	if len(conf.ShardIDs) == 0 && conf.TotalNumberOfShards != 0 {
-		return errors.New("TotalNumberOfShards should only be set when you use distributed bots and have set the ShardIDs field - TotalNumberOfShards is an optional field")
+	if len(conf.ShardIDs) == 0 && conf.ShardCount != 0 {
+		return errors.New("ShardCount should only be set when you use distributed bots and have set the ShardIDs field - ShardCount is an optional field")
 	}
 
 	data, err := client.GetGatewayBot()
@@ -36,7 +36,7 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 		return err
 	}
 
-	if len(conf.ShardIDs) > 0 || conf.TotalNumberOfShards > 0 {
+	if len(conf.ShardIDs) > 0 || conf.ShardCount > 0 {
 		conf.DisableAutoScaling = true
 	}
 
@@ -45,12 +45,12 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 	}
 
 	if len(conf.ShardIDs) == 0 {
-		conf.TotalNumberOfShards = data.Shards
+		conf.ShardCount = data.Shards
 		for i := uint(0); i < data.Shards; i++ {
 			conf.ShardIDs = append(conf.ShardIDs, i)
 		}
-	} else if conf.TotalNumberOfShards == 0 {
-		conf.TotalNumberOfShards = uint(len(conf.ShardIDs))
+	} else if conf.ShardCount == 0 {
+		conf.ShardCount = uint(len(conf.ShardIDs))
 	}
 
 	if conf.ShardRateLimit == 0 {
@@ -108,7 +108,7 @@ type ShardManager interface {
 	Disconnect() error
 	Emit(string, interface{}, Snowflake) error
 	NrOfShards() uint
-	NrOfTotalShards() uint
+	ShardCount() uint
 	ShardIDs() (shardIDs []uint)
 	GetShard(shardID shardID) (shard *EvtClient, err error)
 	HeartbeatLatencies() (latencies map[shardID]time.Duration, err error)
@@ -127,13 +127,13 @@ type ShardConfig struct {
 	// Default value is populated by discord if this slice is nil.
 	ShardIDs []uint
 
-	// TotalNumberOfShards should reflect the "total number of shards" across all
+	// ShardCount should reflect the "total number of shards" across all
 	// instances for your bot. If you run 3 containers with 2 shards each, then
-	// the TotalNumberOfShards should be 6, while the length of shardIDs would be
+	// the ShardCount should be 6, while the length of shardIDs would be
 	// two on each container.
 	//
 	// defaults to len(shardIDs) if 0
-	TotalNumberOfShards uint
+	ShardCount uint
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit time.Duration
@@ -141,7 +141,7 @@ type ShardConfig struct {
 	// DisableAutoScaling is triggered when at least one shard gets a 4011 websocket
 	// error from Discord. This causes all the shards to disconnect and new ones are created.
 	//
-	// default value is false unless shardIDs or TotalNumberOfShards is set.
+	// default value is false unless shardIDs or ShardCount is set.
 	DisableAutoScaling bool
 
 	// OnScalingRequired is triggered when Discord closes the websocket connection
@@ -202,7 +202,7 @@ func (s *shardMngr) initializeShards() error {
 		Browser:             s.conf.DisgordInfo,
 		Device:              s.conf.ProjectName,
 		GuildLargeThreshold: 0, // let's not sometimes load partial guilds info. Either load everything or nothing.
-		ShardCount:          s.conf.TotalNumberOfShards,
+		ShardCount:          s.conf.ShardCount,
 		Presence:            s.conf.DefaultBotPresence,
 		GuildSubscriptions:  s.conf.GuildSubscriptions,
 
@@ -240,7 +240,7 @@ func (s *shardMngr) initializeShards() error {
 					panic("ShardConfig.OnScalingRequired must be set")
 				}
 				var newShards []uint
-				s.conf.TotalNumberOfShards, newShards = s.conf.OnScalingRequired(s.ShardIDs())
+				s.conf.ShardCount, newShards = s.conf.OnScalingRequired(s.ShardIDs())
 				s.conf.ShardIDs = append(s.conf.ShardIDs, newShards...)
 
 				_ = s.Disconnect()
@@ -260,7 +260,7 @@ func (s *shardMngr) initializeShards() error {
 
 	for _, id := range s.conf.ShardIDs {
 		if shard, alreadyConfigured := s.shards[id]; alreadyConfigured {
-			shard.evtConf.ShardCount = s.conf.TotalNumberOfShards
+			shard.evtConf.ShardCount = s.conf.ShardCount
 			continue
 		}
 
@@ -321,10 +321,10 @@ func (s *shardMngr) NrOfShards() uint {
 	return uint(len(s.conf.ShardIDs))
 }
 
-func (s *shardMngr) NrOfTotalShards() uint {
+func (s *shardMngr) ShardCount() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.conf.TotalNumberOfShards
+	return s.conf.ShardCount
 }
 
 func (s *shardMngr) ShardIDs() (shardIDs []uint) {
@@ -343,7 +343,7 @@ func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error)
 			err = shard.Emit(cmd, data, id)
 		}
 	} else {
-		shardID := GetShardForGuildID(id, s.conf.TotalNumberOfShards)
+		shardID := GetShardForGuildID(id, s.conf.ShardCount)
 		if shard, exists := s.shards[shardID]; exists {
 			err = shard.Emit(cmd, data, id)
 		} else {
