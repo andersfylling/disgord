@@ -102,7 +102,7 @@ func main() {
 }
 ' >> main.go
 
-echo "FROM andersfylling/disgord:v0.12.0-rc4 as builder
+echo "FROM andersfylling/disgord:latest as builder
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY . /build
