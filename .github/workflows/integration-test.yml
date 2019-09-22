@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - develop
-name: GoReleaser
+name: integration tests
 jobs:
   integration-tests:
     name: Release
