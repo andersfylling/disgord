@@ -42,12 +42,12 @@ func GuildMemberRole(guildID, userID, roleID fmt.Stringer) string {
 	return GuildMember(guildID, userID) + roles + "/" + roleID.String()
 }
 
-// GuildBans /builds/{guild.id}/bans
+// GuildBans /guilds/{guild.id}/bans
 func GuildBans(id fmt.Stringer) string {
 	return Guild(id) + bans
 }
 
-// GuildBan /builds/{guild.id}/bans/{user.id}
+// GuildBan /guilds/{guild.id}/bans/{user.id}
 func GuildBan(guildID, userID fmt.Stringer) string {
 	return Guild(guildID) + bans + "/" + userID.String()
 }
