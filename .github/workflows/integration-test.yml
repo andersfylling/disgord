@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - develop
+name: GoReleaser
+jobs:
+  integration-tests:
+    name: Release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.13']
+    steps:
+      - name: Check out code
+        uses: actions/checkout@develop
+      - name: Integration tests
+        env:
+          DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
+        run: go test ./... -race -tags=integration
