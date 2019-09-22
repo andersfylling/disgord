@@ -19,6 +19,12 @@ jobs:
         id: go
       - name: Check out code
         uses: actions/checkout@master
+#      - name: install ruby and gem
+#        run: |
+#          sudo apt-get install ruby
+#          wget https://rubygems.org/rubygems/rubygems-3.0.6.zip
+#          unzip rubygems-3.0.6.zip -d .
+#          sudo ruby rubygems-3.0.6/setup.rb
       - name: Update disgord version
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
@@ -32,6 +38,7 @@ jobs:
         uses: docker://goreleaser/goreleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         with:

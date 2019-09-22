@@ -27,12 +27,17 @@ VERSION_FILE="constant/version.go"
 echo "package constant" > "${VERSION_FILE}"
 echo "const Version = \"${VERSION}\"" >> "${VERSION_FILE}"
 go fmt ./...
+go mod tidy
 
 # generate CHANGELOG.md
-github_changelog_generator --release-branch develop -u andersfylling -p disgord
+#gem install github_changelog_generator
+#github_changelog_generator --release-branch develop -u andersfylling -p disgord
 
 # commit, tag and push
-git add .
-git commit -m "gen changelog & set version to ${VERSION}"
+if [[ `git status --porcelain` ]]; then
+  git add .
+  #git commit -m "gen changelog & set version to ${VERSION}"
+  git commit -m "set version to ${VERSION}"
+fi
 git tag "${VERSION}" -m "DisGord ${VERSION}"
 git push origin develop --tags

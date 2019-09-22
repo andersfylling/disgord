@@ -1,10 +1,10 @@
 project_name: DisGord
 env:
   - GO111MODULE=on
-before:
-  hooks:
-    - go fmt ./...
-    - go mod tidy
+#before:
+#  hooks:
+#    - go fmt ./...
+#    - go mod tidy
 changelog:
   sort: asc
   filters:
@@ -23,18 +23,10 @@ dockers:
       - 'andersfylling/disgord:{{ .Tag }}'
       - 'andersfylling/disgord:latest'
     dockerfile: Dockerfile
-    binaries:
-      - goreleaser
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
       - "--label=org.label-schema.version={{.Version}}"
       - "--label=org.label-schema.name={{.ProjectName}}"
       - "--label=com.github.actions.name={{.ProjectName}}"
       - "--label=com.github.actions.description=DisGord is a Go module for interacting with Discord"
       - "--label=repository=http://github.com/andersfylling/disgord"
       - "--label=maintainer=Anders Fylling <anders@nordic.email>"
-archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    format_overrides:
-      - goos: windows
-        format: zip
