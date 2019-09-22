@@ -109,11 +109,13 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		<-time.After(5 * time.Second)
 	}
 
-	select {
-	case <-ctx.Done():
+	defer func() {
 		for i := range instances {
 			_ = instances[i].Disconnect()
 		}
+	}()
+	select {
+	case <-ctx.Done():
 		t.Fatal("unable to connect within time frame")
 	case <-done:
 	}
