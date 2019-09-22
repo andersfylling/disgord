@@ -6,17 +6,28 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    #needs: [ test ]
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.13']
+    # needs: [ integration-tests ]
     steps:
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+        id: go
       - name: Check out code
-        uses: actions/checkout@develop
+        uses: actions/checkout@master
       - name: Update disgord version
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
           GITHUB_EMAIL: ${{ secrets.GITHUB_EMAIL }}
-        run: sh .github/milestone-release.sh
+        run: |
+          chmod +x .github/milestone-release.sh
+          bash .github/milestone-release.sh
       - name: Check out code, again
-        uses: actions/checkout@develop
+        uses: actions/checkout@master
       - name: goreleaser
         uses: docker://goreleaser/goreleaser
         env:
