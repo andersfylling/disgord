@@ -11,9 +11,14 @@ jobs:
       fail-fast: true
       matrix:
         go: ['1.13']
-    steps:
+    steps:    
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+        id: go
       - name: Check out code
-        uses: actions/checkout@develop
+        uses: actions/checkout@master
       - name: Integration tests
         env:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
