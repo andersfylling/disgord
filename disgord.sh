@@ -102,11 +102,10 @@ func main() {
 }
 ' >> main.go
 
-echo "FROM andersfylling/disgord:v0.11.3 as builder
+echo "FROM andersfylling/disgord:v0.12.0-rc4 as builder
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY . /build
-RUN export GO111MODULE=on
 RUN go test ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags \"-static\"' -o discordbot .
 
