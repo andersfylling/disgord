@@ -452,22 +452,49 @@ func (g *Guild) AddMember(member *Member) error {
 	return nil
 }
 
-// LoadAllMembers fetches all the members for this guild from the Discord REST API
-func (g *Guild) LoadAllMembers(s Session) (err error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
+// LoadAllMembers fetches all the members for this guild from the Discord Gateway.
+// This function will block until all members are loaded, or when the context is canceled
+func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
 	// TODO: what if members have already been loaded? use Guild.MembersCount?
 
-	members, err := s.GetMembers(g.ID, nil, IgnoreCache)
+	err = s.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: g.ID})
 	if err != nil {
 		return err
 	}
 
-	g.addMembers(members...)
+	chunkEvtChan := make(chan *GuildMembersChunk, 1+g.MemberCount/1000)
+	ctrl := &Ctrl{Channel: chunkEvtChan}
+	evtCtx, isDone := context.WithCancel(context.Background())
 
-	return nil
+	s.On(EvtGuildMembersChunk, chunkEvtChan, ctrl)
+	for {
+		select {
+		case e := <-chunkEvtChan:
+			if e.GuildID != g.ID {
+				continue
+			}
+
+			// GW will return chunks of 1k members, when less, last members are received
+			if len(e.Members) < 1000 {
+				isDone()
+			}
+			continue
+
+		// TODO: Make dynamic timeout?
+		//		 Allow people to set a timeout on the ctx themselves maybe>
+		case <-time.After(10 * time.Second):
+			err = errors.New("loading timed out, loading will continue in background")
+		case <-ctx.Done():
+			// TODO: errors.Wrap(ctx.Err())
+			err = errors.New("loading was canceled, loading will continue in background")
+		case <-evtCtx.Done():
+		}
+		break
+	}
+
+	ctrl.CloseChannel()
+
+	return
 }
 
 // GetMembersCountEstimate estimates the number of members in a guild without fetching everyone.
