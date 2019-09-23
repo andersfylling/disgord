@@ -1064,7 +1064,9 @@ var _ fmt.Stringer = (*Member)(nil)
 var _ internalUpdater = (*Member)(nil)
 
 func (m *Member) updateInternals() {
-	m.userID = m.User.ID
+	if m.User != nil {
+		m.userID = m.User.ID
+	}
 }
 
 func (m *Member) String() string {
