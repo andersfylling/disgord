@@ -185,7 +185,7 @@ const VoiceStateUpdate = "VOICE_STATE_UPDATE"
 //  - Endpoint  string
 const VoiceServerUpdate = "VOICE_SERVER_UPDATE"
 
-// WebhooksUpdate Sent when a guild channel's webhook is created, updated, or deleted.
+// WebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake

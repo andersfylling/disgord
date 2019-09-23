@@ -1,4 +1,4 @@
-// Package disgord provides Go bindings for the documented Discord API. And allows for a stateful Client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
+// Package disgord provides Go bindings for the documented Discord API, and allows for a stateful Client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
 //
 // Getting started
 //
@@ -65,7 +65,7 @@
 //  }
 //
 //
-// Websockets and sharding
+// WebSockets and Sharding
 //
 // DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord (in these cases you must handle scaling yourself as DisGord can not).
 //
@@ -115,7 +115,7 @@
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
-// A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
+// A part of DisGord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
@@ -162,7 +162,7 @@
 //
 // Build tags
 //
-// `disgord_diagnosews` will store all the incoming and outgoing json data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
+// `disgord_diagnosews` will store all the incoming and outgoing JSON data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
 //
 // `json_std` switches out jsoniter with the json package from the std libs.
 //
