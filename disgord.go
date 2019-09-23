@@ -8,7 +8,7 @@
 //  discord := disgord.New(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //  })
-//  defer discord.StayConnectedUntilInterrupt()
+//  defer discord.StayConnectedUntilInterrupted()
 //
 //  // listen for incoming messages and reply with a "hello"
 //  discord.On(event.MessageCreate, func(s disgord.Session, evt *disgord.MessageCreate) {
@@ -67,34 +67,43 @@
 //
 // Websockets and sharding
 //
-// DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord, and limit the number of shards per instance (in these cases you must handle scaling yourself as DisGord can not).
+// DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord (in these cases you must handle scaling yourself as DisGord can not).
 //
 // Sharding is done behind the scenes, so you do not need to worry about any settings. DisGord will simply ask Discord for the recommended amount of shards for your bot on startup. However, to set specific amount of shards you can use the `disgord.ShardConfig` to specify a range of valid shard IDs (starts from 0).
 //
 // starting a bot with exactly 5 shards
 //  client := disgord.New(&disgord.Config{
-//  	ShardConfig: disgord.ShardConfig{
-//			// this is a copy so u can't manipulate it later on
-//          shardIDs: []uint{0,1,2,3,4},
-//  	},
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate the config later on
+//      ShardIDs: []uint{0,1,2,3,4},
+//    },
+//  })
+//
+// Running multiple instances each with 1 shard (note each instance must use unique shard ids)
+//  client := disgord.New(&disgord.Config{
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate the config later on
+//      ShardIDs: []uint{0}, // this number must change for each instance. Try to automate this.
+//      ShardCount: 5, // total of 5 shards, but this disgord instance only has one. AutoScaling is disabled - use OnScalingRequired.
+//    },
 //  })
 //
 // Handle scaling options yourself
 //  client := disgord.New(&disgord.Config{
-//  	ShardConfig: disgord.ShardConfig{
-//			// this is a copy so u can't manipulate it later on
-//          DisableAutoScaling: true,
-//          OnScalingRequired: func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint) {
-//				// instead of asking discord for exact number of shards recommended
-//				// this is increased by 50% every time discord complains you don't have enough shards
-// 				// to reduce the number of times you have to scale
-//              TotalNrOfShards := uint(len(shardIDs) * 1.5)
-//				for i := len(shardIDs) - 1; i < TotalNrOfShards; i++ {
-//					AdditionalShardIDs = append(AdditionalShardIDs, i)
-//				}
-//				return
-//          },
-//  	},
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate it later on
+//      DisableAutoScaling: true,
+//      OnScalingRequired: func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint) {
+//        // instead of asking discord for exact number of shards recommended
+//        // this is increased by 50% every time discord complains you don't have enough shards
+//        // to reduce the number of times you have to scale
+//        TotalNrOfShards := uint(len(shardIDs) * 1.5)
+//        for i := len(shardIDs) - 1; i < TotalNrOfShards; i++ {
+//          AdditionalShardIDs = append(AdditionalShardIDs, i)
+//        }
+//        return
+//      }, // end OnScalingRequired
+//    }, // end ShardConfig
 //  })
 //
 //
