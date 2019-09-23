@@ -2,29 +2,13 @@
 
 DisGord supports the use of sharding for as explained here: [discordapp.com/.../gateway#sharding](https://discordapp.com/developers/docs/topics/gateway#sharding)
 
-DisGord uses an internal shard manager to handle this for you. However, you are able to specify a maximum number of shards, an offset on shards IDs and the connection URL.
+DisGord uses an internal shard manager to handle this for you. However, you can customize this and should have enough control to handle sharding across N instances of disgord (see the godoc).
 
 # Enforce N number of shards
 ```go
 client := disgord.New(&disgord.Config{
-    WSShardManagerConfig: &disgord.WSShardManagerConfig{
-        // If you have another instance running with shards 0-3, and want this instance to use the range 4-8
-        // you can specify the number of the first shard this instance should have. Otherwise there is no
-        // reason for you to tweak this.
-        FirstID: 4, //offset. 
-		
-        // no less and no more than 4 shards. 
-        // Setting this to 0 will allow DisGord to ask Discord for the recommented 
-        // amount in respect to how many guilds your bot exists in.
-        ShardLimit: 4, // number of shards.
-        
-        // rate limit per second. Default is 1/5s
-        // larger bots might be granted a lower rate limit from Discord.
-        // if you are uncertain, don't touch this.
-        ShardRateLimit: 5,
-        
-        // if not set, DisGord will contact Discord to get one.
-        URL: "",
+    ShardConfig: disgord.ShardConfig{
+        ShardIDs: []uint{0, 1, 2, 3}, // must be valid shard ids
     },
     BotToken: "random token",
     Logger: disgord.DefaultLogger(false), // optional logging, debug=false
