@@ -11,9 +11,7 @@ require (
 	github.com/sergi/go-diff v1.0.0
 	go.uber.org/atomic v1.4.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
-	golang.org/x/sys v0.0.0-20190904154756-749cb33beabd // indirect
-	golang.org/x/tools v0.0.0-20190905155444-2a03e9e3a71a // indirect
-	nhooyr.io/websocket v1.5.1
+	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
+	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
+	nhooyr.io/websocket v1.6.2
 )
