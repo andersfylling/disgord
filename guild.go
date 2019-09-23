@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
@@ -409,19 +411,8 @@ func (g *Guild) addMembers(members ...*Member) error {
 		return errors.New("members was nil")
 	}
 
-	// Reduces allocations
-	membersToAdd := members[:0]
-
-	for _, member := range members {
-		if !g.hasMember(member.userID) {
-			// Could maybe be replaced by
-			// g.Members = append(g.Members, member)
-			membersToAdd = append(membersToAdd, member)
-		}
-	}
-
 	// TODO: implement sorting for faster searching later
-	g.Members = append(g.Members, membersToAdd...)
+	g.Members = append(g.Members, members...)
 
 	return nil
 }
@@ -433,7 +424,17 @@ func (g *Guild) AddMembers(members []*Member) {
 		defer g.Unlock()
 	}
 
-	g.addMembers(members...)
+	// Reduces allocations
+	membersToAdd := members[:0]
+
+	for _, member := range members {
+		// TODO: Check for userID.IsZero()
+		if !g.hasMember(member.userID) {
+			membersToAdd = append(membersToAdd, member)
+		}
+	}
+
+	g.addMembers(membersToAdd...)
 }
 
 // AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
@@ -443,7 +444,12 @@ func (g *Guild) AddMember(member *Member) error {
 		defer g.Unlock()
 	}
 
-	return g.addMembers(member)
+	// TODO: Check for userID.IsZero()
+	if !g.hasMember(member.userID) {
+		return g.addMembers(member)
+	}
+
+	return nil
 }
 
 // LoadAllMembers fetches all the members for this guild from the Discord REST API
