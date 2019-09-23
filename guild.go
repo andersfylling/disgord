@@ -455,7 +455,16 @@ func (g *Guild) AddMember(member *Member) error {
 // LoadAllMembers fetches all the members for this guild from the Discord Gateway.
 // This function will block until all members are loaded, or when the context is canceled
 func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
-	// TODO: what if members have already been loaded? use Guild.MembersCount?
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
+	}
+
+	// Check if guild is already loaded
+	// TODO: Check whether this is actually the best way to check
+	if uint(len(g.Members)) == g.MemberCount {
+		return nil
+	}
 
 	err = s.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: g.ID})
 	if err != nil {
@@ -483,16 +492,22 @@ func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
 		// TODO: Make dynamic timeout?
 		//		 Allow people to set a timeout on the ctx themselves maybe>
 		case <-time.After(10 * time.Second):
-			err = errors.New("loading timed out, loading will continue in background")
+			err = errors.New("loading timed out")
 		case <-ctx.Done():
 			// TODO: errors.Wrap(ctx.Err())
-			err = errors.New("loading was canceled, loading will continue in background")
+			err = errors.New("loading was canceled")
 		case <-evtCtx.Done():
 		}
 		break
 	}
 
 	ctrl.CloseChannel()
+
+	members, err := s.GetMembers(g.ID, nil)
+	if err != nil {
+		return err
+	}
+	g.Members = members
 
 	return
 }
