@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -452,19 +451,17 @@ func (g *Guild) AddMember(member *Member) error {
 	return nil
 }
 
-// LoadAllMembers fetches all the members for this guild from the Discord Gateway.
-// This function will block until all members are loaded, or when the context is canceled
+// LoadAllMembers uses the Gateway to synchronously load all members of a Guild.
+// Will emit an Request Guild Members event to Gateway. Gateway will respond with Guild Member Chunk events
+// whose can hold up to 1000 members. The Gateway will keep sending this event until all members have been received.
+// Be cautious, this can take long on big guilds and it's recommended using context.WithTimeout on the context.
 func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	// Check if guild is already loaded
-	// TODO: Check whether this is actually the best way to check
-	if uint(len(g.Members)) == g.MemberCount {
-		return nil
-	}
+	// TODO: Check in a margin of g.MemberCount + %2 + 5
+	//mLen := uint(len(g.Members))
+	//if mLen >= g.MemberCount - 5 && mLen <= g.MemberCount + 5 {
+	//	return nil
+	//}
 
 	err = s.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: g.ID})
 	if err != nil {
@@ -474,6 +471,7 @@ func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
 	chunkEvtChan := make(chan *GuildMembersChunk, 1+g.MemberCount/1000)
 	ctrl := &Ctrl{Channel: chunkEvtChan}
 	evtCtx, isDone := context.WithCancel(context.Background())
+	members := make([]*Member, 0, g.MemberCount)
 
 	s.On(EvtGuildMembersChunk, chunkEvtChan, ctrl)
 	for {
@@ -483,19 +481,16 @@ func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
 				continue
 			}
 
+			members = append(members, e.Members...)
+
 			// GW will return chunks of 1k members, when less, last members are received
 			if len(e.Members) < 1000 {
 				isDone()
 			}
 			continue
 
-		// TODO: Make dynamic timeout?
-		//		 Allow people to set a timeout on the ctx themselves maybe>
-		case <-time.After(10 * time.Second):
-			err = errors.New("loading timed out")
 		case <-ctx.Done():
-			// TODO: errors.Wrap(ctx.Err())
-			err = errors.New("loading was canceled")
+			err = errors.New("loading was canceled, " + ctx.Err().Error())
 		case <-evtCtx.Done():
 		}
 		break
@@ -503,9 +498,9 @@ func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
 
 	ctrl.CloseChannel()
 
-	members, err := s.GetMembers(g.ID, nil)
-	if err != nil {
-		return err
+	if constant.LockedMethods {
+		g.Lock()
+		defer g.Unlock()
 	}
 	g.Members = members
 
