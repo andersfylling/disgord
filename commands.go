@@ -23,7 +23,7 @@ const CommandRequestGuildMembers SocketCommand = cmd.RequestGuildMembers
 // See CommandRequestGuildMembers
 type RequestGuildMembersCommand struct {
 	// GuildID	id of the guild(s) to get offline members for
-	GuildID Snowflake `json:"guild_id"`
+	GuildID []Snowflake `json:"guild_id"`
 
 	// Query string that username starts with, or an empty string to return all members
 	Query string `json:"query"`
