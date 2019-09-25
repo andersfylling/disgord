@@ -3,6 +3,8 @@ package websocket
 import (
 	"testing"
 
+	"github.com/andersfylling/disgord/websocket/cmd"
+
 	"github.com/andersfylling/disgord/event"
 )
 
@@ -90,6 +92,77 @@ func TestEnableGuildSubscriptions(t *testing.T) {
 	if _, ok := enableGuildSubscriptions(ignore); !ok {
 		t.Error("guild sub should be enabled")
 	}
+}
+
+func TestRedistributeShardMessages(t *testing.T) {
+	u := "localhost:6060"
+	mock := &GatewayBotGetterMock{
+		get: func() (gateway *GatewayBot, err error) {
+			return &GatewayBot{
+				Shards:  4,
+				Gateway: Gateway{u},
+			}, nil
+		},
+	}
+	config := ShardManagerConfig{
+		ShutdownChan: make(chan interface{}),
+		EventChan:    make(chan *Event),
+	}
+	defer func() {
+		close(config.ShutdownChan)
+		close(config.EventChan)
+	}()
+
+	if err := ConfigureShardConfig(mock, &config.ShardConfig); err != nil {
+		t.Fatal(err)
+	}
+
+	mngr := NewShardMngr(config)
+	if err := mngr.initShards(); err != nil {
+		t.Fatal(err)
+	}
+
+	// trick shards into thinking they have connected so we can emit msgs
+	connect := func() {
+		for _, shard := range mngr.shards {
+			shard.haveConnectedOnce = true
+		}
+	}
+	connect()
+
+	for i := 1; i <= int(mngr.conf.ShardCount*14); i++ {
+		if err := mngr.Emit(cmd.UpdateVoiceState, true, Snowflake(i<<22)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	verifyDistribution := func() {
+		for id, shard := range mngr.shards {
+			for i := range shard.messageQueue.messages {
+				m := shard.messageQueue.messages[i]
+				if GetShardForGuildID(m.guildID, mngr.conf.ShardCount) != id {
+					t.Error("incorrect distribution")
+				}
+			}
+			if len(shard.messageQueue.messages) == 0 {
+				t.Error("there should be at least one message in shard", id)
+			}
+		}
+	}
+
+	verifyDistribution()
+	mngr.redistributeMsgs(func() {})
+	verifyDistribution()
+
+	mngr.redistributeMsgs(func() {
+		mngr.conf.ShardIDs = append(mngr.conf.ShardIDs, uint(len(mngr.conf.ShardIDs)))
+		mngr.conf.ShardCount++
+		if err := mngr.initShards(); err != nil {
+			t.Fatal(err)
+		}
+		connect()
+	})
+	verifyDistribution()
 }
 
 //

@@ -5,6 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/json"
 	"io"
+
+	"github.com/andersfylling/disgord/websocket/opcode"
 )
 
 //////////////////////////////////////////////////////
@@ -129,8 +131,8 @@ type GatewayBot struct {
 
 // clientPacket is outgoing packets by the client
 type clientPacket struct {
-	Op   uint        `json:"op"`
-	Data interface{} `json:"d"`
+	Op   opcode.OpCode `json:"op"`
+	Data interface{}   `json:"d"`
 
 	// allows restocking pkts on shard scaling
 	guildID Snowflake `json:"-"`
@@ -143,10 +145,10 @@ type helloPacket struct {
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic
 type discordPacketJSON struct {
-	Op             uint   `json:"op"`
-	Data           []byte `json:"d"`
-	SequenceNumber uint   `json:"s"`
-	EventName      string `json:"t"`
+	Op             opcode.OpCode `json:"op"`
+	Data           []byte        `json:"d"`
+	SequenceNumber uint          `json:"s"`
+	EventName      string        `json:"t"`
 }
 
 func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
@@ -158,7 +160,7 @@ func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 
 // DiscordPacket is packets sent by Discord over the socket connection
 type DiscordPacket struct {
-	Op             uint            `json:"op"`
+	Op             opcode.OpCode   `json:"op"`
 	Data           json.RawMessage `json:"d"`
 	SequenceNumber uint            `json:"s,omitempty"`
 	EventName      string          `json:"t,omitempty"`

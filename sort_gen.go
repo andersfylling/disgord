@@ -553,12 +553,6 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*RequestGuildMembersCommand:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
 	case []*UpdateVoiceStateCommand:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }

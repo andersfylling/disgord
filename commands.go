@@ -21,6 +21,10 @@ const CommandRequestGuildMembers SocketCommand = cmd.RequestGuildMembers
 
 // RequestGuildMembersCommand payload for socket command REQUEST_GUILD_MEMBERS.
 // See CommandRequestGuildMembers
+//
+// WARNING: If this request is in queue while a auto-scaling is forced, it will be removed from the queue
+// and not re-inserted like the other commands. This is due to the guild id slice, which is a bit trickier
+// to handle.
 type RequestGuildMembersCommand struct {
 	// GuildID	id of the guild(s) to get offline members for
 	GuildID []Snowflake `json:"guild_id"`
@@ -33,7 +37,7 @@ type RequestGuildMembersCommand struct {
 }
 
 func (u *RequestGuildMembersCommand) getGuildID() Snowflake {
-	return u.GuildID
+	return 0 // TODO
 }
 
 var _ guilder = (*RequestGuildMembersCommand)(nil)

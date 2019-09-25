@@ -387,7 +387,7 @@ func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id
 
 // ---------------------------
 
-// EvtWebhooksUpdate Sent when a guild channel's webhook is created, updated, or deleted.
+// EvtWebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake

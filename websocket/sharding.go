@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/cmd"
+
 	"github.com/andersfylling/disgord/event"
 
 	"github.com/andersfylling/disgord/constant"
@@ -196,7 +198,7 @@ type shardMngr struct {
 
 var _ ShardManager = (*shardMngr)(nil)
 
-func (s *shardMngr) initializeShards() error {
+func (s *shardMngr) initShards() error {
 	baseConfig := EvtConfig{ // TIP: not nicely grouped, feel free to adjust
 		// identity
 		Browser:             s.conf.DisgordInfo,
@@ -244,7 +246,7 @@ func (s *shardMngr) initializeShards() error {
 				s.conf.ShardIDs = append(s.conf.ShardIDs, newShards...)
 
 				_ = s.Disconnect()
-				if err := s.initializeShards(); err != nil {
+				if err := s.initShards(); err != nil {
 					s.conf.Logger.Error("scaling", "init-shards", err)
 					return
 				}
@@ -284,7 +286,7 @@ func (s *shardMngr) Connect() (err error) {
 	}
 
 	if len(s.shards) == 0 {
-		if err = s.initializeShards(); err != nil {
+		if err = s.initShards(); err != nil {
 			return err
 		}
 	}
@@ -387,35 +389,46 @@ func (s *shardMngr) scale(code int, reason string) {
 
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
+	s.redistributeMsgs(func() {
+		data, err := s.conf.RESTClient.GetGatewayBot()
+		if err != nil {
+			s.conf.Logger.Error("autoscaling", err)
+			return
+		}
+
+		_ = s.Disconnect()
+
+		s.conf.URL = data.URL
+		for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
+			s.conf.ShardIDs = append(s.conf.ShardIDs, i)
+			s.conf.ShardCount++
+		}
+		if err := s.initShards(); err != nil {
+			s.conf.Logger.Error("autoscaling", "init-shards", err)
+			return
+		}
+		if err := s.Connect(); err != nil {
+			s.conf.Logger.Error("autoscaling", "connect", err)
+		}
+	})
+}
+
+func (s *shardMngr) redistributeMsgs(scaleShards func()) {
 	var messages []*clientPacket
 	for _, shard := range s.shards {
 		messages = append(messages, shard.messageQueue.Steal()...)
 	}
-	defer func() {
-		for i := len(messages) - 1; i >= 0; i-- {
-			// reverse such that injected order stays the same
-			m := messages[i]
-			_ = s.Emit(m.cmd, m.Data, m.guildID)
+
+	scaleShards()
+
+	for i := len(messages) - 1; i >= 0; i-- {
+		// reverse such that injected order stays the same
+		m := messages[i]
+		if m.cmd == cmd.RequestGuildMembers {
+			// TODO: support RequestGuildMembers. see RequestGuildMembers for issue
+			continue
 		}
-	}()
 
-	data, err := s.conf.RESTClient.GetGatewayBot()
-	if err != nil {
-		s.conf.Logger.Error("autoscaling", err)
-		return
-	}
-
-	_ = s.Disconnect()
-
-	s.conf.URL = data.URL
-	for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
-		s.conf.ShardIDs = append(s.conf.ShardIDs, i)
-	}
-	if err := s.initializeShards(); err != nil {
-		s.conf.Logger.Error("autoscaling", "init-shards", err)
-		return
-	}
-	if err := s.Connect(); err != nil {
-		s.conf.Logger.Error("autoscaling", "connect", err)
+		_ = s.Emit(m.cmd, m.Data, m.guildID)
 	}
 }
