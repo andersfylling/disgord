@@ -100,7 +100,7 @@ func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (ret VoiceC
 	}(r, guildID)
 
 	// Tell Discord we want to connect to a channel
-	err = r.c.Emit(CommandUpdateVoiceState, UpdateVoiceStateCommand{
+	err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
 		ChannelID: &channelID,
 		SelfDeaf:  false,
@@ -328,7 +328,7 @@ func (v *voiceImpl) Close() (err error) {
 	}
 
 	// Tell Discord we want to disconnect from channel/guild
-	_ = v.c.Emit(CommandUpdateVoiceState, UpdateVoiceStateCommand{
+	_ = v.c.Emit(UpdateVoiceState, UpdateVoiceStatePayload{
 		GuildID:   v.guildID,
 		ChannelID: nil,
 		SelfDeaf:  true,

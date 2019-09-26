@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-
 	"github.com/andersfylling/disgord/event"
 
 	"github.com/andersfylling/disgord/constant"
@@ -22,6 +20,15 @@ const defaultShardRateLimit time.Duration = 5*time.Second + 100*time.Millisecond
 const discordErrShardScalingRequired = 4011
 
 type shardID = uint
+
+type ShardDistributer interface {
+	Distribute(shardCount uint, filter func(guildID Snowflake) (shardID uint)) (pkts []ShardDistributer)
+	GetGuildIDs() []Snowflake
+}
+
+type GatewayCommandPayload interface {
+	CmdName() string
+}
 
 // GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
 func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
@@ -108,7 +115,7 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
-	Emit(string, interface{}, Snowflake) error
+	Emit(string, GatewayCommandPayload) error
 	NrOfShards() uint
 	ShardCount() uint
 	ShardIDs() (shardIDs []uint)
@@ -339,20 +346,45 @@ func (s *shardMngr) ShardIDs() (shardIDs []uint) {
 	return shardIDs
 }
 
-func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error) {
+// Emit splits up and dispatches the payload into the correct shards
+// TODO: unclear - refactor
+func (s *shardMngr) Emit(cmd string, payload GatewayCommandPayload) (err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if id.IsZero() {
-		for _, shard := range s.shards {
-			err = shard.Emit(cmd, data, id)
-		}
-	} else {
-		shardID := GetShardForGuildID(id, s.conf.ShardCount)
-		if shard, exists := s.shards[shardID]; exists {
-			err = shard.Emit(cmd, data, id)
+	if d, ok := payload.(ShardDistributer); ok {
+		guildIDs := d.GetGuildIDs()
+		if len(guildIDs) == 0 { // global
+			for _, shard := range s.shards {
+				err = shard.Emit(cmd, payload)
+			}
 		} else {
-			err = errors.New("no shard with id " + strconv.FormatUint(uint64(shardID), 10))
+			messages := d.Distribute(s.conf.ShardCount, func(guildID Snowflake) (shardID uint) {
+				return GetShardForGuildID(guildID, s.conf.ShardCount)
+			})
+
+			for _, m := range messages {
+				// verify that each guild id maps to the same shard
+				firstShardID := GetShardForGuildID(m.GetGuildIDs()[0], s.conf.ShardCount)
+				for _, id := range m.GetGuildIDs() {
+					shardID := GetShardForGuildID(id, s.conf.ShardCount)
+					if shardID != firstShardID && !id.IsZero() {
+						err = errors.New("incorrect sharding distribution for websocket command")
+					}
+				}
+				if err != nil {
+					break
+				}
+
+				if shard, exists := s.shards[firstShardID]; exists {
+					err = shard.Emit(cmd, payload)
+				} else {
+					err = errors.New("no shard with id " + strconv.FormatUint(uint64(firstShardID), 10))
+				}
+				if err != nil {
+					break
+				}
+			}
 		}
 	}
 
@@ -421,14 +453,12 @@ func (s *shardMngr) redistributeMsgs(scaleShards func()) {
 
 	scaleShards()
 
+	// reverse such that injected order stays the same
 	for i := len(messages) - 1; i >= 0; i-- {
-		// reverse such that injected order stays the same
 		m := messages[i]
-		if m.cmd == cmd.RequestGuildMembers {
-			// TODO: support RequestGuildMembers. see RequestGuildMembers for issue
-			continue
+		if payload, ok := m.Data.(GatewayCommandPayload); ok {
+			_ = s.Emit(payload.CmdName(), payload)
+			messages[i] = nil
 		}
-
-		_ = s.Emit(m.cmd, m.Data, m.guildID)
 	}
 }

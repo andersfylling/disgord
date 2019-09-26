@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
 
@@ -107,6 +108,24 @@ type evtIdentity struct {
 	GuildSubscriptions bool            `json:"guild_subscriptions"` // most ambiguous naming ever but ok.
 }
 
+var _ GatewayCommandPayload = (*evtIdentity)(nil)
+
+func (e *evtIdentity) CmdName() string {
+	return event.Identify
+}
+
+type evtResume struct {
+	Token      string `json:"token"`
+	SessionID  string `json:"session_id"`
+	SequenceNr uint   `json:"seq"`
+}
+
+var _ GatewayCommandPayload = (*evtResume)(nil)
+
+func (e *evtResume) CmdName() string {
+	return event.Resume
+}
+
 //////////////////////////////////////////////////////
 //
 // GENERAL PURPOSE
@@ -129,14 +148,17 @@ type GatewayBot struct {
 	} `json:"session_start_limit"`
 }
 
+func newClientPacket(msg GatewayCommandPayload, t ClientType) *clientPacket {
+	return &clientPacket{
+		Op:   CmdNameToOpCode(msg.CmdName(), t),
+		Data: msg,
+	}
+}
+
 // clientPacket is outgoing packets by the client
 type clientPacket struct {
 	Op   opcode.OpCode `json:"op"`
 	Data interface{}   `json:"d"`
-
-	// allows restocking pkts on shard scaling
-	guildID Snowflake `json:"-"`
-	cmd     string    `json:"-"`
 }
 
 type helloPacket struct {

@@ -16,14 +16,14 @@ import (
 
 	"github.com/andersfylling/disgord/logger"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	"golang.org/x/net/proxy"
 )
 
+type ClientType int
+
 const (
-	clientTypeEvent = iota
+	clientTypeEvent ClientType = iota
 	clientTypeVoice
 )
 
@@ -118,7 +118,7 @@ type config struct {
 // If you do not care about these. Please overwrite both methods.
 type client struct {
 	sync.RWMutex
-	clientType   int
+	clientType   ClientType
 	conf         *config
 	lastRestart  int64      //unix
 	restartMutex sync.Mutex // TODO: atomic bool
@@ -395,56 +395,21 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(command string, data interface{}, guildID Snowflake) (err error) {
-	return c.emit(false, command, data, guildID)
+func (c *client) Emit(command string, data GatewayCommandPayload) (err error) {
+	return c.queueRequest(command, data)
 }
-func (c *client) emit(internal bool, command string, data interface{}, guildID Snowflake) (err error) {
+
+func (c *client) queueRequest(command string, data GatewayCommandPayload) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
 
-	op := opcode.None
-	// TODO: refactor command and event name to avoid conversion (?)
-	if c.clientType == clientTypeVoice {
-		switch command {
-		case cmd.VoiceSpeaking:
-			op = opcode.VoiceSpeaking
-		case cmd.VoiceIdentify:
-			op = opcode.VoiceIdentify
-		case cmd.VoiceSelectProtocol:
-			op = opcode.VoiceSelectProtocol
-		case cmd.VoiceHeartbeat:
-			op = opcode.VoiceHeartbeat
-		case cmd.VoiceResume:
-			op = opcode.VoiceResume
-		}
-	} else if c.clientType == clientTypeEvent {
-		switch command {
-		case event.Heartbeat:
-			op = opcode.EventHeartbeat
-		case event.Identify:
-			op = opcode.EventIdentify
-		case event.Resume:
-			op = opcode.EventResume
-		case cmd.RequestGuildMembers:
-			op = opcode.EventRequestGuildMembers
-		case cmd.UpdateVoiceState:
-			op = opcode.EventVoiceStateUpdate
-		case cmd.UpdateStatus:
-			op = opcode.EventStatusUpdate
-		}
-	}
+	op := CmdNameToOpCode(command, c.clientType)
 	if op == opcode.None {
 		return errors.New("unsupported command: " + command)
 	}
 
-	p := &clientPacket{
-		Op:      op,
-		Data:    data,
-		guildID: guildID,
-		cmd:     command,
-	}
-
+	p := newClientPacket(data, c.clientType)
 	if accepted := c.ratelimit.Request(command); !accepted {
 		// we might be rate limited.. but lets see if there is another
 		// presence update in the queue; then it can be overwritten
@@ -454,12 +419,19 @@ func (c *client) emit(internal bool, command string, data interface{}, guildID S
 			return nil
 		}
 	}
-
-	if internal {
-		c.internalEmitChan <- p
-		return
-	}
 	return c.messageQueue.Add(p)
+}
+
+func (c *client) emit(command string, data interface{}) (err error) {
+	if !c.haveConnectedOnce {
+		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
+	}
+
+	c.internalEmitChan <- &clientPacket{
+		Op:   CmdNameToOpCode(command, c.clientType),
+		Data: data,
+	}
+	return nil
 }
 
 func (c *client) lockEmitter() bool {

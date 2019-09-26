@@ -142,7 +142,7 @@ type Config struct {
 	DisableCache bool
 	CacheConfig  *CacheConfig
 	ShardConfig  ShardConfig
-	Presence     *UpdateStatusCommand
+	Presence     *UpdateStatusPayload
 
 	// IgnoreEvents will skip events that matches the given event names.
 	// WARNING! This can break your caching, so be careful about what you want to ignore.
@@ -598,21 +598,9 @@ func (c *Client) On(event string, inputs ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(command SocketCommand, data interface{}) error {
-	switch command {
-	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
-	default:
-		return errors.New("command is not supported")
-	}
-
-	var guildID Snowflake
-	if g, ok := data.(guilder); ok {
-		// if this is guild specific, then only send data through the related shard
-		guildID = g.getGuildID()
-	}
-
-	// otherwise it is sent through every shard
-	return c.shardManager.Emit(command, data, guildID)
+func (c *Client) Emit(name gatewayCmdName, data gatewayCmdPayload) error {
+	payload := &gatewayCommand{data, name}
+	return c.shardManager.Emit(string(name), payload)
 }
 
 //////////////////////////////////////////////////////
@@ -708,16 +696,16 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 
 // UpdateStatus updates the Client's game status
 // note: for simple games, check out UpdateStatusString
-func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
+func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return c.Emit(CommandUpdateStatus, s)
+	return c.Emit(UpdateStatus, s)
 }
 
 // UpdateStatusString sets the Client's game activity to the provided string, status to online
 // and type to Playing
 func (c *Client) UpdateStatusString(s string) error {
-	updateData := &UpdateStatusCommand{
+	updateData := &UpdateStatusPayload{
 		Since: nil,
 		Game: &Activity{
 			Name: s,

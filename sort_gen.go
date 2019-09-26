@@ -101,11 +101,11 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Config:
 		s = *t
-	case *[]*RequestGuildMembersCommand:
+	case *[]*RequestGuildMembersPayload:
 		s = *t
-	case *[]*UpdateStatusCommand:
+	case *[]*UpdateStatusPayload:
 		s = *t
-	case *[]*UpdateVoiceStateCommand:
+	case *[]*UpdateVoiceStatePayload:
 		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
@@ -553,7 +553,7 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*UpdateVoiceStateCommand:
+	case []*UpdateVoiceStatePayload:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {

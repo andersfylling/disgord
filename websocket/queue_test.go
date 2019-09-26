@@ -118,16 +118,13 @@ func TestClientPktQueue_Try(t *testing.T) {
 		t.Error("queue should be empty")
 	}
 
-	_ = q.Add(&clientPacket{guildID: 1})
-	_ = q.Add(&clientPacket{guildID: 2})
-	_ = q.Add(&clientPacket{guildID: 3})
+	_ = q.Add(&clientPacket{})
+	_ = q.Add(&clientPacket{})
+	_ = q.Add(&clientPacket{})
 	if err := q.Try(func(msg *clientPacket) error { return nil }); err != nil {
 		t.Error("Try should not have failed", err)
 	}
 	if len(q.messages) != 2 {
 		t.Error("the number of entries in the queue should reduce after Try execution")
-	}
-	if q.messages[0].guildID != Snowflake(2) {
-		t.Error("Try should pop the first entry (FIFO)")
 	}
 }

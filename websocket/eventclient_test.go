@@ -268,7 +268,7 @@ func TestEvtClient_communication(t *testing.T) {
 	// #########################################
 	// emitting user messages
 	wg[status].Add(1)
-	_ = m.Emit(cmd.UpdateStatus, 1, 0)
+	_ = m.emit(cmd.UpdateStatus, 1)
 	wg[status].Wait()
 
 	<-time.After(10 * time.Millisecond)

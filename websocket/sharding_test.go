@@ -18,6 +18,17 @@ func (g GatewayBotGetterMock) GetGatewayBot() (gateway *GatewayBot, err error) {
 
 var _ GatewayBotGetter = (*GatewayBotGetterMock)(nil)
 
+type gPayload struct {
+	guildIDs []Snowflake
+	cmd      string
+}
+
+func (g *gPayload) CmdName() string {
+	return g.cmd
+}
+
+var _ GatewayCommandPayload = (*gPayload)(nil)
+
 func TestConfigureShardConfig(t *testing.T) {
 	nrOfShards := uint(4)
 	u := "localhost:6060"
@@ -131,7 +142,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 	connect()
 
 	for i := 1; i <= int(mngr.conf.ShardCount*14); i++ {
-		if err := mngr.Emit(cmd.UpdateVoiceState, true, Snowflake(i<<22)); err != nil {
+		if err := mngr.Emit(cmd.UpdateVoiceState, &gPayload{[]Snowflake{Snowflake(i << 22)}, "a"}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -140,8 +151,12 @@ func TestRedistributeShardMessages(t *testing.T) {
 		for id, shard := range mngr.shards {
 			for i := range shard.messageQueue.messages {
 				m := shard.messageQueue.messages[i]
-				if GetShardForGuildID(m.guildID, mngr.conf.ShardCount) != id {
-					t.Error("incorrect distribution")
+				if g, ok := m.Data.(*gPayload); ok {
+					if GetShardForGuildID(g.guildIDs[0], mngr.conf.ShardCount) != id {
+						t.Error("incorrect distribution")
+					}
+				} else {
+					panic("not *gPayload")
 				}
 			}
 			if len(shard.messageQueue.messages) == 0 {
