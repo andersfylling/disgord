@@ -1,10 +1,6 @@
 <div align='center'>
   <img src="/docs/disgord-draft-8.jpeg" alt='Build Status' />
   <p>
-    <a href='https://circleci.com/gh/andersfylling/disgord/tree/develop'>
-      <img src='https://circleci.com/gh/andersfylling/disgord/tree/develop.svg?style=shield'
-           alt='Build Status' />
-    </a>
     <a href='https://codeclimate.com/github/andersfylling/disgord/test_coverage'>
       <img src='https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage'
            alt='Maintainability' />
@@ -98,7 +94,6 @@ The cache tries to represent the Discord state as accurate as it can. Because of
 None of the sub-packages should be used outside the library. If there exists a requirement for that, please create an issue or pull request.
 ```Markdown
 github.com/andersfylling/disgord
-└──.circleci    :CircleCI configuration
 └──.githooks    :Hooks that can help speed up development for DisGord contributors
 └──.github      :GitHub templates, issues, PR, etc.
 └──crs          :Cache Replacement Algorithm
