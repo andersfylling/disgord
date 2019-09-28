@@ -5,7 +5,6 @@ import (
 	"compress/zlib"
 	"encoding/json"
 	"io"
-	"sync"
 
 	"github.com/andersfylling/disgord/websocket/opcode"
 )
@@ -152,7 +151,6 @@ var _ CmdPayload = (*UpdateVoiceStatePayload)(nil)
 func (u *UpdateVoiceStatePayload) isCmdPayload() bool { return true }
 
 type UpdateStatusPayload struct {
-	mu sync.RWMutex
 	// Since unix time (in milliseconds) of when the Client went idle, or null if the Client is not idle
 	Since *uint `json:"since"`
 

@@ -363,8 +363,7 @@ func (s *shardMngr) Emit(cmd string, payload CmdPayload) (guildIDs []Snowflake, 
 		}
 
 		for shardID := range requests {
-			var r RequestGuildMembersPayload
-			r = *t
+			r := *t
 			r.GuildIDs = requests[shardID]
 			if shard, ok := s.shards[shardID]; ok {
 				err = shard.Emit(cmd, &r)
