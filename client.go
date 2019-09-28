@@ -599,6 +599,10 @@ func (c *Client) On(event string, inputs ...interface{}) {
 
 // Emit sends a socket command directly to Discord.
 func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+	if c.shardManager == nil {
+		return nil, errors.New("you must connect before you can Emit")
+	}
+
 	p, err := prepareGatewayCommand(payload)
 	if err != nil {
 		return nil, err

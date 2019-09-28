@@ -124,7 +124,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 func TestFailOnPrematureEmit(t *testing.T) {
 	// TODO: update when a queue is added/or whatever, for c.Emit before c.Connect takes place
 	c := disgord.New(&disgord.Config{
-		BotToken:     token,
+		BotToken:     "dkjfhslkjfhksf",
 		DisableCache: true,
 		ShardConfig: disgord.ShardConfig{
 			ShardIDs: []uint{0, 1},
