@@ -1,5 +1,27 @@
 # Change Log
 
+
+## [v0.12.0-rc6](https://github.com/andersfylling/disgord/tree/v0.12.0-rc6) (2019-09-28)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc5...v0.12.0-rc6)
+
+**Implemented enhancements:**
+
+- Use slice in Request Guild Members Command [\#210](https://github.com/andersfylling/disgord/pull/210) ([andersfylling](https://github.com/andersfylling))
+
+**Fixed bugs:**
+
+- UpdateStatus while not connected will silently do nothing [\#209](https://github.com/andersfylling/disgord/issues/209)
+- disgord does not complain about unknown handler signatures [\#208](https://github.com/andersfylling/disgord/issues/208)
+- Use slice in Request Guild Members Command [\#210](https://github.com/andersfylling/disgord/pull/210) ([andersfylling](https://github.com/andersfylling))
+
+**Merged pull requests:**
+
+- panic when registerring a incorrect handler signature [\#217](https://github.com/andersfylling/disgord/pull/217) ([andersfylling](https://github.com/andersfylling))
+- upgrade websocket/nhooyr to fix atomic panic on ARM systems [\#216](https://github.com/andersfylling/disgord/pull/216) ([andersfylling](https://github.com/andersfylling))
+- detects premature Emit usage [\#215](https://github.com/andersfylling/disgord/pull/215) ([andersfylling](https://github.com/andersfylling))
+- upgrade deps [\#206](https://github.com/andersfylling/disgord/pull/206) ([andersfylling](https://github.com/andersfylling))
+- Some grammar changes/fixes [\#203](https://github.com/andersfylling/disgord/pull/203) ([GreemDev](https://github.com/GreemDev))
+
 ## [v0.12.0-rc5](https://github.com/andersfylling/disgord/tree/v0.12.0-rc5) (2019-09-22)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc4...v0.12.0-rc5)
 
