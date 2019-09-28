@@ -276,11 +276,12 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		return
 	}
 
-	_ = c.emit(cmd.VoiceResume, struct {
+	resumeData := struct {
 		GuildID   Snowflake `json:"server_id"`
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
-	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token})
+	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token}
+	_ = c.emit(cmd.VoiceResume, &resumeData)
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
