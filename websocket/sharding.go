@@ -161,6 +161,14 @@ type ShardConfig struct {
 	// to nil.
 	OnScalingRequired func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint)
 
+	// OnScalingDiscardedRequests When scaling is triggered, some of the guilds might have moved to other shards
+	// that do not exist on this disgord instance. This callback will return a list of guild ID that exists in
+	// outgoing requests that were discarded due to no local shard match.
+	//
+	// Note: only regards systems with multiple disgord instances
+	// TODO: return a list of outgoing requests instead such that people can re-trigger these on other instances.
+	OnScalingDiscardedRequests func(unhandledGuildIDs []Snowflake)
+
 	// URL is fetched from the gateway before initialising a connection
 	URL string
 }
@@ -423,7 +431,7 @@ func (s *shardMngr) scale(code int, reason string) {
 
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
-	s.redistributeMsgs(func() {
+	unchandledGuilds := s.redistributeMsgs(func() {
 		data, err := s.conf.RESTClient.GetGatewayBot()
 		if err != nil {
 			s.conf.Logger.Error("autoscaling", err)
@@ -445,6 +453,10 @@ func (s *shardMngr) scale(code int, reason string) {
 			s.conf.Logger.Error("autoscaling", "connect", err)
 		}
 	})
+
+	if s.conf.OnScalingDiscardedRequests != nil {
+		s.conf.OnScalingDiscardedRequests(unchandledGuilds)
+	}
 }
 
 func (s *shardMngr) redistributeMsgs(scaleShards func()) (unhandledGuildIDs []Snowflake) {
