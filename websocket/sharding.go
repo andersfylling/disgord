@@ -320,9 +320,10 @@ func (s *shardMngr) Disconnect() error {
 			s.conf.Logger.Error("Disconnect error (trivial):", err)
 		}
 		// possible connect/disconnect race..
-		shard.Lock()
 		shard.sessionID = ""
 		shard.sequenceNumber = 0
+
+		shard.Lock()
 		shard.haveConnectedOnce = false
 		shard.Unlock()
 	}
