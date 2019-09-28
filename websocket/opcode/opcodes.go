@@ -2,15 +2,17 @@ package opcode
 
 import "math"
 
+type OpCode uint
+
 // custom op codes used by DisGord internally
 const (
-	EventReadyResumed uint = 102 // Discord use 0 here, but that is a shared op code
-	NoOPCode          uint = math.MaxUint16
+	EventReadyResumed OpCode = 102 // Discord use 0 here, but that is a shared op code
+	None              OpCode = math.MaxUint16
 )
 
 // operation codes for the event client
 const (
-	EventDiscordEvent uint = iota
+	EventDiscordEvent OpCode = iota
 	EventHeartbeat
 	EventIdentify
 	EventStatusUpdate
@@ -26,7 +28,7 @@ const (
 
 // operation codes for the voice client
 const (
-	VoiceIdentify uint = iota
+	VoiceIdentify OpCode = iota
 	VoiceSelectProtocol
 	VoiceReady
 	VoiceHeartbeat
@@ -44,10 +46,10 @@ const (
 
 // OperationCodeHolder Used on objects that holds a operation code
 type OperationCodeHolder interface {
-	GetOperationCode() uint
+	GetOperationCode() OpCode
 }
 
 // ExtractFrom extract the operation code
-func ExtractFrom(holder OperationCodeHolder) uint {
+func ExtractFrom(holder OperationCodeHolder) OpCode {
 	return holder.GetOperationCode()
 }

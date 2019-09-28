@@ -5,6 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/json"
 	"io"
+
+	"github.com/andersfylling/disgord/websocket/opcode"
 )
 
 //////////////////////////////////////////////////////
@@ -105,6 +107,67 @@ type evtIdentity struct {
 	GuildSubscriptions bool            `json:"guild_subscriptions"` // most ambiguous naming ever but ok.
 }
 
+type evtResume struct {
+	Token      string `json:"token"`
+	SessionID  string `json:"session_id"`
+	SequenceNr uint   `json:"seq"`
+}
+
+type RequestGuildMembersPayload struct {
+	// GuildID	id of the guild(s) to get offline members for
+	GuildIDs []Snowflake `json:"guild_id"`
+
+	// Query string that username starts with, or an empty string to return all members
+	Query string `json:"query"`
+
+	// Limit maximum number of members to send or 0 to request all members matched
+	Limit uint `json:"limit"`
+
+	// UserIDs used to specify which users you wish to fetch
+	UserIDs []Snowflake `json:"user_ids,omitempty"`
+}
+
+var _ CmdPayload = (*RequestGuildMembersPayload)(nil)
+
+func (u *RequestGuildMembersPayload) isCmdPayload() bool { return true }
+
+type UpdateVoiceStatePayload struct {
+	// GuildID id of the guild
+	GuildID Snowflake `json:"guild_id"`
+
+	// ChannelID id of the voice channel Client wants to join
+	// (set to 0 if disconnecting)
+	ChannelID Snowflake `json:"channel_id"`
+
+	// SelfMute is the Client mute
+	SelfMute bool `json:"self_mute"`
+
+	// SelfDeaf is the Client deafened
+	SelfDeaf bool `json:"self_deaf"`
+}
+
+var _ CmdPayload = (*UpdateVoiceStatePayload)(nil)
+
+func (u *UpdateVoiceStatePayload) isCmdPayload() bool { return true }
+
+type UpdateStatusPayload struct {
+	// Since unix time (in milliseconds) of when the Client went idle, or null if the Client is not idle
+	Since *uint `json:"since"`
+
+	// Game null, or the user's new activity
+	Game interface{} `json:"game"`
+
+	// Status the user's new status
+	Status string `json:"status"`
+
+	// AFK whether or not the Client is afk
+	AFK bool `json:"afk"`
+}
+
+var _ CmdPayload = (*UpdateStatusPayload)(nil)
+
+func (u *UpdateStatusPayload) isCmdPayload() bool { return true }
+
 //////////////////////////////////////////////////////
 //
 // GENERAL PURPOSE
@@ -129,12 +192,9 @@ type GatewayBot struct {
 
 // clientPacket is outgoing packets by the client
 type clientPacket struct {
-	Op   uint        `json:"op"`
-	Data interface{} `json:"d"`
-
-	// allows restocking pkts on shard scaling
-	guildID Snowflake `json:"-"`
-	cmd     string    `json:"-"`
+	Op      opcode.OpCode `json:"op"`
+	Data    interface{}   `json:"d"`
+	CmdName string        `json:"-"`
 }
 
 type helloPacket struct {
@@ -143,10 +203,10 @@ type helloPacket struct {
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic
 type discordPacketJSON struct {
-	Op             uint   `json:"op"`
-	Data           []byte `json:"d"`
-	SequenceNumber uint   `json:"s"`
-	EventName      string `json:"t"`
+	Op             opcode.OpCode `json:"op"`
+	Data           []byte        `json:"d"`
+	SequenceNumber uint          `json:"s"`
+	EventName      string        `json:"t"`
 }
 
 func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
@@ -158,7 +218,7 @@ func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 
 // DiscordPacket is packets sent by Discord over the socket connection
 type DiscordPacket struct {
-	Op             uint            `json:"op"`
+	Op             opcode.OpCode   `json:"op"`
 	Data           json.RawMessage `json:"d"`
 	SequenceNumber uint            `json:"s,omitempty"`
 	EventName      string          `json:"t,omitempty"`

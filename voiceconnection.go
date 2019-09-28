@@ -100,9 +100,9 @@ func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (ret VoiceC
 	}(r, guildID)
 
 	// Tell Discord we want to connect to a channel
-	err = r.c.Emit(CommandUpdateVoiceState, UpdateVoiceStateCommand{
+	_, err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
-		ChannelID: &channelID,
+		ChannelID: channelID,
 		SelfDeaf:  false,
 		SelfMute:  false,
 	})
@@ -286,7 +286,7 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
 		Speaking: b,
 		SSRC:     v.ssrc,
-	}, v.guildID)
+	})
 }
 
 func (v *voiceImpl) SendOpusFrame(data []byte) {
@@ -328,9 +328,9 @@ func (v *voiceImpl) Close() (err error) {
 	}
 
 	// Tell Discord we want to disconnect from channel/guild
-	_ = v.c.Emit(CommandUpdateVoiceState, UpdateVoiceStateCommand{
+	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   v.guildID,
-		ChannelID: nil,
+		ChannelID: 0, // disconnect "code/value" (disgord implementation specific)
 		SelfDeaf:  true,
 		SelfMute:  true,
 	})

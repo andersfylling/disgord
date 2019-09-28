@@ -134,7 +134,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.emit(true, cmd.VoiceHeartbeat, nil, 0)
+	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -188,7 +188,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.emit(true, cmd.VoiceHeartbeat, nil, 0)
+	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
 //////////////////////////////////////////////////////
@@ -261,6 +261,12 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	return evt, err
 }
 
+// Emit for voice client needs to bypass the normal Emit restrictions.
+// TODO: put more of the code flow of disgord/voiceclient.go into the websocket pkg.
+func (c *VoiceClient) Emit(name string, data interface{}) error {
+	return c.emit(name, data)
+}
+
 func (c *VoiceClient) sendVoiceHelloPacket() {
 	// if this is a new connection we can drop the resume packet
 	if !c.haveIdentifiedOnce {
@@ -270,21 +276,22 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		return
 	}
 
-	_ = c.emit(true, cmd.VoiceResume, struct {
+	resumeData := struct {
 		GuildID   Snowflake `json:"server_id"`
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
-	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token}, 0)
+	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token}
+	_ = c.emit(cmd.VoiceResume, &resumeData)
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	err = m.emit(true, cmd.VoiceIdentify, &voiceIdentify{
+	err = m.emit(cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
 		Token:     m.conf.Token,
-	}, 0)
+	})
 
 	m.haveIdentifiedOnce = true
 	return
@@ -294,10 +301,10 @@ func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSe
 	ch := make(chan interface{}, 1)
 	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
-	err = c.emit(true, cmd.VoiceSelectProtocol, &voiceSelectProtocol{
+	err = c.emit(cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
-	}, 0)
+	})
 	if err != nil {
 		return nil, err
 	}

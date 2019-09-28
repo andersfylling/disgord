@@ -8,6 +8,9 @@ import (
 )
 
 func newClientPktQueue(limit int) clientPktQueue {
+	if limit == 0 {
+		limit = -1 // no limit
+	}
 	return clientPktQueue{
 		limit: limit,
 	}
@@ -61,7 +64,7 @@ func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	c.Lock()
 	defer c.Unlock()
 	if len(c.messages) == 0 {
-		return errors.New("queue is empty")
+		return nil // nothing to try, this avoid a potential race as well
 	}
 
 	next := c.messages[0]
@@ -81,7 +84,11 @@ func (c *clientPktQueue) Steal() (m []*clientPacket) {
 	c.Lock()
 	defer c.Unlock()
 
-	m = c.messages
+	m = make([]*clientPacket, len(c.messages))
+	copy(m, c.messages)
+	for i := range c.messages {
+		c.messages[i] = nil // redundant?
+	}
 	c.messages = c.messages[:0]
 	return m
 }

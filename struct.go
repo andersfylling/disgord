@@ -81,7 +81,7 @@ type hasher interface {
 }
 
 type guilder interface {
-	getGuildID() Snowflake
+	getGuildIDs() []Snowflake
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.

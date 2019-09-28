@@ -16,14 +16,14 @@ import (
 
 	"github.com/andersfylling/disgord/logger"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-	"github.com/andersfylling/disgord/websocket/event"
 	"github.com/andersfylling/disgord/websocket/opcode"
 	"golang.org/x/net/proxy"
 )
 
+type ClientType int
+
 const (
-	clientTypeEvent = iota
+	clientTypeEvent ClientType = iota
 	clientTypeVoice
 )
 
@@ -118,7 +118,7 @@ type config struct {
 // If you do not care about these. Please overwrite both methods.
 type client struct {
 	sync.RWMutex
-	clientType   int
+	clientType   ClientType
 	conf         *config
 	lastRestart  int64      //unix
 	restartMutex sync.Mutex // TODO: atomic bool
@@ -395,57 +395,25 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(command string, data interface{}, guildID Snowflake) (err error) {
-	return c.emit(false, command, data, guildID)
+func (c *client) Emit(command string, data CmdPayload) (err error) {
+	return c.queueRequest(command, data)
 }
-func (c *client) emit(internal bool, command string, data interface{}, guildID Snowflake) (err error) {
+
+func (c *client) queueRequest(command string, data CmdPayload) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
 
-	noMatch := ^uint(0)
-	op := noMatch
-	// TODO: refactor command and event name to avoid conversion (?)
-	if c.clientType == clientTypeVoice {
-		switch command {
-		case cmd.VoiceSpeaking:
-			op = opcode.VoiceSpeaking
-		case cmd.VoiceIdentify:
-			op = opcode.VoiceIdentify
-		case cmd.VoiceSelectProtocol:
-			op = opcode.VoiceSelectProtocol
-		case cmd.VoiceHeartbeat:
-			op = opcode.VoiceHeartbeat
-		case cmd.VoiceResume:
-			op = opcode.VoiceResume
-		}
-	} else if c.clientType == clientTypeEvent {
-		switch command {
-		case event.Heartbeat:
-			op = opcode.EventHeartbeat
-		case event.Identify:
-			op = opcode.EventIdentify
-		case event.Resume:
-			op = opcode.EventResume
-		case cmd.RequestGuildMembers:
-			op = opcode.EventRequestGuildMembers
-		case cmd.UpdateVoiceState:
-			op = opcode.EventVoiceStateUpdate
-		case cmd.UpdateStatus:
-			op = opcode.EventStatusUpdate
-		}
-	}
-	if op == noMatch {
+	op := CmdNameToOpCode(command, c.clientType)
+	if op == opcode.None {
 		return errors.New("unsupported command: " + command)
 	}
 
 	p := &clientPacket{
 		Op:      op,
 		Data:    data,
-		guildID: guildID,
-		cmd:     command,
+		CmdName: command,
 	}
-
 	if accepted := c.ratelimit.Request(command); !accepted {
 		// we might be rate limited.. but lets see if there is another
 		// presence update in the queue; then it can be overwritten
@@ -455,12 +423,20 @@ func (c *client) emit(internal bool, command string, data interface{}, guildID S
 			return nil
 		}
 	}
-
-	if internal {
-		c.internalEmitChan <- p
-		return
-	}
 	return c.messageQueue.Add(p)
+}
+
+func (c *client) emit(command string, data interface{}) (err error) {
+	if !c.haveConnectedOnce {
+		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
+	}
+
+	c.internalEmitChan <- &clientPacket{
+		Op:      CmdNameToOpCode(command, c.clientType),
+		Data:    data,
+		CmdName: command,
+	}
+	return nil
 }
 
 func (c *client) lockEmitter() bool {
@@ -518,14 +494,13 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
-		case <-time.After(100 * time.Millisecond):
-			// TODO-race: potential race condition in the case of shard scaling
+		case <-time.After(50 * time.Millisecond):
 			if c.messageQueue.IsEmpty() {
 				continue
 			}
 
 			// try to write the message
-			// on failure the message is stored until next time
+			// on failure the message is put back into the queue
 			err = c.messageQueue.Try(write)
 		case msg, open := <-c.internalEmitChan:
 			if !open {

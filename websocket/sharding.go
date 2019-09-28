@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/websocket/cmd"
 
 	"github.com/andersfylling/disgord/event"
 
@@ -20,6 +21,10 @@ const defaultShardRateLimit time.Duration = 5*time.Second + 100*time.Millisecond
 const discordErrShardScalingRequired = 4011
 
 type shardID = uint
+
+type CmdPayload interface {
+	isCmdPayload() bool
+}
 
 // GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
 func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
@@ -106,8 +111,8 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
-	Emit(string, interface{}, Snowflake) error
-	NrOfShards() uint
+	Emit(string, CmdPayload) (unhandledGuildIDs []Snowflake, err error)
+	LocalShardCount() uint
 	ShardCount() uint
 	ShardIDs() (shardIDs []uint)
 	GetShard(shardID shardID) (shard *EvtClient, err error)
@@ -156,6 +161,14 @@ type ShardConfig struct {
 	// to nil.
 	OnScalingRequired func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint)
 
+	// OnScalingDiscardedRequests When scaling is triggered, some of the guilds might have moved to other shards
+	// that do not exist on this disgord instance. This callback will return a list of guild ID that exists in
+	// outgoing requests that were discarded due to no local shard match.
+	//
+	// Note: only regards systems with multiple disgord instances
+	// TODO: return a list of outgoing requests instead such that people can re-trigger these on other instances.
+	OnScalingDiscardedRequests func(unhandledGuildIDs []Snowflake)
+
 	// URL is fetched from the gateway before initialising a connection
 	URL string
 }
@@ -196,7 +209,7 @@ type shardMngr struct {
 
 var _ ShardManager = (*shardMngr)(nil)
 
-func (s *shardMngr) initializeShards() error {
+func (s *shardMngr) initShards() error {
 	baseConfig := EvtConfig{ // TIP: not nicely grouped, feel free to adjust
 		// identity
 		Browser:             s.conf.DisgordInfo,
@@ -244,7 +257,7 @@ func (s *shardMngr) initializeShards() error {
 				s.conf.ShardIDs = append(s.conf.ShardIDs, newShards...)
 
 				_ = s.Disconnect()
-				if err := s.initializeShards(); err != nil {
+				if err := s.initShards(); err != nil {
 					s.conf.Logger.Error("scaling", "init-shards", err)
 					return
 				}
@@ -284,7 +297,7 @@ func (s *shardMngr) Connect() (err error) {
 	}
 
 	if len(s.shards) == 0 {
-		if err = s.initializeShards(); err != nil {
+		if err = s.initShards(); err != nil {
 			return err
 		}
 	}
@@ -316,7 +329,7 @@ func (s *shardMngr) Disconnect() error {
 	return nil
 }
 
-func (s *shardMngr) NrOfShards() uint {
+func (s *shardMngr) LocalShardCount() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -337,24 +350,55 @@ func (s *shardMngr) ShardIDs() (shardIDs []uint) {
 	return shardIDs
 }
 
-func (s *shardMngr) Emit(cmd string, data interface{}, id Snowflake) (err error) {
+// Emit splits up and dispatches the payload into the correct shards
+// returns the guild ids it can not support and a error message
+func (s *shardMngr) Emit(cmd string, payload CmdPayload) (guildIDs []Snowflake, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if id.IsZero() {
-		for _, shard := range s.shards {
-			err = shard.Emit(cmd, data, id)
+	switch t := payload.(type) {
+	case *RequestGuildMembersPayload:
+		if len(s.shards) == 1 {
+			for _, shard := range s.shards {
+				return t.GuildIDs, shard.Emit(cmd, payload)
+			}
 		}
-	} else {
-		shardID := GetShardForGuildID(id, s.conf.ShardCount)
-		if shard, exists := s.shards[shardID]; exists {
-			err = shard.Emit(cmd, data, id)
+
+		requests := make(map[uint][]Snowflake)
+		for i := range t.GuildIDs {
+			shardID := GetShardForGuildID(t.GuildIDs[i], s.ShardCount())
+			requests[shardID] = append(requests[shardID], t.GuildIDs[i])
+		}
+
+		for shardID := range requests {
+			r := *t
+			r.GuildIDs = requests[shardID]
+			if shard, ok := s.shards[shardID]; ok {
+				err = shard.Emit(cmd, &r)
+				if err != nil {
+					guildIDs = append(guildIDs, r.GuildIDs...)
+				}
+			} else {
+				guildIDs = append(guildIDs, r.GuildIDs...)
+			}
+		}
+	case *UpdateVoiceStatePayload:
+		shardID := GetShardForGuildID(t.GuildID, s.ShardCount())
+		if shard, ok := s.shards[shardID]; ok {
+			err = shard.Emit(cmd, payload)
 		} else {
-			err = errors.New("no shard with id " + strconv.FormatUint(uint64(shardID), 10))
+			guildIDs = append(guildIDs, t.GuildID)
+			err = errors.New("this guild is not handled by this shard")
 		}
+	case *UpdateStatusPayload:
+		for _, shard := range s.shards {
+			err = shard.Emit(cmd, payload)
+		}
+	default:
+		err = errors.New("missing support for payload type")
 	}
 
-	return err
+	return guildIDs, err
 }
 
 func (s *shardMngr) GetShard(shardID shardID) (shard *EvtClient, err error) {
@@ -387,35 +431,84 @@ func (s *shardMngr) scale(code int, reason string) {
 
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
+	unchandledGuilds := s.redistributeMsgs(func() {
+		data, err := s.conf.RESTClient.GetGatewayBot()
+		if err != nil {
+			s.conf.Logger.Error("autoscaling", err)
+			return
+		}
+
+		_ = s.Disconnect()
+
+		s.conf.URL = data.URL
+		for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
+			s.conf.ShardIDs = append(s.conf.ShardIDs, i)
+			s.conf.ShardCount++
+		}
+		if err := s.initShards(); err != nil {
+			s.conf.Logger.Error("autoscaling", "init-shards", err)
+			return
+		}
+		if err := s.Connect(); err != nil {
+			s.conf.Logger.Error("autoscaling", "connect", err)
+		}
+	})
+
+	if s.conf.OnScalingDiscardedRequests != nil {
+		s.conf.OnScalingDiscardedRequests(unchandledGuilds)
+	}
+}
+
+func (s *shardMngr) redistributeMsgs(scaleShards func()) (unhandledGuildIDs []Snowflake) {
 	var messages []*clientPacket
 	for _, shard := range s.shards {
 		messages = append(messages, shard.messageQueue.Steal()...)
 	}
-	defer func() {
-		for i := len(messages) - 1; i >= 0; i-- {
-			// reverse such that injected order stays the same
-			m := messages[i]
-			_ = s.Emit(m.cmd, m.Data, m.guildID)
+
+	scaleShards()
+
+	// merge similar requests that only differs by guild IDs
+	opToMerge := CmdNameToOpCode(cmd.RequestGuildMembers, clientTypeEvent)
+	for i := range messages {
+		m1 := messages[i]
+		if m1 == nil || m1.Op != opToMerge {
+			continue
 		}
-	}()
 
-	data, err := s.conf.RESTClient.GetGatewayBot()
-	if err != nil {
-		s.conf.Logger.Error("autoscaling", err)
-		return
+		for j := i + 1; j < len(messages); j++ {
+			m2 := messages[j]
+			if m2 == nil || m1.Op != m2.Op {
+				continue
+			}
+
+			var rgm1 *RequestGuildMembersPayload
+			var rgm2 *RequestGuildMembersPayload
+			var ok bool
+			if rgm1, ok = m1.Data.(*RequestGuildMembersPayload); !ok {
+				continue
+			}
+			if rgm2, ok = m2.Data.(*RequestGuildMembersPayload); !ok {
+				continue
+			}
+			rgm1.GuildIDs = append(rgm1.GuildIDs, rgm2.GuildIDs...)
+			messages[j] = nil
+		}
 	}
 
-	_ = s.Disconnect()
+	// reverse such that injected order stays the same
+	// and merge similar requests that only differs by guild IDs
+	for i := len(messages) - 1; i >= 0; i-- {
+		m := messages[i]
+		if m == nil {
+			continue
+		}
 
-	s.conf.URL = data.URL
-	for i := uint(len(s.conf.ShardIDs) - 1); i < data.Shards; i++ {
-		s.conf.ShardIDs = append(s.conf.ShardIDs, i)
+		if payload, ok := m.Data.(CmdPayload); ok {
+			gIDs, _ := s.Emit(m.CmdName, payload)
+			unhandledGuildIDs = append(unhandledGuildIDs, gIDs...)
+			messages[i] = nil
+		}
 	}
-	if err := s.initializeShards(); err != nil {
-		s.conf.Logger.Error("autoscaling", "init-shards", err)
-		return
-	}
-	if err := s.Connect(); err != nil {
-		s.conf.Logger.Error("autoscaling", "connect", err)
-	}
+
+	return unhandledGuildIDs
 }

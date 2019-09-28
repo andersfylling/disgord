@@ -167,13 +167,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}, guildID Snowflake) (err error) {
+func (c *EvtClient) Emit(command string, data CmdPayload) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.emit(false, command, data, guildID)
+	return c.client.queueRequest(command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -367,7 +367,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.emit(true, event.Heartbeat, snr, 0)
+	return c.emit(event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -466,11 +466,7 @@ func (c *EvtClient) sendHelloPacket() {
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.emit(true, event.Resume, struct {
-		Token      string `json:"token"`
-		SessionID  string `json:"session_id"`
-		SequenceNr uint   `json:"seq"`
-	}{token, session, sequence}, 0)
+	err := c.emit(event.Resume, &evtResume{token, session, sequence})
 	if err != nil {
 		c.log.Error(c.getLogPrefix(), err)
 	}
@@ -488,7 +484,7 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.emit(true, event.Identify, id, 0)
+	err = c.emit(event.Identify, id)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
