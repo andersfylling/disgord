@@ -356,6 +356,10 @@ func (s *shardMngr) Emit(cmd string, payload CmdPayload) (guildIDs []Snowflake, 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	if len(s.shards) == 0 {
+		return nil, errors.New("can not use Emit before Connected")
+	}
+
 	switch t := payload.(type) {
 	case *RequestGuildMembersPayload:
 		if len(s.shards) == 1 {
