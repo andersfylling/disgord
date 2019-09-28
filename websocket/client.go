@@ -395,11 +395,11 @@ func (c *client) reconnectLoop() (err error) {
 //////////////////////////////////////////////////////
 
 // Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
-func (c *client) Emit(command string, data GatewayCommandPayload) (err error) {
+func (c *client) Emit(command string, data CmdPayload) (err error) {
 	return c.queueRequest(command, data)
 }
 
-func (c *client) queueRequest(command string, data GatewayCommandPayload) (err error) {
+func (c *client) queueRequest(command string, data CmdPayload) (err error) {
 	if !c.haveConnectedOnce {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
@@ -409,7 +409,11 @@ func (c *client) queueRequest(command string, data GatewayCommandPayload) (err e
 		return errors.New("unsupported command: " + command)
 	}
 
-	p := newClientPacket(data, c.clientType)
+	p := &clientPacket{
+		Op:      op,
+		Data:    data,
+		CmdName: command,
+	}
 	if accepted := c.ratelimit.Request(command); !accepted {
 		// we might be rate limited.. but lets see if there is another
 		// presence update in the queue; then it can be overwritten
@@ -428,8 +432,9 @@ func (c *client) emit(command string, data interface{}) (err error) {
 	}
 
 	c.internalEmitChan <- &clientPacket{
-		Op:   CmdNameToOpCode(command, c.clientType),
-		Data: data,
+		Op:      CmdNameToOpCode(command, c.clientType),
+		Data:    data,
+		CmdName: command,
 	}
 	return nil
 }
@@ -489,14 +494,13 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
-		case <-time.After(100 * time.Millisecond):
-			// TODO-race: potential race condition in the case of shard scaling
+		case <-time.After(50 * time.Millisecond):
 			if c.messageQueue.IsEmpty() {
 				continue
 			}
 
 			// try to write the message
-			// on failure the message is stored until next time
+			// on failure the message is put back into the queue
 			err = c.messageQueue.Try(write)
 		case msg, open := <-c.internalEmitChan:
 			if !open {

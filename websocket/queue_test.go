@@ -99,9 +99,6 @@ func TestClientPktQueue_Steal(t *testing.T) {
 
 func TestClientPktQueue_Try(t *testing.T) {
 	q := newClientPktQueue(10)
-	if err := q.Try(nil); err == nil {
-		t.Error("Try should fail when queue is empty")
-	}
 
 	_ = q.Add(&clientPacket{})
 	if err := q.Try(func(msg *clientPacket) error { return errors.New("") }); err == nil {

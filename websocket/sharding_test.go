@@ -18,17 +18,6 @@ func (g GatewayBotGetterMock) GetGatewayBot() (gateway *GatewayBot, err error) {
 
 var _ GatewayBotGetter = (*GatewayBotGetterMock)(nil)
 
-type gPayload struct {
-	guildIDs []Snowflake
-	cmd      string
-}
-
-func (g *gPayload) CmdName() string {
-	return g.cmd
-}
-
-var _ GatewayCommandPayload = (*gPayload)(nil)
-
 func TestConfigureShardConfig(t *testing.T) {
 	nrOfShards := uint(4)
 	u := "localhost:6060"
@@ -142,32 +131,34 @@ func TestRedistributeShardMessages(t *testing.T) {
 	connect()
 
 	for i := 1; i <= int(mngr.conf.ShardCount*14); i++ {
-		if err := mngr.Emit(cmd.UpdateVoiceState, &gPayload{[]Snowflake{Snowflake(i << 22)}, "a"}); err != nil {
-			t.Fatal(err)
+		p := &RequestGuildMembersPayload{GuildIDs: []Snowflake{Snowflake(i << 22)}}
+		if unhandledGuilds, err := mngr.Emit(cmd.RequestGuildMembers, p); err != nil || len(unhandledGuilds) != 0 {
+			t.Error(err)
+			t.Fatalf("%+v", unhandledGuilds)
 		}
 	}
 
-	verifyDistribution := func() {
+	verifyDistribution := func(sid string) {
 		for id, shard := range mngr.shards {
 			for i := range shard.messageQueue.messages {
 				m := shard.messageQueue.messages[i]
-				if g, ok := m.Data.(*gPayload); ok {
-					if GetShardForGuildID(g.guildIDs[0], mngr.conf.ShardCount) != id {
-						t.Error("incorrect distribution")
+				if g, ok := m.Data.(*RequestGuildMembersPayload); ok {
+					if GetShardForGuildID(g.GuildIDs[0], mngr.conf.ShardCount) != id {
+						t.Error(sid, "incorrect distribution")
 					}
 				} else {
-					panic("not *gPayload")
+					panic(sid + "not *RequestGuildMembersPayload")
 				}
 			}
 			if len(shard.messageQueue.messages) == 0 {
-				t.Error("there should be at least one message in shard", id)
+				t.Error(sid, "there should be at least one message in shard", id)
 			}
 		}
 	}
 
-	verifyDistribution()
+	verifyDistribution("1")
 	mngr.redistributeMsgs(func() {})
-	verifyDistribution()
+	verifyDistribution("2")
 
 	mngr.redistributeMsgs(func() {
 		mngr.conf.ShardIDs = append(mngr.conf.ShardIDs, uint(len(mngr.conf.ShardIDs)))
@@ -177,7 +168,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 		}
 		connect()
 	})
-	verifyDistribution()
+	verifyDistribution("3")
 }
 
 //

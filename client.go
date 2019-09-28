@@ -598,9 +598,12 @@ func (c *Client) On(event string, inputs ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(name gatewayCmdName, data gatewayCmdPayload) error {
-	payload := &gatewayCommand{data, name}
-	return c.shardManager.Emit(string(name), payload)
+func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+	p, err := prepareGatewayCommand(payload)
+	if err != nil {
+		return nil, err
+	}
+	return c.shardManager.Emit(string(name), p)
 }
 
 //////////////////////////////////////////////////////
@@ -699,7 +702,8 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return c.Emit(UpdateStatus, s)
+	_, err := c.Emit(UpdateStatus, s)
+	return err
 }
 
 // UpdateStatusString sets the Client's game activity to the provided string, status to online

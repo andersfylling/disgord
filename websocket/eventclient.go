@@ -167,7 +167,7 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data GatewayCommandPayload, guildIDs ...Snowflake) (err error) {
+func (c *EvtClient) Emit(command string, data CmdPayload) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err

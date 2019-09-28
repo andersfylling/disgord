@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
+
+	"github.com/andersfylling/disgord/websocket/cmd"
 
 	"github.com/andersfylling/disgord/event"
 
@@ -21,13 +22,8 @@ const discordErrShardScalingRequired = 4011
 
 type shardID = uint
 
-type ShardDistributer interface {
-	Distribute(shardCount uint, filter func(guildID Snowflake) (shardID uint)) (pkts []ShardDistributer)
-	GetGuildIDs() []Snowflake
-}
-
-type GatewayCommandPayload interface {
-	CmdName() string
+type CmdPayload interface {
+	isCmdPayload() bool
 }
 
 // GetShardForGuildID converts a GuildID into a ShardID for correct retrieval of guild information
@@ -115,8 +111,8 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 type ShardManager interface {
 	Connect() error
 	Disconnect() error
-	Emit(string, GatewayCommandPayload) error
-	NrOfShards() uint
+	Emit(string, CmdPayload) (unhandledGuildIDs []Snowflake, err error)
+	LocalShardCount() uint
 	ShardCount() uint
 	ShardIDs() (shardIDs []uint)
 	GetShard(shardID shardID) (shard *EvtClient, err error)
@@ -325,7 +321,7 @@ func (s *shardMngr) Disconnect() error {
 	return nil
 }
 
-func (s *shardMngr) NrOfShards() uint {
+func (s *shardMngr) LocalShardCount() uint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -347,48 +343,55 @@ func (s *shardMngr) ShardIDs() (shardIDs []uint) {
 }
 
 // Emit splits up and dispatches the payload into the correct shards
-// TODO: unclear - refactor
-func (s *shardMngr) Emit(cmd string, payload GatewayCommandPayload) (err error) {
+// returns the guild ids it can not support and a error message
+func (s *shardMngr) Emit(cmd string, payload CmdPayload) (guildIDs []Snowflake, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if d, ok := payload.(ShardDistributer); ok {
-		guildIDs := d.GetGuildIDs()
-		if len(guildIDs) == 0 { // global
+	switch t := payload.(type) {
+	case *RequestGuildMembersPayload:
+		if len(s.shards) == 1 {
 			for _, shard := range s.shards {
-				err = shard.Emit(cmd, payload)
-			}
-		} else {
-			messages := d.Distribute(s.conf.ShardCount, func(guildID Snowflake) (shardID uint) {
-				return GetShardForGuildID(guildID, s.conf.ShardCount)
-			})
-
-			for _, m := range messages {
-				// verify that each guild id maps to the same shard
-				firstShardID := GetShardForGuildID(m.GetGuildIDs()[0], s.conf.ShardCount)
-				for _, id := range m.GetGuildIDs() {
-					shardID := GetShardForGuildID(id, s.conf.ShardCount)
-					if shardID != firstShardID && !id.IsZero() {
-						err = errors.New("incorrect sharding distribution for websocket command")
-					}
-				}
-				if err != nil {
-					break
-				}
-
-				if shard, exists := s.shards[firstShardID]; exists {
-					err = shard.Emit(cmd, payload)
-				} else {
-					err = errors.New("no shard with id " + strconv.FormatUint(uint64(firstShardID), 10))
-				}
-				if err != nil {
-					break
-				}
+				return t.GuildIDs, shard.Emit(cmd, payload)
 			}
 		}
+
+		requests := make(map[uint][]Snowflake)
+		for i := range t.GuildIDs {
+			shardID := GetShardForGuildID(t.GuildIDs[i], s.ShardCount())
+			requests[shardID] = append(requests[shardID], t.GuildIDs[i])
+		}
+
+		for shardID := range requests {
+			var r RequestGuildMembersPayload
+			r = *t
+			r.GuildIDs = requests[shardID]
+			if shard, ok := s.shards[shardID]; ok {
+				err = shard.Emit(cmd, &r)
+				if err != nil {
+					guildIDs = append(guildIDs, r.GuildIDs...)
+				}
+			} else {
+				guildIDs = append(guildIDs, r.GuildIDs...)
+			}
+		}
+	case *UpdateVoiceStatePayload:
+		shardID := GetShardForGuildID(t.GuildID, s.ShardCount())
+		if shard, ok := s.shards[shardID]; ok {
+			err = shard.Emit(cmd, payload)
+		} else {
+			guildIDs = append(guildIDs, t.GuildID)
+			err = errors.New("this guild is not handled by this shard")
+		}
+	case *UpdateStatusPayload:
+		for _, shard := range s.shards {
+			err = shard.Emit(cmd, payload)
+		}
+	default:
+		err = errors.New("missing support for payload type")
 	}
 
-	return err
+	return guildIDs, err
 }
 
 func (s *shardMngr) GetShard(shardID shardID) (shard *EvtClient, err error) {
@@ -445,7 +448,7 @@ func (s *shardMngr) scale(code int, reason string) {
 	})
 }
 
-func (s *shardMngr) redistributeMsgs(scaleShards func()) {
+func (s *shardMngr) redistributeMsgs(scaleShards func()) (unhandledGuildIDs []Snowflake) {
 	var messages []*clientPacket
 	for _, shard := range s.shards {
 		messages = append(messages, shard.messageQueue.Steal()...)
@@ -453,12 +456,48 @@ func (s *shardMngr) redistributeMsgs(scaleShards func()) {
 
 	scaleShards()
 
+	// merge similar requests that only differs by guild IDs
+	opToMerge := CmdNameToOpCode(cmd.RequestGuildMembers, clientTypeEvent)
+	for i := range messages {
+		m1 := messages[i]
+		if m1 == nil || m1.Op != opToMerge {
+			continue
+		}
+
+		for j := i + 1; j < len(messages); j++ {
+			m2 := messages[j]
+			if m2 == nil || m1.Op != m2.Op {
+				continue
+			}
+
+			var rgm1 *RequestGuildMembersPayload
+			var rgm2 *RequestGuildMembersPayload
+			var ok bool
+			if rgm1, ok = m1.Data.(*RequestGuildMembersPayload); !ok {
+				continue
+			}
+			if rgm2, ok = m2.Data.(*RequestGuildMembersPayload); !ok {
+				continue
+			}
+			rgm1.GuildIDs = append(rgm1.GuildIDs, rgm2.GuildIDs...)
+			messages[j] = nil
+		}
+	}
+
 	// reverse such that injected order stays the same
+	// and merge similar requests that only differs by guild IDs
 	for i := len(messages) - 1; i >= 0; i-- {
 		m := messages[i]
-		if payload, ok := m.Data.(GatewayCommandPayload); ok {
-			_ = s.Emit(payload.CmdName(), payload)
+		if m == nil {
+			continue
+		}
+
+		if payload, ok := m.Data.(CmdPayload); ok {
+			gIDs, _ := s.Emit(m.CmdName, payload)
+			unhandledGuildIDs = append(unhandledGuildIDs, gIDs...)
 			messages[i] = nil
 		}
 	}
+
+	return unhandledGuildIDs
 }

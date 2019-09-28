@@ -261,6 +261,12 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	return evt, err
 }
 
+// Emit for voice client needs to bypass the normal Emit restrictions.
+// TODO: put more of the code flow of disgord/voiceclient.go into the websocket pkg.
+func (c *VoiceClient) Emit(name string, data interface{}) error {
+	return c.emit(name, data)
+}
+
 func (c *VoiceClient) sendVoiceHelloPacket() {
 	// if this is a new connection we can drop the resume packet
 	if !c.haveIdentifiedOnce {

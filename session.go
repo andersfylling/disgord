@@ -8,7 +8,7 @@ import (
 
 // Emitter for emitting data from A to B. Used in websocket connection
 type Emitter interface {
-	Emit(name gatewayCmdName, data gatewayCmdPayload) error
+	Emit(name gatewayCmdName, data gatewayCmdPayload) (unhandledGuildIDs []Snowflake, err error)
 }
 
 // Link allows basic Discord connection control. Affects all shards
