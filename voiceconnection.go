@@ -107,8 +107,8 @@ func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, self
 	_, err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
 		ChannelID: channelID,
-		SelfDeaf:  false,
-		SelfMute:  false,
+		SelfDeaf:  selfDeaf,
+		SelfMute:  selfMute,
 	})
 	if err != nil {
 		return
