@@ -1,5 +1,6 @@
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/agnivade/wasmbrowsertest v0.3.0/go.mod h1:zQt6ZTdl338xxRaMW395qccVE2eQm0SjC/SDz0mPWQI=
+github.com/andersfylling/djp v0.0.0-20190905223822-fbe0bb181ad8/go.mod h1:b8AELVulmph/YSLS+rfrA6fCFULCuxFKu+mzG4N0BZM=
 github.com/andersfylling/snowflake/v4 v4.0.1/go.mod h1:m/0yauv7FVegGSd+TJ2fNnLG243FQVPqLwyQo0CwFP8=
 github.com/andybalholm/cascadia v1.0.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
 github.com/antchfx/htmlquery v1.0.0/go.mod h1:MS9yksVSQXls00iXkiMqXr0J+umL/AmxXKuP28SUJM8=
