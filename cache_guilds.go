@@ -46,12 +46,16 @@ func (c *cachedGuild) transform() {
 type guildsCache struct {
 	sync.RWMutex
 
-	items    *crs.LFU
+	conf  *CacheConfig
+	items *crs.LFU
+	pool  Pool
+
+	// to publish changes
+	evt chan<- *websocket.Event
+
+	// for rebuilding
 	users    *usersCache
 	channels *channelsCache
-	config   *CacheConfig
-	pool     Pool
-	evt      chan<- *websocket.Event
 }
 
 func (c *guildsCache) Del(guildID Snowflake) {
@@ -153,8 +157,9 @@ func (c *guildsCache) evtDemultiplexer(evt string, data []byte, flags Flag) (upd
 	return f(data, flags)
 }
 
+// onGuildCreate must run last - manipulates the data !!!!
 func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{}, err error) {
-	guildID, err := jsonGetSnowflake(data, "id")
+	guildID, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, errors.New("missing guild id")
 	}
@@ -173,6 +178,11 @@ func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{
 		}
 	}
 
+	// data must be a copy.. sadly
+	cdata := make([]byte, len(data))
+	copy(cdata, data)
+	data = cdata
+
 	// extract channel ids
 	var channelIDs []Snowflake
 	_, _ = jsonparser.ArrayEach(data, func(d []byte, _ jsonparser.ValueType, _ int, _ error) {
@@ -189,7 +199,14 @@ func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{
 	data = jsonparser.Delete(data, "channels")
 
 	// avoid allocating N redundant user objects to the heap
-	data = djp.MemberReplaceUserWithID(data, "members")
+	_, _, _, err = jsonparser.Get(data, "members")
+	if err == nil {
+		data := make([]byte, len(data))
+		membersData := make([]byte, len(membersRef))
+		copy(membersData, membersRef)
+		membersData = djp.ReplaceUserWithUserID(true, membersData)
+	}
+	data = djp.ReplaceUserWithUserID(true, data, "members")
 
 	if err := Unmarshal(data, cg.guild); err != nil {
 		return nil, err
@@ -201,7 +218,7 @@ func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{
 }
 
 func (c *guildsCache) onGuildUpdate(data []byte, flags Flag) (updated interface{}, err error) {
-	guildID, err := jsonGetSnowflake(data, "id")
+	guildID, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, errors.New("missing guild id")
 	}
@@ -230,7 +247,7 @@ func (c *guildsCache) onGuildUpdate(data []byte, flags Flag) (updated interface{
 
 func (c *guildsCache) onGuildDelete(data []byte, flags Flag) (updated interface{}, err error) {
 	// get user data
-	guildID, err := jsonGetSnowflake(data, "id")
+	guildID, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, errors.New("missing guild id")
 	}

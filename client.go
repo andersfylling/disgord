@@ -211,7 +211,7 @@ type Client struct {
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
 
-	cache *Cache
+	cache *cache
 
 	log Logger
 
@@ -371,7 +371,7 @@ func (c *Client) setupConnectEnv() {
 	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
 
 	// start demultiplexer which also trigger dispatching
-	var cache *Cache
+	var cache *cache
 	if !c.config.DisableCache {
 		cache = c.cache
 	}

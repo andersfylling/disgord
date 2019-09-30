@@ -168,6 +168,22 @@ func (u *User) Reset() {
 	u.PremiumType = 0
 }
 
+func (u *UserPresence) Reset() {
+	if u.User != nil {
+		u.User.Reset()
+	}
+	u.Roles = nil
+	if u.Game != nil {
+		u.Game.Reset()
+	}
+	u.GuildID = 0
+	u.Nick = ""
+	u.Status = ""
+	u.Activities = nil
+	u.ClientStatus = nil
+	u.userID = 0
+}
+
 func (v *VoiceState) Reset() {
 	v.GuildID = 0
 	v.ChannelID = 0

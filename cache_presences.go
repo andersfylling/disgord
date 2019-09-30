@@ -10,10 +10,11 @@ import (
 
 // the guild should nil their presence field, and fetch them from here on build
 type presencesCache struct {
-	items  *crs.LFU
-	users  *usersCache
-	config *CacheConfig
-	pool   Pool // must never be nil !
+	conf  *CacheConfig
+	items *crs.LFU
+	pool  Pool // must never be nil !
+
+	users *usersCache
 }
 
 type cachedGuildPresences struct {

@@ -7,6 +7,13 @@ type Pool interface {
 	Get() (x Reseter)
 }
 
+type bottomlessPool struct {
+	New func() Reseter
+}
+
+func (p *bottomlessPool) Put(x Reseter)    {}
+func (p *bottomlessPool) Get() (x Reseter) { return p.New() }
+
 type pool struct {
 	pool sync.Pool
 
@@ -15,6 +22,8 @@ type pool struct {
 	// It may not be changed concurrently with calls to Get.
 	New func() Reseter
 }
+
+var _ Pool = (*pool)(nil)
 
 // Put resets the object before it is put back into the pool. We reset it here
 // to quickly detect if there are other owners than the pool as it is inserted.

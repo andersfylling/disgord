@@ -1,6 +1,4 @@
 github.com/agnivade/wasmbrowsertest v0.3.0/go.mod h1:zQt6ZTdl338xxRaMW395qccVE2eQm0SjC/SDz0mPWQI=
-github.com/andersfylling/djp v0.0.0-20190905223822-fbe0bb181ad8 h1:Y4W72deWpRIOO8ysy3OH+Xh2mru+wTCattaIx3IkdFs=
-github.com/andersfylling/djp v0.0.0-20190905223822-fbe0bb181ad8/go.mod h1:b8AELVulmph/YSLS+rfrA6fCFULCuxFKu+mzG4N0BZM=
 github.com/andersfylling/snowflake/v4 v4.0.1 h1:zBUa0CBSrYBy0QV9WM0LyPKvO4sQ9K50j+q+eVCB9pM=
 github.com/andersfylling/snowflake/v4 v4.0.1/go.mod h1:m/0yauv7FVegGSd+TJ2fNnLG243FQVPqLwyQo0CwFP8=
 github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23 h1:D21IyuvjDCshj1/qq+pCNd3VZOAEI9jy6Bi131YlXgI=

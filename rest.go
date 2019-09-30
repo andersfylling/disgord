@@ -254,7 +254,7 @@ type RESTBuilder struct {
 
 	itemFactory fRESTItemFactory
 
-	cache           *Cache
+	cache           *cache
 	cacheRegistry   cacheRegistry
 	cacheMiddleware fRESTCacheMiddleware
 	cacheItemID     Snowflake
@@ -274,7 +274,7 @@ func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
 	b.prerequisites = append(b.prerequisites, errorMsg)
 }
 
-func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
+func (b *RESTBuilder) setup(cache *cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
 	b.cache = cache
@@ -295,7 +295,7 @@ func (b *RESTBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMid
 }
 
 func (b *RESTBuilder) prepare() {
-	// update the config
+	// update the conf
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
 	}

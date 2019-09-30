@@ -6,10 +6,11 @@ import (
 )
 
 type channelsCache struct {
-	items  *crs.LFU
-	users  *usersCache
 	config *CacheConfig
+	items  *crs.LFU
 	pool   Pool
+
+	users *usersCache
 }
 
 func (c *channelsCache) Del(channelID Snowflake) {
