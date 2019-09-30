@@ -1058,6 +1058,14 @@ func (m *Member) String() string {
 	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
 }
 
+type nickUpdater interface {
+	UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder
+}
+
+func (m *Member) UpdateNick(client nickUpdater, nickname string, flags ...Flag) error {
+	return client.UpdateGuildMember(m.GuildID, m.userID, flags...).SetNick(nickname).Execute()
+}
+
 func (m *Member) GetPermissions(s Session) (p uint64, err error) {
 	uID := m.userID
 	if uID.IsZero() {

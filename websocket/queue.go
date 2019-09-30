@@ -8,26 +8,28 @@ import (
 )
 
 func newClientPktQueue(limit int) clientPktQueue {
+	if limit == 0 {
+		limit = -1 // no limit
+	}
 	return clientPktQueue{
-		notifier: make(chan bool, limit),
-		limit:    limit,
+		limit: limit,
 	}
 }
 
-// clientPktQueue is a ordered queue. Entries are not removed unless they are successfully written to the websocket.
+// clientPktQueue is an ordered queue. Entries are not removed unless they are successfully written to the websocket.
 type clientPktQueue struct {
 	sync.RWMutex
 	messages []*clientPacket
-	notifier chan bool
 	limit    int
 }
 
-func (c *clientPktQueue) HasContent() chan bool {
+func (c *clientPktQueue) IsEmpty() bool {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.notifier
+	return len(c.messages) == 0
 }
+
 func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 	c.Lock()
 	defer c.Unlock()
@@ -40,6 +42,7 @@ func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 	}
 	return errors.New("no entry with existing operation code")
 }
+
 func (c *clientPktQueue) Add(msg *clientPacket) error {
 	if msg.Op == opcode.EventStatusUpdate {
 		if err := c.AddByOverwrite(msg); err == nil {
@@ -54,14 +57,14 @@ func (c *clientPktQueue) Add(msg *clientPacket) error {
 	}
 
 	c.messages = append(c.messages, msg)
-	c.notifier <- true
 	return nil
 }
+
 func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	c.Lock()
 	defer c.Unlock()
 	if len(c.messages) == 0 {
-		return errors.New("queue is empty")
+		return nil // nothing to try, this avoid a potential race as well
 	}
 
 	next := c.messages[0]
@@ -75,4 +78,17 @@ func (c *clientPktQueue) Try(cb func(msg *clientPacket) error) error {
 	}
 	c.messages = c.messages[:len(c.messages)-1]
 	return nil
+}
+
+func (c *clientPktQueue) Steal() (m []*clientPacket) {
+	c.Lock()
+	defer c.Unlock()
+
+	m = make([]*clientPacket, len(c.messages))
+	copy(m, c.messages)
+	for i := range c.messages {
+		c.messages[i] = nil // redundant?
+	}
+	c.messages = c.messages[:0]
+	return m
 }

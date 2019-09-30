@@ -8,7 +8,7 @@ import (
 
 // Emitter for emitting data from A to B. Used in websocket connection
 type Emitter interface {
-	Emit(command SocketCommand, dataPointer interface{}) error
+	Emit(name gatewayCmdName, data gatewayCmdPayload) (unhandledGuildIDs []Snowflake, err error)
 }
 
 // Link allows basic Discord connection control. Affects all shards
@@ -53,11 +53,6 @@ type SocketHandler interface {
 	On(event string, inputs ...interface{})
 
 	Emitter
-
-	// event register (which events to accept)
-	// events which are not registered are discarded at socket level
-	// to increase performance
-	AcceptEvent(events ...string)
 }
 
 // AuditLogsRESTer REST interface for all audit-logs endpoints
@@ -524,7 +519,7 @@ type Session interface {
 	KickVoiceParticipant(guildID, userID Snowflake) error
 
 	// Status update functions
-	UpdateStatus(s *UpdateStatusCommand) error
+	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
 
 	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error)

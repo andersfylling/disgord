@@ -83,7 +83,7 @@ type hasher interface {
 }
 
 type guilder interface {
-	getGuildID() Snowflake
+	getGuildIDs() []Snowflake
 }
 
 // Loader loads the objects content into memory. From either the cache or the discord servers.

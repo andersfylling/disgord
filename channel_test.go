@@ -33,12 +33,6 @@ func TestChannel_DeepCopy(t *testing.T) {
 	}
 }
 
-func verifyChannelUnmarshal(t *testing.T, data []byte) {
-	v := Channel{}
-	err := validateJSONMarshalling(data, &v)
-	check(err, t)
-}
-
 func checkForChannelUnmarshalErr(t *testing.T, data []byte) {
 	v := Channel{}
 	if err := Unmarshal(data, &v); err != nil {

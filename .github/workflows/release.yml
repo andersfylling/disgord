@@ -1,0 +1,46 @@
+on:
+  milestone:
+    types: [closed]
+name: GoReleaser
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.13']
+    # needs: [ integration-tests ]
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+        id: go
+      - name: Check out code
+        uses: actions/checkout@master
+#      - name: install ruby and gem
+#        run: |
+#          sudo apt-get install ruby
+#          wget https://rubygems.org/rubygems/rubygems-3.0.6.zip
+#          unzip rubygems-3.0.6.zip -d .
+#          sudo ruby rubygems-3.0.6/setup.rb
+      - name: Update disgord version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          GITHUB_EMAIL: ${{ secrets.GITHUB_EMAIL }}
+        run: |
+          chmod +x .github/milestone-release.sh
+          bash .github/milestone-release.sh
+      - name: Check out code, again
+        uses: actions/checkout@master
+      - name: goreleaser
+        uses: docker://goreleaser/goreleaser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          args: release
+        if: success()

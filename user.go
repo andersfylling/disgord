@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/endpoint"
@@ -29,6 +30,13 @@ const (
 	ActivityFlagJoinRequest = 1 << 3
 	ActivityFlagSync        = 1 << 4
 	ActivityFlagPlay        = 1 << 5
+)
+
+// Activity types https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+const (
+	ActivityTypeGame = iota
+	ActivityTypeStreaming
+	ActivityTypeListening
 )
 
 //type UserInterface interface {
@@ -391,8 +399,31 @@ func (u *User) Mention() string {
 	return "<@" + u.ID.String() + ">"
 }
 
+// AvatarURL returns a link to the users avatar with the given size.
+func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
+	if size > 2048 || size < 16 || (size&(size-1)) > 0 {
+		return "", errors.New("image size can be any power of two between 16 and 2048")
+	}
+
+	if u.Avatar == "" {
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
+	} else if strings.HasPrefix(u.Avatar, "a_") && preferGIF {
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
+	} else {
+		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.webp?size=%d", u.ID, u.Avatar, size)
+	}
+
+	return
+}
+
+// Tag formats the user to Anders#1234
+func (u *User) Tag() string {
+	return u.Username + "#" + u.Discriminator.String()
+}
+
+// String formats the user to Anders#1234{1234567890}
 func (u *User) String() string {
-	return u.Username + "#" + u.Discriminator.String() + "{" + u.ID.String() + "}"
+	return u.Tag() + "{" + u.ID.String() + "}"
 }
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string

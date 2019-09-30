@@ -25,10 +25,6 @@ import (
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
 func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error) {
-	if conf.TrackedEvents == nil {
-		conf.TrackedEvents = &UniqueStringSlice{}
-	}
-
 	if conf.SystemShutdown == nil {
 		panic("missing conf.SystemShutdown channel")
 	}
@@ -42,9 +38,9 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 	}
 
 	client = &EvtClient{
-		evtConf:       conf,
-		trackedEvents: conf.TrackedEvents,
-		eventChan:     eChan,
+		evtConf:      conf,
+		ignoreEvents: conf.IgnoreEvents,
+		eventChan:    eChan,
 	}
 	client.client, err = newClient(shardID, &config{
 		Logger:            conf.Logger,
@@ -68,9 +64,10 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 			OS      string `json:"$os"`
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
-		}{runtime.GOOS, client.evtConf.Browser, client.evtConf.Device},
-		LargeThreshold: 0, // this field is just annoying. Users must fetch all members manually.
-		Shard:          &[2]uint{client.ShardID, client.evtConf.ShardCount},
+		}{runtime.GOOS, conf.Browser, conf.Device},
+		LargeThreshold:     conf.GuildLargeThreshold,
+		Shard:              &[2]uint{client.ShardID, conf.ShardCount},
+		GuildSubscriptions: conf.GuildSubscriptions,
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {
@@ -101,15 +98,16 @@ type EvtConfig struct {
 	// for testing only
 	conn Conn
 
-	// TrackedEvents holds a list of predetermined events that should not be ignored.
-	// This is especially useful for creating multiple shards, to reuse the same slice
-	TrackedEvents *UniqueStringSlice
+	// IgnoreEvents holds a list of predetermined events that should be ignored.
+	IgnoreEvents []string
 
 	// EventChan can be used to inject a channel instead of letting the ws client construct one
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
 
 	connectQueue func(shardID uint, cb func() error) error
+
+	discordErrListener discordErrListener
 
 	Presence interface{}
 
@@ -128,6 +126,7 @@ type EvtConfig struct {
 	Device              string
 	GuildLargeThreshold uint
 	ShardCount          uint
+	GuildSubscriptions  bool
 
 	DiscordPktPool *sync.Pool
 
@@ -145,8 +144,8 @@ type EvtClient struct {
 	*client
 	ReadyCounter uint
 
-	eventChan     chan<- *Event
-	trackedEvents *UniqueStringSlice
+	eventChan    chan<- *Event
+	ignoreEvents []string
 
 	sessionID      string
 	sequenceNumber uint
@@ -170,13 +169,13 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	return nil
 }
 
-func (c *EvtClient) Emit(command string, data interface{}) (err error) {
+func (c *EvtClient) Emit(command string, data CmdPayload) (err error) {
 	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
 	}
-	return c.client.emit(false, command, data)
+	return c.client.queueRequest(command, data)
 }
 
 //////////////////////////////////////////////////////
@@ -370,7 +369,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.emit(true, event.Heartbeat, snr)
+	return c.emit(event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -453,20 +452,13 @@ func (c *EvtClient) openConnection(ctx context.Context) error {
 	return nil
 }
 
-// RegisterEvent tells the socket layer which event types are of interest. Any event that are not registered
-// will be discarded once the socket info is extracted from the event.
-func (c *EvtClient) RegisterEvent(event string) {
-	c.trackedEvents.Add(event)
-}
-
-// RemoveEvent removes an event type from the registry. This will cause the event type to be discarded
-// by the socket layer.
-func (c *EvtClient) RemoveEvent(event string) {
-	c.trackedEvents.Remove(event)
-}
-
 func (c *EvtClient) eventOfInterest(name string) bool {
-	return c.trackedEvents.Exists(name)
+	for i := range c.ignoreEvents {
+		if c.ignoreEvents[i] == name {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *EvtClient) sendHelloPacket() {
@@ -476,11 +468,7 @@ func (c *EvtClient) sendHelloPacket() {
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.emit(true, event.Resume, struct {
-		Token      string `json:"token"`
-		SessionID  string `json:"session_id"`
-		SequenceNr uint   `json:"seq"`
-	}{token, session, sequence})
+	err := c.emit(event.Resume, &evtResume{token, session, sequence})
 	if err != nil {
 		c.log.Error(c.getLogPrefix(), err)
 	}
@@ -498,7 +486,7 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.emit(true, event.Identify, id)
+	err = c.emit(event.Identify, id)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")

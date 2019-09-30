@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: bug
 assignees: andersfylling
 
 ---
@@ -17,7 +17,7 @@ A clear and concise description of what you expected to happen.
 If applicable, copy the errors messages into this thread to help explain your problem.
 
 **Desktop (please complete the following information):**
- - Golang version: [e.g. v1.11.1]
+ - Golang version: [e.g. v1.13.1]
  - Using Go modules? [yes/no]
 
 **Additional context**

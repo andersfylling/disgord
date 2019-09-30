@@ -338,6 +338,7 @@ func (h *PresenceUpdate) CustomEvt() bool                     { return h.ShardID
 
 // ---------------------------
 
+<<<<<<< HEAD
 // EvtPresencesReplace Holds and array of presence update objects
 //
 const EvtPresencesReplace = event.PresencesReplace
@@ -348,6 +349,8 @@ func (h *PresencesReplace) CustomEvt() bool                     { return h.Shard
 
 // ---------------------------
 
+=======
+>>>>>>> develop
 // EvtReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.
@@ -429,7 +432,7 @@ func (h *VoiceStateUpdate) CustomEvt() bool                     { return h.Shard
 
 // ---------------------------
 
-// EvtWebhooksUpdate Sent when a guild channel's webhook is created, updated, or deleted.
+// EvtWebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake

@@ -1,4 +1,4 @@
-// Package disgord provides Go bindings for the documented Discord API. And allows for a stateful Client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
+// Package disgord provides Go bindings for the documented Discord API, and allows for a stateful Client using the Session interface, with the option of a configurable caching system or bypass the built-in caching logic all together.
 //
 // Getting started
 //
@@ -6,9 +6,9 @@
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
 //  discord := disgord.New(&disgord.Config{
-//    Token: "my-secret-bot-token",
+//    BotToken: "my-secret-bot-token",
 //  })
-//  defer discord.StayConnectedUntilInterrupt()
+//  defer discord.StayConnectedUntilInterrupted()
 //
 //  // listen for incoming messages and reply with a "hello"
 //  discord.On(event.MessageCreate, func(s disgord.Session, evt *disgord.MessageCreate) {
@@ -16,8 +16,8 @@
 //      msg.Reply(s, "hello")
 //  })
 //
-// // If you want some logic to fire when the bot is ready
-// // (all shards has received their ready event), please use the Ready method.
+//  // If you want some logic to fire when the bot is ready
+//  // (all shards has received their ready event), please use the Ready method.
 //  discord.Ready(func() {
 //  	fmt.Println("READY NOW!")
 //  })
@@ -26,17 +26,18 @@
 //
 // Listen for events using channels
 //
-// Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a handler.
-// Simply define your channel, add buffering if you need it, and register it as a handler in the .On method.
+// Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a function.
+// Simply define your channel, add buffering if you need it, and register it as a handler in the `.On` method.
 //
 //  msgCreateChan := make(chan *disgord.MessageCreate, 10)
 //  session.On(disgord.EvtMessageCreate, msgCreateChan)
 //
-// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you can
-// inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will not
+// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you
+// inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will never
 // close it for you.
 //
 //  ctrl := &disgord.Ctrl{Channel: msgCreateChan}
+//  session.On(disgord.EvtMessageCreate, msgCreateChan, ctrl)
 //  go func() {
 //    // close the channel after 20 seconds and safely remove it from disgord
 //    // without disgord trying to send data through it after it has closed
@@ -55,15 +56,58 @@
 //          if !alive {
 //              return
 //          }
-//          message = evt.Message
+//          msg = evt.Message
 //          status = "created"
 //      }
 //
-//      fmt.Printf("A message from %s was %s\n", message.Author.Mention(), status)
-//      // output example: "A message from @Anders was created"
+//      fmt.Printf("A message from %s was %s\n", msg.Author.Mention(), status)
+//      // output: "A message from @Anders was created"
 //  }
 //
-// Optimizing your cache logic
+//
+// WebSockets and Sharding
+//
+// DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord (in these cases you must handle scaling yourself as DisGord can not).
+//
+// Sharding is done behind the scenes, so you do not need to worry about any settings. DisGord will simply ask Discord for the recommended amount of shards for your bot on startup. However, to set specific amount of shards you can use the `disgord.ShardConfig` to specify a range of valid shard IDs (starts from 0).
+//
+// starting a bot with exactly 5 shards
+//  client := disgord.New(&disgord.Config{
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate the config later on
+//      ShardIDs: []uint{0,1,2,3,4},
+//    },
+//  })
+//
+// Running multiple instances each with 1 shard (note each instance must use unique shard ids)
+//  client := disgord.New(&disgord.Config{
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate the config later on
+//      ShardIDs: []uint{0}, // this number must change for each instance. Try to automate this.
+//      ShardCount: 5, // total of 5 shards, but this disgord instance only has one. AutoScaling is disabled - use OnScalingRequired.
+//    },
+//  })
+//
+// Handle scaling options yourself
+//  client := disgord.New(&disgord.Config{
+//    ShardConfig: disgord.ShardConfig{
+//      // this is a copy so u can't manipulate it later on
+//      DisableAutoScaling: true,
+//      OnScalingRequired: func(shardIDs []uint) (TotalNrOfShards uint, AdditionalShardIDs []uint) {
+//        // instead of asking discord for exact number of shards recommended
+//        // this is increased by 50% every time discord complains you don't have enough shards
+//        // to reduce the number of times you have to scale
+//        TotalNrOfShards := uint(len(shardIDs) * 1.5)
+//        for i := len(shardIDs) - 1; i < TotalNrOfShards; i++ {
+//          AdditionalShardIDs = append(AdditionalShardIDs, i)
+//        }
+//        return
+//      }, // end OnScalingRequired
+//    }, // end ShardConfig
+//  })
+//
+//
+// Caching
 //
 // > Note: if you create a CacheConfig you don't have to set every field.
 //
@@ -71,7 +115,7 @@
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
-// A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
+// A part of DisGord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
@@ -115,20 +159,22 @@
 //
 // In addition to disgord.IgnoreCache, as shown above, you can pass in other flags such as: disgord.SortByID, disgord.OrderAscending, etc. You can find these flags in the flag.go file.
 //
-// Manually updating the cache
-//
-// Currently not supported. Should it ever be?
-//
 //
 // Build tags
 //
-// `disgord_diagnosews` will store all the incoming and outgoing json data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
+// `disgord_diagnosews` will store all the incoming and outgoing JSON data as files in the directory "diagnose-report/packets". The file format is as follows: unix_clientType_direction_shardID_operationCode_sequenceNumber[_eventName].json
 //
-// `json-std` switches out jsoniter with the json package from the std libs.
+// `json_std` switches out jsoniter with the json package from the std libs.
 //
 // `disgord_removeDiscordMutex` replaces mutexes in discord structures with a empty mutex; removes locking behaviour and any mutex code when compiled.
 //
 // `disgord_parallelism` activates built-in locking in discord structure methods. Eg. Guild.AddChannel(*Channel) does not do locking by default. But if you find yourself using these discord data structures in parallel environment, you can activate the internal locking to reduce race conditions. Note that activating `disgord_parallelism` and `disgord_removeDiscordMutex` at the same time, will cause you to have no locking as `disgord_removeDiscordMutex` affects the same mutexes.
+//
+// `disgord_legacy` adds wrapper methods with the original discord naming. eg. For REST requests you will notice DisGord uses a consistency between update/create/get/delete/set while discord uses edit/update/modify/close/delete/remove/etc. So if you struggle find a REST method, you can enable this build tag to gain access to mentioned wrappers.
+//
+// `disgordperf` does some low level tweaking that can help boost json unmarshalling and drops json validation from Discord responses/events. Other optimizations might take place as well.
+//
+// `disgord_websocket_gorilla` replaces nhooyr/websocket dependency with gorilla/websocket for gateway communication.
 //
 //
 // Deleting Discord data

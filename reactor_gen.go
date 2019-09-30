@@ -64,8 +64,6 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &MessageUpdate{}
 	case EvtPresenceUpdate:
 		resource = &PresenceUpdate{}
-	case EvtPresencesReplace:
-		resource = &PresencesReplace{}
 	case EvtReady:
 		resource = &Ready{}
 	case EvtResumed:
@@ -197,10 +195,6 @@ func isHandler(h Handler) (ok bool) {
 		ok = true
 	case chan *PresenceUpdate:
 		ok = true
-	case PresencesReplaceHandler:
-		ok = true
-	case chan *PresencesReplace:
-		ok = true
 	case ReadyHandler:
 		ok = true
 	case chan *Ready:
@@ -288,8 +282,6 @@ func closeChannel(channel interface{}) {
 	case chan *MessageUpdate:
 		close(t)
 	case chan *PresenceUpdate:
-		close(t)
-	case chan *PresencesReplace:
 		close(t)
 	case chan *Ready:
 		close(t)
@@ -491,12 +483,6 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*PresenceUpdate)
 	case chan<- *PresenceUpdate:
 		t <- evt.(*PresenceUpdate)
-	case PresencesReplaceHandler:
-		t(d.session, evt.(*PresencesReplace))
-	case chan *PresencesReplace:
-		t <- evt.(*PresencesReplace)
-	case chan<- *PresencesReplace:
-		t <- evt.(*PresencesReplace)
 	case ReadyHandler:
 		t(d.session, evt.(*Ready))
 	case chan *Ready:
@@ -625,9 +611,6 @@ type MessageUpdateHandler = func(s Session, h *MessageUpdate)
 
 // PresenceUpdateHandler is triggered in PresenceUpdate events
 type PresenceUpdateHandler = func(s Session, h *PresenceUpdate)
-
-// PresencesReplaceHandler is triggered in PresencesReplace events
-type PresencesReplaceHandler = func(s Session, h *PresencesReplace)
 
 // ReadyHandler is triggered in Ready events
 type ReadyHandler = func(s Session, h *Ready)

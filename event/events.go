@@ -1,9 +1,6 @@
 // Package event is a universal discord package that holds all the event types one can receive (currently only bot events).
 package event
 
-// PresencesReplace Holds and array of presence update objects
-const PresencesReplace = "PRESENCES_REPLACE"
-
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 //// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 //// required for a client to begin interacting with the rest of the platform.
@@ -188,7 +185,7 @@ const VoiceStateUpdate = "VOICE_STATE_UPDATE"
 //  - Endpoint  string
 const VoiceServerUpdate = "VOICE_SERVER_UPDATE"
 
-// WebhooksUpdate Sent when a guild channel's webhook is created, updated, or deleted.
+// WebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake

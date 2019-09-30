@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andersfylling/disgord/websocket/cmd"
+
 	"github.com/andersfylling/disgord/constant"
 	"github.com/andersfylling/disgord/logger"
 	"github.com/andersfylling/disgord/websocket/opcode"
@@ -74,47 +76,8 @@ func (g *testWS) Disconnected() bool {
 
 var _ Conn = (*testWS)(nil)
 
-func TestManager_RegisterEvent(t *testing.T) {
-	m := EvtClient{
-		trackedEvents: &UniqueStringSlice{},
-	}
-	t1 := "test"
-	m.RegisterEvent(t1)
-
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RegisterEvent(t1)
-	if m.trackedEvents.Len() == 2 {
-		t.Error("expected length to be 1, got 2")
-	}
-}
-
-func TestManager_RemoveEvent(t *testing.T) {
-	m := EvtClient{
-		trackedEvents: &UniqueStringSlice{},
-	}
-	t1 := "test"
-	m.RegisterEvent(t1)
-
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RemoveEvent("sdfsdf")
-	if m.trackedEvents.Len() == 0 {
-		t.Error("expected length to be 1, got 0")
-	}
-
-	m.RemoveEvent(t1)
-	if m.trackedEvents.Len() == 1 {
-		t.Error("expected length to be 0, got 1")
-	}
-}
-
 // TODO: rewrite. EventClient now waits for a Ready event in the Connect method
-func TestEvtClient_reconnect(t *testing.T) {
+func TestEvtClient_communication(t *testing.T) {
 	deadline := 1 * time.Second
 	conn := &testWS{
 		closing:      make(chan interface{}),
@@ -166,12 +129,16 @@ func TestEvtClient_reconnect(t *testing.T) {
 	m.client.timeoutMultiplier = 0
 	seq := uint(1)
 
+	// ###############################
+	// RECONNECT
 	resume := 0
 	identify := 1
 	heartbeat := 2
 	connecting := 3
 	disconnecting := 4
+	status := 4
 	wg := []sync.WaitGroup{
+		sync.WaitGroup{},
 		sync.WaitGroup{},
 		sync.WaitGroup{},
 		sync.WaitGroup{},
@@ -229,6 +196,8 @@ func TestEvtClient_reconnect(t *testing.T) {
 				//fmt.Printf("discord: ->%+v\n", d)
 				*seq++
 				wg[resume].Done()
+			case opcode.EventStatusUpdate:
+				wg[status].Done()
 			default:
 				// send the event back around
 				fmt.Println("wtf")
@@ -295,5 +264,12 @@ func TestEvtClient_reconnect(t *testing.T) {
 
 	// wait for identify
 	wg[identify].Wait()
+
+	// #########################################
+	// emitting user messages
+	wg[status].Add(1)
+	_ = m.emit(cmd.UpdateStatus, 1)
+	wg[status].Wait()
+
 	<-time.After(10 * time.Millisecond)
 }

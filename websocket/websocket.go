@@ -19,6 +19,7 @@ type Conn interface {
 }
 
 type CloseErr struct {
+	code int
 	info string
 }
 
@@ -26,7 +27,7 @@ func (e *CloseErr) Error() string {
 	return e.info
 }
 
-// WebsocketErr is used internally when the websocket package returns an error. It does not represent a Discord error(!)
+// WebsocketErr is used internally when the websocket package returns an error. It does not represent a Discord error!
 type WebsocketErr struct {
 	ID      uint
 	message string

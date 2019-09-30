@@ -78,8 +78,9 @@ func (g *gorilla) Read(ctx context.Context) (packet []byte, err error) {
 	var messageType int
 	messageType, packet, err = g.c.ReadMessage()
 	if err != nil {
-		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		if e, ok := err.(*websocket.CloseError); ok {
 			err = &CloseErr{
+				code: e.Code,
 				info: err.Error(),
 			}
 		}

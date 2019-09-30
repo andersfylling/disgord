@@ -13,7 +13,7 @@ func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
 
 	// whenever the message written is "ping", the bot replies "pong"
 	if msg.Content == "ping" {
-		msg.Reply(s, "pong")
+		_, _ = msg.Reply(s, "pong")
 	}
 }
 

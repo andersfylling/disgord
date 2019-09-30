@@ -5,7 +5,7 @@ This file tries to show the difference between DisGord and other Discord librari
 
 ## Features
 
-|           | Caching | REST API | Gateway API | User/self bot | Channels | event middleware |
+|           | Caching | REST API | Gateway API | User/self bot | Channels | Event Middleware |
 |----------:|:-------:|:--------:|:-----------:|:-------------:|----------|------------------|
 |   DisGord |    X    |     X    |      X      |               |     X    |         X        |
 | DiscordGo |    X    |     X    |      X      |       X       |          |                  |

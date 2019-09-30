@@ -71,13 +71,14 @@ func NewClient(conf *Config) (c *Client, err error) {
 		conf.Logger = logger.Empty{}
 	}
 
+	// ignore PRESENCES_REPLACE: https://github.com/discordapp/discord-api-docs/issues/683
+	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
+
 	// request Client for REST requests
 	reqClient, err := NewRESTClient(conf)
 	if err != nil {
 		return nil, err
 	}
-
-	eventTracker := &websocket.UniqueStringSlice{}
 
 	// caching
 	var cacher *Cache
@@ -89,32 +90,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		cacher, err = newCache(conf.CacheConfig)
 		if err != nil {
 			return nil, err
-		}
-
-		// register for events for activate caches
-		if !conf.CacheConfig.DisableUserCaching {
-			eventTracker.Add(event.Ready)
-			eventTracker.Add(event.UserUpdate)
-		}
-		if !conf.CacheConfig.DisableChannelCaching {
-			eventTracker.Add(event.ChannelCreate)
-			eventTracker.Add(event.ChannelUpdate)
-			eventTracker.Add(event.ChannelPinsUpdate)
-			eventTracker.Add(event.ChannelDelete)
-		}
-		if !conf.CacheConfig.DisableGuildCaching {
-			eventTracker.Add(event.GuildCreate)
-			eventTracker.Add(event.GuildDelete)
-			eventTracker.Add(event.GuildUpdate)
-			eventTracker.Add(event.GuildEmojisUpdate)
-			eventTracker.Add(event.GuildMemberAdd)
-			eventTracker.Add(event.GuildMemberRemove)
-			eventTracker.Add(event.GuildMembersChunk)
-			eventTracker.Add(event.GuildMemberUpdate)
-			eventTracker.Add(event.GuildRoleCreate)
-			eventTracker.Add(event.GuildRoleDelete)
-			eventTracker.Add(event.GuildRoleUpdate)
-			eventTracker.Add(event.GuildIntegrationsUpdate)
 		}
 	} else {
 		// create an empty cache to avoid nil panics
@@ -129,10 +104,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		}
 	}
 	cacher.conf.clientConf = conf
-
-	// Required for voice operation
-	eventTracker.Add(event.VoiceStateUpdate)
-	eventTracker.Add(event.VoiceServerUpdate)
 
 	// websocket sharding
 	evtChan := make(chan *websocket.Event, 2) // TODO: higher value when more shards?
@@ -153,7 +124,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 		log:          conf.Logger,
 		pool:         newPools(),
 		eventChan:    evtChan,
-		eventTracker: eventTracker,
 	}
 	c.dispatcher.addSessionInstance(c)
 	c.voiceRepository = newVoiceRepository(c)
@@ -174,6 +144,7 @@ type Config struct {
 	DisableCache bool
 	CacheConfig  *CacheConfig
 	ShardConfig  ShardConfig
+<<<<<<< HEAD
 	Presence     *UpdateStatusCommand
 
 	// DisGord triggers custom events to handle caching in a simpler manner.
@@ -185,11 +156,17 @@ type Config struct {
 	AcceptCustomEvents bool
 
 	//ImmutableCache bool
+=======
+	Presence     *UpdateStatusPayload
+>>>>>>> develop
 
-	//LoadAllMembers   bool
-	//LoadAllChannels  bool
-	//LoadAllRoles     bool
-	//LoadAllPresences bool
+	// IgnoreEvents will skip events that matches the given event names.
+	// WARNING! This can break your caching, so be careful about what you want to ignore.
+	//
+	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
+	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
+	// them at all due to how the identify command was defined. eg. guildS_subscriptions
+	IgnoreEvents []string
 
 	// for cancellation
 	shutdownChan chan interface{}
@@ -234,7 +211,6 @@ type Client struct {
 
 	shardManager websocket.ShardManager
 	eventChan    chan *websocket.Event
-	eventTracker *websocket.UniqueStringSlice
 
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
@@ -427,7 +403,7 @@ func (c *Client) Connect() (err error) {
 		Logger:             c.config.Logger,
 		ShutdownChan:       c.config.shutdownChan,
 		DefaultBotPresence: c.config.Presence,
-		TrackedEvents:      c.eventTracker,
+		IgnoreEvents:       c.config.IgnoreEvents,
 		EventChan:          c.eventChan,
 		DisgordInfo:        LibraryInfo(),
 		ProjectName:        c.config.ProjectName,
@@ -556,16 +532,45 @@ func (c *Client) Ready(cb func()) {
 		cb: cb,
 	}
 
-	c.On(EvtReady, func(s Session, evt *Ready) {
+	c.On(EvtReady, func(_ Session, evt *Ready) {
 		ctrl.Lock()
 		defer ctrl.Unlock()
 
-		l := c.shardManager.NrOfShards()
+		l := c.shardManager.ShardCount()
 		if l != uint(len(ctrl.shardReady)) {
 			ctrl.shardReady = make([]bool, l)
+			ctrl.localShardIDs = c.shardManager.ShardIDs()
 		}
 
 		ctrl.shardReady[evt.ShardID] = true
+	}, ctrl)
+}
+
+// GuildsReady is triggered once all unavailable guilds given in the READY event has loaded from their respective GUILD_CREATE events.
+func (c *Client) GuildsReady(cb func()) {
+	ctrl := &guildsRdyCtrl{
+		status: make(map[Snowflake]bool),
+	}
+	ctrl.cb = cb
+	ctrl.status[0] = false
+
+	c.On(EvtReady, func(_ Session, evt *Ready) {
+		ctrl.Lock()
+		defer ctrl.Unlock()
+
+		for _, g := range evt.Guilds {
+			if _, ok := ctrl.status[g.ID]; !ok {
+				ctrl.status[g.ID] = false
+			}
+		}
+
+		delete(ctrl.status, 0)
+	}, ctrl)
+
+	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
+		ctrl.Lock()
+		defer ctrl.Unlock()
+		ctrl.status[evt.Guild.ID] = true
 	}, ctrl)
 }
 
@@ -602,7 +607,6 @@ func (c *Client) On(event string, inputs ...interface{}) {
 	if err := ValidateHandlerInputs(inputs...); err != nil {
 		panic(err)
 	}
-	c.eventTracker.Add(event)
 
 	if err := c.dispatcher.register(event, inputs...); err != nil {
 		panic(err)
@@ -610,34 +614,16 @@ func (c *Client) On(event string, inputs ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(command SocketCommand, data interface{}) error {
-	switch command {
-	case CommandUpdateStatus, CommandUpdateVoiceState, CommandRequestGuildMembers:
-	default:
-		return errors.New("command is not supported")
+func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+	if c.shardManager == nil {
+		return nil, errors.New("you must connect before you can Emit")
 	}
 
-	if g, ok := data.(guilder); ok {
-		// if this is guild specific, then only send data through the related shard
-		guildID := g.getGuildID()
-		shardID := GetShardForGuildID(guildID, c.shardManager.NrOfShards())
-		shard, err := c.shardManager.GetShard(shardID)
-		if err != nil {
-			return err
-		}
-		return shard.Emit(command, data)
+	p, err := prepareGatewayCommand(payload)
+	if err != nil {
+		return nil, err
 	}
-
-	// otherwise it is sent through every shard
-	return c.shardManager.Emit(command, data)
-}
-
-// AcceptEvent only events registered using this method is accepted from the Discord socket API. The rest is discarded
-// to reduce unnecessary marshalling and controls.
-func (c *Client) AcceptEvent(events ...string) {
-	for _, evt := range events {
-		c.eventTracker.Add(evt)
-	}
+	return c.shardManager.Emit(string(name), p)
 }
 
 //////////////////////////////////////////////////////
@@ -733,16 +719,17 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 
 // UpdateStatus updates the Client's game status
 // note: for simple games, check out UpdateStatusString
-func (c *Client) UpdateStatus(s *UpdateStatusCommand) error {
+func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return c.shardManager.Emit(CommandUpdateStatus, s)
+	_, err := c.Emit(UpdateStatus, s)
+	return err
 }
 
 // UpdateStatusString sets the Client's game activity to the provided string, status to online
 // and type to Playing
 func (c *Client) UpdateStatusString(s string) error {
-	updateData := &UpdateStatusCommand{
+	updateData := &UpdateStatusPayload{
 		Since: nil,
 		Game: &Activity{
 			Name: s,
