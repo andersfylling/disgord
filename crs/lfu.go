@@ -93,10 +93,10 @@ func (list *LFU) Set(id Snowflake, newItem *LFUItem) {
 	if len(list.nilTable) > 0 {
 		key = list.nilTable[len(list.nilTable)-1]
 		list.nilTable = list.nilTable[:len(list.nilTable)-1]
-		list.items[key] = newItem
+		list.items[key] = *newItem
 	} else {
 		key = len(list.items)
-		list.items = append(list.items, newItem)
+		list.items = append(list.items, *newItem)
 	}
 	list.table[id] = key
 	list.size++

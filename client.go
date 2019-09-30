@@ -144,8 +144,6 @@ type Config struct {
 	DisableCache bool
 	CacheConfig  *CacheConfig
 	ShardConfig  ShardConfig
-<<<<<<< HEAD
-	Presence     *UpdateStatusCommand
 
 	// DisGord triggers custom events to handle caching in a simpler manner.
 	// eg. on guild delete, all the channels should be deleted too. to make this simple
@@ -156,9 +154,7 @@ type Config struct {
 	AcceptCustomEvents bool
 
 	//ImmutableCache bool
-=======
-	Presence     *UpdateStatusPayload
->>>>>>> develop
+	Presence *UpdateStatusPayload
 
 	// IgnoreEvents will skip events that matches the given event names.
 	// WARNING! This can break your caching, so be careful about what you want to ignore.

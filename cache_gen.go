@@ -86,9 +86,6 @@ func (c *cache) Demultiplexer(evt *websocket.Event) (updated interface{}, err er
 	case EvtPresenceUpdate:
 		updated, err = c.onPresenceUpdate(evt.Data, Flag(0))
 
-	case EvtPresencesReplace:
-		updated, err = c.onPresencesReplace(evt.Data, Flag(0))
-
 	case EvtReady:
 		updated, err = c.onReady(evt.Data, Flag(0))
 
