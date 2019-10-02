@@ -1713,6 +1713,59 @@ func (c *Client) GetMembers(guildID Snowflake, params *GetMembersParams, flags .
 	return members, err
 }
 
+// LoadAllMembers uses the Gateway to synchronously load all members of a Guild.
+// Will emit an Request Guild Members event to Gateway. Gateway will respond with Guild Member Chunk events
+// whose can hold up to 1000 members. The Gateway will keep sending this event until all members have been received.
+// Be cautious, this can take long on big guilds and it's recommended using context.WithTimeout on the context.
+func (c *Client) LoadMembers(ctx context.Context, guildID Snowflake, flags ...Flag) (members []*Member, err error) {
+	g, err := c.cache.GetGuild(guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	flag := mergeFlags(flags)
+	if !flag.Ignorecache() && uint(len(g.Members)) == g.MemberCount {
+		return g.Members, nil
+	}
+
+	err = c.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: guildID})
+	if err != nil {
+		return nil, err
+	}
+
+	chunkEvtChan := make(chan *GuildMembersChunk, 1+g.MemberCount/1000)
+	ctrl := &Ctrl{Channel: chunkEvtChan}
+	evtCtx, isDone := context.WithCancel(context.Background())
+	members = make([]*Member, 0, g.MemberCount)
+
+	c.On(EvtGuildMembersChunk, chunkEvtChan, ctrl)
+	for {
+		select {
+		case e := <-chunkEvtChan:
+			if e.GuildID != g.ID {
+				continue
+			}
+
+			members = append(members, e.Members...)
+
+			// GW will return chunks of 1k members, when less, last members are received
+			if len(e.Members) < 1000 {
+				isDone()
+			}
+			continue
+
+		case <-ctx.Done():
+			err = errors.New("loading was canceled, " + ctx.Err().Error())
+		case <-evtCtx.Done():
+		}
+		break
+	}
+
+	ctrl.CloseChannel()
+
+	return
+}
+
 // AddGuildMemberParams ...
 // https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
