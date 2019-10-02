@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/andersfylling/disgord/endpoint"
 	"github.com/andersfylling/disgord/httd"
@@ -449,62 +450,6 @@ func (g *Guild) AddMember(member *Member) error {
 	}
 
 	return nil
-}
-
-// LoadAllMembers uses the Gateway to synchronously load all members of a Guild.
-// Will emit an Request Guild Members event to Gateway. Gateway will respond with Guild Member Chunk events
-// whose can hold up to 1000 members. The Gateway will keep sending this event until all members have been received.
-// Be cautious, this can take long on big guilds and it's recommended using context.WithTimeout on the context.
-func (g *Guild) LoadAllMembers(ctx context.Context, s Session) (err error) {
-	// Check if guild is already loaded
-	// TODO: Check in a margin of g.MemberCount + %2 + 5
-	//mLen := uint(len(g.Members))
-	//if mLen >= g.MemberCount - 5 && mLen <= g.MemberCount + 5 {
-	//	return nil
-	//}
-
-	err = s.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: g.ID})
-	if err != nil {
-		return err
-	}
-
-	chunkEvtChan := make(chan *GuildMembersChunk, 1+g.MemberCount/1000)
-	ctrl := &Ctrl{Channel: chunkEvtChan}
-	evtCtx, isDone := context.WithCancel(context.Background())
-	members := make([]*Member, 0, g.MemberCount)
-
-	s.On(EvtGuildMembersChunk, chunkEvtChan, ctrl)
-	for {
-		select {
-		case e := <-chunkEvtChan:
-			if e.GuildID != g.ID {
-				continue
-			}
-
-			members = append(members, e.Members...)
-
-			// GW will return chunks of 1k members, when less, last members are received
-			if len(e.Members) < 1000 {
-				isDone()
-			}
-			continue
-
-		case <-ctx.Done():
-			err = errors.New("loading was canceled, " + ctx.Err().Error())
-		case <-evtCtx.Done():
-		}
-		break
-	}
-
-	ctrl.CloseChannel()
-
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-	g.Members = members
-
-	return
 }
 
 // GetMembersCountEstimate estimates the number of members in a guild without fetching everyone.
@@ -1713,47 +1658,62 @@ func (c *Client) GetMembers(guildID Snowflake, params *GetMembersParams, flags .
 	return members, err
 }
 
-// LoadAllMembers uses the Gateway to synchronously load all members of a Guild.
+// LoadMembers uses the Gateway to synchronously load members of guilds.
 // Will emit an Request Guild Members event to Gateway. Gateway will respond with Guild Member Chunk events
 // whose can hold up to 1000 members. The Gateway will keep sending this event until all members have been received.
 // Be cautious, this can take long on big guilds and it's recommended using context.WithTimeout on the context.
-func (c *Client) LoadMembers(ctx context.Context, guildID Snowflake, flags ...Flag) (members []*Member, err error) {
-	g, err := c.cache.GetGuild(guildID)
+func (c *Client) LoadMembers(ctx context.Context, payload *RequestGuildMembersPayload) (members []*Member, err error) {
+
+	// Calculate an estimated member count
+	var estimatedMemberCount uint
+	for _, guildID := range payload.GuildIDs {
+		g, err := c.GetGuild(guildID)
+		if err != nil {
+			return nil, err
+		}
+		estimatedMemberCount += g.MemberCount
+	}
+
+	_, err = c.Emit(RequestGuildMembers, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	flag := mergeFlags(flags)
-	if !flag.Ignorecache() && uint(len(g.Members)) == g.MemberCount {
-		return g.Members, nil
-	}
-
-	err = c.Emit(CommandRequestGuildMembers, RequestGuildMembersCommand{GuildID: guildID})
-	if err != nil {
-		return nil, err
-	}
-
-	chunkEvtChan := make(chan *GuildMembersChunk, 1+g.MemberCount/1000)
+	chunkEvtChan := make(chan *GuildMembersChunk, 1+estimatedMemberCount/1000)
 	ctrl := &Ctrl{Channel: chunkEvtChan}
 	evtCtx, isDone := context.WithCancel(context.Background())
-	members = make([]*Member, 0, g.MemberCount)
+	members = make([]*Member, 0, estimatedMemberCount)
+
+	// Small helper utility to check if event is related to this payload
+	forThisPayload := func(e *GuildMembersChunk) bool {
+		for _, guildID := range payload.GuildIDs {
+			if guildID == e.GuildID {
+				return true
+			}
+		}
+
+		return false
+	}
 
 	c.On(EvtGuildMembersChunk, chunkEvtChan, ctrl)
 	for {
 		select {
 		case e := <-chunkEvtChan:
-			if e.GuildID != g.ID {
+			if !forThisPayload(e) {
 				continue
 			}
 
 			members = append(members, e.Members...)
 
 			// GW will return chunks of 1k members, when less, last members are received
+			// TODO: Also check if the len is close to the estimatedMemberCount
 			if len(e.Members) < 1000 {
 				isDone()
 			}
 			continue
 
+		case <-time.After(time.Second * 20):
+			err = errors.New("loading timed out")
 		case <-ctx.Done():
 			err = errors.New("loading was canceled, " + ctx.Err().Error())
 		case <-evtCtx.Done():
