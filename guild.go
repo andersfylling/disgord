@@ -1664,6 +1664,8 @@ func (c *Client) LoadMembers(ctx context.Context, payload *RequestGuildMembersPa
 	evtCtx, isDone := context.WithCancel(context.Background())
 	members = make([]*Member, 0, estimatedMemberCount)
 
+	defer isDone()
+
 	// Small helper utility to check if event is related to this payload
 	forThisPayload := func(e *GuildMembersChunk) bool {
 		for _, guildID := range payload.GuildIDs {
