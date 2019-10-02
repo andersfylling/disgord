@@ -406,15 +406,9 @@ func (g *Guild) hasMember(id Snowflake) bool {
 	return false
 }
 
-func (g *Guild) addMembers(members ...*Member) error {
-	if members == nil {
-		return errors.New("members was nil")
-	}
-
+func (g *Guild) addMembers(members ...*Member) {
 	// TODO: implement sorting for faster searching later
 	g.Members = append(g.Members, members...)
-
-	return nil
 }
 
 // AddMembers adds multiple members to the Guild object. Note that this method does not interact with Discord.
@@ -446,7 +440,7 @@ func (g *Guild) AddMember(member *Member) error {
 
 	// TODO: Check for userID.IsZero()
 	if !g.hasMember(member.userID) {
-		return g.addMembers(member)
+		g.addMembers(member)
 	}
 
 	return nil
