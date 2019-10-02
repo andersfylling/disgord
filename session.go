@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/logger"
@@ -249,6 +250,12 @@ type RESTGuild interface {
 
 	// GetMembers uses the GetGuildMembers endpoint iteratively until your query params are met.
 	GetMembers(guildID Snowflake, params *GetMembersParams, flags ...Flag) ([]*Member, error)
+
+	// LoadAllMembers uses the Gateway to synchronously load all members of a Guild.
+	// Will emit an Request Guild Members event to Gateway. Gateway will respond with Guild Member Chunk events
+	// whose can hold up to 1000 members. The Gateway will keep sending this event until all members have been received.
+	// Be cautious, this can take long on big guilds and it's recommended using context.WithTimeout on the context.
+	LoadMembers(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Member, error)
 
 	// AddGuildMember Adds a user to the guild, provided you have a valid oauth2 access token for the user with
 	// the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
