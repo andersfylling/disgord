@@ -298,6 +298,7 @@ func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, e
 	updated.(*Channel).Recipients = recipients
 	return updated, nil
 }
+
 func (c *cache) onChannelDelete(data []byte, flags Flag) (updated interface{}, err error) {
 	id, err := djp.GetSnowflake(data, "id")
 	if err != nil {
@@ -325,6 +326,7 @@ func (c *cache) onChannelDelete(data []byte, flags Flag) (updated interface{}, e
 
 	return updated, nil
 }
+
 func (c *cache) onChannelPinsUpdate(data []byte, flags Flag) (updated interface{}, err error) {
 	if c.conf.DisableChannelCaching {
 		var cpu *ChannelPinsUpdate
@@ -332,9 +334,11 @@ func (c *cache) onChannelPinsUpdate(data []byte, flags Flag) (updated interface{
 		return cpu, err
 	}
 }
+
 func (c *cache) onGuildCreate(data []byte, flags Flag) (updated interface{}, err error) {
 
 }
+
 func (c *cache) onGuildUpdate(data []byte, flags Flag) (updated interface{}, err error)             {}
 func (c *cache) onGuildDelete(data []byte, flags Flag) (updated interface{}, err error)             {}
 func (c *cache) onGuildBanAdd(data []byte, flags Flag) (updated interface{}, err error)             {}
@@ -348,35 +352,44 @@ func (c *cache) onGuildMembersChunk(data []byte, flags Flag) (updated interface{
 func (c *cache) onGuildRoleCreate(data []byte, flags Flag) (updated interface{}, err error)         {}
 func (c *cache) onGuildRoleUpdate(data []byte, flags Flag) (updated interface{}, err error)         {}
 func (c *cache) onGuildRoleDelete(data []byte, flags Flag) (updated interface{}, err error)         {}
+
 func (c *cache) onMessageCreate(data []byte, flags Flag) (updated interface{}, err error) {
 	var msg *MessageCreate
 	err = Unmarshal(data, &msg)
 	return msg, err
 }
+
 func (c *cache) onMessageUpdate(data []byte, flags Flag) (updated interface{}, err error) {
 	var msg *MessageUpdate
 	err = Unmarshal(data, &msg)
 	return msg, err
 }
+
 func (c *cache) onMessageDelete(data []byte, flags Flag) (updated interface{}, err error) {
 	var msg *MessageDelete
 	err = Unmarshal(data, &msg)
 	return msg, err
 }
+
 func (c *cache) onMessageDeleteBulk(data []byte, flags Flag) (updated interface{}, err error) {
 	var msg *MessageDeleteBulk
 	err = Unmarshal(data, &msg)
 	return msg, err
 }
+
 func (c *cache) onMessageReactionAdd(data []byte, flags Flag) (updated interface{}, err error)       {}
 func (c *cache) onMessageReactionRemove(data []byte, flags Flag) (updated interface{}, err error)    {}
 func (c *cache) onMessageReactionRemoveAll(data []byte, flags Flag) (updated interface{}, err error) {}
 func (c *cache) onPresenceUpdate(data []byte, flags Flag) (updated interface{}, err error)           {}
-func (c *cache) onTypingStart(data []byte, flags Flag) (updated interface{}, err error)              {}
-func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error)               {}
-func (c *cache) onVoiceStateUpdate(data []byte, flags Flag) (updated interface{}, err error)         {}
-func (c *cache) onVoiceServerUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
-func (c *cache) onWebhooksUpdate(data []byte, flags Flag) (updated interface{}, err error)           {}
+func (c *cache) onTypingStart(data []byte, flags Flag) (updated interface{}, err error) {
+	var ts *TypingStart
+	err = Unmarshal(data, &ts)
+	return ts, err
+}
+func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onVoiceStateUpdate(data []byte, flags Flag) (updated interface{}, err error)  {}
+func (c *cache) onVoiceServerUpdate(data []byte, flags Flag) (updated interface{}, err error) {}
+func (c *cache) onWebhooksUpdate(data []byte, flags Flag) (updated interface{}, err error)    {}
 
 //////////////////////////////////////////////////////
 //
