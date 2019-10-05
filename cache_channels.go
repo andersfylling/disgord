@@ -256,7 +256,9 @@ func (c *channelsCache) onMessageCreate(data []byte, flags Flag) (updated interf
 	}
 
 	c.Edit(channelID, func(channel *Channel) {
-		channel.LastMessageID = msgID
+		if msgID.Date().After(channel.LastMessageID.Date()) {
+			channel.LastMessageID = msgID
+		}
 	})
 
 	return nil, nil
