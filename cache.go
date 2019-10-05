@@ -381,15 +381,22 @@ func (c *cache) onMessageReactionAdd(data []byte, flags Flag) (updated interface
 func (c *cache) onMessageReactionRemove(data []byte, flags Flag) (updated interface{}, err error)    {}
 func (c *cache) onMessageReactionRemoveAll(data []byte, flags Flag) (updated interface{}, err error) {}
 func (c *cache) onPresenceUpdate(data []byte, flags Flag) (updated interface{}, err error)           {}
+
 func (c *cache) onTypingStart(data []byte, flags Flag) (updated interface{}, err error) {
 	var ts *TypingStart
 	err = Unmarshal(data, &ts)
 	return ts, err
 }
+
 func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
 func (c *cache) onVoiceStateUpdate(data []byte, flags Flag) (updated interface{}, err error)  {}
 func (c *cache) onVoiceServerUpdate(data []byte, flags Flag) (updated interface{}, err error) {}
-func (c *cache) onWebhooksUpdate(data []byte, flags Flag) (updated interface{}, err error)    {}
+
+func (c *cache) onWebhooksUpdate(data []byte, flags Flag) (updated interface{}, err error) {
+	var wu *WebhooksUpdate
+	err = Unmarshal(data, &wu)
+	return wu, err
+}
 
 //////////////////////////////////////////////////////
 //
