@@ -299,11 +299,31 @@ func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, e
 	return updated, nil
 }
 func (c *cache) onChannelDelete(data []byte, flags Flag) (updated interface{}, err error) {
-	if c.conf.DisableChannelCaching {
-		var cd *ChannelDelete
-		err = Unmarshal(data, &cd)
-		return cd, err
+	id, err := djp.GetSnowflake(data, "id")
+	if err != nil {
+		return nil, err
 	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	c.work(func() {
+		defer wg.Done()
+
+		guildID, err := djp.GetSnowflake(data, "guild_id")
+		if err != nil || guildID.IsZero() {
+			return
+		}
+
+		_, _ = c.guilds(guildID).onChannelDelete(data, flags)
+	})
+
+	updated, err = c.channels(id).onChannelDelete(data, flags)
+	if err != nil {
+		return nil, err
+	}
+	wg.Wait()
+
+	return updated, nil
 }
 func (c *cache) onChannelPinsUpdate(data []byte, flags Flag) (updated interface{}, err error) {
 	if c.conf.DisableChannelCaching {

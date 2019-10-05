@@ -285,7 +285,7 @@ func (c *guildsCache) Prepare(guildID Snowflake) {
 }
 
 func (c *guildsCache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error) {
-	channelID, err := djp.GetSnowflake(data, "guild_id")
+	channelID, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, err
 	}
@@ -315,6 +315,36 @@ func (c *guildsCache) onChannelUpdate(data []byte, flags Flag) (updated interfac
 
 		if !knownChannelID {
 			v.channels = append(v.channels, channelID)
+		}
+	}
+	return nil, nil
+}
+
+func (c *guildsCache) onChannelDelete(data []byte, flags Flag) (interface{}, interface{}) {
+	guildID, err := djp.GetSnowflake(data, "guild_id")
+	if err != nil {
+		return nil, err
+	} else if guildID.IsZero() {
+		return nil, errors.New("empty guild id")
+	}
+
+	channelID, err := djp.GetSnowflake(data, "id")
+	if err != nil {
+		return nil, err
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if cg, exists := c.items.Get(guildID); !exists {
+		v := cg.Val.(*cachedGuild)
+
+		for i := range v.channels {
+			if v.channels[i] == channelID {
+				v.channels[i] = v.channels[len(v.channels)-1]
+				v.channels = v.channels[:len(v.channels)-1]
+				break
+			}
 		}
 	}
 	return nil, nil
