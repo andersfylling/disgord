@@ -246,11 +246,11 @@ func (c *channelsCache) onChannelPinsUpdate(data []byte, flags Flag) (updated in
 }
 
 func (c *channelsCache) onMessageCreate(data []byte, flags Flag) (updated interface{}, err error) {
-	channelID, err := jsonGetSnowflake(data, "channel_id")
+	channelID, err := djp.GetSnowflake(data, "channel_id")
 	if err != nil {
 		return nil, nil
 	}
-	msgID, err := jsonGetSnowflake(data, "id")
+	msgID, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, nil
 	}

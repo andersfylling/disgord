@@ -258,6 +258,11 @@ func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, e
 	return channel, nil
 }
 
+// onChannelUpdate
+//
+// Discord: Sent when a channel is updated. The inner payload is a channel object. This is not
+// sent when the field last_message_id is altered. To keep track of the last_message_id changes,
+// you must listen for Message Create events.
 func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error) {
 	id, err := djp.GetSnowflake(data, "id")
 	if err != nil {
@@ -354,6 +359,11 @@ func (c *cache) onGuildRoleUpdate(data []byte, flags Flag) (updated interface{},
 func (c *cache) onGuildRoleDelete(data []byte, flags Flag) (updated interface{}, err error)         {}
 
 func (c *cache) onMessageCreate(data []byte, flags Flag) (updated interface{}, err error) {
+	channelID, err := djp.GetSnowflake(data, "channel_id")
+	if err == nil && !channelID.IsZero() {
+		_, _ = c.channels(channelID).onMessageCreate(data, flags)
+	}
+
 	var msg *MessageCreate
 	err = Unmarshal(data, &msg)
 	return msg, err
