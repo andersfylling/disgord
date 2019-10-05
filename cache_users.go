@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/crs"
+	"github.com/andersfylling/djp"
 	jp "github.com/buger/jsonparser"
 )
 
@@ -70,7 +71,7 @@ func (c *usersCache) Foreach(cb func(*User)) {
 func (c *usersCache) handleUserData(data []byte, flags Flag) (updated *User, err error) {
 	// get-user-id
 	var id Snowflake
-	if id, err = jsonGetSnowflake(data, "id"); err != nil {
+	if id, err = djp.GetSnowflake(data, "id"); err != nil {
 		return nil, err
 	}
 	// end get-user-id

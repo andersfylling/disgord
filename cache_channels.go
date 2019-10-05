@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/crs"
+	"github.com/andersfylling/djp"
 	jp "github.com/buger/jsonparser"
 )
 
@@ -158,12 +159,23 @@ func (c *channelsCache) onGuildCreate(data []byte, flags Flag) (updated interfac
 }
 
 func (c *channelsCache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error) {
-	id, err := jsonGetSnowflake(data, "id")
+	if c.config.DisableChannelCaching {
+		var u *Channel
+		err = Unmarshal(data, &u)
+		// TODO: this allocates Recipients when the type is DM or GroupDM
+		// recipients is handled by the users cache repo
+		for i := range u.Recipients {
+			u.Recipients[i] = nil
+		}
+		return u, err
+	}
+
+	id, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, nil
 	}
 
-	var createChannel = func(channel *Channel) (interface{}, error) {
+	var updateChannel = func(channel *Channel) (interface{}, error) {
 		if channel == nil {
 			channel = &Channel{}
 		}
@@ -179,7 +191,7 @@ func (c *channelsCache) onChannelUpdate(data []byte, flags Flag) (updated interf
 		}
 
 		_, _ = jp.ArrayEach(recipients, func(value []byte, dataType jp.ValueType, offset int, err error) {
-			id, err := jsonGetSnowflake(data, "id")
+			id, err := djp.GetSnowflake(data, "id")
 			if err != nil {
 				return
 			}
@@ -202,9 +214,9 @@ func (c *channelsCache) onChannelUpdate(data []byte, flags Flag) (updated interf
 	}
 
 	if ok := c.Edit(id, func(channel *Channel) {
-		updated, err = createChannel(channel)
+		updated, err = updateChannel(channel)
 	}); !ok {
-		updated, err = createChannel(nil)
+		updated, err = updateChannel(nil)
 	}
 	if err != nil {
 		return nil, err
@@ -214,7 +226,7 @@ func (c *channelsCache) onChannelUpdate(data []byte, flags Flag) (updated interf
 }
 
 func (c *channelsCache) onChannelDelete(data []byte, flags Flag) (updated interface{}, err error) {
-	if id, err := jsonGetSnowflake(data, "id"); err == nil {
+	if id, err := djp.GetSnowflake(data, "id"); err == nil {
 		c.Del(id)
 	}
 	return // don't really care about errors here

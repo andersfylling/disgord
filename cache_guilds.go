@@ -176,7 +176,10 @@ func (c *guildsCache) onGuildCreate(data []byte, flags Flag) (updated interface{
 		cg = &cachedGuild{
 			guild: NewGuild(),
 		}
+		lfuItem := &crs.LFUItem{ID: guildID, Val: cg}
+		c.items.Set(guildID, lfuItem)
 	}
+	cg.guild.Unavailable = false
 
 	// data must be a copy.. sadly
 	cdata := make([]byte, len(data))
@@ -261,5 +264,58 @@ func (c *guildsCache) onGuildDelete(data []byte, flags Flag) (updated interface{
 		go c.triggerChannelDelete(channelID)
 	}
 
+	return nil, nil
+}
+
+func (c *guildsCache) Prepare(guildID Snowflake) {
+	c.Lock()
+	defer c.Unlock()
+
+	var cg *cachedGuild
+	// check if it already exists
+	// it should _not_. But that's not an excuse in the discord realm.
+	if _, exists := c.items.Get(guildID); !exists {
+		cg = &cachedGuild{
+			guild: NewGuild(),
+		}
+		cg.guild.Unavailable = true
+		lfuItem := &crs.LFUItem{ID: guildID, Val: cg}
+		c.items.Set(guildID, lfuItem)
+	}
+}
+
+func (c *guildsCache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error) {
+	channelID, err := djp.GetSnowflake(data, "guild_id")
+	if err != nil {
+		return nil, err
+	}
+
+	guildID, err := djp.GetSnowflake(data, "guild_id")
+	if err != nil {
+		return nil, err
+	} else if guildID.IsZero() {
+		return nil, errors.New("no guild id")
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	if cg, exists := c.items.Get(guildID); !exists {
+		v := cg.Val.(*cachedGuild)
+		v.guild.Unavailable = false
+
+		// ensure channel id exists
+		var knownChannelID bool
+		for i := range v.channels {
+			if v.channels[i] == channelID {
+				knownChannelID = true
+				break
+			}
+		}
+
+		if !knownChannelID {
+			v.channels = append(v.channels, channelID)
+		}
+	}
 	return nil, nil
 }

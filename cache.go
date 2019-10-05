@@ -9,7 +9,6 @@ import (
 	"github.com/andersfylling/disgord/crs"
 
 	jp "github.com/buger/jsonparser"
-	"github.com/pkg/errors"
 )
 
 type cacheRegistry uint
@@ -39,6 +38,8 @@ type gatewayCacher interface {
 type restCacher interface {
 	handleRESTResponse(obj interface{}) error
 }
+
+type evtCacheFunc func(data []byte, flags Flag) (updated interface{}, err error)
 
 type BasicCacheRepo interface {
 	Size() uint
@@ -129,6 +130,7 @@ func newCache(conf *CacheConfig) (c *cache, err error) {
 
 type cache struct {
 	conf          *CacheConfig
+	bot           *User
 	userRepos     []*usersCache
 	channelRepos  []*channelsCache
 	guildRepos    []*guildsCache
@@ -141,6 +143,11 @@ func (c *cache) resultRef(x DeepCopier) interface{} {
 	}
 
 	return x.DeepCopy()
+}
+
+func (c *cache) work(job func()) {
+	// makes it easier to do a goroutine pool if needed
+	go job()
 }
 
 //////////////////////////////////////////////////////
@@ -175,14 +182,24 @@ func (c *cache) presences(id Snowflake) *presencesCache {
 //
 //////////////////////////////////////////////////////
 
-func (c *cache) onPresencesReplace(data []byte, flags Flag) (updated interface{}, err error) {
-	return nil, errors.New("not implemented")
-}
 func (c *cache) onReady(data []byte, flags Flag) (updated interface{}, err error) {
-	return nil, errors.New("not implemented")
+	r := &Ready{User: c.bot}
+	err = Unmarshal(data, &r)
+
+	if c.conf.DisableGuildCaching {
+		return r, err
+	}
+
+	for i := range r.Guilds {
+		id := r.Guilds[i].ID
+		c.guilds(id).Prepare(id)
+	}
+
+	return r, nil
 }
+
 func (c *cache) onResumed(data []byte, flags Flag) (updated interface{}, err error) {
-	return nil, errors.New("not implemented")
+	return &Resumed{}, nil
 }
 
 func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, err error) {
@@ -204,7 +221,7 @@ func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, e
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	go func() {
+	c.work(func() {
 		defer wg.Done()
 
 		var channelI interface{}
@@ -213,8 +230,8 @@ func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, e
 			return
 		}
 		channel = channelI.(*Channel)
-	}()
-	go func() {
+	})
+	c.work(func() {
 		defer wg.Done()
 
 		var recipientsI interface{}
@@ -223,7 +240,7 @@ func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, e
 			return
 		}
 		recipients = recipientsI.([]*User)
-	}()
+	})
 	wg.Wait()
 
 	if channelErr != nil {
@@ -238,14 +255,48 @@ func (c *cache) onChannelCreate(data []byte, flags Flag) (updated interface{}, e
 	//}
 
 	channel.Recipients = recipients
-	return c.resultRef(channel), nil
+	return channel, nil
 }
+
 func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, err error) {
-	if c.conf.DisableChannelCaching {
-		var cu *ChannelUpdate
-		err = Unmarshal(data, &cu)
-		return cu, err
+	id, err := djp.GetSnowflake(data, "id")
+	if err != nil {
+		return nil, err
 	}
+
+	var recipients []*User
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	c.work(func() {
+		defer wg.Done()
+
+		recipientsI, err := c.users(id).onChannelUpdate(data, flags)
+		if err != nil {
+			return
+		}
+		recipients = recipientsI.([]*User)
+	})
+	c.work(func() {
+		defer wg.Done()
+
+		guildID, err := djp.GetSnowflake(data, "guild_id")
+		if err != nil || guildID.IsZero() {
+			return
+		}
+
+		_, _ = c.guilds(guildID).onChannelUpdate(data, flags)
+	})
+	wg.Wait()
+
+	updated, err = c.channels(id).onChannelUpdate(data, flags)
+	if err != nil {
+		return nil, err
+	}
+	// for usersErr see onChannelCreate
+
+	updated.(*Channel).Recipients = recipients
+	return updated, nil
 }
 func (c *cache) onChannelDelete(data []byte, flags Flag) (updated interface{}, err error) {
 	if c.conf.DisableChannelCaching {
