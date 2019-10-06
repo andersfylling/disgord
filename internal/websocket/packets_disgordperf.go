@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
+
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
@@ -98,7 +100,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 			evt.CopyOverTo(p)
 			return
 		}
-		p.Op = uint(tmp)
+		p.Op = opcode.OpCode(tmp)
 	}
 
 	// data
