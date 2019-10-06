@@ -1,0 +1,40 @@
+name: PR Quality
+on: [pull_request]
+jobs:
+  none:
+    name: No build tags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+      - name: Get dependencies
+        run: go mod download
+      - name: Format Test # ty Ikkerens
+        run: diff <(gofmt -d ./...) <(echo -n)
+      - name: test
+        run: go test -v -race ./...
+  buildtags:
+    name: Build tags
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        buildtag: [disgord_diagnosews, json_std, disgord_removeDiscordMutex, disgord_parallelism, disgord_legacy, disgordperf, disgord_websocket_gorilla]
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+      - name: Get dependencies
+        run: go mod download
+      - name: Format Test
+        run: diff <(gofmt -tags=${{ matrix.buildtag }} -d ./...) <(echo -n)
+      - name: test
+        run: go test -tags=${{ matrix.buildtag }} -v -race ./...
