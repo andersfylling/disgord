@@ -101,12 +101,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Config:
 		s = *t
-	case *[]*RequestGuildMembersPayload:
-		s = *t
-	case *[]*UpdateStatusPayload:
-		s = *t
-	case *[]*UpdateVoiceStatePayload:
-		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
 	case *[]*ErrorMissingSnowflake:
@@ -200,6 +194,12 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*VoiceStateUpdate:
 		s = *t
 	case *[]*WebhooksUpdate:
+		s = *t
+	case *[]*RequestGuildMembersPayload:
+		s = *t
+	case *[]*UpdateStatusPayload:
+		s = *t
+	case *[]*UpdateVoiceStatePayload:
 		s = *t
 	case *[]*AddGuildMemberParams:
 		s = *t
@@ -553,12 +553,6 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*UpdateVoiceStatePayload:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
 	case []*GuildBanAdd:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -638,6 +632,12 @@ func sortByGuildID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
 	case []*WebhooksUpdate:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*UpdateVoiceStatePayload:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
@@ -738,6 +738,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*WebhooksUpdate:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*UpdateVoiceStatePayload:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
