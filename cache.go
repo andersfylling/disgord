@@ -80,27 +80,43 @@ type CacheConfig struct {
 	GuildCacheAlgorithm string
 }
 
-func newCache(conf *CacheConfig) (c *cache, err error) {
+func newCache(websocketShardCount uint, conf *CacheConfig) (c *cache, err error) {
+	if websocketShardCount == 0 {
+		websocketShardCount = 1
+	}
+
 	c = &cache{
 		conf: conf,
 	}
-	c.userRepos = append(c.userRepos, &usersCache{
-		conf,
-		crs.New(conf.UserCacheMaxEntries),
-		&bottomlessPool{
-			New: func() Reseter {
-				return &User{}
-			},
+
+	// pools
+	poolUsers := &bottomlessPool{
+		New: func() Reseter {
+			return &User{}
 		},
-	})
+	}
+	poolChannels := &bottomlessPool{
+		New: func() Reseter {
+			return &Channel{}
+		},
+	}
+
+	userShardCount := 12 * websocketShardCount
+	if userShardCount > 256 {
+		userShardCount = 256
+	}
+	for i := uint(0); i < userShardCount; i++ {
+		c.userRepos = append(c.userRepos, &usersCache{
+			conf,
+			crs.New(conf.UserCacheMaxEntries),
+			poolUsers,
+		})
+	}
+
 	c.channelRepos = append(c.channelRepos, &channelsCache{
 		conf,
 		crs.New(conf.ChannelCacheMaxEntries),
-		&bottomlessPool{
-			New: func() Reseter {
-				return &Channel{}
-			},
-		},
+		poolChannels,
 		c.userRepos[0],
 	})
 	c.guildRepos = append(c.guildRepos, &guildsCache{

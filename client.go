@@ -87,13 +87,13 @@ func NewClient(conf *Config) (c *Client, err error) {
 			conf.CacheConfig = &CacheConfig{}
 		}
 		conf.CacheConfig.Log = conf.Logger
-		cacher, err = newCache(conf.CacheConfig)
+		cacher, err = newCache(1, conf.CacheConfig)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// create an empty cache to avoid nil panics
-		cacher, err = newCache(&CacheConfig{
+		cacher, err = newCache(1, &CacheConfig{
 			DisableUserCaching:       true,
 			DisableChannelCaching:    true,
 			DisableGuildCaching:      true,
