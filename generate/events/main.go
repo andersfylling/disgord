@@ -47,7 +47,7 @@ func main() {
 	})
 
 	// Next up, read event/events.go to see which events are actual Discord events
-	keysFile, err := parser.ParseFile(token.NewFileSet(), "event/events.go", nil, parser.ParseComments)
+	keysFile, err := parser.ParseFile(token.NewFileSet(), "internal/event/events.go", nil, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
