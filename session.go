@@ -3,7 +3,7 @@ package disgord
 import (
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 // Emitter for emitting data from A to B. Used in websocket connection

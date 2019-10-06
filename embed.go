@@ -1,7 +1,7 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits

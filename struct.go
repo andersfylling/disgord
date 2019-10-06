@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // common functionality/types used by struct_*.go files goes here

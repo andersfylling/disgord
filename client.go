@@ -12,14 +12,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/internal/websocket"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
 	"golang.org/x/net/proxy"
 
-	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/event"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // NewRESTClient creates a Client for sending and handling Discord protocols such as rate limiting

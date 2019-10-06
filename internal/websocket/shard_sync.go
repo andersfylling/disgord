@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 type shardSync struct {

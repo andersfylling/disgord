@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
+	httd2 "github.com/andersfylling/disgord/internal/httd"
+	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
+
 	"go.uber.org/atomic"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/logger"
 
-	"github.com/andersfylling/disgord/logger"
-
-	"github.com/andersfylling/disgord/websocket/opcode"
 	"golang.org/x/net/proxy"
 )
 
@@ -405,7 +405,7 @@ func (c *client) queueRequest(command string, data CmdPayload) (err error) {
 	}
 
 	op := CmdNameToOpCode(command, c.clientType)
-	if op == opcode.None {
+	if op == opcode2.None {
 		return errors.New("unsupported command: " + command)
 	}
 
@@ -583,7 +583,7 @@ func (c *client) receiver(ctx context.Context) {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		if err = httd.Unmarshal(packet, evt); err != nil {
+		if err = httd2.Unmarshal(packet, evt); err != nil {
 			c.log.Error(c.getLogPrefix(), err, "ERRONEOUS PACKET CONTENT:", string(packet))
 			cancel() // sometimes a CDN or some VPN might send a HTML string..
 			continue

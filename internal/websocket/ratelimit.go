@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
+	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
 )
 
 // UniqueStringSlice a thread safe string slice that does not allow duplicate strings to be stored
@@ -62,7 +62,7 @@ func newRatelimiter() ratelimiter {
 		buckets: map[string]rlBucket{},
 		global:  newRatelimitBucket(120, 60),
 	}
-	rl.buckets[cmd.UpdateStatus] = newRatelimitBucket(5, 60)
+	rl.buckets[cmd2.UpdateStatus] = newRatelimitBucket(5, 60)
 
 	return rl
 }

@@ -7,12 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
+	constant2 "github.com/andersfylling/disgord/internal/constant"
+	event2 "github.com/andersfylling/disgord/internal/event"
+	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
 
-	"github.com/andersfylling/disgord/event"
-
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 
 	"golang.org/x/net/proxy"
 )
@@ -69,7 +68,7 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 // https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
 func enableGuildSubscriptions(ignore []string) (updatedIgnores []string, ok bool) {
 	requires := []string{
-		event.TypingStart, event.PresenceUpdate,
+		event2.TypingStart, event2.PresenceUpdate,
 	}
 	for i := range ignore {
 		for j := range requires {
@@ -220,8 +219,8 @@ func (s *shardMngr) initShards() error {
 		GuildSubscriptions:  s.conf.GuildSubscriptions,
 
 		// lib specific
-		Version:        constant.DiscordVersion,
-		Encoding:       constant.JSONEncoding,
+		Version:        constant2.DiscordVersion,
+		Encoding:       constant2.JSONEncoding,
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
 		IgnoreEvents:   s.conf.IgnoreEvents,
@@ -473,7 +472,7 @@ func (s *shardMngr) redistributeMsgs(scaleShards func()) (unhandledGuildIDs []Sn
 	scaleShards()
 
 	// merge similar requests that only differs by guild IDs
-	opToMerge := CmdNameToOpCode(cmd.RequestGuildMembers, clientTypeEvent)
+	opToMerge := CmdNameToOpCode(cmd2.RequestGuildMembers, clientTypeEvent)
 	for i := range messages {
 		m1 := messages[i]
 		if m1 == nil || m1.Op != opToMerge {

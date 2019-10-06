@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/andersfylling/disgord/websocket/opcode"
+	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 //////////////////////////////////////////////////////
@@ -192,9 +192,9 @@ type GatewayBot struct {
 
 // clientPacket is outgoing packets by the client
 type clientPacket struct {
-	Op      opcode.OpCode `json:"op"`
-	Data    interface{}   `json:"d"`
-	CmdName string        `json:"-"`
+	Op      opcode2.OpCode `json:"op"`
+	Data    interface{}    `json:"d"`
+	CmdName string         `json:"-"`
 }
 
 type helloPacket struct {
@@ -203,10 +203,10 @@ type helloPacket struct {
 
 // discordPacketJSON is used when we need to fall back on the unmarshaler logic
 type discordPacketJSON struct {
-	Op             opcode.OpCode `json:"op"`
-	Data           []byte        `json:"d"`
-	SequenceNumber uint          `json:"s"`
-	EventName      string        `json:"t"`
+	Op             opcode2.OpCode `json:"op"`
+	Data           []byte         `json:"d"`
+	SequenceNumber uint           `json:"s"`
+	EventName      string         `json:"t"`
 }
 
 func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
@@ -218,7 +218,7 @@ func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 
 // DiscordPacket is packets sent by Discord over the socket connection
 type DiscordPacket struct {
-	Op             opcode.OpCode   `json:"op"`
+	Op             opcode2.OpCode  `json:"op"`
 	Data           json.RawMessage `json:"d"`
 	SequenceNumber uint            `json:"s,omitempty"`
 	EventName      string          `json:"t,omitempty"`
