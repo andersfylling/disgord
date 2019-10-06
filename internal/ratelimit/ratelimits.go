@@ -1,10 +1,10 @@
 package ratelimit
 
 import (
-	depalias2 "github.com/andersfylling/disgord/internal/depalias"
+	"github.com/andersfylling/disgord/internal/depalias"
 )
 
-type Snowflake = depalias2.Snowflake
+type Snowflake = depalias.Snowflake
 
 func GetB() *b {
 	return &b{}

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	httd2 "github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 //UnmarshalJSON see interface json.Unmarshaler
@@ -23,7 +23,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	for i = range t {
 		if t[i] != data[i] {
 			evt := discordPacketJSON{}
-			err = httd2.Unmarshal(data, &evt)
+			err = httd.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -46,7 +46,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2 // skip `,"`
 	if data[i] != 's' {
 		evt := discordPacketJSON{}
-		err = httd2.Unmarshal(data, &evt)
+		err = httd.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}
@@ -63,7 +63,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 		tmp, err = strconv.ParseUint(val.String(), 10, 64)
 		if err != nil {
 			evt := discordPacketJSON{}
-			err = httd2.Unmarshal(data, &evt)
+			err = httd.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -74,7 +74,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2              // skip `,"`
 	if data[i] != 'o' { // o as in op
 		evt := discordPacketJSON{}
-		err = httd2.Unmarshal(data, &evt)
+		err = httd.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}
@@ -94,7 +94,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 		tmp, err = strconv.ParseUint(val.String(), 10, 64)
 		if err != nil {
 			evt := discordPacketJSON{}
-			err = httd2.Unmarshal(data, &evt)
+			err = httd.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -105,7 +105,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2 // skip `,"`
 	if data[i] != 'd' {
 		evt := discordPacketJSON{}
-		err = httd2.Unmarshal(data, &evt)
+		err = httd.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}
