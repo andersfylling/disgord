@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 	"go.uber.org/atomic"
 )
 
@@ -22,7 +23,7 @@ const DiagnosePath_packets = "diagnose-report/packets"
 var outgoingPacketSequence = atomic.NewUint64(0)
 var dirExists bool
 
-func formatFilename(incoming bool, clientType int, shardID, opCode uint, sequencenr uint64, suffix string) (filename string) {
+func formatFilename(incoming bool, clientType ClientType, shardID uint, opCode opcode.OpCode, sequencenr uint64, suffix string) (filename string) {
 
 	unix := strconv.FormatInt(time.Now().UnixNano(), 10)
 	shard := strconv.FormatUint(uint64(shardID), 10)
