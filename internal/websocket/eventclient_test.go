@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	constant2 "github.com/andersfylling/disgord/internal/constant"
-	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
-	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
-
+	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 type testWS struct {
@@ -100,8 +99,8 @@ func TestEvtClient_communication(t *testing.T) {
 
 		// lib specific
 		Endpoint: "sfkjsdlfsf",
-		Version:  constant2.DiscordVersion,
-		Encoding: constant2.JSONEncoding,
+		Version:  constant.DiscordVersion,
+		Encoding: constant.JSONEncoding,
 		Logger:   logger.DefaultLogger(true),
 
 		// user settings
@@ -179,24 +178,24 @@ func TestEvtClient_communication(t *testing.T) {
 				return
 			}
 			switch data.Op {
-			case opcode2.EventHeartbeat:
+			case opcode.EventHeartbeat:
 				var d string = `{"t":null,"s":null,"op":11,"d":null}`
 				conn.reading <- []byte(d)
 				//fmt.Printf("discord: ->%+v\n", d)
 				wg[heartbeat].Done()
-			case opcode2.EventIdentify:
+			case opcode.EventIdentify:
 				var d string = `{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`
 				conn.reading <- []byte(d)
 				//fmt.Printf("discord: ->%+v\n", d)
 				*seq++
 				wg[identify].Done()
-			case opcode2.EventResume:
+			case opcode.EventResume:
 				var d string = `{"t":"RESUMED","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`
 				conn.reading <- []byte(d)
 				//fmt.Printf("discord: ->%+v\n", d)
 				*seq++
 				wg[resume].Done()
-			case opcode2.EventStatusUpdate:
+			case opcode.EventStatusUpdate:
 				wg[status].Done()
 			default:
 				// send the event back around
@@ -268,7 +267,7 @@ func TestEvtClient_communication(t *testing.T) {
 	// #########################################
 	// emitting user messages
 	wg[status].Add(1)
-	_ = m.emit(cmd2.UpdateStatus, 1)
+	_ = m.emit(cmd.UpdateStatus, 1)
 	wg[status].Wait()
 
 	<-time.After(10 * time.Millisecond)

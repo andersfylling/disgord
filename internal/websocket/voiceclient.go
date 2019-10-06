@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	httd2 "github.com/andersfylling/disgord/internal/httd"
-	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
-	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 
 	"github.com/andersfylling/disgord/internal/logger"
 	"golang.org/x/net/proxy"
@@ -95,11 +95,11 @@ func (c *VoiceClient) setupBehaviors() {
 	c.addBehavior(&behavior{
 		addresses: discordOperations,
 		actions: behaviorActions{
-			opcode2.VoiceReady:              c.onReady,
-			opcode2.VoiceHeartbeat:          c.onHeartbeatRequest,
-			opcode2.VoiceHeartbeatAck:       c.onHeartbeatAck,
-			opcode2.VoiceHello:              c.onHello,
-			opcode2.VoiceSessionDescription: c.onVoiceSessionDescription,
+			opcode.VoiceReady:              c.onReady,
+			opcode.VoiceHeartbeat:          c.onHeartbeatRequest,
+			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
+			opcode.VoiceHello:              c.onHello,
+			opcode.VoiceSessionDescription: c.onVoiceSessionDescription,
 		},
 	})
 
@@ -121,11 +121,11 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	readyPk := &VoiceReady{}
-	if err = httd2.Unmarshal(p.Data, readyPk); err != nil {
+	if err = httd.Unmarshal(p.Data, readyPk); err != nil {
 		return err
 	}
 
-	if ch := c.onceChannels.Acquire(opcode2.VoiceReady); ch != nil {
+	if ch := c.onceChannels.Acquire(opcode.VoiceReady); ch != nil {
 		ch <- readyPk
 	} else {
 		panic("once channel for Ready was missing")
@@ -135,7 +135,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
 	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
-	return c.emit(cmd2.VoiceHeartbeat, nil)
+	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
 func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
@@ -151,7 +151,7 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err = httd2.Unmarshal(p.Data, helloPk); err != nil {
+	if err = httd.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 	c.Lock()
@@ -172,11 +172,11 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	sessionPk := &VoiceSessionDescription{}
-	if err = httd2.Unmarshal(p.Data, sessionPk); err != nil {
+	if err = httd.Unmarshal(p.Data, sessionPk); err != nil {
 		return err
 	}
 
-	if ch := c.onceChannels.Acquire(opcode2.VoiceSessionDescription); ch != nil {
+	if ch := c.onceChannels.Acquire(opcode.VoiceSessionDescription); ch != nil {
 		ch <- sessionPk
 	}
 	return nil
@@ -189,7 +189,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.emit(cmd2.VoiceHeartbeat, nil)
+	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
 //////////////////////////////////////////////////////
@@ -221,9 +221,9 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	}
 
 	waitingChan := make(chan interface{}, 2)
-	c.onceChannels.Add(opcode2.VoiceReady, waitingChan)
+	c.onceChannels.Add(opcode.VoiceReady, waitingChan)
 	defer func() {
-		c.onceChannels.Acquire(opcode2.VoiceReady)
+		c.onceChannels.Acquire(opcode.VoiceReady)
 		close(waitingChan)
 	}()
 
@@ -257,7 +257,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 		c.disconnected = true
 	case <-time.After(5 * time.Second):
 		c.disconnected = true
-		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode2.VoiceReady)))
+		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
 	}
 	return evt, err
 }
@@ -282,12 +282,12 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 		SessionID string    `json:"session_id"`
 		Token     string    `json:"token"`
 	}{c.conf.GuildID, c.conf.SessionID, c.conf.Token}
-	_ = c.emit(cmd2.VoiceResume, &resumeData)
+	_ = c.emit(cmd.VoiceResume, &resumeData)
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	// https://discordapp.com/developers/docs/topics/gateway#identify
-	err = m.emit(cmd2.VoiceIdentify, &voiceIdentify{
+	err = m.emit(cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
 		SessionID: m.conf.SessionID,
@@ -300,9 +300,9 @@ func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 
 func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSessionDescription, err error) {
 	ch := make(chan interface{}, 1)
-	c.onceChannels.Add(opcode2.VoiceSessionDescription, ch)
+	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 
-	err = c.emit(cmd2.VoiceSelectProtocol, &voiceSelectProtocol{
+	err = c.emit(cmd.VoiceSelectProtocol, &voiceSelectProtocol{
 		Protocol: "udp",
 		Data:     data,
 	})

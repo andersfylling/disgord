@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	depalias2 "github.com/andersfylling/disgord/internal/depalias"
+	"github.com/andersfylling/disgord/internal/depalias"
 )
 
-type Snowflake = depalias2.Snowflake
+type Snowflake = depalias.Snowflake
 
 type Conn interface {
 	Close() error

@@ -3,8 +3,8 @@ package websocket
 import (
 	"testing"
 
-	event2 "github.com/andersfylling/disgord/internal/event"
-	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/event"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
 )
 
 type GatewayBotGetterMock struct {
@@ -67,21 +67,21 @@ func TestConfigureShardConfig(t *testing.T) {
 
 func TestEnableGuildSubscriptions(t *testing.T) {
 	ignore := []string{
-		event2.TypingStart, event2.PresenceUpdate,
+		event.TypingStart, event.PresenceUpdate,
 	}
 	if _, ok := enableGuildSubscriptions(ignore); ok {
 		t.Error("guild sub should be disabled")
 	}
 
 	ignore = []string{
-		event2.TypingStart, event2.PresenceUpdate, event2.Ready,
+		event.TypingStart, event.PresenceUpdate, event.Ready,
 	}
 	if _, ok := enableGuildSubscriptions(ignore); ok {
 		t.Error("guild sub should be disabled")
 	}
 
 	ignore = []string{
-		event2.TypingStart, event2.Ready,
+		event.TypingStart, event.Ready,
 	}
 	if _, ok := enableGuildSubscriptions(ignore); !ok {
 		t.Error("guild sub should be enabled")
@@ -131,7 +131,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 
 	for i := 1; i <= int(mngr.conf.ShardCount*14); i++ {
 		p := &RequestGuildMembersPayload{GuildIDs: []Snowflake{Snowflake(i << 22)}}
-		if unhandledGuilds, err := mngr.Emit(cmd2.RequestGuildMembers, p); err != nil || len(unhandledGuilds) != 0 {
+		if unhandledGuilds, err := mngr.Emit(cmd.RequestGuildMembers, p); err != nil || len(unhandledGuilds) != 0 {
 			t.Error(err)
 			t.Fatalf("%+v", unhandledGuilds)
 		}

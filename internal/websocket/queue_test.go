@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 func TestClientPktQueue_Add(t *testing.T) {
@@ -34,11 +34,11 @@ func TestClientPktQueue_Add(t *testing.T) {
 	}
 
 	q.Steal()
-	_ = q.Add(&clientPacket{Op: opcode2.EventStatusUpdate})
+	_ = q.Add(&clientPacket{Op: opcode.EventStatusUpdate})
 	if len(q.messages) != 1 {
 		t.Fatal("number of entries in queue should be 1")
 	}
-	_ = q.Add(&clientPacket{Op: opcode2.EventStatusUpdate})
+	_ = q.Add(&clientPacket{Op: opcode.EventStatusUpdate})
 	if len(q.messages) != 1 {
 		t.Fatal("number of entries in queue should be 1")
 	}

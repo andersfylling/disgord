@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	httd2 "github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func BenchmarkEvent_CustomUnmarshal_smallJSON(b *testing.B) {
@@ -29,7 +29,7 @@ func BenchmarkEvent_Unmarshal_smallJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		if err := httd2.Unmarshal(data, &evt); err != nil {
+		if err := httd.Unmarshal(data, &evt); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -55,7 +55,7 @@ func BenchmarkEvent_Unmarshal_largeJSON(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		evt := DiscordPacket{}
-		if err := httd2.Unmarshal(data, &evt); err != nil {
+		if err := httd.Unmarshal(data, &evt); err != nil {
 			b.Fatal(err)
 		}
 	}

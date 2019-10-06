@@ -3,22 +3,22 @@ package websocket
 import (
 	"sync"
 
-	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 // inline
 func newOnceChannels() onceChannels {
 	return onceChannels{
-		channels: map[opcode2.OpCode]chan interface{}{},
+		channels: map[opcode.OpCode]chan interface{}{},
 	}
 }
 
 type onceChannels struct {
 	mu       sync.Mutex
-	channels map[opcode2.OpCode]chan interface{}
+	channels map[opcode.OpCode]chan interface{}
 }
 
-func (o *onceChannels) Acquire(op opcode2.OpCode) (ch chan interface{}) {
+func (o *onceChannels) Acquire(op opcode.OpCode) (ch chan interface{}) {
 	var ok bool
 	o.mu.Lock()
 	if ch, ok = o.channels[op]; ok {
@@ -29,7 +29,7 @@ func (o *onceChannels) Acquire(op opcode2.OpCode) (ch chan interface{}) {
 	return ch
 }
 
-func (o *onceChannels) Add(op opcode2.OpCode, ch chan interface{}) {
+func (o *onceChannels) Add(op opcode.OpCode, ch chan interface{}) {
 	o.mu.Lock()
 	o.channels[op] = ch
 	o.mu.Unlock()

@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	httd2 "github.com/andersfylling/disgord/internal/httd"
-	cmd2 "github.com/andersfylling/disgord/internal/websocket/cmd"
-	event2 "github.com/andersfylling/disgord/internal/websocket/event"
-	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/event"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -156,7 +156,7 @@ type EvtClient struct {
 func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	// marshalling is done to avoid race
 	var presence json.RawMessage
-	if presence, err = httd2.Marshal(data); err != nil {
+	if presence, err = httd.Marshal(data); err != nil {
 		return err
 	}
 	c.idMu.Lock()
@@ -167,7 +167,7 @@ func (c *EvtClient) SetPresence(data interface{}) (err error) {
 }
 
 func (c *EvtClient) Emit(command string, data CmdPayload) (err error) {
-	if command == cmd2.UpdateStatus {
+	if command == cmd.UpdateStatus {
 		if err = c.SetPresence(data); err != nil {
 			return err
 		}
@@ -186,12 +186,12 @@ func (c *EvtClient) setupBehaviors() {
 	c.addBehavior(&behavior{
 		addresses: discordOperations,
 		actions: behaviorActions{
-			opcode2.EventDiscordEvent:   c.onDiscordEvent,
-			opcode2.EventHeartbeat:      c.onHeartbeatRequest,
-			opcode2.EventHeartbeatAck:   c.onHeartbeatAck,
-			opcode2.EventHello:          c.onHello,
-			opcode2.EventInvalidSession: c.onSessionInvalidated,
-			opcode2.EventReconnect: func(i interface{}) error {
+			opcode.EventDiscordEvent:   c.onDiscordEvent,
+			opcode.EventHeartbeat:      c.onHeartbeatRequest,
+			opcode.EventHeartbeatAck:   c.onHeartbeatAck,
+			opcode.EventHello:          c.onHello,
+			opcode.EventInvalidSession: c.onSessionInvalidated,
+			opcode.EventReconnect: func(i interface{}) error {
 				c.log.Info(c.getLogPrefix(), "Discord requested a reconnect")
 				// There might be duplicate EventReconnect requests from Discord
 				// this is therefore a goroutine such that reconnect requests that takes
@@ -243,7 +243,7 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	// always store the session id
 	ready := evtReadyPacket{}
-	if err = httd2.Unmarshal(p.Data, &ready); err != nil {
+	if err = httd.Unmarshal(p.Data, &ready); err != nil {
 		return err
 	}
 
@@ -266,7 +266,7 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 		return
 	}
 
-	if p.EventName == event2.Ready {
+	if p.EventName == event.Ready {
 		if err = c.onReady(p); err != nil {
 			return err
 		}
@@ -309,7 +309,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err := httd2.Unmarshal(p.Data, helloPk); err != nil {
+	if err := httd.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 
@@ -366,7 +366,7 @@ func (c *EvtClient) sendHeartbeat(i interface{}) error {
 	snr := c.sequenceNumber
 	c.RUnlock()
 
-	return c.emit(event2.Heartbeat, snr)
+	return c.emit(event.Heartbeat, snr)
 }
 
 //////////////////////////////////////////////////////
@@ -397,12 +397,12 @@ func (c *EvtClient) internalConnect() (evt interface{}, err error) {
 
 	err = c.evtConf.connectQueue(c.ShardID, func() error {
 		sentIdentifyResume := make(chan interface{})
-		c.onceChannels.Add(opcode2.EventIdentify, sentIdentifyResume)
-		c.onceChannels.Add(opcode2.EventResume, sentIdentifyResume)
+		c.onceChannels.Add(opcode.EventIdentify, sentIdentifyResume)
+		c.onceChannels.Add(opcode.EventResume, sentIdentifyResume)
 		defer func() {
 			// cleanup once channels
-			c.onceChannels.Acquire(opcode2.EventIdentify)
-			c.onceChannels.Acquire(opcode2.EventResume)
+			c.onceChannels.Acquire(opcode.EventIdentify)
+			c.onceChannels.Acquire(opcode.EventResume)
 		}()
 
 		if err := c.openConnection(sessionCtx); err != nil {
@@ -465,13 +465,13 @@ func (c *EvtClient) sendHelloPacket() {
 	sequence := c.sequenceNumber
 	c.RUnlock()
 
-	err := c.emit(event2.Resume, &evtResume{token, session, sequence})
+	err := c.emit(event.Resume, &evtResume{token, session, sequence})
 	if err != nil {
 		c.log.Error(c.getLogPrefix(), err)
 	}
 
 	c.log.Debug(c.getLogPrefix(), "sendHelloPacket is acquiring once channel")
-	channel := c.onceChannels.Acquire(opcode2.EventResume)
+	channel := c.onceChannels.Acquire(opcode.EventResume)
 	c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
 	channel <- true
 	c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
@@ -483,11 +483,11 @@ func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()
-	err = c.emit(event2.Identify, id)
+	err = c.emit(event.Identify, id)
 
 	if !invalidSession {
 		c.log.Debug(c.getLogPrefix(), "sendIdentityPacket is acquiring once channel")
-		channel := c.onceChannels.Acquire(opcode2.EventIdentify)
+		channel := c.onceChannels.Acquire(opcode.EventIdentify)
 		c.log.Debug(c.getLogPrefix(), "writing to once channel", channel)
 		channel <- true
 		c.log.Debug(c.getLogPrefix(), "finished writing to once channel", channel)
