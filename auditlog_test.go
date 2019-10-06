@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {

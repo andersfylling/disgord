@@ -1,7 +1,7 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 	"go.uber.org/zap"
 )
 

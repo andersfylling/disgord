@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/websocket"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 

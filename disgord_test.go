@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/websocket"
 )
 
 func injectRandomEvents(t *testing.T, callback func(name string, evt interface{}) error) {

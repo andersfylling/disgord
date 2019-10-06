@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/websocket"
 )
 
 //////////////////////////////////////////////////////

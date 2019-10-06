@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/websocket/opcode"
+	opcode2 "github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 func newClientPktQueue(limit int) clientPktQueue {
@@ -44,7 +44,7 @@ func (c *clientPktQueue) AddByOverwrite(msg *clientPacket) error {
 }
 
 func (c *clientPktQueue) Add(msg *clientPacket) error {
-	if msg.Op == opcode.EventStatusUpdate {
+	if msg.Op == opcode2.EventStatusUpdate {
 		if err := c.AddByOverwrite(msg); err == nil {
 			return nil
 		}

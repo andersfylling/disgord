@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func check(err error, t *testing.T) {

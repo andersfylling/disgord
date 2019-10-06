@@ -8,7 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/andersfylling/disgord/httd"
+	httd2 "github.com/andersfylling/disgord/internal/httd"
+
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/proxy"
 )
@@ -52,7 +53,7 @@ func (g *gorilla) WriteJSON(v interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	err = httd.JSONEncode(w, v)
+	err = httd2.JSONEncode(w, v)
 	return
 }
 

@@ -8,9 +8,10 @@ import (
 	"io"
 	"net/http"
 
+	httd2 "github.com/andersfylling/disgord/internal/httd"
+
 	"golang.org/x/net/proxy"
 
-	"github.com/andersfylling/disgord/httd"
 	"nhooyr.io/websocket"
 )
 
@@ -49,7 +50,7 @@ func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	err = httd.JSONEncode(w, v)
+	err = httd2.JSONEncode(w, v)
 	return
 }
 

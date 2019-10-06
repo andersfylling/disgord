@@ -6,7 +6,7 @@ package disgord
 import (
 	"context"
 
-	"github.com/andersfylling/disgord/event"
+	"github.com/andersfylling/disgord/internal/event"
 )
 
 // ---------------------------

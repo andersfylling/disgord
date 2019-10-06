@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/event"
+	"github.com/andersfylling/disgord/internal/event"
 )
 
 func filterTestPrefix(evt interface{}) (ret interface{}) {

@@ -186,9 +186,9 @@ package disgord
 import (
 	"fmt"
 
-	"github.com/andersfylling/disgord/depalias"
+	"github.com/andersfylling/disgord/internal/depalias"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // LibraryInfo returns name + version
