@@ -1,0 +1,6 @@
+## Exclude generated files
+ignore:
+- "**/*_gen.go"
+- "**/*_string.go"
+- "generate"
+- "cmd"

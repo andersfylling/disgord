@@ -1,9 +1,8 @@
 <div align='center'>
   <img src="/docs/disgord-draft-8.jpeg" alt='Build Status' />
   <p>
-    <a href='https://codeclimate.com/github/andersfylling/disgord/test_coverage'>
-      <img src='https://api.codeclimate.com/v1/badges/687d02ca069eba704af9/test_coverage'
-           alt='Maintainability' />
+    <a href="https://codecov.io/gh/andersfylling/disgord">
+      <img src="https://codecov.io/gh/andersfylling/disgord/branch/develop/graph/badge.svg" />
     </a>
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord'
