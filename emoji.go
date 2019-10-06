@@ -100,7 +100,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	emoji.Managed = e.Managed
 	emoji.Animated = e.Animated
 	emoji.guildID = e.guildID
-	emoji.mu = Lockable{}
 
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)
