@@ -12,7 +12,7 @@ const (
 
 func WithProgressReactions(cmd func(s disgord.Session, evt *disgord.MessageCreate) error) func(s disgord.Session, evt *disgord.MessageCreate) {
 	return func(s disgord.Session, evt *disgord.MessageCreate) {
-		if messageIsBot(evt, true) {
+		if evt.Message.Author != nil && evt.Message.Author.Bot {
 			return
 		}
 		s.CreateReaction(evt.Message.ChannelID, evt.Message.ID, thinking)
