@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/websocket"
 )
 
 //////////////////////////////////////////////////////
@@ -53,6 +53,7 @@ func ensure(inputs ...interface{}) {
 //////////////////////////////////////////////////////
 
 func BenchmarkClient_On(b *testing.B) {
+	b.ReportAllocs()
 	c := New(&Config{
 		BotToken:     "testing",
 		DisableCache: true,
@@ -61,7 +62,6 @@ func BenchmarkClient_On(b *testing.B) {
 	c.setupConnectEnv()
 
 	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
-	evt := &websocket.Event{Name: EvtMessageCreate, Data: msgData}
 
 	wg := sync.WaitGroup{}
 	c.On(EvtMessageCreate, func() {
@@ -70,10 +70,13 @@ func BenchmarkClient_On(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
+
+		cp := make([]byte, len(msgData))
+		copy(cp, msgData)
+		evt := &websocket.Event{Name: EvtMessageCreate, Data: cp}
 		c.eventChan <- evt
 		wg.Wait()
 	}
-
 }
 
 //////////////////////////////////////////////////////

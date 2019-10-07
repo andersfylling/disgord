@@ -1,10 +1,10 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 // VoiceState Voice State structure

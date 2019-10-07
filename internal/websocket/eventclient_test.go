@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/logger"
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 type testWS struct {
@@ -126,7 +125,7 @@ func TestEvtClient_communication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m.client.timeoutMultiplier = 0
+	m.timeoutMultiplier = 0
 	seq := uint(1)
 
 	// ###############################

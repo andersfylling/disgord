@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func BenchmarkEvent_CustomUnmarshal_smallJSON(b *testing.B) {

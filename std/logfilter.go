@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 type logFilterdg interface {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func verifyQueryString(t *testing.T, params URLQueryStringer, wants string) {

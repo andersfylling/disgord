@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // Resource represents a discord event.

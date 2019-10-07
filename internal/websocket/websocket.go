@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/andersfylling/disgord/depalias"
+	"github.com/andersfylling/disgord/internal/depalias"
 )
 
 type Snowflake = depalias.Snowflake

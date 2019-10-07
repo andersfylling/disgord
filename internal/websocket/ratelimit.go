@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
 )
 
 // UniqueStringSlice a thread safe string slice that does not allow duplicate strings to be stored

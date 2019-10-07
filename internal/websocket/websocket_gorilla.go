@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/httd"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/proxy"
 )

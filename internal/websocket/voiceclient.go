@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/logger"
-	"github.com/andersfylling/disgord/websocket/cmd"
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
+
+	"github.com/andersfylling/disgord/internal/logger"
 	"golang.org/x/net/proxy"
 )
 

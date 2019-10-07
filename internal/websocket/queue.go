@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 func newClientPktQueue(limit int) clientPktQueue {

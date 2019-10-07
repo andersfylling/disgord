@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/websocket"
 )
 
 type ErrRest = httd.ErrREST

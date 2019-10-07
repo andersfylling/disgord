@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
 
 	"github.com/gocolly/colly"
 )

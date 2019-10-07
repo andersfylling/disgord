@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 func validEmojiName(name string) bool {
@@ -100,7 +100,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	emoji.Managed = e.Managed
 	emoji.Animated = e.Animated
 	emoji.guildID = e.guildID
-	emoji.mu = Lockable{}
 
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)

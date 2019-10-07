@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 func TestClientPktQueue_Add(t *testing.T) {

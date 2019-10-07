@@ -1,9 +1,9 @@
 package websocket
 
 import (
-	"github.com/andersfylling/disgord/websocket/cmd"
-	"github.com/andersfylling/disgord/websocket/event"
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/websocket/event"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 func CmdNameToOpCode(command string, t ClientType) (op opcode.OpCode) {

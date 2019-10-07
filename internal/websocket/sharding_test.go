@@ -3,9 +3,8 @@ package websocket
 import (
 	"testing"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
-
-	"github.com/andersfylling/disgord/event"
+	"github.com/andersfylling/disgord/internal/event"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
 )
 
 type GatewayBotGetterMock struct {

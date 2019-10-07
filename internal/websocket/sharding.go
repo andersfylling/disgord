@@ -7,12 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/event"
+	"github.com/andersfylling/disgord/internal/websocket/cmd"
 
-	"github.com/andersfylling/disgord/event"
-
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 
 	"golang.org/x/net/proxy"
 )

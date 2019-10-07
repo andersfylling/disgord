@@ -3,7 +3,7 @@ package websocket
 import (
 	"sync"
 
-	"github.com/andersfylling/disgord/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 // inline
