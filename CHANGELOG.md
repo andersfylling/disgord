@@ -1,5 +1,21 @@
 # Change Log
 
+## [v0.12.0-rc7](https://github.com/andersfylling/disgord/tree/v0.12.0-rc7)
+
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc6...v0.12.0-rc7)
+
+**Implemented enhancements:**
+
+- Add voice options self-mute & deafen [\#218](https://github.com/andersfylling/disgord/pull/218) ([ikkerens](https://github.com/ikkerens))
+
+**Merged pull requests:**
+
+- Move private pkgs to internal pkg [\#223](https://github.com/andersfylling/disgord/pull/223) ([andersfylling](https://github.com/andersfylling))
+
+**Fixed bugs:**
+
+- WEBHOOKS_UPDATE was missing and s causing related handlers not to fire
+- Lockable for Channel and Emoji when using build tag disgord_parallelism/disgord_removeDiscordMutex would not compile
 
 ## [v0.12.0-rc6](https://github.com/andersfylling/disgord/tree/v0.12.0-rc6) (2019-09-28)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc5...v0.12.0-rc6)
@@ -16,11 +32,12 @@
 
 **Merged pull requests:**
 
-- panic when registerring a incorrect handler signature [\#217](https://github.com/andersfylling/disgord/pull/217) ([andersfylling](https://github.com/andersfylling))
+- panic when registerring a incorrect handler signature \(fixes \#20… [\#217](https://github.com/andersfylling/disgord/pull/217) ([andersfylling](https://github.com/andersfylling))
 - upgrade websocket/nhooyr to fix atomic panic on ARM systems [\#216](https://github.com/andersfylling/disgord/pull/216) ([andersfylling](https://github.com/andersfylling))
-- detects premature Emit usage [\#215](https://github.com/andersfylling/disgord/pull/215) ([andersfylling](https://github.com/andersfylling))
+- detects premature Emit usage \(fixes \#209\) [\#215](https://github.com/andersfylling/disgord/pull/215) ([andersfylling](https://github.com/andersfylling))
+- Removed circle ci [\#212](https://github.com/andersfylling/disgord/pull/212) ([svenwiltink](https://github.com/svenwiltink))
 - upgrade deps [\#206](https://github.com/andersfylling/disgord/pull/206) ([andersfylling](https://github.com/andersfylling))
-- Some grammar changes/fixes [\#203](https://github.com/andersfylling/disgord/pull/203) ([GreemDev](https://github.com/GreemDev))
+- Some grammar changes/fixes, more to come [\#203](https://github.com/andersfylling/disgord/pull/203) ([GreemDev](https://github.com/GreemDev))
 
 ## [v0.12.0-rc5](https://github.com/andersfylling/disgord/tree/v0.12.0-rc5) (2019-09-22)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc4...v0.12.0-rc5)
@@ -235,6 +252,7 @@
 **Merged pull requests:**
 
 - Release v0.10 [\#122](https://github.com/andersfylling/disgord/pull/122) ([andersfylling](https://github.com/andersfylling))
+- adds script for making a basic bot \(fixes \#83\) [\#112](https://github.com/andersfylling/disgord/pull/112) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.9.6](https://github.com/andersfylling/disgord/tree/v0.9.6) (2019-02-21)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.9.5...v0.9.6)
@@ -291,7 +309,6 @@
 
 **Merged pull requests:**
 
-- adds script for making a basic bot \(fixes \#83\) [\#112](https://github.com/andersfylling/disgord/pull/112) ([andersfylling](https://github.com/andersfylling))
 - refactors websocketing + adds voice support + better shard handling [\#110](https://github.com/andersfylling/disgord/pull/110) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.8.8](https://github.com/andersfylling/disgord/tree/v0.8.8) (2019-01-30)
@@ -418,6 +435,7 @@
 **Fixed bugs:**
 
 - Use date from http response in rate limiting [\#51](https://github.com/andersfylling/disgord/issues/51)
+- Emoji endpoints have incorrect rate limit bucket key [\#43](https://github.com/andersfylling/disgord/issues/43)
 - reset is obviusly going to be ahead of time [\#52](https://github.com/andersfylling/disgord/issues/52)
 
 **Closed issues:**
@@ -443,7 +461,6 @@
 
 **Fixed bugs:**
 
-- Emoji endpoints have incorrect rate limit bucket key [\#43](https://github.com/andersfylling/disgord/issues/43)
 - Does not stop goroutine on shutdown [\#42](https://github.com/andersfylling/disgord/issues/42)
 
 ## [v0.4.2](https://github.com/andersfylling/disgord/tree/v0.4.2) (2018-09-05)
