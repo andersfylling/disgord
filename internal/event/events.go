@@ -189,4 +189,4 @@ const VoiceServerUpdate = "VOICE_SERVER_UPDATE"
 //  Fields:
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake
-const WebhooksUpdate = "WEBHOOK_UPDATE"
+const WebhooksUpdate = "WEBHOOKS_UPDATE"
