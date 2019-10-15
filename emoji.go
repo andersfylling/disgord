@@ -3,13 +3,11 @@ package disgord
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 func validEmojiName(name string) bool {
@@ -190,8 +188,7 @@ func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 //  Comment                 -
 func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimit.GuildEmojis(guildID),
-		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
 	}, flags)
 	r.pool = c.pool.emoji
 	r.CacheRegistry = GuildEmojiCache
@@ -214,8 +211,7 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoj
 //  Comment                 -
 func (c *Client) GetGuildEmojis(guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimit.GuildEmojis(guildID),
-		Endpoint:    endpoint.GuildEmojis(guildID),
+		Endpoint: endpoint.GuildEmojis(guildID),
 	}, flags)
 	r.CacheRegistry = GuildEmojiCache
 	r.checkCache = func() (v interface{}, err error) {
@@ -254,7 +250,7 @@ type CreateGuildEmojiParams struct {
 	Roles []Snowflake `json:"roles"` // optional
 }
 
-// CreateGuildEmoji [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
+// CreateGuildEmoji [REST] NewTicket a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/emojis
@@ -280,8 +276,7 @@ func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiPar
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimit.GuildEmojis(guildID),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.GuildEmojis(guildID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -315,8 +310,7 @@ func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 	builder.r.flags = flags
 	builder.r.cacheRegistry = GuildEmojiCache
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimit.GuildEmojis(guildID),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -334,9 +328,8 @@ func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 //  Comment                 -
 func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimit.GuildEmojis(guildID),
-		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
 	}, flags)
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
 		c.cache.DeleteGuildEmoji(guildID, emojiID)

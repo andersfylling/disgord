@@ -408,8 +408,7 @@ func (c *Client) getMessages(channelID Snowflake, params URLQueryStringer, flags
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID),
-		Endpoint:    endpoint.ChannelMessages(channelID) + query,
+		Endpoint: endpoint.ChannelMessages(channelID) + query,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Message, 0)
@@ -542,8 +541,7 @@ func (c *Client) GetMessage(channelID, messageID Snowflake, flags ...Flag) (mess
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelMessages(channelID),
-		Endpoint:    endpoint.ChannelMessage(channelID, messageID),
+		Endpoint: endpoint.ChannelMessage(channelID, messageID),
 	}, flags)
 	r.pool = c.pool.message
 	r.factory = func() interface{} {
@@ -668,7 +666,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 // CreateMessage [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this
 // endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 // the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
-// Message Create Gateway event. See message formatting for more information on how to properly format messages.
+// Message NewTicket Gateway event. See message formatting for more information on how to properly format messages.
 // The maximum request size when sending a message is 8MB.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages
@@ -696,8 +694,7 @@ func (c *Client) CreateMessage(channelID Snowflake, params *CreateMessageParams,
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelMessages(channelID),
+		Method:      httd.MethodPost,
 		Endpoint:    "/channels/" + channelID.String() + "/messages",
 		Body:        postBody,
 		ContentType: contentType,
@@ -728,8 +725,7 @@ func (c *Client) UpdateMessage(chanID, msgID Snowflake, flags ...Flag) (builder 
 	builder.r.addPrereq(chanID.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(msgID.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitChannelMessages(chanID),
+		Method:      httd.MethodPatch,
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -757,9 +753,8 @@ func (c *Client) DeleteMessage(channelID, msgID Snowflake, flags ...Flag) (err e
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannelMessagesDelete(channelID),
-		Endpoint:    endpoint.ChannelMessage(channelID, msgID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.ChannelMessage(channelID, msgID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -824,7 +819,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // will only be counted once.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages/bulk-delete
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE] TODO: is this limiter key incorrect?
+//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE]
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
@@ -839,8 +834,7 @@ func (c *Client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, 
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelMessagesDelete(chanID),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(chanID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -863,9 +857,8 @@ func (c *Client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, 
 //  Comment                 -
 func (c *Client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelTyping(channelID),
-		Endpoint:    endpoint.ChannelTyping(channelID),
+		Method:   httd.MethodPost,
+		Endpoint: endpoint.ChannelTyping(channelID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -882,8 +875,7 @@ func (c *Client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err
 //  Comment                 -
 func (c *Client) GetPinnedMessages(channelID Snowflake, flags ...Flag) (ret []*Message, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelPins(channelID),
-		Endpoint:    endpoint.ChannelPins(channelID),
+		Endpoint: endpoint.ChannelPins(channelID),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Message, 0)
@@ -908,9 +900,8 @@ func (c *Client) PinMessage(message *Message, flags ...Flag) error {
 //  Comment                 -
 func (c *Client) PinMessageID(channelID, messageID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPut,
-		Ratelimiter: ratelimitChannelPins(channelID),
-		Endpoint:    endpoint.ChannelPin(channelID, messageID),
+		Method:   httd.MethodPut,
+		Endpoint: endpoint.ChannelPin(channelID, messageID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -940,9 +931,8 @@ func (c *Client) UnpinMessageID(channelID, messageID Snowflake, flags ...Flag) (
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannelPins(channelID),
-		Endpoint:    endpoint.ChannelPin(channelID, messageID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.ChannelPin(channelID, messageID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 

@@ -757,8 +757,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Comment                 -
 func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me",
-		Endpoint:    endpoint.UserMe(),
+		Endpoint: endpoint.UserMe(),
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
@@ -780,8 +779,7 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 //  Comment                 -
 func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.User(id),
+		Endpoint: endpoint.User(id),
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = id
@@ -803,8 +801,7 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitUsers(),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -825,8 +822,7 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 //                          integrations that need to get a list of users' guilds.
 func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me/guilds",
-		Endpoint:    endpoint.UserMeGuilds(),
+		Endpoint: endpoint.UserMeGuilds(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*PartialGuild, 0)
@@ -853,9 +849,8 @@ func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 //  Comment                 -
 func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: "/users/@me/guilds",
-		Endpoint:    endpoint.UserMeGuild(id),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.UserMeGuild(id),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.CacheRegistry = GuildCache
@@ -882,8 +877,7 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 // Deprecated: Needs cache checking to get the actual list of channels
 func (c *Client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Endpoint:    endpoint.UserMeChannels(),
-		Ratelimiter: "/users/@me/channels",
+		Endpoint: endpoint.UserMeChannels(),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -907,7 +901,7 @@ type BodyUserCreateDM struct {
 	RecipientID Snowflake `json:"recipient_id"`
 }
 
-// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
+// CreateDM [REST] NewTicket a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users/@me/channels
@@ -916,8 +910,7 @@ type BodyUserCreateDM struct {
 //  Comment                 -
 func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitUsers(),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
 		ContentType: httd.ContentTypeJSON,
@@ -940,7 +933,7 @@ type CreateGroupDMParams struct {
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
-// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
+// CreateGroupDM [REST] NewTicket a new group DM channel with multiple users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
@@ -951,8 +944,7 @@ type CreateGroupDMParams struct {
 //  Comment                 -
 func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: "/users/@me/channels",
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -975,8 +967,7 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 //  Comment                 -
 func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me/connections",
-		Endpoint:    endpoint.UserMeConnections(),
+		Endpoint: endpoint.UserMeConnections(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*UserConnection, 0)

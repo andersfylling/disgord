@@ -347,8 +347,7 @@ func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, e
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannel(channelID),
-		Endpoint:    endpoint.Channel(channelID),
+		Endpoint: endpoint.Channel(channelID),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.ID = channelID
@@ -377,8 +376,8 @@ func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *upd
 	}
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitChannel(channelID),
+		Method: httd.MethodPatch,
+
 		Endpoint:    endpoint.Channel(channelID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -408,9 +407,9 @@ func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Cha
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannel(channelID),
-		Endpoint:    endpoint.Channel(channelID),
+		Method: httd.MethodDelete,
+
+		Endpoint: endpoint.Channel(channelID),
 	}, flags)
 	r.expectsStatusCode = http.StatusOK
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -449,8 +448,7 @@ func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPut,
-		Ratelimiter: ratelimitChannelPermissions(channelID),
+		Method:      httd.MethodPut,
 		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -480,8 +478,7 @@ func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites 
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelInvites(channelID),
-		Endpoint:    endpoint.ChannelInvites(channelID),
+		Endpoint: endpoint.ChannelInvites(channelID),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -500,7 +497,7 @@ type CreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild channels. Requires
+// CreateChannelInvites [REST] NewTicket a new invite object for the channel. Only usable for guild channels. Requires
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
@@ -519,8 +516,7 @@ func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelInvites(channelID),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.ChannelInvites(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -550,9 +546,8 @@ func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannelPermissions(channelID),
-		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.ChannelPermission(channelID, overwriteID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -605,8 +600,7 @@ func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPut,
-		Ratelimiter: ratelimitChannelRecipients(channelID),
+		Method:      httd.MethodPut,
 		Endpoint:    endpoint.ChannelRecipient(channelID, participant.UserID),
 		Body:        participant,
 		ContentType: httd.ContentTypeJSON,
@@ -633,9 +627,8 @@ func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (er
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitChannelRecipients(channelID),
-		Endpoint:    endpoint.ChannelRecipient(channelID, userID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.ChannelRecipient(channelID, userID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 

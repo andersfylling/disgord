@@ -89,7 +89,7 @@ func TestExtractRateLimitGlobal(t *testing.T) {
 	resp.Header.Set("date", time.Now().Format(time.RFC1123))
 
 	rl := NewRateLimit()
-	rl.UpdateRegisters("something", nil, resp, []byte(""))
+	rl.UpdateRegisters("something", resp, []byte(""))
 
 	if !rl.RateLimited("random") {
 		t.Error("was not rate limited on a global scale")

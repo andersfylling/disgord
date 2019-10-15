@@ -15,8 +15,9 @@ import (
 	"github.com/andersfylling/disgord/internal/logger"
 	"github.com/andersfylling/disgord/internal/websocket"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"golang.org/x/net/proxy"
+
+	"github.com/andersfylling/disgord/internal/constant"
 
 	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -229,6 +230,11 @@ func (c *Client) Pool() *pools {
 	return c.pool
 }
 
+// RESTBucketsRelations returns relationships between endpoints/requests and their buckets
+func (c *Client) RESTBucketsRelations() map[string]string {
+	return c.req.Relations()
+}
+
 // AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
 // This is useful for creating the bot URL.
 //
@@ -330,7 +336,7 @@ func (c *Client) String() string {
 }
 
 // RateLimiter return the rate limiter object
-func (c *Client) RateLimiter() httd.RateLimiter {
+func (c *Client) RateLimiter() *httd.Manager {
 	return c.req.RateLimiter()
 }
 
@@ -578,7 +584,7 @@ func (c *Client) GuildsReady(cb func()) {
 //  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
 //
 // Another example is to create a voting system where you specify a deadline instead of a Runs counter:
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().Add(time.Hour)})
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().NewTicket(time.Hour)})
 //
 // You can use your own Ctrl struct, as long as it implements disgord.HandlerCtrl. Do not execute long running tasks
 // in the methods. Use a go routine instead.

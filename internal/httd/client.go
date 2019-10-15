@@ -3,6 +3,7 @@ package httd
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,11 +18,11 @@ import (
 const (
 	BaseURL = "https://discordapp.com/api"
 
+	RegexpURLSnowflakes = `\/([0-9]+)\/?`
+
 	// Header
 	AuthorizationFormat = "Bot %s"
 	UserAgentFormat     = "DiscordBot (%s, %s) %s"
-
-	HTTPCodeRateLimit int = 429
 
 	ContentEncoding = "Content-Encoding"
 	ContentType     = "Content-Type"
@@ -31,7 +32,7 @@ const (
 
 // Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
-	Request(req *Request) (resp *http.Response, body []byte, err error)
+	Do(req *Request) (resp *http.Response, body []byte, err error)
 	Getter
 	Poster
 	Puter
@@ -80,40 +81,44 @@ func (e *ErrREST) Error() string {
 // Client is the httd client for handling Discord requests
 type Client struct {
 	url                          string // base url with API version
-	rateLimit                    *RateLimit
 	reqHeader                    http.Header
 	httpClient                   *http.Client // TODO: decouple to allow better unit testing of REST requests
 	cancelRequestWhenRateLimited bool
+	rateLimitMngr                *Manager
+}
+
+func (c *Client) Relations() (relations map[string]string) {
+	return c.rateLimitMngr.Relations()
 }
 
 // Get handles Discord get requests
 func (c *Client) Get(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodGet
-	return c.Request(req)
+	return c.Do(req)
 }
 
 // Post handles Discord post requests
 func (c *Client) Post(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPost
-	return c.Request(req)
+	return c.Do(req)
 }
 
 // Put handles Discord put requests
 func (c *Client) Put(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPut
-	return c.Request(req)
+	return c.Do(req)
 }
 
 // Patch handles Discord patch requests
 func (c *Client) Patch(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodPatch
-	return c.Request(req)
+	return c.Do(req)
 }
 
 // Delete handles Discord delete requests
 func (c *Client) Delete(req *Request) (resp *http.Response, body []byte, err error) {
 	req.Method = http.MethodDelete
-	return c.Request(req)
+	return c.Do(req)
 }
 
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
@@ -168,10 +173,10 @@ func NewClient(conf *Config) (*Client, error) {
 	}
 
 	return &Client{
-		url:        BaseURL + "/v" + strconv.Itoa(conf.APIVersion),
-		reqHeader:  header,
-		httpClient: conf.HTTPClient,
-		rateLimit:  NewRateLimit(),
+		url:           BaseURL + "/v" + strconv.Itoa(conf.APIVersion),
+		reqHeader:     header,
+		httpClient:    conf.HTTPClient,
+		rateLimitMngr: NewManager(nil),
 	}, nil
 }
 
@@ -199,19 +204,6 @@ type Details struct {
 	SuccessHTTPCode int
 }
 
-// RateLimitAdjuster acts as a middleware when receiving ratelimits from Discord.
-type RateLimitAdjuster func(timeout time.Duration) time.Duration
-
-// Request is populated before executing a Discord request to correctly generate a http request
-type Request struct {
-	Method            string
-	Ratelimiter       string
-	RateLimitAdjuster RateLimitAdjuster // TODO: is this now redundant?
-	Endpoint          string
-	Body              interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
-	ContentType       string
-}
-
 func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error) {
 	buffer, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -221,12 +213,11 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	switch resp.Header.Get(ContentEncoding) {
 	case GZIPCompression:
 		b := bytes.NewBuffer(buffer)
-
-		var r io.Reader
-		r, err = gzip.NewReader(b)
+		r, err := gzip.NewReader(b)
 		if err != nil {
 			return nil, err
 		}
+		defer r.Close()
 
 		var resB bytes.Buffer
 		_, err = resB.ReadFrom(r)
@@ -242,63 +233,20 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return body, nil
 }
 
-func makeRateLimitCompliant(key string, c *Client) (err error) {
-	var timeout time.Duration
-	remaining := c.httpClient.Timeout.Nanoseconds()
-	for {
-		timeout, err = c.rateLimit.RequestPermit(key)
-		if err != nil {
-			return err // no way around the rate limiter in this case
-		}
-		tns := timeout.Nanoseconds()
-
-		if tns > 0 && c.cancelRequestWhenRateLimited {
-			return errors.New("rate limited")
-		}
-
-		if tns > 0 {
-			if remaining < tns {
-				return errors.New("rate limit timeout is higher than http.Client.Timeout, cannot wait")
-			}
-			remaining -= tns
-
-			// if we are given a timeout, we weren't allowed to send a request so we need to retry
-			<-time.After(timeout)
-			continue
-		}
-
-		return nil
-	}
-}
-
-// Request execute a Discord request
-func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err error) {
-	err = makeRateLimitCompliant(r.Ratelimiter, c)
-	if err != nil {
+func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
+	if err = r.init(); err != nil {
 		return nil, nil, err
 	}
 
-	// prepare request body
-	var bodyReader io.Reader
-	if r.Body != nil {
-		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
-		case io.Reader:
-			bodyReader = b
-		default:
-			// If the type is unknown, possibly Marshal it as JSON
-			if r.ContentType != ContentTypeJSON {
-				return nil, nil, errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
-			}
-
-			bodyReader, err = convertStructToIOReader(r.Body)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
+	now := time.Now()
+	acceptableDelay := now.Add(200 * time.Millisecond).Sub(now)
+	if !c.cancelRequestWhenRateLimited {
+		acceptableDelay = c.httpClient.Timeout
 	}
 
 	// create request
-	req, err := http.NewRequest(r.Method, c.url+r.Endpoint, bodyReader)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -306,15 +254,24 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 	req.Header.Set(ContentType, r.ContentType) // unique for each request
 
 	// send request
-	resp, err = c.httpClient.Do(req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer resp.Body.Close()
-	body, err = c.decodeResponseBody(resp)
+	bucket := c.rateLimitMngr.Bucket(r.RateLimitID())
+	resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	// update rate limits
-	c.rateLimit.UpdateRegisters(r.Ratelimiter, r.RateLimitAdjuster, resp, body)
+		// decode body
+		body, err := c.decodeResponseBody(resp)
+		_ = resp.Body.Close()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// normalize Discord header fields
+		resp.Header, err = NormalizeDiscordHeader(resp.StatusCode, resp.Header, body)
+		return resp, body, err
+	})
 
 	// check if request was successful
 	noDiff := resp.StatusCode == http.StatusNotModified
@@ -340,8 +297,8 @@ func (c *Client) Request(r *Request) (resp *http.Response, body []byte, err erro
 }
 
 // RateLimiter get the rate limit manager
-func (c *Client) RateLimiter() RateLimiter {
-	return c.rateLimit
+func (c *Client) RateLimiter() *Manager {
+	return c.rateLimitMngr
 }
 
 // helper functions

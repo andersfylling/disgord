@@ -158,8 +158,8 @@ type CreateGuildRoleParams struct {
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
-// CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
-// Returns the new role object on success. Fires a Guild Role Create Gateway event.
+// CreateGuildRole [REST] NewTicket a new role for the guild. Requires the 'MANAGE_ROLES' permission.
+// Returns the new role object on success. Fires a Guild Role NewTicket Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
 //  Rate limiter            /guilds/{guild.id}/roles
@@ -168,8 +168,7 @@ type CreateGuildRoleParams struct {
 //  Comment                 All JSON params are optional.
 func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitGuildRoles(id),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -201,8 +200,7 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 	}
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitGuildRoles(guildID),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -226,9 +224,8 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 //  Comment                 -
 func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    endpoint.GuildRole(guildID, roleID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.GuildRole(guildID, roleID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -245,8 +242,7 @@ func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 //  Comment                 -
 func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/roles",
+		Endpoint: "/guilds/" + guildID.String() + "/roles",
 	}, flags)
 	r.CacheRegistry = GuildRolesCache
 	r.factory = func() interface{} {
