@@ -4,7 +4,6 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 // VoiceState Voice State structure
@@ -174,8 +173,7 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 //  Comment                 -
 func (c *Client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimit.VoiceRegions(),
-		Endpoint:    endpoint.VoiceRegions(),
+		Endpoint: endpoint.VoiceRegions(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*VoiceRegion, 0)

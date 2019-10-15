@@ -47,7 +47,7 @@ func (gm *reqMocker) Delete(req *httd.Request) (*http.Response, []byte, error) {
 	return gm.resp, gm.body, gm.err
 }
 
-func (gm *reqMocker) Request(req *httd.Request) (*http.Response, []byte, error) {
+func (gm *reqMocker) Do(req *httd.Request) (*http.Response, []byte, error) {
 	gm.req = req
 	return gm.resp, gm.body, gm.err
 }

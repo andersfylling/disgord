@@ -1,12 +1,9 @@
 package disgord
 
 import (
-	"net/http"
-
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 type AuditLogEvt uint
@@ -333,9 +330,8 @@ func (c *Client) GetGuildAuditLogs(guildID Snowflake, flags ...Flag) (builder *g
 	builder.r.itemFactory = auditLogFactory
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
-		Endpoint:    endpoint.GuildAuditLogs(guildID),
+		Method:   httd.MethodGet,
+		Endpoint: endpoint.GuildAuditLogs(guildID),
 	}, nil)
 
 	return builder

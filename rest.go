@@ -114,16 +114,9 @@ func (r *rest) Get() (x interface{}) {
 
 func (r *rest) init() {
 	if r.conf != nil {
-		if r.conf.Method == "" {
-			r.conf.Method = http.MethodGet
-		}
-		if r.conf.Method != "" {
-			r.httpMethod = r.conf.Method
-		}
+		r.conf.PopulateMissing()
 	}
-	if r.httpMethod == "" {
-		r.httpMethod = http.MethodGet
-	}
+	r.httpMethod = r.conf.Method.String()
 
 	r.checkCache = r.stepCheckCache
 	r.doRequest = r.stepDoRequest
@@ -138,7 +131,7 @@ func (r *rest) bindParams(params interface{}) {
 }
 
 func (r *rest) stepCheckCache() (v interface{}, err error) {
-	if r.httpMethod != http.MethodGet {
+	if r.httpMethod != httd.MethodGet.String() {
 		return nil, nil
 	}
 
@@ -159,7 +152,7 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 		return
 	}
 
-	resp, body, err = r.c.req.Request(r.conf)
+	resp, body, err = r.c.req.Do(r.conf)
 	return
 }
 
@@ -293,7 +286,7 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 
 	if b.config == nil {
 		b.config = &httd.Request{
-			Method: http.MethodGet,
+			Method: httd.MethodGet,
 		}
 	}
 }
@@ -339,7 +332,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	var resp *http.Response
 	var body []byte
-	resp, body, err = b.client.Request(b.config)
+	resp, body, err = b.client.Do(b.config)
 	if err != nil {
 		return nil, err
 	}
@@ -436,8 +429,7 @@ type basicBuilder struct {
 func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err error) {
 	var body []byte
 	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: "/gateway",
-		Endpoint:    "/gateway",
+		Endpoint: "/gateway",
 	})
 	if err != nil {
 		return
@@ -460,8 +452,7 @@ func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err
 func (c *Client) GetGatewayBot() (gateway *websocket.GatewayBot, err error) {
 	var body []byte
 	_, body, err = c.req.Get(&httd.Request{
-		Ratelimiter: "/gateway/bot",
-		Endpoint:    "/gateway/bot",
+		Endpoint: "/gateway/bot",
 	})
 	if err != nil {
 		return
