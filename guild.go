@@ -1339,7 +1339,7 @@ type CreateGuildChannelParams struct {
 }
 
 // CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
-// Returns the new channel object on success. Fires a Channel Add Gateway event.
+// Returns the new channel object on success. Fires a Channel Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
@@ -1821,8 +1821,8 @@ func (b *BanMemberParams) FindErrors() error {
 	return nil
 }
 
-// BanMember [REST] Add a guild ban, and optionally delete previous messages sent by the banned user. Requires
-// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
+// BanMember [REST] Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Create Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-ban
