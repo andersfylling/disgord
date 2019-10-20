@@ -1205,7 +1205,7 @@ type CreateGuildParams struct {
 	Channels                []*PartialChannel             `json:"channels"`
 }
 
-// CreateGuild [REST] Add a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
+// CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
 //  Rate limiter            /guilds
@@ -1343,7 +1343,7 @@ type CreateGuildChannelParams struct {
 	Position             int                   `json:"position"` // can not omitempty in case position is 0
 }
 
-// CreateGuildChannel [REST] Add a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
+// CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
 // Returns the new channel object on success. Fires a Channel Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels

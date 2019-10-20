@@ -158,7 +158,7 @@ type CreateGuildRoleParams struct {
 	Mentionable bool   `json:"mentionable,omitempty"`
 }
 
-// CreateGuildRole [REST] Add a new role for the guild. Requires the 'MANAGE_ROLES' permission.
+// CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 // Returns the new role object on success. Fires a Guild Role Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
