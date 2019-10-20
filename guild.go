@@ -1205,7 +1205,7 @@ type CreateGuildParams struct {
 	Channels                []*PartialChannel             `json:"channels"`
 }
 
-// CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
+// CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild
