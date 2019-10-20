@@ -93,6 +93,9 @@ func (r *Manager) UpdateProxyID(id, pID, bucketHash string) {
 	}
 
 	r.mu.Lock()
+	if _, exists := r.buckets[bucketHash]; !exists {
+		r.buckets[bucketHash] = r.buckets[r.proxy[id]]
+	}
 	r.proxy[id] = bucketHash
 	r.mu.Unlock()
 }

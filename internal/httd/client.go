@@ -243,6 +243,9 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 			return resp, body, err
 		})
 	})
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// check if request was successful
 	noDiff := resp.StatusCode == http.StatusNotModified
@@ -262,7 +265,6 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 		if len(body) > 0 {
 			_ = Unmarshal(body, err)
 		}
-		fmt.Println(err)
 		return nil, nil, err
 	}
 
