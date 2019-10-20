@@ -31,6 +31,7 @@ func TestLtBucket_AcquireLock(t *testing.T) {
 	t.Run("global-unlocked", func(t *testing.T) {
 		global := newLeakyBucket(nil)
 		global.remaining = 2
+		global.resetTime = time.Now().Add(1 * time.Hour)
 		if !global.active() {
 			t.Fatal("incorrectly configured global bucket")
 		}
@@ -44,6 +45,7 @@ func TestLtBucket_AcquireLock(t *testing.T) {
 		global := newLeakyBucket(nil)
 		global.atomicLock.AcquireLock()
 		global.remaining = 2
+		global.resetTime = time.Now().Add(1 * time.Hour)
 		if !global.active() {
 			t.Fatal("incorrectly configured global bucket")
 		}
