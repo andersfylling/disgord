@@ -1208,7 +1208,6 @@ type CreateGuildParams struct {
 // CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
-//  Rate limiter            /guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild
 //  Reviewed                2018-08-16
 //  Comment                 This endpoint. can be used only by bots in less than 10 guilds. Creating channel
@@ -1247,7 +1246,6 @@ func (c *Client) CreateGuild(guildName string, params *CreateGuildParams, flags 
 // GetGuild [REST] Returns the guild object for the given id.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}
-//  Rate limiter            /guilds/{guild.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
@@ -1268,7 +1266,6 @@ func (c *Client) GetGuild(id Snowflake, flags ...Flag) (guild *Guild, err error)
 // object on success. Fires a Guild Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}
-//  Rate limiter            /guilds/{guild.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
@@ -1293,7 +1290,6 @@ func (c *Client) UpdateGuild(id Snowflake, flags ...Flag) (builder *updateGuildB
 // Fires a Guild Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}
-//  Rate limiter            /guilds/{guild.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
@@ -1311,7 +1307,6 @@ func (c *Client) DeleteGuild(id Snowflake, flags ...Flag) (err error) {
 // GetGuildChannels [REST] Returns a list of guild channel objects.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/channels
-//  Rate limiter            /guilds/{guild.id}/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
@@ -1347,7 +1342,6 @@ type CreateGuildChannelParams struct {
 // Returns the new channel object on success. Fires a Channel Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels
-//  Rate limiter            /guilds/{guild.id}/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
@@ -1393,7 +1387,6 @@ type UpdateGuildChannelPositionsParams struct {
 // Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/channels
-//  Rate limiter            /guilds/{guild.id}/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
@@ -1436,7 +1429,6 @@ type UpdateGuildRolePositionsParams struct {
 // Fires multiple Guild Role Update Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1502,7 +1494,6 @@ func (c *Client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuil
 // GetMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 -
@@ -1537,7 +1528,6 @@ func (g *getGuildMembersParams) FindErrors() error {
 // refers to the highest snowflake.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-members
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
@@ -1650,7 +1640,6 @@ type AddGuildMemberParams struct {
 // CREATE_INSTANT_INVITE permission.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 All parameters to this endpoint. except for access_token are optional.
@@ -1691,7 +1680,6 @@ func (c *Client) AddGuildMember(guildID, userID Snowflake, accessToken string, p
 // Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
@@ -1723,7 +1711,6 @@ func (c *Client) UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) (bu
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/members/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1742,7 +1729,6 @@ func (c *Client) AddGuildMemberRole(guildID, userID, roleID Snowflake, flags ...
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1761,7 +1747,6 @@ func (c *Client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags 
 // Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Rate limiter            /guilds/{guild.id}/members
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1779,7 +1764,6 @@ func (c *Client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error
 // GetGuildBans [REST] Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans
-//  Rate limiter            /guilds/{guild.id}/bans
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-bans
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1807,7 +1791,6 @@ func (c *Client) GetGuildBans(id Snowflake, flags ...Flag) (bans []*Ban, err err
 // Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Rate limiter            /guilds/{guild.id}/bans
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1842,7 +1825,6 @@ func (b *BanMemberParams) FindErrors() error {
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Rate limiter            /guilds/{guild.id}/bans
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1868,7 +1850,6 @@ func (c *Client) BanMember(guildID, userID Snowflake, params *BanMemberParams, f
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Rate limiter            /guilds/{guild.id}/bans
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1911,7 +1892,6 @@ type guildPruneCount struct {
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/prune
-//  Rate limiter            /guilds/{guild.id}/prune
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1949,7 +1929,6 @@ func (c *Client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag
 // Fires multiple Guild Member Remove Gateway events.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/prune
-//  Rate limiter            /guilds/{guild.id}/prune
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1972,7 +1951,6 @@ func (c *Client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error)
 // this returns VIP servers when the guild is VIP-enabled.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/regions
-//  Rate limiter            /guilds/{guild.id}/regions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-voice-regions
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -1992,7 +1970,6 @@ func (c *Client) GetGuildVoiceRegions(id Snowflake, flags ...Flag) (ret []*Voice
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/invites
-//  Rate limiter            /guilds/{guild.id}/invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-invites
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2012,7 +1989,6 @@ func (c *Client) GetGuildInvites(id Snowflake, flags ...Flag) (ret []*Invite, er
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/integrations
-//  Rate limiter             /guilds/{guild.id}/integrations
 //  Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
 //  Reviewed                 2018-08-18
 //  Comment                  -
@@ -2040,7 +2016,6 @@ type CreateGuildIntegrationParams struct {
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations
-//  Rate limiter            /guilds/{guild.id}/integrations
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2071,7 +2046,6 @@ type UpdateGuildIntegrationParams struct {
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
-//  Rate limiter            /guilds/{guild.id}/integrations
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2093,7 +2067,6 @@ func (c *Client) UpdateGuildIntegration(guildID, integrationID Snowflake, params
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
-//  Rate limiter            /guilds/{guild.id}/integrations
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2112,7 +2085,6 @@ func (c *Client) DeleteGuildIntegration(guildID, integrationID Snowflake, flags 
 // Returns a 204 empty response on success.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}/sync
-//  Rate limiter            /guilds/{guild.id}/integrations
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2141,7 +2113,6 @@ type nickNameResponse struct {
 // with the nickname on success. Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/@me/nick
-//  Rate limiter            /guilds/{guild.id}/members/@me/nick
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2167,7 +2138,6 @@ func (c *Client) SetCurrentUserNick(id Snowflake, nick string, flags ...Flag) (n
 // GetGuildEmbed [REST] Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/embed
-//  Rate limiter            /guilds/{guild.id}/embed
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2186,7 +2156,6 @@ func (c *Client) GetGuildEmbed(guildID Snowflake, flags ...Flag) (embed *GuildEm
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/embed
-//  Rate limiter            /guilds/{guild.id}/embed
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -2209,7 +2178,6 @@ func (c *Client) UpdateGuildEmbed(guildID Snowflake, flags ...Flag) (builder *up
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/vanity-url
-//  Rate limiter            /guilds/{guild.id}/vanity-url
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-vanity-url
 //  Reviewed                2018-08-18
 //  Comment                 -

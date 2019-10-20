@@ -179,7 +179,6 @@ var _ URLQueryStringer = (*GetInviteParams)(nil)
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
-//  Rate limiter            /invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -200,7 +199,6 @@ func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
-//  Rate limiter            /invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -

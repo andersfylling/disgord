@@ -167,7 +167,6 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
-//  Rate limiter            /voice/regions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -

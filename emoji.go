@@ -182,7 +182,6 @@ func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 // GetGuildEmoji [REST] Returns an emoji object for the given guild and emoji IDs.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Rate limiter [MAJOR]    /guilds/{guild.id}/emojis
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 -
@@ -205,7 +204,6 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoj
 // GetGuildEmojis [REST] Returns a list of emoji objects for the given guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis
-//  Rate limiter [MAJOR]    /guilds/{guild.id}/emojis
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -254,7 +252,6 @@ type CreateGuildEmojiParams struct {
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/emojis
-//  Rate limiter [MAJOR]    /guilds/{guild.id}/emojis
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 Emojis and animated emojis have a maximum file size of 256kb. Attempting to upload
@@ -294,7 +291,6 @@ func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiPar
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Rate limiter [MAJOR]    /guilds/{guild.id}/emojis
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 -
@@ -322,7 +318,6 @@ func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 // success. Fires a Guild Emojis Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Rate limiter [MAJOR]    /guilds/{guild.id}/emojis
 //  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
 //  Reviewed                2018-06-10
 //  Comment                 -

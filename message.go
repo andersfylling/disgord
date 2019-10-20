@@ -391,7 +391,6 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 // (since they cannot read the message history). Returns an array of message objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-messages
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
@@ -526,7 +525,6 @@ func (c *Client) GetMessages(channelID Snowflake, filter *GetMessagesParams, fla
 // Returns a message object on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -670,7 +668,6 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 // The maximum request size when sending a message is 8MB.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
@@ -711,7 +708,6 @@ func (c *Client) CreateMessage(channelID Snowflake, params *CreateMessageParams,
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
@@ -738,7 +734,6 @@ func (c *Client) UpdateMessage(chanID, msgID Snowflake, flags ...Flag) (builder 
 // on success. Fires a Message Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE]
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -819,7 +814,6 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // will only be counted once.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages/bulk-delete
-//  Rate limiter [MAJOR]    /channels/{channel.id}/messages [DELETE]
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
@@ -851,7 +845,6 @@ func (c *Client) DeleteMessages(chanID Snowflake, params *DeleteMessagesParams, 
 // on success. Fires a Typing Start Gateway event.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/typing
-//  Rate limiter [MAJOR]    /channels/{channel.id}/typing
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -869,7 +862,6 @@ func (c *Client) TriggerTypingIndicator(channelID Snowflake, flags ...Flag) (err
 // GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/pins
-//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -894,7 +886,6 @@ func (c *Client) PinMessage(message *Message, flags ...Flag) error {
 // Returns a 204 empty response on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -918,7 +909,6 @@ func (c *Client) UnpinMessage(message *Message, flags ...Flag) error {
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/pins
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -

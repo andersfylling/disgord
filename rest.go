@@ -422,7 +422,6 @@ type basicBuilder struct {
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET
 //  Endpoint                /gateway
-//  Rate limiter            /gateway
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
@@ -446,7 +445,6 @@ func (c *Client) GetGateway() (gateway *websocket.Gateway, err error) {
 // changes as the bot joins/leaves guilds.
 //  Method                  GET
 //  Endpoint                /gateway/bot
-//  Rate limiter            /gateway/bot
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
