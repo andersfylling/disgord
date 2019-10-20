@@ -87,7 +87,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 	return nil
 }
 
-// CreateWebhook [REST] Add a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns a webhook object on success.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks

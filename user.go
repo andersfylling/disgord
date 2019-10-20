@@ -901,7 +901,7 @@ type BodyUserCreateDM struct {
 	RecipientID Snowflake `json:"recipient_id"`
 }
 
-// CreateDM [REST] Add a new DM channel with a user. Returns a DM channel object.
+// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
 //  Rate limiter            /users/@me/channels
@@ -933,7 +933,7 @@ type CreateGroupDMParams struct {
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
-// CreateGroupDM [REST] Add a new group DM channel with multiple users. Returns a DM channel object.
+// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
 //  Method                  POST

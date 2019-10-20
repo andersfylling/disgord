@@ -250,7 +250,7 @@ type CreateGuildEmojiParams struct {
 	Roles []Snowflake `json:"roles"` // optional
 }
 
-// CreateGuildEmoji [REST] Add a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
+// CreateGuildEmoji [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/emojis
