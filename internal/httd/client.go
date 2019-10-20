@@ -212,8 +212,10 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 		return nil, nil, err
 	}
 
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.httpClient.Timeout))
+	defer cancel()
+
 	// create request
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.httpClient.Timeout))
 	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
