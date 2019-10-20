@@ -1,9 +1,9 @@
-package websocket
+package gateway
 
 import (
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
 
 // inline

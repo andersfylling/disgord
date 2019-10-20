@@ -1,4 +1,4 @@
-package websocket
+package gateway
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
 
 	"go.uber.org/atomic"
 

@@ -1,6 +1,6 @@
 // +build disgordperf
 
-package websocket
+package gateway
 
 import (
 	"io/ioutil"

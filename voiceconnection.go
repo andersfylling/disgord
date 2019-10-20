@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
 
-	"github.com/andersfylling/disgord/internal/websocket"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
@@ -49,7 +49,7 @@ type voiceImpl struct {
 
 	ready bool
 
-	ws  *websocket.VoiceClient
+	ws  *gateway.VoiceClient
 	udp net.Conn
 
 	ssrc      uint32
@@ -157,7 +157,7 @@ waiter:
 	}(&voice)
 
 	// Connect to the websocket
-	voice.ws, err = websocket.NewVoiceClient(&websocket.VoiceConfig{
+	voice.ws, err = gateway.NewVoiceClient(&gateway.VoiceConfig{
 		GuildID:        server.GuildID,
 		UserID:         r.c.myID,
 		SessionID:      state.SessionID,
@@ -171,7 +171,7 @@ waiter:
 		return
 	}
 
-	var ready *websocket.VoiceReady
+	var ready *gateway.VoiceReady
 	if ready, err = voice.ws.Connect(); err != nil {
 		return
 	}
@@ -218,8 +218,8 @@ waiter:
 	// Tell the websocket which encryption mode we want to use. We'll go with XSalsa20 and Poly1305 since that's what
 	// libSodium/NaCl and golang.org/x/crypto/nacl/secretbox use. If both Discord and Go both start supporting more
 	// modes "out of the box" we might want to consider implementing a "preferred mode selection" algorithm here.
-	var session *websocket.VoiceSessionDescription
-	session, err = voice.ws.SendUDPInfo(&websocket.VoiceSelectProtocolParams{
+	var session *gateway.VoiceSessionDescription
+	session, err = voice.ws.SendUDPInfo(&gateway.VoiceSelectProtocolParams{
 		Mode:    "xsalsa20_poly1305",
 		Address: ip,
 		Port:    port,

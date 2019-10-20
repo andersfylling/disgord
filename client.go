@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
-	"github.com/andersfylling/disgord/internal/websocket"
 
 	"golang.org/x/net/proxy"
 
@@ -102,7 +102,7 @@ func createClient(conf *Config) (c *Client, err error) {
 	}
 
 	// websocket sharding
-	evtChan := make(chan *websocket.Event, 2) // TODO: higher value when more shards?
+	evtChan := make(chan *gateway.Event, 2) // TODO: higher value when more shards?
 
 	// event dispatcher
 	dispatch := newDispatcher()
@@ -127,7 +127,7 @@ func createClient(conf *Config) (c *Client, err error) {
 	return c, err
 }
 
-type ShardConfig = websocket.ShardConfig
+type ShardConfig = gateway.ShardConfig
 
 // Config Configuration for the DisGord Client
 type Config struct {
@@ -211,8 +211,8 @@ type Client struct {
 	httpClient *http.Client
 	proxy      proxy.Dialer
 
-	shardManager websocket.ShardManager
-	eventChan    chan *websocket.Event
+	shardManager gateway.ShardManager
+	eventChan    chan *gateway.Event
 
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
@@ -397,11 +397,11 @@ func (c *Client) Connect() (err error) {
 	}
 	c.myID = me.ID
 
-	if err = websocket.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
+	if err = gateway.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
 		return err
 	}
 
-	sharding := websocket.NewShardMngr(websocket.ShardManagerConfig{
+	sharding := gateway.NewShardMngr(gateway.ShardManagerConfig{
 		ShardConfig:        c.config.ShardConfig,
 		Logger:             c.config.Logger,
 		ShutdownChan:       c.config.shutdownChan,

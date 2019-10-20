@@ -1,6 +1,6 @@
 // +build !disgord_diagnosews
 
-package websocket
+package gateway
 
 const SaveIncomingPackets = false
 

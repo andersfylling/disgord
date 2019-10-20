@@ -1,10 +1,10 @@
-package websocket
+package gateway
 
 import (
 	"testing"
 
 	"github.com/andersfylling/disgord/internal/event"
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
 )
 
 type GatewayBotGetterMock struct {

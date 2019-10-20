@@ -1,9 +1,9 @@
-package websocket
+package gateway
 
 import (
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
-	"github.com/andersfylling/disgord/internal/websocket/event"
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
+	"github.com/andersfylling/disgord/internal/gateway/event"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
 
 func CmdNameToOpCode(command string, t ClientType) (op opcode.OpCode) {

@@ -1,4 +1,4 @@
-package websocket
+package gateway
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
 
 	"github.com/andersfylling/disgord/internal/logger"
 	"golang.org/x/net/proxy"

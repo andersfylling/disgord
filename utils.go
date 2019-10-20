@@ -4,13 +4,13 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/websocket"
+	"github.com/andersfylling/disgord/internal/gateway"
 )
 
 // ShardID calculate the shard id for a given guild.
 // https://discordapp.com/developers/docs/topics/gateway#sharding-sharding-formula
 func ShardID(guildID Snowflake, nrOfShards uint) uint {
-	return websocket.GetShardForGuildID(guildID, nrOfShards)
+	return gateway.GetShardForGuildID(guildID, nrOfShards)
 }
 
 //////////////////////////////////////////////////////

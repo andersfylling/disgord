@@ -1,10 +1,10 @@
-package websocket
+package gateway
 
 import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
 
 func newClientPktQueue(limit int) clientPktQueue {

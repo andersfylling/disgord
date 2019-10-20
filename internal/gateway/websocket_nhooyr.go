@@ -1,6 +1,6 @@
 // +build !disgord_websocket_gorilla
 
-package websocket
+package gateway
 
 import (
 	"context"

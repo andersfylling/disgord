@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/websocket"
 )
 
 type ErrRest = httd.ErrREST
@@ -425,7 +425,7 @@ type basicBuilder struct {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func (c *Client) GetGateway() (gateway *websocket.Gateway, err error) {
+func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
 	var body []byte
 	_, body, err = c.req.Do(&httd.Request{
 		Method:   httd.MethodGet,
@@ -448,7 +448,7 @@ func (c *Client) GetGateway() (gateway *websocket.Gateway, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
-func (c *Client) GetGatewayBot() (gateway *websocket.GatewayBot, err error) {
+func (c *Client) GetGatewayBot() (gateway *gateway.GatewayBot, err error) {
 	var body []byte
 	_, body, err = c.req.Do(&httd.Request{
 		Method:   httd.MethodGet,

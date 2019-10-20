@@ -1,4 +1,4 @@
-package websocket
+package gateway
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/event"
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
 
 	"github.com/andersfylling/disgord/internal/logger"
 

@@ -1,12 +1,12 @@
 // +build disgordperf
 
-package websocket
+package gateway
 
 import (
 	"strconv"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 
 	"github.com/andersfylling/disgord/internal/httd"
 )

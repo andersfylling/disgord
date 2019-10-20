@@ -1,10 +1,10 @@
-package websocket
+package gateway
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
 
 func TestClientPktQueue_Add(t *testing.T) {

@@ -1,4 +1,4 @@
-package websocket
+package gateway
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/logger"
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
 )
 
 type testWS struct {

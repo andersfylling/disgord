@@ -1,4 +1,4 @@
-package websocket
+package gateway
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/andersfylling/disgord/internal/websocket/opcode"
+	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
 
 //////////////////////////////////////////////////////
