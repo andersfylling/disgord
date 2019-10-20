@@ -10,14 +10,15 @@ import (
 
 // http rate limit identifiers
 const (
-	XRateLimitPrecision  = "X-RateLimit-Precision"
-	XRateLimitBucket     = "X-RateLimit-Bucket"
-	XRateLimitLimit      = "X-RateLimit-Limit"
-	XRateLimitRemaining  = "X-RateLimit-Remaining"
-	XRateLimitReset      = "X-RateLimit-Reset"
-	XRateLimitResetAfter = "X-RateLimit-Reset-After"
-	XRateLimitGlobal     = "X-RateLimit-Global"
-	RateLimitRetryAfter  = "Retry-After"
+	XRateLimitPrecision     = "X-RateLimit-Precision"
+	XRateLimitBucket        = "X-RateLimit-Bucket"
+	XRateLimitLimit         = "X-RateLimit-Limit"
+	XRateLimitRemaining     = "X-RateLimit-Remaining"
+	XRateLimitReset         = "X-RateLimit-Reset"
+	XRateLimitResetAfter    = "X-RateLimit-Reset-After"
+	XRateLimitGlobal        = "X-RateLimit-Global"
+	RateLimitRetryAfter     = "Retry-After"
+	DisgordNormalizedHeader = "X-Disgord-Normalized-Kufdsfksduhf-S47yf"
 )
 
 // HeaderToTime takes the response header from Discord and extracts the
@@ -56,7 +57,7 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 	}
 
 	// sometimes the body might be populated too
-	if statusCode == http.StatusTooManyRequests {
+	if statusCode == http.StatusTooManyRequests && body != nil {
 		var rateLimitBodyInfo *RateLimitResponseStructure
 		if err = json.Unmarshal(body, &rateLimitBodyInfo); err != nil {
 			return nil, err
@@ -88,5 +89,6 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 		header.Set(XRateLimitReset, strconv.FormatInt(ms, 10))
 	}
 
+	header.Set(DisgordNormalizedHeader, "true")
 	return header, nil
 }

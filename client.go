@@ -225,11 +225,6 @@ func (c *Client) Pool() *pools {
 	return c.pool
 }
 
-// RESTBucketsRelations returns relationships between endpoints/requests and their buckets
-func (c *Client) RESTBucketsRelations() map[string]string {
-	return c.req.BucketGrouping()
-}
-
 // AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
 // This is useful for creating the bot URL.
 //
@@ -332,7 +327,7 @@ func (c *Client) String() string {
 
 // RESTBucketGrouping shows which hashed endpoints belong to which bucket hash for the REST API.
 // Note that these bucket hashes are eventual consistent.
-func (c *Client) RESTBucketGrouping() map[string]string {
+func (c *Client) RESTBucketGrouping() (group map[string][]string) {
 	return c.req.BucketGrouping()
 }
 

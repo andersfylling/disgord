@@ -499,6 +499,8 @@ type Session interface {
 	// returns the latency for each given shard id. shardID => latency
 	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
 
+	RESTBucketGrouping() (group map[string][]string)
+
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error
 

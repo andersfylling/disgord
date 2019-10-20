@@ -24,6 +24,7 @@ func NewManager(defaultRelations map[string]string) *Manager {
 	global.hash = GlobalHash
 
 	m := &Manager{
+		proxy:   make(map[string]string),
 		buckets: make(map[string]*ltBucket),
 		global:  global,
 	}
@@ -58,15 +59,15 @@ type Manager struct {
 
 var _ RESTBucketManager = (*Manager)(nil)
 
-func (r *Manager) BucketGrouping() (relations map[string]string) {
+func (r *Manager) BucketGrouping() (group map[string][]string) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	relations = make(map[string]string)
-	for k, v := range r.buckets {
-		relations[k] = v.hash
+	group = make(map[string][]string)
+	for k, v := range r.proxy {
+		group[v] = append(group[v], k)
 	}
-	return relations
+	return group
 }
 
 func (r *Manager) ProxyID(id string) (pID string) {
