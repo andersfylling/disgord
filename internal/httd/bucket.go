@@ -244,5 +244,5 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 }
 
 func (b *ltBucket) active() bool {
-	return b.remaining >= 0
+	return b.remaining >= 0 && !time.Now().After(b.resetTime)
 }
