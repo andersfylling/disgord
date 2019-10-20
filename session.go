@@ -236,7 +236,7 @@ type RESTGuild interface {
 	GetGuildChannels(id Snowflake, flags ...Flag) ([]*Channel, error)
 
 	// CreateGuildChannel Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
-	// Returns the new channel object on success. Fires a Channel Add Gateway event.
+	// Returns the new channel object on success. Fires a Channel Create Gateway event.
 	CreateGuildChannel(id Snowflake, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
 
 	// UpdateGuildChannelPositions Modify the positions of a set of channel objects for the guild.
@@ -283,8 +283,8 @@ type RESTGuild interface {
 	// Requires the 'BAN_MEMBERS' permission.
 	GetGuildBan(guildID, userID Snowflake, flags ...Flag) (*Ban, error)
 
-	// BanMember Add a guild ban, and optionally delete previous messages sent by the banned user. Requires
-	// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
+	// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+	// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Create Gateway event.
 	BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) error
 
 	// UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
