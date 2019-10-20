@@ -21,7 +21,7 @@ func filterTestPrefix(evt interface{}) (ret interface{}) {
 }
 
 func main() {
-	client := disgord.New(&disgord.Config{
+	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   disgord.DefaultLogger(true),
 	})

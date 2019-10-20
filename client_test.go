@@ -54,7 +54,7 @@ func ensure(inputs ...interface{}) {
 
 func BenchmarkClient_On(b *testing.B) {
 	b.ReportAllocs()
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
@@ -86,7 +86,7 @@ func BenchmarkClient_On(b *testing.B) {
 //////////////////////////////////////////////////////
 
 func TestClient_Once(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 		Logger:       DefaultLogger(true),
@@ -142,7 +142,7 @@ func TestClient_Once(t *testing.T) {
 }
 
 func TestClient_On(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
@@ -174,7 +174,7 @@ func TestClient_On(t *testing.T) {
 }
 
 func TestClient_On_Middleware(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
@@ -221,7 +221,7 @@ func TestClient_On_Middleware(t *testing.T) {
 // TestClient_System looks for crashes when the DisGord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
-	c, err := NewClient(&Config{
+	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
 	if err != nil {
@@ -321,7 +321,7 @@ func TestClient_System(t *testing.T) {
 }
 
 func TestInternalStateHandlers(t *testing.T) {
-	c, err := NewClient(&Config{
+	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
 	if err != nil {

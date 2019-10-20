@@ -24,18 +24,21 @@ import (
 )
 
 // New create a Client. But panics on configuration/setup errors.
-func New(conf *Config) (c *Client) {
-	var err error
-	if c, err = NewClient(conf); err != nil {
+func New(conf Config) *Client {
+	client, err := createClient(&conf)
+	if err != nil {
 		panic(err)
 	}
-
-	return c
-
+	return client
 }
 
 // NewClient creates a new DisGord Client and returns an error on configuration issues
-func NewClient(conf *Config) (c *Client, err error) {
+func NewClient(conf Config) (*Client, error) {
+	return createClient(&conf)
+}
+
+// NewClient creates a new DisGord Client and returns an error on configuration issues
+func createClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
 		conf.HTTPClient = &http.Client{
 			Timeout: time.Second * 10,
@@ -128,25 +131,21 @@ type ShardConfig = websocket.ShardConfig
 
 // Config Configuration for the DisGord Client
 type Config struct {
+	// ################################################
+	// ##
+	// ## Basic bot configuration.
+	// ## This section is for everyone. And beginners
+	// ## should stick to this section unless they know
+	// ## what they are doing.
+	// ##
+	// ################################################
 	BotToken   string
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
 	CancelRequestWhenRateLimited bool
-	RESTBucketManager            httd.RESTBucketManager
 
-	DisableCache bool
-	CacheConfig  *CacheConfig
-	ShardConfig  ShardConfig
-	Presence     *UpdateStatusPayload
-
-	// IgnoreEvents will skip events that matches the given event names.
-	// WARNING! This can break your caching, so be careful about what you want to ignore.
-	//
-	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
-	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
-	// them at all due to how the identify command was defined. eg. guildS_subscriptions
-	IgnoreEvents []string
+	Presence *UpdateStatusPayload
 
 	// for cancellation
 	shutdownChan chan interface{}
@@ -157,6 +156,29 @@ type Config struct {
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
 	Logger Logger
+
+	// ################################################
+	// ##
+	// ## WARNING! For advanced users only.
+	// ## This section of options might break the bot,
+	// ## make it incoherent to the Discord API requirements,
+	// ## potentially causing your bot to be banned.
+	// ## You use these features on your own risk.
+	// ##
+	// ################################################
+	RESTBucketManager httd.RESTBucketManager
+
+	DisableCache bool
+	CacheConfig  *CacheConfig
+	ShardConfig  ShardConfig
+
+	// IgnoreEvents will skip events that matches the given event names.
+	// WARNING! This can break your caching, so be careful about what you want to ignore.
+	//
+	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
+	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
+	// them at all due to how the identify command was defined. eg. guildS_subscriptions
+	IgnoreEvents []string
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
@@ -208,7 +230,7 @@ type Client struct {
 
 //////////////////////////////////////////////////////
 //
-// COMPLIANCE'S / IMPLEMENTATIONS
+// IMPLEMENTED INTERFACES
 //
 //////////////////////////////////////////////////////
 var _ fmt.Stringer = (*Client)(nil)

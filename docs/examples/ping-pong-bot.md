@@ -5,24 +5,23 @@ So the time has come where you want to be a bot engineer huh? In this article yo
 package main
 
 import (
-	"fmt"
 	"github.com/andersfylling/disgord"
 	"os"
 )
 
 func main() {
     // configure a DisGord client
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // debug=false
     })
     defer client.StayConnectedUntilInterrupted()
     
     // create a handler and bind it to new message events
-    client.On(disgord.EvtMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+    client.On(disgord.EvtMessageCreate, func(s disgord.Session, evt *disgord.MessageCreate) {
         msg := evt.Message
         if msg.Content == "ping" {
-            _, _ = msg.Reply(session, "pong")
+            _, _ = msg.Reply(s, "pong")
         }
     })
 }
@@ -45,7 +44,7 @@ const NewMessage = disgord.EvtMessageCreate
 
 func main() {
     // configure a DisGord client
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // debug=false
     })

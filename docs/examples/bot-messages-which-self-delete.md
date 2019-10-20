@@ -44,7 +44,7 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 }
 
 func main() {
-	client := disgord.New(&disgord.Config{
+	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
@@ -52,7 +52,7 @@ func main() {
 	client.On(disgord.EvtMessageCreate, autoDeleteNewMessages)
 
 	// connect to the discord gateway to receive events
-	if err = client.Connect(); err != nil {
+	if err := client.Connect(); err != nil {
 		panic(err)
 	}
 

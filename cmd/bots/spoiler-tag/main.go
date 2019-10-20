@@ -7,16 +7,13 @@ import (
 )
 
 func main() {
-	c, err := disgord.NewClient(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   disgord.DefaultLogger(true),
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	chanID := disgord.Snowflake(540519296640614416)
-	_, err = c.CreateMessage(chanID, &disgord.CreateMessageParams{
+	_, err := c.CreateMessage(chanID, &disgord.CreateMessageParams{
 		Content:           "testing",
 		SpoilerTagContent: true,
 	})
