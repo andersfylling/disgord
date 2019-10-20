@@ -337,7 +337,6 @@ func ratelimitChannelWebhooks(id Snowflake) string {
 // GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -365,7 +364,6 @@ func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, e
 // For the PATCH method, all the JSON Params are optional.
 //  Method                  PUT/PATCH
 //  Endpoint                /channels/{channel.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
@@ -393,7 +391,6 @@ func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *upd
 // Fires a Channel Delete Gateway event.
 //  Method                  Delete
 //  Endpoint                /channels/{channel.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
 //  Reviewed                2018-10-09
 //  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
@@ -435,7 +432,6 @@ type UpdateChannelPermissionsParams struct {
 // For more information about permissions, see permissions.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -467,7 +463,6 @@ func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 // guild channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/invites
-//  Rate limiter [MAJOR]    /channels/{channel.id}/invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -502,7 +497,6 @@ type CreateChannelInvitesParams struct {
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/invites
-//  Rate limiter [MAJOR]    /channels/{channel.id}/invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -533,7 +527,6 @@ func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 // information about permissions, see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/permissions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -584,7 +577,6 @@ func (g *GroupDMParticipant) FindErrors() error {
 // on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -614,7 +606,6 @@ func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 // KickParticipant [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Rate limiter [MAJOR]    /channels/{channel.id}/recipients
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -

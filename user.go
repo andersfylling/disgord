@@ -751,7 +751,6 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 // with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
-//  Rate limiter            /users/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
@@ -773,7 +772,6 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
-//  Rate limiter            /users
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -792,7 +790,6 @@ func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
-//  Rate limiter            /users
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -814,7 +811,6 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 // Requires the guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
-//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
@@ -843,7 +839,6 @@ func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -867,7 +862,6 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
 //  Reviewed                2019-02-19
 //  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
@@ -904,7 +898,6 @@ type BodyUserCreateDM struct {
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
@@ -938,7 +931,6 @@ type CreateGroupDMParams struct {
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
@@ -961,7 +953,6 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 // GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/connections
-//  Rate limiter            /users/@me/connections
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -

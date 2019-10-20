@@ -162,7 +162,6 @@ type CreateGuildRoleParams struct {
 // Returns the new role object on success. Fires a Guild Role Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
@@ -189,7 +188,6 @@ func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, fl
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -218,7 +216,6 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -236,7 +233,6 @@ func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
