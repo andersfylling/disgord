@@ -127,6 +127,9 @@ func (b *ltBucket) Transaction(ctx context.Context, do bucketTransaction) (resp 
 	if bucket.resetTime.After(now) && bucket.remaining == 0 {
 		wait = bucket.resetTime.Sub(now)
 	}
+	if deadline, ok := ctx.Deadline(); ok && deadline.Before(time.Now().Add(wait)) {
+		return nil, nil, errors.New("time out, bucket resets in " + wait.String())
+	}
 	select {
 	case <-ctx.Done():
 		return nil, nil, errors.New("time out")
@@ -194,7 +197,7 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 
 	if remainingStr := header.Get(XRateLimitRemaining); remainingStr != "" {
 		remainingInt64, _ := strconv.ParseInt(remainingStr, 10, 64)
-		if remainingInt64 > 0 {
+		if remainingInt64 >= 0 {
 			remaining = int(remainingInt64)
 		}
 	}
@@ -214,6 +217,10 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 		if !(b.global == nil || b == b.global) && bucketHash != "" {
 			b.hash = bucketHash
 		}
+	}
+
+	if discordReset.Before(time.Unix(0, int64(time.Hour))) {
+		return false
 	}
 
 	// TODO: this can be simpler
