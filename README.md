@@ -16,7 +16,7 @@
 </div>
 
 ## About
-Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, concurrent rate limiters, etc.
+Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
 
 Talk to us on Discord! We exist in both the Gopher server and the Discord API server:
  - [Discord Gophers](https://discord.gg/qBVmnq9)
