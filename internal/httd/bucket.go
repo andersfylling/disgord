@@ -31,8 +31,9 @@ type ltBucket struct {
 
 	queue util.TicketQueue // Ticket => Token
 
-	remaining int // remaining requests
-	resetTime time.Time
+	remaining        int       // remaining requests
+	resetTime        time.Time // affected by time diff
+	discordResetTime time.Time // unaffected by time diff
 
 	updatedAt time.Time // use date from discord header
 
@@ -147,7 +148,14 @@ func (b *ltBucket) Transaction(ctx context.Context, do bucketTransaction) (resp 
 	return resp, body, nil
 }
 
+// updateAfterRequests updates the bucket with the latest rate limit info from http responses.
+//
+// Note! you must call NormalizeDiscordHeader before using this.
 func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjustedRemaining bool) {
+	if normalized := header.Get(DisgordNormalizedHeader); normalized == "" {
+		panic("headers were not normalized to use milliseconds")
+	}
+
 	// to synchronize the timestamp between the bot and the discord server
 	// we assume the current time is equal the header date
 	discordTime, err := HeaderToTime(header)
@@ -175,10 +183,13 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 	}
 
 	var reset time.Time
+	var discordReset time.Time
 	var remaining int = -1
 	if resetStr := header.Get(XRateLimitReset); resetStr != "" {
 		epoch, _ := strconv.ParseInt(resetStr, 10, 64)
+		epoch *= int64(time.Millisecond) // ms => nano
 		reset = time.Unix(0, epoch+diff.Nanoseconds())
+		discordReset = time.Unix(0, epoch)
 	}
 
 	if remainingStr := header.Get(XRateLimitRemaining); remainingStr != "" {
@@ -200,18 +211,24 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 		defer bucket.mu.Unlock()
 	} else {
 		bucket = b // no need to lock normal buckets
+		if !(b.global == nil || b == b.global) && bucketHash != "" {
+			b.hash = bucketHash
+		}
 	}
 
 	// TODO: this can be simpler
-	if reset.After(bucket.resetTime) {
+	// use discord reset time, as the local reset can be different in ms or s per request.
+	if discordReset.After(bucket.discordResetTime) {
 		bucket.resetTime = reset
+		bucket.discordResetTime = discordReset
 		bucket.remaining = remaining
 		bucket.updatedAt = discordTime
 		adjustedRemaining = true
-	} else if bucket.resetTime == reset {
+	} else if bucket.discordResetTime == discordReset {
 		if bucket.remaining == -1 || bucket.remaining > remaining {
 			bucket.remaining = remaining
 			bucket.updatedAt = discordTime
+			bucket.discordResetTime = discordReset
 			adjustedRemaining = true
 		}
 	}
