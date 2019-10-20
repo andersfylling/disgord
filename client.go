@@ -23,19 +23,6 @@ import (
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
-// NewRESTClient creates a Client for sending and handling Discord protocols such as rate limiting
-func NewRESTClient(conf *Config) (*httd.Client, error) {
-	return httd.NewClient(&httd.Config{
-		APIVersion:                   constant.DiscordVersion,
-		BotToken:                     conf.BotToken,
-		UserAgentSourceURL:           constant.GitHubURL,
-		UserAgentVersion:             constant.Version,
-		UserAgentExtra:               conf.ProjectName,
-		HTTPClient:                   conf.HTTPClient,
-		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
-	})
-}
-
 // New create a Client. But panics on configuration/setup errors.
 func New(conf *Config) (c *Client) {
 	var err error
@@ -61,6 +48,19 @@ func NewClient(conf *Config) (c *Client, err error) {
 			},
 		}
 	}
+	httdClient, err := httd.NewClient(&httd.Config{
+		APIVersion:                   constant.DiscordVersion,
+		BotToken:                     conf.BotToken,
+		UserAgentSourceURL:           constant.GitHubURL,
+		UserAgentVersion:             constant.Version,
+		UserAgentExtra:               conf.ProjectName,
+		HTTPClient:                   conf.HTTPClient,
+		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
+		RESTBucketManager:            conf.RESTBucketManager,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	if conf.ProjectName == "" {
 		conf.ProjectName = LibraryInfo()
@@ -74,12 +74,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 
 	// ignore PRESENCES_REPLACE: https://github.com/discordapp/discord-api-docs/issues/683
 	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
-
-	// request Client for REST requests
-	reqClient, err := NewRESTClient(conf)
-	if err != nil {
-		return nil, err
-	}
 
 	// caching
 	var cacher *Cache
@@ -118,7 +112,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 		proxy:        conf.Proxy,
 		botToken:     conf.BotToken,
 		dispatcher:   dispatch,
-		req:          reqClient,
+		req:          httdClient,
 		cache:        cacher,
 		log:          conf.Logger,
 		pool:         newPools(),
@@ -139,6 +133,7 @@ type Config struct {
 	Proxy      proxy.Dialer
 
 	CancelRequestWhenRateLimited bool
+	RESTBucketManager            httd.RESTBucketManager
 
 	DisableCache bool
 	CacheConfig  *CacheConfig
@@ -232,7 +227,7 @@ func (c *Client) Pool() *pools {
 
 // RESTBucketsRelations returns relationships between endpoints/requests and their buckets
 func (c *Client) RESTBucketsRelations() map[string]string {
-	return c.req.Relations()
+	return c.req.BucketGrouping()
 }
 
 // AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
@@ -335,9 +330,10 @@ func (c *Client) String() string {
 	return LibraryInfo()
 }
 
-// RateLimiter return the rate limiter object
-func (c *Client) RateLimiter() *httd.Manager {
-	return c.req.RateLimiter()
+// RESTBucketGrouping shows which hashed endpoints belong to which bucket hash for the REST API.
+// Note that these bucket hashes are eventual consistent.
+func (c *Client) RESTBucketGrouping() map[string]string {
+	return c.req.BucketGrouping()
 }
 
 // Req return the request object. Used in REST requests to handle rate limits,

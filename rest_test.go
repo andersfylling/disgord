@@ -52,11 +52,6 @@ func (gm *reqMocker) Do(req *httd.Request) (*http.Response, []byte, error) {
 	return gm.resp, gm.body, gm.err
 }
 
-var _ httd.Getter = (*reqMocker)(nil)
-var _ httd.Poster = (*reqMocker)(nil)
-var _ httd.Puter = (*reqMocker)(nil)
-var _ httd.Patcher = (*reqMocker)(nil)
-var _ httd.Deleter = (*reqMocker)(nil)
 var _ httd.Requester = (*reqMocker)(nil)
 
 func TestParamHolder_URLQueryString(t *testing.T) {
