@@ -167,7 +167,7 @@ type Ready struct {
 	SessionID string `json:"session_id"`
 
 	// private_channels will be an empty array. As bots receive private messages,
-	// they will be notified via Channel NewTicket events.
+	// they will be notified via Channel Add events.
 	//PrivateChannels []*channel.Channel `json:"private_channels"`
 
 	// bot can't have presences

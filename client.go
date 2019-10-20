@@ -580,7 +580,7 @@ func (c *Client) GuildsReady(cb func()) {
 //  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
 //
 // Another example is to create a voting system where you specify a deadline instead of a Runs counter:
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().NewTicket(time.Hour)})
+//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().Add(time.Hour)})
 //
 // You can use your own Ctrl struct, as long as it implements disgord.HandlerCtrl. Do not execute long running tasks
 // in the methods. Use a go routine instead.

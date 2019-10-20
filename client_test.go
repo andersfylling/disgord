@@ -298,7 +298,7 @@ func TestClient_System(t *testing.T) {
 	//}
 
 	//wg := sync.WaitGroup{}
-	//wg.NewTicket(1)
+	//wg.Add(1)
 	//c.On(event.GuildMembersChunk, func(s Session, evt *GuildMembersChunk) {
 	//	var msg string
 	//	for i := range evt.Members {
