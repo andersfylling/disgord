@@ -2,9 +2,10 @@ package httd
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -122,6 +123,32 @@ func TestLtBucket_RespectRateLimit(t *testing.T) {
 	})
 
 	mngr.Bucket(id, func(bucket RESTBucket) {
-		fmt.Println("asd")
+		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
+		defer cancel()
+		_, _, err := bucket.Transaction(ctx, func() (response *http.Response, bytes []byte, err error) {
+			return nil, nil, nil
+		})
+
+		if err == nil || !strings.Contains(err.Error(), "time out") {
+			t.Error("should have been rate limited")
+		}
 	})
+
+	// make the info outdated
+	mngr.Bucket(id, func(bucket RESTBucket) {
+		b := bucket.(*ltBucket)
+		b.resetTime = time.Unix(0, time.Now().UnixNano()-int64(5*time.Hour))
+		b.discordResetTime = b.resetTime.Add(3 * time.Second)
+
+		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
+		defer cancel()
+		_, _, err := bucket.Transaction(ctx, func() (response *http.Response, bytes []byte, err error) {
+			return nil, nil, errors.New("resp error yay")
+		})
+
+		if !strings.Contains(err.Error(), "resp error yay") {
+			t.Error("should have been able to send the request")
+		}
+	})
+
 }
