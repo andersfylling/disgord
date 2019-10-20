@@ -87,7 +87,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 	return nil
 }
 
-// CreateWebhook [REST] NewTicket a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// CreateWebhook [REST] Add a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns a webhook object on success.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
@@ -367,7 +367,7 @@ func (c *Client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, fl
 //  Rate limiter            /webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
 //  Reviewed                2018-08-14
-//  Comment                 NewTicket a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
+//  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.

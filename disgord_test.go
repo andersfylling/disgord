@@ -184,7 +184,7 @@ var sink1 int = 1
 //
 //	f := func(mocker *mockerWSReceiveOnly, wg *sync.WaitGroup, seq *uint) {
 //		loops := 1000
-//		wg.NewTicket(loops)
+//		wg.Add(loops)
 //		for i := 0; i < loops; i++ {
 //			//evt := []byte(`{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{}}`)
 //			evt := []byte(`{"t":"READY","s":` + strconv.Itoa(int(*seq)) + `,"op":0,"d":{"v":6,"user_settings":{},"user":{"verified":true,"username":"Disgord tester","mfa_enabled":false,"id":"486832262592069632","email":null,"discriminator":"9338","bot":true,"avatar":null},"session_id":"d3954ff063fa8d387ec395fe65723624","relationships":[],"private_channels":[],"presences":[],"guilds":[{"unavailable":true,"id":"486833041486905345"},{"unavailable":true,"id":"486833611564253184"}],"_trace":["gateway-prd-main-kg6w","discord-sessions-prd-1-27"]}}`)

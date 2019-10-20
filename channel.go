@@ -497,7 +497,7 @@ type CreateChannelInvitesParams struct {
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
 }
 
-// CreateChannelInvites [REST] NewTicket a new invite object for the channel. Only usable for guild channels. Requires
+// CreateChannelInvites [REST] Add a new invite object for the channel. Only usable for guild channels. Requires
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST

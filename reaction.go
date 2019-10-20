@@ -57,7 +57,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// CreateReaction [REST] NewTicket a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+// CreateReaction [REST] Add a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 // permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
 // response on success. The maximum request size when sending a message is 8MB.

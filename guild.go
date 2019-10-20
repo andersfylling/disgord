@@ -1205,7 +1205,7 @@ type CreateGuildParams struct {
 	Channels                []*PartialChannel             `json:"channels"`
 }
 
-// CreateGuild [REST] NewTicket a new guild. Returns a guild object on success. Fires a Guild NewTicket Gateway event.
+// CreateGuild [REST] Add a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
 //  Rate limiter            /guilds
@@ -1343,8 +1343,8 @@ type CreateGuildChannelParams struct {
 	Position             int                   `json:"position"` // can not omitempty in case position is 0
 }
 
-// CreateGuildChannel [REST] NewTicket a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
-// Returns the new channel object on success. Fires a Channel NewTicket Gateway event.
+// CreateGuildChannel [REST] Add a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
+// Returns the new channel object on success. Fires a Channel Add Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels
 //  Rate limiter            /guilds/{guild.id}/channels
@@ -1646,7 +1646,7 @@ type AddGuildMemberParams struct {
 
 // AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with
 // the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
-// already a member of the guild. Fires a Guild Member NewTicket Gateway event. Requires the bot to have the
+// already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
@@ -1838,8 +1838,8 @@ func (b *BanMemberParams) FindErrors() error {
 	return nil
 }
 
-// BanMember [REST] NewTicket a guild ban, and optionally delete previous messages sent by the banned user. Requires
-// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban NewTicket Gateway event.
+// BanMember [REST] Add a guild ban, and optionally delete previous messages sent by the banned user. Requires
+// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
 //  Rate limiter            /guilds/{guild.id}/bans
