@@ -664,7 +664,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 // CreateMessage [REST] Post a message to a guild text or DM channel. If operating on a guild channel, this
 // endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 // the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
-// Message Add Gateway event. See message formatting for more information on how to properly format messages.
+// Message Create Gateway event. See message formatting for more information on how to properly format messages.
 // The maximum request size when sending a message is 8MB.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages

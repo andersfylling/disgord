@@ -77,7 +77,7 @@ type RESTMessage interface {
 	// CreateMessage Post a message to a guild text or DM channel. If operating on a guild channel, this
 	// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 	// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
-	// Message Add Gateway event. See message formatting for more information on how to properly format messages.
+	// Message Create Gateway event. See message formatting for more information on how to properly format messages.
 	// The maximum request size when sending a message is 8MB.
 	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
 
@@ -101,7 +101,7 @@ type RESTMessage interface {
 }
 
 type RESTReaction interface {
-	// CreateReaction Add a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
+	// CreateReaction Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 	// permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 	// emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204
 	// empty response on success. The maximum request size when sending a message is 8MB.
@@ -175,7 +175,7 @@ type RESTChannel interface {
 	// guild channels. Requires the 'MANAGE_CHANNELS' permission.
 	GetChannelInvites(id Snowflake, flags ...Flag) (ret []*Invite, err error)
 
-	// CreateChannelInvites Add a new invite object for the channel. Only usable for guild channels. Requires
+	// CreateChannelInvites Create a new invite object for the channel. Only usable for guild channels. Requires
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
@@ -203,7 +203,7 @@ type RESTEmoji interface {
 	// GetGuildEmojis Returns a list of emoji objects for the given guild.
 	GetGuildEmojis(id Snowflake, flags ...Flag) ([]*Emoji, error)
 
-	// CreateGuildEmoji Add a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
+	// CreateGuildEmoji Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
 	// Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 	CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
 
@@ -218,7 +218,7 @@ type RESTEmoji interface {
 
 // RESTGuild REST interface for all guild endpoints
 type RESTGuild interface {
-	// CreateGuild Add a new guild. Returns a guild object on success. Fires a Guild Add Gateway event.
+	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 	CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
 
 	// GetGuild Returns the guild object for the given id.
@@ -235,7 +235,7 @@ type RESTGuild interface {
 	// GetGuildChannels Returns a list of guild channel objects.
 	GetGuildChannels(id Snowflake, flags ...Flag) ([]*Channel, error)
 
-	// CreateGuildChannel Add a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
+	// CreateGuildChannel Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
 	// Returns the new channel object on success. Fires a Channel Add Gateway event.
 	CreateGuildChannel(id Snowflake, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
 
@@ -296,8 +296,8 @@ type RESTGuild interface {
 
 	GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error)
 
-	// CreateGuildRole Add a new role for the guild. Requires the 'MANAGE_ROLES' permission.
-	// Returns the new role object on success. Fires a Guild Role Add Gateway event.
+	// CreateGuildRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
+	// Returns the new role object on success. Fires a Guild Role Create Gateway event.
 	CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
 
 	// UpdateGuildRolePositions Modify the positions of a set of role objects for the guild.
@@ -397,10 +397,10 @@ type RESTUser interface {
 	// GetUserDMs Returns a list of DM channel objects.
 	GetUserDMs(flags ...Flag) (ret []*Channel, err error)
 
-	// CreateDM Add a new DM channel with a user. Returns a DM channel object.
+	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
 	CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error)
 
-	// CreateGroupDM Add a new group DM channel with multiple users. Returns a DM channel object.
+	// CreateGroupDM Create a new group DM channel with multiple users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 	// endpoint will not be shown in the Discord Client
 	CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error)
@@ -417,7 +417,7 @@ type RESTVoice interface {
 
 // RESTWebhook REST interface for all Webhook endpoints
 type RESTWebhook interface {
-	// CreateWebhook Add a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns a webhook object on success.
 	CreateWebhook(channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error)
 

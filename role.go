@@ -159,7 +159,7 @@ type CreateGuildRoleParams struct {
 }
 
 // CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
-// Returns the new role object on success. Fires a Guild Role Add Gateway event.
+// Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
