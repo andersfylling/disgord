@@ -10,7 +10,7 @@ import (
 )
 
 func TestOn(t *testing.T) {
-	c := disgord.New(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken:     "sdkjfhdksfhskdjfhdkfjsd",
 		DisableCache: true,
 	})

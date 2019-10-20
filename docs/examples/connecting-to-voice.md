@@ -14,7 +14,7 @@ import (
 
 func main() {
 	// Set up a new Disgord client
-	discord := disgord.New(&disgord.Config{
+	discord := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
