@@ -2,6 +2,7 @@ package httd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -9,6 +10,8 @@ import (
 )
 
 type httpMethod string
+
+var _ fmt.Stringer = (*httpMethod)(nil)
 
 func (method httpMethod) String() string {
 	return string(method)
@@ -31,8 +34,8 @@ type Request struct {
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType string
 
-	bodyReader   io.Reader
-	rateLimitKey string
+	bodyReader     io.Reader
+	hashedEndpoint string
 }
 
 func (r *Request) PopulateMissing() {
@@ -44,7 +47,7 @@ func (r *Request) PopulateMissing() {
 	// 	c.ContentType = ContentTypeJSON
 	// }
 
-	r.rateLimitKey = r.RateLimitID()
+	r.hashedEndpoint = r.HashEndpoint()
 }
 
 func (r *Request) init() (err error) {
@@ -68,18 +71,19 @@ func (r *Request) init() (err error) {
 	return nil
 }
 
-func (r *Request) RateLimitID() string {
-	matches := regexpURLSnowflakes.FindAllString(r.Endpoint, -1)
+func (r *Request) HashEndpoint() string {
+	endpoint := strings.Split(r.Endpoint, "?")[0]
+	matches := regexpURLSnowflakes.FindAllString(endpoint, -1)
 
 	var isMajor bool
 	for _, prefix := range []string{"/guilds", "/channels", "/webhooks"} {
-		if strings.HasPrefix(r.Endpoint, prefix) {
+		if strings.HasPrefix(endpoint, prefix) {
 			isMajor = true
 			break
 		}
 	}
 
-	buffer := r.Endpoint
+	buffer := endpoint
 	for i := range matches {
 		if i == 0 && isMajor {
 			continue

@@ -43,7 +43,7 @@ type RateLimitResponseStructure struct {
 // NormalizeDiscordHeader overrides header fields with body content and make sure every header field
 // uses milliseconds and not seconds. Regards rate limits only.
 func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h http.Header, err error) {
-	// don't care about 2 different time delay estimates for the bucket reset.
+	// don't care about 2 different time delay estimates for the ltBucket reset.
 	// So lets take Retry-After and X-RateLimit-Reset-After to set the reset
 	var delay int64
 	if retryAfter := header.Get(RateLimitRetryAfter); retryAfter != "" {

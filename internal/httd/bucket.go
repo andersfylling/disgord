@@ -11,54 +11,64 @@ import (
 	"github.com/andersfylling/disgord/internal/util"
 )
 
-type bucketID struct {
-	global     bool
-	mustReturn bool
-	resetTime  time.Time
-}
-
-func newBucket(global *bucket) (b *bucket) {
-	b = &bucket{
-		global:    global,
+func newLeakyBucket(global *ltBucket) (b *ltBucket) {
+	b = &ltBucket{
 		remaining: -1,
-		resetTime: time.Now().Add(1 * time.Hour),
+		resetTime: time.Now(),
+		global:    global,
 	}
 
 	return b
 }
 
-type bucketTransaction func() (resp *http.Response, body []byte, err error)
+type bucketTransaction = func() (resp *http.Response, body []byte, err error)
 
-// bucket holds the rate limit info for a given hash or endpoint
-type bucket struct {
+// ltBucket combines leaky and token buckets to allow time aware of the REST requests while they're in queue.
+type ltBucket struct {
 	mu         sync.RWMutex
 	atomicLock util.AtomicLock
 	hash       string // discord designated hash
 
-	queue util.TicketQueue
+	queue util.TicketQueue // Ticket => Token
 
-	remaining uint // remaining requests
+	remaining int // remaining requests
 	resetTime time.Time
 
+	updatedAt time.Time // use date from discord header
+
+	// this bucket is global if this.global is nil or this == this.global
+	global      *ltBucket
 	usingGlobal bool
-	global      *bucket
 }
 
-func (b *bucket) AcquireLock() (locked bool) {
+var _ RESTBucket = (*ltBucket)(nil)
+
+func (b *ltBucket) AcquireLock() (locked bool) {
 	if locked = b.atomicLock.AcquireLock(); !locked {
 		return false
 	}
 
+	if _, err := b.SelectiveGlobalLock(); err != nil {
+		b.atomicLock.Unlock()
+		return false
+	}
+
+	return true
+}
+
+func (b *ltBucket) SelectiveGlobalLock() (locked bool, err error) {
 	if b != b.global {
-		// peek global bucket
+		// peek global ltBucket
 		b.global.mu.RLock()
 		globalLock := b.global.active()
 		b.global.mu.RUnlock()
 
 		if globalLock {
-			// only the one with an acquired lock can write
 			// so check if the globalLock has changed since the read
-			locked = b.global.atomicLock.AcquireLock()
+			if locked = b.global.atomicLock.AcquireLock(); !locked {
+				return false, errors.New("unable to acquire needed global lock")
+			}
+
 			b.global.mu.RLock()
 			if !b.global.active() {
 				b.global.atomicLock.Unlock()
@@ -70,20 +80,26 @@ func (b *bucket) AcquireLock() (locked bool) {
 		}
 	}
 
-	return locked
+	return locked, nil
 }
 
-func (b *bucket) Transaction(ctx context.Context, do bucketTransaction) (resp *http.Response, body []byte, err error) {
-	ticket := b.queue.NewTicket()
+func (b *ltBucket) Transaction(ctx context.Context, do bucketTransaction) (resp *http.Response, body []byte, err error) {
+	// wait until you are next in line and you can acquire a lock
+	// this is to support timeout/cancellation for stacked requests
+	// TODO: on success, every request with same endpoint or a valid subset can be fulfilled locally
+	// reqA = /guilds/1/members?limit=100
+	// reqB = /guilds/1/members?limit=10
+	// reqB is a subset of A, and therefore reqA can create a response for reqB locally (must be deep copy - djp)
+	token := b.queue.NewTicket()
 	for {
 		select {
 		case <-ctx.Done():
-			b.queue.Delete(ticket)
+			b.queue.Delete(token)
 			return nil, nil, errors.New("time out")
 		case <-time.After(10 * time.Millisecond):
 		}
 
-		if !b.queue.Next(ticket, b.AcquireLock) {
+		if !b.queue.Next(token, b.AcquireLock) {
 			continue
 		}
 		break
@@ -91,10 +107,13 @@ func (b *bucket) Transaction(ctx context.Context, do bucketTransaction) (resp *h
 	defer b.atomicLock.Unlock()
 	if b.usingGlobal {
 		defer b.global.atomicLock.Unlock()
+		defer func() {
+			b.usingGlobal = false
+		}()
 	}
 
-	// set active bucket
-	var bucket *bucket
+	// set active ltBucket
+	var bucket *ltBucket
 	if b.usingGlobal {
 		bucket = b.global
 	} else {
@@ -119,17 +138,19 @@ func (b *bucket) Transaction(ctx context.Context, do bucketTransaction) (resp *h
 		return nil, nil, err
 	}
 
-	// update bucket info
-
-	// reduce remaining if rate limited
-	// remaining == -1 when no rate limit info currently exists
-	if bucket.remaining > 0 {
+	// update ltBucket info
+	// reduce remaining if needed
+	if !b.updateAfterRequest(resp.Header, resp.StatusCode) && bucket.remaining > 0 {
 		bucket.remaining--
 	}
 
+	return resp, body, nil
+}
+
+func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjustedRemaining bool) {
 	// to synchronize the timestamp between the bot and the discord server
 	// we assume the current time is equal the header date
-	discordTime, err := HeaderToTime(resp.Header)
+	discordTime, err := HeaderToTime(header)
 	if err != nil {
 		discordTime = time.Now()
 	}
@@ -138,14 +159,14 @@ func (b *bucket) Transaction(ctx context.Context, do bucketTransaction) (resp *h
 	diff := localTime.Sub(discordTime)
 
 	var isGlobal bool
-	bucketHash := resp.Header.Get(XRateLimitBucket)
-	if _, ok := resp.Header[XRateLimitBucket]; ok && bucketHash == "" {
+	bucketHash := header.Get(XRateLimitBucket)
+	if _, ok := header[XRateLimitBucket]; ok && bucketHash == "" {
 		isGlobal = true
 	}
-	isGlobal = isGlobal || resp.Header.Get(XRateLimitGlobal) == "true"
+	isGlobal = isGlobal || header.Get(XRateLimitGlobal) == "true"
 
-	// if this is not a 429 error we can determine if the local bucket is a global one or not
-	if resp.StatusCode != http.StatusTooManyRequests && b.hash == "" {
+	// if this is not a 429 error we can determine if the local ltBucket is a global one or not
+	if statusCode != http.StatusTooManyRequests && b.hash == "" {
 		if isGlobal {
 			b.hash = GlobalHash
 		} else if bucketHash != "" {
@@ -154,33 +175,50 @@ func (b *bucket) Transaction(ctx context.Context, do bucketTransaction) (resp *h
 	}
 
 	var reset time.Time
-	var remaining uint
-	if resetStr := resp.Header.Get(XRateLimitReset); resetStr != "" {
+	var remaining int = -1
+	if resetStr := header.Get(XRateLimitReset); resetStr != "" {
 		epoch, _ := strconv.ParseInt(resetStr, 10, 64)
 		reset = time.Unix(0, epoch+diff.Nanoseconds())
 	}
 
-	if remainingStr := resp.Header.Get(XRateLimitRemaining); remainingStr != "" {
-		remainingInt, _ := strconv.ParseInt(remainingStr, 10, 64)
-		remaining = uint(remainingInt)
+	if remainingStr := header.Get(XRateLimitRemaining); remainingStr != "" {
+		remainingInt64, _ := strconv.ParseInt(remainingStr, 10, 64)
+		if remainingInt64 > 0 {
+			remaining = int(remainingInt64)
+		}
 	}
 
-	// update bucket reference to whatever the header regards
+	// update ltBucket reference to whatever the header regards
+	var bucket *ltBucket
 	if isGlobal {
-		bucket = b.global // TODO-?: AcquireLock?
-	} else {
-		if !reset.IsZero() {
-			b.resetTime = reset
-		}
-
-		if b.resetTime.Before(reset) {
-			b.resetTime = reset
+		if b.global == b {
+			bucket = b
 		} else {
+			bucket = b.global
+		}
+		bucket.mu.Lock()
+		defer bucket.mu.Unlock()
+	} else {
+		bucket = b // no need to lock normal buckets
+	}
 
+	// TODO: this can be simpler
+	if reset.After(bucket.resetTime) {
+		bucket.resetTime = reset
+		bucket.remaining = remaining
+		bucket.updatedAt = discordTime
+		adjustedRemaining = true
+	} else if bucket.resetTime == reset {
+		if bucket.remaining == -1 || bucket.remaining > remaining {
+			bucket.remaining = remaining
+			bucket.updatedAt = discordTime
+			adjustedRemaining = true
 		}
 	}
+
+	return adjustedRemaining
 }
 
-func (b *bucket) active() bool {
+func (b *ltBucket) active() bool {
 	return b.remaining >= 0
 }

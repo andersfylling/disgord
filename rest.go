@@ -426,9 +426,10 @@ type basicBuilder struct {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err error) {
+func (c *Client) GetGateway() (gateway *websocket.Gateway, err error) {
 	var body []byte
-	_, body, err = client.Get(&httd.Request{
+	_, body, err = c.req.Do(&httd.Request{
+		Method:   httd.MethodGet,
 		Endpoint: "/gateway",
 	})
 	if err != nil {
@@ -451,7 +452,8 @@ func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err
 //  Comment                 This endpoint requires authentication using a valid bot token.
 func (c *Client) GetGatewayBot() (gateway *websocket.GatewayBot, err error) {
 	var body []byte
-	_, body, err = c.req.Get(&httd.Request{
+	_, body, err = c.req.Do(&httd.Request{
+		Method:   httd.MethodGet,
 		Endpoint: "/gateway/bot",
 	})
 	if err != nil {

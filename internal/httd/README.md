@@ -35,6 +35,7 @@ To tackle this, every hashed endpoint is assumed to have its own bucket. To hash
 /test => /test
 /test/4234 => /test/{id}
 /channels => /channels 
+/channels?limit=12 => /channels 
 /channels/895349573 => /channels/895349573
 /guilds/35347862384/roles/23489723 => /guilds/35347862384/roles/{id}
 ```

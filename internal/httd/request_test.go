@@ -29,8 +29,8 @@ func TestRequest_RateLimitID(t *testing.T) {
 		r := Request{Endpoint: endpoint}
 		r.PopulateMissing() // calls generator
 
-		if r.rateLimitKey != wants {
-			t.Errorf("got %s, wants %s", r.rateLimitKey, wants)
+		if r.hashedEndpoint != wants {
+			t.Errorf("got %s, wants %s", r.hashedEndpoint, wants)
 		}
 	}
 }
