@@ -94,6 +94,7 @@ func main() {
 	enforcers := []Enforcer{
 		{Name: "Reseter"},
 		{Name: "URLQueryStringer"},
+		{Name: "Copier"},
 
 		{Name: "internalUpdater"},
 		{Name: "internalClientUpdater"},
@@ -116,6 +117,7 @@ func main() {
 	}
 
 	makeFile(enforcers, "generate/interfaces/Reseter.gotpl", "iface_reseter_gen.go")
+	makeFile(enforcers, "generate/interfaces/Copier.gotpl", "iface_copier_gen.go")
 	makeFile(enforcers, "generate/interfaces/URLQueryStringer.gotpl", "iface_urlquerystringer_gen.go")
 	makeFile(enforcers, "generate/interfaces/internalUpdaters.gotpl", "iface_internalupdaters_gen.go")
 }
