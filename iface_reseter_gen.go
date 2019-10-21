@@ -100,6 +100,9 @@ func (m *Message) Reset() {
 	if m.Author != nil {
 		m.Author.Reset()
 	}
+	if m.Member != nil {
+		m.Member.Reset()
+	}
 	m.Content = ""
 	m.Timestamp = Time{}
 	m.EditedTimestamp = Time{}
@@ -107,6 +110,7 @@ func (m *Message) Reset() {
 	m.MentionEveryone = false
 	m.Mentions = nil
 	m.MentionRoles = nil
+	m.MentionChannels = nil
 	m.Attachments = nil
 	m.Embeds = nil
 	m.Reactions = nil
@@ -116,6 +120,8 @@ func (m *Message) Reset() {
 	m.Type = 0
 	m.Activity = MessageActivity{}
 	m.Application = MessageApplication{}
+	m.MessageReference = nil
+	m.Flags = 0
 	m.GuildID = 0
 	m.SpoilerTagContent = false
 	m.SpoilerTagAllAttachments = false

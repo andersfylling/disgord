@@ -267,11 +267,15 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetMessagesParams:
 		s = *t
+	case *[]*MentionChannel:
+		s = *t
 	case *[]*Message:
 		s = *t
 	case *[]*MessageActivity:
 		s = *t
 	case *[]*MessageApplication:
+		s = *t
+	case *[]*MessageReference:
 		s = *t
 	case *[]*updateMessageBuilder:
 		s = *t
@@ -471,6 +475,12 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
+	case []*MentionChannel:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*Message:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -649,7 +659,19 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
+	case []*MentionChannel:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*Message:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*MessageReference:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
@@ -756,6 +778,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*Message:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*MessageReference:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
