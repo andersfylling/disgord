@@ -346,6 +346,26 @@ func (m *Message) Reply(client msgSender, data ...interface{}) (*Message, error)
 	return client.SendMsg(m.ChannelID, data...)
 }
 
+func (m *Message) React(s Session, emoji interface{}, flags ...Flag) error {
+	if m.ID.IsZero() {
+		return errors.New("missing message ID")
+	} else if m.ChannelID.IsZero() {
+		return errors.New("missing channel ID")
+	}
+
+	return s.CreateReaction(m.ChannelID, m.ID, emoji, flags...)
+}
+
+func (m *Message) Unreact(s Session, emoji interface{}, flags ...Flag) error {
+	if m.ID.IsZero() {
+		return errors.New("missing message ID")
+	} else if m.ChannelID.IsZero() {
+		return errors.New("missing channel ID")
+	}
+
+	return s.DeleteOwnReaction(m.ChannelID, m.ID, emoji, flags...)
+}
+
 // AddReaction adds a reaction to the message
 //func (m *Message) AddReaction(reaction *Reaction) {}
 
