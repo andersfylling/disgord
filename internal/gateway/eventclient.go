@@ -102,7 +102,7 @@ type EvtConfig struct {
 	// useful in sharding to avoid complicated patterns to handle N channels.
 	EventChan chan<- *Event
 
-	connectQueue func(shardID uint, cb func() error) error
+	connectQueue connectQueue
 
 	discordErrListener discordErrListener
 

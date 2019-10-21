@@ -102,6 +102,9 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	}
 	mngr.sync.logger = conf.Logger
 	mngr.sync.timeoutMs = conf.ShardRateLimit
+	if conf.ConnectQueue == nil {
+		mngr.connectQueue = mngr.sync.queueShard
+	}
 
 	return mngr
 }
@@ -141,6 +144,11 @@ type ShardConfig struct {
 
 	// Large bots only. If Discord did not give you a custom rate limit, do not touch this.
 	ShardRateLimit time.Duration
+
+	// ConnectQueue is used to control how often shards can connect by sending an identify command.
+	// For distributed systems, this must be overwritten as, by default, you can only send one identify
+	// every five seconds. The default implementation can be found in shard_sync.go.
+	ConnectQueue connectQueue
 
 	// DisableAutoScaling is triggered when at least one shard gets a 4011 websocket
 	// error from Discord. This causes all the shards to disconnect and new ones are created.
@@ -203,7 +211,8 @@ type shardMngr struct {
 	shards         map[shardID]*EvtClient
 	DiscordPktPool *sync.Pool
 
-	sync shardSync
+	sync         shardSync
+	connectQueue connectQueue
 }
 
 var _ ShardManager = (*shardMngr)(nil)
@@ -228,7 +237,7 @@ func (s *shardMngr) initShards() error {
 
 		// synchronization
 		EventChan:    s.conf.EventChan,
-		connectQueue: s.sync.queueShard,
+		connectQueue: s.connectQueue,
 
 		// user settings
 		BotToken:   s.conf.BotToken,
