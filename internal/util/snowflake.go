@@ -1,4 +1,4 @@
-package depalias
+package util
 
 import (
 	"github.com/andersfylling/snowflake/v4"

@@ -186,7 +186,7 @@ package disgord
 import (
 	"fmt"
 
-	"github.com/andersfylling/disgord/internal/depalias"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/constant"
 )
@@ -200,21 +200,21 @@ func LibraryInfo() string {
 // ------------------
 
 // Snowflake twitter snowflake identification for Discord
-type Snowflake = depalias.Snowflake
+type Snowflake = util.Snowflake
 
 // GetSnowflake see snowflake.GetSnowflake
 func GetSnowflake(v interface{}) (Snowflake, error) {
-	return depalias.GetSnowflake(v)
+	return util.GetSnowflake(v)
 }
 
 // NewSnowflake see snowflake.NewSnowflake
 func NewSnowflake(id uint64) Snowflake {
-	return depalias.NewSnowflake(id)
+	return util.NewSnowflake(id)
 }
 
 // ParseSnowflakeString see snowflake.ParseSnowflakeString
 func ParseSnowflakeString(v string) Snowflake {
-	return depalias.ParseSnowflakeString(v)
+	return util.ParseSnowflakeString(v)
 }
 
 func newErrorMissingSnowflake(message string) *ErrorMissingSnowflake {

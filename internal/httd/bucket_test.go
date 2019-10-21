@@ -75,7 +75,7 @@ func TestLtBucket_updateAfterResponse(t *testing.T) {
 		resp.Header.Set(XRateLimitBucket, hash)
 		resp.Header.Set(XRateLimitLimit, strconv.Itoa(limit))
 		resp.Header.Set(XRateLimitRemaining, strconv.Itoa(remaining))
-		resp.Header.Set(XRateLimitReset, strconv.FormatFloat(float64(reset.UnixNano())/float64(time.Second), 'f', 4, 64))
+		resp.Header.Set(XRateLimitReset, strconv.FormatFloat(float64(reset.UnixNano())/float64(time.Second), 'f', 5, 64))
 		resp.Header.Set("date", time.Now().Format(time.RFC1123))
 
 		header, err := NormalizeDiscordHeader(resp.StatusCode, resp.Header, nil)
