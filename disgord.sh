@@ -78,7 +78,7 @@ func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
 }
 
 func main() {
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // debug=false
     })
