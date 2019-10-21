@@ -346,45 +346,6 @@ func (m *Message) Reply(client msgSender, data ...interface{}) (*Message, error)
 	return client.SendMsg(m.ChannelID, data...)
 }
 
-// Respond responds to a message using a Message object.
-// Deprecated: use Reply
-func (m *Message) Respond(client MessageSender, message *Message) (msg *Message, err error) {
-	if constant.LockedMethods {
-		m.RLock()
-	}
-	id := m.ChannelID
-	if constant.LockedMethods {
-		m.RUnlock()
-	}
-
-	if constant.LockedMethods {
-		message.Lock()
-	}
-	message.ChannelID = id
-	if constant.LockedMethods {
-		message.Unlock()
-	}
-	msg, err = message.Send(client)
-	return
-}
-
-// RespondString sends a reply to a message in the form of a string
-// Deprecated: use Reply
-func (m *Message) RespondString(client MessageSender, content string) (msg *Message, err error) {
-	params := &CreateMessageParams{
-		Content: content,
-	}
-
-	if constant.LockedMethods {
-		m.RLock()
-	}
-	msg, err = client.CreateMessage(m.ChannelID, params)
-	if constant.LockedMethods {
-		m.RUnlock()
-	}
-	return
-}
-
 // AddReaction adds a reaction to the message
 //func (m *Message) AddReaction(reaction *Reaction) {}
 
