@@ -29,6 +29,10 @@ There might be bugs in the cache, or the cache processing might not exist yet fo
 
 Remember to read the docs/code for whatever version of disgord you are using. This README file reflects the latest state in the develop branch, or at least, I try to reflect the latest state.
 
+## Data types & tips
+ - Use disgord.Snowflake, not snowflake.Snowflake.
+ - Use disgord.Time, not time.Time when dealing with Discord timestamps. This is because Discord returns a weird time format.
+
 ## Starter guide
 > This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dealing with dependencies, remember to activate module support in your IDE
 
