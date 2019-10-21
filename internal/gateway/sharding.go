@@ -104,6 +104,8 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 	mngr.sync.timeoutMs = conf.ShardRateLimit
 	if conf.ConnectQueue == nil {
 		mngr.connectQueue = mngr.sync.queueShard
+	} else {
+		mngr.connectQueue = conf.ConnectQueue
 	}
 
 	return mngr
