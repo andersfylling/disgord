@@ -19,10 +19,10 @@ jobs:
         id: go
       - name: create inputs
         run: |
-        echo "botty" >> inputs.txt
-        echo "" >> inputs.txt
-        echo "" >> inputs.txt
-        echo "n" >> inputs.txt
-        echo "n" >> inputs.txt
+          echo "botty" >> inputs.txt
+          echo "" >> inputs.txt
+          echo "" >> inputs.txt
+          echo "n" >> inputs.txt
+          echo "n" >> inputs.txt
       - name: run script
         run: cat inputs.txt | bash <(curl -s -L https://git.io/disgord-script)
