@@ -41,6 +41,7 @@ type Link interface {
 //
 //////////////////////////////////////////////////////
 
+type connectQueue = func(shardID uint, cb func() error) error
 type connectSignature = func() (evt interface{}, err error)
 type discordErrListener = func(code int, reason string)
 
