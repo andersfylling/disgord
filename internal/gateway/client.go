@@ -13,7 +13,7 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/httd"
 
-	"go.uber.org/atomic"
+	"sync/atomic"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -170,7 +170,7 @@ type client struct {
 	ChannelBuffer uint
 
 	log         logger.Logger
-	logSequence atomic.Uint64
+	logSequence uint64
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -261,7 +261,8 @@ func (c *client) getLogPrefix() string {
 		t += "?"
 	}
 
-	s := "s:" + strconv.FormatUint(c.logSequence.Inc(), 10)
+	nr := atomic.AddUint64(&c.logSequence, 1)
+	s := "s:" + strconv.FormatUint(nr, 10)
 	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
 	// [ws-?, s:0, shard:0]

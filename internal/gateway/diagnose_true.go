@@ -9,10 +9,10 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"go.uber.org/atomic"
 )
 
 const SaveIncomingPackets = true
@@ -20,7 +20,7 @@ const SaveIncomingPackets = true
 const DiagnosePath = "diagnose-report"
 const DiagnosePath_packets = "diagnose-report/packets"
 
-var outgoingPacketSequence = atomic.NewUint64(0)
+var outgoingPacketSequence uint64
 var dirExists bool
 
 func formatFilename(incoming bool, clientType ClientType, shardID uint, opCode opcode.OpCode, sequencenr uint64, suffix string) (filename string) {
@@ -78,8 +78,8 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 		c.log.Debug(c.getLogPrefix(), err)
 	}
 
-	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, outgoingPacketSequence.Load(), "")
-	outgoingPacketSequence.Inc()
+	nr := atomic.AddUint64(&outgoingPacketSequence, 1)
+	filename := formatFilename(false, c.clientType, c.ShardID, packet.Op, nr, "")
 
 	path := DiagnosePath_packets + "/" + filename
 	if err = ioutil.WriteFile(path, data, 0644); err != nil {
