@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -37,10 +36,7 @@ type Emoji struct {
 
 var _ Reseter = (*Emoji)(nil)
 var _ DeepCopier = (*Emoji)(nil)
-var _ Copier = (*Emoji)(nil)
 var _ discordDeleter = (*Emoji)(nil)
-
-// var _ discordSaver = (*Emoji)(nil) // TODO
 var _ fmt.Stringer = (*Emoji)(nil)
 
 func (e *Emoji) String() string {
@@ -73,40 +69,6 @@ func (e *Emoji) LinkToGuild(guildID Snowflake) {
 func (e *Emoji) DeepCopy() (copy interface{}) {
 	copy = &Emoji{}
 	e.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (e *Emoji) CopyOverTo(other interface{}) (err error) {
-	var emoji *Emoji
-	var ok bool
-	if emoji, ok = other.(*Emoji); !ok {
-		err = newErrorUnsupportedType("given type is not *Emoji")
-		return
-	}
-
-	if constant.LockedMethods {
-		e.mu.RLock()
-		emoji.mu.Lock()
-	}
-
-	emoji.ID = e.ID
-	emoji.Name = e.Name
-	emoji.Roles = e.Roles
-	emoji.RequireColons = e.RequireColons
-	emoji.Managed = e.Managed
-	emoji.Animated = e.Animated
-	emoji.guildID = e.guildID
-
-	if e.User != nil {
-		emoji.User = e.User.DeepCopy().(*User)
-	}
-
-	if constant.LockedMethods {
-		e.mu.RUnlock()
-		emoji.mu.Unlock()
-	}
 
 	return
 }

@@ -5,15 +5,19 @@ package disgord
 import "github.com/andersfylling/disgord/internal/constant"
 
 {{ range $enf := . }}
-{{ if eq $enf.Name "Copier" }}
+{{ if eq $enf.Name "DeepCopier" }}
 
 {{ range $struct := $enf.Structs }}
-func ({{ $struct.ShortName }} *{{ $struct.Name }}) CopyOverTo(other interface{}) (err error) {
+func ({{ $struct.ShortName }} *{{ $struct.Name }}) DeepCopy(other interface{}) (copy interface{}) {
 	var cp *{{ $struct.Name }}
-	var valid bool
-	if cp, valid = other.(*{{ $struct.Name }}); !valid {
-		err = newErrorUnsupportedType("argument given is not a *{{ $struct.Name }} type")
-		return
+	if other == nil {
+		cp = &{{ $struct.Name }}{}
+	} else {
+		var valid bool
+		if cp, valid = other.(*{{ $struct.Name }}); !valid {
+			err = newErrorUnsupportedType("argument given is not a *{{ $struct.Name }} type")
+			panic(err)
+		}
 	}
 
 	if constant.LockedMethods {
@@ -22,18 +26,22 @@ func ({{ $struct.ShortName }} *{{ $struct.Name }}) CopyOverTo(other interface{})
 	}
 
     {{- range $i, $field := $struct.Fields }}
+
     {{- if $field.Resetable }}
+
     {{- if eq $field.ZeroVal "nil" }}
     if {{ $struct.ShortName }}.{{ $field.Name }} != nil {
         cp.{{ $field.Name }}.Reset()
-        _ = {{ $struct.ShortName }}.{{ $field.Name }}.CopyOverTo(cp.{{ $field.Name }})
-    }
-    {{- end }}
+        {{ $struct.ShortName }}.{{ $field.Name }}.DeepCopy(cp.{{ $field.Name }})
+    } else {
+		cp.{{ $field.Name }} = {{ $struct.ShortName }}.{{ $field.Name }}.DeepCopy(nil)
+	}
+	{{- end }}
     {{- else }}
     cp.{{ $field.Name }} = {{ $struct.ShortName }}.{{ $field.Name }}
     {{- end }}
-    {{- end }}
 
+    {{- end }}
 
 	if constant.LockedMethods {
 		{{ $struct.ShortName }}.RUnlock()

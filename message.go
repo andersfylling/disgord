@@ -144,7 +144,6 @@ var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
 var _ discordDeleter = (*Message)(nil)
-var _ Copier = (*Message)(nil)
 var _ DeepCopier = (*Message)(nil)
 
 func (m *Message) String() string {
@@ -205,71 +204,6 @@ type messageDeleter interface {
 func (m *Message) DeepCopy() (copy interface{}) {
 	copy = NewMessage()
 	m.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (m *Message) CopyOverTo(other interface{}) (err error) {
-	var message *Message
-	var valid bool
-	if message, valid = other.(*Message); !valid {
-		err = newErrorUnsupportedType("argument given is not a *Message type")
-		return
-	}
-
-	if constant.LockedMethods {
-		m.RLock()
-		message.Lock()
-	}
-
-	message.ID = m.ID
-	message.ChannelID = m.ChannelID
-	message.Content = m.Content
-	message.Timestamp = m.Timestamp
-	message.EditedTimestamp = m.EditedTimestamp
-	message.Tts = m.Tts
-	message.MentionEveryone = m.MentionEveryone
-	message.MentionRoles = m.MentionRoles
-	message.Pinned = m.Pinned
-	message.WebhookID = m.WebhookID
-	message.Type = m.Type
-	message.Activity = m.Activity
-	message.Application = m.Application
-	message.GuildID = m.GuildID
-	message.HasSpoilerImage = m.HasSpoilerImage
-	message.Nonce = m.Nonce
-	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
-	message.SpoilerTagContent = m.SpoilerTagContent
-
-	if m.Author != nil {
-		message.Author = m.Author.DeepCopy().(*User)
-	}
-
-	if !m.Nonce.IsZero() {
-		message.Nonce = m.Nonce
-	}
-
-	for _, mention := range m.Mentions {
-		message.Mentions = append(message.Mentions, mention.DeepCopy().(*User))
-	}
-
-	for _, attachment := range m.Attachments {
-		message.Attachments = append(message.Attachments, attachment.DeepCopy().(*Attachment))
-	}
-
-	for _, embed := range m.Embeds {
-		message.Embeds = append(message.Embeds, embed.DeepCopy().(*Embed))
-	}
-
-	for _, reaction := range m.Reactions {
-		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
-	}
-
-	if constant.LockedMethods {
-		m.RUnlock()
-		message.Unlock()
-	}
 
 	return
 }

@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -34,7 +33,6 @@ type Invite struct {
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
-var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 var _ discordDeleter = (*Invite)(nil)
 
@@ -53,44 +51,6 @@ func (i *Invite) DeepCopy() (copy interface{}) {
 	i.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (i *Invite) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var invite *Invite
-	if invite, ok = other.(*Invite); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Invite")
-		return
-	}
-
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
-	invite.Code = i.Code
-	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
-	invite.ApproximateMemberCount = i.ApproximateMemberCount
-
-	if i.Guild != nil {
-		invite.Guild = NewPartialGuild(i.Guild.ID)
-	}
-	if i.Channel != nil {
-		c := i.Channel
-		invite.Channel = &PartialChannel{
-			ID:   c.ID,
-			Name: c.Name,
-			Type: c.Type,
-		}
-	}
-
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
-	return nil
 }
 
 // InviteMetadata Object
@@ -121,49 +81,7 @@ type InviteMetadata struct {
 	Revoked bool `json:"revoked"`
 }
 
-var _ Copier = (*InviteMetadata)(nil)
 var _ DeepCopier = (*InviteMetadata)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (i *InviteMetadata) DeepCopy() (copy interface{}) {
-	copy = &InviteMetadata{}
-	i.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var invite *InviteMetadata
-	if invite, ok = other.(*InviteMetadata); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *InviteMetadata")
-		return
-	}
-
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
-	invite.Uses = i.Uses
-	invite.MaxUses = i.MaxUses
-	invite.MaxAge = i.MaxAge
-	invite.Temporary = i.Temporary
-	invite.CreatedAt = i.CreatedAt
-	invite.Revoked = i.Revoked
-
-	if i.Inviter != nil {
-		invite.Inviter = i.Inviter.DeepCopy().(*User)
-	}
-
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
-	return nil
-}
 
 // voiceRegionsFactory temporary until flyweight is implemented
 func inviteFactory() interface{} {

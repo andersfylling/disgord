@@ -14,13 +14,6 @@ import (
 //go:generate go run generate/sorters/main.go
 //go:generate go run generate/json/main.go
 
-// Copier holds the CopyOverTo method which copies all it's content from one
-// struct to another. Note that this requires a deep copy.
-// useful when overwriting already existing content in the cacheLink to reduce GC.
-type Copier interface {
-	CopyOverTo(other interface{}) error
-}
-
 // cacheCopier is similar to Copier interface. Except that it only copies over fields which has a value, unlike Copier
 // that creates an exact copy of everything. This will also ignore arrays that can be simplified to a snowflake array.
 // An example of said simplification is Guild.Channels, as there will already exist a channel cacheLink.

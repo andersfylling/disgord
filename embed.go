@@ -1,9 +1,5 @@
 package disgord
 
-import (
-	"github.com/andersfylling/disgord/internal/constant"
-)
-
 // limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
 // TODO: implement NewEmbedX functions that ensures limitations
 
@@ -26,64 +22,14 @@ type Embed struct {
 	Fields      []*EmbedField   `json:"fields,omitempty"`      //	array of embed field objects	fields information
 }
 
+var _ DeepCopier = (*Embed)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *Embed) DeepCopy() (copy interface{}) {
+func (e *Embed) DeepCopy() (copy interface{}) {
 	copy = &Embed{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *Embed) CopyOverTo(other interface{}) (err error) {
-	var embed *Embed
-	var valid bool
-	if embed, valid = other.(*Embed); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *Embed")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.Title = c.Title
-	embed.Type = c.Type
-	embed.Description = c.Description
-	embed.URL = c.URL
-	embed.Timestamp = c.Timestamp
-	embed.Color = c.Color
-
-	if c.Footer != nil {
-		embed.Footer = c.Footer.DeepCopy().(*EmbedFooter)
-	}
-	if c.Image != nil {
-		embed.Image = c.Image.DeepCopy().(*EmbedImage)
-	}
-	if c.Thumbnail != nil {
-		embed.Thumbnail = c.Thumbnail.DeepCopy().(*EmbedThumbnail)
-	}
-	if c.Video != nil {
-		embed.Video = c.Video.DeepCopy().(*EmbedVideo)
-	}
-	if c.Provider != nil {
-		embed.Provider = c.Provider.DeepCopy().(*EmbedProvider)
-	}
-	if c.Author != nil {
-		embed.Author = c.Author.DeepCopy().(*EmbedAuthor)
-	}
-
-	embed.Fields = make([]*EmbedField, len(c.Fields))
-	for i, field := range c.Fields {
-		embed.Fields[i] = field.DeepCopy().(*EmbedField)
-	}
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
@@ -96,37 +42,13 @@ type EmbedThumbnail struct {
 	Width    int    `json:"width,omitempty"`     // ?| , width of image
 }
 
+var _ DeepCopier = (*EmbedThumbnail)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedThumbnail) DeepCopy() (copy interface{}) {
+func (e *EmbedThumbnail) DeepCopy() (copy interface{}) {
 	copy = &EmbedThumbnail{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedThumbnail) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedThumbnail
-	var valid bool
-	if embed, valid = other.(*EmbedThumbnail); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedThumbnail")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.URL = c.URL
-	embed.ProxyURL = c.ProxyURL
-	embed.Height = c.Height
-	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return
 }
 
@@ -139,37 +61,14 @@ type EmbedVideo struct {
 	Width  int    `json:"width,omitempty"`  // ?| , width of video
 }
 
+var _ DeepCopier = (*EmbedVideo)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedVideo) DeepCopy() (copy interface{}) {
+func (e *EmbedVideo) DeepCopy() (copy interface{}) {
 	copy = &EmbedVideo{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedVideo) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedVideo
-	var valid bool
-	if embed, valid = other.(*EmbedVideo); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedVideo")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.URL = c.URL
-	embed.Height = c.Height
-	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
@@ -182,38 +81,14 @@ type EmbedImage struct {
 	Width    int    `json:"width,omitempty"`     // ?| , width of image
 }
 
+var _ DeepCopier = (*EmbedImage)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedImage) DeepCopy() (copy interface{}) {
+func (e *EmbedImage) DeepCopy() (copy interface{}) {
 	copy = &EmbedImage{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedImage) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedImage
-	var valid bool
-	if embed, valid = other.(*EmbedImage); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedImage")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.URL = c.URL
-	embed.ProxyURL = c.ProxyURL
-	embed.Height = c.Height
-	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
@@ -224,36 +99,14 @@ type EmbedProvider struct {
 	URL  string `json:"url,omitempty"`  // ?| , url of provider
 }
 
+var _ DeepCopier = (*EmbedProvider)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedProvider) DeepCopy() (copy interface{}) {
+func (e *EmbedProvider) DeepCopy() (copy interface{}) {
 	copy = &EmbedProvider{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedProvider) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedProvider
-	var valid bool
-	if embed, valid = other.(*EmbedProvider); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedProvider")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.URL = c.URL
-	embed.Name = c.Name
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
@@ -266,38 +119,14 @@ type EmbedAuthor struct {
 	ProxyIconURL string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of author icon
 }
 
+var _ DeepCopier = (*EmbedAuthor)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedAuthor) DeepCopy() (copy interface{}) {
+func (e *EmbedAuthor) DeepCopy() (copy interface{}) {
 	copy = &EmbedAuthor{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedAuthor) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedAuthor
-	var valid bool
-	if embed, valid = other.(*EmbedAuthor); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedAuthor")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.Name = c.Name
-	embed.URL = c.URL
-	embed.IconURL = c.IconURL
-	embed.ProxyIconURL = c.ProxyIconURL
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
@@ -309,37 +138,14 @@ type EmbedFooter struct {
 	ProxyIconURL string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
 }
 
+var _ DeepCopier = (*EmbedFooter)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedFooter) DeepCopy() (copy interface{}) {
+func (e *EmbedFooter) DeepCopy() (copy interface{}) {
 	copy = &EmbedFooter{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedFooter) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedFooter
-	var valid bool
-	if embed, valid = other.(*EmbedFooter); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedFooter")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.Text = c.Text
-	embed.IconURL = c.IconURL
-	embed.ProxyIconURL = c.ProxyIconURL
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }
 
 // EmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
@@ -351,35 +157,12 @@ type EmbedField struct {
 	Inline bool   `json:"inline,omitempty"` // ?| , whether or not this field should display inline
 }
 
+var _ DeepCopier = (*EmbedField)(nil)
+
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedField) DeepCopy() (copy interface{}) {
+func (e *EmbedField) DeepCopy() (copy interface{}) {
 	copy = &EmbedField{}
-	c.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *EmbedField) CopyOverTo(other interface{}) (err error) {
-	var embed *EmbedField
-	var valid bool
-	if embed, valid = other.(*EmbedField); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *EmbedField")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
-	embed.Name = c.Name
-	embed.Value = c.Value
-	embed.Inline = c.Inline
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
-	return nil
 }

@@ -94,7 +94,7 @@ func main() {
 	enforcers := []Enforcer{
 		{Name: "Reseter"},
 		{Name: "URLQueryStringer"},
-		{Name: "Copier"},
+		{Name: "DeepCopier"},
 
 		{Name: "internalUpdater"},
 		{Name: "internalClientUpdater"},
@@ -116,10 +116,10 @@ func main() {
 		addStructs(enforcers, file)
 	}
 
-	makeFile(enforcers, "generate/interfaces/Reseter.gotpl", "iface_reseter_gen.go")
-	makeFile(enforcers, "generate/interfaces/Copier.gotpl", "iface_copier_gen.go")
-	makeFile(enforcers, "generate/interfaces/URLQueryStringer.gotpl", "iface_urlquerystringer_gen.go")
-	makeFile(enforcers, "generate/interfaces/internalUpdaters.gotpl", "iface_internalupdaters_gen.go")
+	makeFile(enforcers, "generate/interfaces/Reseter.gohtml", "iface_reseter_gen.go")
+	makeFile(enforcers, "generate/interfaces/DeepCopier.gohtml", "iface_deepcopier_gen.go")
+	makeFile(enforcers, "generate/interfaces/URLQueryStringer.gohtml", "iface_urlquerystringer_gen.go")
+	makeFile(enforcers, "generate/interfaces/internalUpdaters.gohtml", "iface_internalupdaters_gen.go")
 }
 
 func addStructs(enforcers []Enforcer, file *ast.File) {

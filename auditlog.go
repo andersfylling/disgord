@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -110,8 +109,10 @@ type AuditLog struct {
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
 }
 
-func (l *AuditLog) Bans() (bans []*PartialBan) {
-	for _, e := range l.AuditLogEntries {
+var _ DeepCopier = (*AuditLog)(nil)
+
+func (a *AuditLog) Bans() (bans []*PartialBan) {
+	for _, e := range a.AuditLogEntries {
 		if e.Event == AuditLogEvtMemberBanAdd {
 			bans = append(bans, &PartialBan{
 				Reason:                 e.Reason,
@@ -121,45 +122,6 @@ func (l *AuditLog) Bans() (bans []*PartialBan) {
 		}
 	}
 	return bans
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLog) DeepCopy() (copy interface{}) {
-	copy = &AuditLog{}
-	l.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLog
-	if log, ok = other.(*AuditLog); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLog")
-		return
-	}
-
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
-	for _, webhook := range l.Webhooks {
-		log.Webhooks = append(log.Webhooks, webhook.DeepCopy().(*Webhook))
-	}
-	for _, user := range l.Users {
-		log.Users = append(log.Users, user.DeepCopy().(*User))
-	}
-	for _, entry := range l.AuditLogEntries {
-		log.AuditLogEntries = append(log.AuditLogEntries, entry.DeepCopy().(*AuditLogEntry))
-	}
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
-	return
 }
 
 // AuditLogEntry ...
@@ -175,48 +137,7 @@ type AuditLogEntry struct {
 	Reason   string             `json:"reason,omitempty"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogEntry) DeepCopy() (copy interface{}) {
-	copy = &AuditLogEntry{}
-	l.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogEntry
-	if log, ok = other.(*AuditLogEntry); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogEntry")
-		return
-	}
-
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
-	log.TargetID = l.TargetID
-	log.UserID = l.UserID
-	log.ID = l.ID
-	log.Event = l.Event
-	log.Reason = l.Reason
-
-	for _, change := range l.Changes {
-		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChanges))
-	}
-
-	if l.Options != nil {
-		log.Options = l.Options.DeepCopy().(*AuditLogOption)
-	}
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
-	return
-}
+var _ DeepCopier = (*AuditLogEntry)(nil)
 
 // AuditLogOption ...
 type AuditLogOption struct {
@@ -231,42 +152,7 @@ type AuditLogOption struct {
 	RoleName         string    `json:"role_name"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogOption) DeepCopy() (copy interface{}) {
-	copy = &AuditLogOption{}
-	l.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogOption
-	if log, ok = other.(*AuditLogOption); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogOption")
-		return
-	}
-
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
-	log.DeleteMemberDays = l.DeleteMemberDays
-	log.MembersRemoved = l.MembersRemoved
-	log.ChannelID = l.ChannelID
-	log.Count = l.Count
-	log.ID = l.ID
-	log.Type = l.Type
-	log.RoleName = l.RoleName
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
-	return
-}
+var _ DeepCopier = (*AuditLogOption)(nil)
 
 // AuditLogChanges ...
 type AuditLogChanges struct {
@@ -277,39 +163,7 @@ type AuditLogChanges struct {
 	Key      string      `json:"key"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogChanges) DeepCopy() (copy interface{}) {
-	copy = &AuditLogChanges{}
-	l.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogChanges) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogChanges
-	if log, ok = other.(*AuditLogChanges); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogChanges")
-		return
-	}
-
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
-	log.NewValue = l.NewValue
-	log.OldValue = l.OldValue
-	log.Key = l.Key
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
-
-	return
-}
+var _ DeepCopier = (*AuditLogChanges)(nil)
 
 // auditLogFactory temporary until flyweight is implemented
 func auditLogFactory() interface{} {

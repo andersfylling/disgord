@@ -54,6 +54,8 @@ type ActivityParty struct {
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
 }
 
+var _ DeepCopier = (*ActivityParty)(nil)
+
 // Limit shows the maximum number of guests/people allowed
 func (ap *ActivityParty) Limit() int {
 	if len(ap.Size) != 2 {
@@ -70,39 +72,6 @@ func (ap *ActivityParty) NumberOfPeople() int {
 	}
 
 	return ap.Size[0]
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (ap *ActivityParty) DeepCopy() (copy interface{}) {
-	copy = &ActivityParty{}
-	ap.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivityParty
-	if activity, ok = other.(*ActivityParty); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivityParty")
-		return
-	}
-
-	if constant.LockedMethods {
-		ap.RLock()
-		activity.Lock()
-	}
-
-	activity.ID = ap.ID
-	activity.Size = ap.Size
-
-	if constant.LockedMethods {
-		ap.RUnlock()
-		activity.Unlock()
-	}
-
-	return
 }
 
 // ActivityAssets ...
@@ -159,39 +128,7 @@ type ActivitySecrets struct {
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivitySecrets) DeepCopy() (copy interface{}) {
-	copy = &ActivitySecrets{}
-	a.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivitySecrets
-	if activity, ok = other.(*ActivitySecrets); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivitySecrets")
-		return
-	}
-
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
-	activity.Join = a.Join
-	activity.Spectate = a.Spectate
-	activity.Match = a.Match
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
-	return
-}
+var _ DeepCopier = (*ActivitySecrets)(nil)
 
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
@@ -260,58 +197,7 @@ type Activity struct {
 }
 
 var _ Reseter = (*Activity)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *Activity) DeepCopy() (copy interface{}) {
-	copy = &Activity{}
-	a.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *Activity) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *Activity
-	if activity, ok = other.(*Activity); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Activity")
-		return
-	}
-
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
-	activity.Name = a.Name
-	activity.Type = a.Type
-	activity.ApplicationID = a.ApplicationID
-	activity.Instance = a.Instance
-	activity.Flags = a.Flags
-	activity.URL = a.URL
-	activity.Details = a.Details
-	activity.State = a.State
-
-	if a.Timestamps != nil {
-		activity.Timestamps = a.Timestamps.DeepCopy().(*ActivityTimestamp)
-	}
-	if a.Party != nil {
-		activity.Party = a.Party.DeepCopy().(*ActivityParty)
-	}
-	if a.Assets != nil {
-		activity.Assets = a.Assets.DeepCopy().(*ActivityAssets)
-	}
-	if a.Secrets != nil {
-		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
-	}
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
-	return
-}
+var _ DeepCopier = (*Activity)(nil)
 
 // ---------
 
@@ -423,7 +309,6 @@ type User struct {
 
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
-var _ Copier = (*User)(nil)
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
@@ -632,48 +517,11 @@ type UserPresence struct {
 	Status  string      `json:"status"`
 }
 
+var _ DeepCopier = (*UserPresence)(nil)
+var _ fmt.Stringer = (*UserPresence)(nil)
+
 func (p *UserPresence) String() string {
 	return p.Status
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (p *UserPresence) DeepCopy() (copy interface{}) {
-	copy = NewUserPresence()
-	p.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var presence *UserPresence
-	if presence, ok = other.(*UserPresence); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *UserPresence")
-		return
-	}
-
-	if constant.LockedMethods {
-		p.RLock()
-		presence.Lock()
-	}
-
-	presence.User = p.User.DeepCopy().(*User)
-	presence.Roles = p.Roles
-	presence.GuildID = p.GuildID
-	presence.Nick = p.Nick
-	presence.Status = p.Status
-
-	if p.Game != nil {
-		presence.Game = p.Game.DeepCopy().(*Activity)
-	}
-
-	if constant.LockedMethods {
-		p.RUnlock()
-		presence.Unlock()
-	}
-
-	return
 }
 
 // UserConnection ...
@@ -687,45 +535,7 @@ type UserConnection struct {
 	Integrations []*IntegrationAccount `json:"integrations"` // an array of partial server integrations
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (c *UserConnection) DeepCopy() (copy interface{}) {
-	copy = &UserConnection{}
-	c.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var con *UserConnection
-	if con, ok = other.(*UserConnection); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *UserConnection")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		con.Lock()
-	}
-
-	con.ID = c.ID
-	con.Name = c.Name
-	con.Type = c.Type
-	con.Revoked = c.Revoked
-
-	con.Integrations = make([]*IntegrationAccount, len(c.Integrations))
-	for i, account := range c.Integrations {
-		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
-	}
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		con.Unlock()
-	}
-
-	return
-}
+var _ DeepCopier = (*UserConnection)(nil)
 
 //////////////////////////////////////////////////////
 //

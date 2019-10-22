@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -20,40 +19,17 @@ type Reaction struct {
 }
 
 var _ Reseter = (*Reaction)(nil)
+var _ DeepCopier = (*Reaction)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (r *Reaction) DeepCopy() (copy interface{}) {
-	copy = &Reaction{}
-	r.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (r *Reaction) CopyOverTo(other interface{}) (err error) {
-	var reaction *Reaction
-	var valid bool
-	if reaction, valid = other.(*Reaction); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *Reaction")
-		return
+func (r *Reaction) DeepCopy(other interface{}) (copy interface{}) {
+	if other == nil {
+		copy = &Reaction{}
+	} else {
+		copy = other
 	}
+	_ = r.CopyOverTo(copy)
 
-	if constant.LockedMethods {
-		r.RLock()
-		reaction.Lock()
-	}
-
-	reaction.Count = r.Count
-	reaction.Me = r.Me
-
-	if r.Emoji != nil {
-		reaction.Emoji = r.Emoji.DeepCopy().(*Emoji)
-	}
-
-	if constant.LockedMethods {
-		r.RUnlock()
-		reaction.Unlock()
-	}
 	return
 }
 

@@ -64,7 +64,6 @@ type Role struct {
 
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
-var _ Copier = (*Role)(nil)
 var _ discordDeleter = (*Role)(nil)
 var _ fmt.Stringer = (*Role)(nil)
 
@@ -80,45 +79,6 @@ func (r *Role) Mention() string {
 // SetGuildID link role to a guild before running session.SaveToDiscord(*Role)
 func (r *Role) SetGuildID(id Snowflake) {
 	r.guildID = id
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (r *Role) DeepCopy() (copy interface{}) {
-	copy = NewRole()
-	r.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (r *Role) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var role *Role
-	if role, ok = other.(*Role); !ok {
-		return newErrorUnsupportedType("given interface{} was not a *Role")
-	}
-
-	if constant.LockedMethods {
-		r.RLock()
-		role.Lock()
-	}
-
-	role.ID = r.ID
-	role.Name = r.Name
-	role.Color = r.Color
-	role.Hoist = r.Hoist
-	role.Position = r.Position
-	role.Permissions = r.Permissions
-	role.Managed = r.Managed
-	role.Mentionable = r.Mentionable
-	role.guildID = r.guildID
-
-	if constant.LockedMethods {
-		r.RUnlock()
-		role.Unlock()
-	}
-
-	return
 }
 
 func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {

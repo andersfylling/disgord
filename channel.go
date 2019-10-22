@@ -132,7 +132,6 @@ type Channel struct {
 
 var _ Reseter = (*Channel)(nil)
 var _ fmt.Stringer = (*Channel)(nil)
-var _ Copier = (*Channel)(nil)
 var _ DeepCopier = (*Channel)(nil)
 var _ discordDeleter = (*Channel)(nil)
 
@@ -194,53 +193,6 @@ func (c *Channel) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 func (c *Channel) DeepCopy() (copy interface{}) {
 	copy = NewChannel()
 	_ = c.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *Channel) CopyOverTo(other interface{}) (err error) {
-	var channel *Channel
-	var valid bool
-	if channel, valid = other.(*Channel); !valid {
-		err = newErrorUnsupportedType("argument given is not a *Channel type")
-		return
-	}
-
-	if constant.LockedMethods {
-		c.Lockable.RLock()
-		channel.Lockable.Lock()
-	}
-
-	channel.ID = c.ID
-	channel.Type = c.Type
-	channel.GuildID = c.GuildID
-	channel.Position = c.Position
-	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
-	channel.Name = c.Name
-	channel.Topic = c.Topic
-	channel.NSFW = c.NSFW
-	channel.LastMessageID = c.LastMessageID
-	channel.Bitrate = c.Bitrate
-	channel.UserLimit = c.UserLimit
-	channel.RateLimitPerUser = c.RateLimitPerUser
-	channel.Icon = c.Icon
-	channel.OwnerID = c.OwnerID
-	channel.ApplicationID = c.ApplicationID
-	channel.ParentID = c.ParentID
-	channel.LastPinTimestamp = c.LastPinTimestamp
-	channel.LastMessageID = c.LastMessageID
-
-	// add recipients if it's a DM
-	channel.Recipients = make([]*User, 0, len(c.Recipients))
-	for _, recipient := range c.Recipients {
-		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
-	}
-
-	if constant.LockedMethods {
-		c.Lockable.RUnlock()
-		channel.Lockable.Unlock()
-	}
 
 	return
 }

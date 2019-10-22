@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -44,52 +43,7 @@ type VoiceState struct {
 }
 
 var _ Reseter = (*VoiceState)(nil)
-var _ Copier = (*VoiceState)(nil)
 var _ DeepCopier = (*VoiceState)(nil)
-
-//func (vst *VoiceState) Clear() {
-//
-//}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceState) DeepCopy() (copy interface{}) {
-	copy = &VoiceState{}
-	v.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voiceState *VoiceState
-	if voiceState, ok = other.(*VoiceState); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceState")
-		return
-	}
-
-	if constant.LockedMethods {
-		v.RLock()
-		voiceState.Lock()
-	}
-
-	voiceState.GuildID = v.GuildID
-	voiceState.ChannelID = v.ChannelID
-	voiceState.UserID = v.UserID
-	voiceState.SessionID = v.SessionID
-	voiceState.Deaf = v.Deaf
-	voiceState.Mute = v.Mute
-	voiceState.SelfDeaf = v.SelfDeaf
-	voiceState.SelfMute = v.SelfMute
-	voiceState.Suppress = v.Suppress
-
-	if constant.LockedMethods {
-		v.RUnlock()
-		voiceState.Unlock()
-	}
-
-	return
-}
 
 // VoiceRegion voice region structure
 // https://discordapp.com/developers/docs/resources/voice#voice-region
@@ -122,47 +76,7 @@ type VoiceRegion struct {
 }
 
 var _ Reseter = (*VoiceRegion)(nil)
-var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceRegion) DeepCopy() (copy interface{}) {
-	copy = &VoiceRegion{}
-	v.CopyOverTo(copy)
-
-	return
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voice *VoiceRegion
-	if voice, ok = other.(*VoiceRegion); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
-		return
-	}
-
-	if constant.LockedMethods {
-		v.RLock()
-		voice.Lock()
-	}
-
-	voice.ID = v.ID
-	voice.Name = v.Name
-	voice.SampleHostname = v.SampleHostname
-	voice.SamplePort = v.SamplePort
-	voice.VIP = v.VIP
-	voice.Optimal = v.Optimal
-	voice.Deprecated = v.Deprecated
-	voice.Custom = v.Custom
-
-	if constant.LockedMethods {
-		v.RUnlock()
-		voice.Unlock()
-	}
-
-	return
-}
 
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
