@@ -73,6 +73,28 @@ func executeInternalUpdater(x interface{}) {
 		for i := range slice {
 			update(slice[i])
 		}
+	case *GuildMemberAdd:
+		update(t)
+	case []*GuildMemberAdd:
+		for i := range t {
+			update(t[i])
+		}
+	case *[]*GuildMemberAdd:
+		slice := *t
+		for i := range slice {
+			update(slice[i])
+		}
+	case *GuildMembersChunk:
+		update(t)
+	case []*GuildMembersChunk:
+		for i := range t {
+			update(t[i])
+		}
+	case *[]*GuildMembersChunk:
+		slice := *t
+		for i := range slice {
+			update(slice[i])
+		}
 	case *GuildRoleCreate:
 		update(t)
 	case []*GuildRoleCreate:

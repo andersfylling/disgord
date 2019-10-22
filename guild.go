@@ -235,6 +235,9 @@ func (g *Guild) updateInternals() {
 	for i := range g.Channels {
 		g.Channels[i].GuildID = g.ID
 	}
+	for i := range g.Members {
+		g.Members[i].updateInternals()
+	}
 }
 
 func (g *Guild) copyOverToCache(other interface{}) (err error) {
