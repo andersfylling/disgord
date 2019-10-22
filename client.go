@@ -19,7 +19,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/constant"
 
-	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
@@ -145,6 +144,12 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
+	// LoadMembersQuietly will start fetching members for all guilds in the background.
+	// There is currently no proper way to detect when the loading is done nor if it
+	// finished successfully.
+	LoadMembersQuietly bool
+
+	// Presence will automatically be emitted to discord on start up
 	Presence *UpdateStatusPayload
 
 	// for cancellation
@@ -242,7 +247,6 @@ var _ Link = (*Client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
-
 func (c *Client) Pool() *pools {
 	return c.pool
 }
@@ -373,9 +377,12 @@ func (c *Client) Cache() Cacher {
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
-	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
-	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
-	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
+	if c.config.LoadMembersQuietly {
+		c.On(EvtReady, c.handlerLoadMembers)
+	}
+	c.On(EvtUserUpdate, c.handlerUpdateSelfBot)
+	c.On(EvtGuildCreate, c.handlerAddToConnectedGuilds)
+	c.On(EvtGuildDelete, c.handlerRemoveFromConnectedGuilds)
 
 	// start demultiplexer which also trigger dispatching
 	var cache *Cache
@@ -520,6 +527,17 @@ func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 
 func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 	_ = c.cache.Update(UserCache, update.User)
+}
+
+func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
+	guildIDs := make([]Snowflake, len(evt.Guilds))
+	for i := range evt.Guilds {
+		guildIDs[i] = evt.Guilds[i].ID
+	}
+
+	c.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
+		GuildIDs: guildIDs,
+	})
 }
 
 //////////////////////////////////////////////////////

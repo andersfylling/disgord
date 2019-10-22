@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/crs"
 
 	"github.com/andersfylling/disgord/internal/httd"
@@ -956,30 +957,57 @@ func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
 		return
 	}
 
+	lock := func(m *Member, cb func(*Member)) {
+		if constant.LockedMethods {
+			m.Lock()
+		}
+		cb(m)
+		if constant.LockedMethods {
+			m.Unlock()
+		}
+	}
+
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
 	var newMembers []*Member
 	for i := range members {
-		if members[i].User != nil {
-			members[i].userID = members[i].User.ID
-			members[i].User = nil
-		}
-
 		var updated bool
 		for j := range guild.Members {
-			if guild.Members[j].userID == members[i].userID {
+			if guild.Members[j].userID != 0 && guild.Members[j].userID == members[i].userID {
+				var tmp *User
+				lock(members[i], func(m *Member) {
+					tmp = members[i].User
+					members[i].User = nil
+				})
 				_ = members[i].CopyOverTo(guild.Members[j])
+				lock(members[i], func(_ *Member) {
+					members[i].User = tmp
+				})
 				updated = true
 				break
 			}
 		}
 
 		if !updated {
-			newMembers = append(newMembers, members[i])
+			var tmp *User
+			lock(members[i], func(m *Member) {
+				tmp = members[i].User
+				members[i].User = nil
+			})
+			member := members[i].DeepCopy().(*Member)
+			lock(members[i], func(_ *Member) {
+				members[i].User = tmp
+			})
+
+			newMembers = append(newMembers, member)
 		}
 	}
 
 	guild.Members = append(guild.Members, newMembers...)
+
+	if guild.MemberCount < uint(len(guild.Members)) {
+		guild.MemberCount = uint(len(guild.Members))
+	}
 }
 
 // GetGuildMember ...
