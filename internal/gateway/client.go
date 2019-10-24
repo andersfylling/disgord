@@ -8,12 +8,11 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/httd"
-
-	"sync/atomic"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -477,11 +476,11 @@ func (c *client) emitter(ctx context.Context) {
 		// build tag: disgord_diagnosews
 		saveOutgoingPacket(c, msg)
 
-		err := c.conn.WriteJSON(msg)
-		if err != nil {
+		if err := c.conn.WriteJSON(msg); err != nil {
 			cancel()
+			return err
 		}
-		return err
+		return nil
 	}
 
 	for {
@@ -496,24 +495,23 @@ func (c *client) emitter(ctx context.Context) {
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
-		case <-time.After(50 * time.Millisecond):
-			if c.messageQueue.IsEmpty() {
-				continue
+		case <-time.After(300 * time.Millisecond): // TODO: don't use fixed timeout
+			if !c.messageQueue.IsEmpty() {
+				// try to write the message
+				// on failure the message is put back into the queue
+				err = c.messageQueue.Try(write)
 			}
-
-			// try to write the message
-			// on failure the message is put back into the queue
-			err = c.messageQueue.Try(write)
 		case msg, open := <-c.internalEmitChan:
 			if !open {
-				c.log.Debug(c.getLogPrefix(), "emitter channel is closed")
-				continue
+				err = errors.New("emitter channel is closed")
+			} else if err = write(msg); err != nil {
+				insight = fmt.Sprintf("%v", *msg)
 			}
-			err = write(msg)
-			insight = fmt.Sprintf("%v", *msg)
 		}
 
-		c.log.Error(c.getLogPrefix(), err, insight)
+		if err != nil {
+			c.log.Error(c.getLogPrefix(), err, insight)
+		}
 	}
 }
 
