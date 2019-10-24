@@ -1,7 +1,16 @@
 # Change Log
 
-## [v0.12.0](https://github.com/andersfylling/disgord/tree/v0.12.0)
+## [v0.12.1](https://github.com/andersfylling/disgord/tree/v0.12.1)
 
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0...v0.12.1)
+
+**Fixed bugs:**
+
+- emitter uses continue in select statement [\#230](https://github.com/andersfylling/disgord/issues/230)
+
+- increase timeout for queue checks in gateway emitter [\#231](https://github.com/andersfylling/disgord/issues/231)
+
+## [v0.12.0](https://github.com/andersfylling/disgord/tree/v0.12.0) (2019-10-22)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc8...v0.12.0)
 
 **Fixed bugs:**
@@ -53,16 +62,11 @@
 
 **Implemented enhancements:**
 
-- Add voice options self-mute & deafen [\#218](https://github.com/andersfylling/disgord/pull/218) ([ikkerens](https://github.com/ikkerens))
+- Fix voice options not being used \(self-mute & deafen\) [\#218](https://github.com/andersfylling/disgord/pull/218) ([ikkerens](https://github.com/ikkerens))
 
 **Merged pull requests:**
 
 - Move private pkgs to internal pkg [\#223](https://github.com/andersfylling/disgord/pull/223) ([andersfylling](https://github.com/andersfylling))
-
-**Fixed bugs:**
-
-- WEBHOOKS_UPDATE was missing and s causing related handlers not to fire
-- Lockable for Channel and Emoji when using build tag disgord_parallelism/disgord_removeDiscordMutex would not compile
 
 ## [v0.12.0-rc6](https://github.com/andersfylling/disgord/tree/v0.12.0-rc6) (2019-09-28)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc5...v0.12.0-rc6)
