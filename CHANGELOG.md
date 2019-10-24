@@ -1,12 +1,21 @@
 # Change Log
 
-## [v0.12.1](https://github.com/andersfylling/disgord/tree/v0.12.1)
+## [v0.12.2](https://github.com/andersfylling/disgord/tree/v0.12.2)
 
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.1...v0.12.2)
+
+**Fixed bugs:**
+
+- Client.CreateBotURL panics in powershell [\#233](https://github.com/andersfylling/disgord/issues/233)
+
+## [v0.12.1](https://github.com/andersfylling/disgord/tree/v0.12.1) (2019-10-24)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0...v0.12.1)
 
 **Fixed bugs:**
 
 - emitter uses continue in select statement [\#230](https://github.com/andersfylling/disgord/issues/230)
+
+**Closed issues:**
 
 - increase timeout for queue checks in gateway emitter [\#231](https://github.com/andersfylling/disgord/issues/231)
 
