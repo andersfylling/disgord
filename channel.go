@@ -286,7 +286,7 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 	message.RLock()
 	params := &CreateMessageParams{
 		Content: message.Content,
-		Nonce:   message.Nonce,
+		Nonce:   message.Nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 		Tts:     message.Tts,
 		// File: ...
 		// Embed: ...

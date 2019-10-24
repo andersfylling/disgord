@@ -121,8 +121,8 @@ type Message struct {
 	MentionChannels  []*MentionChannel  `json:"mention_channels"`
 	Attachments      []*Attachment      `json:"attachments"`
 	Embeds           []*Embed           `json:"embeds"`
-	Reactions        []*Reaction        `json:"reactions"`       // ?
-	Nonce            Snowflake          `json:"nonce,omitempty"` // ?, used for validating a message was sent
+	Reactions        []*Reaction        `json:"reactions"` // ?
+	Nonce            string             `json:"nonce"`     // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 	Pinned           bool               `json:"pinned"`
 	WebhookID        Snowflake          `json:"webhook_id"` // ?
 	Type             MessageType        `json:"type"`
@@ -241,13 +241,10 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Nonce = m.Nonce
 	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
 	message.SpoilerTagContent = m.SpoilerTagContent
+	message.Nonce = m.Nonce
 
 	if m.Author != nil {
 		message.Author = m.Author.DeepCopy().(*User)
-	}
-
-	if !m.Nonce.IsZero() {
-		message.Nonce = m.Nonce
 	}
 
 	for _, mention := range m.Mentions {
@@ -580,10 +577,10 @@ func NewMessageByString(content string) *CreateMessageParams {
 
 // CreateMessageParams JSON params for CreateChannelMessage
 type CreateMessageParams struct {
-	Content string    `json:"content"`
-	Nonce   Snowflake `json:"nonce,omitempty"`
-	Tts     bool      `json:"tts,omitempty"`
-	Embed   *Embed    `json:"embed,omitempty"` // embedded rich content
+	Content string `json:"content"`
+	Nonce   string `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Tts     bool   `json:"tts,omitempty"`
+	Embed   *Embed `json:"embed,omitempty"` // embedded rich content
 
 	Files []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
