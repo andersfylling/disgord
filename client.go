@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -269,13 +270,8 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 	return c.permissions
 }
 
-// CreateBotURL creates a URL that can be used to invite this bot to a guild/server.
-// Note that it depends on the bot ID to be after the Discord update where the Client ID
-// is the same as the Bot ID.
-//
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
+// CreateBotURL ...
+// Deprecated use InviteURL()
 func (c *Client) CreateBotURL() (u string, err error) {
 	_, _ = c.GetCurrentUser() // update c.myID
 
@@ -290,12 +286,32 @@ func (c *Client) CreateBotURL() (u string, err error) {
 		return "", err
 	}
 
-	loc, _ := time.LoadLocation("America/Los_Angeles")
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		return "", err
+	}
 	t = t.In(loc)
 
 	if !c.myID.Date().After(t) {
 		err = errors.New("the bot was not created after " + t.String() + " and can therefore not use the bot ID to generate a invite link")
 		return "", err
+	}
+
+	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
+	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
+	return u, nil
+}
+
+// InviteURL creates a URL that can be used to invite this bot to a guild/server.
+// Note that it depends on the bot ID to be after the Discord update where the Client ID
+// is the same as the Bot ID.
+//
+// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
+// for your bot to run successfully, you should utilise
+//  Client.
+func (c *Client) InviteURL() (u string, err error) {
+	if _, err = c.GetCurrentUser(); err != nil && c.myID.IsZero() {
+		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
 	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"

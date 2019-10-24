@@ -13,6 +13,7 @@ import (
 //go:generate go run generate/interfaces/main.go
 //go:generate go run generate/sorters/main.go
 //go:generate go run generate/json/main.go
+//go:generate go run generate/errors/main.go
 
 // Copier holds the CopyOverTo method which copies all it's content from one
 // struct to another. Note that this requires a deep copy.
