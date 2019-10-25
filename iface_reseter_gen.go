@@ -114,7 +114,7 @@ func (m *Message) Reset() {
 	m.Attachments = nil
 	m.Embeds = nil
 	m.Reactions = nil
-	m.Nonce = ""
+	m.Nonce = nil
 	m.Pinned = false
 	m.WebhookID = 0
 	m.Type = 0

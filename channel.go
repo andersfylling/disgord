@@ -283,10 +283,15 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
+	nonce := fmt.Sprint(message.Nonce)
+	if len(nonce) > 25 {
+		return nil, errors.New("nonce can not be longer than 25 characters")
+	}
+
 	message.RLock()
 	params := &CreateMessageParams{
 		Content: message.Content,
-		Nonce:   message.Nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+		Nonce:   nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 		Tts:     message.Tts,
 		// File: ...
 		// Embed: ...

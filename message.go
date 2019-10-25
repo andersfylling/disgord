@@ -122,7 +122,7 @@ type Message struct {
 	Attachments      []*Attachment      `json:"attachments"`
 	Embeds           []*Embed           `json:"embeds"`
 	Reactions        []*Reaction        `json:"reactions"` // ?
-	Nonce            string             `json:"nonce"`     // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Nonce            interface{}        `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
 	Pinned           bool               `json:"pinned"`
 	WebhookID        Snowflake          `json:"webhook_id"` // ?
 	Type             MessageType        `json:"type"`
@@ -312,11 +312,16 @@ func (m *Message) Send(client MessageSender, flags ...Flag) (msg *Message, err e
 	if constant.LockedMethods {
 		m.RLock()
 	}
+	nonce := fmt.Sprint(m.Nonce)
+	if len(nonce) > 25 {
+		return nil, errors.New("nonce can not be more than 25 characters")
+	}
+
 	// TODO: attachments
 	params := &CreateMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
-		Nonce:   m.Nonce,
+		Nonce:   nonce,
 		// File: ...
 		// Embed: ...
 	}
