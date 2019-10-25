@@ -788,3 +788,5 @@ func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 
 	return r
 }
+
+/* command handling */
