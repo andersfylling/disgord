@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/gateway"
 )
 
 //////////////////////////////////////////////////////
@@ -53,15 +53,15 @@ func ensure(inputs ...interface{}) {
 //////////////////////////////////////////////////////
 
 func BenchmarkClient_On(b *testing.B) {
-	c := New(&Config{
+	b.ReportAllocs()
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
-	c.eventChan = make(chan *websocket.Event)
+	c.eventChan = make(chan *gateway.Event)
 	c.setupConnectEnv()
 
 	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
-	evt := &websocket.Event{Name: EvtMessageCreate, Data: msgData}
 
 	wg := sync.WaitGroup{}
 	c.On(EvtMessageCreate, func() {
@@ -70,10 +70,13 @@ func BenchmarkClient_On(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
+
+		cp := make([]byte, len(msgData))
+		copy(cp, msgData)
+		evt := &gateway.Event{Name: EvtMessageCreate, Data: cp}
 		c.eventChan <- evt
 		wg.Wait()
 	}
-
 }
 
 //////////////////////////////////////////////////////
@@ -83,7 +86,7 @@ func BenchmarkClient_On(b *testing.B) {
 //////////////////////////////////////////////////////
 
 func TestClient_Once(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 		Logger:       DefaultLogger(true),
@@ -91,11 +94,11 @@ func TestClient_Once(t *testing.T) {
 	defer close(c.dispatcher.shutdown)
 
 	dispatcher := c.dispatcher
-	input := make(chan *websocket.Event)
+	input := make(chan *gateway.Event)
 	go demultiplexer(dispatcher, input, nil)
 
 	trigger := func() {
-		input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+		input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
 	}
 
 	base := dispatcher.nrOfAliveHandlers()
@@ -139,14 +142,14 @@ func TestClient_Once(t *testing.T) {
 }
 
 func TestClient_On(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
 	defer close(c.dispatcher.shutdown)
 
 	dispatcher := c.dispatcher
-	input := make(chan *websocket.Event)
+	input := make(chan *gateway.Event)
 	go demultiplexer(dispatcher, input, nil)
 
 	base := dispatcher.nrOfAliveHandlers()
@@ -164,20 +167,20 @@ func TestClient_On(t *testing.T) {
 	wg.Add(2)
 
 	// trigger the handler twice
-	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
-	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
-	input <- &websocket.Event{Name: EvtReady, Data: []byte(`{}`)}
+	input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+	input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+	input <- &gateway.Event{Name: EvtReady, Data: []byte(`{}`)}
 	wg.Wait()
 }
 
 func TestClient_On_Middleware(t *testing.T) {
-	c := New(&Config{
+	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
 	})
 	defer close(c.dispatcher.shutdown)
 	dispatcher := c.dispatcher
-	input := make(chan *websocket.Event)
+	input := make(chan *gateway.Event)
 	go demultiplexer(dispatcher, input, nil)
 
 	const prefix = "this cool prefix"
@@ -210,22 +213,22 @@ func TestClient_On_Middleware(t *testing.T) {
 	})
 	wg.Add(2)
 
-	input <- &websocket.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"` + prefix + ` testing"}`)}
-	input <- &websocket.Event{Name: EvtReady}
+	input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"` + prefix + ` testing"}`)}
+	input <- &gateway.Event{Name: EvtReady}
 	wg.Wait()
 }
 
 // TestClient_System looks for crashes when the DisGord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
-	c, err := NewClient(&Config{
+	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	input := make(chan *websocket.Event, 1)
+	input := make(chan *gateway.Event, 1)
 	c.eventChan = input
 	c.setupConnectEnv()
 
@@ -283,7 +286,7 @@ func TestClient_System(t *testing.T) {
 			continue
 		}
 
-		input <- &websocket.Event{
+		input <- &gateway.Event{
 			Name: p.E,
 			Data: p.D,
 		}
@@ -318,7 +321,7 @@ func TestClient_System(t *testing.T) {
 }
 
 func TestInternalStateHandlers(t *testing.T) {
-	c, err := NewClient(&Config{
+	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
 	if err != nil {

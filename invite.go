@@ -1,12 +1,9 @@
 package disgord
 
 import (
-	"net/http"
-
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // PartialInvite ...
@@ -182,7 +179,6 @@ var _ URLQueryStringer = (*GetInviteParams)(nil)
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
-//  Rate limiter            /invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -193,8 +189,7 @@ func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimit.Invites(),
-		Endpoint:    endpoint.Invite(inviteCode) + params.URLQueryString(),
+		Endpoint: endpoint.Invite(inviteCode) + params.URLQueryString(),
 	}, flags)
 	r.factory = inviteFactory
 
@@ -204,15 +199,13 @@ func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
-//  Rate limiter            /invites
 //  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimit.Invites(),
-		Endpoint:    endpoint.Invite(inviteCode),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.Invite(inviteCode),
 	}, flags)
 	r.factory = inviteFactory
 

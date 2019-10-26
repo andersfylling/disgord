@@ -352,6 +352,12 @@ type GuildMemberAdd struct {
 	ShardID int             `json:"-"`
 }
 
+var _ internalUpdater = (*GuildMemberAdd)(nil)
+
+func (g *GuildMemberAdd) updateInternals() {
+	g.Member.updateInternals()
+}
+
 // UnmarshalJSON ...
 func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
@@ -388,6 +394,14 @@ type GuildMembersChunk struct {
 	Members []*Member       `json:"members"`
 	Ctx     context.Context `json:"-"`
 	ShardID int             `json:"-"`
+}
+
+var _ internalUpdater = (*GuildMembersChunk)(nil)
+
+func (g *GuildMembersChunk) updateInternals() {
+	for i := range g.Members {
+		g.Members[i].updateInternals()
+	}
 }
 
 // ---------------------------

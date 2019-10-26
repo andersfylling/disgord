@@ -1,7 +1,7 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/crs"
+	"github.com/andersfylling/disgord/internal/crs"
 	"github.com/andersfylling/djp"
 	jp "github.com/buger/jsonparser"
 )

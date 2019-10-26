@@ -6,9 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/httd"
-
-	"github.com/andersfylling/disgord/constant"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // common functionality/types used by struct_*.go files goes here

@@ -3,7 +3,7 @@ package disgord
 import (
 	"sync"
 
-	"github.com/andersfylling/disgord/crs"
+	"github.com/andersfylling/disgord/internal/crs"
 
 	jp "github.com/buger/jsonparser"
 )

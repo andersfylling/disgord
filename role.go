@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 type roles []*Role
@@ -162,14 +162,12 @@ type CreateGuildRoleParams struct {
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
 func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitGuildRoles(id),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -190,7 +188,6 @@ func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, fl
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -201,8 +198,7 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 	}
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitGuildRoles(guildID),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -220,15 +216,13 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    endpoint.GuildRole(guildID, roleID),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.GuildRole(guildID, roleID),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -239,14 +233,12 @@ func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/roles
-//  Rate limiter            /guilds/{guild.id}/roles
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitGuildRoles(guildID),
-		Endpoint:    "/guilds/" + guildID.String() + "/roles",
+		Endpoint: "/guilds/" + guildID.String() + "/roles",
 	}, flags)
 	r.CacheRegistry = GuildRolesCache
 	r.factory = func() interface{} {

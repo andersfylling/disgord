@@ -12,42 +12,33 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/disgorderr"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/internal/logger"
 
-	"github.com/andersfylling/disgord/constant"
 	"golang.org/x/net/proxy"
 
-	"github.com/andersfylling/disgord/event"
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/constant"
+
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
-// NewRESTClient creates a Client for sending and handling Discord protocols such as rate limiting
-func NewRESTClient(conf *Config) (*httd.Client, error) {
-	return httd.NewClient(&httd.Config{
-		APIVersion:                   constant.DiscordVersion,
-		BotToken:                     conf.BotToken,
-		UserAgentSourceURL:           constant.GitHubURL,
-		UserAgentVersion:             constant.Version,
-		UserAgentExtra:               conf.ProjectName,
-		HTTPClient:                   conf.HTTPClient,
-		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
-	})
-}
-
 // New create a Client. But panics on configuration/setup errors.
-func New(conf *Config) (c *Client) {
-	var err error
-	if c, err = NewClient(conf); err != nil {
+func New(conf Config) *Client {
+	client, err := createClient(&conf)
+	if err != nil {
 		panic(err)
 	}
-
-	return c
-
+	return client
 }
 
 // NewClient creates a new DisGord Client and returns an error on configuration issues
-func NewClient(conf *Config) (c *Client, err error) {
+func NewClient(conf Config) (*Client, error) {
+	return createClient(&conf)
+}
+
+// NewClient creates a new DisGord Client and returns an error on configuration issues
+func createClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
 		conf.HTTPClient = &http.Client{
 			Timeout: time.Second * 10,
@@ -59,6 +50,19 @@ func NewClient(conf *Config) (c *Client, err error) {
 				return conf.Proxy.Dial(network, addr)
 			},
 		}
+	}
+	httdClient, err := httd.NewClient(&httd.Config{
+		APIVersion:                   constant.DiscordVersion,
+		BotToken:                     conf.BotToken,
+		UserAgentSourceURL:           constant.GitHubURL,
+		UserAgentVersion:             constant.Version,
+		UserAgentExtra:               conf.ProjectName,
+		HTTPClient:                   conf.HTTPClient,
+		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
+		RESTBucketManager:            conf.RESTBucketManager,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	if conf.ProjectName == "" {
@@ -73,12 +77,6 @@ func NewClient(conf *Config) (c *Client, err error) {
 
 	// ignore PRESENCES_REPLACE: https://github.com/discordapp/discord-api-docs/issues/683
 	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
-
-	// request Client for REST requests
-	reqClient, err := NewRESTClient(conf)
-	if err != nil {
-		return nil, err
-	}
 
 	// caching
 	var cacher *Cache
@@ -106,7 +104,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 	cacher.conf.clientConf = conf
 
 	// websocket sharding
-	evtChan := make(chan *websocket.Event, 2) // TODO: higher value when more shards?
+	evtChan := make(chan *gateway.Event, 2) // TODO: higher value when more shards?
 
 	// event dispatcher
 	dispatch := newDispatcher()
@@ -119,7 +117,7 @@ func NewClient(conf *Config) (c *Client, err error) {
 		proxy:        conf.Proxy,
 		botToken:     conf.BotToken,
 		dispatcher:   dispatch,
-		req:          reqClient,
+		req:          httdClient,
 		cache:        cacher,
 		log:          conf.Logger,
 		pool:         newPools(),
@@ -131,38 +129,31 @@ func NewClient(conf *Config) (c *Client, err error) {
 	return c, err
 }
 
-type ShardConfig = websocket.ShardConfig
+type ShardConfig = gateway.ShardConfig
 
 // Config Configuration for the DisGord Client
 type Config struct {
+	// ################################################
+	// ##
+	// ## Basic bot configuration.
+	// ## This section is for everyone. And beginners
+	// ## should stick to this section unless they know
+	// ## what they are doing.
+	// ##
+	// ################################################
 	BotToken   string
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
 	CancelRequestWhenRateLimited bool
 
-	DisableCache bool
-	CacheConfig  *CacheConfig
-	ShardConfig  ShardConfig
+	// LoadMembersQuietly will start fetching members for all guilds in the background.
+	// There is currently no proper way to detect when the loading is done nor if it
+	// finished successfully.
+	LoadMembersQuietly bool
 
-	// DisGord triggers custom events to handle caching in a simpler manner.
-	// eg. on guild delete, all the channels should be deleted too. to make this simple
-	// disgord dispatches a channel delete event for all channels owned by the guild.
-	//
-	// Setting AcceptCustomEvents to true, will allow you to receive these. Note that
-	// they can be detected with evt.ShardID == disgord.MockedShardID or evt.ShardID < 0.
-	AcceptCustomEvents bool
-
-	//ImmutableCache bool
+	// Presence will automatically be emitted to discord on start up
 	Presence *UpdateStatusPayload
-
-	// IgnoreEvents will skip events that matches the given event names.
-	// WARNING! This can break your caching, so be careful about what you want to ignore.
-	//
-	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
-	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
-	// them at all due to how the identify command was defined. eg. guildS_subscriptions
-	IgnoreEvents []string
 
 	// for cancellation
 	shutdownChan chan interface{}
@@ -173,6 +164,29 @@ type Config struct {
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
 	Logger Logger
+
+	// ################################################
+	// ##
+	// ## WARNING! For advanced users only.
+	// ## This section of options might break the bot,
+	// ## make it incoherent to the Discord API requirements,
+	// ## potentially causing your bot to be banned.
+	// ## You use these features on your own risk.
+	// ##
+	// ################################################
+	RESTBucketManager httd.RESTBucketManager
+
+	DisableCache bool
+	CacheConfig  *CacheConfig
+	ShardConfig  ShardConfig
+
+	// IgnoreEvents will skip events that matches the given event names.
+	// WARNING! This can break your caching, so be careful about what you want to ignore.
+	//
+	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
+	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
+	// them at all due to how the identify command was defined. eg. guildS_subscriptions
+	IgnoreEvents []string
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
@@ -205,8 +219,8 @@ type Client struct {
 	httpClient *http.Client
 	proxy      proxy.Dialer
 
-	shardManager websocket.ShardManager
-	eventChan    chan *websocket.Event
+	shardManager gateway.ShardManager
+	eventChan    chan *gateway.Event
 
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
@@ -224,7 +238,7 @@ type Client struct {
 
 //////////////////////////////////////////////////////
 //
-// COMPLIANCE'S / IMPLEMENTATIONS
+// IMPLEMENTED INTERFACES
 //
 //////////////////////////////////////////////////////
 var _ fmt.Stringer = (*Client)(nil)
@@ -236,7 +250,6 @@ var _ Link = (*Client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
-
 func (c *Client) Pool() *pools {
 	return c.pool
 }
@@ -259,13 +272,8 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 	return c.permissions
 }
 
-// CreateBotURL creates a URL that can be used to invite this bot to a guild/server.
-// Note that it depends on the bot ID to be after the Discord update where the Client ID
-// is the same as the Bot ID.
-//
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
+// CreateBotURL ...
+// Deprecated use InviteURL()
 func (c *Client) CreateBotURL() (u string, err error) {
 	_, _ = c.GetCurrentUser() // update c.myID
 
@@ -280,12 +288,32 @@ func (c *Client) CreateBotURL() (u string, err error) {
 		return "", err
 	}
 
-	loc, _ := time.LoadLocation("America/Los_Angeles")
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		return "", err
+	}
 	t = t.In(loc)
 
 	if !c.myID.Date().After(t) {
 		err = errors.New("the bot was not created after " + t.String() + " and can therefore not use the bot ID to generate a invite link")
 		return "", err
+	}
+
+	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
+	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
+	return u, nil
+}
+
+// InviteURL creates a URL that can be used to invite this bot to a guild/server.
+// Note that it depends on the bot ID to be after the Discord update where the Client ID
+// is the same as the Bot ID.
+//
+// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
+// for your bot to run successfully, you should utilise
+//  Client.
+func (c *Client) InviteURL() (u string, err error) {
+	if _, err = c.GetCurrentUser(); err != nil && c.myID.IsZero() {
+		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
 	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
@@ -341,20 +369,16 @@ func (c *Client) String() string {
 	return LibraryInfo()
 }
 
-// RateLimiter return the rate limiter object
-func (c *Client) RateLimiter() httd.RateLimiter {
-	return c.req.RateLimiter()
+// RESTBucketGrouping shows which hashed endpoints belong to which bucket hash for the REST API.
+// Note that these bucket hashes are eventual consistent.
+func (c *Client) RESTBucketGrouping() (group map[string][]string) {
+	return c.req.BucketGrouping()
 }
 
 // Req return the request object. Used in REST requests to handle rate limits,
 // wrong http responses, etc.
 func (c *Client) Req() httd.Requester {
 	return c.req
-}
-
-// Cache returns the cacheLink manager for the session
-func (c *Client) Cache() Cacher {
-	return c.cache
 }
 
 //////////////////////////////////////////////////////
@@ -366,9 +390,12 @@ func (c *Client) Cache() Cacher {
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
-	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
-	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
-	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
+	if c.config.LoadMembersQuietly {
+		c.On(EvtReady, c.handlerLoadMembers)
+	}
+	c.On(EvtUserUpdate, c.handlerUpdateSelfBot)
+	c.On(EvtGuildCreate, c.handlerAddToConnectedGuilds)
+	c.On(EvtGuildDelete, c.handlerRemoveFromConnectedGuilds)
 
 	// start demultiplexer which also trigger dispatching
 	var cache *cache
@@ -390,11 +417,11 @@ func (c *Client) Connect() (err error) {
 	}
 	c.myID = me.ID
 
-	if err = websocket.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
+	if err = gateway.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
 		return err
 	}
 
-	sharding := websocket.NewShardMngr(websocket.ShardManagerConfig{
+	sharding := gateway.NewShardMngr(gateway.ShardManagerConfig{
 		ShardConfig:        c.config.ShardConfig,
 		Logger:             c.config.Logger,
 		ShutdownChan:       c.config.shutdownChan,
@@ -513,6 +540,17 @@ func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 
 func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 	_ = c.cache.Update(UserCache, update.User)
+}
+
+func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
+	guildIDs := make([]Snowflake, len(evt.Guilds))
+	for i := range evt.Guilds {
+		guildIDs[i] = evt.Guilds[i].ID
+	}
+
+	c.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
+		GuildIDs: guildIDs,
+	})
 }
 
 //////////////////////////////////////////////////////

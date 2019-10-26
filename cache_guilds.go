@@ -5,9 +5,9 @@ import (
 
 	"github.com/buger/jsonparser"
 
-	"github.com/andersfylling/disgord/crs"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/crs"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/internal/httd"
 	"github.com/andersfylling/djp"
 	"github.com/pkg/errors"
 )
@@ -51,7 +51,7 @@ type guildsCache struct {
 	pool  Pool
 
 	// to publish changes
-	evt chan<- *websocket.Event
+	evt chan<- *gateway.Event
 
 	// for rebuilding
 	users    *usersCache
@@ -129,7 +129,7 @@ func (c *guildsCache) triggerChannelDelete(channelID Snowflake) {
 		return
 	}
 
-	c.evt <- &websocket.Event{
+	c.evt <- &gateway.Event{
 		Name:    EvtChannelDelete,
 		Data:    data,
 		ShardID: MockedShardID,

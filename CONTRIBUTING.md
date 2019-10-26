@@ -20,7 +20,7 @@ These are mostly guidelines, not rules. Use your best judgment, and feel free to
   * [Reporting Bugs](#reporting-bugs)
   * [Suggesting Enhancements](#suggesting-enhancements)
   * [Your First Code Contribution](#your-first-code-contribution)
-  * [Unit Tests](#unit-tests)
+  * [Tests](#tests)
   * [Pull Requests](#pull-requests)
 
 [Styleguide](#styleguide)
@@ -168,8 +168,8 @@ We don't currently have a template for this. Provide benchmarks or demonstration
 ### Your First Code Contribution
 Remember to run go fmt to properly format your code and add unit tests if you provide new content. Benchmarks are also welcome as we can use these in future decisions (!).
 
-### Unit Tests
-Make them readable. And don't have external dependencies (eg. Discord API).
+### Tests
+Make them readable. Tests that is for the public interface of DisGord, should be placed in the test sub-pkg, you can also do integration tests here against the Discord API. Tests for unexported or very specific/local behaviour, can be placed in the disgord pkg directly.
 
 ### Pull Requests
 If your PR is not ready yet, make it a Draft.

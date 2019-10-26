@@ -100,6 +100,9 @@ func (m *Message) Reset() {
 	if m.Author != nil {
 		m.Author.Reset()
 	}
+	if m.Member != nil {
+		m.Member.Reset()
+	}
 	m.Content = ""
 	m.Timestamp = Time{}
 	m.EditedTimestamp = Time{}
@@ -107,15 +110,18 @@ func (m *Message) Reset() {
 	m.MentionEveryone = false
 	m.Mentions = nil
 	m.MentionRoles = nil
+	m.MentionChannels = nil
 	m.Attachments = nil
 	m.Embeds = nil
 	m.Reactions = nil
-	m.Nonce = 0
+	m.Nonce = nil
 	m.Pinned = false
 	m.WebhookID = 0
 	m.Type = 0
 	m.Activity = MessageActivity{}
 	m.Application = MessageApplication{}
+	m.MessageReference = nil
+	m.Flags = 0
 	m.GuildID = 0
 	m.SpoilerTagContent = false
 	m.SpoilerTagAllAttachments = false
@@ -142,17 +148,18 @@ func (r *Role) Reset() {
 
 func (a *Activity) Reset() {
 	a.Name = ""
-	a.Type = 0
+	a.Type = acitivityType{}
 	a.URL = ""
 	a.Timestamps = nil
 	a.ApplicationID = 0
 	a.Details = ""
 	a.State = ""
+	a.Emoji = nil
 	a.Party = nil
 	a.Assets = nil
 	a.Secrets = nil
 	a.Instance = false
-	a.Flags = 0
+	a.Flags = activityFlag{}
 }
 
 func (u *User) Reset() {

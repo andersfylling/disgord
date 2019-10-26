@@ -1,10 +1,9 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // VoiceState Voice State structure
@@ -168,14 +167,12 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
-//  Rate limiter            /voice/regions
 //  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
 func (c *Client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimit.VoiceRegions(),
-		Endpoint:    endpoint.VoiceRegions(),
+		Endpoint: endpoint.VoiceRegions(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*VoiceRegion, 0)

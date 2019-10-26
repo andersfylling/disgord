@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/websocket"
+	"github.com/andersfylling/disgord/internal/gateway"
 )
 
 func injectRandomEvents(t *testing.T, callback func(name string, evt interface{}) error) {
@@ -149,7 +149,7 @@ func (g *mockerWSReceiveOnly) Disconnected() bool {
 	return true
 }
 
-var _ websocket.Conn = (*mockerWSReceiveOnly)(nil)
+var _ gateway.Conn = (*mockerWSReceiveOnly)(nil)
 
 var sink1 int = 1
 

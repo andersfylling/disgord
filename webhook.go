@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/andersfylling/disgord/constant"
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // Webhook Used to represent a webhook
@@ -91,7 +91,6 @@ func (c *CreateWebhookParams) FindErrors() error {
 // Returns a webhook object on success.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
-//  Rate limiter            /channels/{channel.id}/webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -104,8 +103,7 @@ func (c *Client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams,
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitChannelWebhooks(channelID),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -120,14 +118,12 @@ func (c *Client) CreateWebhook(channelID Snowflake, params *CreateWebhookParams,
 // GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
-//  Rate limiter            /channels/{channel.id}/webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitChannelWebhooks(channelID),
-		Endpoint:    endpoint.ChannelWebhooks(channelID),
+		Endpoint: endpoint.ChannelWebhooks(channelID),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Webhook, 0)
@@ -140,14 +136,12 @@ func (c *Client) GetChannelWebhooks(channelID Snowflake, flags ...Flag) (ret []*
 // GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/webhooks
-//  Rate limiter            /guilds/{guild.id}/webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitGuildWebhooks(guildID),
-		Endpoint:    endpoint.GuildWebhooks(guildID),
+		Endpoint: endpoint.GuildWebhooks(guildID),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Webhook, 0)
@@ -160,14 +154,12 @@ func (c *Client) GetGuildWebhooks(guildID Snowflake, flags ...Flag) (ret []*Webh
 // GetWebhook [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitWebhook(id),
-		Endpoint:    endpoint.Webhook(id),
+		Endpoint: endpoint.Webhook(id),
 	}, flags)
 	r.factory = func() interface{} {
 		return &Webhook{}
@@ -180,14 +172,12 @@ func (c *Client) GetWebhook(id Snowflake, flags ...Flag) (ret *Webhook, err erro
 // returns no user in the webhook object.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitWebhook(id),
-		Endpoint:    endpoint.WebhookToken(id, token),
+		Endpoint: endpoint.WebhookToken(id, token),
 	}, flags)
 	r.factory = func() interface{} {
 		return &Webhook{}
@@ -200,7 +190,6 @@ func (c *Client) GetWebhookWithToken(id Snowflake, token string, flags ...Flag) 
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
@@ -212,8 +201,7 @@ func (c *Client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebh
 	builder.r.flags = flags
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitWebhook(id),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.Webhook(id),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -225,7 +213,6 @@ func (c *Client) UpdateWebhook(id Snowflake, flags ...Flag) (builder *updateWebh
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
@@ -238,8 +225,7 @@ func (c *Client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Fla
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(token == "", "given webhook token was not set")
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitWebhook(id),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.WebhookToken(id, token),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -250,7 +236,6 @@ func (c *Client) UpdateWebhookWithToken(id Snowflake, token string, flags ...Fla
 // DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -261,7 +246,6 @@ func (c *Client) DeleteWebhook(id Snowflake, flags ...Flag) (err error) {
 // DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -274,9 +258,8 @@ func (c *Client) DeleteWebhookWithToken(id Snowflake, token string, flags ...Fla
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: ratelimitWebhook(id),
-		Endpoint:    e,
+		Method:   httd.MethodDelete,
+		Endpoint: e,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -314,7 +297,6 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 // ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks/{webhook.id}
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-webhook
 //  Reviewed                2018-08-14
 //  Comment                 This endpoint. supports both JSON and form data bodies. It does require
@@ -346,8 +328,7 @@ func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuff
 
 	urlparams := &execWebhookParams{wait}
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitWebhook(params.WebhookID),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix + urlparams.URLQueryString(),
 		Body:        params,
 		ContentType: contentType,
@@ -361,7 +342,6 @@ func (c *Client) ExecuteWebhook(params *ExecuteWebhookParams, wait bool, URLSuff
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
 //  Reviewed                2018-08-14
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
@@ -373,7 +353,6 @@ func (c *Client) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, fl
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Rate limiter            /webhooks
 //  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
 //  Reviewed                2018-08-14
 //  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.

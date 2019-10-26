@@ -3,7 +3,7 @@ package disgord
 import (
 	"time"
 
-	"github.com/andersfylling/disgord/logger"
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 // Emitter for emitting data from A to B. Used in websocket connection
@@ -284,7 +284,7 @@ type RESTGuild interface {
 	GetGuildBan(guildID, userID Snowflake, flags ...Flag) (*Ban, error)
 
 	// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
-	// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
+	// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Create Gateway event.
 	BanMember(guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) error
 
 	// UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
@@ -498,6 +498,8 @@ type Session interface {
 	AvgHeartbeatLatency() (duration time.Duration, err error)
 	// returns the latency for each given shard id. shardID => latency
 	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
+
+	RESTBucketGrouping() (group map[string][]string)
 
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(obj discordDeleter, flags ...Flag) error

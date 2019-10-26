@@ -9,7 +9,7 @@ func printMessage(session disgord.Session, data *disgord.MessageCreate) {
 }
 
 func main() {
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // optional logging, debug=false
     })
@@ -24,29 +24,19 @@ func main() {
 }
 ```
 
-Note that if you dislike the long `disgord.EvtMessageCreate` name. You can use the sub package `event`. However, the `event` package will only hold valid Discord events.
-```go 
-session.On(event.MessageCreate, printMessage)
-```
-
-There's even a pkg called "shortevent". But please never use this if you're in a team or plan to share your code/make it public, etc. But it might be nice if you're just prototyping..
-That being said; these are just string consts. Here it's the same as writing "MESSAGE_CREATE".
-```go 
-// import evt "github.com/andersfylling/disgord/event/shortevent
-session.On(evt.Msg, printMessage)
-```
-
 In addition, Disgord also supports the use of channels for handling events. They work just like registering handlers.
 However, be careful if you plan on closing channels, as you might put disgord internals into a deadlock. Instead, use the disgord.Ctrl method CloseChannel to handle this.
 ```go
-client := disgord.New(&disgord.Config{
+client := disgord.New(disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
     Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // or use a channel to listen for events
+msgCreateChan := make(chan *disgord.MessageCreate)
+client.On(disgord.EvtMessageCreate, msgCreateChan)
+
 go func() {
-    msgCreateChan := make(chan *disgord.MessageCreate)
     for {
         var msg *disgord.Message
 
@@ -147,6 +137,7 @@ func chessWorker(s disgord.Session, workChan chan *disgord.MessageCreate, ctrl *
 		if !gameStatus.Finished() {
 			// yes, you need locking.
 			// increment Runs such that the player can do another move
+            // if the ctrl hits 0 or lower, the handler is removed. 
 			ctrl.Runs++
 		}
 		

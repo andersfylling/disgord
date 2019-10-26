@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/andersfylling/disgord/endpoint"
-	"github.com/andersfylling/disgord/httd"
-	"github.com/andersfylling/disgord/ratelimit"
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -123,9 +122,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -135,10 +133,6 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		if client.req.Endpoint != "/guilds/7/audit-logs" {
 			t.Error("incorrect endpoint")
-		}
-
-		if client.req.Ratelimiter != "g:7:a-l" { // why even test this?
-			t.Error("incorrect rate limit key")
 		}
 	})
 	t.Run("success", func(t *testing.T) {
@@ -156,9 +150,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -192,9 +185,8 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -218,9 +210,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()

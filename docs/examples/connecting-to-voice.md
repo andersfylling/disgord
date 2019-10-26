@@ -10,12 +10,11 @@ import (
 	"os"
 
 	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/event"
 )
 
 func main() {
 	// Set up a new Disgord client
-	discord := disgord.New(&disgord.Config{
+	discord := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 	})
@@ -25,7 +24,7 @@ func main() {
 		// Once the bot has connected to the websocket, also connect to the voice channel
 		voice, _ = discord.VoiceConnect(myGuildID, myChannelID)
 	})
-	_ = discord.On(event.MessageCreate, func(_ disgord.Session, m *disgord.MessageCreate) {
+	_ = discord.On(disgord.EvtMessageCreate, func(_ disgord.Session, m *disgord.MessageCreate) {
 		// Upon receiving a message with content !airhorn, play a sound to the connection made earlier
 		if m.Message.Content == "!airhorn" {
 			f, _ := os.Open("airhorn.dca")

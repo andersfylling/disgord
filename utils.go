@@ -3,7 +3,15 @@ package disgord
 import (
 	"errors"
 	"strings"
+
+	"github.com/andersfylling/disgord/internal/gateway"
 )
+
+// ShardID calculate the shard id for a given guild.
+// https://discordapp.com/developers/docs/topics/gateway#sharding-sharding-formula
+func ShardID(guildID Snowflake, nrOfShards uint) uint {
+	return gateway.GetShardForGuildID(guildID, nrOfShards)
+}
 
 //////////////////////////////////////////////////////
 //

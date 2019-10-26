@@ -15,7 +15,7 @@ import (
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 func TestConnect(t *testing.T) {
-	c := disgord.New(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
 	})
@@ -37,7 +37,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestConnectWithShards(t *testing.T) {
-	c := disgord.New(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
 		ShardConfig: disgord.ShardConfig{
@@ -63,7 +63,7 @@ func TestConnectWithShards(t *testing.T) {
 
 func TestConnectWithSeveralInstances(t *testing.T) {
 	createInstance := func(shardIDs []uint, shardCount uint) *disgord.Client {
-		return disgord.New(&disgord.Config{
+		return disgord.New(disgord.Config{
 			BotToken:     token,
 			DisableCache: true,
 			ShardConfig: disgord.ShardConfig{
@@ -123,7 +123,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 
 func TestFailOnPrematureEmit(t *testing.T) {
 	// TODO: update when a queue is added/or whatever, for c.Emit before c.Connect takes place
-	c := disgord.New(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken:     "dkjfhslkjfhksf",
 		DisableCache: true,
 		ShardConfig: disgord.ShardConfig{

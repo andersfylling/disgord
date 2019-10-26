@@ -6,8 +6,8 @@ import (
 
 	"github.com/andersfylling/djp"
 
-	"github.com/andersfylling/disgord/crs"
-
+	"github.com/andersfylling/disgord/internal/constant"
+	"github.com/andersfylling/disgord/internal/crs"
 	jp "github.com/buger/jsonparser"
 )
 
@@ -283,6 +283,103 @@ func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, e
 	id, err := djp.GetSnowflake(data, "id")
 	if err != nil {
 		return nil, err
+	}
+
+	lock := func(m *Member, cb func(*Member)) {
+		if constant.LockedMethods {
+			m.Lock()
+		}
+		cb(m)
+		if constant.LockedMethods {
+			m.Unlock()
+		}
+	}
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+	var newMembers []*Member
+	for i := range members {
+		var updated bool
+		for j := range guild.Members {
+			if guild.Members[j].userID != 0 && guild.Members[j].userID == members[i].userID {
+				var tmp *User
+				lock(members[i], func(m *Member) {
+					tmp = members[i].User
+					members[i].User = nil
+				})
+				_ = members[i].CopyOverTo(guild.Members[j])
+				lock(members[i], func(_ *Member) {
+					members[i].User = tmp
+				})
+				updated = true
+				break
+			}
+		}
+
+		if !updated {
+			var tmp *User
+			lock(members[i], func(m *Member) {
+				tmp = members[i].User
+				members[i].User = nil
+			})
+			member := members[i].DeepCopy().(*Member)
+			lock(members[i], func(_ *Member) {
+				members[i].User = tmp
+			})
+
+			newMembers = append(newMembers, member)
+		}
+	}
+
+	guild.Members = append(guild.Members, newMembers...)
+
+	if guild.MemberCount < uint(len(guild.Members)) {
+		guild.MemberCount = uint(len(guild.Members))
+	}
+}
+
+// GetGuildMember ...
+func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err error) {
+	if c.guilds == nil {
+		err = newErrorUsingDeactivatedCache("guilds")
+		return
+	}
+
+	c.guilds.RLock()
+
+	result, exists := c.guilds.Get(guildID)
+	if !exists {
+		err = newErrorCacheItemNotFound(guildID)
+		return
+	}
+
+	guild := result.Val.(*guildCacheItem).guild
+	for i := range guild.Members {
+		if guild.Members[i].userID == userID {
+			member = guild.Members[i]
+			if c.immutable {
+				member = member.DeepCopy().(*Member)
+			}
+			break
+		}
+	}
+	c.guilds.RUnlock()
+
+	if member == nil {
+		err = newErrorCacheItemNotFound(userID)
+		return
+	}
+
+	// add user object if it exists
+	member.User, _ = c.GetUser(userID)
+	return
+}
+
+// GetGuildMembersAfter ...
+func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (members []*Member, err error) {
+	if c.guilds == nil {
+		err = newErrorUsingDeactivatedCache("guilds")
+		return
 	}
 
 	var recipients []*User
