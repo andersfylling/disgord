@@ -8,6 +8,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -15,7 +16,7 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = httd.Unmarshal(data, &v)
+	err = util.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -239,7 +240,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := httd.Unmarshal(data, &v2); err != nil {
+	if err := util.Unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
 
@@ -250,7 +251,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := httd.Unmarshal(data, &v); err != nil {
+	if err := util.Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 

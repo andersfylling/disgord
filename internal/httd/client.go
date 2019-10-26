@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // defaults and string format's for Discord interaction
@@ -263,7 +265,7 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 
 		// store the Discord error if it exists
 		if len(body) > 0 {
-			_ = Unmarshal(body, err)
+			_ = util.Unmarshal(body, err)
 		}
 		return nil, nil, err
 	}

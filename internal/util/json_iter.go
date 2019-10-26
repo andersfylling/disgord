@@ -1,6 +1,6 @@
 // +build !json_std
 
-package httd
+package util
 
 import (
 	"encoding/json"

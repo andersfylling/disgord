@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -583,7 +583,7 @@ func (c *client) receiver(ctx context.Context) {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		if err = httd.Unmarshal(packet, evt); err != nil {
+		if err = util.Unmarshal(packet, evt); err != nil {
 			c.log.Error(c.getLogPrefix(), err, "ERRONEOUS PACKET CONTENT:", string(packet))
 			cancel() // sometimes a CDN or some VPN might send a HTML string..
 			continue

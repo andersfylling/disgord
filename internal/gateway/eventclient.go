@@ -14,7 +14,7 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/event"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -156,7 +156,7 @@ type EvtClient struct {
 func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	// marshalling is done to avoid race
 	var presence json.RawMessage
-	if presence, err = httd.Marshal(data); err != nil {
+	if presence, err = util.Marshal(data); err != nil {
 		return err
 	}
 	c.idMu.Lock()
@@ -243,7 +243,7 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	// always store the session id
 	ready := evtReadyPacket{}
-	if err = httd.Unmarshal(p.Data, &ready); err != nil {
+	if err = util.Unmarshal(p.Data, &ready); err != nil {
 		return err
 	}
 
@@ -309,7 +309,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err := httd.Unmarshal(p.Data, helloPk); err != nil {
+	if err := util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 

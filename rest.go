@@ -9,6 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 type ErrRest = httd.ErrREST
@@ -19,11 +20,11 @@ type URLQueryStringer interface {
 }
 
 func unmarshal(data []byte, v interface{}) error {
-	return httd.Unmarshal(data, v)
+	return util.Unmarshal(data, v)
 }
 
 func marshal(v interface{}) ([]byte, error) {
-	return httd.Marshal(v)
+	return util.Marshal(v)
 }
 
 // AvatarParamHolder is used when handling avatar related REST structs.
@@ -184,7 +185,7 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = httd.Unmarshal(body, obj); err != nil {
+	if err = util.Unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
@@ -345,7 +346,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = httd.Unmarshal(body, v); err != nil {
+		if err = util.Unmarshal(body, v); err != nil {
 			return nil, err
 		}
 

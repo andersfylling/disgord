@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // Resource represents a discord event.
@@ -496,7 +496,7 @@ func (g *GuildMemberAdd) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
-	return httd.Unmarshal(data, obj.Member)
+	return util.Unmarshal(data, obj.Member)
 }
 
 // ---------------------------

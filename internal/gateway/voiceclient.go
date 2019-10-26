@@ -10,10 +10,11 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/internal/logger"
-	"golang.org/x/net/proxy"
 )
 
 type VoiceConfig struct {
@@ -121,7 +122,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	readyPk := &VoiceReady{}
-	if err = httd.Unmarshal(p.Data, readyPk); err != nil {
+	if err = util.Unmarshal(p.Data, readyPk); err != nil {
 		return err
 	}
 
@@ -151,7 +152,7 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err = httd.Unmarshal(p.Data, helloPk); err != nil {
+	if err = util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 	c.Lock()
@@ -172,7 +173,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	sessionPk := &VoiceSessionDescription{}
-	if err = httd.Unmarshal(p.Data, sessionPk); err != nil {
+	if err = util.Unmarshal(p.Data, sessionPk); err != nil {
 		return err
 	}
 

@@ -7,8 +7,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/crs"
-
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 type cacheRegistry uint
@@ -380,7 +379,7 @@ func (c *Cache) DirectUpdate(registry cacheRegistry, id Snowflake, changes []byt
 			return err
 		}
 
-		err = httd.Unmarshal(changes, usr)
+		err = util.Unmarshal(changes, usr)
 		return err
 	}
 
@@ -655,7 +654,7 @@ func (g *guildCacheItem) updateRole(role *Role, data json.RawMessage) bool {
 	for i := range g.guild.Roles {
 		if g.guild.Roles[i].ID == role.ID {
 			todo := &GuildRoleUpdate{Role: g.guild.Roles[i]}
-			err := httd.Unmarshal(data, todo)
+			err := util.Unmarshal(data, todo)
 			updated = err == nil
 			break
 		}
@@ -799,7 +798,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	}
 
 	member.User = tmpUser
-	if err := httd.Unmarshal(data, member); err != nil {
+	if err := util.Unmarshal(data, member); err != nil {
 		c.guilds.Unlock()
 		// TODO: logging
 		return

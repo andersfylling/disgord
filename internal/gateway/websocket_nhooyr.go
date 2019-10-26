@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"golang.org/x/net/proxy"
 
@@ -50,7 +50,7 @@ func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	err = httd.JSONEncode(w, v)
+	err = util.JSONEncode(w, v)
 	return
 }
 
