@@ -154,6 +154,7 @@ func (a *Activity) Reset() {
 	a.ApplicationID = 0
 	a.Details = ""
 	a.State = ""
+	a.Emoji = nil
 	a.Party = nil
 	a.Assets = nil
 	a.Secrets = nil

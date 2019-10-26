@@ -321,6 +321,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ActivityAssets:
 		s = *t
+	case *[]*ActivityEmoji:
+		s = *t
 	case *[]*ActivityParty:
 		s = *t
 	case *[]*ActivitySecrets:
@@ -500,6 +502,12 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*Role:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ActivityEmoji:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -908,6 +916,12 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*Activity:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ActivityEmoji:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

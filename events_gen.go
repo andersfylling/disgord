@@ -9,6 +9,87 @@ import (
 	"github.com/andersfylling/disgord/internal/event"
 )
 
+func AllEvents(except ...string) []string {
+	evtsMap := map[string]int8{
+
+		EvtChannelCreate: 0,
+
+		EvtChannelDelete: 0,
+
+		EvtChannelPinsUpdate: 0,
+
+		EvtChannelUpdate: 0,
+
+		EvtGuildBanAdd: 0,
+
+		EvtGuildBanRemove: 0,
+
+		EvtGuildCreate: 0,
+
+		EvtGuildDelete: 0,
+
+		EvtGuildEmojisUpdate: 0,
+
+		EvtGuildIntegrationsUpdate: 0,
+
+		EvtGuildMemberAdd: 0,
+
+		EvtGuildMemberRemove: 0,
+
+		EvtGuildMemberUpdate: 0,
+
+		EvtGuildMembersChunk: 0,
+
+		EvtGuildRoleCreate: 0,
+
+		EvtGuildRoleDelete: 0,
+
+		EvtGuildRoleUpdate: 0,
+
+		EvtGuildUpdate: 0,
+
+		EvtMessageCreate: 0,
+
+		EvtMessageDelete: 0,
+
+		EvtMessageDeleteBulk: 0,
+
+		EvtMessageReactionAdd: 0,
+
+		EvtMessageReactionRemove: 0,
+
+		EvtMessageReactionRemoveAll: 0,
+
+		EvtMessageUpdate: 0,
+
+		EvtPresenceUpdate: 0,
+
+		EvtReady: 0,
+
+		EvtResumed: 0,
+
+		EvtTypingStart: 0,
+
+		EvtUserUpdate: 0,
+
+		EvtVoiceServerUpdate: 0,
+
+		EvtVoiceStateUpdate: 0,
+
+		EvtWebhooksUpdate: 0,
+	}
+
+	for i := range except {
+		delete(evtsMap, except[i])
+	}
+
+	evts := make([]string, 0, len(evtsMap))
+	for k := range evtsMap {
+		evts = append(evts, k)
+	}
+	return evts
+}
+
 // ---------------------------
 
 // EvtChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
