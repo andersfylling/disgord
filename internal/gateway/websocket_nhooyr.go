@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/util"
 
 	"nhooyr.io/websocket"
@@ -20,8 +22,9 @@ func newConn(httpClient *http.Client) (Conn, error) {
 }
 
 type nhooyr struct {
-	c          *websocket.Conn
-	httpClient *http.Client
+	c           *websocket.Conn
+	httpClient  *http.Client
+	isConnected atomic.Bool
 }
 
 func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
@@ -36,6 +39,7 @@ func (g *nhooyr) Open(ctx context.Context, endpoint string, requestHeader http.H
 		}
 		return err
 	}
+	g.isConnected.Store(true)
 
 	g.c.SetReadLimit(32768 * 10000) // discord.. Can we add stream support?
 	return
@@ -54,7 +58,10 @@ func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 
 func (g *nhooyr) Close() (err error) {
 	err = g.c.Close(websocket.StatusNormalClosure, "Bot is shutting down")
-	g.c = nil
+	if !g.isConnected.Load() {
+		err = nil // discard error if we're already closed, should be a noop anyways
+	}
+	g.isConnected.Store(false)
 	return err
 }
 
@@ -64,6 +71,7 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	if err != nil {
 		var closeErr *websocket.CloseError
 		if errors.As(err, &closeErr) {
+			g.isConnected.Store(false)
 			err = &CloseErr{
 				code: int(closeErr.Code),
 				info: closeErr.Error(),
@@ -79,13 +87,7 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 }
 
 func (g *nhooyr) Disconnected() bool {
-	status := g.disconnected()
-
-	return status
-}
-
-func (g *nhooyr) disconnected() bool {
-	return g.c == nil
+	return !g.isConnected.Load()
 }
 
 var _ Conn = (*nhooyr)(nil)
