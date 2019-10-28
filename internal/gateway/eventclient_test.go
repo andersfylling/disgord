@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
@@ -17,19 +19,16 @@ import (
 )
 
 type testWS struct {
-	closing      chan interface{}
-	opening      chan interface{}
-	writing      chan interface{}
-	reading      chan []byte
-	disconnected bool
-	sync.RWMutex
+	closing     chan interface{}
+	opening     chan interface{}
+	writing     chan interface{}
+	reading     chan []byte
+	isConnected atomic.Bool
 }
 
 func (g *testWS) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	g.opening <- 1
-	g.Lock()
-	g.disconnected = false
-	g.Unlock()
+	g.isConnected.Store(true)
 	return
 }
 
@@ -40,9 +39,7 @@ func (g *testWS) WriteJSON(v interface{}) (err error) {
 
 func (g *testWS) Close() (err error) {
 	g.closing <- 1
-	g.Lock()
-	g.disconnected = true
-	g.Unlock()
+	g.isConnected.Store(false)
 	return
 }
 
@@ -53,10 +50,7 @@ func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
 		case <-ctx.Done():
 			break
 		case <-time.After(1 * time.Millisecond):
-			g.RLock()
-			dis := g.disconnected
-			g.RUnlock()
-			if !dis {
+			if g.isConnected.Load() {
 				continue
 			}
 		}
@@ -70,7 +64,7 @@ func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
 }
 
 func (g *testWS) Disconnected() bool {
-	return g.disconnected
+	return !g.isConnected.Load()
 }
 
 var _ Conn = (*testWS)(nil)
@@ -79,12 +73,12 @@ var _ Conn = (*testWS)(nil)
 func TestEvtClient_communication(t *testing.T) {
 	deadline := 1 * time.Second
 	conn := &testWS{
-		closing:      make(chan interface{}),
-		opening:      make(chan interface{}),
-		writing:      make(chan interface{}),
-		reading:      make(chan []byte),
-		disconnected: true,
+		closing: make(chan interface{}),
+		opening: make(chan interface{}),
+		writing: make(chan interface{}),
+		reading: make(chan []byte),
 	}
+	conn.isConnected.Store(false)
 
 	eChan := make(chan *Event)
 

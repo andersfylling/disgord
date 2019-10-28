@@ -124,7 +124,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 	// trick shards into thinking they have connected so we can emit msgs
 	connect := func() {
 		for _, shard := range mngr.shards {
-			shard.haveConnectedOnce = true
+			shard.haveConnectedOnce.Store(true)
 		}
 	}
 	connect()
@@ -185,8 +185,8 @@ func TestRedistributeShardMessages(t *testing.T) {
 //		opening:      make(chan interface{}),
 //		writing:      make(chan interface{}),
 //		reading:      make(chan []byte),
-//		disconnected: true,
 //	}
+//  conn.isConnected.Store(false)
 //
 //	mngr := NewShardMngr(ShardManagerConfig{
 //		ShardConfig: ShardConfig{

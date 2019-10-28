@@ -376,9 +376,7 @@ func (c *EvtClient) Connect() (err error) {
 }
 
 func (c *EvtClient) internalConnect() (evt interface{}, err error) {
-	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
-	// certainty say if we are connected
-	if !c.disconnected {
+	if c.isConnected.Load() {
 		err = errors.New("cannot Connect while a connection already exist")
 		return nil, err
 	}
@@ -428,8 +426,8 @@ func (c *EvtClient) openConnection(ctx context.Context) error {
 	}
 
 	// we can now interact with Discord
-	c.haveConnectedOnce = true
-	c.disconnected = false
+	c.haveConnectedOnce.Store(true)
+	c.isConnected.Store(true)
 	go c.receiver(ctx)
 	go c.emitter(ctx)
 	go c.startBehaviors(ctx)

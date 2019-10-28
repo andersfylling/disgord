@@ -329,9 +329,7 @@ func (s *shardMngr) Disconnect() error {
 		shard.sessionID = ""
 		shard.sequenceNumber = 0
 
-		shard.Lock()
-		shard.haveConnectedOnce = false
-		shard.Unlock()
+		shard.haveConnectedOnce.Store(false)
 	}
 	return nil
 }
