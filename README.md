@@ -57,7 +57,7 @@ func printMessage(session disgord.Session, evt *disgord.MessageCreate) {
 }
 
 func main() {
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         // You can inject any logger that implements disgord.Logger interface (eg. logrus)
         // DisGord provides a simple logger to get you started. Nothing is logged if nil.
