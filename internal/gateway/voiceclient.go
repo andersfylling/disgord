@@ -12,8 +12,6 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/util"
 
-	"golang.org/x/net/proxy"
-
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
@@ -31,7 +29,6 @@ type VoiceConfig struct {
 	Token string
 
 	// proxy allows for use of a custom proxy
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// Endpoint for establishing voice connection
@@ -65,7 +62,6 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 	client.client, err = newClient(0, &config{
 		Logger:     conf.Logger,
 		Endpoint:   conf.Endpoint,
-		Proxy:      conf.Proxy,
 		HTTPClient: conf.HTTPClient,
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {

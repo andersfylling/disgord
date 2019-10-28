@@ -48,7 +48,7 @@ type discordErrListener = func(code int, reason string)
 func newClient(shardID uint, conf *config, connect connectSignature) (c *client, err error) {
 	var ws Conn
 	if conf.conn == nil {
-		ws, err = newConn(conf.Proxy, conf.HTTPClient)
+		ws, err = newConn(conf.HTTPClient)
 		if err != nil {
 			return nil, err
 		}
@@ -88,7 +88,6 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 }
 
 type config struct {
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// for testing only

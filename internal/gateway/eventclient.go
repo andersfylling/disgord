@@ -17,8 +17,6 @@ import (
 	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
-
-	"golang.org/x/net/proxy"
 )
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
@@ -45,7 +43,6 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		Logger:            conf.Logger,
 		Endpoint:          conf.Endpoint,
 		DiscordPktPool:    conf.DiscordPktPool,
-		Proxy:             conf.Proxy,
 		HTTPClient:        conf.HTTPClient,
 		conn:              conf.conn,
 		messageQueueLimit: conf.MessageQueueLimit,
@@ -89,7 +86,6 @@ type Event struct {
 type EvtConfig struct {
 	// BotToken Discord bot token
 	BotToken   string
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// for testing only

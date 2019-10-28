@@ -12,8 +12,6 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 
 	"github.com/andersfylling/disgord/internal/logger"
-
-	"golang.org/x/net/proxy"
 )
 
 const defaultShardRateLimit time.Duration = 5*time.Second + 100*time.Millisecond
@@ -187,7 +185,6 @@ type ShardManagerConfig struct {
 	ShardConfig
 	DisgordInfo  string
 	BotToken     string
-	Proxy        proxy.Dialer
 	HTTPClient   *http.Client
 	Logger       logger.Logger
 	ShutdownChan chan interface{}
@@ -243,7 +240,6 @@ func (s *shardMngr) initShards() error {
 
 		// user settings
 		BotToken:   s.conf.BotToken,
-		Proxy:      s.conf.Proxy,
 		HTTPClient: s.conf.HTTPClient,
 
 		// other

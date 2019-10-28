@@ -1,6 +1,6 @@
-// +build !disgord_websocket_gorilla
-
 package gateway
+
+// TODO: merge websocket_nhooyr.go with the client.go. Figure out mocking for the client as well.
 
 import (
 	"context"
@@ -10,12 +10,10 @@ import (
 
 	"github.com/andersfylling/disgord/internal/util"
 
-	"golang.org/x/net/proxy"
-
 	"nhooyr.io/websocket"
 )
 
-func newConn(proxy proxy.Dialer, httpClient *http.Client) (Conn, error) {
+func newConn(httpClient *http.Client) (Conn, error) {
 	return &nhooyr{
 		httpClient: httpClient,
 	}, nil
