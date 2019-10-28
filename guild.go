@@ -1345,6 +1345,9 @@ type CreateGuildChannelParams struct {
 	ParentID             Snowflake             `json:"parent_id,omitempty"`
 	NSFW                 bool                  `json:"nsfw,omitempty"`
 	Position             int                   `json:"position"` // can not omitempty in case position is 0
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // CreateGuildChannel [REST] Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
@@ -1374,6 +1377,7 @@ func (c *Client) CreateGuildChannel(guildID Snowflake, channelName string, param
 		Endpoint:    endpoint.GuildChannels(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Channel{}
@@ -1389,6 +1393,11 @@ func (c *Client) CreateGuildChannel(guildID Snowflake, channelName string, param
 type UpdateGuildChannelPositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	// just reuse the string. Go will optimize it to point to the same memory anyways
+	// TODO: improve this?
+	Reason string `json:"-"`
 }
 
 // UpdateGuildChannelPositions [REST] Modify the positions of a set of channel objects for the guild.
@@ -1401,11 +1410,19 @@ type UpdateGuildChannelPositionsParams struct {
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
 func (c *Client) UpdateGuildChannelPositions(guildID Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
+	var reason string
+	for i := range params {
+		if params[i].Reason != "" {
+			reason = params[i].Reason
+			break
+		}
+	}
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.GuildChannels(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      reason,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	// TODO: update ordering of guild channels in cache
@@ -1431,6 +1448,9 @@ func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions
 type UpdateGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // UpdateGuildRolePositions [REST] Modify the positions of a set of role objects for the guild.
@@ -1442,11 +1462,20 @@ type UpdateGuildRolePositionsParams struct {
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UpdateGuildRolePositions(guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (roles []*Role, err error) {
+	var reason string
+	for i := range params {
+		if params[i].Reason != "" {
+			reason = params[i].Reason
+			break
+		}
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.GuildRoles(guildID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      reason,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Role, 0)
@@ -1759,10 +1788,11 @@ func (c *Client) RemoveGuildMemberRole(guildID, userID, roleID Snowflake, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) KickMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) KickMember(guildID, userID Snowflake, reason string, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildMember(guildID, userID),
+		Reason:   reason,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1848,6 +1878,7 @@ func (c *Client) BanMember(guildID, userID Snowflake, params *BanMemberParams, f
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPut,
 		Endpoint: endpoint.GuildBan(guildID, userID) + params.URLQueryString(),
+		Reason:   params.Reason,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1862,10 +1893,11 @@ func (c *Client) BanMember(guildID, userID Snowflake, params *BanMemberParams, f
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) UnbanMember(guildID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) UnbanMember(guildID, userID Snowflake, reason string, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildBan(guildID, userID),
+		Reason:   reason,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1941,7 +1973,7 @@ func (c *Client) EstimatePruneMembersCount(id Snowflake, days int, flags ...Flag
 //  Discord documentation   https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error) {
+func (c *Client) PruneMembers(id Snowflake, days int, reason string, flags ...Flag) (err error) {
 	params := pruneMembersParams{Days: days}
 	if err = params.FindErrors(); err != nil {
 		return err
@@ -1950,6 +1982,7 @@ func (c *Client) PruneMembers(id Snowflake, days int, flags ...Flag) (err error)
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPost,
 		Endpoint: endpoint.GuildPrune(id) + params.URLQueryString(),
+		Reason:   reason,
 	}, flags)
 
 	_, err = r.Execute()
