@@ -10,6 +10,7 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
 )
@@ -98,9 +99,13 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 			},
 		},
 	}
+	mngr.sync.metric = &IdentifyMetric{}
 	mngr.sync.logger = conf.Logger
+	mngr.sync.lpre = "[shardSync]"
 	mngr.sync.timeoutMs = conf.ShardRateLimit
 	if conf.ConnectQueue == nil {
+		mngr.sync.queue = util.NewThreadSafeQueue()
+		go mngr.sync.process() // handle requests
 		mngr.connectQueue = mngr.sync.queueShard
 	} else {
 		mngr.connectQueue = conf.ConnectQueue
@@ -217,7 +222,7 @@ type shardMngr struct {
 var _ ShardManager = (*shardMngr)(nil)
 
 func (s *shardMngr) initShards() error {
-	baseConfig := EvtConfig{ // TIP: not nicely grouped, feel free to adjust
+	baseConfig := EvtConfig{ // TODO: not nicely grouped, feel free to adjust
 		// identity
 		Browser:             s.conf.DisgordInfo,
 		Device:              s.conf.ProjectName,

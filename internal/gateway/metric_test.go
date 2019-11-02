@@ -15,7 +15,7 @@ func TestShardMetric_ReconnectsSince(t *testing.T) {
 		now,
 	}
 
-	metric := &ShardMetric{
+	metric := &IdentifyMetric{
 		Reconnects: times,
 	}
 

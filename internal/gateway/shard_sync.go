@@ -1,77 +1,82 @@
 package gateway
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 type shardSync struct {
 	timeoutMs time.Duration
 	sync.Mutex
-	next         time.Time
+	queue        util.Queue
 	logger       logger.Logger
+	lpre         string
 	shutdownChan chan interface{}
-	metric       *ShardMetric
+	metric       *IdentifyMetric
 }
 
 func (s *shardSync) queueShard(shardID uint, cb func() error) error {
-	var success bool
-	var delay time.Duration
-	now := time.Now()
+	waitChan := make(chan (chan bool))
+	s.queue.Push(waitChan)
 
-	s.metric.Lock()
-	s.metric.RequestedReconnect = append(s.metric.RequestedReconnect, now)
-	s.metric.Unlock()
+	s.logger.Debug(s.lpre, "shard", shardID, "is waiting to identify")
+	waited := time.Now()
+	resultChan := <-waitChan
 
-	defer func() {
-		if !success {
+	s.logger.Debug(s.lpre, "shard", shardID, "waited", time.Since(waited), "and is now executing")
+	if err := cb(); err != nil {
+		resultChan <- false
+		return err
+	}
+	resultChan <- true
+
+	return nil
+}
+
+func (s *shardSync) process() {
+	var timeout time.Duration
+	resultChan := make(chan bool)
+
+	for {
+		select {
+		case <-s.shutdownChan:
+			s.logger.Debug("shard identify-rate-limiter got shutdown signal")
 			return
+		case <-time.After(timeout):
 		}
+		timeout = s.timeoutMs * time.Millisecond
+
+		// 1000 identify / 24 hours rate limit check
+		if s.metric.ReconnectsSince(24*time.Hour) > 999 {
+			s.metric.Lock()
+			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
+			s.metric.Unlock()
+
+			timeout = (24 * time.Hour) - time.Since(oldest)
+			continue // go back to the top to wait
+		}
+
+		x, err := s.queue.Pop()
+		if err != nil {
+			continue
+		}
+		if wChan, ok := x.(chan (chan bool)); ok {
+			wChan <- resultChan
+		} else {
+			continue
+		}
+
+		// wait for result
+		if reconnected := <-resultChan; !reconnected {
+			timeout = 0 // no need to wait if the identify was _not_ sent
+			continue
+		}
+
 		s.metric.Lock()
 		s.metric.Reconnects = append(s.metric.Reconnects, time.Now())
 		s.metric.Unlock()
-	}()
-
-	s.Lock()
-	defer s.Unlock()
-
-	if s.next.After(now) {
-		delay = s.next.Sub(now)
-	} else {
-		delay = time.Duration(0)
-		s.next = now
 	}
-	s.next = s.next.Add(s.timeoutMs)
-
-	// 1000 identify / 24 hours rate limit check
-	if s.metric.ReconnectsSince(24*time.Hour) > 999 {
-		s.metric.Lock()
-		oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
-		s.metric.Unlock()
-
-		delay += (24 * time.Hour) - time.Since(oldest)
-		s.next = s.next.Add(delay) // might add excess milliseconds, but it really doesn't matter at this stage
-	}
-
-	s.logger.Debug("shard", shardID, "will wait in connect queue for", delay)
-	select {
-	case <-time.After(delay):
-		s.logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
-		start := time.Now()
-		if err := cb(); err != nil {
-			return err
-		}
-		execDuration := time.Since(start)
-		s.next = s.next.Add(execDuration)
-		success = true // store reconnect timestamp in metrics
-
-	case <-s.shutdownChan:
-		s.logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
-		return errors.New("shutting down")
-	}
-
-	return nil
 }

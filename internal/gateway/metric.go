@@ -7,20 +7,20 @@ import (
 
 const MetricReconnectPeriod = time.Hour * 48
 
-type ShardMetric struct {
+// TODO-1: make it specific to individual shards for more insight
+// TODO-2: Limit storage period
+type IdentifyMetric struct {
 	sync.Mutex
-	Reconnects         []time.Time // last 48h or (see const ReconnectPeriod)
-	RequestedReconnect []time.Time // ^
+	Reconnects []time.Time // last 48h or (see const ReconnectPeriod)
 }
 
-func (s *ShardMetric) cleanup() {
+func (s *IdentifyMetric) cleanup() {
 	now := time.Now()
 	s.Reconnects = rotateByTime(s.Reconnects, now.Add(MetricReconnectPeriod))
-	s.RequestedReconnect = rotateByTime(s.RequestedReconnect, now.Add(MetricReconnectPeriod))
 }
 
 // ReconnectsSince counts the number of reconnects since t, where t can be no more than ReconnectPeriod (48h?)
-func (s *ShardMetric) ReconnectsSince(d time.Duration) (counter uint) {
+func (s *IdentifyMetric) ReconnectsSince(d time.Duration) (counter uint) {
 	limit := time.Now().Add(d)
 	s.Lock()
 	defer s.Unlock()
