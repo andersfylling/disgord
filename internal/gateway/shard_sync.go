@@ -14,11 +14,26 @@ type shardSync struct {
 	next         time.Time
 	logger       logger.Logger
 	shutdownChan chan interface{}
+	metric       *ShardMetric
 }
 
 func (s *shardSync) queueShard(shardID uint, cb func() error) error {
+	var success bool
 	var delay time.Duration
 	now := time.Now()
+
+	s.metric.Lock()
+	s.metric.RequestedReconnect = append(s.metric.RequestedReconnect, now)
+	s.metric.Unlock()
+
+	defer func() {
+		if !success {
+			return
+		}
+		s.metric.Lock()
+		s.metric.Reconnects = append(s.metric.Reconnects, time.Now())
+		s.metric.Unlock()
+	}()
 
 	s.Lock()
 	defer s.Unlock()
@@ -41,6 +56,7 @@ func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 		}
 		execDuration := time.Since(start)
 		s.next = s.next.Add(execDuration)
+		success = true // store reconnect timestamp in metrics
 
 	case <-s.shutdownChan:
 		s.logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
