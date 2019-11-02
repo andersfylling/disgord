@@ -3,7 +3,6 @@
 package util
 
 import (
-	"encoding/json"
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
@@ -20,9 +19,6 @@ var jiter = jsoniter.Config{
 
 // Unmarshal is the json unmarshaler implementation that is defined by the used build tags.
 func Unmarshal(data []byte, v interface{}) error {
-	if j, has := v.(json.Unmarshaler); has {
-		return j.UnmarshalJSON(data)
-	}
 	return jiter.Unmarshal(data, v)
 }
 
@@ -37,8 +33,5 @@ func JSONEncode(w io.WriteCloser, v interface{}) error {
 
 // Marshal is the json marshaler implementation for jsoniter, depending on the build tags.
 func Marshal(v interface{}) (data []byte, err error) {
-	if j, has := v.(json.Marshaler); has {
-		return j.MarshalJSON()
-	}
 	return jiter.Marshal(v)
 }
