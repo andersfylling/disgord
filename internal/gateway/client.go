@@ -477,6 +477,8 @@ func (c *client) receiver(ctx context.Context) {
 	defer c.isReceiving.Store(false)
 	c.log.Debug(c.getLogPrefix(), "starting receiver")
 
+	var noopCounter int
+
 	internal, cancel := context.WithCancel(context.Background())
 	for {
 		// check if application has closed
@@ -512,7 +514,14 @@ func (c *client) receiver(ctx context.Context) {
 			c.poolDiscordPkt.Put(evt)
 
 			// noop
+			if noopCounter >= 10 {
+				c.log.Error(c.getLogPrefix(), "json unmarshal failed 10 times for this shard and reconnect is now forced")
+				cancel() // on 10 continuous errors, we just force a reconnect
+			}
+			noopCounter++
 			continue
+		} else {
+			noopCounter = 0
 		}
 
 		// save to file
