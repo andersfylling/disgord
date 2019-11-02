@@ -11,23 +11,60 @@ type Queue interface {
 	Len() uint
 }
 
-func NewQueue() Queue {
+//////////////////////////////////////////////////////
+//
+// QUEUE: Thread Safe
+//
+//////////////////////////////////////////////////////
+
+func NewThreadSafeQueue() Queue {
+	return &mutexQueue{}
+}
+
+type mutexQueue struct {
+	sync.RWMutex
+	queue
+}
+
+var _ Queue = (*mutexQueue)(nil)
+
+func (q *mutexQueue) Pop() (interface{}, error) {
+	q.Lock()
+	defer q.Unlock()
+	return q.queue.Pop()
+}
+
+func (q *mutexQueue) Push(x ...interface{}) {
+	q.Lock()
+	q.queue.Push(x...)
+	q.Unlock()
+}
+
+func (q *mutexQueue) Len() uint {
+	q.Lock()
+	defer q.Unlock()
+	return q.queue.Len()
+}
+
+//////////////////////////////////////////////////////
+//
+// QUEUE: Unsafe
+//
+//////////////////////////////////////////////////////
+
+func NewThreadUnsafeQueue() Queue {
 	return &queue{}
 }
 
 type queue struct {
-	sync.RWMutex
 	items []interface{}
 }
 
 var _ Queue = (*queue)(nil)
 
 func (q *queue) Pop() (interface{}, error) {
-	q.Lock()
-	defer q.Unlock()
-
 	if len(q.items) == 0 {
-		return nil, errors.New("queue is empty")
+		return nil, errors.New("mutexQueue is empty")
 	}
 
 	// get first
@@ -43,13 +80,9 @@ func (q *queue) Pop() (interface{}, error) {
 }
 
 func (q *queue) Push(x ...interface{}) {
-	q.Lock()
 	q.items = append(q.items, x...)
-	q.Unlock()
 }
 
 func (q *queue) Len() uint {
-	q.Lock()
-	defer q.Unlock()
 	return uint(len(q.items))
 }

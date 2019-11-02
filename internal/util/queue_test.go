@@ -5,27 +5,27 @@ import (
 )
 
 func TestQueue(t *testing.T) {
-	q := NewQueue()
+	q := NewThreadSafeQueue()
 	q.Push(true)
 
 	l := q.Len()
 	if l != 1 {
-		t.Errorf("queue should contain 1 entry but holds %d", l)
+		t.Errorf("mutexQueue should contain 1 entry but holds %d", l)
 	}
 
 	_, _ = q.Pop()
 	l = q.Len()
 	if l != 0 {
-		t.Errorf("queue should contain no entries but holds %d", l)
+		t.Errorf("mutexQueue should contain no entries but holds %d", l)
 	}
 
 	if _, err := q.Pop(); err == nil {
-		t.Error("expected pop to fail on empty queue")
+		t.Error("expected pop to fail on empty mutexQueue")
 	}
 }
 
 func TestQueueOrder(t *testing.T) {
-	q := NewQueue()
+	q := NewThreadSafeQueue()
 
 	iterate := func(cb func(int)) {
 		for i := 0; i < 10; i++ {
