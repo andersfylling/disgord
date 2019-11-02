@@ -55,7 +55,7 @@ func (s *shardSync) process() {
 			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
 			s.metric.Unlock()
 
-			timeout = (24 * time.Hour) - time.Since(oldest)
+			timeout += (24 * time.Hour) - time.Since(oldest)
 			continue // go back to the top to wait
 		}
 
