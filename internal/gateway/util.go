@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"time"
+
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/event"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
@@ -40,4 +42,23 @@ func CmdNameToOpCode(command string, t ClientType) (op opcode.OpCode) {
 	}
 
 	return op
+}
+
+// rotateByTime every timestamp after "limit" is deleted. Assumes the oldest entries are first.
+func rotateByTime(times []time.Time, limit time.Time) []time.Time {
+	var delim int
+	for i := range times {
+		if times[i].After(limit) {
+			delim++
+		} else {
+			break
+		}
+	}
+
+	// shift
+	for i := 0; i+delim < len(times); i++ {
+		times[i] = times[delim+i]
+	}
+
+	return times[:len(times)-delim]
 }

@@ -46,6 +46,16 @@ func (s *shardSync) queueShard(shardID uint, cb func() error) error {
 	}
 	s.next = s.next.Add(s.timeoutMs)
 
+	// 1000 identify / 24 hours rate limit check
+	if s.metric.ReconnectsSince(24*time.Hour) > 999 {
+		s.metric.Lock()
+		oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
+		s.metric.Unlock()
+
+		delay += (24 * time.Hour) - time.Since(oldest)
+		s.next = s.next.Add(delay) // might add excess milliseconds, but it really doesn't matter at this stage
+	}
+
 	s.logger.Debug("shard", shardID, "will wait in connect queue for", delay)
 	select {
 	case <-time.After(delay):
