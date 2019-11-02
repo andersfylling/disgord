@@ -508,8 +508,10 @@ func (c *client) receiver(ctx context.Context) {
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
 		if err = util.Unmarshal(packet, evt); err != nil {
-			c.log.Error(c.getLogPrefix(), err, "ERRONEOUS PACKET CONTENT:", string(packet))
-			cancel() // sometimes a CDN or some VPN might send a HTML string..
+			c.log.Error(c.getLogPrefix(), err, "SKIPPED ERRONEOUS PACKET CONTENT:", string(packet))
+			c.poolDiscordPkt.Put(evt)
+
+			// noop
 			continue
 		}
 
