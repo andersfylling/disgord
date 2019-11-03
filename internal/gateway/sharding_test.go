@@ -228,8 +228,15 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	case <-connected:
 		t.Fatal("should not be able to connect")
 	case <-time.After(100 * time.Millisecond): // TODO: remove timeout, just don't know how yet
-		if mngr.sync.queue.Len() != 1 {
-			t.Errorf("connect caller should still be in queue due to timeout")
+		select {
+		case item, ok := <-mngr.sync.queue:
+			if !ok {
+				t.Fatal("queue was closed somehow")
+			}
+			if item == nil {
+				t.Fatal("expected item to not be nil")
+			}
+		default:
 		}
 	}
 }

@@ -5,49 +5,89 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/logger"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
+func newShardSync(l logger.Logger, lPrefix string, rlTimeout time.Duration, shutdownChan chan interface{}) *shardSync {
+	return &shardSync{
+		timeout:      rlTimeout,
+		queue:        make(chan *shardSyncQueueItem, 100), // it's just pointers anyways
+		logger:       l,
+		lpre:         lPrefix,
+		shutdownChan: shutdownChan,
+		metric:       &IdentifyMetric{},
+	}
+}
+
+type shardSyncQueueItem struct {
+	ShardID uint
+	run     func() error
+	errChan chan error
+}
+
 type shardSync struct {
-	timeoutMs time.Duration
 	sync.Mutex
-	queue        util.Queue
+
+	timeout      time.Duration
+	queue        chan *shardSyncQueueItem
 	logger       logger.Logger
 	lpre         string
 	shutdownChan chan interface{}
 	metric       *IdentifyMetric
 }
 
-func (s *shardSync) queueShard(shardID uint, cb func() error) error {
-	waitChan := make(chan (chan bool))
-	s.queue.Push(waitChan)
+func (s *shardSync) queueShard(shardID uint, cb func() error) (err error) {
+	errChan := make(chan error)
+	defer func() {
+		close(errChan)
+	}()
+
+	start := time.Now()
 
 	s.logger.Debug(s.lpre, "shard", shardID, "is waiting to identify")
-	waited := time.Now()
-	resultChan := <-waitChan
+	s.queue <- &shardSyncQueueItem{
+		ShardID: shardID,
+		run:     cb,
+		errChan: errChan,
+	} // TODO: what if this becomes blocking?
 
-	s.logger.Debug(s.lpre, "shard", shardID, "waited", time.Since(waited), "and is now executing")
-	if err := cb(); err != nil {
-		resultChan <- false
-		return err
+	select {
+	case <-s.shutdownChan:
+		return nil
+	case err = <-errChan:
 	}
-	resultChan <- true
-
-	return nil
+	s.logger.Debug(s.lpre, "shard", shardID, "waited and finished execution after", time.Since(start))
+	return err
 }
 
 func (s *shardSync) process() {
-	var timeout time.Duration
-	resultChan := make(chan bool)
-
 	for {
+		var item *shardSyncQueueItem
+		var open bool
+		var penalty time.Duration
+
 		select {
 		case <-s.shutdownChan:
-			s.logger.Debug("shard identify-rate-limiter got shutdown signal")
-			return
-		case <-time.After(timeout):
+			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
+			break
+		case item, open = <-s.queue:
+			if !open {
+				s.logger.Error(s.lpre, "queue unexpectly closed - shards can no longer identify")
+				break
+			}
 		}
-		timeout = s.timeoutMs * time.Millisecond
+		if item == nil {
+			continue
+		}
+
+		err := item.run()
+		item.errChan <- err // panics if shutdown is triggered as errChan is then closed
+		if err != nil {
+			continue
+		}
+
+		s.metric.Lock()
+		s.metric.Reconnects = append(s.metric.Reconnects, time.Now())
+		s.metric.Unlock()
 
 		// 1000 identify / 24 hours rate limit check
 		if s.metric.ReconnectsSince(24*time.Hour) > 999 {
@@ -55,28 +95,15 @@ func (s *shardSync) process() {
 			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
 			s.metric.Unlock()
 
-			timeout += (24 * time.Hour) - time.Since(oldest)
-			continue // go back to the top to wait
+			penalty = (24 * time.Hour) - time.Since(oldest)
+			s.logger.Info(s.lpre, "shard identifying hit 1k rate limit and connections are halted for", penalty)
 		}
 
-		x, err := s.queue.Pop()
-		if err != nil {
-			continue
+		select {
+		case <-s.shutdownChan:
+			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
+			break
+		case <-time.After(s.timeout + penalty):
 		}
-		if wChan, ok := x.(chan (chan bool)); ok {
-			wChan <- resultChan
-		} else {
-			continue
-		}
-
-		// wait for result
-		if reconnected := <-resultChan; !reconnected {
-			timeout = 0 // no need to wait if the identify was _not_ sent
-			continue
-		}
-
-		s.metric.Lock()
-		s.metric.Reconnects = append(s.metric.Reconnects, time.Now())
-		s.metric.Unlock()
 	}
 }

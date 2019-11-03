@@ -10,8 +10,6 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
-	"github.com/andersfylling/disgord/internal/util"
-
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
@@ -99,14 +97,11 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 			},
 		},
 	}
-	mngr.sync.metric = &IdentifyMetric{}
-	mngr.sync.logger = conf.Logger
-	mngr.sync.lpre = "[shardSync]"
-	mngr.sync.timeoutMs = conf.ShardRateLimit
 	if conf.ConnectQueue == nil {
-		mngr.sync.queue = util.NewThreadSafeQueue()
-		go mngr.sync.process() // handle requests
+		mngr.sync = newShardSync(conf.Logger, "[shardSync]", conf.ShardRateLimit, conf.ShutdownChan)
 		mngr.connectQueue = mngr.sync.queueShard
+
+		go mngr.sync.process() // handle requests
 	} else {
 		mngr.connectQueue = conf.ConnectQueue
 	}
@@ -215,7 +210,7 @@ type shardMngr struct {
 	shards         map[shardID]*EvtClient
 	DiscordPktPool *sync.Pool
 
-	sync         shardSync
+	sync         *shardSync
 	connectQueue connectQueue
 }
 
