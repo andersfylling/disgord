@@ -203,8 +203,8 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	}
 
 	ts := time.Now().Add(20 * time.Hour)
-	reconnects := make([]time.Time, 0, 1001)
-	for i := 1; i <= 998; i++ {
+	reconnects := make([]time.Time, 0, DefaultIdentifyRateLimit+1)
+	for i := 1; i <= DefaultIdentifyRateLimit-2; i++ {
 		reconnects = append(reconnects, ts)
 	}
 
@@ -213,7 +213,7 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	mngr.sync.metric.Unlock()
 
 	nrOfTimestamps := mngr.sync.metric.ReconnectsSince(24 * time.Hour)
-	if nrOfTimestamps != 998 {
+	if nrOfTimestamps != DefaultIdentifyRateLimit-2 {
 		t.Fatalf("should be 998 reconnect time stamps, got %d", nrOfTimestamps)
 	}
 

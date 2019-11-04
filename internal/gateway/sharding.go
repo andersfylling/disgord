@@ -45,6 +45,10 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 		conf.URL = data.URL
 	}
 
+	if conf.IdentifiesPer24H == 0 {
+		conf.IdentifiesPer24H = DefaultIdentifyRateLimit
+	}
+
 	if len(conf.ShardIDs) == 0 {
 		conf.ShardCount = data.Shards
 		for i := uint(0); i < data.Shards; i++ {
@@ -98,7 +102,7 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 		},
 	}
 	if conf.ConnectQueue == nil {
-		mngr.sync = newShardSync(conf.Logger, "[shardSync]", conf.ShardRateLimit, conf.ShutdownChan)
+		mngr.sync = newShardSync(&conf.ShardConfig, conf.Logger, "[shardSync]", conf.ShutdownChan)
 		mngr.connectQueue = mngr.sync.queueShard
 
 		go mngr.sync.process() // handle requests
@@ -175,6 +179,12 @@ type ShardConfig struct {
 	// Note: only regards systems with multiple disgord instances
 	// TODO: return a list of outgoing requests instead such that people can re-trigger these on other instances.
 	OnScalingDiscardedRequests func(unhandledGuildIDs []Snowflake)
+
+	// IdentifiesPer24H regards how many identify packets a bot can send per a 24h period. Normally this
+	// is 1000, but in some cases discord might allow you to increase it.
+	//
+	// Setting it to 0 will default it to 1000.
+	IdentifiesPer24H uint
 
 	// URL is fetched from the gateway before initialising a connection
 	URL string

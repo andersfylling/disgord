@@ -159,16 +159,15 @@ func TestEvtClient_communication(t *testing.T) {
 	go func(seq *uint) {
 		for {
 			var data *clientPacket
-		waiter:
 			select {
 			case v := <-conn.writing:
 				data = v.(*clientPacket)
 			case <-conn.opening:
 				wg[connecting].Done()
-				goto waiter
+				continue
 			case <-conn.closing:
 				wg[disconnecting].Done()
-				goto waiter
+				continue
 			case <-shutdown:
 				return
 			case <-done:

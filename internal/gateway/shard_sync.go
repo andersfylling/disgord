@@ -7,14 +7,17 @@ import (
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
-func newShardSync(l logger.Logger, lPrefix string, rlTimeout time.Duration, shutdownChan chan interface{}) *shardSync {
+const DefaultIdentifyRateLimit = 1000
+
+func newShardSync(conf *ShardConfig, l logger.Logger, lPrefix string, shutdownChan chan interface{}) *shardSync {
 	return &shardSync{
-		timeout:      rlTimeout,
-		queue:        make(chan *shardSyncQueueItem, 100), // it's just pointers anyways
-		logger:       l,
-		lpre:         lPrefix,
-		shutdownChan: shutdownChan,
-		metric:       &IdentifyMetric{},
+		identifiesPer24H: conf.IdentifiesPer24H,
+		timeout:          conf.ShardRateLimit,
+		queue:            make(chan *shardSyncQueueItem, 100), // it's just pointers anyways
+		logger:           l,
+		lpre:             lPrefix,
+		shutdownChan:     shutdownChan,
+		metric:           &IdentifyMetric{},
 	}
 }
 
@@ -27,12 +30,13 @@ type shardSyncQueueItem struct {
 type shardSync struct {
 	sync.Mutex
 
-	timeout      time.Duration
-	queue        chan *shardSyncQueueItem
-	logger       logger.Logger
-	lpre         string
-	shutdownChan chan interface{}
-	metric       *IdentifyMetric
+	identifiesPer24H uint
+	timeout          time.Duration
+	queue            chan *shardSyncQueueItem
+	logger           logger.Logger
+	lpre             string
+	shutdownChan     chan interface{}
+	metric           *IdentifyMetric
 }
 
 func (s *shardSync) queueShard(shardID uint, cb func() error) (err error) {
@@ -90,9 +94,9 @@ func (s *shardSync) process() {
 		s.metric.Unlock()
 
 		// 1000 identify / 24 hours rate limit check
-		if s.metric.ReconnectsSince(24*time.Hour) > 999 {
+		if s.metric.ReconnectsSince(24*time.Hour) > (s.identifiesPer24H - 1) {
 			s.metric.Lock()
-			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-1000]
+			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-int(s.identifiesPer24H)]
 			s.metric.Unlock()
 
 			penalty = (24 * time.Hour) - time.Since(oldest)
