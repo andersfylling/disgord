@@ -44,11 +44,12 @@ func (g *testWS) Close() (err error) {
 }
 
 func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
+loop:
 	for {
 		select {
 		case packet = <-g.reading:
 		case <-ctx.Done():
-			break
+			break loop
 		case <-time.After(1 * time.Millisecond):
 			if g.isConnected.Load() {
 				continue
@@ -148,7 +149,8 @@ func TestEvtClient_communication(t *testing.T) {
 		for {
 			select {
 			case <-eChan:
-				continue
+			case <-shutdown:
+				return
 			}
 		}
 	}()
@@ -157,15 +159,16 @@ func TestEvtClient_communication(t *testing.T) {
 	go func(seq *uint) {
 		for {
 			var data *clientPacket
+		waiter:
 			select {
 			case v := <-conn.writing:
 				data = v.(*clientPacket)
 			case <-conn.opening:
 				wg[connecting].Done()
-				continue
+				goto waiter
 			case <-conn.closing:
 				wg[disconnecting].Done()
-				continue
+				goto waiter
 			case <-shutdown:
 				return
 			case <-done:

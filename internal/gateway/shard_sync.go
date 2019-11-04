@@ -68,11 +68,11 @@ func (s *shardSync) process() {
 		select {
 		case <-s.shutdownChan:
 			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
-			break
+			return
 		case item, open = <-s.queue:
 			if !open {
 				s.logger.Error(s.lpre, "queue unexpectly closed - shards can no longer identify")
-				break
+				return
 			}
 		}
 		if item == nil {
@@ -102,7 +102,7 @@ func (s *shardSync) process() {
 		select {
 		case <-s.shutdownChan:
 			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
-			break
+			return
 		case <-time.After(s.timeout + penalty):
 		}
 	}

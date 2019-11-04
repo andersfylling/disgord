@@ -18,6 +18,7 @@ func TestConnect(t *testing.T) {
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
+		Logger:       disgord.DefaultLogger(true),
 	})
 	defer c.Disconnect()
 	if err := c.Connect(); err != nil {
@@ -40,6 +41,7 @@ func TestConnectWithShards(t *testing.T) {
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
+		Logger:       disgord.DefaultLogger(true),
 		ShardConfig: disgord.ShardConfig{
 			ShardIDs: []uint{0, 1},
 		},
@@ -66,6 +68,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		return disgord.New(disgord.Config{
 			BotToken:     token,
 			DisableCache: true,
+			Logger:       disgord.DefaultLogger(true),
 			ShardConfig: disgord.ShardConfig{
 				ShardIDs:   shardIDs,
 				ShardCount: shardCount,
