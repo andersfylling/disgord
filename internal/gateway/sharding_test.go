@@ -202,12 +202,10 @@ func TestIdentifyRateLimiting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reconnects := []time.Time{
-		time.Now().Add(20 * time.Hour),
-	}
-	now := time.Now()
-	for i := 1; i <= 1000-2; i++ {
-		reconnects = append(reconnects, now)
+	ts := time.Now().Add(20 * time.Hour)
+	reconnects := make([]time.Time, 0, 1001)
+	for i := 1; i <= 998; i++ {
+		reconnects = append(reconnects, ts)
 	}
 
 	mngr.sync.metric.Lock()
@@ -215,8 +213,8 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	mngr.sync.metric.Unlock()
 
 	nrOfTimestamps := mngr.sync.metric.ReconnectsSince(24 * time.Hour)
-	if nrOfTimestamps != 999 {
-		t.Fatalf("should be 999 reconnect time stamps, got %d", nrOfTimestamps)
+	if nrOfTimestamps != 998 {
+		t.Fatalf("should be 998 reconnect time stamps, got %d", nrOfTimestamps)
 	}
 
 	// the timeout is after a run execution, so we add a entry before the test case
