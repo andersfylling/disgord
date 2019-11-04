@@ -108,6 +108,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 	config := ShardManagerConfig{
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
+		Logger:       &logger.Empty{},
 	}
 	defer func() {
 		close(config.ShutdownChan)
@@ -185,7 +186,7 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	config := ShardManagerConfig{
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
-		Logger:       logger.Empty{},
+		Logger:       &logger.Empty{},
 	}
 	defer func() {
 		close(config.EventChan)
