@@ -15,6 +15,7 @@ import (
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 func TestConnect(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
@@ -38,6 +39,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestConnectWithShards(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
@@ -64,6 +66,7 @@ func TestConnectWithShards(t *testing.T) {
 }
 
 func TestConnectWithSeveralInstances(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	createInstance := func(shardIDs []uint, shardCount uint) *disgord.Client {
 		return disgord.New(disgord.Config{
 			BotToken:     token,

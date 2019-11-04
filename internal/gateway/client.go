@@ -414,6 +414,7 @@ func (c *client) emitter(ctx context.Context) {
 	c.log.Debug(c.getLogPrefix(), "starting emitter")
 
 	internal, cancel := context.WithCancel(context.Background())
+	once := sync.Once{}
 
 	write := func(msg *clientPacket) error {
 		// save to file
@@ -421,7 +422,7 @@ func (c *client) emitter(ctx context.Context) {
 		saveOutgoingPacket(c, msg)
 
 		if err := c.conn.WriteJSON(msg); err != nil {
-			cancel()
+			once.Do(cancel)
 			return err
 		}
 		return nil
@@ -434,6 +435,7 @@ func (c *client) emitter(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter")
+			once.Do(cancel)
 			return
 		case <-internal.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
@@ -480,11 +482,14 @@ func (c *client) receiver(ctx context.Context) {
 	var noopCounter int
 
 	internal, cancel := context.WithCancel(context.Background())
+	once := sync.Once{}
+
 	for {
 		// check if application has closed
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing receiver")
+			once.Do(cancel)
 			return
 		case <-internal.Done():
 			go c.reconnect()
@@ -499,8 +504,15 @@ func (c *client) receiver(ctx context.Context) {
 			if e, ok := err.(*CloseErr); ok && c.conf.discordErrListener != nil && e.code >= 4000 && e.code < 5000 {
 				go c.conf.discordErrListener(e.code, e.info)
 			}
-			c.log.Debug(c.getLogPrefix(), err)
-			cancel()
+			if _, ok := err.(*CloseErr); !ok {
+				c.log.Debug(c.getLogPrefix(), err)
+			}
+			select {
+			case <-ctx.Done():
+				// in this case we dont want reconnect to start, only to stop
+			default:
+				once.Do(cancel)
+			}
 			continue
 		}
 
@@ -516,7 +528,7 @@ func (c *client) receiver(ctx context.Context) {
 			// noop
 			if noopCounter >= 10 {
 				c.log.Error(c.getLogPrefix(), "json unmarshal failed 10 times for this shard and reconnect is now forced")
-				cancel() // on 10 continuous errors, we just force a reconnect
+				once.Do(cancel) // on 10 continuous errors, we just force a reconnect
 			}
 			noopCounter++
 			continue
