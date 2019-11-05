@@ -1,7 +1,27 @@
 # Change Log
 
-## [v0.12.2](https://github.com/andersfylling/disgord/tree/v0.12.2)
+## [v0.15.0](https://github.com/andersfylling/disgord/tree/HEAD)
 
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.2...v0.15.0)
+
+**Fixed bugs:**
+
+- develop branch gives ws error on read [\#236](https://github.com/andersfylling/disgord/issues/236)
+- Missing 1k/24h identifies rate limit [\#237](https://github.com/andersfylling/disgord/issues/237)
+
+## [v0.14.2](https://github.com/andersfylling/disgord/tree/v0.14.2) (2019-10-26)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.1...v0.14.2)
+
+## [v0.14.1](https://github.com/andersfylling/disgord/tree/v0.14.1) (2019-10-26)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.0...v0.14.1)
+
+## [v0.14.0](https://github.com/andersfylling/disgord/tree/v0.14.0) (2019-10-25)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.13.0...v0.14.0)
+
+## [v0.13.0](https://github.com/andersfylling/disgord/tree/v0.13.0) (2019-10-24)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.2...v0.13.0)
+
+## [v0.12.2](https://github.com/andersfylling/disgord/tree/v0.12.2) (2019-10-24)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.1...v0.12.2)
 
 **Fixed bugs:**
@@ -161,6 +181,7 @@
 
 **Fixed bugs:**
 
+- Missing 1k/24h identifies rate limit [\#237](https://github.com/andersfylling/disgord/issues/237)
 - How to handle gateway error 4011? [\#184](https://github.com/andersfylling/disgord/issues/184)
 
 **Closed issues:**
