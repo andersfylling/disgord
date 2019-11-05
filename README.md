@@ -133,8 +133,7 @@ To notify about bugs or suggesting enhancements, simply create a issue. The more
 To contribute with code, always create an issue before you open a pull request. This allows automating change logs and releases.
 
 ## Q&A
-> **NOTE:** To see more examples go visit the docs/examples folder.
-See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
+> **NOTE:** To see more examples go visit the docs/examples folder. See the GoDoc for a in-depth introduction on the various topics.
 
 ```Markdown
 1. How do I find my bot token and/or add my bot to a server?
