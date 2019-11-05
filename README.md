@@ -109,8 +109,8 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.GetCurrentUser(disgord.DisableCache)
-client.GetGuildMembers(guildID, disgord.DisableCache)
+client.GetCurrentUser(disgord.IgnoreCache)
+client.GetGuildMembers(guildID, disgord.IgnoreCache)
 
 // always checks the local cache first
 client.GetCurrentUser()
