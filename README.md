@@ -7,20 +7,22 @@
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord' alt='Code coverage' />
     </a>
-  </p>
-  <p>
     <a href='http://godoc.org/github.com/andersfylling/disgord'>
       <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg' alt='Godoc' />
+    </a>
+  </p>
+  <p>
+    <a href='https://discord.gg/fQgmBg'>
+      <img src='https://img.shields.io/badge/Discord%20Gophers-%23disgord-blue.svg' alt='Discord Gophers' />
+    </a>
+    <a href='https://discord.gg/HBTHbme'>
+      <img src='https://img.shields.io/badge/Discord%20API-%23disgord-blue.svg' alt='Discord API' />
     </a>
   </p>
 </div>
 
 ## About
 Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
-
-Talk to us on Discord! We exist in both the Gopher server and the Discord API server:
- - [Discord Gophers](https://discord.gg/qBVmnq9)
- - [Discord API](https://discord.gg/HBTHbme)
 
 ## Warning
 The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
