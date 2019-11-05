@@ -218,7 +218,7 @@ func TestIdentifyRateLimiting(t *testing.T) {
 	}
 
 	// the timeout is after a run execution, so we add a entry before the test case
-	go mngr.connectQueue(0, func() error {
+	mngr.connectQueue(0, func() error {
 		return nil
 	})
 	connected := make(chan interface{})
