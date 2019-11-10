@@ -121,7 +121,7 @@ func TestEvtClient_communication(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.timeoutMultiplier = 0
-	seq := uint(1)
+	seq := uint64(1)
 
 	// ###############################
 	// RECONNECT
@@ -156,7 +156,7 @@ func TestEvtClient_communication(t *testing.T) {
 	}()
 
 	// mocked websocket server.. ish
-	go func(seq *uint) {
+	go func(seq *uint64) {
 		for {
 			var data *clientPacket
 			select {
@@ -243,9 +243,7 @@ func TestEvtClient_communication(t *testing.T) {
 	// during testing, most timeouts are 0, so we experience moments where not all
 	// channels have finished syncing. TODO: remove timeout requirement.
 	<-time.After(time.Millisecond * 10)
-	m.RLock()
-	sequence := m.sequenceNumber
-	m.RUnlock()
+	sequence := m.sequenceNumber.Load()
 	if sequence != seq-1 {
 		t.Errorf("incorrect sequence number. Got %d, wants %d\n", sequence, seq)
 		return

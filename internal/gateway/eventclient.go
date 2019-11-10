@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/event"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
@@ -141,7 +143,7 @@ type EvtClient struct {
 	ignoreEvents []string
 
 	sessionID      string
-	sequenceNumber uint
+	sequenceNumber atomic.Uint64
 
 	rdyPool *sync.Pool
 
@@ -218,20 +220,20 @@ func (c *EvtClient) synchronizeSnr(p *DiscordPacket) (err error) {
 
 	// validate the sequence numbers
 	// ws/tcp only
-	if p.SequenceNumber != c.sequenceNumber+1 {
+	if p.SequenceNumber != c.sequenceNumber.Load()+1 {
 		go c.reconnect()
 
-		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber+1)
+		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber.Load()+1)
 		return
 	}
 
 	// increment the sequence number for each event to make sure everything is synced with discord
-	c.sequenceNumber++
+	c.sequenceNumber.Inc()
 	return nil
 }
 
 func (c *EvtClient) virginConnection() bool {
-	return c.sessionID == "" && c.sequenceNumber == 0
+	return c.sessionID == "" && c.sequenceNumber.Load() == 0
 }
 
 func (c *EvtClient) onReady(v interface{}) (err error) {
@@ -329,9 +331,7 @@ func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 	c.log.Info(c.getLogPrefix(), "Discord invalidated session")
 
 	// session is invalidated, reset the sequence number
-	c.Lock()
-	c.sequenceNumber = 0
-	c.Unlock()
+	c.sequenceNumber.Store(0)
 
 	rand.Seed(time.Now().UnixNano())
 	delay := rand.Intn(4) + 1
@@ -456,8 +456,8 @@ func (c *EvtClient) sendHelloPacket() {
 	c.RLock()
 	token := c.evtConf.BotToken
 	session := c.sessionID
-	sequence := c.sequenceNumber
 	c.RUnlock()
+	sequence := c.sequenceNumber.Load()
 
 	err := c.emit(event.Resume, &evtResume{token, session, sequence})
 	if err != nil {

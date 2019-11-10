@@ -337,7 +337,7 @@ func (s *shardMngr) Disconnect() error {
 		}
 		// possible connect/disconnect race..
 		shard.sessionID = ""
-		shard.sequenceNumber = 0
+		shard.sequenceNumber.Store(0)
 
 		shard.haveConnectedOnce.Store(false)
 	}
