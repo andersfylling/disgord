@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/websocket"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 type ErrRest = httd.ErrREST
@@ -19,11 +20,11 @@ type URLQueryStringer interface {
 }
 
 func unmarshal(data []byte, v interface{}) error {
-	return httd.Unmarshal(data, v)
+	return util.Unmarshal(data, v)
 }
 
 func marshal(v interface{}) ([]byte, error) {
-	return httd.Marshal(v)
+	return util.Marshal(v)
 }
 
 // AvatarParamHolder is used when handling avatar related REST structs.
@@ -114,16 +115,9 @@ func (r *rest) Get() (x interface{}) {
 
 func (r *rest) init() {
 	if r.conf != nil {
-		if r.conf.Method == "" {
-			r.conf.Method = http.MethodGet
-		}
-		if r.conf.Method != "" {
-			r.httpMethod = r.conf.Method
-		}
+		r.conf.PopulateMissing()
 	}
-	if r.httpMethod == "" {
-		r.httpMethod = http.MethodGet
-	}
+	r.httpMethod = r.conf.Method.String()
 
 	r.checkCache = r.stepCheckCache
 	r.doRequest = r.stepDoRequest
@@ -138,7 +132,7 @@ func (r *rest) bindParams(params interface{}) {
 }
 
 func (r *rest) stepCheckCache() (v interface{}, err error) {
-	if r.httpMethod != http.MethodGet {
+	if r.httpMethod != httd.MethodGet.String() {
 		return nil, nil
 	}
 
@@ -159,7 +153,7 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 		return
 	}
 
-	resp, body, err = r.c.req.Request(r.conf)
+	resp, body, err = r.c.req.Do(r.conf)
 	return
 }
 
@@ -191,7 +185,7 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = httd.Unmarshal(body, obj); err != nil {
+	if err = util.Unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
@@ -293,7 +287,7 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 
 	if b.config == nil {
 		b.config = &httd.Request{
-			Method: http.MethodGet,
+			Method: httd.MethodGet,
 		}
 	}
 }
@@ -339,7 +333,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	var resp *http.Response
 	var body []byte
-	resp, body, err = b.client.Request(b.config)
+	resp, body, err = b.client.Do(b.config)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +346,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = httd.Unmarshal(body, v); err != nil {
+		if err = util.Unmarshal(body, v); err != nil {
 			return nil, err
 		}
 
@@ -429,15 +423,14 @@ type basicBuilder struct {
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET
 //  Endpoint                /gateway
-//  Rate limiter            /gateway
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err error) {
+func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
 	var body []byte
-	_, body, err = client.Get(&httd.Request{
-		Ratelimiter: "/gateway",
-		Endpoint:    "/gateway",
+	_, body, err = c.req.Do(&httd.Request{
+		Method:   httd.MethodGet,
+		Endpoint: "/gateway",
 	})
 	if err != nil {
 		return
@@ -453,15 +446,14 @@ func (c *Client) GetGateway(client httd.Getter) (gateway *websocket.Gateway, err
 // changes as the bot joins/leaves guilds.
 //  Method                  GET
 //  Endpoint                /gateway/bot
-//  Rate limiter            /gateway/bot
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
-func (c *Client) GetGatewayBot() (gateway *websocket.GatewayBot, err error) {
+func (c *Client) GetGatewayBot() (gateway *gateway.GatewayBot, err error) {
 	var body []byte
-	_, body, err = c.req.Get(&httd.Request{
-		Ratelimiter: "/gateway/bot",
-		Endpoint:    "/gateway/bot",
+	_, body, err = c.req.Do(&httd.Request{
+		Method:   httd.MethodGet,
+		Endpoint: "/gateway/bot",
 	})
 	if err != nil {
 		return

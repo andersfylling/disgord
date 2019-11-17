@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestChannel_DeepCopy(t *testing.T) {
@@ -80,7 +80,7 @@ func TestChannel_JSONIconNull(t *testing.T) {
 		Type int       `json:"type"`
 		Icon string    `json:"icon"`
 	}
-	if err := httd.Unmarshal(data, &c); err != nil {
+	if err := util.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
 

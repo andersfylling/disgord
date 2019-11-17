@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/websocket"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 //////////////////////////////////////////////////////
@@ -19,11 +19,11 @@ import (
 //
 //////////////////////////////////////////////////////
 
-func populateResource(resource evtResource, ctx context.Context, evt *websocket.Event) (err error) {
+func populateResource(resource evtResource, ctx context.Context, evt *gateway.Event) (err error) {
 	resource.registerContext(ctx)
 	resource.setShardID(evt.ShardID)
 
-	if err = httd.Unmarshal(evt.Data, resource); err != nil {
+	if err = util.Unmarshal(evt.Data, resource); err != nil {
 		return err
 	}
 	executeInternalUpdater(resource)
@@ -41,9 +41,9 @@ func populateResource(resource evtResource, ctx context.Context, evt *websocket.
 //
 //////////////////////////////////////////////////////
 
-func demultiplexer(d *dispatcher, read <-chan *websocket.Event, cache *Cache) {
+func demultiplexer(d *dispatcher, read <-chan *gateway.Event, cache *Cache) {
 	for {
-		var evt *websocket.Event
+		var evt *gateway.Event
 		var alive bool
 
 		select {

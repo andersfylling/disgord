@@ -8,7 +8,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/ratelimit"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -16,7 +16,7 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = httd.Unmarshal(data, &v)
+	err = util.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -123,9 +123,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -135,10 +134,6 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		if client.req.Endpoint != "/guilds/7/audit-logs" {
 			t.Error("incorrect endpoint")
-		}
-
-		if client.req.Ratelimiter != "g:7:a-l" { // why even test this?
-			t.Error("incorrect rate limit key")
 		}
 	})
 	t.Run("success", func(t *testing.T) {
@@ -156,9 +151,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -192,9 +186,8 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -218,9 +211,8 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
-			Method:      http.MethodGet,
-			Ratelimiter: ratelimit.GuildAuditLogs(7),
-			Endpoint:    endpoint.GuildAuditLogs(Snowflake(7)),
+			Method:   httd.MethodGet,
+			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -248,7 +240,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := httd.Unmarshal(data, &v2); err != nil {
+	if err := util.Unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
 
@@ -259,7 +251,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := httd.Unmarshal(data, &v); err != nil {
+	if err := util.Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 

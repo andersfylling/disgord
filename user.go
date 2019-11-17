@@ -23,23 +23,6 @@ const (
 	StatusOffline = "offline"
 )
 
-// flags for the Activity object to signify the type of action taken place
-const (
-	ActivityFlagInstance    = 1 << 0
-	ActivityFlagJoin        = 1 << 1
-	ActivityFlagSpectate    = 1 << 2
-	ActivityFlagJoinRequest = 1 << 3
-	ActivityFlagSync        = 1 << 4
-	ActivityFlagPlay        = 1 << 5
-)
-
-// Activity types https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
-const (
-	ActivityTypeGame = iota
-	ActivityTypeStreaming
-	ActivityTypeListening
-)
-
 //type UserInterface interface {
 //	Mention() string
 //	MentionNickname() string
@@ -193,6 +176,15 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ActivityEmoji ...
+type ActivityEmoji struct {
+	Lockable `json:"-"`
+
+	Name     string    `json:"name"`
+	ID       Snowflake `json:"id,omitempty"`
+	Animated bool      `json:"animated,omitempty"`
+}
+
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
 	Lockable `json:"-"`
@@ -234,6 +226,36 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ######################
+// ##
+// ## Activity
+// ##
+// ######################
+
+// activityTypes https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+type acitivityType = int // TODO-v0.15: remove = sign, make uint
+
+const (
+	ActivityTypeGame acitivityType = iota
+	ActivityTypeStreaming
+	ActivityTypeListening
+	_
+	ActivityTypeCustom
+)
+
+// activityFlag https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-flags
+type activityFlag = int // TODO-v0.15: remove = sign, make uint
+
+// flags for the Activity object to signify the type of action taken place
+const (
+	ActivityFlagInstance activityFlag = 1 << iota
+	ActivityFlagJoin
+	ActivityFlagSpectate
+	ActivityFlagJoinRequest
+	ActivityFlagSync
+	ActivityFlagPlay
+)
+
 // NewActivity ...
 func NewActivity() (activity *Activity) {
 	return &Activity{
@@ -246,17 +268,18 @@ type Activity struct {
 	Lockable `json:"-"`
 
 	Name          string             `json:"name"`                     // the activity's name
-	Type          int                `json:"type"`                     // activity type
+	Type          acitivityType      `json:"type"`                     // activity type
 	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
 	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
 	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
 	Details       string             `json:"details,omitempty"`        //?	?string	what the player is currently doing
 	State         string             `json:"state,omitempty"`          //state?	?string	the user's current party status
-	Party         *ActivityParty     `json:"party,omitempty"`          //party?	party object	information for the current party of the player
-	Assets        *ActivityAssets    `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
-	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
-	Instance      bool               `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session
-	Flags         int                `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
+	Emoji         *ActivityEmoji     `json:"emoji"`
+	Party         *ActivityParty     `json:"party,omitempty"`    //party?	party object	information for the current party of the player
+	Assets        *ActivityAssets    `json:"assets,omitempty"`   // assets?	assets object	images for the presence and their hover texts
+	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`  // secrets?	secrets object	secrets for Rich Presence joining and spectating
+	Instance      bool               `json:"instance,omitempty"` // instance?	boolean	whether or not the activity is an instanced game session
+	Flags         activityFlag       `json:"flags,omitempty"`    // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
 var _ Reseter = (*Activity)(nil)
@@ -751,14 +774,12 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 // with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
-//  Rate limiter            /users/@me
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
 func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me",
-		Endpoint:    endpoint.UserMe(),
+		Endpoint: endpoint.UserMe(),
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
@@ -774,14 +795,12 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
-//  Rate limiter            /users
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: ratelimitUsers(),
-		Endpoint:    endpoint.User(id),
+		Endpoint: endpoint.User(id),
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = id
@@ -794,7 +813,6 @@ func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
-//  Rate limiter            /users
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -803,8 +821,7 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ratelimiter: ratelimitUsers(),
+		Method:      httd.MethodPatch,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -817,7 +834,6 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 // Requires the guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
-//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
@@ -825,8 +841,7 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 //                          integrations that need to get a list of users' guilds.
 func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me/guilds",
-		Endpoint:    endpoint.UserMeGuilds(),
+		Endpoint: endpoint.UserMeGuilds(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*PartialGuild, 0)
@@ -847,15 +862,13 @@ func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Rate limiter            /users/@me/guilds
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
 func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ratelimiter: "/users/@me/guilds",
-		Endpoint:    endpoint.UserMeGuild(id),
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.UserMeGuild(id),
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.CacheRegistry = GuildCache
@@ -872,7 +885,6 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
 //  Reviewed                2019-02-19
 //  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
@@ -882,8 +894,7 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 // Deprecated: Needs cache checking to get the actual list of channels
 func (c *Client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Endpoint:    endpoint.UserMeChannels(),
-		Ratelimiter: "/users/@me/channels",
+		Endpoint: endpoint.UserMeChannels(),
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -910,14 +921,12 @@ type BodyUserCreateDM struct {
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
 func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: ratelimitUsers(),
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
 		ContentType: httd.ContentTypeJSON,
@@ -945,14 +954,12 @@ type CreateGroupDMParams struct {
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Rate limiter            /users/@me/channels
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
 func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ratelimiter: "/users/@me/channels",
+		Method:      httd.MethodPost,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -969,14 +976,12 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 // GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/connections
-//  Rate limiter            /users/@me/connections
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
 func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Ratelimiter: "/users/@me/connections",
-		Endpoint:    endpoint.UserMeConnections(),
+		Endpoint: endpoint.UserMeConnections(),
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*UserConnection, 0)

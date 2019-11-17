@@ -267,11 +267,15 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetMessagesParams:
 		s = *t
+	case *[]*MentionChannel:
+		s = *t
 	case *[]*Message:
 		s = *t
 	case *[]*MessageActivity:
 		s = *t
 	case *[]*MessageApplication:
+		s = *t
+	case *[]*MessageReference:
 		s = *t
 	case *[]*updateMessageBuilder:
 		s = *t
@@ -316,6 +320,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*Activity:
 		s = *t
 	case *[]*ActivityAssets:
+		s = *t
+	case *[]*ActivityEmoji:
 		s = *t
 	case *[]*ActivityParty:
 		s = *t
@@ -471,6 +477,12 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
+	case []*MentionChannel:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*Message:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -490,6 +502,12 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*Role:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ActivityEmoji:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -649,7 +667,19 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
+	case []*MentionChannel:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*Message:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*MessageReference:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
@@ -756,6 +786,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*Message:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*MessageReference:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
@@ -880,6 +916,12 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*Activity:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ActivityEmoji:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

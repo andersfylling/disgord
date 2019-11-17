@@ -6,11 +6,11 @@ DisGord uses an internal shard manager to handle this for you. However, you can 
 
 # Enforce N number of shards
 ```go
-client := disgord.New(&disgord.Config{
+client := disgord.New(disgord.Config{
     ShardConfig: disgord.ShardConfig{
         ShardIDs: []uint{0, 1, 2, 3}, // must be valid shard ids
     },
-    BotToken: "random token",
+    BotToken: "secret token",
     Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 ```
@@ -19,8 +19,8 @@ The entire shard config is optional as your bot will always use sharding by defa
 
 ```go
 // this client is also using shards
-client := disgord.New(&disgord.Config{
-    BotToken: "random token",
+client := disgord.New(disgord.Config{
+    BotToken: "secret token",
     Logger: disgord.DefaultLogger(false), // optional logging, debug=false
 })
 ```

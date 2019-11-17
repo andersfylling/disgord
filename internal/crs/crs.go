@@ -2,6 +2,8 @@
 
 package crs
 
-import "github.com/andersfylling/disgord/internal/depalias"
+import (
+	"github.com/andersfylling/disgord/internal/util"
+)
 
-type Snowflake = depalias.Snowflake
+type Snowflake = util.Snowflake

@@ -1,12 +1,9 @@
 package disgord
 
 import (
-	"net/http"
-
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/ratelimit"
 )
 
 type AuditLogEvt uint
@@ -323,7 +320,6 @@ func auditLogFactory() interface{} {
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
 //  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/audit-logs
-//  Rate limiter [MAJOR]     /guilds/{guild.id}/audit-logs
 //  Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
 //  Reviewed                 2018-06-05
 //  Comment                  -
@@ -333,9 +329,8 @@ func (c *Client) GetGuildAuditLogs(guildID Snowflake, flags ...Flag) (builder *g
 	builder.r.itemFactory = auditLogFactory
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
-		Method:      http.MethodGet,
-		Ratelimiter: ratelimit.GuildAuditLogs(guildID),
-		Endpoint:    endpoint.GuildAuditLogs(guildID),
+		Method:   httd.MethodGet,
+		Endpoint: endpoint.GuildAuditLogs(guildID),
 	}, nil)
 
 	return builder

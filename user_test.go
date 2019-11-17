@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func verifyUserMashaller(t *testing.T, file string) {
@@ -13,7 +13,7 @@ func verifyUserMashaller(t *testing.T, file string) {
 	check(err, t)
 
 	user := User{}
-	err = httd.Unmarshal(data, &user)
+	err = util.Unmarshal(data, &user)
 	check(err, t)
 }
 

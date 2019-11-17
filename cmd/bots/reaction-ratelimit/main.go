@@ -41,13 +41,10 @@ func setupKeys() *keys {
 }
 
 func main() {
-	c, err := disgord.NewClient(&disgord.Config{
+	c := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   disgord.DefaultLogger(true),
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	msgID := disgord.Snowflake(540519319814275089)
 	chanID := disgord.Snowflake(540519296640614416)

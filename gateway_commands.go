@@ -4,9 +4,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/websocket"
-
-	"github.com/andersfylling/disgord/internal/websocket/cmd"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/internal/gateway/cmd"
 )
 
 // gatewayCmdName is the gateway command name for the payload to be sent to Discord over a websocket connection.
@@ -35,24 +34,24 @@ type gatewayCmdPayload interface { // TODO: go generate...
 	isGatewayCmdPayload() bool
 }
 
-func prepareGatewayCommand(payload gatewayCmdPayload) (x websocket.CmdPayload, err error) {
+func prepareGatewayCommand(payload gatewayCmdPayload) (x gateway.CmdPayload, err error) {
 	switch t := payload.(type) {
 	case *RequestGuildMembersPayload:
-		x = &websocket.RequestGuildMembersPayload{
+		x = &gateway.RequestGuildMembersPayload{
 			GuildIDs: t.GuildIDs,
 			Query:    t.Query,
 			Limit:    t.Limit,
 			UserIDs:  t.UserIDs,
 		}
 	case *UpdateVoiceStatePayload:
-		x = &websocket.UpdateVoiceStatePayload{
+		x = &gateway.UpdateVoiceStatePayload{
 			GuildID:   t.GuildID,
 			ChannelID: t.ChannelID,
 			SelfMute:  t.SelfMute,
 			SelfDeaf:  t.SelfDeaf,
 		}
 	case *UpdateStatusPayload:
-		x = &websocket.UpdateStatusPayload{
+		x = &gateway.UpdateStatusPayload{
 			Since:  t.Since,
 			Game:   t.Game,
 			Status: t.Status,
@@ -67,7 +66,7 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x websocket.CmdPayload, e
 
 // #################################################################
 // RequestGuildMembersPayload payload for socket command REQUEST_GUILD_MEMBERS.
-// See GatewayCmdRequestGuildMembers
+// See RequestGuildMembers
 //
 // WARNING: If this request is in queue while a auto-scaling is forced, it will be removed from the queue
 // and not re-inserted like the other commands. This is due to the guild id slice, which is a bit trickier
@@ -75,7 +74,7 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x websocket.CmdPayload, e
 //
 // Wrapper for websocket.RequestGuildMembersPayload
 type RequestGuildMembersPayload struct {
-	// GuildID	id of the guild(s) to get offline members for
+	// GuildID	id of the guild(s) to get the members for
 	GuildIDs []Snowflake
 
 	// Query string that username starts with, or an empty string to return all members

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestGuildMarshal(t *testing.T) {
@@ -13,7 +13,7 @@ func TestGuildMarshal(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = httd.Unmarshal(data, &v)
+	err = util.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -22,7 +22,7 @@ func TestGuildMarshalUnavailable(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = httd.Unmarshal(data, &v)
+	err = util.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -50,7 +50,7 @@ func TestGuildBanObject(t *testing.T) {
 	check(err, t)
 
 	ban := Ban{}
-	err = httd.Unmarshal(data, &ban)
+	err = util.Unmarshal(data, &ban)
 	check(err, t)
 }
 
