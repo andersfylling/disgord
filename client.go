@@ -40,9 +40,11 @@ func NewClient(conf Config) (*Client, error) {
 // NewClient creates a new DisGord Client and returns an error on configuration issues
 func createClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
+		// WARNING: do not set http.Client.Timeout (!)
+		conf.HTTPClient = &http.Client{}
+	} else if conf.HTTPClient.Timeout > 0 {
+		// https://github.com/nhooyr/websocket/issues/67
+		return nil, errors.New("do not set timeout in the http.Client, use context.Context instead")
 	}
 	if conf.Proxy != nil {
 		conf.HTTPClient.Transport = &http.Transport{
@@ -388,7 +390,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	}
 	c.myID = me.ID
 
-	if err = gateway.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
+	if err = gateway.ConfigureShardConfig(ctx, c, &c.config.ShardConfig); err != nil {
 		return err
 	}
 

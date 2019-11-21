@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/andersfylling/disgord/internal/util"
 )
@@ -129,9 +128,8 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// if no http client was provided, create a new one
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
+		// no need for a timeout, everything uses context.Context now
+		conf.HTTPClient = &http.Client{}
 	}
 
 	if conf.RESTBucketManager == nil {
