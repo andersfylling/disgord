@@ -1,51 +1,113 @@
 package gateway
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
-type shardSync struct {
-	timeoutMs time.Duration
-	sync.Mutex
-	next         time.Time
-	logger       logger.Logger
-	shutdownChan chan interface{}
+const DefaultIdentifyRateLimit = 1000
+
+func newShardSync(conf *ShardConfig, l logger.Logger, lPrefix string, shutdownChan chan interface{}) *shardSync {
+	return &shardSync{
+		identifiesPer24H: conf.IdentifiesPer24H,
+		timeout:          conf.ShardRateLimit,
+		queue:            make(chan *shardSyncQueueItem, 100), // it's just pointers anyways
+		logger:           l,
+		lpre:             lPrefix,
+		shutdownChan:     shutdownChan,
+		metric:           &IdentifyMetric{},
+	}
 }
 
-func (s *shardSync) queueShard(shardID uint, cb func() error) error {
-	var delay time.Duration
-	now := time.Now()
+type shardSyncQueueItem struct {
+	ShardID uint
+	run     func() error
+	errChan chan error
+}
 
-	s.Lock()
-	defer s.Unlock()
+type shardSync struct {
+	sync.Mutex
 
-	if s.next.After(now) {
-		delay = s.next.Sub(now)
-	} else {
-		delay = time.Duration(0)
-		s.next = now
-	}
-	s.next = s.next.Add(s.timeoutMs)
+	identifiesPer24H uint
+	timeout          time.Duration
+	queue            chan *shardSyncQueueItem
+	logger           logger.Logger
+	lpre             string
+	shutdownChan     chan interface{}
+	metric           *IdentifyMetric
+}
 
-	s.logger.Debug("shard", shardID, "will wait in connect queue for", delay)
+func (s *shardSync) queueShard(shardID uint, cb func() error) (err error) {
+	errChan := make(chan error)
+	defer func() {
+		close(errChan)
+	}()
+
+	start := time.Now()
+
+	s.logger.Debug(s.lpre, "shard", shardID, "is waiting to identify")
+	s.queue <- &shardSyncQueueItem{
+		ShardID: shardID,
+		run:     cb,
+		errChan: errChan,
+	} // TODO: what if this becomes blocking?
+
 	select {
-	case <-time.After(delay):
-		s.logger.Debug("shard", shardID, "waited", delay, "and is now being connected")
-		start := time.Now()
-		if err := cb(); err != nil {
-			return err
-		}
-		execDuration := time.Since(start)
-		s.next = s.next.Add(execDuration)
-
 	case <-s.shutdownChan:
-		s.logger.Debug("shard", shardID, "got shutdown signal while waiting in connect queue")
-		return errors.New("shutting down")
+		return nil
+	case err = <-errChan:
 	}
+	s.logger.Debug(s.lpre, "shard", shardID, "waited and finished execution after", time.Since(start))
+	return err
+}
 
-	return nil
+func (s *shardSync) process() {
+	for {
+		var item *shardSyncQueueItem
+		var open bool
+		var penalty time.Duration
+
+		select {
+		case <-s.shutdownChan:
+			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
+			return
+		case item, open = <-s.queue:
+			if !open {
+				s.logger.Error(s.lpre, "queue unexpectly closed - shards can no longer identify")
+				return
+			}
+		}
+		if item == nil {
+			continue
+		}
+
+		err := item.run()
+		item.errChan <- err // panics if shutdown is triggered as errChan is then closed
+		if err != nil {
+			continue
+		}
+
+		s.metric.Lock()
+		s.metric.Reconnects = append(s.metric.Reconnects, time.Now())
+		s.metric.Unlock()
+
+		// 1000 identify / 24 hours rate limit check
+		if s.metric.ReconnectsSince(24*time.Hour) > (s.identifiesPer24H - 1) {
+			s.metric.Lock()
+			oldest := s.metric.Reconnects[len(s.metric.Reconnects)-int(s.identifiesPer24H)]
+			s.metric.Unlock()
+
+			penalty = (24 * time.Hour) - time.Since(oldest)
+			s.logger.Info(s.lpre, "shard identifying hit 1k rate limit and connections are halted for", penalty)
+		}
+
+		select {
+		case <-s.shutdownChan:
+			s.logger.Debug(s.lpre, "shard identify-rate-limiter got shutdown signal")
+			return
+		case <-time.After(s.timeout + penalty):
+		}
+	}
 }

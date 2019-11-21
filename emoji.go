@@ -249,6 +249,9 @@ type CreateGuildEmojiParams struct {
 	Name  string      `json:"name"`  // required
 	Image string      `json:"image"` // required
 	Roles []Snowflake `json:"roles"` // optional
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // CreateGuildEmoji [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
@@ -281,6 +284,7 @@ func (c *Client) CreateGuildEmoji(ctx context.Context, guildID Snowflake, params
 		Endpoint:    endpoint.GuildEmojis(guildID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
+		Reason:      params.Reason,
 	}, flags)
 	r.CacheRegistry = GuildEmojiCache
 	r.pool = c.pool.emoji

@@ -1,16 +1,72 @@
 # Change Log
 
-## [v0.12.0-rc8](https://github.com/andersfylling/disgord/tree/v0.12.0-rc8)
+## [v0.15.0](https://github.com/andersfylling/disgord/tree/HEAD)
 
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.2...v0.15.0)
+
+**Fixed bugs:**
+
+- develop branch gives ws error on read [\#236](https://github.com/andersfylling/disgord/issues/236)
+- Missing 1k/24h identifies rate limit [\#237](https://github.com/andersfylling/disgord/issues/237)
+
+## [v0.14.2](https://github.com/andersfylling/disgord/tree/v0.14.2) (2019-10-26)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.1...v0.14.2)
+
+## [v0.14.1](https://github.com/andersfylling/disgord/tree/v0.14.1) (2019-10-26)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.14.0...v0.14.1)
+
+## [v0.14.0](https://github.com/andersfylling/disgord/tree/v0.14.0) (2019-10-25)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.13.0...v0.14.0)
+
+## [v0.13.0](https://github.com/andersfylling/disgord/tree/v0.13.0) (2019-10-24)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.2...v0.13.0)
+
+## [v0.12.2](https://github.com/andersfylling/disgord/tree/v0.12.2) (2019-10-24)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.1...v0.12.2)
+
+**Fixed bugs:**
+
+- Client.CreateBotURL panics in powershell [\#233](https://github.com/andersfylling/disgord/issues/233)
+
+## [v0.12.1](https://github.com/andersfylling/disgord/tree/v0.12.1) (2019-10-24)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0...v0.12.1)
+
+**Fixed bugs:**
+
+- emitter uses continue in select statement [\#230](https://github.com/andersfylling/disgord/issues/230)
+
+**Closed issues:**
+
+- increase timeout for queue checks in gateway emitter [\#231](https://github.com/andersfylling/disgord/issues/231)
+
+## [v0.12.0](https://github.com/andersfylling/disgord/tree/v0.12.0) (2019-10-22)
+[Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc8...v0.12.0)
+
+**Fixed bugs:**
+
+- Member is missing internalUpdate [\#193](https://github.com/andersfylling/disgord/issues/193)
+- Guild.LoadAllMembers does not check for duplicates [\#190](https://github.com/andersfylling/disgord/issues/190)
+
+**Closed issues:**
+
+- replace shutdown channel with context.Context [\#169](https://github.com/andersfylling/disgord/issues/169)
+- "not by bot" filter for reactions [\#157](https://github.com/andersfylling/disgord/issues/157)
+
+**Merged pull requests:**
+
+- add config option LoadMembersQuietly [\#229](https://github.com/andersfylling/disgord/pull/229) ([andersfylling](https://github.com/andersfylling))
+- Replace Guild.LoadAllMembers with more suitable Client.LoadMembers [\#221](https://github.com/andersfylling/disgord/pull/221) ([paulhobbel](https://github.com/paulhobbel))
+
+## [v0.12.0-rc8](https://github.com/andersfylling/disgord/tree/v0.12.0-rc8) (2019-10-21)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc7...v0.12.0-rc8)
 
 **Implemented enhancements:**
 
-- Better support for distributed instances [\#224](https://github.com/andersfylling/disgord/issues/224)
 - Replace uber dep for atomic with sync.atomic [\#213](https://github.com/andersfylling/disgord/issues/213)
 - Add a convenience method for reactions [\#211](https://github.com/andersfylling/disgord/issues/211)
-- create workflow that verifies install scipt works on push to develop [\#170](https://github.com/andersfylling/disgord/issues/170)
 - improve docs about snowflake.Snowflake vs disgord.Snowflake [\#161](https://github.com/andersfylling/disgord/issues/161)
+- Better support for distributed instances [\#224](https://github.com/andersfylling/disgord/issues/224)
+- create workflow that verifies install scipt works on push to develop [\#170](https://github.com/andersfylling/disgord/issues/170)
 - dynamic buckets + option to inject custom system [\#173](https://github.com/andersfylling/disgord/pull/173) ([andersfylling](https://github.com/andersfylling))
 
 **Fixed bugs:**
@@ -30,22 +86,16 @@
 - allow injecting custom identify rate limiter [\#227](https://github.com/andersfylling/disgord/pull/227) ([andersfylling](https://github.com/andersfylling))
 - copy only config + doc update [\#226](https://github.com/andersfylling/disgord/pull/226) ([andersfylling](https://github.com/andersfylling))
 
-## [v0.12.0-rc7](https://github.com/andersfylling/disgord/tree/v0.12.0-rc7)
-
+## [v0.12.0-rc7](https://github.com/andersfylling/disgord/tree/v0.12.0-rc7) (2019-10-13)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc6...v0.12.0-rc7)
 
 **Implemented enhancements:**
 
-- Add voice options self-mute & deafen [\#218](https://github.com/andersfylling/disgord/pull/218) ([ikkerens](https://github.com/ikkerens))
+- Fix voice options not being used \(self-mute & deafen\) [\#218](https://github.com/andersfylling/disgord/pull/218) ([ikkerens](https://github.com/ikkerens))
 
 **Merged pull requests:**
 
 - Move private pkgs to internal pkg [\#223](https://github.com/andersfylling/disgord/pull/223) ([andersfylling](https://github.com/andersfylling))
-
-**Fixed bugs:**
-
-- WEBHOOKS_UPDATE was missing and s causing related handlers not to fire
-- Lockable for Channel and Emoji when using build tag disgord_parallelism/disgord_removeDiscordMutex would not compile
 
 ## [v0.12.0-rc6](https://github.com/andersfylling/disgord/tree/v0.12.0-rc6) (2019-09-28)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.12.0-rc5...v0.12.0-rc6)
@@ -131,6 +181,7 @@
 
 **Fixed bugs:**
 
+- Missing 1k/24h identifies rate limit [\#237](https://github.com/andersfylling/disgord/issues/237)
 - How to handle gateway error 4011? [\#184](https://github.com/andersfylling/disgord/issues/184)
 
 **Closed issues:**
@@ -153,7 +204,6 @@
 - add DM check to Message [\#166](https://github.com/andersfylling/disgord/pull/166) ([andersfylling](https://github.com/andersfylling))
 - add IsByBot middleware + refactored logic into utils [\#155](https://github.com/andersfylling/disgord/pull/155) ([jfoster](https://github.com/jfoster))
 - clarify self-bot support \(resolves \#150\) [\#151](https://github.com/andersfylling/disgord/pull/151) ([nikkelma](https://github.com/nikkelma))
-- GetMessages with internal looping [\#145](https://github.com/andersfylling/disgord/pull/145) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.11.3](https://github.com/andersfylling/disgord/tree/v0.11.3) (2019-07-10)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.11.2...v0.11.3)
@@ -169,6 +219,10 @@
 
 ## [v0.11.2](https://github.com/andersfylling/disgord/tree/v0.11.2) (2019-06-22)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.10.5...v0.11.2)
+
+**Merged pull requests:**
+
+- GetMessages with internal looping [\#145](https://github.com/andersfylling/disgord/pull/145) ([andersfylling](https://github.com/andersfylling))
 
 ## [v0.10.5](https://github.com/andersfylling/disgord/tree/v0.10.5) (2019-06-08)
 [Full Changelog](https://github.com/andersfylling/disgord/compare/v0.11.1...v0.10.5)
@@ -306,6 +360,7 @@
 **Closed issues:**
 
 - Adds a handler controller \(builds on middleware\) [\#114](https://github.com/andersfylling/disgord/issues/114)
+- Add middleware support for socket events [\#91](https://github.com/andersfylling/disgord/issues/91)
 
 **Merged pull requests:**
 
@@ -437,7 +492,6 @@
 
 **Closed issues:**
 
-- Add middleware support for socket events [\#91](https://github.com/andersfylling/disgord/issues/91)
 - File uploads [\#55](https://github.com/andersfylling/disgord/issues/55)
 - Use json.RawMessage instead [\#47](https://github.com/andersfylling/disgord/issues/47)
 - Cannot stop disgord during reconnect [\#11](https://github.com/andersfylling/disgord/issues/11)

@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
-
-	"sync/atomic"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
 
-	"golang.org/x/net/proxy"
+	"go.uber.org/atomic"
 )
 
 type ClientType int
@@ -49,7 +47,7 @@ type discordErrListener = func(code int, reason string)
 func newClient(shardID uint, conf *config, connect connectSignature) (c *client, err error) {
 	var ws Conn
 	if conf.conn == nil {
-		ws, err = newConn(conf.Proxy, conf.HTTPClient)
+		ws, err = newConn(conf.HTTPClient)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +71,6 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		conn:              ws,
 		ratelimit:         newRatelimiter(),
 		timeoutMultiplier: 1,
-		disconnected:      true,
 		log:               conf.Logger,
 		behaviors:         map[string]*behavior{},
 		poolDiscordPkt:    conf.DiscordPktPool,
@@ -84,12 +81,12 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 		activateHeartbeats: make(chan interface{}),
 		SystemShutdown:     conf.SystemShutdown,
 	}
+	c.isConnected.Store(false)
 
 	return
 }
 
 type config struct {
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// for testing only
@@ -119,10 +116,9 @@ type config struct {
 // If you do not care about these. Please overwrite both methods.
 type client struct {
 	sync.RWMutex
-	clientType   ClientType
-	conf         *config
-	lastRestart  int64      //unix
-	restartMutex sync.Mutex // TODO: atomic bool
+	clientType  ClientType
+	conf        *config
+	lastRestart atomic.Int64 // unix nano
 
 	pulsating          uint8
 	pulseMutex         sync.Mutex
@@ -149,28 +145,24 @@ type client struct {
 	connect connectSignature
 
 	// states
-	disconnected      bool
-	haveConnectedOnce bool
-	isReconnecting    bool
-	isReceiving       bool // has the go routine started
-	isEmitting        bool // has the go routine started
-	recEmitMutex      sync.Mutex
+	isConnected       atomic.Bool
+	haveConnectedOnce atomic.Bool
+	isReconnecting    atomic.Bool
+	isReceiving       atomic.Bool // has the go routine started
+	isEmitting        atomic.Bool // has the go routine started
 	onceChannels      onceChannels
 
-	isRestarting bool
+	isRestarting atomic.Bool
 
 	// identify timeout on invalid session
 	// useful in unit tests when you want to drop any actual timeouts
 	timeoutMultiplier int
 
-	// proxy allows for use of a custom proxy
-	Proxy proxy.Dialer
-
 	// ChannelBuffer is used to set the event channel buffer
 	ChannelBuffer uint
 
 	log         logger.Logger
-	logSequence uint64
+	logSequence atomic.Uint64
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -182,7 +174,7 @@ type client struct {
 	SystemShutdown <-chan interface{}
 
 	// receiver gets closed when the connection is lost
-	requestedDisconnect bool
+	requestedDisconnect atomic.Bool
 }
 
 type behaviorActions map[interface{}]actionFunc
@@ -261,7 +253,7 @@ func (c *client) getLogPrefix() string {
 		t += "?"
 	}
 
-	nr := atomic.AddUint64(&c.logSequence, 1)
+	nr := c.logSequence.Add(1)
 	s := "s:" + strconv.FormatUint(nr, 10)
 	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
@@ -277,10 +269,10 @@ func (c *client) getLogPrefix() string {
 func (c *client) disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
-	if c.conn.Disconnected() || !c.haveConnectedOnce || c.cancel == nil {
-		c.disconnected = true
-		err = errors.New("already disconnected")
-		return
+	if c.conn.Disconnected() || !c.haveConnectedOnce.Load() || c.cancel == nil {
+		_ = c.conn.Close() // just to be safe, but ignore errors
+		c.isConnected.Store(false)
+		return errors.New("already disconnected")
 	}
 
 	// stop emitter, receiver and behaviors
@@ -293,59 +285,30 @@ func (c *client) disconnect() (err error) {
 
 	// c.Emit(event.Close, nil)
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
-	c.disconnected = true
+	c.isConnected.Store(false)
 
 	c.log.Info(c.getLogPrefix(), "disconnected")
 
-	// close connection
-	<-time.After(time.Second * 1 * time.Duration(c.timeoutMultiplier))
-
-	return
+	return err
 }
 
 // Disconnect disconnects the socket connection
 func (c *client) Disconnect() (err error) {
-	c.Lock()
-	c.requestedDisconnect = true
-	c.Unlock()
+	c.requestedDisconnect.Store(true)
 	return c.disconnect()
 }
 
-func (c *client) lockReconnect() bool {
-	c.restartMutex.Lock()
-	defer c.restartMutex.Unlock()
-
-	now := time.Now().UnixNano()
-	locked := (now - c.lastRestart) < (time.Second.Nanoseconds() / 2)
-
-	if !locked && !c.isReconnecting {
-		c.lastRestart = now
-		c.isReconnecting = true
-		return true
-	}
-
-	return false
-}
-
-func (c *client) unlockReconnect() {
-	c.restartMutex.Lock()
-	defer c.restartMutex.Unlock()
-
-	c.isReconnecting = false
-}
-
 func (c *client) reconnect() (err error) {
-	// make sure there aren't multiple reconnect processes running
-	if !c.lockReconnect() {
-		c.log.Debug(c.getLogPrefix(), "tried to start reconnect when already reconnecting")
+	if !c.isReconnecting.CAS(false, true) {
 		return
 	}
-	defer c.unlockReconnect()
+	c.lastRestart.Store(time.Now().UnixNano())
+	defer c.isReconnecting.Store(false)
 
 	c.log.Debug(c.getLogPrefix(), "is reconnecting")
 	if err := c.disconnect(); err != nil {
 		c.RLock()
-		if c.requestedDisconnect {
+		if c.requestedDisconnect.Load() {
 			c.RUnlock()
 			c.log.Debug(c.getLogPrefix(), err)
 			return errors.New("already disconnected, cannot reconnect")
@@ -402,7 +365,7 @@ func (c *client) Emit(command string, data CmdPayload) (err error) {
 }
 
 func (c *client) queueRequest(command string, data CmdPayload) (err error) {
-	if !c.haveConnectedOnce {
+	if !c.haveConnectedOnce.Load() {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
 
@@ -429,7 +392,7 @@ func (c *client) queueRequest(command string, data CmdPayload) (err error) {
 }
 
 func (c *client) emit(command string, data interface{}) (err error) {
-	if !c.haveConnectedOnce {
+	if !c.haveConnectedOnce.Load() {
 		return errors.New("race condition detected: you must Connect to the socket API/Gateway before you can send gateway commands: " + command)
 	}
 
@@ -441,47 +404,28 @@ func (c *client) emit(command string, data interface{}) (err error) {
 	return nil
 }
 
-func (c *client) lockEmitter() bool {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	if !c.isEmitting {
-		c.isEmitting = true
-		return true
-	}
-
-	return false
-}
-
-func (c *client) unlockEmitter() {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	c.isEmitting = false
-}
-
 // emitter holds the actually dispatching logic for sending data to the Discord Gateway.
 // client#Emit depends on this.
 func (c *client) emitter(ctx context.Context) {
-	if !c.lockEmitter() {
-		c.log.Debug(c.getLogPrefix(), "tried to startBehaviors another websocket emitter go routine")
+	if !c.isEmitting.CAS(false, true) {
 		return
 	}
-	defer c.unlockEmitter()
+	defer c.isEmitting.Store(false)
 	c.log.Debug(c.getLogPrefix(), "starting emitter")
 
 	internal, cancel := context.WithCancel(context.Background())
+	once := sync.Once{}
 
 	write := func(msg *clientPacket) error {
 		// save to file
 		// build tag: disgord_diagnosews
 		saveOutgoingPacket(c, msg)
 
-		err := c.conn.WriteJSON(msg)
-		if err != nil {
-			cancel()
+		if err := c.conn.WriteJSON(msg); err != nil {
+			once.Do(cancel)
+			return err
 		}
-		return err
+		return nil
 	}
 
 	for {
@@ -491,29 +435,29 @@ func (c *client) emitter(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter")
+			once.Do(cancel)
 			return
 		case <-internal.Done():
 			c.log.Debug(c.getLogPrefix(), "closing emitter after write error")
 			go c.reconnect()
 			return
-		case <-time.After(50 * time.Millisecond):
-			if c.messageQueue.IsEmpty() {
-				continue
+		case <-time.After(300 * time.Millisecond): // TODO: don't use fixed timeout
+			if !c.messageQueue.IsEmpty() {
+				// try to write the message
+				// on failure the message is put back into the queue
+				err = c.messageQueue.Try(write)
 			}
-
-			// try to write the message
-			// on failure the message is put back into the queue
-			err = c.messageQueue.Try(write)
 		case msg, open := <-c.internalEmitChan:
 			if !open {
-				c.log.Debug(c.getLogPrefix(), "emitter channel is closed")
-				continue
+				err = errors.New("emitter channel is closed")
+			} else if err = write(msg); err != nil {
+				insight = fmt.Sprintf("%v", *msg)
 			}
-			err = write(msg)
-			insight = fmt.Sprintf("%v", *msg)
 		}
 
-		c.log.Error(c.getLogPrefix(), err, insight)
+		if err != nil {
+			c.log.Error(c.getLogPrefix(), err, insight)
+		}
 	}
 }
 
@@ -528,39 +472,24 @@ func (c *client) Receive() <-chan *DiscordPacket {
 	return c.receiveChan
 }
 
-func (c *client) lockReceiver() bool {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	if !c.isReceiving {
-		c.isReceiving = true
-		return true
-	}
-
-	return false
-}
-
-func (c *client) unlockReceiver() {
-	c.recEmitMutex.Lock()
-	defer c.recEmitMutex.Unlock()
-
-	c.isReceiving = false
-}
-
 func (c *client) receiver(ctx context.Context) {
-	if !c.lockReceiver() {
-		c.log.Debug(c.getLogPrefix(), "tried to start another receiver")
+	if !c.isReceiving.CAS(false, true) {
 		return
 	}
-	defer c.unlockReceiver()
+	defer c.isReceiving.Store(false)
 	c.log.Debug(c.getLogPrefix(), "starting receiver")
 
+	var noopCounter int
+
 	internal, cancel := context.WithCancel(context.Background())
+	once := sync.Once{}
+
 	for {
 		// check if application has closed
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing receiver")
+			once.Do(cancel)
 			return
 		case <-internal.Done():
 			go c.reconnect()
@@ -575,8 +504,15 @@ func (c *client) receiver(ctx context.Context) {
 			if e, ok := err.(*CloseErr); ok && c.conf.discordErrListener != nil && e.code >= 4000 && e.code < 5000 {
 				go c.conf.discordErrListener(e.code, e.info)
 			}
-			c.log.Debug(c.getLogPrefix(), err)
-			cancel()
+			if _, ok := err.(*CloseErr); !ok {
+				c.log.Debug(c.getLogPrefix(), err)
+			}
+			select {
+			case <-ctx.Done():
+				// in this case we dont want reconnect to start, only to stop
+			default:
+				once.Do(cancel)
+			}
 			continue
 		}
 
@@ -585,10 +521,19 @@ func (c *client) receiver(ctx context.Context) {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		if err = httd.Unmarshal(packet, evt); err != nil {
-			c.log.Error(c.getLogPrefix(), err, "ERRONEOUS PACKET CONTENT:", string(packet))
-			cancel() // sometimes a CDN or some VPN might send a HTML string..
+		if err = util.Unmarshal(packet, evt); err != nil {
+			c.log.Error(c.getLogPrefix(), err, "SKIPPED ERRONEOUS PACKET CONTENT:", string(packet))
+			c.poolDiscordPkt.Put(evt)
+
+			// noop
+			if noopCounter >= 10 {
+				c.log.Error(c.getLogPrefix(), "json unmarshal failed 10 times for this shard and reconnect is now forced")
+				once.Do(cancel) // on 10 continuous errors, we just force a reconnect
+			}
+			noopCounter++
 			continue
+		} else {
+			noopCounter = 0
 		}
 
 		// save to file

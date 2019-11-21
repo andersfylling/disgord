@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
@@ -17,19 +19,16 @@ import (
 )
 
 type testWS struct {
-	closing      chan interface{}
-	opening      chan interface{}
-	writing      chan interface{}
-	reading      chan []byte
-	disconnected bool
-	sync.RWMutex
+	closing     chan interface{}
+	opening     chan interface{}
+	writing     chan interface{}
+	reading     chan []byte
+	isConnected atomic.Bool
 }
 
 func (g *testWS) Open(ctx context.Context, endpoint string, requestHeader http.Header) (err error) {
 	g.opening <- 1
-	g.Lock()
-	g.disconnected = false
-	g.Unlock()
+	g.isConnected.Store(true)
 	return
 }
 
@@ -40,23 +39,19 @@ func (g *testWS) WriteJSON(v interface{}) (err error) {
 
 func (g *testWS) Close() (err error) {
 	g.closing <- 1
-	g.Lock()
-	g.disconnected = true
-	g.Unlock()
+	g.isConnected.Store(false)
 	return
 }
 
 func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
+loop:
 	for {
 		select {
 		case packet = <-g.reading:
 		case <-ctx.Done():
-			break
+			break loop
 		case <-time.After(1 * time.Millisecond):
-			g.RLock()
-			dis := g.disconnected
-			g.RUnlock()
-			if !dis {
+			if g.isConnected.Load() {
 				continue
 			}
 		}
@@ -70,7 +65,7 @@ func (g *testWS) Read(ctx context.Context) (packet []byte, err error) {
 }
 
 func (g *testWS) Disconnected() bool {
-	return g.disconnected
+	return !g.isConnected.Load()
 }
 
 var _ Conn = (*testWS)(nil)
@@ -79,12 +74,12 @@ var _ Conn = (*testWS)(nil)
 func TestEvtClient_communication(t *testing.T) {
 	deadline := 1 * time.Second
 	conn := &testWS{
-		closing:      make(chan interface{}),
-		opening:      make(chan interface{}),
-		writing:      make(chan interface{}),
-		reading:      make(chan []byte),
-		disconnected: true,
+		closing: make(chan interface{}),
+		opening: make(chan interface{}),
+		writing: make(chan interface{}),
+		reading: make(chan []byte),
 	}
+	conn.isConnected.Store(false)
 
 	eChan := make(chan *Event)
 
@@ -126,7 +121,7 @@ func TestEvtClient_communication(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.timeoutMultiplier = 0
-	seq := uint(1)
+	seq := uint64(1)
 
 	// ###############################
 	// RECONNECT
@@ -154,13 +149,14 @@ func TestEvtClient_communication(t *testing.T) {
 		for {
 			select {
 			case <-eChan:
-				continue
+			case <-shutdown:
+				return
 			}
 		}
 	}()
 
 	// mocked websocket server.. ish
-	go func(seq *uint) {
+	go func(seq *uint64) {
 		for {
 			var data *clientPacket
 			select {
@@ -247,9 +243,7 @@ func TestEvtClient_communication(t *testing.T) {
 	// during testing, most timeouts are 0, so we experience moments where not all
 	// channels have finished syncing. TODO: remove timeout requirement.
 	<-time.After(time.Millisecond * 10)
-	m.RLock()
-	sequence := m.sequenceNumber
-	m.RUnlock()
+	sequence := m.sequenceNumber.Load()
 	if sequence != seq-1 {
 		t.Errorf("incorrect sequence number. Got %d, wants %d\n", sequence, seq)
 		return

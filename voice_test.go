@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestStateMarshalling(t *testing.T) {
@@ -12,6 +12,6 @@ func TestStateMarshalling(t *testing.T) {
 	check(err, t)
 
 	state := VoiceState{}
-	err = httd.Unmarshal(data, &state)
+	err = util.Unmarshal(data, &state)
 	check(err, t)
 }

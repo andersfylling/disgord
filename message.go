@@ -122,8 +122,8 @@ type Message struct {
 	MentionChannels  []*MentionChannel  `json:"mention_channels"`
 	Attachments      []*Attachment      `json:"attachments"`
 	Embeds           []*Embed           `json:"embeds"`
-	Reactions        []*Reaction        `json:"reactions"`       // ?
-	Nonce            Snowflake          `json:"nonce,omitempty"` // ?, used for validating a message was sent
+	Reactions        []*Reaction        `json:"reactions"` // ?
+	Nonce            interface{}        `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
 	Pinned           bool               `json:"pinned"`
 	WebhookID        Snowflake          `json:"webhook_id"` // ?
 	Type             MessageType        `json:"type"`
@@ -150,6 +150,17 @@ var _ DeepCopier = (*Message)(nil)
 
 func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
+}
+
+// DiscordURL returns the Discord link to the message. This can be used to jump
+// directly to a message from within the client.
+//
+// Example: https://discordapp.com/channels/319567980491046913/644376487331495967/646925626523254795
+func (m *Message) DiscordURL() string {
+	return fmt.Sprintf(
+		"https://discordapp.com/channels/%d/%d/%d",
+		m.GuildID, m.ChannelID, m.ID,
+	)
 }
 
 func (m *Message) updateInternals() {
@@ -242,13 +253,10 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Nonce = m.Nonce
 	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
 	message.SpoilerTagContent = m.SpoilerTagContent
+	message.Nonce = m.Nonce
 
 	if m.Author != nil {
 		message.Author = m.Author.DeepCopy().(*User)
-	}
-
-	if !m.Nonce.IsZero() {
-		message.Nonce = m.Nonce
 	}
 
 	for _, mention := range m.Mentions {
@@ -316,11 +324,16 @@ func (m *Message) Send(client MessageSender, flags ...Flag) (msg *Message, err e
 	if constant.LockedMethods {
 		m.RLock()
 	}
+	nonce := fmt.Sprint(m.Nonce)
+	if len(nonce) > 25 {
+		return nil, errors.New("nonce can not be more than 25 characters")
+	}
+
 	// TODO: attachments
 	params := &CreateMessageParams{
 		Content: m.Content,
 		Tts:     m.Tts,
-		Nonce:   m.Nonce,
+		Nonce:   nonce,
 		// File: ...
 		// Embed: ...
 	}
@@ -583,10 +596,10 @@ func NewMessageByString(content string) *CreateMessageParams {
 
 // CreateMessageParams JSON params for CreateChannelMessage
 type CreateMessageParams struct {
-	Content string    `json:"content"`
-	Nonce   Snowflake `json:"nonce,omitempty"`
-	Tts     bool      `json:"tts,omitempty"`
-	Embed   *Embed    `json:"embed,omitempty"` // embedded rich content
+	Content string `json:"content"`
+	Nonce   string `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Tts     bool   `json:"tts,omitempty"`
+	Embed   *Embed `json:"embed,omitempty"` // embedded rich content
 
 	Files []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 

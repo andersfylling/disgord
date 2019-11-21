@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 //////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ func populateResource(resource evtResource, ctx context.Context, evt *gateway.Ev
 	resource.registerContext(ctx)
 	resource.setShardID(evt.ShardID)
 
-	if err = httd.Unmarshal(evt.Data, resource); err != nil {
+	if err = util.Unmarshal(evt.Data, resource); err != nil {
 		return err
 	}
 	executeInternalUpdater(resource)

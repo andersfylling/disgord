@@ -66,7 +66,7 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x gateway.CmdPayload, err
 
 // #################################################################
 // RequestGuildMembersPayload payload for socket command REQUEST_GUILD_MEMBERS.
-// See GatewayCmdRequestGuildMembers
+// See RequestGuildMembers
 //
 // WARNING: If this request is in queue while a auto-scaling is forced, it will be removed from the queue
 // and not re-inserted like the other commands. This is due to the guild id slice, which is a bit trickier
@@ -74,7 +74,7 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x gateway.CmdPayload, err
 //
 // Wrapper for websocket.RequestGuildMembersPayload
 type RequestGuildMembersPayload struct {
-	// GuildID	id of the guild(s) to get offline members for
+	// GuildID	id of the guild(s) to get the members for
 	GuildIDs []Snowflake
 
 	// Query string that username starts with, or an empty string to return all members

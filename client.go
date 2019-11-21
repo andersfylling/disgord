@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -19,7 +20,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/constant"
 
-	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
@@ -145,6 +145,12 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
+	// LoadMembersQuietly will start fetching members for all guilds in the background.
+	// There is currently no proper way to detect when the loading is done nor if it
+	// finished successfully.
+	LoadMembersQuietly bool
+
+	// Presence will automatically be emitted to discord on start up
 	Presence *UpdateStatusPayload
 
 	// for cancellation
@@ -242,7 +248,6 @@ var _ Link = (*Client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
-
 func (c *Client) Pool() *pools {
 	return c.pool
 }
@@ -265,33 +270,16 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 	return c.permissions
 }
 
-// CreateBotURL creates a URL that can be used to invite this bot to a guild/server.
+// InviteURL creates a URL that can be used to invite this bot to a guild/server.
 // Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
 //
 // By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
 // for your bot to run successfully, you should utilise
 //  Client.
-func (c *Client) CreateBotURL(ctx context.Context) (u string, err error) {
-	_, _ = c.GetCurrentUser(ctx) // update c.myID
-
-	if c.myID.IsZero() {
-		err = errors.New("unable to get bot id")
-		return "", err
-	}
-
-	// make sure the snowflake is new enough to be used as a Client ID
-	t, err := time.Parse("2006-01-02 15:04:05", "2016-08-07 05:39:21.906")
-	if err != nil {
-		return "", err
-	}
-
-	loc, _ := time.LoadLocation("America/Los_Angeles")
-	t = t.In(loc)
-
-	if !c.myID.Date().After(t) {
-		err = errors.New("the bot was not created after " + t.String() + " and can therefore not use the bot ID to generate a invite link")
-		return "", err
+func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
+	if _, err = c.GetCurrentUser(ctx); err != nil && c.myID.IsZero() {
+		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
 	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
@@ -373,9 +361,12 @@ func (c *Client) Cache() Cacher {
 func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
-	c.On(event.UserUpdate, c.handlerUpdateSelfBot)
-	c.On(event.GuildCreate, c.handlerAddToConnectedGuilds)
-	c.On(event.GuildDelete, c.handlerRemoveFromConnectedGuilds)
+	if c.config.LoadMembersQuietly {
+		c.On(EvtReady, c.handlerLoadMembers)
+	}
+	c.On(EvtUserUpdate, c.handlerUpdateSelfBot)
+	c.On(EvtGuildCreate, c.handlerAddToConnectedGuilds)
+	c.On(EvtGuildDelete, c.handlerRemoveFromConnectedGuilds)
 
 	// start demultiplexer which also trigger dispatching
 	var cache *Cache
@@ -520,6 +511,17 @@ func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 
 func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
 	_ = c.cache.Update(UserCache, update.User)
+}
+
+func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
+	guildIDs := make([]Snowflake, len(evt.Guilds))
+	for i := range evt.Guilds {
+		guildIDs[i] = evt.Guilds[i].ID
+	}
+
+	c.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
+		GuildIDs: guildIDs,
+	})
 }
 
 //////////////////////////////////////////////////////

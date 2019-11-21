@@ -10,10 +10,9 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
-	"golang.org/x/net/proxy"
 )
 
 type VoiceConfig struct {
@@ -30,7 +29,6 @@ type VoiceConfig struct {
 	Token string
 
 	// proxy allows for use of a custom proxy
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// Endpoint for establishing voice connection
@@ -64,7 +62,6 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 	client.client, err = newClient(0, &config{
 		Logger:     conf.Logger,
 		Endpoint:   conf.Endpoint,
-		Proxy:      conf.Proxy,
 		HTTPClient: conf.HTTPClient,
 		DiscordPktPool: &sync.Pool{
 			New: func() interface{} {
@@ -121,7 +118,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	readyPk := &VoiceReady{}
-	if err = httd.Unmarshal(p.Data, readyPk); err != nil {
+	if err = util.Unmarshal(p.Data, readyPk); err != nil {
 		return err
 	}
 
@@ -151,7 +148,7 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err = httd.Unmarshal(p.Data, helloPk); err != nil {
+	if err = util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 	c.Lock()
@@ -172,7 +169,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	sessionPk := &VoiceSessionDescription{}
-	if err = httd.Unmarshal(p.Data, sessionPk); err != nil {
+	if err = util.Unmarshal(p.Data, sessionPk); err != nil {
 		return err
 	}
 
@@ -209,9 +206,9 @@ func (c *VoiceClient) Connect() (rdy *VoiceReady, err error) {
 }
 
 func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
-	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
+	// c.conn.Disconnected can always tell us if we are isConnected, but it cannot with
 	// certainty say if we are connected
-	if !c.disconnected {
+	if c.isConnected.Load() {
 		err = errors.New("cannot Connect while a connection already exist")
 		return nil, err
 	}
@@ -236,8 +233,8 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	ctx, c.cancel = context.WithCancel(context.Background())
 
 	// we can now interact with Discord
-	c.haveConnectedOnce = true
-	c.disconnected = false
+	c.haveConnectedOnce.Store(true)
+	c.isConnected.Store(true)
 	go c.receiver(ctx)
 	go c.emitter(ctx)
 	go c.startBehaviors(ctx)
@@ -254,9 +251,9 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	case evt = <-waitingChan:
 		c.log.Info(c.getLogPrefix(), "connected")
 	case <-ctx.Done():
-		c.disconnected = true
+		c.isConnected.Store(false)
 	case <-time.After(5 * time.Second):
-		c.disconnected = true
+		c.isConnected.Store(false)
 		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
 	}
 	return evt, err

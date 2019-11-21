@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // defaults and string format's for Discord interaction
@@ -103,6 +105,16 @@ func SupportsDiscordAPIVersion(version int) bool {
 	}
 
 	return supported
+}
+
+func copyHeader(h http.Header) http.Header {
+	cp := make(http.Header, len(h))
+	for k, vs := range h {
+		for i := range vs {
+			cp.Add(k, vs[i])
+		}
+	}
+	return cp
 }
 
 // NewClient ...
@@ -217,8 +229,16 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	req.Header = c.reqHeader
-	req.Header.Set(ContentType, r.ContentType) // unique for each request
+
+	header := copyHeader(c.reqHeader)
+	header.Set(ContentType, r.ContentType)
+	if r.Reason != "" {
+		header.Add(XAuditLogReason, r.Reason)
+	} else {
+		// the header is a map, so it's a shared memory resource
+		req.Header.Del(XAuditLogReason)
+	}
+	req.Header = header
 
 	// send request
 	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
@@ -260,7 +280,7 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 
 		// store the Discord error if it exists
 		if len(body) > 0 {
-			_ = Unmarshal(body, err)
+			_ = util.Unmarshal(body, err)
 		}
 		return nil, nil, err
 	}

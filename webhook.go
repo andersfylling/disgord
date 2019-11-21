@@ -72,6 +72,9 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 type CreateWebhookParams struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 func (c *CreateWebhookParams) FindErrors() error {
@@ -105,6 +108,7 @@ func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params 
 		Endpoint:    endpoint.ChannelWebhooks(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Webhook{}

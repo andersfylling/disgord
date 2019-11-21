@@ -24,23 +24,6 @@ const (
 	StatusOffline = "offline"
 )
 
-// flags for the Activity object to signify the type of action taken place
-const (
-	ActivityFlagInstance    = 1 << 0
-	ActivityFlagJoin        = 1 << 1
-	ActivityFlagSpectate    = 1 << 2
-	ActivityFlagJoinRequest = 1 << 3
-	ActivityFlagSync        = 1 << 4
-	ActivityFlagPlay        = 1 << 5
-)
-
-// Activity types https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
-const (
-	ActivityTypeGame = iota
-	ActivityTypeStreaming
-	ActivityTypeListening
-)
-
 //type UserInterface interface {
 //	Mention() string
 //	MentionNickname() string
@@ -194,6 +177,15 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ActivityEmoji ...
+type ActivityEmoji struct {
+	Lockable `json:"-"`
+
+	Name     string    `json:"name"`
+	ID       Snowflake `json:"id,omitempty"`
+	Animated bool      `json:"animated,omitempty"`
+}
+
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
 	Lockable `json:"-"`
@@ -235,6 +227,36 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+// ######################
+// ##
+// ## Activity
+// ##
+// ######################
+
+// activityTypes https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+type acitivityType = int // TODO-v0.15: remove = sign, make uint
+
+const (
+	ActivityTypeGame acitivityType = iota
+	ActivityTypeStreaming
+	ActivityTypeListening
+	_
+	ActivityTypeCustom
+)
+
+// activityFlag https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-flags
+type activityFlag = int // TODO-v0.15: remove = sign, make uint
+
+// flags for the Activity object to signify the type of action taken place
+const (
+	ActivityFlagInstance activityFlag = 1 << iota
+	ActivityFlagJoin
+	ActivityFlagSpectate
+	ActivityFlagJoinRequest
+	ActivityFlagSync
+	ActivityFlagPlay
+)
+
 // NewActivity ...
 func NewActivity() (activity *Activity) {
 	return &Activity{
@@ -247,17 +269,18 @@ type Activity struct {
 	Lockable `json:"-"`
 
 	Name          string             `json:"name"`                     // the activity's name
-	Type          int                `json:"type"`                     // activity type
+	Type          acitivityType      `json:"type"`                     // activity type
 	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
 	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
 	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
 	Details       string             `json:"details,omitempty"`        //?	?string	what the player is currently doing
 	State         string             `json:"state,omitempty"`          //state?	?string	the user's current party status
-	Party         *ActivityParty     `json:"party,omitempty"`          //party?	party object	information for the current party of the player
-	Assets        *ActivityAssets    `json:"assets,omitempty"`         // assets?	assets object	images for the presence and their hover texts
-	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`        // secrets?	secrets object	secrets for Rich Presence joining and spectating
-	Instance      bool               `json:"instance,omitempty"`       // instance?	boolean	whether or not the activity is an instanced game session
-	Flags         int                `json:"flags,omitempty"`          // flags?	int	activity flags ORd together, describes what the payload includes
+	Emoji         *ActivityEmoji     `json:"emoji"`
+	Party         *ActivityParty     `json:"party,omitempty"`    //party?	party object	information for the current party of the player
+	Assets        *ActivityAssets    `json:"assets,omitempty"`   // assets?	assets object	images for the presence and their hover texts
+	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`  // secrets?	secrets object	secrets for Rich Presence joining and spectating
+	Instance      bool               `json:"instance,omitempty"` // instance?	boolean	whether or not the activity is an instanced game session
+	Flags         activityFlag       `json:"flags,omitempty"`    // flags?	int	activity flags ORd together, describes what the payload includes
 }
 
 var _ Reseter = (*Activity)(nil)

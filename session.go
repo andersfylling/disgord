@@ -275,7 +275,7 @@ type RESTGuild interface {
 
 	// RemoveGuildMember Remove a member from a guild. Requires 'KICK_MEMBERS' permission.
 	// Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
-	KickMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) error
+	KickMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error
 
 	// GetGuildBans Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 	GetGuildBans(ctx context.Context, id Snowflake, flags ...Flag) ([]*Ban, error)
@@ -290,7 +290,7 @@ type RESTGuild interface {
 
 	// UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
 	// Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
-	UnbanMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) error
+	UnbanMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error
 
 	// GetGuildRoles Returns a list of role objects for the guild.
 	GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Role, error)
@@ -321,7 +321,7 @@ type RESTGuild interface {
 	// PruneMembers Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
 	// The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
 	// if you need it. Fires multiple Guild Member Remove Gateway events.
-	PruneMembers(ctx context.Context, id Snowflake, days int, flags ...Flag) error
+	PruneMembers(ctx context.Context, id Snowflake, days int, reason string, flags ...Flag) error
 
 	// GetGuildVoiceRegions Returns a list of voice region objects for the guild. Unlike the similar /voice route,
 	// this returns VIP servers when the guild is VIP-enabled.
@@ -510,7 +510,7 @@ type Session interface {
 	GetPermissions() (permissions PermissionBits)
 
 	// CreateBotURL
-	CreateBotURL(ctx context.Context) (url string, err error)
+	InviteURL(ctx context.Context) (url string, err error)
 
 	Pool() *pools
 

@@ -36,6 +36,9 @@ type Request struct {
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType string
 
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string
+
 	bodyReader     io.Reader
 	hashedEndpoint string
 }

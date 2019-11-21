@@ -284,10 +284,15 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
+	nonce := fmt.Sprint(message.Nonce)
+	if len(nonce) > 25 {
+		return nil, errors.New("nonce can not be longer than 25 characters")
+	}
+
 	message.RLock()
 	params := &CreateMessageParams{
 		Content: message.Content,
-		Nonce:   message.Nonce,
+		Nonce:   nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 		Tts:     message.Tts,
 		// File: ...
 		// Embed: ...
@@ -466,6 +471,9 @@ type CreateChannelInvitesParams struct {
 	MaxUses   int  `json:"max_uses,omitempty"`  // max number of uses or 0 for unlimited. default 0
 	Temporary bool `json:"temporary,omitempty"` // whether this invite only grants temporary membership. default false
 	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild channels. Requires
@@ -491,6 +499,7 @@ func (c *Client) CreateChannelInvites(ctx context.Context, channelID Snowflake, 
 		Endpoint:    endpoint.ChannelInvites(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Invite{}

@@ -7,20 +7,22 @@
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord' alt='Code coverage' />
     </a>
-  </p>
-  <p>
     <a href='http://godoc.org/github.com/andersfylling/disgord'>
       <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg' alt='Godoc' />
+    </a>
+  </p>
+  <p>
+    <a href='https://discord.gg/fQgmBg'>
+      <img src='https://img.shields.io/badge/Discord%20Gophers-%23disgord-blue.svg' alt='Discord Gophers' />
+    </a>
+    <a href='https://discord.gg/HBTHbme'>
+      <img src='https://img.shields.io/badge/Discord%20API-%23disgord-blue.svg' alt='Discord API' />
     </a>
   </p>
 </div>
 
 ## About
 Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
-
-Talk to us on Discord! We exist in both the Gopher server and the Discord API server:
- - [Discord Gophers](https://discord.gg/qBVmnq9)
- - [Discord API](https://discord.gg/HBTHbme)
 
 ## Warning
 The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
@@ -57,7 +59,7 @@ func printMessage(session disgord.Session, evt *disgord.MessageCreate) {
 }
 
 func main() {
-    client := disgord.New(&disgord.Config{
+    client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         // You can inject any logger that implements disgord.Logger interface (eg. logrus)
         // DisGord provides a simple logger to get you started. Nothing is logged if nil.
@@ -107,8 +109,8 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.GetCurrentUser(disgord.DisableCache)
-client.GetGuildMembers(guildID, disgord.DisableCache)
+client.GetCurrentUser(disgord.IgnoreCache)
+client.GetGuildMembers(guildID, disgord.IgnoreCache)
 
 // always checks the local cache first
 client.GetCurrentUser()
@@ -131,8 +133,7 @@ To notify about bugs or suggesting enhancements, simply create a issue. The more
 To contribute with code, always create an issue before you open a pull request. This allows automating change logs and releases.
 
 ## Q&A
-> **NOTE:** To see more examples go visit the docs/examples folder.
-See the GoDoc for a in-depth introduction on the various topics (or disgord.go package comment). Below is an example of the traditional ping-pong bot and then some.
+> **NOTE:** To see more examples go to the [docs/examples folder](docs/examples). See the GoDoc for a in-depth introduction on the various topics.
 
 ```Markdown
 1. How do I find my bot token and/or add my bot to a server?
@@ -143,15 +144,13 @@ Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-a
 ```Markdown
 2. Is there an alternative Go package?
 
-Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide low 
-level bindings for Discord, while DisGord wants to provide a more configurable system with more 
-features (channels, build constraints, tailored unmarshal methods, etc.). 
+Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide a minimalistic API wrapper for Discord, it does not handle multiple websocket sharding, scaling, etc. behind the scenes such as DisGord does.
 Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
 future, for now the biggest difference is that DisGord does not support self bots.
 ```
 
 ```Markdown
-3. Why make another Discord lib in GoLang?
+3. Why make another Discord lib in Go?
 
 I'm trying to take over the world and then become a intergalactic war lord. Have to start somewhere.
 ```

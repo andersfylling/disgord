@@ -114,14 +114,14 @@ func (m *Message) Reset() {
 	m.Attachments = nil
 	m.Embeds = nil
 	m.Reactions = nil
-	m.Nonce = 0
+	m.Nonce = nil
 	m.Pinned = false
 	m.WebhookID = 0
-	m.Type = MessageType{}
+	m.Type = 0
 	m.Activity = MessageActivity{}
 	m.Application = MessageApplication{}
 	m.MessageReference = nil
-	m.Flags = MessageFlag{}
+	m.Flags = 0
 	m.GuildID = 0
 	m.SpoilerTagContent = false
 	m.SpoilerTagAllAttachments = false
@@ -154,6 +154,7 @@ func (a *Activity) Reset() {
 	a.ApplicationID = 0
 	a.Details = ""
 	a.State = ""
+	a.Emoji = nil
 	a.Party = nil
 	a.Assets = nil
 	a.Secrets = nil

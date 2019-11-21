@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func getAllJSONFiles(t *testing.T) (files [][]byte) {
@@ -33,7 +33,7 @@ func TestDiscordPacket_UnmarshalJSON(t *testing.T) {
 	files := getAllJSONFiles(t)
 	for _, file := range files {
 		evt := DiscordPacket{}
-		err := httd.Unmarshal(file, &evt)
+		err := util.Unmarshal(file, &evt)
 		if err != nil {
 			t.Error(err)
 		}
@@ -47,7 +47,7 @@ func TestDiscordPacket_UnmarshalJSON(t *testing.T) {
 		}
 
 		evt := DiscordPacket{}
-		err = httd.Unmarshal(data, &evt)
+		err = util.Unmarshal(data, &evt)
 		if err != nil {
 			t.Error(err)
 		}
@@ -63,7 +63,7 @@ func TestDiscordPacket_UnmarshalJSON(t *testing.T) {
 		for _, file := range files {
 			evt := pool.Get().(*DiscordPacket)
 			evt.reset()
-			err := httd.Unmarshal(file, evt)
+			err := util.Unmarshal(file, evt)
 			pool.Put(evt)
 			if err != nil {
 				t.Error(err)

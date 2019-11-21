@@ -9,6 +9,26 @@ import (
 	"github.com/andersfylling/disgord/internal/event"
 )
 
+func AllEvents(except ...string) []string {
+    evtsMap := map[string]int8{
+    {{- range .}}
+        {{if .IsDiscordEvent }}
+            Evt{{.}}: 0,
+        {{ end}}
+    {{- end}}
+    }
+
+    for i := range except {
+        delete(evtsMap, except[i])
+    }
+
+    evts := make([]string, 0, len(evtsMap))
+    for k := range evtsMap {
+        evts = append(evts, k)
+    }
+    return evts
+}
+
 // ---------------------------
 
 {{range .}}

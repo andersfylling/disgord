@@ -157,6 +157,9 @@ type CreateGuildRoleParams struct {
 	Color       uint   `json:"color,omitempty"`
 	Hoist       bool   `json:"hoist,omitempty"`
 	Mentionable bool   `json:"mentionable,omitempty"`
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
@@ -173,6 +176,7 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
 	}, flags)
 	r.CacheRegistry = GuildRoleCache
 	r.factory = func() interface{} {
