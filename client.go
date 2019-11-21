@@ -40,9 +40,11 @@ func NewClient(conf Config) (*Client, error) {
 // NewClient creates a new DisGord Client and returns an error on configuration issues
 func createClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
+		// WARNING: do not set http.Client.Timeout (!)
+		conf.HTTPClient = &http.Client{}
+	} else if conf.HTTPClient.Timeout > 0 {
+		// https://github.com/nhooyr/websocket/issues/67
+		return nil, errors.New("do not set timeout in the http.Client, use context.Context instead")
 	}
 	if conf.Proxy != nil {
 		conf.HTTPClient.Transport = &http.Transport{
@@ -270,38 +272,6 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 	return c.permissions
 }
 
-// CreateBotURL ...
-// Deprecated use InviteURL()
-func (c *Client) CreateBotURL() (u string, err error) {
-	_, _ = c.GetCurrentUser() // update c.myID
-
-	if c.myID.IsZero() {
-		err = errors.New("unable to get bot id")
-		return "", err
-	}
-
-	// make sure the snowflake is new enough to be used as a Client ID
-	t, err := time.Parse("2006-01-02 15:04:05", "2016-08-07 05:39:21.906")
-	if err != nil {
-		return "", err
-	}
-
-	loc, err := time.LoadLocation("America/Los_Angeles")
-	if err != nil {
-		return "", err
-	}
-	t = t.In(loc)
-
-	if !c.myID.Date().After(t) {
-		err = errors.New("the bot was not created after " + t.String() + " and can therefore not use the bot ID to generate a invite link")
-		return "", err
-	}
-
-	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
-	return u, nil
-}
-
 // InviteURL creates a URL that can be used to invite this bot to a guild/server.
 // Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
@@ -309,8 +279,8 @@ func (c *Client) CreateBotURL() (u string, err error) {
 // By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
 // for your bot to run successfully, you should utilise
 //  Client.
-func (c *Client) InviteURL() (u string, err error) {
-	if _, err = c.GetCurrentUser(); err != nil && c.myID.IsZero() {
+func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
+	if _, err = c.GetCurrentUser(ctx); err != nil && c.myID.IsZero() {
 		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
@@ -344,8 +314,8 @@ func (c *Client) HeartbeatLatencies() (latencies map[uint]time.Duration, err err
 
 // Myself get the current user / connected user
 // Deprecated: use GetCurrentUser instead
-func (c *Client) Myself() (user *User, err error) {
-	return c.GetCurrentUser()
+func (c *Client) Myself(ctx context.Context) (user *User, err error) {
+	return c.GetCurrentUser(ctx)
 }
 
 // GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
@@ -409,18 +379,18 @@ func (c *Client) setupConnectEnv() {
 }
 
 // Connect establishes a websocket connection to the discord API
-func (c *Client) Connect() (err error) {
+func (c *Client) Connect(ctx context.Context) (err error) {
 	// set the user ID upon connection
 	// only works for socketing
 	//
 	// also verifies that the correct credentials were supplied
 	var me *User
-	if me, err = c.GetCurrentUser(); err != nil {
+	if me, err = c.GetCurrentUser(ctx); err != nil {
 		return err
 	}
 	c.myID = me.ID
 
-	if err = gateway.ConfigureShardConfig(c, &c.config.ShardConfig); err != nil {
+	if err = gateway.ConfigureShardConfig(ctx, c, &c.config.ShardConfig); err != nil {
 		return err
 	}
 
@@ -488,8 +458,8 @@ func (c *Client) DisconnectOnInterrupt() (err error) {
 
 // StayConnectedUntilInterrupted is a simple wrapper for connect, and disconnect that listens for system interrupts.
 // When a error happens you can terminate the application without worries.
-func (c *Client) StayConnectedUntilInterrupted() (err error) {
-	if err = c.Connect(); err != nil {
+func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) {
+	if err = c.Connect(ctx); err != nil {
 		c.log.Error(err)
 		return err
 	}
@@ -671,12 +641,12 @@ func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandle
 
 // DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
 // be used to delete said object.
-func (c *Client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error) {
+func (c *Client) DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) (err error) {
 	if obj == nil {
 		return errors.New("object to save can not be nil")
 	}
 
-	err = obj.deleteFromDiscord(c, flags...)
+	err = obj.deleteFromDiscord(ctx, c, flags...)
 	return
 }
 
@@ -687,13 +657,13 @@ func (c *Client) DeleteFromDiscord(obj discordDeleter, flags ...Flag) (err error
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
+func (c *Client) GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
 	// TODO: populate these partial guild objects
-	return c.GetCurrentUserGuilds(params)
+	return c.GetCurrentUserGuilds(ctx, params)
 }
 
-func (c *Client) KickVoiceParticipant(guildID, userID Snowflake) error {
-	return c.UpdateGuildMember(guildID, userID).KickFromVoice().Execute()
+func (c *Client) KickVoiceParticipant(ctx context.Context, guildID, userID Snowflake) error {
+	return c.UpdateGuildMember(ctx, guildID, userID).KickFromVoice().Execute()
 }
 
 // SendMsg Input anything and it will be converted to a message and sent. If you
@@ -706,7 +676,7 @@ func (c *Client) KickVoiceParticipant(guildID, userID Snowflake) error {
 //
 // If you want to affect the actual message data besides .Content; provide a
 // MessageCreateParams. The reply message will be updated by the last one provided.
-func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
+func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (msg *Message, err error) {
 
 	var flags []Flag
 	params := &CreateMessageParams{}
@@ -749,7 +719,7 @@ func (c *Client) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message
 		}
 	}
 
-	return c.CreateMessage(channelID, params, flags...)
+	return c.CreateMessage(ctx, channelID, params, flags...)
 }
 
 /* status updates */

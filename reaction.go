@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -66,7 +67,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -93,6 +94,7 @@ func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPut,
 		Endpoint: endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -107,7 +109,7 @@ func (c *Client) CreateReaction(channelID, messageID Snowflake, emoji interface{
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -133,6 +135,7 @@ func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interfa
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactionMe(channelID, messageID, emojiCode),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -147,7 +150,7 @@ func (c *Client) DeleteOwnReaction(channelID, messageID Snowflake, emoji interfa
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
+func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -173,6 +176,7 @@ func (c *Client) DeleteUserReaction(channelID, messageID, userID Snowflake, emoj
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactionUser(channelID, messageID, emojiCode, userID),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -195,7 +199,7 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
+func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
 	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -225,6 +229,7 @@ func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelMessageReaction(channelID, messageID, emojiCode) + query,
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*User, 0)
@@ -241,7 +246,7 @@ func (c *Client) GetReaction(channelID, messageID Snowflake, emoji interface{}, 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
-func (c *Client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteAllReactions(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -252,6 +257,7 @@ func (c *Client) DeleteAllReactions(channelID, messageID Snowflake, flags ...Fla
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactions(channelID, messageID),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 

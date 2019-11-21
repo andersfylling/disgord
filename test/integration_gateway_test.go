@@ -22,7 +22,7 @@ func TestConnect(t *testing.T) {
 		Logger:       disgord.DefaultLogger(true),
 	})
 	defer c.Disconnect()
-	if err := c.Connect(); err != nil {
+	if err := c.Connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -49,7 +49,7 @@ func TestConnectWithShards(t *testing.T) {
 		},
 	})
 	defer c.Disconnect()
-	if err := c.Connect(); err != nil {
+	if err := c.Connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -108,7 +108,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		instance.Ready(func() {
 			instanceReady <- true
 		})
-		if err := instance.Connect(); err != nil {
+		if err := instance.Connect(context.Background()); err != nil {
 			cancel()
 			t.Fatal(err)
 		}

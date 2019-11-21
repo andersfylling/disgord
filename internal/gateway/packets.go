@@ -3,6 +3,7 @@ package gateway
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/json"
 	"io"
 
@@ -37,7 +38,7 @@ func decompressBytes(input []byte) (output []byte, err error) {
 }
 
 type GatewayBotGetter interface {
-	GetGatewayBot() (gateway *GatewayBot, err error)
+	GetGatewayBot(context.Context) (gateway *GatewayBot, err error)
 }
 
 //////////////////////////////////////////////////////

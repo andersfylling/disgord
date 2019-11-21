@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,12 +28,12 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 	return uint(guildID>>22) % shardCount
 }
 
-func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+func ConfigureShardConfig(ctx context.Context, client GatewayBotGetter, conf *ShardConfig) error {
 	if len(conf.ShardIDs) == 0 && conf.ShardCount != 0 {
 		return errors.New("ShardCount should only be set when you use distributed bots and have set the ShardIDs field - ShardCount is an optional field")
 	}
 
-	data, err := client.GetGatewayBot()
+	data, err := client.GetGatewayBot(ctx)
 	if err != nil {
 		return err
 	}
@@ -451,7 +452,7 @@ func (s *shardMngr) scale(code int, reason string) {
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
 	unchandledGuilds := s.redistributeMsgs(func() {
-		data, err := s.conf.RESTClient.GetGatewayBot()
+		data, err := s.conf.RESTClient.GetGatewayBot(context.Background())
 		if err != nil {
 			s.conf.Logger.Error("autoscaling", err)
 			return

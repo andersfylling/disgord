@@ -1,6 +1,7 @@
 package httd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +30,7 @@ var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
+	Ctx         context.Context
 	Method      httpMethod
 	Endpoint    string
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON

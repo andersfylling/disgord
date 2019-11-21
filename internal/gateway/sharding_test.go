@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ type GatewayBotGetterMock struct {
 	get func() (gateway *GatewayBot, err error)
 }
 
-func (g GatewayBotGetterMock) GetGatewayBot() (gateway *GatewayBot, err error) {
+func (g GatewayBotGetterMock) GetGatewayBot(_ context.Context) (gateway *GatewayBot, err error) {
 	return g.get()
 }
 
@@ -32,7 +33,7 @@ func TestConfigureShardConfig(t *testing.T) {
 	}
 
 	conf := ShardConfig{}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if conf.URL != u {
@@ -48,7 +49,7 @@ func TestConfigureShardConfig(t *testing.T) {
 	conf = ShardConfig{
 		ShardIDs: []uint{34, 7, 2},
 	}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if !conf.DisableAutoScaling {
@@ -59,7 +60,7 @@ func TestConfigureShardConfig(t *testing.T) {
 		ShardIDs:   []uint{34, 7, 2},
 		ShardCount: 34,
 	}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if !conf.DisableAutoScaling {
@@ -115,7 +116,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 		close(config.EventChan)
 	}()
 
-	if err := ConfigureShardConfig(mock, &config.ShardConfig); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &config.ShardConfig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -193,7 +194,7 @@ func TestIdentifyRateLimiting(t *testing.T) {
 		close(config.ShutdownChan)
 	}()
 
-	if err := ConfigureShardConfig(mock, &config.ShardConfig); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &config.ShardConfig); err != nil {
 		t.Fatal(err)
 	}
 

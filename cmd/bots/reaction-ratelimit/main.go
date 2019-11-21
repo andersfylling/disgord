@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -49,19 +50,19 @@ func main() {
 	msgID := disgord.Snowflake(540519319814275089)
 	chanID := disgord.Snowflake(540519296640614416)
 
-	e, err := c.GetGuildEmojis(486833041486905345)
+	e, err := c.GetGuildEmojis(context.Background(), 486833041486905345)
 	if err != nil {
 		panic(err)
 	}
 
-	_ = c.DeleteAllReactions(chanID, msgID)
+	_ = c.DeleteAllReactions(context.Background(), chanID, msgID)
 	wg := sync.WaitGroup{}
 	for i := range e {
 		wg.Add(1)
 		go func(index int) {
 			start := time.Now()
 			var msg string
-			err = c.CreateReaction(chanID, msgID, e[index])
+			err = c.CreateReaction(context.Background(), chanID, msgID, e[index])
 			if err != nil {
 				msg = fmt.Sprint(index, ": ", err, " ### ")
 			}

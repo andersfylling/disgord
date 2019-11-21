@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"context"
+
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -324,11 +326,12 @@ func auditLogFactory() interface{} {
 //  Reviewed                 2018-06-05
 //  Comment                  -
 //  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got
-func (c *Client) GetGuildAuditLogs(guildID Snowflake, flags ...Flag) (builder *guildAuditLogsBuilder) {
+func (c *Client) GetGuildAuditLogs(ctx context.Context, guildID Snowflake, flags ...Flag) (builder *guildAuditLogsBuilder) {
 	builder = &guildAuditLogsBuilder{}
 	builder.r.itemFactory = auditLogFactory
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
+		Ctx:      ctx,
 		Method:   httd.MethodGet,
 		Endpoint: endpoint.GuildAuditLogs(guildID),
 	}, nil)
