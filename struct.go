@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"sync"
@@ -118,7 +120,9 @@ type Time struct {
 	time.Time
 }
 
-// MarshalJSON see json.Marshaler
+var _ json.Marshaler = (*Time)(nil)
+
+// MarshalJSON implements json.Marshaler.
 // error: https://stackoverflow.com/questions/28464711/go-strange-json-hyphen-unmarshall-error
 func (t Time) MarshalJSON() ([]byte, error) {
 	var ts string
@@ -130,9 +134,17 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ts + `"`), nil
 }
 
-// UnmarshalJSON see json.Unmarshaler
+var _ json.Unmarshaler = (*Time)(nil)
+
+// UnmarshalJSON implements json.Unmarshaler.
 func (t *Time) UnmarshalJSON(data []byte) error {
 	var ts time.Time
+
+	// Don't try to unmarshal empty strings.
+	if bytes.Equal([]byte("\"\""), data) {
+		return nil
+	}
+
 	if err := unmarshal(data, &ts); err != nil {
 		return err
 	}
@@ -141,7 +153,8 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// String converts the timestamp into a discord formatted timestamp. time.RFC3331 does not suffice
+// String returns the timestamp as a Discord formatted timestamp. Formatting
+// with time.RFC3331 does not suffice.
 func (t Time) String() string {
 	return t.Format(timestampFormat)
 }
