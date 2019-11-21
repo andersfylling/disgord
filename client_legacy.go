@@ -110,12 +110,12 @@ func (c *Client) ModifyCurrentUserNick(ctx context.Context, guildID Snowflake, n
 
 // Deprecated: use KickMember
 func (c *Client) RemoveGuildMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error {
-	return c.KickMember(guildID, userID, reason, flags...)
+	return c.KickMember(ctx, guildID, userID, reason, flags...)
 }
 
 // Deprecated: use UnbanMember
 func (c *Client) RemoveGuildBan(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error {
-	return c.UnbanMember(guildID, userID, reason, flags...)
+	return c.UnbanMember(ctx, guildID, userID, reason, flags...)
 }
 
 // Deprecated: use UpdateGuildRolePositions
@@ -130,7 +130,7 @@ func (c *Client) RemoveGuildRole(ctx context.Context, guildID, roleID Snowflake,
 
 // Deprecated: use PruneMembers
 func (c *Client) BeginGuildPrune(ctx context.Context, guildID Snowflake, nrOfDays int, reason string, flags ...Flag) error {
-	return c.PruneMembers(guildID, nrOfDays, reason, flags...)
+	return c.PruneMembers(ctx, guildID, nrOfDays, reason, flags...)
 }
 
 // Deprecated: use EstimatePruneMembersCount
