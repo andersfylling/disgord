@@ -151,6 +151,17 @@ func (m *Message) String() string {
 	return "message{" + m.ID.String() + "}"
 }
 
+// DiscordURL returns the Discord link to the message. This can be used to jump
+// directly to a message from within the client.
+//
+// Example: https://discordapp.com/channels/319567980491046913/644376487331495967/646925626523254795
+func (m *Message) DiscordURL() string {
+	return fmt.Sprintf(
+		"https://discordapp.com/channels/%d/%d/%d",
+		m.GuildID, m.ChannelID, m.ID,
+	)
+}
+
 func (m *Message) updateInternals() {
 	if len(m.Content) >= len("||||") {
 		prefix := m.Content[0:2]
