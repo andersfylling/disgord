@@ -107,13 +107,13 @@ func (c *Client) ModifyCurrentUserNick(guildID Snowflake, nick string, flags ...
 // TODO: RemoveGuildMemberRole => UpdateGuildMember
 
 // Deprecated: use KickMember
-func (c *Client) RemoveGuildMember(guildID, userID Snowflake, flags ...Flag) error {
-	return c.KickMember(guildID, userID, flags...)
+func (c *Client) RemoveGuildMember(guildID, userID Snowflake, reason string, flags ...Flag) error {
+	return c.KickMember(guildID, userID, reason, flags...)
 }
 
 // Deprecated: use UnbanMember
-func (c *Client) RemoveGuildBan(guildID, userID Snowflake, flags ...Flag) error {
-	return c.UnbanMember(guildID, userID, flags...)
+func (c *Client) RemoveGuildBan(guildID, userID Snowflake, reason string, flags ...Flag) error {
+	return c.UnbanMember(guildID, userID, reason, flags...)
 }
 
 // Deprecated: use UpdateGuildRolePositions
@@ -127,8 +127,8 @@ func (c *Client) RemoveGuildRole(guildID, roleID Snowflake, flags ...Flag) error
 }
 
 // Deprecated: use PruneMembers
-func (c *Client) BeginGuildPrune(guildID Snowflake, nrOfDays int, flags ...Flag) error {
-	return c.PruneMembers(guildID, nrOfDays, flags...)
+func (c *Client) BeginGuildPrune(guildID Snowflake, nrOfDays int, reason string, flags ...Flag) error {
+	return c.PruneMembers(guildID, nrOfDays, reason, flags...)
 }
 
 // Deprecated: use EstimatePruneMembersCount

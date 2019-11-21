@@ -68,7 +68,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 			evt.CopyOverTo(p)
 			return
 		}
-		p.SequenceNumber = uint(tmp)
+		p.SequenceNumber = tmp
 	}
 
 	// op
