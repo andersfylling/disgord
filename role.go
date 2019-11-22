@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -63,6 +64,7 @@ type Role struct {
 	guildID Snowflake
 }
 
+var _ Mentioner = (*Role)(nil)
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
 var _ Copier = (*Role)(nil)
@@ -74,8 +76,11 @@ func (r *Role) String() string {
 }
 
 // Mention gives a formatted version of the role such that it can be parsed by Discord clients
-func (r *Role) Mention() string {
-	return "<@&" + r.ID.String() + ">"
+func (r *Role) Mention() (string, error) {
+	if r.ID.IsZero() {
+		return "", errors.New("user ID can not be zero in a mention")
+	}
+	return "<@&" + r.ID.String() + ">", nil
 }
 
 // SetGuildID link role to a guild before running session.SaveToDiscord(*Role)

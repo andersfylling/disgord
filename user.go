@@ -24,12 +24,6 @@ const (
 	StatusOffline = "offline"
 )
 
-//type UserInterface interface {
-//	Mention() string
-//	MentionNickname() string
-//	String() string
-//}
-
 // ActivityParty ...
 type ActivityParty struct {
 	Lockable `json:"-"`
@@ -448,10 +442,14 @@ type User struct {
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
 var _ Copier = (*User)(nil)
+var _ Mentioner = (*User)(nil)
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
-func (u *User) Mention() string {
-	return "<@" + u.ID.String() + ">"
+func (u *User) Mention() (string, error) {
+	if u.ID.IsZero() {
+		return "", errors.New("user ID can not be zero in a mention")
+	}
+	return "<@" + u.ID.String() + ">", nil
 }
 
 // AvatarURL returns a link to the users avatar with the given size.

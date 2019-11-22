@@ -1046,6 +1046,7 @@ type Member struct {
 var _ Reseter = (*Member)(nil)
 var _ fmt.Stringer = (*Member)(nil)
 var _ internalUpdater = (*Member)(nil)
+var _ Mentioner = (*Member)(nil)
 
 func (m *Member) updateInternals() {
 	if m.User != nil {
@@ -1096,17 +1097,19 @@ func (m *Member) GetUser(ctx context.Context, session Session) (usr *User, err e
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
-func (m *Member) Mention() string {
+func (m *Member) Mention() (string, error) {
 	var id Snowflake
 	if !m.userID.IsZero() {
 		id = m.userID
 	} else if m.User != nil {
 		id = m.User.ID
-	} else {
-		fmt.Println("ERRPR: unable to fetch user id. please create a issue at github.com/andersfylling/disgord")
-		return "*" + m.Nick + "*"
 	}
-	return "<@!" + id.String() + ">"
+
+	if id.IsZero() {
+		return "", errors.New("user/member ID can not be zero in a mention")
+	}
+
+	return "<@!" + id.String() + ">", nil
 }
 
 // DeepCopy see interface at struct.go#DeepCopier

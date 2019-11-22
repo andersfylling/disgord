@@ -136,6 +136,7 @@ var _ fmt.Stringer = (*Channel)(nil)
 var _ Copier = (*Channel)(nil)
 var _ DeepCopier = (*Channel)(nil)
 var _ discordDeleter = (*Channel)(nil)
+var _ Mentioner = (*Channel)(nil)
 
 func (c *Channel) String() string {
 	return "channel{name:'" + c.Name + "', id:" + c.ID.String() + "}"
@@ -158,8 +159,11 @@ func (c *Channel) valid() bool {
 }
 
 // Mention creates a channel mention string. Mention format is according the Discord protocol.
-func (c *Channel) Mention() string {
-	return "<#" + c.ID.String() + ">"
+func (c *Channel) Mention() (string, error) {
+	if c.ID.IsZero() {
+		return "", errors.New("channel ID can not be zero in a mention")
+	}
+	return "<#" + c.ID.String() + ">", nil
 }
 
 // Compare checks if channel A is the same as channel B

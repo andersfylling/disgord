@@ -740,10 +740,19 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 				return nil, err
 			}
 		default:
-			if str, ok := t.(fmt.Stringer); ok {
-				s = str.String()
-			} else {
-				s = fmt.Sprint(t)
+			var mentioned bool
+			if mentionable, ok := t.(Mentioner); ok {
+				if s, err = mentionable.Mention(); err == nil {
+					mentioned = true
+				}
+			}
+
+			if !mentioned {
+				if str, ok := t.(fmt.Stringer); ok {
+					s = str.String()
+				} else {
+					s = fmt.Sprint(t)
+				}
 			}
 		}
 

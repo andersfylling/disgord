@@ -40,6 +40,7 @@ var _ Reseter = (*Emoji)(nil)
 var _ DeepCopier = (*Emoji)(nil)
 var _ Copier = (*Emoji)(nil)
 var _ discordDeleter = (*Emoji)(nil)
+var _ Mentioner = (*Emoji)(nil)
 
 // var _ discordSaver = (*Emoji)(nil) // TODO
 var _ fmt.Stringer = (*Emoji)(nil)
@@ -57,13 +58,16 @@ type PartialEmoji = Emoji
 //}
 
 // Mention mentions an emoji. Adds the animation prefix, if animated
-func (e *Emoji) Mention() string {
+func (e *Emoji) Mention() (string, error) {
+	if e.ID.IsZero() {
+		return "", errors.New("emoji ID can not be zero in a mention")
+	}
 	prefix := ""
 	if e.Animated {
 		prefix = "a:"
 	}
 
-	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">", nil
 }
 
 func (e *Emoji) LinkToGuild(guildID Snowflake) {
