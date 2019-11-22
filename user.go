@@ -461,7 +461,7 @@ func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
 	}
 
 	if u.Avatar == "" {
-		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png?size=%d", u.Discriminator%5, size)
 	} else if strings.HasPrefix(u.Avatar, "a_") && preferGIF {
 		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
 	} else {
