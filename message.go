@@ -156,11 +156,21 @@ func (m *Message) String() string {
 // directly to a message from within the client.
 //
 // Example: https://discordapp.com/channels/319567980491046913/644376487331495967/646925626523254795
-func (m *Message) DiscordURL() string {
+func (m *Message) DiscordURL() (string, error) {
+	if m.ID.IsZero() {
+		return "", errors.New("missing message ID")
+	}
+	if m.GuildID.IsZero() {
+		return "", errors.New("missing guild ID")
+	}
+	if m.ChannelID.IsZero() {
+		return "", errors.New("missing channel ID")
+	}
+
 	return fmt.Sprintf(
 		"https://discordapp.com/channels/%d/%d/%d",
 		m.GuildID, m.ChannelID, m.ID,
-	)
+	), nil
 }
 
 func (m *Message) updateInternals() {

@@ -666,20 +666,40 @@ func (c *Client) KickVoiceParticipant(ctx context.Context, guildID, userID Snowf
 	return c.UpdateGuildMember(ctx, guildID, userID).KickFromVoice().Execute()
 }
 
-// SendMsg Input anything and it will be converted to a message and sent. If you
-// supply it with multiple data's, it will simply merge them. Even if they are multiple Message objects.
-// However, if you supply multiple CreateMessageParams objects, you will face issues. But at this point
-// you really need to reconsider your own code.
-//
-// Note that sending a &Message will simply refer to it, and not copy over the contents into
-// the reply. example output: message{6434732342356}
+// SendMsg should convert all inputs into a single message. If you supply a object with an ID
+// such as a channel, message, role, etc. It will become a reference.  If say the Message provided
+// does not have an ID, the Message will populate a CreateMessage with it's fields.
 //
 // If you want to affect the actual message data besides .Content; provide a
 // MessageCreateParams. The reply message will be updated by the last one provided.
 func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (msg *Message, err error) {
-
 	var flags []Flag
 	params := &CreateMessageParams{}
+	addEmbed := func(e *Embed) error {
+		if params.Embed != nil {
+			return errors.New("can only send one embed")
+		}
+		params.Embed = e
+		return nil
+	}
+	msgToParams := func(m *Message) (s string, err error) {
+		if s, err = m.DiscordURL(); err != nil {
+			// try to reference the message, otherwise use it to
+			// populate the params
+			if len(m.Embeds) > 1 {
+				return "", errors.New("can only create a message with a single embed")
+			} else if len(m.Embeds) > 0 {
+				params.Embed = m.Embeds[0]
+			}
+
+			params.Content = m.Content
+			params.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
+			params.SpoilerTagContent = m.SpoilerTagContent
+			params.Tts = m.Tts
+			return "", nil
+		}
+		return s, nil
+	}
 	for i := range data {
 		if data[i] == nil {
 			continue
@@ -691,12 +711,34 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 			*params = *t
 		case CreateMessageParams:
 			*params = t
+		case CreateMessageFileParams:
+			params.Files = append(params.Files, t)
+		case *CreateMessageFileParams:
+			params.Files = append(params.Files, *t)
+		case Embed:
+			if err = addEmbed(&t); err != nil {
+				return nil, err
+			}
+		case *Embed:
+			if err = addEmbed(t); err != nil {
+				return nil, err
+			}
+		case *os.File:
+			return nil, errors.New("can not handle *os.File, use a CreateMessageFileParams instead")
 		case string:
 			s = t
 		case *Flag:
 			flags = append(flags, *t)
 		case Flag:
 			flags = append(flags, t)
+		case Message:
+			if s, err = msgToParams(&t); err != nil {
+				return nil, err
+			}
+		case *Message:
+			if s, err = msgToParams(t); err != nil {
+				return nil, err
+			}
 		default:
 			if str, ok := t.(fmt.Stringer); ok {
 				s = str.String()
