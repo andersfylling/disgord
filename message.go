@@ -196,11 +196,11 @@ func (m *Message) updateInternals() {
 	}
 }
 
-// DirectMessage checks if the message is from a direct message channel.
+// IsDirectMessage checks if the message is from a direct message channel.
 //
 // WARNING! Note that, when fetching messages using the REST API the
 // guildID might be empty -> giving a false positive.
-func (m *Message) DirectMessage() bool {
+func (m *Message) IsDirectMessage() bool {
 	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
 }
 
