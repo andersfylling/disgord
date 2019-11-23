@@ -58,16 +58,13 @@ type PartialEmoji = Emoji
 //}
 
 // Mention mentions an emoji. Adds the animation prefix, if animated
-func (e *Emoji) Mention() (string, error) {
-	if e.ID.IsZero() {
-		return "", errors.New("emoji ID can not be zero in a mention")
-	}
+func (e *Emoji) Mention() string {
 	prefix := ""
 	if e.Animated {
 		prefix = "a:"
 	}
 
-	return "<" + prefix + e.Name + ":" + e.ID.String() + ">", nil
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 func (e *Emoji) LinkToGuild(guildID Snowflake) {

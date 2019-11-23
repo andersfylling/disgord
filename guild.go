@@ -1097,7 +1097,7 @@ func (m *Member) GetUser(ctx context.Context, session Session) (usr *User, err e
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
-func (m *Member) Mention() (string, error) {
+func (m *Member) Mention() string {
 	var id Snowflake
 	if !m.userID.IsZero() {
 		id = m.userID
@@ -1105,11 +1105,7 @@ func (m *Member) Mention() (string, error) {
 		id = m.User.ID
 	}
 
-	if id.IsZero() {
-		return "", errors.New("user/member ID can not be zero in a mention")
-	}
-
-	return "<@!" + id.String() + ">", nil
+	return "<@!" + id.String() + ">"
 }
 
 // DeepCopy see interface at struct.go#DeepCopier

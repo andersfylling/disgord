@@ -90,7 +90,7 @@ type guilder interface {
 // Mentioner can be implemented by any type that is mentionable.
 // https://discordapp.com/developers/docs/reference#message-formatting-formats
 type Mentioner interface {
-	Mention() (string, error)
+	Mention() string
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.

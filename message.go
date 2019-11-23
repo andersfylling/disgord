@@ -204,21 +204,6 @@ func (m *Message) IsDirectMessage() bool {
 	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
 }
 
-// TODO: why is this method needed?
-//func (m *Message) MarshalJSON() ([]byte, error) {
-//	if m.ID.IsZero() {
-//		return []byte("{}"), nil
-//	}
-//
-//	//TODO: remove copying of mutex
-//	return json.Marshal(Message(*m))
-//}
-
-// TODO: await for caching
-//func (m *Message) DirectMessage(session Session) bool {
-//	return m.Type == ChannelTypeDM
-//}
-
 type messageDeleter interface {
 	DeleteMessage(channelID, msgID Snowflake) (err error)
 }

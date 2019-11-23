@@ -742,7 +742,7 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 		default:
 			var mentioned bool
 			if mentionable, ok := t.(Mentioner); ok {
-				if s, err = mentionable.Mention(); err == nil {
+				if s = mentionable.Mention(); len(s) > 5 {
 					mentioned = true
 				}
 			}

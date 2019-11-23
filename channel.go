@@ -159,11 +159,8 @@ func (c *Channel) valid() bool {
 }
 
 // Mention creates a channel mention string. Mention format is according the Discord protocol.
-func (c *Channel) Mention() (string, error) {
-	if c.ID.IsZero() {
-		return "", errors.New("channel ID can not be zero in a mention")
-	}
-	return "<#" + c.ID.String() + ">", nil
+func (c *Channel) Mention() string {
+	return "<#" + c.ID.String() + ">"
 }
 
 // Compare checks if channel A is the same as channel B

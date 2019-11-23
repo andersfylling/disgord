@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -76,11 +75,8 @@ func (r *Role) String() string {
 }
 
 // Mention gives a formatted version of the role such that it can be parsed by Discord clients
-func (r *Role) Mention() (string, error) {
-	if r.ID.IsZero() {
-		return "", errors.New("user ID can not be zero in a mention")
-	}
-	return "<@&" + r.ID.String() + ">", nil
+func (r *Role) Mention() string {
+	return "<@&" + r.ID.String() + ">"
 }
 
 // SetGuildID link role to a guild before running session.SaveToDiscord(*Role)
