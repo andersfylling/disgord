@@ -818,15 +818,22 @@ func (c *Cache) AddGuildMember(guildID Snowflake, member *Member) {
 		return
 	}
 
-	c.guilds.Lock()
-	if member.User != nil {
-		member.userID = member.User.ID
-		member.User = nil
+	cpy := member.DeepCopy().(*Member)
+	if cpy.User != nil {
+		cpy.User = nil
 	}
-	guild.Members = append(guild.Members, member)
+
+	c.guilds.Lock()
+	defer c.guilds.Unlock()
+
+	for i := range guild.Members {
+		if guild.Members[i].userID == cpy.userID {
+			return
+		}
+	}
+
+	guild.Members = append(guild.Members, cpy)
 	guild.MemberCount++
-	// TODO: look for duplicates
-	c.guilds.Unlock()
 }
 
 func (c *Cache) RemoveGuildMember(guildID Snowflake, memberID Snowflake) {
