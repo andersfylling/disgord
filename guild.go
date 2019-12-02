@@ -273,7 +273,7 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
 	guild.Splash = g.Splash
-	g.Icon = g.Icon
+	guild.Icon = g.Icon
 
 	// pointers
 	if !g.ApplicationID.IsZero() {
@@ -753,7 +753,7 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.Unavailable = g.Unavailable
 	guild.MemberCount = g.MemberCount
 	guild.Splash = g.Splash
-	g.Icon = g.Icon
+	guild.Icon = g.Icon
 
 	// pointers
 	if !g.ApplicationID.IsZero() {
