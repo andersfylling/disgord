@@ -360,7 +360,7 @@ type MessageReactionRemove struct {
 // MessageReactionRemoveAll all reactions were explicitly removed from a message
 type MessageReactionRemoveAll struct {
 	ChannelID Snowflake       `json:"channel_id"`
-	MessageID Snowflake       `json:"id"`
+	MessageID Snowflake       `json:"message_id"`
 	Ctx       context.Context `json:"-"`
 	ShardID   uint            `json:"-"`
 }
