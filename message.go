@@ -87,7 +87,7 @@ type MentionChannel struct {
 	ID      Snowflake `json:"id"`
 	GuildID Snowflake `json:"guild_id"`
 	Type    int       `json:"type"`
-	NAme    string    `json:"name"`
+	Name    string    `json:"name"`
 }
 
 type MessageReference struct {

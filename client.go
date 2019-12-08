@@ -145,6 +145,11 @@ type Config struct {
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
+	// AlwaysParseChannelMentions will ensure that every message populates the
+	// Message.ChannelsMentions, regardless of the Discord conditions.
+	// AlwaysParseChannelMentions bool
+	// TODO
+
 	CancelRequestWhenRateLimited bool
 
 	// LoadMembersQuietly will start fetching members for all guilds in the background.
