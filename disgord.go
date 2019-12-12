@@ -191,6 +191,9 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 )
 
+const Name = constant.Name
+const Version = constant.Version
+
 // LibraryInfo returns name + version
 func LibraryInfo() string {
 	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
