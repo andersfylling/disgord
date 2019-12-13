@@ -22,7 +22,7 @@
 </div>
 
 ## About
-Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
+Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
 
 ## Warning
 The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
@@ -48,6 +48,7 @@ Here is a basic bot program that prints out every message. Save it as `main.go`,
 package main
 
 import (
+	  "context"
     "fmt"
     "github.com/andersfylling/disgord"
     "os"
@@ -66,7 +67,7 @@ func main() {
         Logger: disgord.DefaultLogger(false), // debug=false
     })
     // connect, and stay connected until a system interrupt takes place
-    defer client.StayConnectedUntilInterrupted()
+    defer client.StayConnectedUntilInterrupted(context.Background())
     
     // create a handler and bind it to new message events
     // handlers/listener are run in sequence if you register more than one
@@ -109,12 +110,12 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.GetCurrentUser(disgord.IgnoreCache)
-client.GetGuildMembers(guildID, disgord.IgnoreCache)
+client.GetCurrentUser(context.Background(), disgord.IgnoreCache)
+client.GetGuildMembers(context.Background(), guildID, disgord.IgnoreCache)
 
 // always checks the local cache first
-client.GetCurrentUser()
-client.GetGuildMembers(guildID)
+client.GetCurrentUser(context.Background())
+client.GetGuildMembers(context.Background(), guildID)
 ```
 
 #### Voice
