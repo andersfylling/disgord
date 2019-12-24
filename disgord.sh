@@ -59,8 +59,9 @@ echo "Creating project"
 mkdir -p ${PROJECT_PATH}
 cd ${PROJECT_PATH}
 
-curl -o Dockerfile https://github.com/andersfylling/disgord/cmd/script/Dockerfile
-curl -o main.go https://github.com/andersfylling/disgord/cmd/script/main.go
+GITHUB_FILES_URL=https://github.com/andersfylling/disgord/tree/develop/cmd/script
+curl -o Dockerfile ${GITHUB_FILES_URL}/Dockerfile
+curl -o main.go ${GITHUB_FILES_URL}/main.go
 sed -i -e "s/REPLACE_ME/${BOT_PREFIX}/g" main.go
 
 echo "# ${PROJECT_NAME}
