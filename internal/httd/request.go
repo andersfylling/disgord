@@ -27,10 +27,14 @@ const (
 )
 
 var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
+var regexpURLReactionEmoji = regexp.MustCompile(`\/channels\/[0-9]+\/messages\/\{id\}\/reactions\/` + RegexpEmoji + `\/?`)
+var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpEmoji)
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
-	Ctx         context.Context
+	// Deprecated
+	Ctx context.Context
+
 	Method      httpMethod
 	Endpoint    string
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
@@ -95,6 +99,14 @@ func (r *Request) HashEndpoint() string {
 		}
 
 		buffer = strings.ReplaceAll(buffer, matches[i], "/{id}/")
+	}
+
+	// check for reaction endpoints, convert emoji identifier to {emoji}
+	if regexpURLReactionEmoji.FindAllString(buffer, -1) != nil {
+		reactionEmojis := regexpURLReactionEmojiSegment.FindAllString(buffer, -1)
+		for i := range reactionEmojis {
+			buffer = strings.ReplaceAll(buffer, reactionEmojis[i], "/reactions/{emoji}")
+		}
 	}
 
 	if strings.HasSuffix(buffer, "/") {

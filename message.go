@@ -204,10 +204,6 @@ func (m *Message) IsDirectMessage() bool {
 	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
 }
 
-type messageDeleter interface {
-	DeleteMessage(channelID, msgID Snowflake) (err error)
-}
-
 // DeepCopy see interface at struct.go#DeepCopier
 func (m *Message) DeepCopy() (copy interface{}) {
 	copy = NewMessage()
@@ -290,15 +286,15 @@ func (m *Message) deleteFromDiscord(ctx context.Context, s Session, flags ...Fla
 
 // MessageUpdater is a interface which only holds the message update method
 type MessageUpdater interface {
-	UpdateMessage(chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
+	UpdateMessage(ctx context.Context, chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
 }
 
 // Update after changing the message object, call update to notify Discord about any changes made
-func (m *Message) update(client MessageUpdater, flags ...Flag) (msg *Message, err error) {
+func (m *Message) update(ctx context.Context, client MessageUpdater, flags ...Flag) (msg *Message, err error) {
 	if constant.LockedMethods {
 		m.RLock()
 	}
-	builder := client.UpdateMessage(m.ChannelID, m.ID, flags...).SetContent(m.Content)
+	builder := client.UpdateMessage(ctx, m.ChannelID, m.ID, flags...).SetContent(m.Content)
 	if len(m.Embeds) > 0 {
 		builder.SetEmbed(m.Embeds[0])
 	}
@@ -311,11 +307,11 @@ func (m *Message) update(client MessageUpdater, flags ...Flag) (msg *Message, er
 
 // MessageSender is an interface which only holds the method needed for creating a channel message
 type MessageSender interface {
-	CreateMessage(channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
+	CreateMessage(ctx context.Context, channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
 }
 
 // Send sends this message to discord.
-func (m *Message) Send(client MessageSender, flags ...Flag) (msg *Message, err error) {
+func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag) (msg *Message, err error) {
 	if constant.LockedMethods {
 		m.RLock()
 	}
@@ -342,7 +338,7 @@ func (m *Message) Send(client MessageSender, flags ...Flag) (msg *Message, err e
 		m.RUnlock()
 	}
 
-	msg, err = client.CreateMessage(channelID, params, flags...)
+	msg, err = client.CreateMessage(ctx, channelID, params, flags...)
 	return
 }
 

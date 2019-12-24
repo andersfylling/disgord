@@ -1067,11 +1067,11 @@ func (m *Member) String() string {
 }
 
 type nickUpdater interface {
-	UpdateGuildMember(guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder
+	UpdateGuildMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder
 }
 
-func (m *Member) UpdateNick(client nickUpdater, nickname string, flags ...Flag) error {
-	return client.UpdateGuildMember(m.GuildID, m.userID, flags...).SetNick(nickname).Execute()
+func (m *Member) UpdateNick(ctx context.Context, client nickUpdater, nickname string, flags ...Flag) error {
+	return client.UpdateGuildMember(ctx, m.GuildID, m.userID, flags...).SetNick(nickname).Execute()
 }
 
 func (m *Member) GetPermissions(ctx context.Context, s Session) (p uint64, err error) {

@@ -266,7 +266,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 //}
 
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
-func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Message, err error) {
+func (c *Channel) SendMsgString(ctx context.Context, client MessageSender, content string) (msg *Message, err error) {
 	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
@@ -275,12 +275,12 @@ func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Mess
 		Content: content,
 	}
 
-	msg, err = client.CreateMessage(c.ID, params)
+	msg, err = client.CreateMessage(ctx, c.ID, params)
 	return
 }
 
 // SendMsg sends a message to a channel
-func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message, err error) {
+func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Message) (msg *Message, err error) {
 	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
@@ -303,7 +303,7 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 	}
 	message.RUnlock()
 
-	msg, err = client.CreateMessage(c.ID, params)
+	msg, err = client.CreateMessage(ctx, c.ID, params)
 	return
 }
 

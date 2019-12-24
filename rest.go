@@ -154,7 +154,7 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 		return
 	}
 
-	resp, body, err = r.c.req.Do(r.conf)
+	resp, body, err = r.c.req.Do(r.conf.Ctx, r.conf)
 	return
 }
 
@@ -335,7 +335,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	var resp *http.Response
 	var body []byte
-	resp, body, err = b.client.Do(b.config)
+	resp, body, err = b.client.Do(b.config.Ctx, b.config)
 	if err != nil {
 		return nil, err
 	}
@@ -430,10 +430,9 @@ type basicBuilder struct {
 //  Comment                 This endpoint does not require authentication.
 func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway",
-		Ctx:      ctx,
 	})
 	if err != nil {
 		return
@@ -454,10 +453,9 @@ func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err 
 //  Comment                 This endpoint requires authentication using a valid bot token.
 func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway/bot",
-		Ctx:      ctx,
 	})
 	if err != nil {
 		return
