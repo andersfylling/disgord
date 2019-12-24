@@ -7,9 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/disgorderr"
@@ -453,11 +451,7 @@ func (c *Client) Suspend() (err error) {
 
 // DisconnectOnInterrupt wait until a termination signal is detected
 func (c *Client) DisconnectOnInterrupt() (err error) {
-	// create a channel to listen for termination signals (graceful shutdown)
-	termSignal := make(chan os.Signal, 1)
-	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	<-termSignal
-
+	<-CreateTermSigListener()
 	return c.Disconnect()
 }
 
@@ -469,12 +463,12 @@ func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) 
 		return err
 	}
 
-	if err = c.DisconnectOnInterrupt(); err != nil {
-		c.log.Error(err)
-		return err
+	select {
+	case <-CreateTermSigListener():
+	case <-ctx.Done():
 	}
 
-	return nil
+	return c.Disconnect()
 }
 
 //////////////////////////////////////////////////////
