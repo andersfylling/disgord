@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VER="v1.0.2"
+VER="v2.0.0"
 
 echo "
 # # # # # # # # # # # # # # # # #
@@ -59,71 +59,22 @@ echo "Creating project"
 mkdir -p ${PROJECT_PATH}
 cd ${PROJECT_PATH}
 
-echo 'package main
-
-import (
-	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/std"
-	"os"
-)
-
-// replyPongToPing is a handler that replies pong to ping messages
-func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
-    msg := data.Message
-
-    // whenever the message written is "ping", the bot replies "pong"
-    if msg.Content == "ping" {
-        msg.Reply(s, "pong")
-    }
-}
-
-func main() {
-    client := disgord.New(disgord.Config{
-        BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger: disgord.DefaultLogger(false), // debug=false
-    })
-    defer client.StayConnectedUntilInterrupted()
-
-	log, _ := std.NewLogFilter(client)
-    filter, _ := std.NewMsgFilter(client)
-	filter.SetPrefix("'${BOT_PREFIX}'")
-
-    // create a handler and bind it to new message events
-    // tip: read the documentation for std.CopyMsgEvt and understand why it is used here.
-    client.On(disgord.EvtMessageCreate,
-    	// middleware
-    	filter.NotByBot,    // ignore bot messages
-    	filter.HasPrefix,   // read original
-    	log.LogMsg,         // log command message
-    	std.CopyMsgEvt,     // read & copy original
-    	filter.StripPrefix, // write copy
-    	// handler
-    	replyPongToPing) // handles copy
-}
-' >> main.go
-
-echo "FROM andersfylling/disgord:latest as builder
-MAINTAINER https://github.com/andersfylling
-WORKDIR /build
-COPY . /build
-RUN go test ./...
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags \"-static\"' -o discordbot .
-
-FROM gcr.io/distroless/base
-WORKDIR /bot
-COPY --from=builder /build/discordbot .
-CMD [\"/bot/discordbot\"]
-" >> Dockerfile
+curl -o Dockerfile https://github.com/andersfylling/disgord/cmd/script/Dockerfile
+curl -o main.go https://github.com/andersfylling/disgord/cmd/script/main.go
+sed -i -e "s/REPLACE_ME/${BOT_PREFIX}/g" main.go
 
 echo "# ${PROJECT_NAME}
-Congratulations! You have successfully created a basic DisGord bot.
+
+## Congratulations!
+You have successfully created a basic DisGord bot.
 
 In order for your bot to start you must supply a environment variable with the name DISGORD_TOKEN that holds
 the bot token you created in a Discord application or got from a friend.
+See tutorial here to find/create the token: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-add-it-to-a-server
 
 eg. \"export DISGORD_TOKEN=si7fisdgfsfushgsjdf.sdfksgjyefs.dfgysyefs\"
 
-A dockerfile has also been created for you if this is a preference. Note that you must supply the environment variable during run.
+A dockerfile has also been created to build a proper production image. Note that you must supply the environment variable DISGORD_TOKEN when running the container.
 
 " >> README.md
 
@@ -152,7 +103,7 @@ spec:
 " >> deployment.yaml
     echo "> remember to change *DOCKERHUBUSERNAME* in deployment.yaml with your actual username on hub.docker.com or other hosting site."
     echo "> note that deployment.yaml is just a suggestion. You will still need to manually edit it ot make it work."
-    # TODO: ask for docker repository url
+    # TODO: ask for script repository url
 fi
 
 if [[ -z ${GO111MODULE} ]] || [[ ${GO111MODULE} == "off" ]]; then
