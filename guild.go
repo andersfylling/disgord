@@ -102,13 +102,12 @@ const (
 // NewGuild ...
 func NewGuild() *Guild {
 	return &Guild{
-		Roles:       []*Role{},
-		Emojis:      []*Emoji{},
-		Features:    []string{},
-		VoiceStates: []*VoiceState{},
-		Members:     []*Member{},
-		Channels:    []*Channel{},
-		Presences:   []*UserPresence{},
+		Roles:     []*Role{},
+		Emojis:    []*Emoji{},
+		Features:  []string{},
+		Members:   []*Member{},
+		Channels:  []*Channel{},
+		Presences: []*UserPresence{},
 	}
 }
 
@@ -208,7 +207,6 @@ type Guild struct {
 	Large       bool            `json:"large,omitempty"`        // ?*|
 	Unavailable bool            `json:"unavailable"`            // ?*| omitempty?
 	MemberCount uint            `json:"member_count,omitempty"` // ?*|
-	VoiceStates []*VoiceState   `json:"voice_states,omitempty"` // ?*|
 	Members     []*Member       `json:"members,omitempty"`      // ?*|
 	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
 	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
@@ -640,6 +638,18 @@ func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 	return
 }
 
+func (g *Guild) GetVoiceStates(c *Client) []*VoiceState {
+	if item, exists := c.cache.voiceStates.Get(g.ID); exists {
+		sessions := item.Val.(*guildVoiceStatesCache).sessions
+
+		vs := make([]*VoiceState, len(sessions))
+		copy(vs, sessions)
+		return vs
+	} else {
+		return make([]*VoiceState, 0)
+	}
+}
+
 // TODO
 // func (g *Guild) UpdatePresence(p *UserPresence) {
 // 	g.RLock()
@@ -783,12 +793,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		guild.Emojis = append(guild.Emojis, emojiP.DeepCopy().(*Emoji))
 	}
 
-	for _, vsP := range g.VoiceStates {
-		if vsP == nil {
-			continue
-		}
-		guild.VoiceStates = append(guild.VoiceStates, vsP.DeepCopy().(*VoiceState))
-	}
 	for _, memberP := range g.Members {
 		if memberP == nil {
 			continue

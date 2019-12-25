@@ -488,8 +488,6 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 			guild.Members[i].User, _ = cache.GetUser(member.userID)
 			// member has a GetUser method to handle nil users
 		}
-
-		// TODO: voice state
 	} else {
 		guild = g.guild
 
@@ -531,16 +529,6 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 			}
 			g.guild.Emojis[i] = emoji.DeepCopy().(*Emoji)
 		}
-		// voice states
-		if len(fresh.VoiceStates) > 0 {
-			g.guild.VoiceStates = make([]*VoiceState, len(fresh.VoiceStates))
-		}
-		for i, state := range fresh.VoiceStates {
-			if state == nil {
-				continue
-			}
-			g.guild.VoiceStates[i] = state.DeepCopy().(*VoiceState)
-		}
 		// members
 		if len(fresh.Members) > 0 {
 			g.guild.Members = make([]*Member, len(fresh.Members))
@@ -579,9 +567,6 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 		}
 		if len(fresh.Emojis) == 0 && len(g.guild.Emojis) > 0 {
 			fresh.Emojis = g.guild.Emojis
-		}
-		if len(fresh.VoiceStates) == 0 && len(g.guild.VoiceStates) > 0 {
-			fresh.VoiceStates = g.guild.VoiceStates
 		}
 		if len(fresh.Members) == 0 && len(g.guild.Members) > 0 {
 			fresh.Members = g.guild.Members

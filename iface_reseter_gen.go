@@ -75,7 +75,6 @@ func (g *Guild) Reset() {
 	g.Large = false
 	g.Unavailable = false
 	g.MemberCount = 0
-	g.VoiceStates = nil
 	g.Members = nil
 	g.Channels = nil
 	g.Presences = nil
