@@ -1329,26 +1329,20 @@ func (g *guildVoiceStatesCache) update(state *VoiceState, copyOnWrite bool) {
 		return
 	}
 
-	// someone joined / moved channel. But there exist no information about the session
-	// so we register the information
+	// Someone's voice state has changed
+	var data *VoiceState
+	if copyOnWrite {
+		data = state.DeepCopy().(*VoiceState)
+	} else {
+		data = state
+	}
+
 	if pos < 0 {
-		var data *VoiceState
-		if copyOnWrite {
-			data = state.DeepCopy().(*VoiceState) // TODO: handle member
-		} else {
-			data = state
-		}
+		// Someone joined or cache not initialized yet
 		g.sessions = append(g.sessions, data)
-		return
+	} else {
+		g.sessions[pos] = data
 	}
-
-	// someone moved an existing channel
-	if g.sessions[pos].ChannelID != state.ChannelID {
-		g.sessions[pos].ChannelID = state.ChannelID
-		return
-	}
-
-	// TODO: this point should not be reached, unless the above checks are incomplete
 }
 
 // SetVoiceState adds a new voice state to cacheLink or updates an existing one

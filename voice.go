@@ -75,6 +75,10 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 		voiceState.Lock()
 	}
 
+	if v.Member != nil {
+		voiceState.Member = v.Member.DeepCopy().(*Member)
+	}
+
 	voiceState.GuildID = v.GuildID
 	voiceState.ChannelID = v.ChannelID
 	voiceState.UserID = v.UserID
