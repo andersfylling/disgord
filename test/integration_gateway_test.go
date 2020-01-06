@@ -110,7 +110,8 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		})
 		if err := instance.Connect(context.Background()); err != nil {
 			cancel()
-			t.Fatal(err)
+			t.Error(err)
+			return
 		}
 		<-time.After(5 * time.Second)
 	}
@@ -122,7 +123,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 	}()
 	select {
 	case <-ctx.Done():
-		t.Fatal("unable to connect within time frame")
+		t.Error("unable to connect within time frame")
 	case <-done:
 	}
 }
