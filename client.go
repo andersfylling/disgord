@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -807,4 +808,33 @@ func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
 	r.flags = mergeFlags(flags)
 
 	return r
+}
+
+/* command handling */
+
+// SetCmdSettings sets the current command settings
+// and affects them only if the current settings are a nil value
+func SetCmdSettings(settings *CmdSettings) {
+	if activeCmdSettings != nil {
+		return
+	}
+
+	activeCmdSettings = settings
+}
+
+// RegisterCmd registers a new command with the given information
+func RegisterCmd(cmd *Cmd) {
+	name := cmd.Name
+	if activeCmdSettings.IgnoreCase {
+		name = strings.ToLower(name)
+	}
+	registeredCommands[name] = cmd
+}
+
+// UnregisterCmd unregisters the command with the given name
+func UnregisterCmd(name string) {
+	if activeCmdSettings.IgnoreCase {
+		name = strings.ToLower(name)
+	}
+	registeredCommands[name] = nil
 }
