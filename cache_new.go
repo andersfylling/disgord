@@ -339,7 +339,7 @@ func (c *cache) onChannelUpdate(data []byte, flags Flag) (updated interface{}, e
 }
 
 // GetGuildMember ...
-func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err error) {
+func (c *cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err error) {
 	if c.guilds == nil {
 		err = newErrorUsingDeactivatedCache("guilds")
 		return
@@ -376,7 +376,7 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 }
 
 // GetGuildMembersAfter ...
-func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (members []*Member, err error) {
+func (c *cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (members []*Member, err error) {
 	if c.guilds == nil {
 		err = newErrorUsingDeactivatedCache("guilds")
 		return
@@ -511,7 +511,18 @@ func (c *cache) onTypingStart(data []byte, flags Flag) (updated interface{}, err
 	return ts, err
 }
 
-func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error)        {}
+func (c *cache) onUserUpdate(data []byte, flags Flag) (updated interface{}, err error) {
+	id, err := djp.GetSnowflake(data, "id")
+	if err != nil {
+		return nil, err
+	}
+
+	if updated, err = c.users(id).onUserUpdate(data, flags); err != nil {
+		return nil, err
+	}
+
+	return updated, nil
+}
 func (c *cache) onVoiceStateUpdate(data []byte, flags Flag) (updated interface{}, err error)  {}
 func (c *cache) onVoiceServerUpdate(data []byte, flags Flag) (updated interface{}, err error) {}
 
