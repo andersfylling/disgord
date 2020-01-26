@@ -3,6 +3,8 @@ package disgord
 //go:generate stringer -type=Flag
 type Flag uint32
 
+// IgnoreCache is to signify that we don't want to extract a certain
+// data point from the cache - if we interact with it.
 func (f Flag) Ignorecache() bool {
 	return (f & IgnoreCache) > 0
 }

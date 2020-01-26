@@ -2,6 +2,8 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/internal/crs"
+	"github.com/andersfylling/disgord/internal/util"
+
 	"github.com/andersfylling/djp"
 	jp "github.com/buger/jsonparser"
 )
@@ -79,16 +81,18 @@ func (c *usersCache) handleUserData(data []byte, flags Flag) (updated *User, err
 	// update-user
 	var usr *User
 	if !flags.Ignorecache() {
+		// create a copy if we want to extract the user data
 		updated = c.pool.Get().(*User)
 	}
 	c.items.Lock()
 	defer c.items.Unlock()
 	if item, exists := c.items.Get(id); exists {
 		usr = item.Val.(*User)
-		err = Unmarshal(data, usr)
-	} else {
+		err = util.Unmarshal(data, usr)
+	} else { // create new entry
+		// TODO: check creation/update time on create events - might be able to skip the need to update the user obj
 		usr = c.pool.Get().(*User)
-		if err = Unmarshal(data, usr); err == nil {
+		if err = util.Unmarshal(data, usr); err == nil {
 			c.items.Set(id, c.items.CreateCacheableItem(usr))
 		}
 	}
