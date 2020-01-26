@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/event"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 
 	"github.com/andersfylling/disgord/internal/logger"
-
-	"golang.org/x/net/proxy"
 )
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
@@ -45,7 +45,6 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		Logger:            conf.Logger,
 		Endpoint:          conf.Endpoint,
 		DiscordPktPool:    conf.DiscordPktPool,
-		Proxy:             conf.Proxy,
 		HTTPClient:        conf.HTTPClient,
 		conn:              conf.conn,
 		messageQueueLimit: conf.MessageQueueLimit,
@@ -91,7 +90,6 @@ type Event struct {
 type EvtConfig struct {
 	// BotToken Discord bot token
 	BotToken   string
-	Proxy      proxy.Dialer
 	HTTPClient *http.Client
 
 	// for testing only
@@ -147,7 +145,7 @@ type EvtClient struct {
 	ignoreEvents []string
 
 	sessionID      string
-	sequenceNumber uint
+	sequenceNumber atomic.Uint64
 
 	rdyPool *sync.Pool
 
@@ -158,7 +156,7 @@ type EvtClient struct {
 func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	// marshalling is done to avoid race
 	var presence json.RawMessage
-	if presence, err = httd.Marshal(data); err != nil {
+	if presence, err = util.Marshal(data); err != nil {
 		return err
 	}
 	c.idMu.Lock()
@@ -224,20 +222,20 @@ func (c *EvtClient) synchronizeSnr(p *DiscordPacket) (err error) {
 
 	// validate the sequence numbers
 	// ws/tcp only
-	if p.SequenceNumber != c.sequenceNumber+1 {
+	if p.SequenceNumber != c.sequenceNumber.Load()+1 {
 		go c.reconnect()
 
-		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber+1)
+		err = fmt.Errorf("websocket sequence numbers missmatch, forcing reconnect. Got %d, wants %d", p.SequenceNumber, c.sequenceNumber.Load()+1)
 		return
 	}
 
 	// increment the sequence number for each event to make sure everything is synced with discord
-	c.sequenceNumber++
+	c.sequenceNumber.Inc()
 	return nil
 }
 
 func (c *EvtClient) virginConnection() bool {
-	return c.sessionID == "" && c.sequenceNumber == 0
+	return c.sessionID == "" && c.sequenceNumber.Load() == 0
 }
 
 func (c *EvtClient) onReady(v interface{}) (err error) {
@@ -245,7 +243,7 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	// always store the session id
 	ready := evtReadyPacket{}
-	if err = httd.Unmarshal(p.Data, &ready); err != nil {
+	if err = util.Unmarshal(p.Data, &ready); err != nil {
 		return err
 	}
 
@@ -311,7 +309,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err := httd.Unmarshal(p.Data, helloPk); err != nil {
+	if err := util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 
@@ -335,9 +333,7 @@ func (c *EvtClient) onSessionInvalidated(v interface{}) error {
 	c.log.Info(c.getLogPrefix(), "Discord invalidated session")
 
 	// session is invalidated, reset the sequence number
-	c.Lock()
-	c.sequenceNumber = 0
-	c.Unlock()
+	c.sequenceNumber.Store(0)
 
 	rand.Seed(time.Now().UnixNano())
 	delay := rand.Intn(4) + 1
@@ -382,9 +378,7 @@ func (c *EvtClient) Connect() (err error) {
 }
 
 func (c *EvtClient) internalConnect() (evt interface{}, err error) {
-	// c.conn.Disconnected can always tell us if we are disconnected, but it cannot with
-	// certainty say if we are connected
-	if !c.disconnected {
+	if c.isConnected.Load() {
 		err = errors.New("cannot Connect while a connection already exist")
 		return nil, err
 	}
@@ -434,8 +428,8 @@ func (c *EvtClient) openConnection(ctx context.Context) error {
 	}
 
 	// we can now interact with Discord
-	c.haveConnectedOnce = true
-	c.disconnected = false
+	c.haveConnectedOnce.Store(true)
+	c.isConnected.Store(true)
 	go c.receiver(ctx)
 	go c.emitter(ctx)
 	go c.startBehaviors(ctx)
@@ -464,8 +458,8 @@ func (c *EvtClient) sendHelloPacket() {
 	c.RLock()
 	token := c.evtConf.BotToken
 	session := c.sessionID
-	sequence := c.sequenceNumber
 	c.RUnlock()
+	sequence := c.sequenceNumber.Load()
 
 	err := c.emit(event.Resume, &evtResume{token, session, sequence})
 	if err != nil {

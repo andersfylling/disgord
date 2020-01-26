@@ -162,7 +162,7 @@ waiter:
 		UserID:         r.c.myID,
 		SessionID:      state.SessionID,
 		Token:          server.Token,
-		Proxy:          r.c.config.Proxy,
+		HTTPClient:     r.c.config.HTTPClient,
 		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
 		Logger:         r.c.log,
 		SystemShutdown: r.c.shutdownChan,

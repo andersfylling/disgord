@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -22,33 +23,9 @@ type reqMocker struct {
 	req  *httd.Request
 }
 
-func (gm *reqMocker) Get(req *httd.Request) (*http.Response, []byte, error) {
+func (gm *reqMocker) Do(ctx context.Context, req *httd.Request) (*http.Response, []byte, error) {
 	gm.req = req
-	return gm.resp, gm.body, gm.err
-}
-
-func (gm *reqMocker) Post(req *httd.Request) (*http.Response, []byte, error) {
-	gm.req = req
-	return gm.resp, gm.body, gm.err
-}
-
-func (gm *reqMocker) Patch(req *httd.Request) (*http.Response, []byte, error) {
-	gm.req = req
-	return gm.resp, gm.body, gm.err
-}
-
-func (gm *reqMocker) Put(req *httd.Request) (*http.Response, []byte, error) {
-	gm.req = req
-	return gm.resp, gm.body, gm.err
-}
-
-func (gm *reqMocker) Delete(req *httd.Request) (*http.Response, []byte, error) {
-	gm.req = req
-	return gm.resp, gm.body, gm.err
-}
-
-func (gm *reqMocker) Do(req *httd.Request) (*http.Response, []byte, error) {
-	gm.req = req
+	gm.req.Ctx = ctx
 	return gm.resp, gm.body, gm.err
 }
 

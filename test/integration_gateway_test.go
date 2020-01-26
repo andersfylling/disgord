@@ -15,12 +15,14 @@ import (
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 func TestConnect(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
+		Logger:       disgord.DefaultLogger(true),
 	})
 	defer c.Disconnect()
-	if err := c.Connect(); err != nil {
+	if err := c.Connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -37,15 +39,17 @@ func TestConnect(t *testing.T) {
 }
 
 func TestConnectWithShards(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
+		Logger:       disgord.DefaultLogger(true),
 		ShardConfig: disgord.ShardConfig{
 			ShardIDs: []uint{0, 1},
 		},
 	})
 	defer c.Disconnect()
-	if err := c.Connect(); err != nil {
+	if err := c.Connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -62,10 +66,12 @@ func TestConnectWithShards(t *testing.T) {
 }
 
 func TestConnectWithSeveralInstances(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
 	createInstance := func(shardIDs []uint, shardCount uint) *disgord.Client {
 		return disgord.New(disgord.Config{
 			BotToken:     token,
 			DisableCache: true,
+			Logger:       disgord.DefaultLogger(true),
 			ShardConfig: disgord.ShardConfig{
 				ShardIDs:   shardIDs,
 				ShardCount: shardCount,
@@ -102,9 +108,10 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		instance.Ready(func() {
 			instanceReady <- true
 		})
-		if err := instance.Connect(); err != nil {
+		if err := instance.Connect(context.Background()); err != nil {
 			cancel()
-			t.Fatal(err)
+			t.Error(err)
+			return
 		}
 		<-time.After(5 * time.Second)
 	}
@@ -116,7 +123,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 	}()
 	select {
 	case <-ctx.Done():
-		t.Fatal("unable to connect within time frame")
+		t.Error("unable to connect within time frame")
 	case <-done:
 	}
 }

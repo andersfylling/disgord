@@ -1,13 +1,16 @@
 package disgord
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/constant"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // common functionality/types used by struct_*.go files goes here
@@ -66,7 +69,7 @@ func (e *ErrorUnsupportedType) Error() string {
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.
 type discordDeleter interface {
-	deleteFromDiscord(session Session, flags ...Flag) error
+	deleteFromDiscord(ctx context.Context, session Session, flags ...Flag) error
 }
 
 // DeepCopier holds the DeepCopy method which creates and returns a deep copy of
@@ -90,6 +93,12 @@ type guilder interface {
 // so calling user.Load(session), will do a get request if needed.
 type Loader interface {
 	Load(Session) error
+}
+
+// Mentioner can be implemented by any type that is mentionable.
+// https://discordapp.com/developers/docs/reference#message-formatting-formats
+type Mentioner interface {
+	Mention() string
 }
 
 // zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
@@ -116,7 +125,7 @@ type internalClientUpdater interface {
 // is correctly updated. For the root pkg, disgord, this should always be used instead of calling
 // httd.Unmarshal directly.
 func Unmarshal(data []byte, v interface{}) (err error) {
-	if err = httd.Unmarshal(data, v); err == nil {
+	if err = util.Unmarshal(data, v); err == nil {
 		executeInternalUpdater(v)
 	}
 
@@ -137,7 +146,9 @@ type Time struct {
 	time.Time
 }
 
-// MarshalJSON see json.Marshaler
+var _ json.Marshaler = (*Time)(nil)
+
+// MarshalJSON implements json.Marshaler.
 // error: https://stackoverflow.com/questions/28464711/go-strange-json-hyphen-unmarshall-error
 func (t Time) MarshalJSON() ([]byte, error) {
 	var ts string
@@ -149,10 +160,18 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ts + `"`), nil
 }
 
-// UnmarshalJSON see json.Unmarshaler
+var _ json.Unmarshaler = (*Time)(nil)
+
+// UnmarshalJSON implements json.Unmarshaler.
 func (t *Time) UnmarshalJSON(data []byte) error {
 	var ts time.Time
-	if err := Unmarshal(data, &ts); err != nil {
+
+	// Don't try to unmarshal empty strings.
+	if bytes.Equal([]byte("\"\""), data) {
+		return nil
+	}
+
+	if err := unmarshal(data, &ts); err != nil {
 		return err
 	}
 
@@ -160,7 +179,8 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// String converts the timestamp into a discord formatted timestamp. time.RFC3331 does not suffice
+// String returns the timestamp as a Discord formatted timestamp. Formatting
+// with time.RFC3331 does not suffice.
 func (t Time) String() string {
 	return t.Format(timestampFormat)
 }

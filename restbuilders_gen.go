@@ -588,14 +588,6 @@ func (b *createDMBuilder) Set(name string, v interface{}) *createDMBuilder {
 	return b
 }
 
-func (b *createDMBuilder) Execute() (channel *Channel, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Channel), nil
-}
-
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *createGroupDMBuilder) IgnoreCache() *createGroupDMBuilder {
@@ -623,14 +615,6 @@ func (b *createGroupDMBuilder) Set(name string, v interface{}) *createGroupDMBui
 	return b
 }
 
-func (b *createGroupDMBuilder) Execute() (channel *Channel, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Channel), nil
-}
-
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *getCurrentUserGuildsBuilder) IgnoreCache() *getCurrentUserGuildsBuilder {
@@ -656,32 +640,6 @@ func (b *getCurrentUserGuildsBuilder) URLParam(name string, v interface{}) *getC
 func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) *getCurrentUserGuildsBuilder {
 	b.r.body[name] = v
 	return b
-}
-
-func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) *getCurrentUserGuildsBuilder {
-	b.r.addPrereq(before.IsZero(), "before can not be 0")
-	b.r.param("before", before)
-	return b
-}
-
-func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) *getCurrentUserGuildsBuilder {
-	b.r.addPrereq(after.IsZero(), "after can not be 0")
-	b.r.param("after", after)
-	return b
-}
-
-func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) *getCurrentUserGuildsBuilder {
-	b.r.param("limit", limit)
-	return b
-}
-
-func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*Guild, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	tmp := v.(*[]*Guild)
-	return *tmp, nil
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -738,15 +696,6 @@ func (b *getUserConnectionsBuilder) Set(name string, v interface{}) *getUserConn
 	return b
 }
 
-func (b *getUserConnectionsBuilder) Execute() (cons []*UserConnection, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	tmp := v.(*[]*UserConnection)
-	return *tmp, nil
-}
-
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *getUserDMsBuilder) IgnoreCache() *getUserDMsBuilder {
@@ -774,15 +723,6 @@ func (b *getUserDMsBuilder) Set(name string, v interface{}) *getUserDMsBuilder {
 	return b
 }
 
-func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	tmp := v.(*[]*Channel)
-	return *tmp, nil
-}
-
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
 func (b *updateCurrentUserBuilder) IgnoreCache() *updateCurrentUserBuilder {
@@ -808,24 +748,6 @@ func (b *updateCurrentUserBuilder) URLParam(name string, v interface{}) *updateC
 func (b *updateCurrentUserBuilder) Set(name string, v interface{}) *updateCurrentUserBuilder {
 	b.r.body[name] = v
 	return b
-}
-
-func (b *updateCurrentUserBuilder) SetUsername(username string) *updateCurrentUserBuilder {
-	b.r.param("username", username)
-	return b
-}
-
-func (b *updateCurrentUserBuilder) SetAvatar(avatar string) *updateCurrentUserBuilder {
-	b.r.param("avatar", avatar)
-	return b
-}
-
-func (b *updateCurrentUserBuilder) Execute() (user *User, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*User), nil
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a

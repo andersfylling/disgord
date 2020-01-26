@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -15,7 +17,7 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = Unmarshal(data, &v)
+	err = util.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -124,6 +126,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -152,6 +155,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -187,6 +191,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -212,6 +217,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -239,7 +245,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := Unmarshal(data, &v2); err != nil {
+	if err := util.Unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
 
@@ -250,7 +256,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := Unmarshal(data, &v); err != nil {
+	if err := util.Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 

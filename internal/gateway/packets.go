@@ -3,6 +3,7 @@ package gateway
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/json"
 	"io"
 
@@ -37,7 +38,7 @@ func decompressBytes(input []byte) (output []byte, err error) {
 }
 
 type GatewayBotGetter interface {
-	GetGatewayBot() (gateway *GatewayBot, err error)
+	GetGatewayBot(context.Context) (gateway *GatewayBot, err error)
 }
 
 //////////////////////////////////////////////////////
@@ -110,7 +111,7 @@ type evtIdentity struct {
 type evtResume struct {
 	Token      string `json:"token"`
 	SessionID  string `json:"session_id"`
-	SequenceNr uint   `json:"seq"`
+	SequenceNr uint64 `json:"seq"`
 }
 
 type RequestGuildMembersPayload struct {
@@ -205,7 +206,7 @@ type helloPacket struct {
 type discordPacketJSON struct {
 	Op             opcode.OpCode `json:"op"`
 	Data           []byte        `json:"d"`
-	SequenceNumber uint          `json:"s"`
+	SequenceNumber uint64        `json:"s"`
 	EventName      string        `json:"t"`
 }
 
@@ -220,7 +221,7 @@ func (p *discordPacketJSON) CopyOverTo(packet *DiscordPacket) {
 type DiscordPacket struct {
 	Op             opcode.OpCode   `json:"op"`
 	Data           json.RawMessage `json:"d"`
-	SequenceNumber uint            `json:"s,omitempty"`
+	SequenceNumber uint64          `json:"s,omitempty"`
 	EventName      string          `json:"t,omitempty"`
 }
 

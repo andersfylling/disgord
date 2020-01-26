@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 func check(err error, t *testing.T) {
@@ -132,7 +132,7 @@ func TestTime(t *testing.T) {
 			T Time `json:"time,omitempty"`
 		}{}
 
-		bBytes, err := httd.Marshal(b)
+		bBytes, err := util.Marshal(b)
 		if err != nil {
 			t.Fatal(err)
 		}

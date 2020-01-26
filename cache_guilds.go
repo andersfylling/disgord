@@ -7,7 +7,8 @@ import (
 
 	"github.com/andersfylling/disgord/internal/crs"
 	"github.com/andersfylling/disgord/internal/gateway"
-	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
+
 	"github.com/andersfylling/djp"
 	"github.com/pkg/errors"
 )
@@ -124,7 +125,7 @@ func (c *guildsCache) triggerChannelDelete(channelID Snowflake) {
 		ID: channelID,
 	}
 
-	data, err := httd.Marshal(&info)
+	data, err := util.Marshal(&info)
 	if err != nil {
 		return
 	}

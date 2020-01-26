@@ -2,7 +2,10 @@ package disgord
 
 import (
 	"errors"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/andersfylling/disgord/internal/gateway"
 )
@@ -175,4 +178,11 @@ func validateChannelName(name string) (err error) {
 	}
 
 	return nil
+}
+
+// CreateTermSigListener create a channel to listen for termination signals (graceful shutdown)
+func CreateTermSigListener() <-chan os.Signal {
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	return termSignal
 }

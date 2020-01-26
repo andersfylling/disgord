@@ -11,7 +11,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
+
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // defaults and string format's for Discord interaction
@@ -19,6 +20,7 @@ const (
 	BaseURL = "https://discordapp.com/api"
 
 	RegexpURLSnowflakes = `\/([0-9]+)\/?`
+	RegexpEmoji         = `([a-zA-Z0-9_]+\:[0-9]+)`
 
 	// Header
 	AuthorizationFormat = "Bot %s"
@@ -32,7 +34,7 @@ const (
 
 // Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
-	Do(req *Request) (resp *http.Response, body []byte, err error)
+	Do(ctx context.Context, req *Request) (resp *http.Response, body []byte, err error)
 }
 
 // TODO: should RESTBucket and RESTBucketManager be merged?
@@ -105,6 +107,16 @@ func SupportsDiscordAPIVersion(version int) bool {
 	return supported
 }
 
+func copyHeader(h http.Header) http.Header {
+	cp := make(http.Header, len(h))
+	for k, vs := range h {
+		for i := range vs {
+			cp.Add(k, vs[i])
+		}
+	}
+	return cp
+}
+
 // NewClient ...
 func NewClient(conf *Config) (*Client, error) {
 	if !SupportsDiscordAPIVersion(conf.APIVersion) {
@@ -117,9 +129,8 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// if no http client was provided, create a new one
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
+		// no need for a timeout, everything uses context.Context now
+		conf.HTTPClient = &http.Client{}
 	}
 
 	if conf.RESTBucketManager == nil {
@@ -207,23 +218,28 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return body, nil
 }
 
-func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
+func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body []byte, err error) {
 	if err = r.init(); err != nil {
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.httpClient.Timeout))
-	defer cancel()
-
-	// create request
+	// create http request
 	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
 	}
-	req.Header = c.reqHeader
-	req.Header.Set(ContentType, r.ContentType) // unique for each request
 
-	// send request
+	header := copyHeader(c.reqHeader)
+	header.Set(ContentType, r.ContentType)
+	if r.Reason != "" {
+		header.Add(XAuditLogReason, r.Reason)
+	} else {
+		// the header is a map, so it's a shared memory resource
+		req.Header.Del(XAuditLogReason)
+	}
+	req.Header = header
+
+	// queue & send request
 	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
 		resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
 			resp, err := c.httpClient.Do(req)
@@ -263,7 +279,7 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 
 		// store the Discord error if it exists
 		if len(body) > 0 {
-			_ = Unmarshal(body, err)
+			_ = util.Unmarshal(body, err)
 		}
 		return nil, nil, err
 	}

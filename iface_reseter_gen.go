@@ -148,7 +148,7 @@ func (r *Role) Reset() {
 
 func (a *Activity) Reset() {
 	a.Name = ""
-	a.Type = acitivityType{}
+	a.Type = 0
 	a.URL = ""
 	a.Timestamps = nil
 	a.ApplicationID = 0
@@ -159,7 +159,7 @@ func (a *Activity) Reset() {
 	a.Assets = nil
 	a.Secrets = nil
 	a.Instance = false
-	a.Flags = activityFlag{}
+	a.Flags = 0
 }
 
 func (u *User) Reset() {

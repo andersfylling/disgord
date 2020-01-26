@@ -10,6 +10,7 @@ import (
 
 // http rate limit identifiers
 const (
+	XAuditLogReason         = "X-Audit-Log-Reason"
 	XRateLimitPrecision     = "X-RateLimit-Precision"
 	XRateLimitBucket        = "X-RateLimit-Bucket"
 	XRateLimitLimit         = "X-RateLimit-Limit"

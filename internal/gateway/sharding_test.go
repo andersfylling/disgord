@@ -1,17 +1,20 @@
 package gateway
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 type GatewayBotGetterMock struct {
 	get func() (gateway *GatewayBot, err error)
 }
 
-func (g GatewayBotGetterMock) GetGatewayBot() (gateway *GatewayBot, err error) {
+func (g GatewayBotGetterMock) GetGatewayBot(_ context.Context) (gateway *GatewayBot, err error) {
 	return g.get()
 }
 
@@ -30,7 +33,7 @@ func TestConfigureShardConfig(t *testing.T) {
 	}
 
 	conf := ShardConfig{}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if conf.URL != u {
@@ -46,7 +49,7 @@ func TestConfigureShardConfig(t *testing.T) {
 	conf = ShardConfig{
 		ShardIDs: []uint{34, 7, 2},
 	}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if !conf.DisableAutoScaling {
@@ -57,7 +60,7 @@ func TestConfigureShardConfig(t *testing.T) {
 		ShardIDs:   []uint{34, 7, 2},
 		ShardCount: 34,
 	}
-	if err := ConfigureShardConfig(mock, &conf); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &conf); err != nil {
 		t.Error(err)
 	}
 	if !conf.DisableAutoScaling {
@@ -106,13 +109,14 @@ func TestRedistributeShardMessages(t *testing.T) {
 	config := ShardManagerConfig{
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
+		Logger:       &logger.Empty{},
 	}
 	defer func() {
 		close(config.ShutdownChan)
 		close(config.EventChan)
 	}()
 
-	if err := ConfigureShardConfig(mock, &config.ShardConfig); err != nil {
+	if err := ConfigureShardConfig(context.Background(), mock, &config.ShardConfig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -124,7 +128,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 	// trick shards into thinking they have connected so we can emit msgs
 	connect := func() {
 		for _, shard := range mngr.shards {
-			shard.haveConnectedOnce = true
+			shard.haveConnectedOnce.Store(true)
 		}
 	}
 	connect()
@@ -170,45 +174,73 @@ func TestRedistributeShardMessages(t *testing.T) {
 	verifyDistribution("3")
 }
 
-//
-//func TestShardAutoScalingFailsafe(t *testing.T) {
-//	// when discord disconnects one or more shards with the websocket
-//	// error 4011: require shard scaling
-//
-//	eChan := make(chan *Event)
-//	shutdown := make(chan interface{})
-//	done := make(chan interface{})
-//	deadline := 1 * time.Second
-//	nrOfShards := uint(4)
-//	conn := &testWS{
-//		closing:      make(chan interface{}),
-//		opening:      make(chan interface{}),
-//		writing:      make(chan interface{}),
-//		reading:      make(chan []byte),
-//		disconnected: true,
-//	}
-//
-//	mngr := NewShardMngr(ShardManagerConfig{
-//		ShardConfig: ShardConfig{
-//			shardIDs: []uint{0, 1},
-//		},
-//		DisgordInfo:   "",
-//		BotToken:      "",
-//		Proxy:         nil,
-//		HTTPClient:    nil,
-//		Logger:        logger.DefaultLogger(true),
-//		ShutdownChan:  shutdown,
-//		conn:          conn,
-//		TrackedEvents: nil,
-//		EventChan:     eChan,
-//		RESTClient: &GatewayBotGetterMock{
-//			get: func() (gateway *GatewayBot, err error) {
-//				return &GatewayBot{
-//					Shards: nrOfShards,
-//				}, nil
-//			},
-//		},
-//		DefaultBotPresence: nil,
-//		ProjectName:        "",
-//	})
-//}
+func TestIdentifyRateLimiting(t *testing.T) {
+	u := "localhost:6060"
+	mock := &GatewayBotGetterMock{
+		get: func() (gateway *GatewayBot, err error) {
+			return &GatewayBot{
+				Shards:  1,
+				Gateway: Gateway{u},
+			}, nil
+		},
+	}
+	config := ShardManagerConfig{
+		ShutdownChan: make(chan interface{}),
+		EventChan:    make(chan *Event),
+		Logger:       &logger.Empty{},
+	}
+	defer func() {
+		close(config.EventChan)
+		close(config.ShutdownChan)
+	}()
+
+	if err := ConfigureShardConfig(context.Background(), mock, &config.ShardConfig); err != nil {
+		t.Fatal(err)
+	}
+
+	mngr := NewShardMngr(config)
+	if err := mngr.initShards(); err != nil {
+		t.Fatal(err)
+	}
+
+	ts := time.Now().Add(20 * time.Hour)
+	reconnects := make([]time.Time, 0, DefaultIdentifyRateLimit+1)
+	for i := 1; i <= DefaultIdentifyRateLimit-2; i++ {
+		reconnects = append(reconnects, ts)
+	}
+
+	mngr.sync.metric.Lock()
+	mngr.sync.metric.Reconnects = reconnects
+	mngr.sync.metric.Unlock()
+
+	nrOfTimestamps := mngr.sync.metric.ReconnectsSince(24 * time.Hour)
+	if nrOfTimestamps != DefaultIdentifyRateLimit-2 {
+		t.Fatalf("should be 998 reconnect time stamps, got %d", nrOfTimestamps)
+	}
+
+	// the timeout is after a run execution, so we add a entry before the test case
+	mngr.connectQueue(0, func() error {
+		return nil
+	})
+	connected := make(chan interface{})
+	go mngr.connectQueue(0, func() error {
+		connected <- true
+		return nil
+	})
+
+	select {
+	case <-connected:
+		t.Fatal("should not be able to connect")
+	case <-time.After(100 * time.Millisecond): // TODO: remove timeout, just don't know how yet
+		select {
+		case item, ok := <-mngr.sync.queue:
+			if !ok {
+				t.Fatal("queue was closed somehow")
+			}
+			if item == nil {
+				t.Fatal("expected item to not be nil")
+			}
+		default:
+		}
+	}
+}

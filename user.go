@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,12 +22,6 @@ const (
 	// StatusOffline presence status for offline
 	StatusOffline = "offline"
 )
-
-//type UserInterface interface {
-//	Mention() string
-//	MentionNickname() string
-//	String() string
-//}
 
 // ActivityParty ...
 type ActivityParty struct {
@@ -92,7 +87,7 @@ type ActivityAssets struct {
 	Lockable `json:"-"`
 
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
-	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
+	LargeText  string `json:"large_text,omitempty"`  // text displayed when hovering over the large image of the activity
 	SmallImage string `json:"small_image,omitempty"` // the id for a small asset of the activity, usually a snowflake
 	SmallText  string `json:"small_text,omitempty"`  //	text displayed when hovering over the small image of the activity
 }
@@ -268,13 +263,13 @@ type Activity struct {
 
 	Name          string             `json:"name"`                     // the activity's name
 	Type          acitivityType      `json:"type"`                     // activity type
-	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
+	URL           string             `json:"url,omitempty"`            // stream url, is validated when type is 1
 	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
-	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
-	Details       string             `json:"details,omitempty"`        //?	?string	what the player is currently doing
-	State         string             `json:"state,omitempty"`          //state?	?string	the user's current party status
+	ApplicationID Snowflake          `json:"application_id,omitempty"` // ?	snowflake	application id for the game
+	Details       string             `json:"details,omitempty"`        // ?	?string	what the player is currently doing
+	State         string             `json:"state,omitempty"`          // state?	?string	the user's current party status
 	Emoji         *ActivityEmoji     `json:"emoji"`
-	Party         *ActivityParty     `json:"party,omitempty"`    //party?	party object	information for the current party of the player
+	Party         *ActivityParty     `json:"party,omitempty"`    // party?	party object	information for the current party of the player
 	Assets        *ActivityAssets    `json:"assets,omitempty"`   // assets?	assets object	images for the presence and their hover texts
 	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`  // secrets?	secrets object	secrets for Rich Presence joining and spectating
 	Instance      bool               `json:"instance,omitempty"` // instance?	boolean	whether or not the activity is an instanced game session
@@ -396,6 +391,7 @@ type User struct {
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
 var _ Copier = (*User)(nil)
+var _ Mentioner = (*User)(nil)
 
 // Load fetches the content from cache or discord servers
 func (u *User) Load(s Session) error {
@@ -429,7 +425,7 @@ func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
 	}
 
 	if u.Avatar == "" {
-		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png?size=%d", u.Discriminator%5, size)
 	} else if strings.HasPrefix(u.Avatar, "a_") && preferGIF {
 		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
 	} else {
@@ -450,19 +446,20 @@ func (u *User) String() string {
 }
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
-func (u *User) SendMsg(s Session, message *Message) (channel *Channel, msg *Message, err error) {
-	channel, err = s.CreateDM(u.ID)
+func (u *User) SendMsg(ctx context.Context, session Session, message *Message) (channel *Channel, msg *Message, err error) {
+	channel, err = session.CreateDM(ctx, u.ID)
 	if err != nil {
 		return
 	}
 
-	msg, err = s.SendMsg(channel.ID, message)
+	msg, err = session.SendMsg(ctx, channel.ID, message)
 	return
 }
 
 // SendMsgString send a message to given user where the message is in the form of a string.
-func (u *User) SendMsgString(s Session, content string) (channel *Channel, msg *Message, err error) {
-	channel, msg, err = u.SendMsg(s, &Message{
+
+func (u *User) SendMsgString(ctx context.Context, session Session, content string) (channel *Channel, msg *Message, err error) {
+	channel, msg, err = u.SendMsg(ctx, session, &Message{
 		Content: content,
 	})
 	return
@@ -661,15 +658,11 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-//////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
 //
 // REST Methods
 //
-//////////////////////////////////////////////////////
-
-func ratelimitUsers() string {
-	return "u"
-}
+// ////////////////////////////////////////////////////
 
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
 type GetCurrentUserGuildsParams struct {
@@ -688,9 +681,10 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
+func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMe(),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
@@ -709,9 +703,10 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
+func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.User(id),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = id
@@ -727,12 +722,13 @@ func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
+func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder) {
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      httd.MethodPatch,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -750,9 +746,10 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of users' guilds.
-func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+func (c *Client) GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*PartialGuild, 0)
@@ -776,10 +773,11 @@ func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
+func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.UserMeGuild(id),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.CacheRegistry = GuildCache
@@ -803,9 +801,10 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
 // Deprecated: Needs cache checking to get the actual list of channels
-func (c *Client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
+func (c *Client) GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeChannels(),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -835,9 +834,10 @@ type BodyUserCreateDM struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
 		ContentType: httd.ContentTypeJSON,
@@ -868,9 +868,10 @@ type CreateGroupDMParams struct {
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -890,9 +891,10 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 //  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
+func (c *Client) GetUserConnections(ctx context.Context, flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeConnections(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*UserConnection, 0)
@@ -910,11 +912,11 @@ func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnectio
 	return nil, errors.New("unable to cast guild slice")
 }
 
-//////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
 //
 // REST Builders
 //
-//////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
 
 func userFactory() interface{} {
 	return &User{}
@@ -945,15 +947,15 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 }
 
 // updateCurrentUserBuilder ...
-//generate-rest-params: username:string, avatar:string,
-//generate-rest-basic-execute: user:*User,
+// generate-rest-params: username:string, avatar:string,
+// generate-rest-basic-execute: user:*User,
 type updateCurrentUserBuilder struct {
 	r RESTBuilder
 }
 
 // TODO: params should be url-params. But it works since we're using GET.
-//generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
-//generate-rest-basic-execute: guilds:[]*Guild,
+// generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
+// generate-rest-basic-execute: guilds:[]*Guild,
 type getCurrentUserGuildsBuilder struct {
 	r RESTBuilder
 }
@@ -963,22 +965,22 @@ func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBui
 	return b
 }
 
-//generate-rest-basic-execute: cons:[]*UserConnection,
+// generate-rest-basic-execute: cons:[]*UserConnection,
 type getUserConnectionsBuilder struct {
 	r RESTBuilder
 }
 
-//generate-rest-basic-execute: channel:*Channel,
+// generate-rest-basic-execute: channel:*Channel,
 type createDMBuilder struct {
 	r RESTBuilder
 }
 
-//generate-rest-basic-execute: channels:[]*Channel,
+// generate-rest-basic-execute: channels:[]*Channel,
 type getUserDMsBuilder struct {
 	r RESTBuilder
 }
 
-//generate-rest-basic-execute: channel:*Channel,
+// generate-rest-basic-execute: channel:*Channel,
 type createGroupDMBuilder struct {
 	r RESTBuilder
 }

@@ -7,6 +7,8 @@ package disgord
 import (
 	"context"
 	"sync"
+
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // Resource represents a discord event.
@@ -225,7 +227,7 @@ type MessageReactionRemove struct {
 // MessageReactionRemoveAll all reactions were explicitly removed from a message
 type MessageReactionRemoveAll struct {
 	ChannelID Snowflake       `json:"channel_id"`
-	MessageID Snowflake       `json:"id"`
+	MessageID Snowflake       `json:"message_id"`
 	Ctx       context.Context `json:"-"`
 	ShardID   int             `json:"-"`
 }
@@ -361,7 +363,7 @@ func (g *GuildMemberAdd) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
-	return Unmarshal(data, obj.Member)
+	return util.Unmarshal(data, obj.Member)
 }
 
 // ---------------------------

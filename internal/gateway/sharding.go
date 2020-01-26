@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,10 +11,7 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
-
 	"github.com/andersfylling/disgord/internal/logger"
-
-	"golang.org/x/net/proxy"
 )
 
 const defaultShardRateLimit time.Duration = 5*time.Second + 100*time.Millisecond
@@ -30,12 +28,12 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 	return uint(guildID>>22) % shardCount
 }
 
-func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+func ConfigureShardConfig(ctx context.Context, client GatewayBotGetter, conf *ShardConfig) error {
 	if len(conf.ShardIDs) == 0 && conf.ShardCount != 0 {
 		return errors.New("ShardCount should only be set when you use distributed bots and have set the ShardIDs field - ShardCount is an optional field")
 	}
 
-	data, err := client.GetGatewayBot()
+	data, err := client.GetGatewayBot(ctx)
 	if err != nil {
 		return err
 	}
@@ -46,6 +44,10 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 
 	if conf.URL == "" {
 		conf.URL = data.URL
+	}
+
+	if conf.IdentifiesPer24H == 0 {
+		conf.IdentifiesPer24H = DefaultIdentifyRateLimit
 	}
 
 	if len(conf.ShardIDs) == 0 {
@@ -100,10 +102,11 @@ func NewShardMngr(conf ShardManagerConfig) *shardMngr {
 			},
 		},
 	}
-	mngr.sync.logger = conf.Logger
-	mngr.sync.timeoutMs = conf.ShardRateLimit
 	if conf.ConnectQueue == nil {
+		mngr.sync = newShardSync(&conf.ShardConfig, conf.Logger, "[shardSync]", conf.ShutdownChan)
 		mngr.connectQueue = mngr.sync.queueShard
+
+		go mngr.sync.process() // handle requests
 	} else {
 		mngr.connectQueue = conf.ConnectQueue
 	}
@@ -178,6 +181,12 @@ type ShardConfig struct {
 	// TODO: return a list of outgoing requests instead such that people can re-trigger these on other instances.
 	OnScalingDiscardedRequests func(unhandledGuildIDs []Snowflake)
 
+	// IdentifiesPer24H regards how many identify packets a bot can send per a 24h period. Normally this
+	// is 1000, but in some cases discord might allow you to increase it.
+	//
+	// Setting it to 0 will default it to 1000.
+	IdentifiesPer24H uint
+
 	// URL is fetched from the gateway before initialising a connection
 	URL string
 }
@@ -187,7 +196,6 @@ type ShardManagerConfig struct {
 	ShardConfig
 	DisgordInfo  string
 	BotToken     string
-	Proxy        proxy.Dialer
 	HTTPClient   *http.Client
 	Logger       logger.Logger
 	ShutdownChan chan interface{}
@@ -213,14 +221,14 @@ type shardMngr struct {
 	shards         map[shardID]*EvtClient
 	DiscordPktPool *sync.Pool
 
-	sync         shardSync
+	sync         *shardSync
 	connectQueue connectQueue
 }
 
 var _ ShardManager = (*shardMngr)(nil)
 
 func (s *shardMngr) initShards() error {
-	baseConfig := EvtConfig{ // TIP: not nicely grouped, feel free to adjust
+	baseConfig := EvtConfig{ // TODO: not nicely grouped, feel free to adjust
 		// identity
 		Browser:             s.conf.DisgordInfo,
 		Device:              s.conf.ProjectName,
@@ -243,7 +251,6 @@ func (s *shardMngr) initShards() error {
 
 		// user settings
 		BotToken:   s.conf.BotToken,
-		Proxy:      s.conf.Proxy,
 		HTTPClient: s.conf.HTTPClient,
 
 		// other
@@ -331,11 +338,9 @@ func (s *shardMngr) Disconnect() error {
 		}
 		// possible connect/disconnect race..
 		shard.sessionID = ""
-		shard.sequenceNumber = 0
+		shard.sequenceNumber.Store(0)
 
-		shard.Lock()
-		shard.haveConnectedOnce = false
-		shard.Unlock()
+		shard.haveConnectedOnce.Store(false)
 	}
 	return nil
 }
@@ -447,7 +452,7 @@ func (s *shardMngr) scale(code int, reason string) {
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
 	unchandledGuilds := s.redistributeMsgs(func() {
-		data, err := s.conf.RESTClient.GetGatewayBot()
+		data, err := s.conf.RESTClient.GetGatewayBot(context.Background())
 		if err != nil {
 			s.conf.Logger.Error("autoscaling", err)
 			return

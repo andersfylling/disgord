@@ -19,6 +19,8 @@ If applicable, copy the errors messages into this thread to help explain your pr
 **Desktop (please complete the following information):**
  - Golang version: [e.g. v1.13.1]
  - Using Go modules? [yes/no]
+ - DisGord version? [e.g. v0.15]
+ - Connected to the gateway before using REST methods? [yes/no]
 
 **Additional context**
 Add any other context about the problem here.

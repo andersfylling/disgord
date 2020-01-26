@@ -15,15 +15,15 @@ if err != nil {
 }
 defer f2.Close()
 
-client.CreateChannelMessage(channelID, &disgord.CreateChannelMessageParams{
+client.CreateMessage(channelID, &disgord.CreateMessageParams{
 	Content: "This is my favourite image, and another in an embed!",
-	Files: []disgord.CreateChannelMessageFileParams{
-		{f1, "myfavouriteimage.jpg"},
-		{f2, "another.jpg"},
+	Files: []disgord.CreateMessageFileParams{
+		{f1, "myfavouriteimage.jpg", false},
+		{f2, "another.jpg", false},
 	},
-	Embed: &disgord.ChannelEmbed{
+	Embed: &disgord.Embed{
 		Description: "Look here!",
-		Image: &disgord.ChannelEmbedImage{
+		Image: &disgord.EmbedImage{
 			URL: "attachment://another.jpg",
 		},
 	},

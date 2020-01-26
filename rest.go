@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 type ErrRest = httd.ErrREST
@@ -16,6 +18,14 @@ type ErrRest = httd.ErrREST
 // URLQueryStringer converts a struct of values to a valid URL query string
 type URLQueryStringer interface {
 	URLQueryString() string
+}
+
+func unmarshal(data []byte, v interface{}) error {
+	return util.Unmarshal(data, v)
+}
+
+func marshal(v interface{}) ([]byte, error) {
+	return util.Marshal(v)
 }
 
 // AvatarParamHolder is used when handling avatar related REST structs.
@@ -144,7 +154,7 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 		return
 	}
 
-	resp, body, err = r.c.req.Do(r.conf)
+	resp, body, err = r.c.req.Do(r.conf.Ctx, r.conf)
 	return
 }
 
@@ -176,7 +186,7 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = Unmarshal(body, obj); err != nil {
+	if err = util.Unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
@@ -277,7 +287,8 @@ func (b *RESTBuilder) setup(cache *cache, client httd.Requester, config *httd.Re
 
 	if b.config == nil {
 		b.config = &httd.Request{
-			Method: httd.MethodGet,
+			Ctx:    context.Background(),
+			Method: http.MethodGet,
 		}
 	}
 }
@@ -323,7 +334,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	var resp *http.Response
 	var body []byte
-	resp, body, err = b.client.Do(b.config)
+	resp, body, err = b.client.Do(b.config.Ctx, b.config)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +347,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = Unmarshal(body, v); err != nil {
+		if err = util.Unmarshal(body, v); err != nil {
 			return nil, err
 		}
 
@@ -415,9 +426,9 @@ type basicBuilder struct {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
+func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway",
 	})
@@ -438,9 +449,9 @@ func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
 //  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
-func (c *Client) GetGatewayBot() (gateway *gateway.GatewayBot, err error) {
+func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway/bot",
 	})
