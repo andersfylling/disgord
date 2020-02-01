@@ -69,7 +69,7 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	var messageType websocket.MessageType
 	messageType, packet, err = g.c.Read(ctx)
 	if err != nil {
-		var closeErr *websocket.CloseError
+		var closeErr websocket.CloseError
 		if errors.As(err, &closeErr) {
 			g.isConnected.Store(false)
 			err = &CloseErr{

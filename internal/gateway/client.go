@@ -266,18 +266,20 @@ func (c *client) getLogPrefix() string {
 // LINKING: CONNECTING / DISCONNECTING / RECONNECTING
 //
 //////////////////////////////////////////////////////
+func (c *client) IsDisconnected() bool {
+	return !c.isConnected.Load()
+}
+
 func (c *client) disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
-	if c.conn.Disconnected() || !c.haveConnectedOnce.Load() || c.cancel == nil {
-		_ = c.conn.Close() // just to be safe, but ignore errors
-		c.isConnected.Store(false)
-		return errors.New("already disconnected")
-	}
+	alreadyDisconnected := c.conn.Disconnected() || !c.haveConnectedOnce.Load() || c.cancel == nil
 
 	// stop emitter, receiver and behaviors
-	c.cancel()
-	c.cancel = nil
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
+	}
 
 	// use the emitter to dispatch the close message
 	err = c.conn.Close()
@@ -287,8 +289,10 @@ func (c *client) disconnect() (err error) {
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.isConnected.Store(false)
 
+	if alreadyDisconnected {
+		return errors.New("already disconnected")
+	}
 	c.log.Info(c.getLogPrefix(), "disconnected")
-
 	return err
 }
 
@@ -486,10 +490,11 @@ func (c *client) receiver(ctx context.Context) {
 
 	for {
 		// check if application has closed
+		// and clean up
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing receiver")
-			once.Do(cancel)
+			once.Do(cancel) // free
 			return
 		case <-internal.Done():
 			go c.reconnect()
@@ -500,18 +505,34 @@ func (c *client) receiver(ctx context.Context) {
 
 		var packet []byte
 		var err error
-		if packet, err = c.conn.Read(context.Background()); err != nil {
-			if e, ok := err.(*CloseErr); ok && c.conf.discordErrListener != nil && e.code >= 4000 && e.code < 5000 {
-				go c.conf.discordErrListener(e.code, e.info)
-			}
-			if _, ok := err.(*CloseErr); !ok {
+		if packet, err = c.conn.Read(ctx); err != nil {
+			reconnect := true
+			var closeErr *CloseErr
+			isCloseErr := errors.As(err, &closeErr)
+			if isCloseErr {
+				if c.conf.discordErrListener != nil && closeErr.code >= 4000 && closeErr.code < 5000 {
+					go c.conf.discordErrListener(closeErr.code, closeErr.info)
+				}
+				switch closeErr.code {
+				case 4014:
+					// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
+					// https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+					c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
+					_ = c.Disconnect()
+					reconnect = false
+				default:
+				}
+			} else {
 				c.log.Debug(c.getLogPrefix(), err)
 			}
+
 			select {
 			case <-ctx.Done():
 				// in this case we dont want reconnect to start, only to stop
 			default:
-				once.Do(cancel)
+				if reconnect {
+					once.Do(cancel)
+				}
 			}
 			continue
 		}
