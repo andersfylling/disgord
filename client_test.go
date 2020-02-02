@@ -218,7 +218,7 @@ func TestClient_On_Middleware(t *testing.T) {
 	wg.Wait()
 }
 
-// TestClient_System looks for crashes when the DisGord system starts up.
+// TestClient_System looks for crashes when the Disgord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
 	c, err := NewClient(Config{

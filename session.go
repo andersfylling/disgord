@@ -476,8 +476,8 @@ type VoiceHandler interface {
 	VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error)
 }
 
-// Session Is the runtime interface for DisGord. It allows you to interact with a live session (using sockets or not).
-// Note that this interface is used after you've configured DisGord, and therefore won't allow you to configure it
+// Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
+// Note that this interface is used after you've configured Disgord, and therefore won't allow you to configure it
 // further.
 type Session interface {
 	// Logger returns the injected logger instance. If nothing was injected, a empty wrapper is returned

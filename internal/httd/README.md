@@ -45,7 +45,7 @@ This will of course cause some hashed endpoints to point to the same bucket, onc
 The list of buckets can then be consolidated, memory wise, if two or more hashed endpoints uses the same bucket key/hash. The most recent bucket should overwrite the older bucket and all related endpoints should then point to the same bucket.
 
 #### Concurrent requests
-~~Due to the above, we can only send one request (per bucket) at the time until Discord returns rate limit information for the given bucket. Once the bucket is reset after Discord DisGord must return to sending request through the same bucket sequentially to reduce potential rate limits.~~
+~~Due to the above, we can only send one request (per bucket) at the time until Discord returns rate limit information for the given bucket. Once the bucket is reset after Discord Disgord must return to sending request through the same bucket sequentially to reduce potential rate limits.~~
 
 ~~For a normal header, without any rate limit information, we can only send sequential requests for the bucket.~~
 ```markdown

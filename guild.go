@@ -18,7 +18,7 @@ import (
 
 // NOTE! Credit for defining the Permission consts in a clean way goes to DiscordGo.
 // This is pretty much a copy from their project. I would have made it a dependency if
-// the consts were in a isolated sub-pkg. Note that in respect to their license, DisGord
+// the consts were in a isolated sub-pkg. Note that in respect to their license, Disgord
 // has no affiliation with DiscordGo.
 //
 // Source code reference:
@@ -1568,7 +1568,7 @@ func (c *Client) getGuildMembers(ctx context.Context, guildID Snowflake, params 
 // is converted into a 1. 0 = every member. The rest is exactly the same, you should be able to do everything
 // the Discord docs says with the addition that you can bypass a limit of 1,000.
 //
-// If you specify a limit of +1,000 DisGord will run N requests until that amount is met, or until you run
+// If you specify a limit of +1,000 Disgord will run N requests until that amount is met, or until you run
 // out of members to fetch.
 type GetMembersParams struct {
 	After Snowflake `urlparam:"after,omitempty"`

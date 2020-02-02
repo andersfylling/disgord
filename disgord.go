@@ -2,7 +2,7 @@
 //
 // Getting started
 //
-// Create a DisGord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
+// Create a Disgord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
 //
 // Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
 //  discord := disgord.New(&disgord.Config{
@@ -32,15 +32,15 @@
 //  msgCreateChan := make(chan *disgord.MessageCreate, 10)
 //  session.On(disgord.EvtMessageCreate, msgCreateChan)
 //
-// Never close a channel without removing the handler from disgord. You can't directly call Remove, instead you
+// Never close a channel without removing the handler from Disgord. You can't directly call Remove, instead you
 // inject a controller to dictate the handler's lifetime. Since you are the owner of the channel, disgord will never
 // close it for you.
 //
 //  ctrl := &disgord.Ctrl{Channel: msgCreateChan}
 //  session.On(disgord.EvtMessageCreate, msgCreateChan, ctrl)
 //  go func() {
-//    // close the channel after 20 seconds and safely remove it from disgord
-//    // without disgord trying to send data through it after it has closed
+//    // close the channel after 20 seconds and safely remove it from Disgord
+//    // without Disgord trying to send data through it after it has closed
 //    <- time.After(20 * time.Second)
 //    ctrl.CloseChannel()
 //  }
@@ -67,9 +67,9 @@
 //
 // WebSockets and Sharding
 //
-// DisGord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of DisGord (in these cases you must handle scaling yourself as DisGord can not).
+// Disgord handles sharding for you automatically; when starting the bot, when discord demands you to scale up your shards (during runtime), etc. It also gives you control over the shard setup in case you want to run multiple instances of Disgord (in these cases you must handle scaling yourself as Disgord can not).
 //
-// Sharding is done behind the scenes, so you do not need to worry about any settings. DisGord will simply ask Discord for the recommended amount of shards for your bot on startup. However, to set specific amount of shards you can use the `disgord.ShardConfig` to specify a range of valid shard IDs (starts from 0).
+// Sharding is done behind the scenes, so you do not need to worry about any settings. Disgord will simply ask Discord for the recommended amount of shards for your bot on startup. However, to set specific amount of shards you can use the `disgord.ShardConfig` to specify a range of valid shard IDs (starts from 0).
 //
 // starting a bot with exactly 5 shards
 //  client := disgord.New(&disgord.Config{
@@ -115,7 +115,7 @@
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
-// A part of DisGord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
+// A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
@@ -148,14 +148,14 @@
 //
 // Bypass the built-in REST cache
 //
-// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using disgord flags.
+// Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using Disgord flags.
 //  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
 //  user, err := session.GetUser(userID)
 //
 //  // bypass the cache checking. Same as before, but we insert a disgord.Flag type.
 //  user, err := session.GetUser(userID, disgord.IgnoreCache)
 //
-// DisGord Flags
+// Disgord Flags
 //
 // In addition to disgord.IgnoreCache, as shown above, you can pass in other flags such as: disgord.SortByID, disgord.OrderAscending, etc. You can find these flags in the flag.go file.
 //
@@ -170,7 +170,7 @@
 //
 // `disgord_parallelism` activates built-in locking in discord structure methods. Eg. Guild.AddChannel(*Channel) does not do locking by default. But if you find yourself using these discord data structures in parallel environment, you can activate the internal locking to reduce race conditions. Note that activating `disgord_parallelism` and `disgord_removeDiscordMutex` at the same time, will cause you to have no locking as `disgord_removeDiscordMutex` affects the same mutexes.
 //
-// `disgord_legacy` adds wrapper methods with the original discord naming. eg. For REST requests you will notice DisGord uses a consistency between update/create/get/delete/set while discord uses edit/update/modify/close/delete/remove/etc. So if you struggle find a REST method, you can enable this build tag to gain access to mentioned wrappers.
+// `disgord_legacy` adds wrapper methods with the original discord naming. eg. For REST requests you will notice Disgord uses a consistency between update/create/get/delete/set while discord uses edit/update/modify/close/delete/remove/etc. So if you struggle find a REST method, you can enable this build tag to gain access to mentioned wrappers.
 //
 // `disgordperf` does some low level tweaking that can help boost json unmarshalling and drops json validation from Discord responses/events. Other optimizations might take place as well.
 //

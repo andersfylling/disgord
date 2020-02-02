@@ -4,11 +4,11 @@ VER="v2.0.0"
 
 echo "
 # # # # # # # # # # # # # # # # #
-#        DisGord utility        #
+#        Disgord utility        #
 #            ${VER}             #
 # # # # # # # # # # # # # # # # #
 * Simple script to assist you   *
-* with creating a basic DisGord *
+* with creating a basic Disgord *
 * bot.                          *
 * * * * * * * * * * * * * * * * *
 "
@@ -67,7 +67,7 @@ sed -i -e "s/REPLACE_ME/${BOT_PREFIX}/g" main.go
 echo "# ${PROJECT_NAME}
 
 ## Congratulations!
-You have successfully created a basic DisGord bot.
+You have successfully created a basic Disgord bot.
 
 In order for your bot to start you must supply a environment variable with the name DISGORD_TOKEN that holds
 the bot token you created in a Discord application or got from a friend.

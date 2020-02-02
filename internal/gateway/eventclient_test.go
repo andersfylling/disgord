@@ -144,7 +144,7 @@ func TestEvtClient_communication(t *testing.T) {
 		close(done)
 	}()
 
-	// mocked DisGord logic (shard manager and event handler)
+	// mocked Disgord logic (shard manager and event handler)
 	go func() {
 		for {
 			select {

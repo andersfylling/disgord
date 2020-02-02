@@ -30,12 +30,12 @@ func New(conf Config) *Client {
 	return client
 }
 
-// NewClient creates a new DisGord Client and returns an error on configuration issues
+// NewClient creates a new Disgord Client and returns an error on configuration issues
 func NewClient(conf Config) (*Client, error) {
 	return createClient(&conf)
 }
 
-// NewClient creates a new DisGord Client and returns an error on configuration issues
+// NewClient creates a new Disgord Client and returns an error on configuration issues
 func createClient(conf *Config) (c *Client, err error) {
 	if conf.HTTPClient == nil {
 		// WARNING: do not set http.Client.Timeout (!)
@@ -129,7 +129,7 @@ func createClient(conf *Config) (c *Client, err error) {
 
 type ShardConfig = gateway.ShardConfig
 
-// Config Configuration for the DisGord Client
+// Config Configuration for the Disgord Client
 type Config struct {
 	// ################################################
 	// ##
@@ -328,7 +328,7 @@ func (c *Client) GetConnectedGuilds() []Snowflake {
 	return c.connectedGuilds
 }
 
-// Logger returns the log instance of DisGord.
+// Logger returns the log instance of Disgord.
 // Note that this instance is never nil. When the conf.Logger is not assigned
 // an empty struct is used instead. Such that all calls are simply discarded at compile time
 // removing the need for nil checks.

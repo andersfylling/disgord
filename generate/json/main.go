@@ -21,7 +21,7 @@ func main() {
 		structs = append(structs, getJSONStructs(files[i])...)
 	}
 
-	// TODO: now that structs holds all json structs in DisGord
+	// TODO: now that structs holds all json structs in Disgord
 	// it's time to use ffjson or another tool to generate the marshal/unmarshal methods
 
 	for _ = range structs {

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// DefaultLogger create a new logger instance for DisGord with the option to activate debugging.
+// DefaultLogger create a new logger instance for Disgord with the option to activate debugging.
 func DefaultLogger(debug bool) *LoggerZap {
 	conf := zap.NewProductionConfig()
 	if debug {

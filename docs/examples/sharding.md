@@ -1,8 +1,8 @@
 > NOTE! outdated: sharding is handled automatically now. Use disgord.ShardConfig.
 
-DisGord supports the use of sharding for as explained here: [discordapp.com/.../gateway#sharding](https://discordapp.com/developers/docs/topics/gateway#sharding)
+Disgord supports the use of sharding for as explained here: [discordapp.com/.../gateway#sharding](https://discordapp.com/developers/docs/topics/gateway#sharding)
 
-DisGord uses an internal shard manager to handle this for you. However, you can customize this and should have enough control to handle sharding across N instances of disgord (see the godoc).
+Disgord uses an internal shard manager to handle this for you. However, you can customize this and should have enough control to handle sharding across N instances of disgord (see the godoc).
 
 # Enforce N number of shards
 ```go
@@ -15,7 +15,7 @@ client := disgord.New(disgord.Config{
 })
 ```
 
-The entire shard config is optional as your bot will always use sharding by default, and automatically decide on how many shards you need. There is also no need to communicate with individual shards in this design, so there is no difference when you interact with the DisGord interface regardless of how many shards are being used.
+The entire shard config is optional as your bot will always use sharding by default, and automatically decide on how many shards you need. There is also no need to communicate with individual shards in this design, so there is no difference when you interact with the Disgord interface regardless of how many shards are being used.
 
 ```go
 // this client is also using shards

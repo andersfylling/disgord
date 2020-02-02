@@ -4,7 +4,7 @@ import "math"
 
 type OpCode uint
 
-// custom op codes used by DisGord internally
+// custom op codes used by Disgord internally
 const (
 	EventReadyResumed OpCode = 102 // Discord use 0 here, but that is a shared op code
 	None              OpCode = math.MaxUint16

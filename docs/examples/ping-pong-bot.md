@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-    // configure a DisGord client
+    // configure a Disgord client
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // debug=false
@@ -28,7 +28,7 @@ func main() {
 ```
 
 
-DisGord also offers middlewares and a std package to checking the msg content
+Disgord also offers middlewares and a std package to checking the msg content
 
 ```go
 package main
@@ -43,7 +43,7 @@ import (
 const NewMessage = disgord.EvtMessageCreate
 
 func main() {
-    // configure a DisGord client
+    // configure a Disgord client
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
         Logger: disgord.DefaultLogger(false), // debug=false

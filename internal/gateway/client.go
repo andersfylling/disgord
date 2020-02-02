@@ -363,7 +363,7 @@ func (c *client) reconnectLoop() (err error) {
 //
 //////////////////////////////////////////////////////
 
-// Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
+// Emit is used by Disgord users for dispatching a socket command to the Discord Gateway.
 func (c *client) Emit(command string, data CmdPayload) (err error) {
 	return c.queueRequest(command, data)
 }

@@ -281,7 +281,7 @@ func (c *EvtClient) onDiscordEvent(v interface{}) (err error) {
 		return nil
 	}
 
-	// dispatch event through out the DisGord system
+	// dispatch event through out the Disgord system
 	c.eventChan <- &Event{
 		Name:    p.EventName,
 		Data:    p.Data,
