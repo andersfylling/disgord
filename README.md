@@ -145,9 +145,11 @@ Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-a
 ```Markdown
 2. Is there an alternative Go package?
 
-Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide a minimalistic API wrapper for Discord, it does not handle multiple websocket sharding, scaling, etc. behind the scenes such as DisGord does.
-Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
-future, for now the biggest difference is that DisGord does not support self bots.
+Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide a 
+minimalistic API wrapper for Discord, it does not handle multiple websocket sharding, scaling, etc. 
+behind the scenes such as DisGord does. Currently I do not have a comparison chart of DisGord and 
+DiscordGo. But I do want to create one in the future, for now the biggest difference is that 
+DisGord does not support self bots.
 ```
 
 ```Markdown
