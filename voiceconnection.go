@@ -39,6 +39,9 @@ type VoiceConnection interface {
 	// SendDCA reads from a Reader expecting a DCA encoded stream/file and sends them as frames.
 	SendDCA(r io.Reader) error
 
+	// MoveTo moves from the current voice channel to the given.
+	MoveTo(channelID Snowflake) error
+
 	// Close closes the websocket and UDP connection. This VoiceConnection interface will no longer be usable and will
 	// panic if any other functions are called beyond this point. It is the callers responsibility to ensure there are
 	// no concurrent calls to any other methods of this interface after calling Close.
@@ -326,6 +329,28 @@ func (v *voiceImpl) SendDCA(r io.Reader) error {
 
 		v.send <- buf
 	}
+}
+
+func (v *voiceImpl) MoveTo(channelID Snowflake) error {
+	if channelID.IsZero() {
+		return errors.New("channelID must be set to move to a voice channel")
+	}
+
+	v.Lock()
+	defer v.Unlock()
+
+	if !v.ready.Load() {
+		panic("Attempting to move in a closed Voice Connection")
+	}
+
+	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
+		GuildID:   v.guildID,
+		ChannelID: channelID,
+		SelfDeaf:  false,
+		SelfMute:  false,
+	})
+
+	return nil
 }
 
 func (v *voiceImpl) Close() (err error) {
