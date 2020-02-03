@@ -3,7 +3,6 @@
 package test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -11,8 +10,6 @@ import (
 
 	"github.com/andersfylling/disgord"
 )
-
-var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 func TestConnect(t *testing.T) {
 	<-time.After(6 * time.Second) // avoid identify abuse

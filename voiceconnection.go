@@ -246,11 +246,11 @@ waiter:
 }
 
 func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
+	r.Lock()
 	if event.UserID != r.c.myID {
+		r.Unlock()
 		return
 	}
-
-	r.Lock()
 
 	if ch, exists := r.pendingStates[event.VoiceState.GuildID]; exists {
 		delete(r.pendingStates, event.VoiceState.GuildID)
@@ -379,6 +379,7 @@ func (v *voiceImpl) Close() (err error) {
 		SelfDeaf:  true,
 		SelfMute:  true,
 	})
+	<-time.After(10 * time.Millisecond) // no way to know when the event has been received by discord..
 
 	err1 := v.udp.Close()
 	err2 := v.ws.Disconnect()

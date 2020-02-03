@@ -779,7 +779,7 @@ func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User,
 	r.pool = c.pool.user
 	r.factory = userFactory
 
-	if user, err = getUser(r.Execute); err == nil {
+	if user, err = getUser(r.Execute); err == nil && c.myID.IsZero() {
 		c.myID = user.ID
 	}
 	return user, err
