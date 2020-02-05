@@ -447,7 +447,6 @@ func (c *guildsRdyCtrl) IsDead() bool {
 	ok := true
 	for _, ok = range c.status {
 		if !ok {
-			ok = false
 			break
 		}
 	}
