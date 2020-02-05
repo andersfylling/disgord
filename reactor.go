@@ -420,15 +420,13 @@ func (c *rdyCtrl) IsDead() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := true
 	for _, id := range c.localShardIDs {
 		if !c.shardReady[id] {
-			ok = false
-			break
+			return false
 		}
 	}
 
-	return ok
+	return true
 }
 
 func (c *rdyCtrl) Update() {
