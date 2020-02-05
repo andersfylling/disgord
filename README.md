@@ -7,7 +7,7 @@
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord' alt='Code coverage' />
     </a>
-    <a href='http://godoc.org/github.com/andersfylling/disgord'>
+    <a href='https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc'>
       <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg' alt='Godoc' />
     </a>
   </p>
@@ -40,7 +40,7 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 
 > Examples can be found in [docs/examples](docs/examples) and some open source projects Disgord projects in the [wiki](https://github.com/andersfylling/disgord/wiki/A-few-Disgord-Projects)
 
-I highly suggest reading the [Discord API documentation](https://discordapp.com/developers/docs/intro) and the [Disgord go doc](http://godoc.org/github.com/andersfylling/disgord).
+I highly suggest reading the [Discord API documentation](https://discordapp.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
 
 Here is a basic bot program that prints out every message. Save it as `main.go`, run `go mod init bot` and `go mod download`. You can then start the bot by writing `go run .`
 
