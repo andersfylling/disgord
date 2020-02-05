@@ -445,7 +445,7 @@ func (c *guildsRdyCtrl) IsDead() bool {
 	defer c.Unlock()
 
 	ok := true
-	for _, ok := range c.status {
+	for _, ok = range c.status {
 		if !ok {
 			ok = false
 			break
