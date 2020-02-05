@@ -165,9 +165,9 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 	if err != nil {
 		discordTime = time.Now()
 	}
-
-	localTime := time.Now()
-	diff := localTime.Sub(discordTime)
+	//
+	// localTime := time.Now()
+	// diff := localTime.Sub(discordTime)
 
 	var isGlobal bool
 	bucketHash := header.Get(XRateLimitBucket)
@@ -187,7 +187,6 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 
 	var reset time.Time
 	var discordReset time.Time
-	var remaining int = -1
 	if resetStr := header.Get(XRateLimitReset); resetStr != "" {
 		epoch, _ := strconv.ParseInt(resetStr, 10, 64)
 		epoch *= int64(time.Millisecond) // ms => nano
@@ -195,6 +194,7 @@ func (b *ltBucket) updateAfterRequest(header http.Header, statusCode int) (adjus
 		discordReset = time.Unix(0, epoch)
 	}
 
+	var remaining int = -1
 	if remainingStr := header.Get(XRateLimitRemaining); remainingStr != "" {
 		remainingInt64, _ := strconv.ParseInt(remainingStr, 10, 64)
 		if remainingInt64 >= 0 {
