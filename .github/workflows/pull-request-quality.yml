@@ -34,7 +34,5 @@ jobs:
         uses: actions/checkout@v1
       - name: Get dependencies
         run: go mod download
-      - name: Format Test
-        run: diff <(gofmt -tags=${{ matrix.buildtag }} -d ./...) <(echo -n)
       - name: test
         run: go test -tags=${{ matrix.buildtag }} -v -race ./...
