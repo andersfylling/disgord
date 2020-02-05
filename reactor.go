@@ -444,7 +444,7 @@ func (c *guildsRdyCtrl) IsDead() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	for _, ready = range c.status {
+	for _, ready := range c.status {
 		if !ready {
 			return false
 		}
