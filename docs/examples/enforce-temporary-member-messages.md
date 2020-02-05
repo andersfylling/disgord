@@ -37,7 +37,7 @@ func main() {
     defer client.StayConnectedUntilInterrupted(context.Background())
 	
 	filter, _ := std.NewMsgFilter(context.Background(), client)
-    filter.SetMinPermissions(disgord.PermissionManageMessages) // make sure u can actually delete messages
+	filter.SetMinPermissions(disgord.PermissionManageMessages) // make sure u can actually delete messages
 
 	client.On(disgord.EvtMessageCreate, filter.HasPermissions, autoDeleteNewMessages)
 }
