@@ -444,13 +444,11 @@ func (c *guildsRdyCtrl) IsDead() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := true
-	for _, ok := range c.status {
-		if !ok {
-			ok = false
-			break
+	for _, ready := range c.status {
+		if !ready {
+			return false
 		}
 	}
 
-	return ok
+	return true
 }
