@@ -11,10 +11,10 @@ func printMessage(session disgord.Session, data *disgord.MessageCreate) {
 func main() {
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+        Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
     })
     // connect, and stay connected until a system interrupt takes place
-    defer client.StayConnectedUntilInterrupted()
+    defer client.StayConnectedUntilInterrupted(context.Background())
     
     // create a handler and bind it to new message events
     // handlers/listener are run in sequence if you register more than one
@@ -29,7 +29,7 @@ However, be careful if you plan on closing channels, as you might put disgord in
 ```go
 client := disgord.New(disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
-    Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+    Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // or use a channel to listen for events
@@ -64,9 +64,9 @@ The nice part with go channels is that they can work as a load balancer. Thanks 
 func main() {
 	client := disgord.New(&disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+        Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
     })
-    defer client.StayConnectedUntilInterrupted()
+    defer client.StayConnectedUntilInterrupted(context.Background())
 	
 	maxNumberOfGames := 5
 	workChan := make(chan *MessageCreate, maxNumberOfGames)
@@ -85,13 +85,13 @@ func main() {
 	}
 	
 	// filters
-    filter, _ := std.NewMsgFilter(client)
+    filter, _ := std.NewMsgFilter(context.Background(), client)
     filter.SetPrefix("!")
     
-    chessFilter, _ := std.NewMsgFilter(client)
+    chessFilter, _ := std.NewMsgFilter(context.Background(), client)
     chessFilter.SetPrefix("chess")
     
-    moveFilter, _ := std.NewMsgFilter(client)
+    moveFilter, _ := std.NewMsgFilter(context.Background(), client)
     moveFilter.SetPrefix("move")
 	
 	// command: !chess move e2e4
@@ -115,7 +115,7 @@ func main() {
 		workChan, ctrl)
 }
 
-func chessWorker(s disgord.Session, workChan chan *disgord.MessageCreate, ctrl *&disgord.Ctrl) {
+func chessWorker(s disgord.Session, workChan chan *disgord.MessageCreate, ctrl *disgord.Ctrl) {
 	for {
 		var msg *disgord.Message
 		select {

@@ -15,7 +15,7 @@ Out of the box you can use the default logger, a really bad wrapper of zap, wher
 ```go
 client := disgord.New(disgord.Config{
     BotToken: "secret",
-    Logger: disgord.DefaultLogger(false) // debugging disabled
+    Logger:   disgord.DefaultLogger(false), // debugging disabled
 })
 ```
 
@@ -23,11 +23,11 @@ eg. sirupsen/logrus and op/go-logging also implements this interface, so you can
 ```go
 client := disgord.New(disgord.Config{
     BotToken: "secret",
-    Logger: logrus.New(),
+    Logger:   logrus.New(),
 })
 client2 := disgord.New(disgord.Config{
     BotToken: "secret",
-    Logger: logging.MustGetLogger("example"),
+    Logger:   logging.MustGetLogger("example"),
 })
 ```
 
@@ -47,6 +47,6 @@ func (l *MyLogger) Error(v ...interface{}) {...}
 // main.go
 client := disgord.New(disgord.Config{
     BotToken: "secret",
-    Logger: &MyLogger{},
+    Logger:   &MyLogger{},
 })
 ```
