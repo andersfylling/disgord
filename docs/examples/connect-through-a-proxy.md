@@ -5,6 +5,7 @@ In this example we will be using SOCKS5, but any custom implementation can be us
 package main
 
 import (
+    "context"
 	"os"
 
 	"github.com/andersfylling/disgord"
@@ -19,11 +20,11 @@ func main() {
 	
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
-		Proxy: p, // Anything satisfying the proxy.Dialer interface will work
-		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+		Proxy:    p, // Anything satisfying the proxy.Dialer interface will work
+		Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
 	})
 
-	if err := client.Connect(); err != nil {
+	if err := client.Connect(context.Background()); err != nil {
 		panic(err)
 	}
 

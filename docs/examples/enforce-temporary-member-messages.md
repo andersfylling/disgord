@@ -5,6 +5,7 @@ If you ever want to create a channel where the messages are deleted after N seco
 package main
 
 import (
+    "context"
 	"fmt"
 	"os"
 	"time"
@@ -17,12 +18,12 @@ const MessageLifeTime = 5 // seconds
 
 func deleteDeadMessage(session disgord.Session, message *disgord.Message, lifetime time.Duration) {
 	<-time.After(lifetime)
-	if err := session.DeleteFromDiscord(message); err != nil {
+	if err := session.DeleteFromDiscord(context.Background(), message); err != nil {
 		fmt.Println(err)
 	}
 }
 
-// please consider using a que instead
+// please consider using a queue instead
 func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) {
 	lifetime := time.Duration(MessageLifeTime) * time.Second
 	go deleteDeadMessage(session, evt.Message, lifetime)
@@ -31,11 +32,11 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
-		Logger: disgord.DefaultLogger(false), // optional logging, debug=false
+		Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
 	})
-    defer client.StayConnectedUntilInterrupted()
+    defer client.StayConnectedUntilInterrupted(context.Background())
 	
-	filter, _ := std.NewMsgFilter(client)
+	filter, _ := std.NewMsgFilter(context.Background(), client)
     filter.SetMinPermissions(disgord.PermissionManageMessages) // make sure u can actually delete messages
 
 	client.On(disgord.EvtMessageCreate, filter.HasPermissions, autoDeleteNewMessages)
