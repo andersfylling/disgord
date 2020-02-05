@@ -6,10 +6,10 @@ package main
 
 import (
     "context"
-	"os"
+    "os"
 
-	"github.com/andersfylling/disgord"
-	"golang.org/x/net/proxy"
+    "github.com/andersfylling/disgord"
+    "golang.org/x/net/proxy"
 )
 
 func main() {

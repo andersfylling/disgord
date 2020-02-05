@@ -6,12 +6,12 @@ package main
 
 import (
     "context"
-	"fmt"
-	"os"
-	"time"
+    "fmt"
+    "os"
+    "time"
 
-	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/std"
+    "github.com/andersfylling/disgord"
+    "github.com/andersfylling/disgord/std"
 )
 
 const MessageLifeTime = 5 // seconds

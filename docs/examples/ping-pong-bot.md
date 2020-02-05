@@ -5,10 +5,10 @@ So the time has come where you want to be a bot engineer huh? In this article yo
 package main
 
 import (
-	"context"
+    "context"
     "os"
 
-	"github.com/andersfylling/disgord"
+    "github.com/andersfylling/disgord"
 )
 
 func main() {
@@ -36,11 +36,11 @@ Disgord also offers middlewares and a std package to checking the msg content
 package main
 
 import (
-	"context"
+    "context"
     "os"
 
-	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/std"
+    "github.com/andersfylling/disgord"
+    "github.com/andersfylling/disgord/std"
 )
 
 const NewMessage = disgord.EvtMessageCreate

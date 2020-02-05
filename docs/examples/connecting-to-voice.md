@@ -8,9 +8,9 @@ package main
 
 import (
     "context"
-	"os"
+    "os"
 
-	"github.com/andersfylling/disgord"
+    "github.com/andersfylling/disgord"
 )
 
 func main() {
