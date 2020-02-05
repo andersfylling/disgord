@@ -7,10 +7,10 @@ you should never do this in actual code**
 package main
 
 import (
-    "context"
-    "os"
+	"context"
+	"os"
 
-    "github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord"
 )
 
 func main() {

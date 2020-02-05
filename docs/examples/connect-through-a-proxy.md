@@ -5,11 +5,11 @@ In this example we will be using SOCKS5, but any custom implementation can be us
 package main
 
 import (
-    "context"
-    "os"
+	"context"
+	"os"
 
-    "github.com/andersfylling/disgord"
-    "golang.org/x/net/proxy"
+	"github.com/andersfylling/disgord"
+	"golang.org/x/net/proxy"
 )
 
 func main() {

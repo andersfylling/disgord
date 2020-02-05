@@ -5,13 +5,13 @@ If you ever want to create a channel where the messages are deleted after N seco
 package main
 
 import (
-    "context"
-    "fmt"
-    "os"
-    "time"
+	"context"
+	"fmt"
+	"os"
+	"time"
 
-    "github.com/andersfylling/disgord"
-    "github.com/andersfylling/disgord/std"
+	"github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord/std"
 )
 
 const MessageLifeTime = 5 // seconds
