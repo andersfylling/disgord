@@ -451,6 +451,12 @@ func (c *Client) Suspend() (err error) {
 
 // DisconnectOnInterrupt wait until a termination signal is detected
 func (c *Client) DisconnectOnInterrupt() (err error) {
+	// catches panic when being called as a deferred function
+	if r := recover(); r != nil {
+		panic("unable to connect due to above error")
+		return
+	}
+
 	<-CreateTermSigListener()
 	return c.Disconnect()
 }
@@ -458,6 +464,12 @@ func (c *Client) DisconnectOnInterrupt() (err error) {
 // StayConnectedUntilInterrupted is a simple wrapper for connect, and disconnect that listens for system interrupts.
 // When a error happens you can terminate the application without worries.
 func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) {
+	// catches panic when being called as a deferred function
+	if r := recover(); r != nil {
+		panic("unable to connect due to above error")
+		return
+	}
+
 	if err = c.Connect(ctx); err != nil {
 		c.log.Error(err)
 		return err
