@@ -454,7 +454,6 @@ func (c *Client) DisconnectOnInterrupt() (err error) {
 	// catches panic when being called as a deferred function
 	if r := recover(); r != nil {
 		panic("unable to connect due to above error")
-		return
 	}
 
 	<-CreateTermSigListener()
@@ -467,7 +466,6 @@ func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) 
 	// catches panic when being called as a deferred function
 	if r := recover(); r != nil {
 		panic("unable to connect due to above error")
-		return
 	}
 
 	if err = c.Connect(ctx); err != nil {
