@@ -33,6 +33,7 @@ func TestRequest_RateLimitID(t *testing.T) {
 		"/channels/540519296640614416/messages/540519319814275089/reactions/🥰/948387463586345":                                                   "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/{id}",
 		"/channels/540519296640614416/messages/540519319814275089/reactions/🥰/@me":                                                               "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/@me",
 		"/channels/486833611564253186/messages/540519319814275089/reactions/🥺/@me":                                                               "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/🥺 /@me":                                                              "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
 	}
 
 	for endpoint, wants := range table {

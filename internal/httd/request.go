@@ -29,7 +29,6 @@ const (
 var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
 var regexpURLReactionEmoji = regexp.MustCompile(`\/channels\/[0-9]+\/messages\/\{id\}\/reactions\/` + RegexpEmoji + `\/?`)
 var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpEmoji)
-var regexpURLReactionEmojiUnicodeSegment = regexp.MustCompile(`\/reactions\/` + RegexpEmojiUnicode)
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
