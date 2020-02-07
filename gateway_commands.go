@@ -51,10 +51,14 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x gateway.CmdPayload, err
 			SelfDeaf:  t.SelfDeaf,
 		}
 	case *UpdateStatusPayload:
+		status, err := gateway.StringToStatusType(t.Status)
+		if err != nil {
+			return nil, err
+		}
 		x = &gateway.UpdateStatusPayload{
 			Since:  t.Since,
 			Game:   t.Game,
-			Status: t.Status,
+			Status: status,
 			AFK:    t.AFK,
 		}
 	default:
@@ -117,6 +121,14 @@ var _ gatewayCmdPayload = (*UpdateVoiceStatePayload)(nil)
 func (u *UpdateVoiceStatePayload) isGatewayCmdPayload() bool { return true }
 
 // #################################################################
+
+const (
+	StatusOnline  = string(gateway.StatusOnline)
+	StatusOffline = string(gateway.StatusOffline)
+	StatusDnd     = string(gateway.StatusDND)
+	StatusIdle    = string(gateway.StatusIdle)
+)
+
 // UpdateStatusPayload payload for socket command UPDATE_STATUS.
 // see UpdateStatus
 //

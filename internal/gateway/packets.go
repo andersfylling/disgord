@@ -5,6 +5,7 @@ import (
 	"compress/zlib"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
@@ -151,6 +152,27 @@ var _ CmdPayload = (*UpdateVoiceStatePayload)(nil)
 
 func (u *UpdateVoiceStatePayload) isCmdPayload() bool { return true }
 
+type updateStatusPayloadStatus string
+
+const (
+	StatusOnline    updateStatusPayloadStatus = "online"
+	StatusDND       updateStatusPayloadStatus = "dnd"
+	StatusIdle      updateStatusPayloadStatus = "idle"
+	StatusInvisible updateStatusPayloadStatus = "invisible"
+	StatusOffline   updateStatusPayloadStatus = "offline"
+)
+
+func StringToStatusType(status string) (updateStatusPayloadStatus, error) {
+	switch updateStatusPayloadStatus(status) {
+	case StatusOnline, StatusIdle, StatusOffline, StatusDND:
+		return updateStatusPayloadStatus(status), nil
+	case "": // default value
+		return StatusOnline, nil
+	default:
+		return "", errors.New("invalid status value for Presence Status")
+	}
+}
+
 type UpdateStatusPayload struct {
 	// Since unix time (in milliseconds) of when the Client went idle, or null if the Client is not idle
 	Since *uint `json:"since"`
@@ -159,7 +181,7 @@ type UpdateStatusPayload struct {
 	Game interface{} `json:"game"`
 
 	// Status the user's new status
-	Status string `json:"status"`
+	Status updateStatusPayloadStatus `json:"status"`
 
 	// AFK whether or not the Client is afk
 	AFK bool `json:"afk"`

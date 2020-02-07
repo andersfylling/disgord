@@ -141,3 +141,58 @@ func TestFailOnPrematureEmit(t *testing.T) {
 		t.Fatal("Emit should have failed as no shards have been connected (initialised)")
 	}
 }
+
+func TestDefaultStatus(t *testing.T) {
+	<-time.After(6 * time.Second) // avoid identify abuse
+	c := disgord.New(disgord.Config{
+		BotToken:     token,
+		DisableCache: true,
+		Logger:       disgord.DefaultLogger(true),
+		Presence: &disgord.UpdateStatusPayload{
+			Status: disgord.StatusIdle,
+			Game: &disgord.Activity{
+				Name: "hello",
+			},
+		},
+	})
+	defer c.StayConnectedUntilInterrupted(context.Background())
+
+	done := make(chan bool, 2)
+	c.On(disgord.EvtPresenceUpdate, func(_ disgord.Session, evt *disgord.PresenceUpdate) {
+		if !evt.User.Bot {
+			return
+		}
+		usr, err := c.GetCurrentUser(context.Background())
+		if err != nil {
+			done <- false
+			return
+		}
+		if evt.User.ID != usr.ID {
+			return
+		}
+
+		if evt.Status != disgord.StatusIdle {
+			done <- false
+			return
+		}
+		if evt.Game == nil {
+			done <- false
+			return
+		}
+		if evt.Game.Name != "hello" {
+			done <- false
+			return
+		}
+
+		done <- true
+	})
+
+	select {
+	case <-time.After(10 * time.Second):
+		t.Fatal("unable to connect within time frame of 10s")
+	case success := <-done:
+		if !success {
+			t.Fatal("was unable to set bot presence")
+		}
+	}
+}

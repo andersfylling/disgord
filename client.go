@@ -37,6 +37,11 @@ func NewClient(conf Config) (*Client, error) {
 
 // NewClient creates a new Disgord Client and returns an error on configuration issues
 func createClient(conf *Config) (c *Client, err error) {
+	if conf.Presence != nil {
+		if _, err := gateway.StringToStatusType(conf.Presence.Status); err != nil {
+			return nil, fmt.Errorf("use a disgord value eg. disgord.StatusOnline: %w", err)
+		}
+	}
 	if conf.HTTPClient == nil {
 		// WARNING: do not set http.Client.Timeout (!)
 		conf.HTTPClient = &http.Client{}
@@ -402,17 +407,28 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		return err
 	}
 
-	sharding := gateway.NewShardMngr(gateway.ShardManagerConfig{
-		ShardConfig:        c.config.ShardConfig,
-		Logger:             c.config.Logger,
-		ShutdownChan:       c.config.shutdownChan,
-		DefaultBotPresence: c.config.Presence,
-		IgnoreEvents:       c.config.IgnoreEvents,
-		EventChan:          c.eventChan,
-		DisgordInfo:        LibraryInfo(),
-		ProjectName:        c.config.ProjectName,
-		BotToken:           c.config.BotToken,
-	})
+	shardMngrConf := gateway.ShardManagerConfig{
+		ShardConfig:  c.config.ShardConfig,
+		Logger:       c.config.Logger,
+		ShutdownChan: c.config.shutdownChan,
+		IgnoreEvents: c.config.IgnoreEvents,
+		EventChan:    c.eventChan,
+		DisgordInfo:  LibraryInfo(),
+		ProjectName:  c.config.ProjectName,
+		BotToken:     c.config.BotToken,
+	}
+	if c.config.Presence != nil {
+		// assumption: error is handled when creating a new client
+		status, _ := gateway.StringToStatusType(c.config.Presence.Status)
+		shardMngrConf.DefaultBotPresence = &gateway.UpdateStatusPayload{
+			Since:  c.config.Presence.Since,
+			Game:   c.config.Presence.Game,
+			Status: status,
+			AFK:    c.config.Presence.AFK,
+		}
+	}
+
+	sharding := gateway.NewShardMngr(shardMngrConf)
 
 	c.setupConnectEnv()
 

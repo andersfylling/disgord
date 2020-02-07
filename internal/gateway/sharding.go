@@ -210,7 +210,7 @@ type ShardManagerConfig struct {
 	RESTClient GatewayBotGetter
 
 	// user specific
-	DefaultBotPresence interface{}
+	DefaultBotPresence *UpdateStatusPayload
 	ProjectName        string
 	GuildSubscriptions bool
 }

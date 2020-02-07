@@ -104,7 +104,7 @@ type EvtConfig struct {
 
 	discordErrListener discordErrListener
 
-	Presence interface{}
+	Presence *UpdateStatusPayload
 
 	// Endpoint for establishing socket connection. Either endpoints, `Gateway` or `Gateway Bot`, is used to retrieve
 	// a valid socket endpoint from Discord
