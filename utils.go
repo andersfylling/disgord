@@ -41,21 +41,24 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 		return errors.New("missing handler(s)")
 	}
 
-	for ; i < len(inputs); i++ {
-		if _, ok = inputs[i].(HandlerCtrl); ok {
-			i--
+	for j := i; j < len(inputs); j++ {
+		if _, ok = inputs[j].(HandlerCtrl); ok {
+			// first element after middlewares and last in inputs
+			if j == i && len(inputs)-1 == j {
+				return errors.New("missing handler(s)")
+			}
+			// not last
+			if len(inputs)-1 != j {
+				return errors.New("a handlerCtrl's can only be at the end of the definition and only one")
+			}
 			break
 		}
-
-		if !isHandler(inputs[i]) {
-			return errors.New("invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
+		if _, ok = inputs[j].(Ctrl); ok {
+			return errors.New("want disgord.HandlerCtrl not disgord.Ctrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
 		}
-	}
 
-	// check for extra controllers
-	for j := len(inputs) - 2; j >= i; j-- {
-		if _, ok = inputs[j].(HandlerCtrl); ok {
-			return errors.New("a handlerCtrl's can only be at the end of the definition. Expected a handler")
+		if !isHandler(inputs[j]) {
+			return errors.New("invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
 		}
 	}
 
