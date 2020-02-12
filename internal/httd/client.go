@@ -20,7 +20,7 @@ const (
 	BaseURL = "https://discordapp.com/api"
 
 	RegexpURLSnowflakes = `\/([0-9]+)\/?`
-	RegexpEmoji         = `([\x{D83C}-\x{DFFF}|\x{1F600}-\x{1F6FF}|[\x{2600}-\x{26FF}]|\:[a-zA-Z0-9_]+\:|[a-zA-Z0-9_]+\:[0-9]+)\s?`
+	RegexpEmoji         = `(\x{D83C}-\x{DFFF}|\x{1F600}-\x{1F6FF}|[\x{2600}-\x{26FF}]|\:[a-zA-Z0-9_]+\:|[a-zA-Z0-9_]+\:[0-9]+)\s?`
 
 	// Header
 	AuthorizationFormat = "Bot %s"
