@@ -43,7 +43,7 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 
 	for j := i; j < len(inputs); j++ {
 		if _, ok = inputs[j].(HandlerCtrl); ok {
-			// first element after middlewares and last input
+			// first element after middlewares and last in inputs
 			if j == i && len(inputs)-1 == j {
 				return errors.New("missing handler(s)")
 			}
@@ -52,6 +52,9 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 				return errors.New("a handlerCtrl's can only be at the end of the definition and only one")
 			}
 			break
+		}
+		if _, ok = inputs[j].(Ctrl); ok {
+			return errors.New("want disgord.HandlerCtrl not disgord.Ctrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
 		}
 
 		if !isHandler(inputs[j]) {

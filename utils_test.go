@@ -7,7 +7,7 @@ import (
 func TestValidateHandlerInputs(t *testing.T) {
 	var testHandler Handler = func() {}
 	var testMiddleware Middleware = func(i interface{}) interface{} { return nil }
-	var testCtrl HandlerCtrl = &Ctrl{Runs: 1}
+	var testCtrl HandlerCtrl = &Ctrl{}
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("handler", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestValidateHandlerInputs(t *testing.T) {
 			}
 			t.Fail()
 		})
-		t.Run("ctrl handler", func(t *testing.T) {
+		t.Run("ctrl handler ctrl", func(t *testing.T) {
 			err := ValidateHandlerInputs(testCtrl, testHandler, testCtrl)
 			if err != nil {
 				if err.Error() == "a handlerCtrl's can only be at the end of the definition and only one" {
@@ -158,6 +158,31 @@ func TestValidateHandlerInputs(t *testing.T) {
 			err := ValidateHandlerInputs(testHandler, testInvalidHandler)
 			if err != nil {
 				if err.Error() == "invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead" {
+					return
+				}
+				t.Error(err)
+			}
+			t.Fail()
+		})
+	})
+
+	t.Run("invalid ctrl", func(t *testing.T) {
+		testInvalidCtrl := Ctrl{}
+
+		t.Run("invalidCtrl", func(t *testing.T) {
+			err := ValidateHandlerInputs(testInvalidCtrl)
+			if err != nil {
+				if err.Error() == "want disgord.HandlerCtrl not disgord.Ctrl. Try to use &disgord.Ctrl instead of disgord.Ctrl" {
+					return
+				}
+				t.Error(err)
+			}
+			t.Fail()
+		})
+		t.Run("handler invalidCtrl", func(t *testing.T) {
+			err := ValidateHandlerInputs(testHandler, testInvalidCtrl)
+			if err != nil {
+				if err.Error() == "want disgord.HandlerCtrl not disgord.Ctrl. Try to use &disgord.Ctrl instead of disgord.Ctrl" {
 					return
 				}
 				t.Error(err)
