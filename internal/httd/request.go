@@ -27,6 +27,7 @@ const (
 )
 
 var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
+var regexpURLReactionPrefix = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/messages\/\{id\}\/reactions\/`)
 var regexpURLReactionEmoji = regexp.MustCompile(`\/channels\/[0-9]+\/messages\/\{id\}\/reactions\/` + RegexpEmoji + `\/?`)
 var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpEmoji)
 
@@ -102,10 +103,25 @@ func (r *Request) HashEndpoint() string {
 	}
 
 	// check for reaction endpoints, convert emoji identifier to {emoji}
-	if regexpURLReactionEmoji.FindAllString(buffer, -1) != nil {
-		reactionEmojis := regexpURLReactionEmojiSegment.FindAllString(buffer, -1)
-		for i := range reactionEmojis {
-			buffer = strings.ReplaceAll(buffer, reactionEmojis[i], "/reactions/{emoji}")
+	reactionPrefixMatch := regexpURLReactionPrefix.FindAllString(buffer, -1)
+	if reactionPrefixMatch != nil {
+		if regexpURLReactionEmoji.FindAllString(buffer, -1) != nil {
+			reactionEmojis := regexpURLReactionEmojiSegment.FindAllString(buffer, -1)
+			for i := range reactionEmojis {
+				buffer = strings.ReplaceAll(buffer, reactionEmojis[i], "/reactions/{emoji}")
+			}
+		} else {
+			// corner case for urls with emojis
+			suffix := buffer[len(reactionPrefixMatch[0]):]
+			until := len(suffix)
+			for i, rune := range suffix {
+				if rune == '/' {
+					until = i
+					break
+				}
+			}
+			newSuffix := "{emoji}" + suffix[until:]
+			buffer = buffer[:len(buffer)-len(suffix)] + newSuffix
 		}
 	}
 
