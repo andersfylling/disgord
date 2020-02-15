@@ -14,6 +14,7 @@ import (
 
 func TestVoice_ChangeChannel(t *testing.T) {
 	<-time.After(6 * time.Second) // avoid identify abuse
+	deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(15*time.Second))
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
@@ -58,12 +59,20 @@ func TestVoice_ChangeChannel(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		<-connectedToVoiceChannel
+		select {
+		case <-connectedToVoiceChannel:
+		case <-deadline.Done():
+			panic("connectedToVoiceChannel did not emit")
+		}
 		if err = v.MoveTo(newChannelID); err != nil {
 			t.Fatal(err)
 		}
 
-		<-successfullyMoved
+		select {
+		case <-successfullyMoved:
+		case <-deadline.Done():
+			panic("successfullyMoved did not emit")
+		}
 		defer func() {
 			close(done)
 		}()
@@ -90,5 +99,10 @@ func TestVoice_ChangeChannel(t *testing.T) {
 		testFinished.Done()
 	}()
 	testFinished.Wait()
-	<-done
+
+	select {
+	case <-done:
+	case <-deadline.Done():
+		panic("done did not emit")
+	}
 }
