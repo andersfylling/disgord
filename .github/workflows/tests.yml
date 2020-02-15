@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.13', '1.14']
+        go: ['1.13']
     steps:
       - name: Setup Go
         uses: actions/setup-go@v1
