@@ -90,7 +90,8 @@ func TestLtBucket_updateAfterResponse(t *testing.T) {
 		if bucket.remaining != remaining {
 			t.Errorf("remaining did not update. Got %d, wants %d", bucket.remaining, remaining)
 		}
-		if bucket.discordResetTime.Nanosecond()/int(time.Millisecond) != reset.Nanosecond()/int(time.Millisecond) {
+		diff := bucket.discordResetTime.Nanosecond()/int(time.Millisecond) - reset.Nanosecond()/int(time.Millisecond)
+		if diff > 2 || diff < -2 {
 			t.Errorf("reset did not update. Got %s, wants %s", bucket.discordResetTime.String(), reset.String())
 		}
 	})
