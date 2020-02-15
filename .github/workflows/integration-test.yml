@@ -28,5 +28,5 @@ jobs:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
         run: go test -v -race -tags=integration -coverprofile=coverage.txt -covermode=atomic ./...
       - name: Codecov
-        run: bash <(curl -s https://codecov.io/bash) -t ${{secrets.CODECOV_TOKEN}} -B develop -f "./coverage.txt" -Z
+        run: bash <(curl -s https://codecov.io/bash) -t ${{secrets.CODECOV_TOKEN}} -B develop -c -F integration -f "./coverage.txt" -Z
 
