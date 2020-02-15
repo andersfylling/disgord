@@ -155,7 +155,7 @@ func TestDefaultStatus(t *testing.T) {
 			},
 		},
 	})
-	defer c.StayConnectedUntilInterrupted(context.Background())
+	defer c.Disconnect()
 
 	done := make(chan bool, 2)
 	c.On(disgord.EvtPresenceUpdate, func(_ disgord.Session, evt *disgord.PresenceUpdate) {
@@ -186,10 +186,11 @@ func TestDefaultStatus(t *testing.T) {
 
 		done <- true
 	})
+	_ = c.Connect(context.Background())
 
 	select {
-	case <-time.After(10 * time.Second):
-		t.Fatal("unable to connect within time frame of 10s")
+	case <-time.After(20 * time.Second):
+		t.Fatal("unable to connect within time frame of 20s")
 	case success := <-done:
 		if !success {
 			t.Fatal("was unable to set bot presence")
