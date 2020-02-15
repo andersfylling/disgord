@@ -4,10 +4,10 @@ jobs:
   none:
     name: No build tags
     runs-on: ubuntu-latest
-      strategy:
-        fail-fast: true
-        matrix:
-          go: ['1.13', '1.14']
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.13', '1.14']
     steps:
       - name: Set up Go ${{ matrix.go }}
         uses: actions/setup-go@v1
