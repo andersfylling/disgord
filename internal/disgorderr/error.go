@@ -20,5 +20,8 @@ type Err struct {
 var _ error = (*Err)(nil)
 
 func (e *Err) Error() string {
-	return e.msg + ": " + e.cause.Error()
+	if e.cause != nil {
+		return e.msg + ": " + e.cause.Error()
+	}
+	return e.msg
 }

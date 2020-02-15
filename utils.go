@@ -7,6 +7,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 )
 
@@ -30,7 +31,9 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 	for j := i; j < len(inputs); j++ {
 		if _, ok = inputs[j].(Middleware); ok {
 			if j != i {
-				return errors.New("middlewares can only be in the beginning. Grouped together")
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeUnexpectedMiddleware,
+					"middlewares can only be in the beginning. Grouped together")
 			}
 			i++
 		}
@@ -38,27 +41,35 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 
 	// there should now be N handlers, 0 < N.
 	if len(inputs) <= i {
-		return errors.New("missing handler(s)")
+		return disgorderr.NewHandlerSpecErr(
+			disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
 	}
 
 	for j := i; j < len(inputs); j++ {
 		if _, ok = inputs[j].(HandlerCtrl); ok {
 			// first element after middlewares and last in inputs
 			if j == i && len(inputs)-1 == j {
-				return errors.New("missing handler(s)")
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
 			}
 			// not last
 			if len(inputs)-1 != j {
-				return errors.New("a handlerCtrl's can only be at the end of the definition and only one")
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeUnexpectedCtrl,
+					"a handlerCtrl's can only be at the end of the definition and only one")
 			}
 			break
 		}
 		if _, ok = inputs[j].(Ctrl); ok {
-			return errors.New("want disgord.HandlerCtrl not disgord.Ctrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
+			return disgorderr.NewHandlerSpecErr(
+				disgorderr.HandlerSpecErrCodeNotHandlerCtrlImpl,
+				"does not implement disgord.HandlerCtrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
 		}
 
 		if !isHandler(inputs[j]) {
-			return errors.New("invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
+			return disgorderr.NewHandlerSpecErr(
+				disgorderr.HandlerSpecErrCodeUnknownHandlerSignature,
+				"invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
 		}
 	}
 
