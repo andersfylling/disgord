@@ -144,22 +144,24 @@ func TestFailOnPrematureEmit(t *testing.T) {
 
 func TestDefaultStatus(t *testing.T) {
 	<-time.After(6 * time.Second) // avoid identify abuse
+	status := &disgord.UpdateStatusPayload{
+		Status: disgord.StatusIdle,
+		Game: &disgord.Activity{
+			Name: "hello",
+		},
+	}
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
 		Logger:       disgord.DefaultLogger(true),
-		Presence: &disgord.UpdateStatusPayload{
-			Status: disgord.StatusIdle,
-			Game: &disgord.Activity{
-				Name: "hello",
-			},
-		},
+		Presence:     status,
 	})
 	defer c.Disconnect()
 
 	done := make(chan bool, 2)
 	c.On(disgord.EvtPresenceUpdate, func(_ disgord.Session, evt *disgord.PresenceUpdate) {
 		if !evt.User.Bot {
+			c.Logger().Info("was not bot")
 			return
 		}
 		usr, err := c.GetCurrentUser(context.Background())
@@ -187,13 +189,19 @@ func TestDefaultStatus(t *testing.T) {
 		done <- true
 	})
 	_ = c.Connect(context.Background())
+	if _, err := c.Emit(disgord.UpdateStatus, status); err != nil {
+		t.Fatal(err)
+	}
 
 	select {
-	case <-time.After(20 * time.Second):
-		t.Fatal("unable to connect within time frame of 20s")
+	case <-time.After(10 * time.Second):
+		// yay
+		// if no presence update is fired after calling emit,
+		// that means that no change took place.
+		// TODO: this test is fragile
 	case success := <-done:
-		if !success {
-			t.Fatal("was unable to set bot presence")
+		if success {
+			t.Fatal("unable to set presence at boot")
 		}
 	}
 }
