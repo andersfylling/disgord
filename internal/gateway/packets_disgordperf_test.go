@@ -1,4 +1,4 @@
-// +build disgordperf
+// +build disgordperf,!integration
 
 package gateway
 
