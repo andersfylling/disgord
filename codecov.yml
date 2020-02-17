@@ -9,11 +9,6 @@ coverage:
         target: 60%
         flags: integration
 
-flags:
-  integration:
-    paths:
-      - test/
-
 ignore:
 - "^.*_gen.go$"
 - "^.*_string.go$"
