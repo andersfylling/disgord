@@ -170,11 +170,7 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 		return err
 	}
 	c.Lock()
-	// From: https://discordapp.com/developers/docs/topics/voice-connections#heartbeating
-	// There is currently a bug in the Hello payload heartbeat interval.
-	// Until it is fixed, please take your heartbeat interval as `heartbeat_interval` * .75.
-	// TODO This warning will be removed and a changelog published when the bug is fixed.
-	c.heartbeatInterval = uint(float64(helloPk.HeartbeatInterval) * .75)
+	c.heartbeatInterval = helloPk.HeartbeatInterval
 	c.Unlock()
 
 	c.activateHeartbeats <- true
