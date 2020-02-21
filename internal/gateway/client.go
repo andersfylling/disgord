@@ -653,6 +653,16 @@ func (c *client) pulsate(ctx context.Context) {
 
 		select {
 		case <-ticker.C:
+			// in case there is a race between when the ticker was started and the
+			// heartbeat interval was updated
+			c.RLock()
+			interval2 := time.Millisecond * time.Duration(c.heartbeatInterval)
+			if interval != interval2 {
+				ticker.Stop()
+				interval = interval2
+				ticker = time.NewTicker(interval)
+			}
+			c.RUnlock()
 			continue
 		case <-ctx.Done():
 		}
