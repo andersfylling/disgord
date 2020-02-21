@@ -22,9 +22,6 @@ func main() {
 }
 
 func run(client *disgord.Client) {
-	// connect and disconnect on system interrupt
-	defer client.StayConnectedUntilInterrupted(context.Background())
-
 	mdlw, err := NewMiddlewareHolder(client, context.Background())
 	if err != nil {
 		panic(err)
@@ -35,6 +32,9 @@ func run(client *disgord.Client) {
 		mdlw.filterOutHumans,
 		mdlw.filterOutOthersMsgs,
 		autoDeleteNewMessages)
+	
+	// connect now, and disconnect on system interrupt
+	client.StayConnectedUntilInterrupted(context.Background())
 }
 
 //////////////////////////////////////////////////////
