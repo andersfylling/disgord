@@ -376,12 +376,16 @@ func (v *voiceImpl) watcherDiscordCloseEvt() {
 		// TODO: can this ever fire?
 		return
 	}
+	v.ready.Store(false)
 
 	close(v.close)
-	close(v.send)
+	// clear send channel
+	for range v.send {
+	}
 
 	_ = v.udp.Close()
 	_ = v.ws.Disconnect()
+	close(v.send)
 
 	v.c.Logger().Info("Discord closed voice connection")
 }
@@ -396,6 +400,9 @@ func (v *voiceImpl) Close() (err error) {
 
 	defer func() {
 		close(v.close)
+		// clear send channel
+		for range v.send {
+		}
 		close(v.send)
 	}()
 
