@@ -73,6 +73,7 @@ func TestVoice_ChangeChannel(t *testing.T) {
 		case <-deadline.Done():
 			panic("successfullyMoved did not emit")
 		}
+
 		defer func() {
 			close(done)
 		}()

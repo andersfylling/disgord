@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
-	"go.uber.org/atomic"
 
 	"golang.org/x/crypto/nacl/secretbox"
 )
@@ -373,14 +374,15 @@ func (v *voiceImpl) watcherDiscordCloseEvt() {
 	defer v.Unlock()
 
 	if !v.ready.Load() {
-		// TODO: can this ever fire?
 		return
 	}
 	v.ready.Store(false)
 
 	close(v.close)
 	// clear send channel
-	for range v.send {
+	select {
+	case <-v.send:
+	default:
 	}
 
 	_ = v.udp.Close()
@@ -401,7 +403,9 @@ func (v *voiceImpl) Close() (err error) {
 	defer func() {
 		close(v.close)
 		// clear send channel
-		for range v.send {
+		select {
+		case <-v.send:
+		default:
 		}
 		close(v.send)
 	}()
