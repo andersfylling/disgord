@@ -14,7 +14,7 @@ import (
 
 func TestVoice_ChangeChannel(t *testing.T) {
 	<-time.After(6 * time.Second) // avoid identify abuse
-	deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(15*time.Second))
+	deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(25*time.Second))
 	c := disgord.New(disgord.Config{
 		BotToken:     token,
 		DisableCache: true,
