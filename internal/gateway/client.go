@@ -519,6 +519,7 @@ func (c *client) receiver(ctx context.Context) {
 					// https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
 					c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
 					_ = c.Disconnect()
+					close(c.receiveChan) // notify client
 					reconnect = false
 				default:
 				}
