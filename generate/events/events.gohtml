@@ -39,4 +39,29 @@ const Evt{{.}} = event.{{.}} {{end}}
 func (h *{{.}}) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
+type Handler{{.}} = func(Session, *{{.}})
+
+func (c *Client) On{{.}}(mdlws []Middleware, handlers []Handler{{.}}, ctrl ...HandlerCtrl) {
+    var inputs []interface{}
+    for mdlw := range mdlws {
+        inputs = append(inputs, mdlw)
+    }
+    for handler := range handlers {
+        inputs = append(inputs, handler)
+    }
+    if len(ctrl) > 0 {
+        inputs = append(inputs, ctrl[0])
+    }
+
+    c.On(Evt{{.}}, inputs...)
+}
+
 // --------------------------- {{end}}
+
+type SocketHandlerRegistrators interface {
+{{range .}}
+{{- if .IsDiscordEvent}}
+    On{{.}}([]Middleware, []Handler{{.}}, ...HandlerCtrl)
+{{- end}}
+{{- end}}
+}

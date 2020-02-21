@@ -52,6 +52,7 @@ type SocketHandler interface {
 	//  // a handler that only runs for events within the first 10 minutes
 	//  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
 	On(event string, inputs ...interface{})
+	SocketHandlerRegistrators // type safe handler registration
 
 	Emitter
 }
