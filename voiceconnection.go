@@ -35,16 +35,19 @@ type VoiceConnection interface {
 	StopSpeaking() error
 
 	// SendOpusFrame sends a single frame of opus data to the UDP server. Frames are sent every 20ms with 960 samples (48kHz).
-	SendOpusFrame(data []byte)
+	//
+	// if the bot has been disconnected or the channel removed, an error will be returned. The voice object must then be properly dealt with to avoid further issues.
+	SendOpusFrame(data []byte) error
 	// SendDCA reads from a Reader expecting a DCA encoded stream/file and sends them as frames.
 	SendDCA(r io.Reader) error
 
 	// MoveTo moves from the current voice channel to the given.
 	MoveTo(channelID Snowflake) error
 
-	// Close closes the websocket and UDP connection. This VoiceConnection interface will no longer be usable and will
-	// panic if any other functions are called beyond this point. It is the callers responsibility to ensure there are
-	// no concurrent calls to any other methods of this interface after calling Close.
+	// Close closes the websocket and UDP connection. This VoiceConnection interface will no
+	// longer be usable.
+	// It is the callers responsibility to ensure there are no concurrent calls to any other
+	// methods of this interface after calling Close.
 	Close() error
 }
 
@@ -157,6 +160,7 @@ waiter:
 			if v.udp != nil {
 				_ = v.udp.Close()
 			}
+			close(v.close)
 		}
 	}(&voice)
 
@@ -240,6 +244,7 @@ waiter:
 	voice.ready.Store(true)
 
 	go voice.opusSendLoop()
+	go voice.watcherDiscordCloseEvt()
 
 	ret = &voice
 	return
@@ -288,7 +293,7 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	defer v.Unlock()
 
 	if !v.ready.Load() {
-		panic("Attempting to interact with a closed voice connection")
+		return errors.New("attempting to interact with a closed voice connection")
 	}
 
 	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
@@ -297,20 +302,17 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	})
 }
 
-func (v *voiceImpl) onForcedDisconnected() {
-
-}
-
-func (v *voiceImpl) SendOpusFrame(data []byte) {
+func (v *voiceImpl) SendOpusFrame(data []byte) error {
 	if !v.ready.Load() {
-		panic("Attempting to send to a closed voice connection")
+		return errors.New("attempting to send to a closed voice connection")
 	}
 	v.send <- data
+	return nil
 }
 
 func (v *voiceImpl) SendDCA(r io.Reader) error {
 	if !v.ready.Load() {
-		panic("Attempting to send to a closed voice connection")
+		return errors.New("attempting to send to a closed voice connection")
 	}
 
 	var sampleSize uint16
@@ -340,7 +342,7 @@ func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	defer v.Unlock()
 
 	if !v.ready.Load() {
-		panic("Attempting to move in a closed Voice Connection")
+		return errors.New("attempting to move in a closed Voice Connection")
 	}
 
 	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
@@ -353,12 +355,43 @@ func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	return nil
 }
 
+func (v *voiceImpl) watcherDiscordCloseEvt() {
+	for {
+		var open bool
+		select {
+		case <-v.close:
+			return
+		case _, open = <-v.ws.Receive():
+			// also drains for any incoming data..
+		}
+		if !open {
+			break
+		}
+	}
+
+	v.Lock()
+	defer v.Unlock()
+
+	if !v.ready.Load() {
+		// TODO: can this ever fire?
+		return
+	}
+
+	close(v.close)
+	close(v.send)
+
+	_ = v.udp.Close()
+	_ = v.ws.Disconnect()
+
+	v.c.Logger().Info("Discord closed voice connection")
+}
+
 func (v *voiceImpl) Close() (err error) {
 	v.Lock()
 	defer v.Unlock()
 
 	if !v.ready.Load() {
-		panic("Attempting to close a closed Voice Connection")
+		return errors.New("attempting to close a closed Voice Connection")
 	}
 
 	defer func() {

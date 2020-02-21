@@ -93,6 +93,7 @@ func (c *VoiceClient) setupBehaviors() {
 		addresses: discordOperations,
 		actions: behaviorActions{
 			opcode.VoiceReady:              c.onReady,
+			opcode.VoiceResumed:            c.onResumed,
 			opcode.VoiceHeartbeat:          c.onHeartbeatRequest,
 			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
 			opcode.VoiceHello:              c.onHello,
@@ -126,6 +127,23 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 		ch <- readyPk
 	} else {
 		panic("once channel for Ready was missing")
+	}
+	return nil
+}
+
+func (c *VoiceClient) onResumed(v interface{}) (err error) {
+	p := v.(*DiscordPacket)
+
+	resumedPk := &voicePacket{}
+	if err = util.Unmarshal(p.Data, resumedPk); err != nil {
+		return err
+	}
+
+	// TODO: use resumed instead..
+	if ch := c.onceChannels.Acquire(opcode.VoiceReady); ch != nil {
+		ch <- resumedPk
+	} else {
+		panic("once channel for Resumed was missing")
 	}
 	return nil
 }
@@ -219,7 +237,9 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 
 	waitingChan := make(chan interface{}, 2)
 	c.onceChannels.Add(opcode.VoiceReady, waitingChan)
+	// TODO: explicitly add resumed as well
 	defer func() {
+		// cleanup
 		c.onceChannels.Acquire(opcode.VoiceReady)
 		close(waitingChan)
 	}()
