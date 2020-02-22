@@ -50,6 +50,62 @@ func ensure(inputs ...interface{}) {
 
 //////////////////////////////////////////////////////
 //
+// Tests
+//
+//////////////////////////////////////////////////////
+
+func TestOn(t *testing.T) {
+	c := New(Config{
+		BotToken:     "sdkjfhdksfhskdjfhdkfjsd",
+		DisableCache: true,
+	})
+
+	t.Run("normal Session", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("should not have triggered a panic")
+			}
+		}()
+
+		c.On(EvtChannelCreate, func(s Session, e *ChannelCreate) {})
+	})
+
+	t.Run("normal Session with ctrl", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("should not have triggered a panic")
+			}
+		}()
+
+		c.On(EvtChannelCreate, func(s Session, e *ChannelCreate) {}, &Ctrl{Runs: 1})
+	})
+
+	t.Run("normal Session with multiple ctrl's", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("multiple controllers should trigger a panic")
+			}
+		}()
+
+		c.On(EvtChannelCreate,
+			func(s Session, e *ChannelCreate) {},
+			&Ctrl{Runs: 1},
+			&Ctrl{Until: time.Now().Add(1 * time.Minute)})
+	})
+
+	t.Run("Session pointer", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Did not panic on incorrect handler signature")
+			}
+		}()
+
+		c.On(EvtChannelCreate, func(s *Session, e *ChannelCreate) {})
+	})
+}
+
+//////////////////////////////////////////////////////
+//
 // Benchmarks
 //
 //////////////////////////////////////////////////////
