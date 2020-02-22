@@ -32,7 +32,7 @@ func run(client *disgord.Client) {
 		mdlw.filterOutHumans,
 		mdlw.filterOutOthersMsgs,
 		autoDeleteNewMessages)
-	
+
 	// connect now, and disconnect on system interrupt
 	client.StayConnectedUntilInterrupted(context.Background())
 }
