@@ -6,7 +6,7 @@ coverage:
         target: 30%
         flags: unit
       integration-tests:
-        target: 60%
+        target: 40%
         flags: integration
 
 ignore:
