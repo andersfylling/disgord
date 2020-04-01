@@ -1,3 +1,4 @@
+//go:generate generateEmojiCodeMap -pkg disgord
 package disgord
 
 import (
@@ -47,6 +48,18 @@ var _ fmt.Stringer = (*Emoji)(nil)
 
 func (e *Emoji) String() string {
 	return "emoji{name:" + e.Name + ", id:" + e.ID.String() + "}"
+}
+
+type EmojiName struct {
+	string
+}
+
+// Parse string to unicode
+func (e EmojiName) String() string {
+	if codepoint, ok := emojiCodeMap[e.string]; ok {
+		e.string = codepoint
+	}
+	return e.string
 }
 
 // PartialEmoji see Emoji

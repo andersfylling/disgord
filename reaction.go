@@ -86,8 +86,10 @@ func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowfl
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+	} else if _, ok := emoji.(EmojiName); ok {
+		emojiCode = emoji.(EmojiName).String() // emoji name to unicode
 	} else {
-		err = errors.New("emoji type can only be a unicode string or a *Emoji struct")
+		err = errors.New("emoji type can only be a unicode string, EmojiName or a *Emoji struct")
 		return
 	}
 
@@ -128,6 +130,8 @@ func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Sno
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+	} else if _, ok := emoji.(EmojiName); ok {
+		emojiCode = emoji.(EmojiName).String() // emoji name to unicode
 	} else {
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
@@ -169,6 +173,8 @@ func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, u
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+	} else if _, ok := emoji.(EmojiName); ok {
+		emojiCode = emoji.(EmojiName).String() // emoji name to unicode
 	} else {
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
@@ -218,6 +224,8 @@ func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+	} else if _, ok := emoji.(EmojiName); ok {
+		emojiCode = emoji.(EmojiName).String() // emoji name to unicode
 	} else {
 		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
