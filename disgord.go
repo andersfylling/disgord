@@ -111,7 +111,7 @@
 //
 // > Note: if you create a CacheConfig you don't have to set every field.
 //
-// > Note: Only LFU is supported.
+// > Note: Only LFU is supported with the default cache.
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
@@ -133,7 +133,7 @@
 //           },
 //  })
 //
-// If you just want to change a specific field, you can do so. The fields are always default values.
+// If you just want to change a specific field, you can do so. The fields are always default values. If you wish to implement a custom cache, you can simply set the CacheInitializer parameter in the client config to a function which initialises the custom cache.
 //
 // > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //
