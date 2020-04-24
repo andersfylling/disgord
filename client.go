@@ -89,7 +89,11 @@ func createClient(conf *Config) (c *Client, err error) {
 		if conf.CacheConfig == nil {
 			conf.CacheConfig = &CacheConfig{}
 		}
-		cacher, err = newCache(conf.CacheConfig)
+		f := newCache
+		if conf.CacheInitializer != nil {
+			f = conf.CacheInitializer
+		}
+		cacher, err = f(conf.CacheConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -172,6 +176,10 @@ type Config struct {
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
 	Logger Logger
+
+	// CacheInitializer defines a function which can be used to create a cache.
+	// For most use cases, you will not need to set this because the built in cache will be sufficient.
+	CacheInitializer func(conf *CacheConfig) (c *Cache, err error)
 
 	// ################################################
 	// ##
