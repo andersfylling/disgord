@@ -16,7 +16,7 @@ type Embed struct {
 	Description string          `json:"description,omitempty"` // description of embed
 	URL         string          `json:"url,omitempty"`         // url of embed
 	Timestamp   Time            `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
-	Color       int             `json:"color"`                 // color code of the embed
+	Color       int             `json:"color,omitempty"`       // color code of the embed
 	Footer      *EmbedFooter    `json:"footer,omitempty"`      // embed footer object	footer information
 	Image       *EmbedImage     `json:"image,omitempty"`       // embed image object	image information
 	Thumbnail   *EmbedThumbnail `json:"thumbnail,omitempty"`   // embed thumbnail object	thumbnail information
