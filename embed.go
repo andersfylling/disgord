@@ -4,10 +4,10 @@ import (
 	"github.com/andersfylling/disgord/internal/constant"
 )
 
-// limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
+// limitations: https://discord.com/developers/docs/resources/channel#embed-limits
 // TODO: implement NewEmbedX functions that ensures limitations
 
-// Embed https://discordapp.com/developers/docs/resources/channel#embed-object
+// Embed https://discord.com/developers/docs/resources/channel#embed-object
 type Embed struct {
 	Lockable `json:"-"`
 
@@ -86,7 +86,7 @@ func (c *Embed) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
+// EmbedThumbnail https://discord.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
 type EmbedThumbnail struct {
 	Lockable `json:"-"`
 
@@ -130,7 +130,7 @@ func (c *EmbedThumbnail) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// EmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
+// EmbedVideo https://discord.com/developers/docs/resources/channel#embed-object-embed-video-structure
 type EmbedVideo struct {
 	Lockable `json:"-"`
 
@@ -172,7 +172,7 @@ func (c *EmbedVideo) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
+// EmbedImage https://discord.com/developers/docs/resources/channel#embed-object-embed-image-structure
 type EmbedImage struct {
 	Lockable `json:"-"`
 
@@ -216,7 +216,7 @@ func (c *EmbedImage) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
+// EmbedProvider https://discord.com/developers/docs/resources/channel#embed-object-embed-provider-structure
 type EmbedProvider struct {
 	Lockable `json:"-"`
 
@@ -256,7 +256,7 @@ func (c *EmbedProvider) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
+// EmbedAuthor https://discord.com/developers/docs/resources/channel#embed-object-embed-author-structure
 type EmbedAuthor struct {
 	Lockable `json:"-"`
 
@@ -300,7 +300,7 @@ func (c *EmbedAuthor) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
+// EmbedFooter https://discord.com/developers/docs/resources/channel#embed-object-embed-footer-structure
 type EmbedFooter struct {
 	Lockable `json:"-"`
 
@@ -342,7 +342,7 @@ func (c *EmbedFooter) CopyOverTo(other interface{}) (err error) {
 	return nil
 }
 
-// EmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
+// EmbedField https://discord.com/developers/docs/resources/channel#embed-object-embed-field-structure
 type EmbedField struct {
 	Lockable `json:"-"`
 

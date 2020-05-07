@@ -59,7 +59,7 @@ type VoiceReady struct {
 	Port  int      `json:"port"`
 	Modes []string `json:"modes"`
 
-	// From: https://discordapp.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection
+	// From: https://discord.com/developers/docs/topics/voice-connections#establishing-a-voice-websocket-connection
 	// `heartbeat_interval` here is an erroneous field and should be ignored.
 	// The correct heartbeat_interval value comes from the Hello payload.
 

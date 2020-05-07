@@ -216,7 +216,7 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 // ##
 // ######################
 
-// activityTypes https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+// activityTypes https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
 type acitivityType = int // TODO-v0.15: remove = sign, make uint
 
 const (
@@ -227,7 +227,7 @@ const (
 	ActivityTypeCustom
 )
 
-// activityFlag https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-flags
+// activityFlag https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
 type activityFlag = int // TODO-v0.15: remove = sign, make uint
 
 // flags for the Activity object to signify the type of action taken place
@@ -247,7 +247,7 @@ func NewActivity() (activity *Activity) {
 	}
 }
 
-// Activity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
+// Activity https://discord.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
 	Lockable `json:"-"`
 
@@ -755,7 +755,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 // with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
 func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User, err error) {
@@ -777,7 +777,7 @@ func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User,
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*User, error) {
@@ -796,7 +796,7 @@ func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*Use
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
 func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder) {
@@ -818,7 +818,7 @@ func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder 
 // Requires the guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
@@ -847,7 +847,7 @@ func (c *Client) GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUse
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
 func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
@@ -871,10 +871,10 @@ func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (e
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-dms
 //  Reviewed                2019-02-19
 //  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
-//							https://github.com/discordapp/discord-api-docs/issues/184
+//							https://github.com/discord/discord-api-docs/issues/184
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
 // Deprecated: Needs cache checking to get the actual list of channels
@@ -908,7 +908,7 @@ type BodyUserCreateDM struct {
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
+//  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
 func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
@@ -928,7 +928,7 @@ func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...F
 }
 
 // CreateGroupDMParams required JSON params for func CreateGroupDM
-// https://discordapp.com/developers/docs/resources/user#create-group-dm
+// https://discord.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
 	// AccessTokens access tokens of users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
@@ -942,7 +942,7 @@ type CreateGroupDMParams struct {
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
+//  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
 func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
@@ -965,7 +965,7 @@ func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams,
 // GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/connections
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
 func (c *Client) GetUserConnections(ctx context.Context, flags ...Flag) (connections []*UserConnection, err error) {

@@ -516,7 +516,7 @@ func (c *client) receiver(ctx context.Context) {
 				switch closeErr.code {
 				case 4014:
 					// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
-					// https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+					// https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
 					c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
 					_ = c.Disconnect()
 					close(c.receiveChan) // notify client

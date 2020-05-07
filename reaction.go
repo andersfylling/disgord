@@ -11,7 +11,7 @@ import (
 )
 
 // Reaction ...
-// https://discordapp.com/developers/docs/resources/channel#reaction-object
+// https://discord.com/developers/docs/resources/channel#reaction-object
 type Reaction struct {
 	Lockable `json:"-"`
 
@@ -64,7 +64,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 // response on success. The maximum request size when sending a message is 8MB.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-reaction
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-reaction
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
@@ -106,7 +106,7 @@ func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowfl
 // Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-own-reaction
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error) {
@@ -147,7 +147,7 @@ func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Sno
 // to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-user-reaction
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error) {
@@ -184,7 +184,7 @@ func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, u
 	return err
 }
 
-// GetReactionURLParams https://discordapp.com/developers/docs/resources/channel#get-reactions-query-string-params
+// GetReactionURLParams https://discord.com/developers/docs/resources/channel#get-reactions-query-string-params
 type GetReactionURLParams struct {
 	Before Snowflake `urlparam:"before,omitempty"` // get users before this user Snowflake
 	After  Snowflake `urlparam:"after,omitempty"`  // get users after this user Snowflake
@@ -196,7 +196,7 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 // GetReaction [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-reactions
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (ret []*User, err error) {
@@ -243,7 +243,7 @@ func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake
 // permission to be present on the current user.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-all-reactions
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (c *Client) DeleteAllReactions(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error) {

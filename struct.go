@@ -88,7 +88,7 @@ type guilder interface {
 }
 
 // Mentioner can be implemented by any type that is mentionable.
-// https://discordapp.com/developers/docs/reference#message-formatting-formats
+// https://discord.com/developers/docs/reference#message-formatting-formats
 type Mentioner interface {
 	Mention() string
 }
@@ -170,7 +170,7 @@ func (t Time) String() string {
 // levels
 
 // ExplicitContentFilterLvl ...
-// https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
+// https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
 type ExplicitContentFilterLvl uint
 
 // Explicit content filter levels
@@ -196,7 +196,7 @@ func (ecfl *ExplicitContentFilterLvl) AllMembers() bool {
 }
 
 // MFALvl ...
-// https://discordapp.com/developers/docs/resources/guild#guild-object-mfa-level
+// https://discord.com/developers/docs/resources/guild#guild-object-mfa-level
 type MFALvl uint
 
 // Different MFA levels
@@ -216,7 +216,7 @@ func (mfal *MFALvl) Elevated() bool {
 }
 
 // VerificationLvl ...
-// https://discordapp.com/developers/docs/resources/guild#guild-object-verification-level
+// https://discord.com/developers/docs/resources/guild#guild-object-verification-level
 type VerificationLvl uint
 
 // the different verification levels
@@ -254,7 +254,7 @@ func (vl *VerificationLvl) VeryHigh() bool {
 }
 
 // DefaultMessageNotificationLvl ...
-// https://discordapp.com/developers/docs/resources/guild#guild-object-default-message-notification-level
+// https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level
 type DefaultMessageNotificationLvl uint
 
 // different notification levels on new messages

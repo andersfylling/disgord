@@ -11,7 +11,7 @@ import (
 )
 
 // Webhook Used to represent a webhook
-// https://discordapp.com/developers/docs/resources/webhook#webhook-object
+// https://discord.com/developers/docs/resources/webhook#webhook-object
 type Webhook struct {
 	Lockable `json:"-"`
 
@@ -68,7 +68,7 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 // CreateWebhookParams json params for the create webhook rest request avatar string
-// https://discordapp.com/developers/docs/resources/user#avatar-data
+// https://discord.com/developers/docs/resources/user#avatar-data
 type CreateWebhookParams struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
@@ -91,7 +91,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 // Returns a webhook object on success.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#create-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
@@ -120,7 +120,7 @@ func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params 
 // GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-channel-webhooks
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
@@ -139,7 +139,7 @@ func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, fl
 // GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/webhooks
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-guild-webhooks
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
@@ -158,7 +158,7 @@ func (c *Client) GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags 
 // GetWebhook [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetWebhook(ctx context.Context, id Snowflake, flags ...Flag) (ret *Webhook, err error) {
@@ -177,7 +177,7 @@ func (c *Client) GetWebhook(ctx context.Context, id Snowflake, flags ...Flag) (r
 // returns no user in the webhook object.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#get-webhook-with-token
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) GetWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
@@ -196,7 +196,7 @@ func (c *Client) GetWebhookWithToken(ctx context.Context, id Snowflake, token st
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
 func (c *Client) UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateWebhookBuilder) {
@@ -220,7 +220,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag)
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#modify-webhook-with-token
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
 func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder) {
@@ -244,7 +244,7 @@ func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token
 // DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) DeleteWebhook(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
@@ -254,7 +254,7 @@ func (c *Client) DeleteWebhook(ctx context.Context, id Snowflake, flags ...Flag)
 // DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#delete-webhook-with-token
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
 func (c *Client) DeleteWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (err error) {
@@ -306,7 +306,7 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 // ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
 //  Reviewed                2018-08-14
 //  Comment                 This endpoint. supports both JSON and form data bodies. It does require
 //                          multipart/form-data requests instead of the normal JSON request type when
@@ -352,7 +352,7 @@ func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParam
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
 //  Reviewed                2018-08-14
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
@@ -363,7 +363,7 @@ func (c *Client) ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhook
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
 //  Reviewed                2018-08-14
 //  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
@@ -379,7 +379,7 @@ func (c *Client) ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhoo
 //
 //////////////////////////////////////////////////////
 
-// UpdateWebhookParams https://discordapp.com/developers/docs/resources/webhook#modify-webhook-json-params
+// UpdateWebhookParams https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params
 // Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
 // avatar by providing a nil to SetAvatar.
 //

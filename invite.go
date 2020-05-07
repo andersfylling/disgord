@@ -15,7 +15,7 @@ import (
 type PartialInvite = Invite
 
 // Invite Represents a code that when used, adds a user to a guild.
-// https://discordapp.com/developers/docs/resources/invite#invite-object
+// https://discord.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
 	Lockable `json:"-"`
@@ -96,7 +96,7 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 }
 
 // InviteMetadata Object
-// https://discordapp.com/developers/docs/resources/invite#invite-metadata-object
+// https://discord.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
 type InviteMetadata struct {
 	Lockable `json:"-"`
@@ -181,7 +181,7 @@ var _ URLQueryStringer = (*GetInviteParams)(nil)
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
+//  Discord documentation   https://discord.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
@@ -202,7 +202,7 @@ func (c *Client) GetInvite(ctx context.Context, inviteCode string, params URLQue
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
+//  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) DeleteInvite(ctx context.Context, inviteCode string, flags ...Flag) (deleted *Invite, err error) {

@@ -322,7 +322,7 @@ func auditLogFactory() interface{} {
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
 //  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/audit-logs
-//  Discord documentation    https://discordapp.com/developers/docs/resources/audit-log#get-guild-audit-log
+//  Discord documentation    https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log
 //  Reviewed                 2018-06-05
 //  Comment                  -
 //  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got

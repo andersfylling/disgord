@@ -149,7 +149,7 @@ func (c *VoiceClient) onResumed(v interface{}) (err error) {
 }
 
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
-	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
+	// https://discord.com/developers/docs/topics/gateway#heartbeating
 	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
@@ -299,7 +299,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
-	// https://discordapp.com/developers/docs/topics/gateway#identify
+	// https://discord.com/developers/docs/topics/gateway#identify
 	err = m.emit(cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,

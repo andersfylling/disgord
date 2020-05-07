@@ -12,7 +12,7 @@ import (
 )
 
 // ShardID calculate the shard id for a given guild.
-// https://discordapp.com/developers/docs/topics/gateway#sharding-sharding-formula
+// https://discord.com/developers/docs/topics/gateway#sharding-sharding-formula
 func ShardID(guildID Snowflake, nrOfShards uint) uint {
 	return gateway.GetShardForGuildID(guildID, nrOfShards)
 }
@@ -76,7 +76,7 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 	return nil
 }
 
-// https://discordapp.com/developers/docs/resources/user#avatar-data
+// https://discord.com/developers/docs/resources/user#avatar-data
 func validAvatarPrefix(avatar string) (valid bool) {
 	if avatar == "" {
 		return false
@@ -105,7 +105,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 }
 
 // ValidateUsername uses Discords rule-set to verify user-names and nicknames
-// https://discordapp.com/developers/docs/resources/user#usernames-and-nicknames
+// https://discord.com/developers/docs/resources/user#usernames-and-nicknames
 //
 // Note that not all the rules are listed in the docs:
 //  There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the

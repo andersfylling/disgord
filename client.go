@@ -80,7 +80,7 @@ func createClient(conf *Config) (c *Client, err error) {
 		conf.Logger = logger.Empty{}
 	}
 
-	// ignore PRESENCES_REPLACE: https://github.com/discordapp/discord-api-docs/issues/683
+	// ignore PRESENCES_REPLACE: https://github.com/discord/discord-api-docs/issues/683
 	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
 
 	// caching
