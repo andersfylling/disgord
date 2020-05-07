@@ -3,4 +3,4 @@ As this rarely changes, it should not be possible to trigger this with `go gener
 
 
 URL it depends on for page scraping (alternative is to clone the github repo):
-https://discordapp.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags
+https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags

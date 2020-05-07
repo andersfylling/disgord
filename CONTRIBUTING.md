@@ -42,7 +42,7 @@ Example (use spaces):
 //                          Gateway event.
 // Endpoint                 /guilds
 // Rate limiter             /guilds
-// Discord documentation    https://discordapp.com/developers/docs/resources/guild#create-guild
+// Discord documentation    https://discord.com/developers/docs/resources/guild#create-guild
 // Reviewed                 2018-08-16
 // Comment                  This endpoint can be used only by bots in less than 10 guilds. Creating channel
 //                          categories from this endpoint is not supported.
