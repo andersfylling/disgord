@@ -292,7 +292,7 @@ func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
 		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
-	format := "https://discordapp.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
+	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
 	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
 	return u, nil
 }

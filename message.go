@@ -168,7 +168,7 @@ func (m *Message) DiscordURL() (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"https://discordapp.com/channels/%d/%d/%d",
+		"https://discord.com/channels/%d/%d/%d",
 		m.GuildID, m.ChannelID, m.ID,
 	), nil
 }

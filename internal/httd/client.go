@@ -17,7 +17,7 @@ import (
 
 // defaults and string format's for Discord interaction
 const (
-	BaseURL = "https://discordapp.com/api"
+	BaseURL = "https://discord.com/api"
 
 	RegexpSnowflakes     = `([0-9]+)`
 	RegexpURLSnowflakes  = `\/` + RegexpSnowflakes + `\/?`
