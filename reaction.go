@@ -58,6 +58,15 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+func unwrapEmoji(e string) string {
+	l := len(e)
+	if l >= 2 && e[0] == e[l-1] && e[0] == ':' {
+		// :emoji: => emoji
+		e = e[1:l-1]
+	}
+	return e
+}
+
 // CreateReaction [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 // permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
@@ -86,6 +95,7 @@ func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowfl
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+		emojiCode = unwrapEmoji(emojiCode)
 	} else {
 		err = errors.New("emoji type can only be a unicode string or a *Emoji struct")
 		return
@@ -128,6 +138,7 @@ func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Sno
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+		emojiCode = unwrapEmoji(emojiCode)
 	} else {
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
@@ -169,6 +180,7 @@ func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, u
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+		emojiCode = unwrapEmoji(emojiCode)
 	} else {
 		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
@@ -218,6 +230,7 @@ func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake
 		emojiCode = e.Name + ":" + e.ID.String()
 	} else if _, ok := emoji.(string); ok {
 		emojiCode = emoji.(string) // unicode
+		emojiCode = unwrapEmoji(emojiCode)
 	} else {
 		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
 	}
