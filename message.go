@@ -77,7 +77,7 @@ func NewMessage() *Message {
 //	ChannelID Snowflake `json:"channel_id"`
 //}
 
-// MessageActivity https://discordapp.com/developers/docs/resources/channel#message-object-message-activity-structure
+// MessageActivity https://discord.com/developers/docs/resources/channel#message-object-message-activity-structure
 type MessageActivity struct {
 	Type    int    `json:"type"`
 	PartyID string `json:"party_id"`
@@ -96,7 +96,7 @@ type MessageReference struct {
 	GuildID   Snowflake `json:"guild_id"`
 }
 
-// MessageApplication https://discordapp.com/developers/docs/resources/channel#message-object-message-application-structure
+// MessageApplication https://discord.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {
 	ID          Snowflake `json:"id"`
 	CoverImage  string    `json:"cover_image"`
@@ -105,7 +105,7 @@ type MessageApplication struct {
 	Name        string    `json:"name"`
 }
 
-// Message https://discordapp.com/developers/docs/resources/channel#message-object-message-structure
+// Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
 	Lockable         `json:"-"`
 	ID               Snowflake          `json:"id"`
@@ -155,7 +155,7 @@ func (m *Message) String() string {
 // DiscordURL returns the Discord link to the message. This can be used to jump
 // directly to a message from within the client.
 //
-// Example: https://discordapp.com/channels/319567980491046913/644376487331495967/646925626523254795
+// Example: https://discord.com/channels/319567980491046913/644376487331495967/646925626523254795
 func (m *Message) DiscordURL() (string, error) {
 	if m.ID.IsZero() {
 		return "", errors.New("missing message ID")
@@ -168,7 +168,7 @@ func (m *Message) DiscordURL() (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"https://discordapp.com/channels/%d/%d/%d",
+		"https://discord.com/channels/%d/%d/%d",
 		m.GuildID, m.ChannelID, m.ID,
 	), nil
 }
@@ -383,7 +383,7 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, fla
 //
 //////////////////////////////////////////////////////
 
-// GetChannelMessagesParams https://discordapp.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// GetChannelMessagesParams https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
 type GetMessagesParams struct {
 	Around Snowflake `urlparam:"around,omitempty"`
@@ -418,7 +418,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 // (since they cannot read the message history). Returns an array of message objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-messages
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-messages
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
@@ -553,7 +553,7 @@ func (c *Client) GetMessages(ctx context.Context, channelID Snowflake, filter *G
 // Returns a message object on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetMessage(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (message *Message, err error) {
@@ -697,7 +697,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 // The maximum request size when sending a message is 8MB.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func (c *Client) CreateMessage(ctx context.Context, channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
@@ -738,7 +738,7 @@ func (c *Client) CreateMessage(ctx context.Context, channelID Snowflake, params 
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
 // TODO: verify embed is working
@@ -765,7 +765,7 @@ func (c *Client) UpdateMessage(ctx context.Context, chanID, msgID Snowflake, fla
 // on success. Fires a Message Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) DeleteMessage(ctx context.Context, channelID, msgID Snowflake, flags ...Flag) (err error) {
@@ -789,7 +789,7 @@ func (c *Client) DeleteMessage(ctx context.Context, channelID, msgID Snowflake, 
 	return err
 }
 
-// DeleteMessagesParams https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+// DeleteMessagesParams https://discord.com/developers/docs/resources/channel#bulk-delete-messages-json-params
 type DeleteMessagesParams struct {
 	Messages []Snowflake `json:"messages"`
 	m        sync.RWMutex
@@ -846,7 +846,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // will only be counted once.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages/bulk-delete
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
@@ -878,7 +878,7 @@ func (c *Client) DeleteMessages(ctx context.Context, chanID Snowflake, params *D
 // on success. Fires a Typing Start Gateway event.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/typing
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#trigger-typing-indicator
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) TriggerTypingIndicator(ctx context.Context, channelID Snowflake, flags ...Flag) (err error) {
@@ -896,7 +896,7 @@ func (c *Client) TriggerTypingIndicator(ctx context.Context, channelID Snowflake
 // GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/pins
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-pinned-messages
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-pinned-messages
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetPinnedMessages(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Message, err error) {
@@ -921,7 +921,7 @@ func (c *Client) PinMessage(ctx context.Context, message *Message, flags ...Flag
 // Returns a 204 empty response on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#add-pinned-channel-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) PinMessageID(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error) {
@@ -945,7 +945,7 @@ func (c *Client) UnpinMessage(ctx context.Context, message *Message, flags ...Fl
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-pinned-channel-message
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) UnpinMessageID(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error) {
@@ -988,7 +988,7 @@ func (c *Client) SetMsgEmbed(ctx context.Context, chanID, msgID Snowflake, embed
 //////////////////////////////////////////////////////
 
 // updateMessageBuilder, params here
-//  https://discordapp.com/developers/docs/resources/channel#edit-message-json-params
+//  https://discord.com/developers/docs/resources/channel#edit-message-json-params
 //generate-rest-params: content:string, embed:*Embed,
 //generate-rest-basic-execute: message:*Message,
 type updateMessageBuilder struct {

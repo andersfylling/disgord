@@ -186,7 +186,7 @@ type RESTChannel interface {
 	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 	// information about permissions,
-	// see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
+	// see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 	DeleteChannelPermission(ctx context.Context, channelID, overwriteID Snowflake, flags ...Flag) (err error)
 
 	// AddDMParticipant Adds a recipient to a Group DM using their access token. Returns a 204 empty response

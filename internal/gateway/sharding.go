@@ -67,7 +67,7 @@ func ConfigureShardConfig(ctx context.Context, client GatewayBotGetter, conf *Sh
 }
 
 // enableGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
-// https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
+// https://discord.com/developers/docs/topics/gateway#guild-subscriptions
 func enableGuildSubscriptions(ignore []string) (updatedIgnores []string, ok bool) {
 	requires := []string{
 		event.TypingStart, event.PresenceUpdate,

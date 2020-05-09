@@ -47,7 +47,7 @@ func NewRole() *Role {
 	return &Role{}
 }
 
-// Role https://discordapp.com/developers/docs/topics/permissions#role-object
+// Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
 	Lockable `json:"-"`
 
@@ -151,7 +151,7 @@ func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) 
 //////////////////////////////////////////////////////
 
 // CreateGuildRoleParams ...
-// https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
+// https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
 	Permissions uint64 `json:"permissions,omitempty"`
@@ -167,7 +167,7 @@ type CreateGuildRoleParams struct {
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
 func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
@@ -195,7 +195,7 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
@@ -224,7 +224,7 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) (err error) {
@@ -242,7 +242,7 @@ func (c *Client) DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake,
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Role, err error) {

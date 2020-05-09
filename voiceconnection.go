@@ -449,7 +449,7 @@ type voiceSpeakingData struct {
 }
 
 func (v *voiceImpl) opusSendLoop() {
-	// https://discordapp.com/developers/docs/topics/voice-connections#encrypting-and-sending-voice
+	// https://discord.com/developers/docs/topics/voice-connections#encrypting-and-sending-voice
 	header := make([]byte, 12)
 	header[0] = 0x80
 	header[1] = 0x78

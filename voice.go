@@ -9,7 +9,7 @@ import (
 )
 
 // VoiceState Voice State structure
-// https://discordapp.com/developers/docs/resources/voice#voice-state-object
+// https://discord.com/developers/docs/resources/voice#voice-state-object
 // reviewed 2018-09-29
 type VoiceState struct {
 	Lockable `json:"-"`
@@ -94,7 +94,7 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 }
 
 // VoiceRegion voice region structure
-// https://discordapp.com/developers/docs/resources/voice#voice-region
+// https://discord.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
 	Lockable `json:"-"`
 
@@ -169,7 +169,7 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
-//  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
+//  Discord documentation   https://discord.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
 func (c *Client) GetVoiceRegions(ctx context.Context, flags ...Flag) (regions []*VoiceRegion, err error) {

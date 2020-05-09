@@ -425,7 +425,7 @@ type basicBuilder struct {
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET
 //  Endpoint                /gateway
-//  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
+//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
 func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err error) {
@@ -448,7 +448,7 @@ func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err 
 // changes as the bot joins/leaves guilds.
 //  Method                  GET
 //  Endpoint                /gateway/bot
-//  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
+//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
 func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {

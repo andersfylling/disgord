@@ -1,6 +1,6 @@
 > NOTE! outdated: sharding is handled automatically now. Use disgord.ShardConfig.
 
-Disgord supports the use of sharding for as explained here: [discordapp.com/.../gateway#sharding](https://discordapp.com/developers/docs/topics/gateway#sharding)
+Disgord supports the use of sharding for as explained here: [discord.com/.../gateway#sharding](https://discord.com/developers/docs/topics/gateway#sharding)
 
 Disgord uses an internal shard manager to handle this for you. However, you can customize this and should have enough control to handle sharding across N instances of disgord (see the godoc).
 

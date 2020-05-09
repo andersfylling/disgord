@@ -42,7 +42,7 @@ func genPermissions() {
 	var err error
 	var done bool
 	httpTimeout := 3 * time.Second
-	tableURL := "https://discordapp.com/developers/docs/topics/permissions"
+	tableURL := "https://discord.com/developers/docs/topics/permissions"
 
 	c := newScraper()
 

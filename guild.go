@@ -173,7 +173,7 @@ type PartialGuild = Guild // TODO: find the actual data struct for partial guild
 
 // Guild Guilds in Discord represent an isolated collection of users and channels,
 //  and are often referred to as "servers" in the UI.
-// https://discordapp.com/developers/docs/resources/guild#guild-object
+// https://discord.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
 // reviewed: 2018-08-25
 type Guild struct {
@@ -831,7 +831,7 @@ func (p *PartialBan) String() string {
 	return fmt.Sprintf("mod{%d} banned member{%d}, reason: %s.", p.ModeratorResponsibleID, p.BannedUserID, p.Reason)
 }
 
-// Ban https://discordapp.com/developers/docs/resources/guild#ban-object
+// Ban https://discord.com/developers/docs/resources/guild#ban-object
 type Ban struct {
 	Lockable `json:"-"`
 
@@ -877,7 +877,7 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 
 // ------------
 
-// GuildEmbed https://discordapp.com/developers/docs/resources/guild#guild-embed-object
+// GuildEmbed https://discord.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
 	Lockable `json:"-"`
 
@@ -920,7 +920,7 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 
 // -------
 
-// Integration https://discordapp.com/developers/docs/resources/guild#integration-object
+// Integration https://discord.com/developers/docs/resources/guild#integration-object
 type Integration struct {
 	Lockable `json:"-"`
 
@@ -982,7 +982,7 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// IntegrationAccount https://discordapp.com/developers/docs/resources/guild#integration-account-object
+// IntegrationAccount https://discord.com/developers/docs/resources/guild#integration-account-object
 type IntegrationAccount struct {
 	Lockable `json:"-"`
 
@@ -1025,7 +1025,7 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 
 // -------
 
-// Member https://discordapp.com/developers/docs/resources/guild#guild-member-object
+// Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
 	Lockable `json:"-"`
 
@@ -1157,7 +1157,7 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 // CreateGuildParams ...
-// https://discordapp.com/developers/docs/resources/guild#create-guild-json-params
+// https://discord.com/developers/docs/resources/guild#create-guild-json-params
 // example partial channel object:
 // {
 //    "name": "naming-things-is-hard",
@@ -1177,7 +1177,7 @@ type CreateGuildParams struct {
 // CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild
 //  Reviewed                2018-08-16
 //  Comment                 This endpoint. can be used only by bots in less than 10 guilds. Creating channel
 //                          categories from this endpoint. is not supported.
@@ -1216,7 +1216,7 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 // GetGuild [REST] Returns the guild object for the given id.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
 func (c *Client) GetGuild(ctx context.Context, id Snowflake, flags ...Flag) (guild *Guild, err error) {
@@ -1237,7 +1237,7 @@ func (c *Client) GetGuild(ctx context.Context, id Snowflake, flags ...Flag) (gui
 // object on success. Fires a Guild Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
 func (c *Client) UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateGuildBuilder) {
@@ -1262,7 +1262,7 @@ func (c *Client) UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 // Fires a Guild Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild
 //  Reviewed                2018-08-17
 //  Comment                 -
 func (c *Client) DeleteGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
@@ -1280,7 +1280,7 @@ func (c *Client) DeleteGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 // GetGuildChannels [REST] Returns a list of guild channel objects.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-channels
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
 func (c *Client) GetGuildChannels(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Channel, err error) {
@@ -1298,7 +1298,7 @@ func (c *Client) GetGuildChannels(ctx context.Context, guildID Snowflake, flags 
 	return getChannels(r.Execute)
 }
 
-// CreateGuildChannelParams https://discordapp.com/developers/docs/resources/guild#create-guild-channel-json-params
+// CreateGuildChannelParams https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params
 type CreateGuildChannelParams struct {
 	Name                 string                `json:"name"` // required
 	Type                 uint                  `json:"type,omitempty"`
@@ -1319,7 +1319,7 @@ type CreateGuildChannelParams struct {
 // Returns the new channel object on success. Fires a Channel Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-channel
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-channel
 //  Reviewed                2018-08-17
 //  Comment                 All parameters for this endpoint. are optional excluding 'name'
 func (c *Client) CreateGuildChannel(ctx context.Context, guildID Snowflake, channelName string, params *CreateGuildChannelParams, flags ...Flag) (ret *Channel, err error) {
@@ -1355,7 +1355,7 @@ func (c *Client) CreateGuildChannel(ctx context.Context, guildID Snowflake, chan
 }
 
 // UpdateGuildChannelPositionsParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
+// https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
 type UpdateGuildChannelPositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
@@ -1371,7 +1371,7 @@ type UpdateGuildChannelPositionsParams struct {
 // Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-channel-positions
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions
 //  Reviewed                2018-08-17
 //  Comment                 Only channels to be modified are required, with the minimum being a swap
 //                          between at least two channels.
@@ -1411,7 +1411,7 @@ func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions
 }
 
 // UpdateGuildRolePositionsParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
+// https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
 type UpdateGuildRolePositionsParams struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
@@ -1425,7 +1425,7 @@ type UpdateGuildRolePositionsParams struct {
 // Fires multiple Guild Role Update Gateway events.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role-positions
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-role-positions
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UpdateGuildRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) (roles []*Role, err error) {
@@ -1500,7 +1500,7 @@ func (c *Client) UpdateGuildRolePositions(ctx context.Context, guildID Snowflake
 // GetMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-member
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 -
 func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
@@ -1535,11 +1535,11 @@ func (g *getGuildMembersParams) FindErrors() error {
 // refers to the highest snowflake.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/members
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-members
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-members
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
-//  Comment#3               https://discordapp.com/developers/docs/resources/guild#list-guild-members-query-string-params
+//  Comment#3               https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params
 func (c *Client) getGuildMembers(ctx context.Context, guildID Snowflake, params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
 	if params == nil {
 		params = &getGuildMembersParams{}
@@ -1635,7 +1635,7 @@ func (c *Client) GetMembers(ctx context.Context, guildID Snowflake, params *GetM
 }
 
 // AddGuildMemberParams ...
-// https://discordapp.com/developers/docs/resources/guild#add-guild-member-json-params
+// https://discord.com/developers/docs/resources/guild#add-guild-member-json-params
 type AddGuildMemberParams struct {
 	AccessToken string      `json:"access_token"` // required
 	Nick        string      `json:"nick,omitempty"`
@@ -1650,7 +1650,7 @@ type AddGuildMemberParams struct {
 // CREATE_INSTANT_INVITE permission.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#add-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 All parameters to this endpoint. except for access_token are optional.
 func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (member *Member, err error) {
@@ -1691,7 +1691,7 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 // Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-member
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
 //                          the API user must have permissions to both connect to the channel and have the
@@ -1723,7 +1723,7 @@ func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflak
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#add-guild-member-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#add-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) AddGuildMemberRole(ctx context.Context, guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
@@ -1742,7 +1742,7 @@ func (c *Client) AddGuildMemberRole(ctx context.Context, guildID, userID, roleID
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#remove-guild-member-role
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) RemoveGuildMemberRole(ctx context.Context, guildID, userID, roleID Snowflake, flags ...Flag) (err error) {
@@ -1761,7 +1761,7 @@ func (c *Client) RemoveGuildMemberRole(ctx context.Context, guildID, userID, rol
 // Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-member
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#remove-guild-member
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) KickMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) (err error) {
@@ -1780,7 +1780,7 @@ func (c *Client) KickMember(ctx context.Context, guildID, userID Snowflake, reas
 // GetGuildBans [REST] Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-bans
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-bans
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildBans(ctx context.Context, id Snowflake, flags ...Flag) (bans []*Ban, err error) {
@@ -1808,7 +1808,7 @@ func (c *Client) GetGuildBans(ctx context.Context, id Snowflake, flags ...Flag) 
 // Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-ban
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildBan(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (ret *Ban, err error) {
@@ -1824,7 +1824,7 @@ func (c *Client) GetGuildBan(ctx context.Context, guildID, userID Snowflake, fla
 }
 
 // BanMemberParams ...
-// https://discordapp.com/developers/docs/resources/guild#create-guild-ban-query-string-params
+// https://discord.com/developers/docs/resources/guild#create-guild-ban-query-string-params
 type BanMemberParams struct {
 	DeleteMessageDays int    `urlparam:"delete_message_days,omitempty"` // number of days to delete messages for (0-7)
 	Reason            string `urlparam:"reason,omitempty"`              // reason for being banned
@@ -1843,7 +1843,7 @@ func (b *BanMemberParams) FindErrors() error {
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Create Gateway event.
 //  Method                  PUT
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-ban
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) BanMember(ctx context.Context, guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error) {
@@ -1870,7 +1870,7 @@ func (c *Client) BanMember(ctx context.Context, guildID, userID Snowflake, param
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/bans/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#remove-guild-ban
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#remove-guild-ban
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UnbanMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) (err error) {
@@ -1887,7 +1887,7 @@ func (c *Client) UnbanMember(ctx context.Context, guildID, userID Snowflake, rea
 }
 
 // PruneMembersParams will delete members, this is the same as kicking.
-// https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
+// https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
 type pruneMembersParams struct {
 	// Days number of days to count prune for (1 or more)
 	Days int `urlparam:"days"`
@@ -1914,7 +1914,7 @@ type guildPruneCount struct {
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/prune
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-prune-count
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-prune-count
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) EstimatePruneMembersCount(ctx context.Context, id Snowflake, days int, flags ...Flag) (estimate int, err error) {
@@ -1952,7 +1952,7 @@ func (c *Client) EstimatePruneMembersCount(ctx context.Context, id Snowflake, da
 // Fires multiple Guild Member Remove Gateway events.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/prune
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#begin-guild-prune
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#begin-guild-prune
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) PruneMembers(ctx context.Context, id Snowflake, days int, reason string, flags ...Flag) (err error) {
@@ -1976,7 +1976,7 @@ func (c *Client) PruneMembers(ctx context.Context, id Snowflake, days int, reaso
 // this returns VIP servers when the guild is VIP-enabled.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/regions
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-voice-regions
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-voice-regions
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildVoiceRegions(ctx context.Context, id Snowflake, flags ...Flag) (ret []*VoiceRegion, err error) {
@@ -1996,7 +1996,7 @@ func (c *Client) GetGuildVoiceRegions(ctx context.Context, id Snowflake, flags .
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/invites
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-invites
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-invites
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildInvites(ctx context.Context, id Snowflake, flags ...Flag) (ret []*Invite, err error) {
@@ -2016,7 +2016,7 @@ func (c *Client) GetGuildInvites(ctx context.Context, id Snowflake, flags ...Fla
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                   GET
 //  Endpoint                 /guilds/{guild.id}/integrations
-//  Discord documentation    https://discordapp.com/developers/docs/resources/guild#get-guild-integrations
+//  Discord documentation    https://discord.com/developers/docs/resources/guild#get-guild-integrations
 //  Reviewed                 2018-08-18
 //  Comment                  -
 func (c *Client) GetGuildIntegrations(ctx context.Context, id Snowflake, flags ...Flag) (ret []*Integration, err error) {
@@ -2033,7 +2033,7 @@ func (c *Client) GetGuildIntegrations(ctx context.Context, id Snowflake, flags .
 }
 
 // CreateGuildIntegrationParams ...
-// https://discordapp.com/developers/docs/resources/guild#create-guild-integration-json-params
+// https://discord.com/developers/docs/resources/guild#create-guild-integration-json-params
 type CreateGuildIntegrationParams struct {
 	Type string    `json:"type"`
 	ID   Snowflake `json:"id"`
@@ -2044,7 +2044,7 @@ type CreateGuildIntegrationParams struct {
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-integration
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) CreateGuildIntegration(ctx context.Context, guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) (err error) {
@@ -2062,7 +2062,7 @@ func (c *Client) CreateGuildIntegration(ctx context.Context, guildID Snowflake, 
 }
 
 // UpdateGuildIntegrationParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-integration-json-params
+// https://discord.com/developers/docs/resources/guild#modify-guild-integration-json-params
 // TODO: currently unsure which are required/optional params
 type UpdateGuildIntegrationParams struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
@@ -2075,7 +2075,7 @@ type UpdateGuildIntegrationParams struct {
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-integration
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UpdateGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) (err error) {
@@ -2097,7 +2097,7 @@ func (c *Client) UpdateGuildIntegration(ctx context.Context, guildID, integratio
 // Fires a Guild Integrations Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-integration
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) DeleteGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, flags ...Flag) (err error) {
@@ -2116,7 +2116,7 @@ func (c *Client) DeleteGuildIntegration(ctx context.Context, guildID, integratio
 // Returns a 204 empty response on success.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/integrations/{integration.id}/sync
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#sync-guild-integration
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#sync-guild-integration
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) SyncGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, flags ...Flag) (err error) {
@@ -2132,7 +2132,7 @@ func (c *Client) SyncGuildIntegration(ctx context.Context, guildID, integrationI
 }
 
 // updateCurrentUserNickParams ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
+// https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
 type updateCurrentUserNickParams struct {
 	Nick string `json:"nick"` // :CHANGE_NICKNAME
 }
@@ -2145,7 +2145,7 @@ type nickNameResponse struct {
 // with the nickname on success. Fires a Guild Member Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/members/@me/nick
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-current-user-nick
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-current-user-nick
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) SetCurrentUserNick(ctx context.Context, id Snowflake, nick string, flags ...Flag) (newNick string, err error) {
@@ -2171,7 +2171,7 @@ func (c *Client) SetCurrentUserNick(ctx context.Context, id Snowflake, nick stri
 // GetGuildEmbed [REST] Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/embed
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-embed
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildEmbed(ctx context.Context, guildID Snowflake, flags ...Flag) (embed *GuildEmbed, err error) {
@@ -2190,7 +2190,7 @@ func (c *Client) GetGuildEmbed(ctx context.Context, guildID Snowflake, flags ...
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/embed
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-embed
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-embed
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags ...Flag) (builder *updateGuildEmbedBuilder) {
@@ -2213,7 +2213,7 @@ func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags 
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/vanity-url
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-vanity-url
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-vanity-url
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildVanityURL(ctx context.Context, guildID Snowflake, flags ...Flag) (ret *PartialInvite, err error) {
@@ -2234,7 +2234,7 @@ func (c *Client) GetGuildVanityURL(ctx context.Context, guildID Snowflake, flags
 //
 //////////////////////////////////////////////////////
 
-// updateGuildBuilder https://discordapp.com/developers/docs/resources/guild#modify-guild-json-params
+// updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
 //generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
 //generate-rest-basic-execute: guild:*Guild,
 type updateGuildBuilder struct {
@@ -2248,7 +2248,7 @@ type updateGuildEmbedBuilder struct {
 }
 
 // updateGuildMemberBuilder ...
-// https://discordapp.com/developers/docs/resources/guild#modify-guild-member-json-params
+// https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
 //generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
 //generate-rest-basic-execute: err:error,
 type updateGuildMemberBuilder struct {

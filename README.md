@@ -40,7 +40,7 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 
 > Examples can be found in [docs/examples](docs/examples) and some open source projects Disgord projects in the [wiki](https://github.com/andersfylling/disgord/wiki/A-few-Disgord-Projects)
 
-I highly suggest reading the [Discord API documentation](https://discordapp.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
+I highly suggest reading the [Discord API documentation](https://discord.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
 
 Here is a basic bot program that prints out every message. Save it as `main.go`, run `go mod init bot` and `go mod download`. You can then start the bot by writing `go run .`
 
@@ -168,7 +168,7 @@ Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
 5. Will Disgord support self bots?
 
 No. Self bots are againts ToS and could result in account termination (see
-https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
+https://support.discord.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
 In addition, self bots aren't a part of the official Discord API, meaning support could change at any 
 time and Disgord could break unexpectedly if this feature were to be added.
 ```
