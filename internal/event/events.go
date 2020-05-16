@@ -197,9 +197,12 @@ const WebhooksUpdate = "WEBHOOKS_UPDATE"
 // InviteCreate Sent when a guild's invite is created.
 //  Fields:
 //  - Code String
-//  - Guild   *Guild
-//  - Channel *Channel
+//  - GuildID   Snowflake
+//  - ChannelID Snowflake
 //  - Inviter *User
+//  - Inviter *User
+//  - Target *User
+//  - TargetType int
 //  - CreatedAt Time
 //  - MaxAge int
 //  - MaxUses int

@@ -653,14 +653,21 @@ type InviteCreate struct {
 	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
 
-	// Guild the guild this invite is for
-	Guild *PartialGuild `json:"guild"`
+	// GuildID the guild this invite is for
+	GuildID Snowflake `json:"guild_id,omitempty"`
 
-	// Channel the channel this invite is for
-	Channel *PartialChannel `json:"channel"`
+	// ChannelID the channel this invite is for
+	ChannelID Snowflake `json:"channel_id"`
 
 	// Inviter the user that created the invite
 	Inviter *User `json:"inviter"`
+
+	// Target the target user for this invite
+	Target *User `json:"target_user,omitempty"`
+
+	// TargetType the type of user target for this invite
+	// 1 STREAM (currently the STREAM only)
+	TargetType int `json:"target_user_type"`
 
 	// CreatedAt the time at which the invite was created
 	CreatedAt Time `json:"created_at"`
