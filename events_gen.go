@@ -48,6 +48,8 @@ func AllEvents(except ...string) []string {
 
 		EvtGuildUpdate: 0,
 
+		EvtInviteCreate: 0,
+
 		EvtInviteDelete: 0,
 
 		EvtMessageCreate: 0,
@@ -602,6 +604,49 @@ func (c *Client) OnGuildUpdate(mdlws []Middleware, handlers []HandlerGuildUpdate
 
 // ---------------------------
 
+// EvtInviteCreate Sent when a guild's invite is created.
+//  Fields:
+//  - Code String
+//  - GuildID   Snowflake
+//  - ChannelID Snowflake
+//  - Inviter *User
+//  - Inviter *User
+//  - Target *User
+//  - TargetType int
+//  - CreatedAt Time
+//  - MaxAge int
+//  - MaxUses int
+//  - Temporary bool
+//  - Uses int
+//  - Revoked bool
+//  - Unique bool
+//  - ApproximatePresenceCount int
+//  - ApproximateMemberCount int
+//
+const EvtInviteCreate = event.InviteCreate
+
+func (h *InviteCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *InviteCreate) setShardID(id uint)                  { h.ShardID = id }
+
+type HandlerInviteCreate = func(Session, *InviteCreate)
+
+func (c *Client) OnInviteCreate(mdlws []Middleware, handlers []HandlerInviteCreate, ctrl ...HandlerCtrl) {
+	var inputs []interface{}
+	for mdlw := range mdlws {
+		inputs = append(inputs, mdlw)
+	}
+	for handler := range handlers {
+		inputs = append(inputs, handler)
+	}
+	if len(ctrl) > 0 {
+		inputs = append(inputs, ctrl[0])
+	}
+
+	c.On(EvtInviteCreate, inputs...)
+}
+
+// ---------------------------
+
 // EvtInviteDelete Sent when an invite is deleted.
 //
 const EvtInviteDelete = event.InviteDelete
@@ -1088,6 +1133,7 @@ type SocketHandlerRegistrators interface {
 	OnGuildRoleDelete([]Middleware, []HandlerGuildRoleDelete, ...HandlerCtrl)
 	OnGuildRoleUpdate([]Middleware, []HandlerGuildRoleUpdate, ...HandlerCtrl)
 	OnGuildUpdate([]Middleware, []HandlerGuildUpdate, ...HandlerCtrl)
+	OnInviteCreate([]Middleware, []HandlerInviteCreate, ...HandlerCtrl)
 	OnInviteDelete([]Middleware, []HandlerInviteDelete, ...HandlerCtrl)
 	OnMessageCreate([]Middleware, []HandlerMessageCreate, ...HandlerCtrl)
 	OnMessageDelete([]Middleware, []HandlerMessageDelete, ...HandlerCtrl)

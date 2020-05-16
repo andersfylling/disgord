@@ -193,3 +193,23 @@ const VoiceServerUpdate = "VOICE_SERVER_UPDATE"
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake
 const WebhooksUpdate = "WEBHOOKS_UPDATE"
+
+// InviteCreate Sent when a guild's invite is created.
+//  Fields:
+//  - Code String
+//  - GuildID   Snowflake
+//  - ChannelID Snowflake
+//  - Inviter *User
+//  - Inviter *User
+//  - Target *User
+//  - TargetType int
+//  - CreatedAt Time
+//  - MaxAge int
+//  - MaxUses int
+//  - Temporary bool
+//  - Uses int
+//  - Revoked bool
+//  - Unique bool
+//  - ApproximatePresenceCount int
+//  - ApproximateMemberCount int
+const InviteCreate = "INVITE_CREATE"

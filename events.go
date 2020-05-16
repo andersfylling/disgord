@@ -265,11 +265,11 @@ type TypingStart struct {
 
 // InviteDelete Sent when an invite is deleted.
 type InviteDelete struct {
-	ChannelID Snowflake `json:"channel_id"`
-	GuildID Snowflake `json:"guild_id"`
-	Code string `json:"code"`
-	Ctx     context.Context `json:"-"`
-	ShardID uint            `json:"-"`
+	ChannelID Snowflake       `json:"channel_id"`
+	GuildID   Snowflake       `json:"guild_id"`
+	Code      string          `json:"code"`
+	Ctx       context.Context `json:"-"`
+	ShardID   uint            `json:"-"`
 }
 
 // ---------------------------
@@ -646,4 +646,53 @@ type WebhooksUpdate struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 	ShardID   uint            `json:"-"`
+}
+
+// InviteCreate guild invite was created
+type InviteCreate struct {
+	// Code the invite code (unique Snowflake)
+	Code string `json:"code"`
+
+	// GuildID the guild this invite is for
+	GuildID Snowflake `json:"guild_id,omitempty"`
+
+	// ChannelID the channel this invite is for
+	ChannelID Snowflake `json:"channel_id"`
+
+	// Inviter the user that created the invite
+	Inviter *User `json:"inviter"`
+
+	// Target the target user for this invite
+	Target *User `json:"target_user,omitempty"`
+
+	// TargetType the type of user target for this invite
+	// 1 STREAM (currently the STREAM only)
+	TargetType int `json:"target_user_type"`
+
+	// CreatedAt the time at which the invite was created
+	CreatedAt Time `json:"created_at"`
+
+	// MaxAge how long the invite is valid for (in seconds)
+	MaxAge int `json:"max_age"`
+
+	// MaxUses the maximum number of times the invite can be used
+	MaxUses int `json:"max_uses"`
+
+	// Temporary whether or not the invite is temporary (invited users will be kicked on disconnect unless they're assigned a role)
+	Temporary bool `json:"temporary"`
+
+	// Uses how many times the invite has been used (always will be 0)
+	Uses int `json:"uses"`
+
+	Revoked bool `json:"revoked"`
+	Unique  bool `json:"unique"`
+
+	// ApproximatePresenceCount approximate count of online members
+	ApproximatePresenceCount int `json:"approximate_presence_count,omitempty"`
+
+	// ApproximatePresenceCount approximate count of total members
+	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
+
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
 }
