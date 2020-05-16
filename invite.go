@@ -29,12 +29,34 @@ type Invite struct {
 	// Channel the channel this invite is for
 	Channel *PartialChannel `json:"channel"`
 
+	// Inviter the user that created the invite
+	Inviter *User `json:"inviter"`
+
+	// CreatedAt the time at which the invite was created
+	CreatedAt Time `json:"created_at"`
+
+	// MaxAge how long the invite is valid for (in seconds)
+	MaxAge int `json:"max_age"`
+
+	// MaxUses the maximum number of times the invite can be used
+	MaxUses int `json:"max_uses"`
+
+	// Temporary whether or not the invite is temporary (invited users will be kicked on disconnect unless they're assigned a role)
+	Temporary bool `json:"temporary"`
+
+	// Uses how many times the invite has been used (always will be 0)
+	Uses int `json:"uses"`
+
+	Revoked bool `json:"revoked"`
+	Unique  bool `json:"unique"`
+
 	// ApproximatePresenceCount approximate count of online members
 	ApproximatePresenceCount int `json:"approximate_presence_count,omitempty"`
 
 	// ApproximatePresenceCount approximate count of total members
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
+
 
 var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
