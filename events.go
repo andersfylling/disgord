@@ -263,6 +263,17 @@ type TypingStart struct {
 
 // ---------------------------
 
+// InviteDelete Sent when an invite is deleted.
+type InviteDelete struct {
+	ChannelID Snowflake `json:"channel_id"`
+	GuildID Snowflake `json:"guild_id"`
+	Code string `json:"code"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
+}
+
+// ---------------------------
+
 // MessageCreate message was created
 type MessageCreate struct {
 	Message *Message

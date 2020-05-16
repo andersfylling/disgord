@@ -43,6 +43,9 @@ const ChannelPinsUpdate = "CHANNEL_PINS_UPDATE"
 //  - TimestampUnix int
 const TypingStart = "TYPING_START"
 
+// InviteDelete Sent when an invite is deleted.
+const InviteDelete = "INVITE_DELETE"
+
 // MessageCreate Sent when a message is created. The inner payload is a message object.
 const MessageCreate = "MESSAGE_CREATE"
 

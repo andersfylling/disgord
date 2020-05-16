@@ -48,6 +48,8 @@ func AllEvents(except ...string) []string {
 
 		EvtGuildUpdate: 0,
 
+		EvtInviteDelete: 0,
+
 		EvtMessageCreate: 0,
 
 		EvtMessageDelete: 0,
@@ -600,6 +602,32 @@ func (c *Client) OnGuildUpdate(mdlws []Middleware, handlers []HandlerGuildUpdate
 
 // ---------------------------
 
+// EvtInviteDelete Sent when an invite is deleted.
+//
+const EvtInviteDelete = event.InviteDelete
+
+func (h *InviteDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
+func (h *InviteDelete) setShardID(id uint)                  { h.ShardID = id }
+
+type HandlerInviteDelete = func(Session, *InviteDelete)
+
+func (c *Client) OnInviteDelete(mdlws []Middleware, handlers []HandlerInviteDelete, ctrl ...HandlerCtrl) {
+	var inputs []interface{}
+	for mdlw := range mdlws {
+		inputs = append(inputs, mdlw)
+	}
+	for handler := range handlers {
+		inputs = append(inputs, handler)
+	}
+	if len(ctrl) > 0 {
+		inputs = append(inputs, ctrl[0])
+	}
+
+	c.On(EvtInviteDelete, inputs...)
+}
+
+// ---------------------------
+
 // EvtMessageCreate Sent when a message is created. The inner payload is a message object.
 //
 const EvtMessageCreate = event.MessageCreate
@@ -1060,6 +1088,7 @@ type SocketHandlerRegistrators interface {
 	OnGuildRoleDelete([]Middleware, []HandlerGuildRoleDelete, ...HandlerCtrl)
 	OnGuildRoleUpdate([]Middleware, []HandlerGuildRoleUpdate, ...HandlerCtrl)
 	OnGuildUpdate([]Middleware, []HandlerGuildUpdate, ...HandlerCtrl)
+	OnInviteDelete([]Middleware, []HandlerInviteDelete, ...HandlerCtrl)
 	OnMessageCreate([]Middleware, []HandlerMessageCreate, ...HandlerCtrl)
 	OnMessageDelete([]Middleware, []HandlerMessageDelete, ...HandlerCtrl)
 	OnMessageDeleteBulk([]Middleware, []HandlerMessageDeleteBulk, ...HandlerCtrl)

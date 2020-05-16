@@ -12,8 +12,8 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
-	golang.org/x/tools v0.0.0-20200107181558-a222fb47e2f1 // indirect
+	golang.org/x/tools v0.0.0-20200515010526-7d3b6ebf133d // indirect
 	nhooyr.io/websocket v1.7.4
 )
