@@ -57,7 +57,6 @@ type Invite struct {
 	ApproximateMemberCount int `json:"approximate_member_count,omitempty"`
 }
 
-
 var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 var _ discordDeleter = (*Invite)(nil)

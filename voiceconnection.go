@@ -172,7 +172,7 @@ waiter:
 		SessionID:      state.SessionID,
 		Token:          server.Token,
 		HTTPClient:     r.c.config.HTTPClient,
-		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
+		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=4",
 		Logger:         r.c.log,
 		SystemShutdown: r.c.shutdownChan,
 	})
@@ -362,8 +362,7 @@ func (v *voiceImpl) watcherDiscordCloseEvt() {
 		select {
 		case <-v.close:
 			return
-		case _, open = <-v.ws.Receive():
-			// also drains for any incoming data..
+		case _, open = <-v.ws.Active():
 		}
 		if !open {
 			break
@@ -388,6 +387,8 @@ func (v *voiceImpl) watcherDiscordCloseEvt() {
 	_ = v.udp.Close()
 	_ = v.ws.Disconnect()
 	close(v.send)
+
+	//for range v.ws.Receive() {} // drain
 
 	v.c.Logger().Info("Discord closed voice connection")
 }

@@ -83,7 +83,7 @@ type VoiceSessionDescription struct {
 }
 
 type voiceIdentify struct {
-	GuildID   Snowflake `json:"server_id"` // Yay for eventual consistency
+	GuildID   Snowflake `json:"server_id"` // Yay for inconsistency
 	UserID    Snowflake `json:"user_id"`
 	SessionID string    `json:"session_id"`
 	Token     string    `json:"token"`

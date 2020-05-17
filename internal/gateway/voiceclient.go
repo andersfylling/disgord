@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
@@ -48,6 +49,7 @@ type VoiceClient struct {
 
 	haveIdentifiedOnce bool
 
+	active         chan interface{}
 	SystemShutdown chan interface{}
 }
 
@@ -85,6 +87,10 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 // BEHAVIORS
 //
 //////////////////////////////////////////////////////
+
+func (c *VoiceClient) Active() <-chan interface{} {
+	return c.SystemShutdown
+}
 
 func (c *VoiceClient) setupBehaviors() {
 	// operation handlers
@@ -165,12 +171,25 @@ func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
 func (c *VoiceClient) onHello(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
-	helloPk := &helloPacket{}
+	type packet struct {
+		// sometimes discord sends a float..............
+		// How do you fuck up an integer, Discord?
+		HeartbeatInterval float32 `json:"heartbeat_interval"`
+	}
+	helloPk := &packet{}
 	if err = util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
+	interval := uint(helloPk.HeartbeatInterval)
 	c.Lock()
-	c.heartbeatInterval = helloPk.HeartbeatInterval
+	if interval == c.heartbeatInterval {
+		c.Unlock()
+		return nil
+	} else if c.heartbeatInterval > 0 {
+		c.Unlock()
+		return errors.New("a new hello packet was sent, with a different interval - please make a github issue at https://github.com/andersfylling/disgord")
+	}
+	c.heartbeatInterval = interval
 	c.Unlock()
 
 	c.activateHeartbeats <- true
@@ -200,7 +219,8 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.emit(cmd.VoiceHeartbeat, nil)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return c.emit(cmd.VoiceHeartbeat, r.Uint32())
 }
 
 //////////////////////////////////////////////////////
@@ -262,6 +282,16 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 			_ = c.Disconnect()
 		}
 	}()
+
+	//errIdentify := c.emit(cmd.VoiceIdentify, &voiceIdentify{
+	//	GuildID: c.conf.GuildID,
+	//	UserID: c.conf.UserID,
+	//	SessionID: c.conf.SessionID,
+	//	Token: c.conf.Token,
+	//})
+	//if errIdentify != nil {
+	//	c.log.Error(c.getLogPrefix(), "unable to send identify", errIdentify)
+	//}
 
 	select {
 	case evt = <-waitingChan:

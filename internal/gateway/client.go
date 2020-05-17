@@ -210,7 +210,7 @@ func (c *client) operationHandlers(ctx context.Context) {
 		var p *DiscordPacket
 		var open bool
 		select {
-		case p, open = <-c.Receive():
+		case p, open = <-c.receive():
 			if !open {
 				c.log.Debug(c.getLogPrefix(), "operationChan is dead..")
 				return
@@ -472,7 +472,7 @@ func (c *client) emitter(ctx context.Context) {
 //////////////////////////////////////////////////////
 
 // Receive returns the channel for receiving Discord packets
-func (c *client) Receive() <-chan *DiscordPacket {
+func (c *client) receive() <-chan *DiscordPacket {
 	return c.receiveChan
 }
 

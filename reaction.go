@@ -62,7 +62,7 @@ func unwrapEmoji(e string) string {
 	l := len(e)
 	if l >= 2 && e[0] == e[l-1] && e[0] == ':' {
 		// :emoji: => emoji
-		e = e[1:l-1]
+		e = e[1 : l-1]
 	}
 	return e
 }
