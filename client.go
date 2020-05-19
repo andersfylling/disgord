@@ -397,6 +397,11 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	// only works for socketing
 	//
 	// also verifies that the correct credentials were supplied
+
+	// Avoid races during connection setup
+	c.Lock()
+	defer c.Unlock()
+
 	var me *User
 	if me, err = c.GetCurrentUser(ctx); err != nil {
 		return err
@@ -652,6 +657,8 @@ func (c *Client) On(event string, inputs ...interface{}) {
 
 // Emit sends a socket command directly to Discord.
 func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+	c.RLock()
+	defer c.RUnlock()
 	if c.shardManager == nil {
 		return nil, errors.New("you must connect before you can Emit")
 	}
