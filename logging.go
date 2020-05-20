@@ -2,16 +2,17 @@ package disgord
 
 import (
 	"github.com/andersfylling/disgord/internal/logger"
-	"go.uber.org/zap"
 )
 
 // Logger super basic logging interface
 type Logger = logger.Logger
 
-func DefaultLogger(debug bool) *logger.LoggerZap {
-	return logger.DefaultLogger(debug)
+// Deprecated
+func DefaultLogger(debug bool) logger.Logger {
+	panic("this has been removed, please see examples/docs/logging-* for more information")
 }
 
-func DefaultLoggerWithInstance(log *zap.Logger) *logger.LoggerZap {
-	return logger.DefaultLoggerWithInstance(log)
+// Deprecated
+func DefaultLoggerWithInstance(log logger.Logger) logger.Logger {
+	return DefaultLogger(true)
 }

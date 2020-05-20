@@ -60,11 +60,9 @@ func printMessage(session disgord.Session, evt *disgord.MessageCreate) {
 }
 
 func main() {
+    // see docs/examples/* for more information about configuration and use cases
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        // You can inject any logger that implements disgord.Logger interface (eg. logrus)
-        // Disgord provides a simple logger to get you started. Nothing is logged if nil.
-        Logger: disgord.DefaultLogger(false), // debug=false
     })
     // connect, and stay connected until a system interrupt takes place
     defer client.StayConnectedUntilInterrupted(context.Background())

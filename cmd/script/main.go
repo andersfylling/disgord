@@ -5,8 +5,16 @@ import (
 	"os"
 
 	"github.com/andersfylling/disgord"
+	"github.com/sirupsen/logrus"
 	"github.com/andersfylling/disgord/std"
 )
+
+var log = &logrus.Logger{
+	Out: os.Stderr,
+	Formatter: new(logrus.TextFormatter),
+	Hooks: make(logrus.LevelHooks),
+	Level: logrus.ErrorLevel,
+}
 
 // replyPongToPing is a handler that replies pong to ping messages
 func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
@@ -21,7 +29,7 @@ func replyPongToPing(s disgord.Session, data *disgord.MessageCreate) {
 func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
-		Logger:   disgord.DefaultLogger(false), // debug=false
+		Logger:   log,
 	})
 	defer client.StayConnectedUntilInterrupted(context.Background())
 

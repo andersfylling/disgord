@@ -125,7 +125,7 @@ func TestEvtClient_communication(t *testing.T) {
 		Endpoint: "sfkjsdlfsf",
 		Version:  constant.DiscordVersion,
 		Encoding: constant.JSONEncoding,
-		Logger:   logger.DefaultLogger(true),
+		Logger:   &logger.FmtPrinter{},
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",

@@ -1,4 +1,4 @@
-module scripts
+module logging
 
 go 1.14
 

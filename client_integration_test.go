@@ -4,6 +4,7 @@ package disgord
 
 import (
 	"context"
+	"github.com/andersfylling/disgord/internal/logger"
 	"os"
 	"sync"
 	"testing"
@@ -42,7 +43,7 @@ func TestClient(t *testing.T) {
 		c, err = NewClient(Config{
 			BotToken:     token,
 			DisableCache: true,
-			Logger:       DefaultLogger(false),
+			Logger:       &logger.FmtPrinter{},
 			Presence:     status,
 		})
 		if err != nil {
@@ -231,7 +232,7 @@ func TestConnectWithShards(t *testing.T) {
 	c := New(Config{
 		BotToken:     token,
 		DisableCache: true,
-		Logger:       DefaultLogger(true),
+		Logger:       &logger.FmtPrinter{},
 		ShardConfig: ShardConfig{
 			ShardIDs: []uint{0, 1},
 		},
@@ -259,7 +260,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		return New(Config{
 			BotToken:     token,
 			DisableCache: true,
-			Logger:       DefaultLogger(true),
+			Logger:       &logger.FmtPrinter{},
 			ShardConfig: ShardConfig{
 				ShardIDs:   shardIDs,
 				ShardCount: shardCount,

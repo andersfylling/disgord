@@ -4,6 +4,7 @@ package disgord
 
 import (
 	"encoding/json"
+	"github.com/andersfylling/disgord/internal/logger"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -147,7 +148,7 @@ func TestClient_Once(t *testing.T) {
 	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
-		Logger:       DefaultLogger(true),
+		Logger:       &logger.FmtPrinter{},
 	})
 	defer close(c.dispatcher.shutdown)
 
