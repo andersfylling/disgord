@@ -183,6 +183,8 @@
 //
 package disgord
 
+//go:generate go run generate/intents/main.go
+
 import (
 	"fmt"
 

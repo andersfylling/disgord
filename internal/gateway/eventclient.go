@@ -66,6 +66,7 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		LargeThreshold:     conf.GuildLargeThreshold,
 		Shard:              &[2]uint{client.ShardID, conf.ShardCount},
 		GuildSubscriptions: conf.GuildSubscriptions,
+		Intents:            conf.Intents,
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {
@@ -95,6 +96,8 @@ type EvtConfig struct {
 
 	// IgnoreEvents holds a list of predetermined events that should be ignored.
 	IgnoreEvents []string
+
+	Intents Intent
 
 	// EventChan can be used to inject a channel instead of letting the ws client construct one
 	// useful in sharding to avoid complicated patterns to handle N channels.
@@ -473,7 +476,7 @@ func (c *EvtClient) sendHelloPacket() {
 
 func sendIdentityPacket(invalidSession bool, c *EvtClient) (err error) {
 	c.idMu.RLock()
-	var id = &evtIdentity{}
+	var id = &evtIdentity{} // TODO: read only?
 	*id = *c.identity
 	// copy it to avoid data race
 	c.idMu.RUnlock()

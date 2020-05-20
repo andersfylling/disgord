@@ -195,6 +195,8 @@ type Config struct {
 	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
 	// them at all due to how the identify command was defined. eg. guildS_subscriptions
 	IgnoreEvents []string
+
+	Intents gateway.Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
@@ -417,6 +419,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		Logger:       c.config.Logger,
 		ShutdownChan: c.config.shutdownChan,
 		IgnoreEvents: c.config.IgnoreEvents,
+		Intents:      c.config.Intents,
 		EventChan:    c.eventChan,
 		DisgordInfo:  LibraryInfo(),
 		ProjectName:  c.config.ProjectName,

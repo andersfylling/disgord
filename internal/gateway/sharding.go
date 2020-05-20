@@ -203,6 +203,7 @@ type ShardManagerConfig struct {
 
 	// ...
 	IgnoreEvents []string
+	Intents      Intent
 
 	// sync ---
 	EventChan chan<- *Event
@@ -243,6 +244,7 @@ func (s *shardMngr) initShards() error {
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
 		IgnoreEvents:   s.conf.IgnoreEvents,
+		Intents:        s.conf.Intents,
 		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization

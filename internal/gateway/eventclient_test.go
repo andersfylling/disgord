@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/internal/util"
 	"net/http"
 	"strconv"
 	"sync"
@@ -71,6 +72,32 @@ func (g *testWS) Disconnected() bool {
 }
 
 var _ Conn = (*testWS)(nil)
+
+func TestEvtIdentify(t *testing.T) {
+	i := &evtIdentity{}
+	var fields map[string]interface{}
+
+	raw, err := util.Marshal(i)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := util.Unmarshal(raw, &fields); err != nil {
+		t.Error(err)
+	}
+
+	if constant.DiscordVersion == 6 {
+		if _, ok := fields["intents"]; ok {
+			t.Error("discord gateway 6 states that intents are optional")
+			// Don't send out intents if none were specified
+		}
+	} else if constant.DiscordVersion == 7 {
+		if _, ok := fields["intents"]; !ok {
+			t.Error("discord gateway 7 states that intents are mandatory")
+			// https://discord.com/developers/docs/topics/gateway#gateway-intents
+		}
+	}
+}
 
 // TODO: rewrite. EventClient now waits for a Ready event in the Connect method
 func TestEvtClient_communication(t *testing.T) {
