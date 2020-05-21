@@ -3,6 +3,7 @@ package disgord
 import (
 	"encoding/json"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/crs"
@@ -442,6 +443,7 @@ func createGuildCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 }
 
 type guildCacheItem struct {
+	mu sync.Mutex
 	guild    *Guild
 	channels []Snowflake
 }
@@ -597,6 +599,9 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 
 func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 	newMembers := []*Member{}
+
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	var userID Snowflake
 	for i := range members {
@@ -873,7 +878,16 @@ func (c *Cache) GetGuild(id Snowflake) (guild *Guild, err error) {
 	return
 }
 
-func (c *Cache) PeekGuild(id Snowflake) (guild *Guild, err error) {
+func (c *Cache) PeekGuild(id Snowflake) (*Guild, error) {
+	guildHolder, err := c.PeekGuildHolder(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return guildHolder.guild, nil
+}
+
+func (c *Cache) PeekGuildHolder(id Snowflake) (guild *guildCacheItem, err error) {
 	if c.guilds == nil {
 		err = newErrorUsingDeactivatedCache("guilds")
 		return
@@ -888,7 +902,7 @@ func (c *Cache) PeekGuild(id Snowflake) (guild *Guild, err error) {
 		return
 	}
 
-	guild = result.Val.(*guildCacheItem).guild
+	guild = result.Val.(*guildCacheItem)
 	return
 }
 
@@ -954,14 +968,15 @@ func (c *Cache) GetGuildEmojis(id Snowflake) (emojis []*Emoji, err error) {
 // so these must be handled before hand.
 // complexity: O(M * N)
 func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
-	guild, err := c.PeekGuild(guildID)
+	guildHolder, err := c.PeekGuildHolder(guildID)
 	if err != nil {
 		return
 	}
 
-	lock := func(m *Member, cb func(*Member)) {
-		cb(m)
-	}
+	guildHolder.mu.Lock()
+	defer guildHolder.mu.Unlock()
+
+	guild := guildHolder.guild
 
 	c.guilds.Lock()
 	defer c.guilds.Unlock()
@@ -970,30 +985,20 @@ func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
 		var updated bool
 		for j := range guild.Members {
 			if guild.Members[j].userID != 0 && guild.Members[j].userID == members[i].userID {
-				var tmp *User
-				lock(members[i], func(m *Member) {
-					tmp = members[i].User
-					members[i].User = nil
-				})
+				tmp := members[i].User
+				members[i].User = nil
 				_ = members[i].CopyOverTo(guild.Members[j])
-				lock(members[i], func(_ *Member) {
-					members[i].User = tmp
-				})
+				members[i].User = tmp
 				updated = true
 				break
 			}
 		}
 
 		if !updated {
-			var tmp *User
-			lock(members[i], func(m *Member) {
-				tmp = members[i].User
-				members[i].User = nil
-			})
+			tmp := members[i].User
+			members[i].User = nil
 			member := members[i].DeepCopy().(*Member)
-			lock(members[i], func(_ *Member) {
-				members[i].User = tmp
-			})
+			members[i].User = tmp
 
 			newMembers = append(newMembers, member)
 		}
