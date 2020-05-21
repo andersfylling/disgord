@@ -162,7 +162,7 @@ type client struct {
 	ChannelBuffer uint
 
 	log         logger.Logger
-	logSequence atomic.Uint64
+	logSequence atomic.Uint32 // ARM 32bit causes panic with 64bit
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -254,7 +254,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	s := "s:" + strconv.FormatUint(nr, 10)
+	s := "s:" + strconv.FormatUint(uint64(nr), 10)
 	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
 	// [ws-?, s:0, shard:0]
