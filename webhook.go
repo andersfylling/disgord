@@ -307,7 +307,7 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
-//  Reviewed                2018-08-14
+//  Reviewed                2020-05-21
 //  Comment                 This endpoint. supports both JSON and form data bodies. It does require
 //                          multipart/form-data requests instead of the normal JSON request type when
 //                          uploading files. Make sure you set your Content-Type to multipart/form-data if
@@ -343,7 +343,11 @@ func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParam
 		Body:        params,
 		ContentType: contentType,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent // TODO: verify
+	if wait {
+		r.expectsStatusCode = http.StatusOK
+	} else {
+		r.expectsStatusCode = http.StatusNoContent
+	}
 
 	_, err = r.Execute()
 	return err
