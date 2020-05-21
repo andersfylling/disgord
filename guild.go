@@ -12,8 +12,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-
-	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // NOTE! Credit for defining the Permission consts in a clean way goes to DiscordGo.
@@ -151,7 +149,6 @@ func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
 type GuildUnavailable struct {
 	ID          Snowflake `json:"id"`
 	Unavailable bool      `json:"unavailable"` // ?*|
-	Lockable    `json:"-"`
 }
 
 //type GuildInterface interface {
@@ -177,8 +174,6 @@ type PartialGuild = Guild // TODO: find the actual data struct for partial guild
 // Fields with `*` are only sent within the GUILD_CREATE event
 // reviewed: 2018-08-25
 type Guild struct {
-	Lockable `json:"-"`
-
 	ID                          Snowflake                     `json:"id"`
 	ApplicationID               Snowflake                     `json:"application_id"` //   |?
 	Name                        string                        `json:"name"`
@@ -244,11 +239,6 @@ func (g *Guild) updateInternals() {
 func (g *Guild) copyOverToCache(other interface{}) (err error) {
 	guild := other.(*Guild)
 
-	if constant.LockedMethods {
-		g.RLock()
-		guild.Lock()
-	}
-
 	//guild.ID = g.ID
 	if g.Name != "" {
 		guild.Name = g.Name
@@ -290,19 +280,11 @@ func (g *Guild) copyOverToCache(other interface{}) (err error) {
 		guild.JoinedAt = &joined
 	}
 
-	if constant.LockedMethods {
-		g.RUnlock()
-		guild.Unlock()
-	}
-
 	return
 }
 
 // GetMemberWithHighestSnowflake finds the member with the highest snowflake value.
 func (g *Guild) GetMemberWithHighestSnowflake() *Member {
-	g.RLock()
-	defer g.RUnlock()
-
 	if len(g.Members) == 0 {
 		return nil
 	}
@@ -324,11 +306,6 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 // MarshalJSON see interface json.Marshaler
 // TODO: fix copying of mutex lock
 func (g *Guild) MarshalJSON() ([]byte, error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	var jsonData []byte
 	var err error
 	if g.Unavailable {
@@ -356,11 +333,6 @@ func (g *Guild) sortChannels() {
 
 // AddChannel adds a channel to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddChannel(c *Channel) error {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	g.Channels = append(g.Channels, c)
 	g.sortChannels()
 
@@ -374,11 +346,6 @@ func (g *Guild) DeleteChannel(c *Channel) error {
 
 // DeleteChannelByID removes a channel from the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) DeleteChannelByID(ID Snowflake) error {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	index := -1
 	for i, c := range g.Channels {
 		if c.ID == ID {
@@ -415,11 +382,6 @@ func (g *Guild) addMembers(members ...*Member) {
 
 // AddMembers adds multiple members to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMembers(members []*Member) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	// Reduces allocations
 	membersToAdd := members[:0]
 
@@ -435,11 +397,6 @@ func (g *Guild) AddMembers(members []*Member) {
 
 // AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMember(member *Member) error {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	// TODO: Check for userID.IsZero()
 	if !g.hasMember(member.userID) {
 		g.addMembers(member)
@@ -452,11 +409,6 @@ func (g *Guild) AddMember(member *Member) error {
 // There is no proper way to get this number, so a invite is created and the estimate
 // is read from there. The invite is then deleted again.
 func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimate int, err error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	var channelID Snowflake
 	if len(g.Channels) == 0 {
 		channels, err := s.GetGuildChannels(ctx, g.ID)
@@ -492,11 +444,6 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 
 // AddRole adds a role to the Guild object. Note that this does not interact with Discord.
 func (g *Guild) AddRole(role *Role) error {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	// TODO: implement sorting for faster searching later
 	role.guildID = g.ID
 	g.Roles = append(g.Roles, role)
@@ -506,11 +453,6 @@ func (g *Guild) AddRole(role *Role) error {
 
 // Member return a member by his/her userid
 func (g *Guild) Member(id Snowflake) (*Member, error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	for _, member := range g.Members {
 		if member.User.ID == id {
 			return member, nil
@@ -522,11 +464,6 @@ func (g *Guild) Member(id Snowflake) (*Member, error) {
 
 // MembersByName retrieve a slice of members with same username or nickname
 func (g *Guild) MembersByName(name string) (members []*Member) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	for _, member := range g.Members {
 		if member.Nick == name || member.User.Username == name {
 			members = append(members, member)
@@ -538,11 +475,6 @@ func (g *Guild) MembersByName(name string) (members []*Member) {
 
 // Role retrieve a role based on role id
 func (g *Guild) Role(id Snowflake) (role *Role, err error) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	for _, role = range g.Roles {
 		if role.ID == id {
 			return
@@ -565,11 +497,6 @@ func (g *Guild) Role(id Snowflake) (role *Role, err error) {
 
 // DeleteRoleByID remove a role from the guild struct
 func (g *Guild) DeleteRoleByID(ID Snowflake) {
-	if constant.LockedMethods {
-		g.Lock()
-		defer g.Unlock()
-	}
-
 	index := -1
 	for i, r := range g.Roles {
 		if r.ID == ID {
@@ -588,11 +515,6 @@ func (g *Guild) DeleteRoleByID(ID Snowflake) {
 
 // RoleByName retrieves a slice of roles with same name
 func (g *Guild) RoleByName(name string) ([]*Role, error) {
-	if constant.LockedMethods {
-		g.RLock()
-		defer g.RUnlock()
-	}
-
 	var roles []*Role
 	for _, role := range g.Roles {
 		if role.Name == name {
@@ -609,11 +531,6 @@ func (g *Guild) RoleByName(name string) ([]*Role, error) {
 
 // Channel get a guild channel given it's ID
 func (g *Guild) Channel(id Snowflake) (*Channel, error) {
-	if constant.LockedMethods {
-		g.RLock()
-		defer g.RUnlock()
-	}
-
 	for _, channel := range g.Channels {
 		if channel.ID == id {
 			return channel, nil
@@ -625,11 +542,6 @@ func (g *Guild) Channel(id Snowflake) (*Channel, error) {
 
 // Emoji get a guild emoji by it's ID
 func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
-	if constant.LockedMethods {
-		g.RLock()
-		defer g.RUnlock()
-	}
-
 	for _, emoji = range g.Emojis {
 		if emoji.ID == id {
 			return
@@ -727,11 +639,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		g.RLock()
-		guild.Lock()
-	}
-
 	guild.ID = g.ID
 	guild.Name = g.Name
 	guild.Owner = g.Owner
@@ -808,11 +715,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		guild.Presences = append(guild.Presences, presenceP.DeepCopy().(*UserPresence))
 	}
 
-	if constant.LockedMethods {
-		g.RUnlock()
-		guild.Unlock()
-	}
-
 	return
 }
 
@@ -833,8 +735,6 @@ func (p *PartialBan) String() string {
 
 // Ban https://discord.com/developers/docs/resources/guild#ban-object
 type Ban struct {
-	Lockable `json:"-"`
-
 	Reason string `json:"reason"`
 	User   *User  `json:"user"`
 }
@@ -856,20 +756,10 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		b.RLock()
-		ban.Lock()
-	}
-
 	ban.Reason = b.Reason
 
 	if b.User != nil {
 		ban.User = b.User.DeepCopy().(*User)
-	}
-
-	if constant.LockedMethods {
-		b.RUnlock()
-		ban.Unlock()
 	}
 
 	return
@@ -879,8 +769,6 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 
 // GuildEmbed https://discord.com/developers/docs/resources/guild#guild-embed-object
 type GuildEmbed struct {
-	Lockable `json:"-"`
-
 	Enabled   bool      `json:"enabled"`
 	ChannelID Snowflake `json:"channel_id"`
 }
@@ -902,18 +790,8 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		e.RLock()
-		embed.Lock()
-	}
-
 	embed.Enabled = e.Enabled
 	embed.ChannelID = e.ChannelID
-
-	if constant.LockedMethods {
-		e.RUnlock()
-		embed.Unlock()
-	}
 
 	return
 }
@@ -922,8 +800,6 @@ func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
 
 // Integration https://discord.com/developers/docs/resources/guild#integration-object
 type Integration struct {
-	Lockable `json:"-"`
-
 	ID                Snowflake           `json:"id"`
 	Name              string              `json:"name"`
 	Type              string              `json:"type"`
@@ -953,11 +829,6 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		integration.Lock()
-	}
-
 	integration.ID = i.ID
 	integration.Name = i.Name
 	integration.Type = i.Type
@@ -974,18 +845,11 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 		integration.Account = i.Account.DeepCopy().(*IntegrationAccount)
 	}
 
-	if constant.LockedMethods {
-		i.RUnlock()
-		integration.Unlock()
-	}
-
 	return
 }
 
 // IntegrationAccount https://discord.com/developers/docs/resources/guild#integration-account-object
 type IntegrationAccount struct {
-	Lockable `json:"-"`
-
 	ID   string `json:"id"`   // id of the account
 	Name string `json:"name"` // name of the account
 }
@@ -1007,19 +871,8 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		account.Lock()
-	}
-
 	account.ID = i.ID
 	account.Name = i.Name
-
-	if constant.LockedMethods {
-		i.RUnlock()
-		account.Unlock()
-	}
-
 	return
 }
 
@@ -1027,8 +880,6 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 
 // Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	Lockable `json:"-"`
-
 	GuildID  Snowflake   `json:"guild_id,omitempty"`
 	User     *User       `json:"user"`
 	Nick     string      `json:"nick,omitempty"` // ?|
@@ -1125,11 +976,6 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		m.RLock()
-		member.Lock()
-	}
-
 	member.GuildID = m.GuildID
 	member.Nick = m.Nick
 	member.Roles = m.Roles
@@ -1141,12 +987,6 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	if m.User != nil {
 		member.User = m.User.DeepCopy().(*User)
 	}
-
-	if constant.LockedMethods {
-		m.RUnlock()
-		member.Unlock()
-	}
-
 	return
 }
 

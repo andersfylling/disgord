@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -105,8 +104,6 @@ const (
 
 // AuditLog ...
 type AuditLog struct {
-	Lockable `json:"-"`
-
 	Webhooks        []*Webhook       `json:"webhooks"`
 	Users           []*User          `json:"users"`
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
@@ -142,11 +139,6 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
 	for _, webhook := range l.Webhooks {
 		log.Webhooks = append(log.Webhooks, webhook.DeepCopy().(*Webhook))
 	}
@@ -156,18 +148,11 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 	for _, entry := range l.AuditLogEntries {
 		log.AuditLogEntries = append(log.AuditLogEntries, entry.DeepCopy().(*AuditLogEntry))
 	}
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
 	return
 }
 
 // AuditLogEntry ...
 type AuditLogEntry struct {
-	Lockable `json:"-"`
-
 	TargetID Snowflake          `json:"target_id"`
 	Changes  []*AuditLogChanges `json:"changes,omitempty"`
 	UserID   Snowflake          `json:"user_id"`
@@ -194,11 +179,6 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
 	log.TargetID = l.TargetID
 	log.UserID = l.UserID
 	log.ID = l.ID
@@ -212,18 +192,11 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 	if l.Options != nil {
 		log.Options = l.Options.DeepCopy().(*AuditLogOption)
 	}
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
 	return
 }
 
 // AuditLogOption ...
 type AuditLogOption struct {
-	Lockable `json:"-"`
-
 	DeleteMemberDays string    `json:"delete_member_days"`
 	MembersRemoved   string    `json:"members_removed"`
 	ChannelID        Snowflake `json:"channel_id"`
@@ -250,11 +223,6 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
 	log.DeleteMemberDays = l.DeleteMemberDays
 	log.MembersRemoved = l.MembersRemoved
 	log.ChannelID = l.ChannelID
@@ -262,18 +230,11 @@ func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
 	log.ID = l.ID
 	log.Type = l.Type
 	log.RoleName = l.RoleName
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
 	return
 }
 
 // AuditLogChanges ...
 type AuditLogChanges struct {
-	Lockable `json:"-"`
-
 	NewValue interface{} `json:"new_value,omitempty"`
 	OldValue interface{} `json:"old_value,omitempty"`
 	Key      string      `json:"key"`
@@ -296,19 +257,9 @@ func (l *AuditLogChanges) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		l.RLock()
-		log.Lock()
-	}
-
 	log.NewValue = l.NewValue
 	log.OldValue = l.OldValue
 	log.Key = l.Key
-
-	if constant.LockedMethods {
-		l.RUnlock()
-		log.Unlock()
-	}
 
 	return
 }

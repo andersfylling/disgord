@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/crs"
 	"github.com/andersfylling/disgord/internal/util"
 )
@@ -599,9 +598,6 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 	newMembers := []*Member{}
 
-	g.guild.Lock()
-	defer g.guild.Unlock()
-
 	var userID Snowflake
 	for i := range members {
 		userID = members[i].User.ID
@@ -964,13 +960,7 @@ func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
 	}
 
 	lock := func(m *Member, cb func(*Member)) {
-		if constant.LockedMethods {
-			m.Lock()
-		}
 		cb(m)
-		if constant.LockedMethods {
-			m.Unlock()
-		}
 	}
 
 	c.guilds.Lock()

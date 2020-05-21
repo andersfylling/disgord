@@ -9,8 +9,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-
-	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // Channel types
@@ -91,7 +89,6 @@ type ChannelFetcher interface {
 // //   "type": 0
 // // }
 type PartialChannel struct {
-	Lockable `json:"-"`
 	ID       Snowflake `json:"id"`
 	Name     string    `json:"name"`
 	Type     uint      `json:"type"`
@@ -99,7 +96,6 @@ type PartialChannel struct {
 
 // Channel ...
 type Channel struct {
-	Lockable             `json:"-"`
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
 	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
@@ -170,14 +166,7 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 func (c *Channel) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	var id Snowflake
-	if constant.LockedMethods {
-		c.Lockable.RLock()
-	}
-	id = c.ID
-	if constant.LockedMethods {
-		c.Lockable.RUnlock()
-	}
+	id := c.ID
 
 	if id.IsZero() {
 		err = newErrorMissingSnowflake("channel id/snowflake is empty or missing")
@@ -209,11 +198,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.Lockable.RLock()
-		channel.Lockable.Lock()
-	}
-
 	channel.ID = c.ID
 	channel.Type = c.Type
 	channel.GuildID = c.GuildID
@@ -237,11 +221,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	channel.Recipients = make([]*User, 0, len(c.Recipients))
 	for _, recipient := range c.Recipients {
 		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
-	}
-
-	if constant.LockedMethods {
-		c.Lockable.RUnlock()
-		channel.Lockable.Unlock()
 	}
 
 	return
@@ -290,7 +269,6 @@ func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Me
 		return nil, errors.New("nonce can not be longer than 25 characters")
 	}
 
-	message.RLock()
 	params := &CreateMessageParams{
 		Content: message.Content,
 		Nonce:   nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
@@ -301,7 +279,6 @@ func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Me
 	if len(message.Embeds) > 0 {
 		params.Embed = message.Embeds[0]
 	}
-	message.RUnlock()
 
 	msg, err = client.CreateMessage(ctx, c.ID, params)
 	return

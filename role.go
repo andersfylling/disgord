@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -49,8 +48,6 @@ func NewRole() *Role {
 
 // Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
-	Lockable `json:"-"`
-
 	ID          Snowflake `json:"id"`
 	Name        string    `json:"name"`
 	Color       uint      `json:"color"`
@@ -100,11 +97,6 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 		return newErrorUnsupportedType("given interface{} was not a *Role")
 	}
 
-	if constant.LockedMethods {
-		r.RLock()
-		role.Lock()
-	}
-
 	role.ID = r.ID
 	role.Name = r.Name
 	role.Color = r.Color
@@ -114,24 +106,12 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	role.Managed = r.Managed
 	role.Mentionable = r.Mentionable
 	role.guildID = r.guildID
-
-	if constant.LockedMethods {
-		r.RUnlock()
-		role.Unlock()
-	}
-
 	return
 }
 
 func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	if constant.LockedMethods {
-		r.RLock()
-	}
 	guildID := r.guildID
 	id := r.ID
-	if constant.LockedMethods {
-		r.RUnlock()
-	}
 
 	if id.IsZero() {
 		return newErrorMissingSnowflake("role has no ID")

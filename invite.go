@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -18,8 +17,6 @@ type PartialInvite = Invite
 // https://discord.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
-	Lockable `json:"-"`
-
 	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
 
@@ -87,11 +84,6 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
 	invite.Code = i.Code
 	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
 	invite.ApproximateMemberCount = i.ApproximateMemberCount
@@ -108,11 +100,6 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		}
 	}
 
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
 	return nil
 }
 
@@ -120,8 +107,6 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 // https://discord.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
 type InviteMetadata struct {
-	Lockable `json:"-"`
-
 	// Inviter user who created the invite
 	Inviter *User `json:"inviter"`
 
@@ -164,11 +149,6 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
 	invite.Uses = i.Uses
 	invite.MaxUses = i.MaxUses
 	invite.MaxAge = i.MaxAge
@@ -179,12 +159,6 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 	if i.Inviter != nil {
 		invite.Inviter = i.Inviter.DeepCopy().(*User)
 	}
-
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
 	return nil
 }
 

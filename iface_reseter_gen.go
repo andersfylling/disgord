@@ -26,7 +26,6 @@ func (c *Channel) Reset() {
 }
 
 func (e *Emoji) Reset() {
-	e.mu = Lockable{}
 	e.ID = 0
 	e.Name = ""
 	e.Roles = nil

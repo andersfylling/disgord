@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -22,8 +21,6 @@ func validEmojiName(name string) bool {
 
 // Emoji ...
 type Emoji struct {
-	mu Lockable
-
 	ID            Snowflake   `json:"id"`
 	Name          string      `json:"name"`
 	Roles         []Snowflake `json:"roles,omitempty"`
@@ -88,11 +85,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		e.mu.RLock()
-		emoji.mu.Lock()
-	}
-
 	emoji.ID = e.ID
 	emoji.Name = e.Name
 	emoji.Roles = e.Roles
@@ -104,12 +96,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)
 	}
-
-	if constant.LockedMethods {
-		e.mu.RUnlock()
-		emoji.mu.Unlock()
-	}
-
 	return
 }
 
