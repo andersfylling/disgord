@@ -146,7 +146,7 @@ type EvtClient struct {
 	ignoreEvents []string
 
 	sessionID      string
-	sequenceNumber atomic.Uint64
+	sequenceNumber atomic.Uint32
 
 	rdyPool *sync.Pool
 

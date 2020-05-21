@@ -150,7 +150,7 @@ func TestEvtClient_communication(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.timeoutMultiplier = 0
-	seq := uint64(1)
+	seq := uint32(1)
 
 	// ###############################
 	// RECONNECT
@@ -185,7 +185,7 @@ func TestEvtClient_communication(t *testing.T) {
 	}()
 
 	// mocked websocket server.. ish
-	go func(seq *uint64) {
+	go func(seq *uint32) {
 		for {
 			var data *clientPacket
 			select {
