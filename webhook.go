@@ -343,6 +343,7 @@ func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParam
 		Body:        params,
 		ContentType: contentType,
 	}, flags)
+	r.pool = c.pool.message
 	if wait {
 		r.expectsStatusCode = http.StatusOK
 	} else {
