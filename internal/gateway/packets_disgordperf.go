@@ -61,14 +61,14 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 			val.WriteByte(data[i])
 		}
 		var tmp uint64
-		tmp, err = strconv.ParseUint(val.String(), 10, 64)
+		tmp, err = strconv.ParseUint(val.String(), 10, 32)
 		if err != nil {
 			evt := discordPacketJSON{}
 			err = util.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
-		p.SequenceNumber = tmp
+		p.SequenceNumber = uint32(tmp)
 	}
 
 	// op
