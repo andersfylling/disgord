@@ -451,13 +451,13 @@ type RESTWebhook interface {
 	DeleteWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) error
 
 	// ExecuteWebhook Trigger a webhook in Discord.
-	ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) error
+	ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
 
 	// ExecuteSlackWebhook Trigger a webhook in Discord from the Slack app.
-	ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) error
+	ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
 
 	// ExecuteGitHubWebhook Trigger a webhook in Discord from the GitHub app.
-	ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) error
+	ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
 }
 
 // RESTer holds all the sub REST interfaces

@@ -307,7 +307,7 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
-//  Reviewed                2018-08-14
+//  Reviewed                2020-05-21
 //  Comment                 This endpoint. supports both JSON and form data bodies. It does require
 //                          multipart/form-data requests instead of the normal JSON request type when
 //                          uploading files. Make sure you set your Content-Type to multipart/form-data if
@@ -316,16 +316,16 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (err error) {
+func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
 	if params == nil {
-		return errors.New("params can not be nil")
+		return nil, errors.New("params can not be nil")
 	}
 
 	if params.WebhookID.IsZero() {
-		return errors.New("webhook id is required")
+		return nil, errors.New("webhook id is required")
 	}
 	if params.Token == "" {
-		return errors.New("webhook token is required")
+		return nil, errors.New("webhook token is required")
 	}
 
 	var contentType string
@@ -343,20 +343,25 @@ func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParam
 		Body:        params,
 		ContentType: contentType,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent // TODO: verify
-
+	// Discord only returns the message when wait=true.
+	if wait {
+		r.pool = c.pool.message
+		r.expectsStatusCode = http.StatusOK
+		return getMessage(r.Execute)
+	}
+	r.expectsStatusCode = http.StatusNoContent
 	_, err = r.Execute()
-	return err
+	return nil, err
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
-//  Reviewed                2018-08-14
+//  Reviewed                2020-05-21
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func (c *Client) ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+func (c *Client) ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
 	return c.ExecuteWebhook(ctx, params, wait, endpoint.Slack(), flags...)
 }
 
@@ -364,12 +369,12 @@ func (c *Client) ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhook
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
-//  Reviewed                2018-08-14
+//  Reviewed                2020-05-21
 //  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-func (c *Client) ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (err error) {
+func (c *Client) ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
 	return c.ExecuteWebhook(ctx, params, wait, endpoint.GitHub(), flags...)
 }
 
