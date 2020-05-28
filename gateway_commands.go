@@ -113,6 +113,10 @@ type UpdateVoiceStatePayload struct {
 	SelfMute bool
 
 	// SelfDeaf is the Client deafened
+	// Currently, it's n ot documented how to receive sound from discord
+	// therefore it's not supported and the bot is always going to be deaf.
+	//
+	// deprecated, this is always true
 	SelfDeaf bool
 }
 

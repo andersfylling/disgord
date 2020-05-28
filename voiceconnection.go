@@ -83,7 +83,7 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 }
 
 func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (VoiceConnection, error) {
-	return r.VoiceConnectOptions(guildID, channelID, false, false)
+	return r.VoiceConnectOptions(guildID, channelID, true, false)
 }
 
 func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, selfDeaf, selfMute bool) (ret VoiceConnection, err error) {
@@ -115,7 +115,7 @@ func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, self
 	_, err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
 		ChannelID: channelID,
-		SelfDeaf:  selfDeaf,
+		SelfDeaf:  true, //selfDeaf,
 		SelfMute:  selfMute,
 	})
 	if err != nil {
@@ -349,7 +349,7 @@ func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   v.guildID,
 		ChannelID: channelID,
-		SelfDeaf:  false,
+		SelfDeaf:  true, //false,
 		SelfMute:  false,
 	})
 
