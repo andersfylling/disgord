@@ -317,8 +317,9 @@ func (c *EvtClient) onHello(v interface{}) error {
 	c.Lock()
 	c.heartbeatInterval = helloPk.HeartbeatInterval
 	c.Unlock()
-
-	c.activateHeartbeats <- true
+	defer func() {
+		c.activateHeartbeats <- true
+	}()
 
 	// if this is a new connection we can drop the resume packet
 	if c.virginConnection() {
