@@ -192,9 +192,8 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 	c.heartbeatInterval = interval
 	c.Unlock()
 
-	c.activateHeartbeats <- true
-
 	c.sendVoiceHelloPacket()
+	c.activateHeartbeats <- true
 	return nil
 }
 
@@ -298,6 +297,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 		c.log.Info(c.getLogPrefix(), "connected")
 	case <-ctx.Done():
 		c.isConnected.Store(false)
+		err = errors.New("context cancelled")
 	case <-time.After(5 * time.Second):
 		c.isConnected.Store(false)
 		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
