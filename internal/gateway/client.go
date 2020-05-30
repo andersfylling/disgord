@@ -311,6 +311,7 @@ func (c *client) reconnect() (err error) {
 
 	c.log.Debug(c.getLogPrefix(), "is reconnecting")
 	if err := c.disconnect(); err != nil {
+		c.log.Debug(c.getLogPrefix(), "reconnecting failed: ", err.Error())
 		c.RLock()
 		if c.requestedDisconnect.Load() {
 			c.RUnlock()
@@ -330,15 +331,14 @@ func (c *client) reconnectLoop() (err error) {
 		if try == 0 {
 			c.log.Debug(c.getLogPrefix(), "trying to connect")
 		} else {
-			c.log.Debug(c.getLogPrefix(), "reconnect attempt", try)
+			c.log.Debug(c.getLogPrefix(), "reconnect attempt ", try)
 		}
 		if _, err = c.connect(); err == nil {
 			c.log.Debug(c.getLogPrefix(), "establishing connection succeeded")
 			break
 		}
-
-		c.log.Info(c.getLogPrefix(), "establishing connection failed, trying again in ", delay)
-		c.log.Info(c.getLogPrefix(), err)
+		c.log.Error(c.getLogPrefix(), "establishing connection failed: ", err)
+		c.log.Info(c.getLogPrefix(), "next connection attempt in ", delay)
 
 		// wait N seconds
 		select {
@@ -497,8 +497,12 @@ func (c *client) receiver(ctx context.Context) {
 			once.Do(cancel) // free
 			return
 		case <-internal.Done():
-			go c.reconnect()
 			c.log.Debug(c.getLogPrefix(), "closing receiver after read error")
+			go func() {
+				if err := c.reconnect(); err != nil {
+					c.log.Error(c.getLogPrefix(), "reconnecting attempt failed: ", err.Error())
+				}
+			}()
 			return
 		default:
 		}
@@ -506,6 +510,7 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(ctx); err != nil {
+			c.log.Debug(c.getLogPrefix(), "read error: ", err.Error())
 			reconnect := true
 			var closeErr *CloseErr
 			isCloseErr := errors.As(err, &closeErr)
@@ -523,8 +528,6 @@ func (c *client) receiver(ctx context.Context) {
 					reconnect = false
 				default:
 				}
-			} else {
-				c.log.Debug(c.getLogPrefix(), err)
 			}
 
 			select {
