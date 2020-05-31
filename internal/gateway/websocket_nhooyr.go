@@ -69,6 +69,12 @@ func (g *nhooyr) Read(ctx context.Context) (packet []byte, err error) {
 	var messageType websocket.MessageType
 	messageType, packet, err = g.c.Read(ctx)
 	if err != nil {
+		// Cancelling Read by ctx results in closed WS, see issue
+		// https://github.com/nhooyr/websocket/issues/242
+		if ctx.Err() != nil && errors.Is(err, context.Canceled) {
+			g.isConnected.Store(false)
+			return nil, context.Canceled
+		}
 		var closeErr websocket.CloseError
 		if errors.As(err, &closeErr) {
 			g.isConnected.Store(false)

@@ -510,7 +510,9 @@ func (c *client) receiver(ctx context.Context) {
 		var packet []byte
 		var err error
 		if packet, err = c.conn.Read(ctx); err != nil {
-			c.log.Debug(c.getLogPrefix(), "read error: ", err.Error())
+			if !errors.Is(err, context.Canceled) && ctx.Err() != nil {
+				c.log.Debug(c.getLogPrefix(), "read error: ", err.Error())
+			}
 			reconnect := true
 			var closeErr *CloseErr
 			isCloseErr := errors.As(err, &closeErr)
