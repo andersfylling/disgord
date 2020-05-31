@@ -271,7 +271,7 @@ const (
 type UserFlag uint64
 
 const (
-	UserFlagNone UserFlag = 0
+	UserFlagNone            UserFlag = 0
 	UserFlagDiscordEmployee UserFlag = 0b1 << iota
 	UserFlagDiscordPartner
 	UserFlagHypeSquadEvents
@@ -393,9 +393,9 @@ type User struct {
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
 	PremiumType   PremiumType   `json:"premium_type,omitempty"`
-	Locale string `json:"locale,omitempty"`
-	Flags UserFlag `json:"flag,omitempty"`
-	PublicFlags UserFlag `json:"public_flag,omitempty"`
+	Locale        string        `json:"locale,omitempty"`
+	Flags         UserFlag      `json:"flag,omitempty"`
+	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
 
 	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
 	overwritten uint16 // map. see number left of field in userJSON struct.
@@ -887,7 +887,7 @@ type CreateGroupDMParams struct {
 	// AccessTokens access tokens of users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
 
-	// map[userID] = nickname
+	// map[UserID] = nickname
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 

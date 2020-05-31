@@ -159,7 +159,7 @@ func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, u
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
 	if userID.IsZero() {
-		return errors.New("userID must be set to target the specific user reaction")
+		return errors.New("UserID must be set to target the specific user reaction")
 	}
 
 	emojiCode := ""

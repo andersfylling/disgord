@@ -158,7 +158,7 @@ type GuildUnavailable struct {
 // if loading is deactivated, then check state, then do a request.
 // if loading is activated, check state only.
 // type Members interface {
-// 	Member(userID snowflake.Snowflake) *Member
+// 	Member(UserID snowflake.Snowflake) *Member
 // 	MembersWithName( /*username*/ name string) map[snowflake.Snowflake]*Member
 // 	MemberByUsername( /*username#discriminator*/ username string) *Member
 // 	MemberByAlias(alias string) *Member
@@ -367,7 +367,7 @@ func (g *Guild) DeleteChannelByID(ID Snowflake) error {
 
 func (g *Guild) hasMember(id Snowflake) bool {
 	for i := len(g.Members) - 1; i >= 0; i-- {
-		if g.Members[i].userID == id {
+		if g.Members[i].UserID == id {
 			return true
 		}
 	}
@@ -386,8 +386,8 @@ func (g *Guild) AddMembers(members []*Member) {
 	membersToAdd := members[:0]
 
 	for _, member := range members {
-		// TODO: Check for userID.IsZero()
-		if !g.hasMember(member.userID) {
+		// TODO: Check for UserID.IsZero()
+		if !g.hasMember(member.UserID) {
 			membersToAdd = append(membersToAdd, member)
 		}
 	}
@@ -397,8 +397,8 @@ func (g *Guild) AddMembers(members []*Member) {
 
 // AddMember adds a member to the Guild object. Note that this method does not interact with Discord.
 func (g *Guild) AddMember(member *Member) error {
-	// TODO: Check for userID.IsZero()
-	if !g.hasMember(member.userID) {
+	// TODO: Check for UserID.IsZero()
+	if !g.hasMember(member.UserID) {
 		g.addMembers(member)
 	}
 
@@ -880,18 +880,17 @@ func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
 
 // Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID  Snowflake   `json:"guild_id,omitempty"`
-	User     *User       `json:"user"`
-	Nick     string      `json:"nick,omitempty"` // ?|
-	Roles    []Snowflake `json:"roles"`
-	JoinedAt Time        `json:"joined_at,omitempty"`
+	GuildID      Snowflake   `json:"guild_id,omitempty"`
+	User         *User       `json:"user"`
+	Nick         string      `json:"nick,omitempty"`
+	Roles        []Snowflake `json:"roles"`
+	JoinedAt     Time        `json:"joined_at,omitempty"`
+	PremiumSince Time        `json:"premium_since,omitempty"`
+	Deaf         bool        `json:"deaf"`
+	Mute         bool        `json:"mute"`
 
-	// voice
-	Deaf bool `json:"deaf"`
-	Mute bool `json:"mute"`
-
-	// used for caching
-	userID Snowflake
+	// custom
+	UserID Snowflake
 }
 
 var _ Reseter = (*Member)(nil)
@@ -901,7 +900,7 @@ var _ Mentioner = (*Member)(nil)
 
 func (m *Member) updateInternals() {
 	if m.User != nil {
-		m.userID = m.User.ID
+		m.UserID = m.User.ID
 	}
 }
 
@@ -910,8 +909,8 @@ func (m *Member) String() string {
 	if m.User != nil {
 		usrname = m.User.Username
 	}
-	id := m.userID
-	if m.userID.IsZero() && m.User != nil {
+	id := m.UserID
+	if m.UserID.IsZero() && m.User != nil {
 		id = m.User.ID
 	}
 	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
@@ -922,11 +921,11 @@ type nickUpdater interface {
 }
 
 func (m *Member) UpdateNick(ctx context.Context, client nickUpdater, nickname string, flags ...Flag) error {
-	return client.UpdateGuildMember(ctx, m.GuildID, m.userID, flags...).SetNick(nickname).Execute()
+	return client.UpdateGuildMember(ctx, m.GuildID, m.UserID, flags...).SetNick(nickname).Execute()
 }
 
 func (m *Member) GetPermissions(ctx context.Context, s Session) (p uint64, err error) {
-	uID := m.userID
+	uID := m.UserID
 	if uID.IsZero() {
 		usr, err := m.GetUser(ctx, s)
 		if err != nil {
@@ -944,14 +943,14 @@ func (m *Member) GetUser(ctx context.Context, session Session) (usr *User, err e
 		return m.User, nil
 	}
 
-	return session.GetUser(ctx, m.userID)
+	return session.GetUser(ctx, m.UserID)
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
 func (m *Member) Mention() string {
 	var id Snowflake
-	if !m.userID.IsZero() {
-		id = m.userID
+	if !m.UserID.IsZero() {
+		id = m.UserID
 	} else if m.User != nil {
 		id = m.User.ID
 	}
@@ -982,7 +981,7 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	member.JoinedAt = m.JoinedAt
 	member.Deaf = m.Deaf
 	member.Mute = m.Mute
-	member.userID = m.userID
+	member.UserID = m.UserID
 
 	if m.User != nil {
 		member.User = m.User.DeepCopy().(*User)

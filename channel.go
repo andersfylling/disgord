@@ -89,9 +89,9 @@ type ChannelFetcher interface {
 // //   "type": 0
 // // }
 type PartialChannel struct {
-	ID       Snowflake `json:"id"`
-	Name     string    `json:"name"`
-	Type     uint      `json:"type"`
+	ID   Snowflake `json:"id"`
+	Name string    `json:"name"`
+	Type uint      `json:"type"`
 }
 
 // Channel ...
@@ -526,7 +526,7 @@ type GroupDMParticipant struct {
 
 func (g *GroupDMParticipant) FindErrors() error {
 	if g.UserID.IsZero() {
-		return errors.New("missing userID")
+		return errors.New("missing UserID")
 	}
 	if g.AccessToken == "" {
 		return errors.New("missing access token")
@@ -580,7 +580,7 @@ func (c *Client) KickParticipant(ctx context.Context, channelID, userID Snowflak
 		return errors.New("channelID must be set to target the correct channel")
 	}
 	if userID.IsZero() {
-		return errors.New("userID must be set to target the specific recipient")
+		return errors.New("UserID must be set to target the specific recipient")
 	}
 
 	r := c.newRESTRequest(&httd.Request{

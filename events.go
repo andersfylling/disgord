@@ -340,7 +340,7 @@ type MessageDeleteBulk struct {
 
 // MessageReactionAdd user reacted to a message
 // Note! do not cache emoji, unless it's updated with guildID
-// TODO: find guildID when given userID, ChannelID and MessageID
+// TODO: find guildID when given UserID, ChannelID and MessageID
 type MessageReactionAdd struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -355,7 +355,7 @@ type MessageReactionAdd struct {
 
 // MessageReactionRemove user removed a reaction from a message
 // Note! do not cache emoji, unless it's updated with guildID
-// TODO: find guildID when given userID, ChannelID and MessageID
+// TODO: find guildID when given UserID, ChannelID and MessageID
 type MessageReactionRemove struct {
 	UserID    Snowflake `json:"user_id"`
 	ChannelID Snowflake `json:"channel_id"`

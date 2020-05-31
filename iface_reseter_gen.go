@@ -90,7 +90,7 @@ func (m *Member) Reset() {
 	m.JoinedAt = Time{}
 	m.Deaf = false
 	m.Mute = false
-	m.userID = 0
+	m.UserID = 0
 }
 
 func (m *Message) Reset() {

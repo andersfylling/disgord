@@ -443,7 +443,7 @@ func createGuildCacher(conf *CacheConfig) (cacher *crs.LFU, err error) {
 }
 
 type guildCacheItem struct {
-	mu sync.Mutex
+	mu       sync.Mutex
 	guild    *Guild
 	channels []Snowflake
 }
@@ -453,7 +453,7 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 		g.guild = guild.DeepCopy().(*Guild)
 
 		for _, member := range g.guild.Members {
-			member.userID = member.User.ID
+			member.UserID = member.User.ID
 			member.User = nil
 		}
 
@@ -466,7 +466,7 @@ func (g *guildCacheItem) process(guild *Guild, immutable bool) {
 		g.guild = guild
 
 		for _, member := range g.guild.Members {
-			member.userID = member.User.ID
+			member.UserID = member.User.ID
 		}
 	}
 
@@ -486,7 +486,7 @@ func (g *guildCacheItem) build(cache *Cache) (guild *Guild) {
 			}
 		}
 		for i, member := range guild.Members {
-			guild.Members[i].User, _ = cache.GetUser(member.userID)
+			guild.Members[i].User, _ = cache.GetUser(member.UserID)
 			// member has a GetUser method to handle nil users
 		}
 
@@ -550,7 +550,7 @@ func (g *guildCacheItem) update(fresh *Guild, immutable bool) {
 			if m == nil {
 				continue
 			}
-			m.userID = m.User.ID
+			m.UserID = m.User.ID
 			m.User = nil
 			g.guild.Members[i] = m.DeepCopy().(*Member)
 		}
@@ -607,7 +607,7 @@ func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 	for i := range members {
 		userID = members[i].User.ID
 		for j := range g.guild.Members {
-			if g.guild.Members[j].userID == userID {
+			if g.guild.Members[j].UserID == userID {
 				userID = 0
 				_ = members[i].CopyOverTo(g.guild.Members[j])
 				g.guild.Members[j].User = nil
@@ -623,7 +623,7 @@ func (g *guildCacheItem) updateMembers(members []*Member, immutable bool) {
 	var member *Member
 	for i := range newMembers {
 		member = newMembers[i]
-		member.userID = member.User.ID
+		member.UserID = member.User.ID
 		member.User = nil
 		g.guild.Members = append(g.guild.Members, member)
 	}
@@ -785,7 +785,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	if item, exists := c.guilds.Get(guildID); exists {
 		guild := item.Val.(*guildCacheItem)
 		for i := range guild.guild.Members {
-			if guild.guild.Members[i].userID == userID {
+			if guild.guild.Members[i].UserID == userID {
 				member = guild.guild.Members[i]
 				break
 			}
@@ -794,7 +794,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	if member == nil {
 		newMember = true
 		member = &Member{
-			userID: userID,
+			UserID: userID,
 		}
 	}
 
@@ -828,7 +828,7 @@ func (c *Cache) AddGuildMember(guildID Snowflake, member *Member) {
 	defer c.guilds.Unlock()
 
 	for i := range guild.Members {
-		if guild.Members[i].userID == cpy.userID {
+		if guild.Members[i].UserID == cpy.UserID {
 			return
 		}
 	}
@@ -845,7 +845,7 @@ func (c *Cache) RemoveGuildMember(guildID Snowflake, memberID Snowflake) {
 
 	c.guilds.Lock()
 	for i := range guild.Members {
-		if guild.Members[i].userID == memberID {
+		if guild.Members[i].UserID == memberID {
 			// delete member without preserving order
 			guild.Members[i] = guild.Members[len(guild.Members)-1]
 			guild.Members = guild.Members[:len(guild.Members)-1]
@@ -984,7 +984,7 @@ func (c *Cache) UpdateOrAddGuildMembers(guildID Snowflake, members []*Member) {
 	for i := range members {
 		var updated bool
 		for j := range guild.Members {
-			if guild.Members[j].userID != 0 && guild.Members[j].userID == members[i].userID {
+			if guild.Members[j].UserID != 0 && guild.Members[j].UserID == members[i].UserID {
 				tmp := members[i].User
 				members[i].User = nil
 				_ = members[i].CopyOverTo(guild.Members[j])
@@ -1028,7 +1028,7 @@ func (c *Cache) GetGuildMember(guildID, userID Snowflake) (member *Member, err e
 
 	guild := result.Val.(*guildCacheItem).guild
 	for i := range guild.Members {
-		if guild.Members[i].userID == userID {
+		if guild.Members[i].UserID == userID {
 			member = guild.Members[i]
 			if c.immutable {
 				member = member.DeepCopy().(*Member)
@@ -1066,7 +1066,7 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 
 	guild := result.Val.(*guildCacheItem).guild
 	for i := range guild.Members {
-		if guild.Members[i].userID > after && len(members) <= limit {
+		if guild.Members[i].UserID > after && len(members) <= limit {
 			member := guild.Members[i]
 			if c.immutable {
 				member = member.DeepCopy().(*Member)
@@ -1080,7 +1080,7 @@ func (c *Cache) GetGuildMembersAfter(guildID, after Snowflake, limit int) (membe
 
 	for i := range members {
 		// add user object if it exists
-		members[i].User, _ = c.GetUser(members[i].userID)
+		members[i].User, _ = c.GetUser(members[i].UserID)
 	}
 	return
 }

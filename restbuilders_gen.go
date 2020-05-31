@@ -32,7 +32,7 @@ func (b *guildAuditLogsBuilder) Set(name string, v interface{}) *guildAuditLogsB
 }
 
 func (b *guildAuditLogsBuilder) SetUserID(userID Snowflake) *guildAuditLogsBuilder {
-	b.r.addPrereq(userID.IsZero(), "userID can not be 0")
+	b.r.addPrereq(userID.IsZero(), "UserID can not be 0")
 	b.r.param("user_id", userID)
 	return b
 }

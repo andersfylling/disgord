@@ -150,10 +150,10 @@
 //
 // Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using Disgord flags.
 //  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
-//  user, err := session.GetUser(userID)
+//  user, err := session.GetUser(UserID)
 //
 //  // bypass the cache checking. Same as before, but we insert a disgord.Flag type.
-//  user, err := session.GetUser(userID, disgord.IgnoreCache)
+//  user, err := session.GetUser(UserID, disgord.IgnoreCache)
 //
 // Disgord Flags
 //

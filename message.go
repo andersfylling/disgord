@@ -190,7 +190,7 @@ func (m *Message) updateInternals() {
 	}
 
 	if m.Author != nil && m.Member != nil {
-		m.Member.userID = m.Author.ID
+		m.Member.UserID = m.Author.ID
 	}
 }
 
