@@ -6,10 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
-	"sync"
 	"time"
-
-	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // common functionality/types used by struct_*.go files goes here
@@ -392,18 +389,4 @@ func extractAttribute(filter []byte, scope int, data []byte) (id Snowflake, err 
 		err = errors.New("id was empty")
 	}
 	return
-}
-
-func handleRWLocking(read, write *sync.RWMutex) {
-	if constant.LockedMethods {
-		read.RLock()
-		write.Lock()
-	}
-}
-
-func handleRWUnlocking(read, write *sync.RWMutex) {
-	if constant.LockedMethods {
-		read.RUnlock()
-		write.Unlock()
-	}
 }

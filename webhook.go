@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -13,8 +12,6 @@ import (
 // Webhook Used to represent a webhook
 // https://discord.com/developers/docs/resources/webhook#webhook-object
 type Webhook struct {
-	Lockable `json:"-"`
-
 	ID        Snowflake `json:"id"`                 //  |
 	GuildID   Snowflake `json:"guild_id,omitempty"` //  |?
 	ChannelID Snowflake `json:"channel_id"`         //  |
@@ -41,11 +38,6 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		w.RLock()
-		hook.Lock()
-	}
-
 	hook.ID = w.ID
 	hook.GuildID = w.GuildID
 	hook.ChannelID = w.ChannelID
@@ -54,10 +46,6 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 	hook.Avatar = w.Avatar
 	hook.Token = w.Token
 
-	if constant.LockedMethods {
-		w.RUnlock()
-		hook.Unlock()
-	}
 	return
 }
 

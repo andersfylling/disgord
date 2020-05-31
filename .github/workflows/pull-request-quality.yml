@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        buildtag: [disgord_diagnosews, json_std, disgord_removeDiscordMutex, disgord_parallelism, disgord_legacy, disgordperf]
+        buildtag: [disgord_diagnosews, json_std, disgord_legacy, disgordperf]
     steps:
       - name: Set up Go 1.13
         uses: actions/setup-go@v1

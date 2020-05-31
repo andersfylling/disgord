@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -13,8 +12,6 @@ import (
 // Reaction ...
 // https://discord.com/developers/docs/resources/channel#reaction-object
 type Reaction struct {
-	Lockable `json:"-"`
-
 	Count uint          `json:"count"`
 	Me    bool          `json:"me"`
 	Emoji *PartialEmoji `json:"Emoji"`
@@ -39,21 +36,11 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		r.RLock()
-		reaction.Lock()
-	}
-
 	reaction.Count = r.Count
 	reaction.Me = r.Me
 
 	if r.Emoji != nil {
 		reaction.Emoji = r.Emoji.DeepCopy().(*Emoji)
-	}
-
-	if constant.LockedMethods {
-		r.RUnlock()
-		reaction.Unlock()
 	}
 	return
 }

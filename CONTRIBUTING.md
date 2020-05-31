@@ -48,11 +48,6 @@ Example (use spaces):
 //                          categories from this endpoint is not supported.
 ```
 
-#### Mutex
-For discord specific structs (Message, User, etc.) use Lockable. This is to allow deactivating/activating the mutex in public methods.
-
-If the mutex does not need to be publicly accessible, then use the `mu` prefix.
-
 #### Singletons
 Nope. But discussions are welcome.
 

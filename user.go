@@ -8,15 +8,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // ActivityParty ...
 type ActivityParty struct {
-	Lockable `json:"-"`
-
 	ID   string `json:"id,omitempty"`   // the id of the party
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
 }
@@ -56,26 +53,13 @@ func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		ap.RLock()
-		activity.Lock()
-	}
-
 	activity.ID = ap.ID
 	activity.Size = ap.Size
-
-	if constant.LockedMethods {
-		ap.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivityAssets ...
 type ActivityAssets struct {
-	Lockable `json:"-"`
-
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
 	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
 	SmallImage string `json:"small_image,omitempty"` // the id for a small asset of the activity, usually a snowflake
@@ -99,28 +83,15 @@ func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.LargeImage = a.LargeImage
 	activity.LargeText = a.LargeText
 	activity.SmallImage = a.SmallImage
 	activity.SmallText = a.SmallText
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivitySecrets ...
 type ActivitySecrets struct {
-	Lockable `json:"-"`
-
 	Join     string `json:"join,omitempty"`     // the secret for joining a party
 	Spectate string `json:"spectate,omitempty"` // the secret for spectating a game
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
@@ -143,27 +114,14 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Join = a.Join
 	activity.Spectate = a.Spectate
 	activity.Match = a.Match
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivityEmoji ...
 type ActivityEmoji struct {
-	Lockable `json:"-"`
-
 	Name     string    `json:"name"`
 	ID       Snowflake `json:"id,omitempty"`
 	Animated bool      `json:"animated,omitempty"`
@@ -171,8 +129,6 @@ type ActivityEmoji struct {
 
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
-	Lockable `json:"-"`
-
 	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
 }
@@ -194,19 +150,8 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Start = a.Start
 	activity.End = a.End
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
@@ -249,8 +194,6 @@ func NewActivity() (activity *Activity) {
 
 // Activity https://discord.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
-	Lockable `json:"-"`
-
 	Name          string             `json:"name"`                     // the activity's name
 	Type          acitivityType      `json:"type"`                     // activity type
 	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
@@ -285,11 +228,6 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Name = a.Name
 	activity.Type = a.Type
 	activity.ApplicationID = a.ApplicationID
@@ -310,11 +248,6 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	}
 	if a.Secrets != nil {
 		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
-	}
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
 	}
 
 	return
@@ -450,8 +383,6 @@ func (u *userJSON) extractMap() uint16 {
 
 // User the Discord user object which is reused in most other data structures.
 type User struct {
-	Lockable `json:"-"`
-
 	ID            Snowflake     `json:"id,omitempty"`
 	Username      string        `json:"username,omitempty"`
 	Discriminator Discriminator `json:"discriminator,omitempty"`
@@ -595,11 +526,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		u.RLock()
-		user.Lock()
-	}
-
 	user.ID = u.ID
 	user.Username = u.Username
 	user.Discriminator = u.Discriminator
@@ -615,22 +541,12 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.PublicFlags = u.PublicFlags
 	user.overwritten = u.overwritten
 
-	if constant.LockedMethods {
-		u.RUnlock()
-		user.Unlock()
-	}
-
 	return
 }
 
 // copyOverToCache see interface at struct.go#CacheCopier
 func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
-
-	if constant.LockedMethods {
-		u.RLock()
-		user.Lock()
-	}
 
 	if !u.ID.IsZero() {
 		user.ID = u.ID
@@ -673,11 +589,6 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	}
 	user.overwritten = u.overwritten
 
-	if constant.LockedMethods {
-		u.RUnlock()
-		user.Unlock()
-	}
-
 	return
 }
 
@@ -697,8 +608,6 @@ func NewUserPresence() *UserPresence {
 
 // UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
-	Lockable `json:"-"`
-
 	User    *User       `json:"user"`
 	Roles   []Snowflake `json:"roles"`
 	Game    *Activity   `json:"activity"`
@@ -728,11 +637,6 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		p.RLock()
-		presence.Lock()
-	}
-
 	presence.User = p.User.DeepCopy().(*User)
 	presence.Roles = p.Roles
 	presence.GuildID = p.GuildID
@@ -743,18 +647,11 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		presence.Game = p.Game.DeepCopy().(*Activity)
 	}
 
-	if constant.LockedMethods {
-		p.RUnlock()
-		presence.Unlock()
-	}
-
 	return
 }
 
 // UserConnection ...
 type UserConnection struct {
-	Lockable `json:"-"`
-
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account
 	Type         string                `json:"type"`         // the service of the connection (twitch, youtube)
@@ -779,11 +676,6 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		con.Lock()
-	}
-
 	con.ID = c.ID
 	con.Name = c.Name
 	con.Type = c.Type
@@ -792,11 +684,6 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 	con.Integrations = make([]*IntegrationAccount, len(c.Integrations))
 	for i, account := range c.Integrations {
 		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
-	}
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		con.Unlock()
 	}
 
 	return

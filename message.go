@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -107,7 +106,6 @@ type MessageApplication struct {
 
 // Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
-	Lockable         `json:"-"`
 	ID               Snowflake          `json:"id"`
 	ChannelID        Snowflake          `json:"channel_id"`
 	Author           *User              `json:"author"`
@@ -221,11 +219,6 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		m.RLock()
-		message.Lock()
-	}
-
 	message.ID = m.ID
 	message.ChannelID = m.ChannelID
 	message.Content = m.Content
@@ -266,11 +259,6 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
 	}
 
-	if constant.LockedMethods {
-		m.RUnlock()
-		message.Unlock()
-	}
-
 	return
 }
 
@@ -291,15 +279,9 @@ type MessageUpdater interface {
 
 // Update after changing the message object, call update to notify Discord about any changes made
 func (m *Message) update(ctx context.Context, client MessageUpdater, flags ...Flag) (msg *Message, err error) {
-	if constant.LockedMethods {
-		m.RLock()
-	}
 	builder := client.UpdateMessage(ctx, m.ChannelID, m.ID, flags...).SetContent(m.Content)
 	if len(m.Embeds) > 0 {
 		builder.SetEmbed(m.Embeds[0])
-	}
-	if constant.LockedMethods {
-		m.RUnlock()
 	}
 
 	return builder.Execute()
@@ -312,9 +294,6 @@ type MessageSender interface {
 
 // Send sends this message to discord.
 func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag) (msg *Message, err error) {
-	if constant.LockedMethods {
-		m.RLock()
-	}
 	nonce := fmt.Sprint(m.Nonce)
 	if len(nonce) > 25 {
 		return nil, errors.New("nonce can not be more than 25 characters")
@@ -333,10 +312,6 @@ func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag)
 		_ = m.Embeds[0].CopyOverTo(params.Embed)
 	}
 	channelID := m.ChannelID
-
-	if constant.LockedMethods {
-		m.RUnlock()
-	}
 
 	msg, err = client.CreateMessage(ctx, channelID, params, flags...)
 	return
