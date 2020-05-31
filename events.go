@@ -617,6 +617,12 @@ type UserUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+// UnmarshalJSON ...
+func (obj *UserUpdate) UnmarshalJSON(data []byte) error {
+	obj.User = &User{}
+	return util.Unmarshal(data, obj.User)
+}
+
 // ---------------------------
 
 // VoiceStateUpdate someone joined, left, or moved a voice channel

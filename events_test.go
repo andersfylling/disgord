@@ -283,3 +283,25 @@ func TestGuildDelete_UnmarshalJSON(t *testing.T) {
 		t.Error("different ID")
 	}
 }
+
+func TestUserUpdate_UnmarshalJSON(t *testing.T) {
+	user := &User{}
+	evt := &UserUpdate{}
+
+	data, err := ioutil.ReadFile("testdata/user/user1.json")
+	check(err, t)
+
+	err = unmarshal(data, user)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = unmarshal(data, evt)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if evt.ID != user.ID {
+		t.Error("different ID")
+	}
+}
