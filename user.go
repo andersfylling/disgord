@@ -330,6 +330,33 @@ const (
 	userOMFAEnabled
 	userOBot
 	userOPremiumType
+	userOLocale
+	userOFlags
+	userOPublicFlags
+)
+
+type UserFlag uint64
+
+const (
+	UserFlagNone UserFlag = 0
+	UserFlagDiscordEmployee UserFlag = 0b1 << iota
+	UserFlagDiscordPartner
+	UserFlagHypeSquadEvents
+	UserFlagBugHunterLevel1
+	_
+	_
+	UserFlagHouseBravery
+	UserFlagHouseBrilliance
+	UserFlagHouseBalance
+	UserFlagEarlySupporter
+	UserFlagTeamUser
+	_
+	UserFlagSystem
+	_
+	UserFlagBugHunterLevel2
+	_
+	UserFlagVerifiedBot
+	UserFlagVerifiedBotDeveloper
 )
 
 type PremiumType int
@@ -380,10 +407,13 @@ type userJSON struct {
 	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
 	/*6*/ Bot *bool `json:"bot"`
 	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
+	/*8*/ Locale *string `json:"locale,omitempty"`
+	/*9*/ Flags *UserFlag `json:"flags,omitempty"`
+	/*10*/ PublicFlags *UserFlag `json:"public_flags,omitempty"`
 }
 
-func (u *userJSON) extractMap() uint8 {
-	var overwritten uint8
+func (u *userJSON) extractMap() uint16 {
+	var overwritten uint16
 	if u.Email != nil {
 		overwritten |= userOEmail
 	}
@@ -405,6 +435,15 @@ func (u *userJSON) extractMap() uint8 {
 	if u.PremiumType != nil {
 		overwritten |= userOPremiumType
 	}
+	if u.Locale != nil {
+		overwritten |= userOLocale
+	}
+	if u.Flags != nil {
+		overwritten |= userOFlags
+	}
+	if u.PublicFlags != nil {
+		overwritten |= userOPublicFlags
+	}
 
 	return overwritten
 }
@@ -423,9 +462,12 @@ type User struct {
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
 	PremiumType   PremiumType   `json:"premium_type,omitempty"`
+	Locale string `json:"locale,omitempty"`
+	Flags UserFlag `json:"flag,omitempty"`
+	PublicFlags UserFlag `json:"public_flag,omitempty"`
 
 	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
-	overwritten uint8 // map. see number left of field in userJSON struct.
+	overwritten uint16 // map. see number left of field in userJSON struct.
 }
 
 var _ Reseter = (*User)(nil)
@@ -502,6 +544,15 @@ func (u *User) UnmarshalJSON(data []byte) (err error) {
 	if (changes & userOPremiumType) > 0 {
 		u.PremiumType = *j.PremiumType
 	}
+	if (changes & userOLocale) > 0 {
+		u.Locale = *j.Locale
+	}
+	if (changes & userOFlags) > 0 {
+		u.Flags = *j.Flags
+	}
+	if (changes & userOPublicFlags) > 0 {
+		u.PublicFlags = *j.PublicFlags
+	}
 	u.overwritten |= changes
 
 	return
@@ -558,6 +609,10 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
 	user.Avatar = u.Avatar
+	user.PremiumType = u.PremiumType
+	user.Locale = u.Locale
+	user.Flags = u.Flags
+	user.PublicFlags = u.PublicFlags
 	user.overwritten = u.overwritten
 
 	if constant.LockedMethods {
@@ -603,6 +658,18 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	}
 	if (u.overwritten & userOBot) > 0 {
 		user.Bot = u.Bot
+	}
+	if (u.overwritten & userOPremiumType) > 0 {
+		user.PremiumType = u.PremiumType
+	}
+	if (u.overwritten & userOLocale) > 0 {
+		user.Locale = u.Locale
+	}
+	if (u.overwritten & userOFlags) > 0 {
+		user.Flags = u.Flags
+	}
+	if (u.overwritten & userOPublicFlags) > 0 {
+		user.PublicFlags = u.PublicFlags
 	}
 	user.overwritten = u.overwritten
 
