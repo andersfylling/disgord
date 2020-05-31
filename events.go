@@ -612,7 +612,7 @@ type PresenceUpdate struct {
 
 // UserUpdate properties about a user changed
 type UserUpdate struct {
-	User    *User           `json:"user"`
+	*User
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
 }
