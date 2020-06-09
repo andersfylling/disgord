@@ -61,7 +61,7 @@ func (e *Emoji) Mention() string {
 		prefix = "a:"
 	}
 
-	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 func (e *Emoji) LinkToGuild(guildID Snowflake) {
