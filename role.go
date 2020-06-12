@@ -247,32 +247,11 @@ func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...
 
 // GetMemberPermissions populates a uint64 with all the permission flags
 func (c *Client) GetMemberPermissions(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error) {
-	roles, err := c.GetGuildRoles(ctx, guildID, flags...)
-	if err != nil {
-		return 0, err
-	}
-
 	member, err := c.GetMember(ctx, guildID, userID, flags...)
 	if err != nil {
 		return 0, err
 	}
-
-	roleIDs := member.Roles
-	for i := range roles {
-		for j := range roleIDs {
-			if roles[i].ID == roleIDs[j] {
-				permissions |= roles[i].Permissions
-				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
-				break
-			}
-		}
-
-		if len(roleIDs) == 0 {
-			break
-		}
-	}
-
-	return permissions, nil
+	return member.GetPermissions(ctx, c, flags...)
 }
 
 //////////////////////////////////////////////////////

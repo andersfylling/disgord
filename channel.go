@@ -154,6 +154,41 @@ func (c *Channel) valid() bool {
 	return true
 }
 
+// GetPermissions is used to get a members permissions in a channel.
+func (c *Channel) GetPermissions(ctx context.Context, s PermissionFetching, member *Member, flags ...Flag) (permissions PermissionBits, err error) {
+	// Get the guild permissions.
+	permissions, err = member.GetPermissions(ctx, s, flags...)
+	if err != nil {
+		return 0, err
+	}
+
+	// Handle permission overwrites.
+	apply := func(o PermissionOverwrite) {
+		permissions |= o.Allow
+		permissions &= (-o.Deny) - 1
+	}
+	for _, overwrite := range c.PermissionOverwrites {
+		if overwrite.Type == "member" {
+			// This is a member. Is it me?
+			if overwrite.ID == member.UserID {
+				// It is! Time to apply the overwrites.
+				apply(overwrite)
+			}
+			continue
+		}
+
+		for _, role := range member.Roles {
+			if role == overwrite.ID {
+				apply(overwrite)
+				break
+			}
+		}
+	}
+
+	// Return the result.
+	return
+}
+
 // Mention creates a channel mention string. Mention format is according the Discord protocol.
 func (c *Channel) Mention() string {
 	return "<#" + c.ID.String() + ">"

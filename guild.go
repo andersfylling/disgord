@@ -924,16 +924,34 @@ func (m *Member) UpdateNick(ctx context.Context, client nickUpdater, nickname st
 	return client.UpdateGuildMember(ctx, m.GuildID, m.UserID, flags...).SetNick(nickname).Execute()
 }
 
-func (m *Member) GetPermissions(ctx context.Context, s Session) (p uint64, err error) {
-	uID := m.UserID
-	if uID.IsZero() {
-		usr, err := m.GetUser(ctx, s)
-		if err != nil {
-			return 0, err
-		}
-		uID = usr.ID
+// PermissionFetching is an interface which only holds the method needed for fetching a users permissions
+type PermissionFetching interface {
+	GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Role, error)
+}
+
+// GetPermissions populates a uint64 with all the permission flags
+func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags ...Flag) (permissions PermissionBits, err error) {
+	roles, err := s.GetGuildRoles(ctx, m.GuildID, flags...)
+	if err != nil {
+		return 0, err
 	}
-	return s.GetMemberPermissions(ctx, m.GuildID, uID)
+
+	roleIDs := m.Roles
+	for i := range roles {
+		for j := range roleIDs {
+			if roles[i].ID == roleIDs[j] {
+				permissions |= roles[i].Permissions
+				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
+				break
+			}
+		}
+
+		if len(roleIDs) == 0 {
+			break
+		}
+	}
+
+	return permissions, nil
 }
 
 // GetUser tries to ensure that you get a user object and not a nil. The user can be nil if the guild
