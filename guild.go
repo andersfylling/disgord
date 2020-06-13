@@ -1546,6 +1546,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 		}
 	}
 
+	if member != nil {
+		member.GuildID = guildID
+	}
+
 	return member, err
 }
 
