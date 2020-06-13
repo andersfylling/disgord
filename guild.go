@@ -1371,7 +1371,12 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 		return &Member{}
 	}
 
-	return getMember(r.Execute)
+	ret, err = getMember(r.Execute)
+	if err != nil {
+		return
+	}
+	ret.GuildID = guildID
+	return
 }
 
 type getGuildMembersParams struct {
