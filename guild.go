@@ -1371,7 +1371,12 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 		return &Member{}
 	}
 
-	return getMember(r.Execute)
+	ret, err = getMember(r.Execute)
+	if err != nil {
+		return
+	}
+	ret.GuildID = guildID
+	return
 }
 
 type getGuildMembersParams struct {
@@ -1539,6 +1544,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 		if errRest, ok := err.(*httd.ErrREST); ok && errRest.HTTPCode == http.StatusNoContent {
 			errRest.Msg = "member{" + userID.String() + "} is already in Guild{" + guildID.String() + "}"
 		}
+	}
+
+	if member != nil {
+		member.GuildID = guildID
 	}
 
 	return member, err
