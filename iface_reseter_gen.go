@@ -88,6 +88,7 @@ func (m *Member) Reset() {
 	m.Nick = ""
 	m.Roles = nil
 	m.JoinedAt = Time{}
+	m.PremiumSince = Time{}
 	m.Deaf = false
 	m.Mute = false
 	m.UserID = 0
@@ -172,6 +173,9 @@ func (u *User) Reset() {
 	u.MFAEnabled = false
 	u.Bot = false
 	u.PremiumType = 0
+	u.Locale = ""
+	u.Flags = 0
+	u.PublicFlags = 0
 	u.overwritten = 0
 }
 

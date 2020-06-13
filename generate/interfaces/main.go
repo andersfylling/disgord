@@ -306,6 +306,8 @@ func getZeroInit(s string) string {
 		return "time.Unix(0, 0)"
 	case "Timestamp":
 		return "Timestamp(time.Unix(0, 0))"
+	case "UserFlag":
+		return "0"
 	}
 
 	if strings.HasPrefix(s, "&{") {
