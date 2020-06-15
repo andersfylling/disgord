@@ -43,7 +43,6 @@ func (log *LoggerZap) Error(v ...interface{}) {
 	_ = log.instance.Sync()
 }
 
-
 func main() {
 	logConf := zap.NewProductionConfig()
 	logConf.Level.SetLevel(zap.DebugLevel)

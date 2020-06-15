@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"github.com/andersfylling/disgord"
 	"github.com/sirupsen/logrus"
-	"context"
 	"os"
 )
 
 var log = &logrus.Logger{
-	Out: os.Stderr,
+	Out:       os.Stderr,
 	Formatter: new(logrus.TextFormatter),
-	Hooks: make(logrus.LevelHooks),
-	Level: logrus.DebugLevel,
+	Hooks:     make(logrus.LevelHooks),
+	Level:     logrus.DebugLevel,
 }
 
 func main() {

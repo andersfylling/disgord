@@ -5,15 +5,15 @@ import (
 	"os"
 
 	"github.com/andersfylling/disgord"
-	"github.com/sirupsen/logrus"
 	"github.com/andersfylling/disgord/std"
+	"github.com/sirupsen/logrus"
 )
 
 var log = &logrus.Logger{
-	Out: os.Stderr,
+	Out:       os.Stderr,
 	Formatter: new(logrus.TextFormatter),
-	Hooks: make(logrus.LevelHooks),
-	Level: logrus.ErrorLevel,
+	Hooks:     make(logrus.LevelHooks),
+	Level:     logrus.ErrorLevel,
 }
 
 // replyPongToPing is a handler that replies pong to ping messages

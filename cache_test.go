@@ -53,7 +53,7 @@ func TestCache_ChannelCreate(t *testing.T) {
 
 func TestCache_MemberUpdate_MemberCachingDisabled(t *testing.T) {
 	cache, _ := newCache(&CacheConfig{
-		DisableGuildCaching:      true,
+		DisableGuildCaching: true,
 	})
 	b, err := ioutil.ReadFile("testdata/guild/member1.json")
 	if err != nil {
