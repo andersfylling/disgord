@@ -781,16 +781,21 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	}
 	var member *Member
 	var newMember bool
-	c.guilds.Lock()
-	if item, exists := c.guilds.Get(guildID); exists {
-		guild := item.Val.(*guildCacheItem)
-		for i := range guild.guild.Members {
-			if guild.guild.Members[i].UserID == userID {
-				member = guild.guild.Members[i]
-				break
+
+	if c.guilds != nil {
+		c.guilds.Lock()
+		if item, exists := c.guilds.Get(guildID); exists {
+			guild := item.Val.(*guildCacheItem)
+			for i := range guild.guild.Members {
+				if guild.guild.Members[i].UserID == userID {
+					member = guild.guild.Members[i]
+					break
+				}
 			}
 		}
+		c.guilds.Unlock()
 	}
+
 	if member == nil {
 		newMember = true
 		member = &Member{
@@ -801,13 +806,11 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 
 	member.User = tmpUser
 	if err := util.Unmarshal(data, member); err != nil {
-		c.guilds.Unlock()
 		// TODO: logging
 		return
 	}
-	c.guilds.Unlock()
 
-	if newMember {
+	if newMember && c.guilds != nil {
 		c.UpdateOrAddGuildMembers(guildID, []*Member{member})
 	}
 
