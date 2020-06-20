@@ -570,6 +570,12 @@ func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
+func (c *Client) Event() SocketHandlerRegistrator {
+	return &socketHandlerRegister{
+		register: c,
+	}
+}
+
 // Ready triggers a given callback when all shards has gotten their first Ready event
 // Warning: Do not call Client.Connect before this.
 func (c *Client) Ready(cb func()) {

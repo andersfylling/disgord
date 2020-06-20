@@ -21,18 +21,7 @@ type Link interface {
 	Disconnect() error
 }
 
-// SocketHandler all socket related logic
-type SocketHandler interface {
-	// Link controls the connection to the Discord API. Affects all shards.
-	// Link
-
-	// Disconnect closes the discord websocket connection
-	Disconnect() error
-
-	// Suspend temporary closes the socket connection, allowing resources to be
-	// reused on reconnect
-	Suspend() error
-
+type OnSocketEventer interface {
 	// On creates a specification to be executed on the given event. The specification
 	// consists of, in order, 0 or more middlewares, 1 or more handlers, 0 or 1 controller.
 	// On incorrect ordering, or types, the method will panic. See reactor.go for types.
@@ -52,7 +41,24 @@ type SocketHandler interface {
 	//  // a handler that only runs for events within the first 10 minutes
 	//  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
 	On(event string, inputs ...interface{})
-	SocketHandlerRegistrators // type safe handler registration
+}
+
+// SocketHandler all socket related logic
+type SocketHandler interface {
+	// Link controls the connection to the Discord API. Affects all shards.
+	// Link
+
+	// Disconnect closes the discord websocket connection
+	Disconnect() error
+
+	// Suspend temporary closes the socket connection, allowing resources to be
+	// reused on reconnect
+	Suspend() error
+
+	OnSocketEventer
+
+	// Event gives access to type safe event handler registration using the builder pattern
+	Event() SocketHandlerRegistrator
 
 	Emitter
 }
