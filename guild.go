@@ -22,12 +22,17 @@ import (
 // Source code reference:
 //  https://github.com/bwmarrin/discordgo/blob/8325a6bf6dd6c91ed4040a1617b07287b8fb0eba/structs.go#L854
 
-type PermissionBit = uint64
-type PermissionBits = PermissionBit
+// PermissionBits is used to define the permission bit(s) which are set.
+type PermissionBits uint64
+
+// Has is used to check if the permission bits has the bits specified.
+func (b PermissionBits) Has(Bits PermissionBits) bool {
+	return (b & Bits) == Bits
+}
 
 // Constants for the different bit offsets of text channel permissions
 const (
-	PermissionReadMessages PermissionBit = 1 << (iota + 10)
+	PermissionReadMessages PermissionBits = 1 << (iota + 10)
 	PermissionSendMessages
 	PermissionSendTTSMessages
 	PermissionManageMessages
@@ -40,18 +45,18 @@ const (
 
 // Constants for the different bit offsets of voice permissions
 const (
-	PermissionVoiceConnect PermissionBit = 1 << (iota + 20)
+	PermissionVoiceConnect PermissionBits = 1 << (iota + 20)
 	PermissionVoiceSpeak
 	PermissionVoiceMuteMembers
 	PermissionVoiceDeafenMembers
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
-	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
+	PermissionVoicePrioritySpeaker PermissionBits = 1 << (iota + 2)
 )
 
 // Constants for general management.
 const (
-	PermissionChangeNickname PermissionBit = 1 << (iota + 26)
+	PermissionChangeNickname PermissionBits = 1 << (iota + 26)
 	PermissionManageNicknames
 	PermissionManageRoles
 	PermissionManageWebhooks
@@ -60,7 +65,7 @@ const (
 
 // Constants for the different bit offsets of general permissions
 const (
-	PermissionCreateInstantInvite PermissionBit = 1 << iota
+	PermissionCreateInstantInvite PermissionBits = 1 << iota
 	PermissionKickMembers
 	PermissionBanMembers
 	PermissionAdministrator
@@ -940,7 +945,7 @@ func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags
 	for i := range roles {
 		for j := range roleIDs {
 			if roles[i].ID == roleIDs[j] {
-				permissions |= roles[i].Permissions
+				permissions |= (PermissionBits)(roles[i].Permissions)
 				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
 				break
 			}

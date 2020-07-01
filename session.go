@@ -514,7 +514,7 @@ type Session interface {
 	DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) error
 
 	// AddPermission is to store the permissions required by the bot to function as intended.
-	AddPermission(permission PermissionBit) (updatedPermissions PermissionBits)
+	AddPermission(permission PermissionBits) (updatedPermissions PermissionBits)
 	GetPermissions() (permissions PermissionBits)
 
 	// CreateBotURL

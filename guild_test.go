@@ -163,3 +163,16 @@ func TestGuild_DeleteChannel(t *testing.T) {
 		t.Error("no error given when requesting a deleted channel")
 	}
 }
+
+func TestPermissionBits(t *testing.T) {
+	testBits := PermissionSendMessages | PermissionReadMessages
+	if testBits.Has(PermissionAdministrator) {
+		t.Fatal("does not have administrator")
+	}
+	if !testBits.Has(PermissionSendMessages) {
+		t.Fatal("does have send messages")
+	}
+	if !testBits.Has(PermissionReadMessages) {
+		t.Fatal("does have read messages")
+	}
+}

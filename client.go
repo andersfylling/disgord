@@ -268,7 +268,7 @@ func (c *Client) Pool() *pools {
 // This is useful for creating the bot URL.
 //
 // At the moment, this holds no other effect than aesthetics.
-func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBits) {
+func (c *Client) AddPermission(permission PermissionBits) (updatedPermissions PermissionBits) {
 	if permission < 0 {
 		permission = 0
 	}
