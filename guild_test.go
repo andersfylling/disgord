@@ -167,13 +167,13 @@ func TestGuild_DeleteChannel(t *testing.T) {
 func TestPermissionBits(t *testing.T) {
 	// test permission bit checking
 	testBits := PermissionSendMessages | PermissionReadMessages
-	if testBits.Has(PermissionAdministrator) {
+	if testBits.Contains(PermissionAdministrator) {
 		t.Fatal("does not have administrator")
 	}
-	if !testBits.Has(PermissionSendMessages) {
+	if !testBits.Contains(PermissionSendMessages) {
 		t.Fatal("does have send messages")
 	}
-	if !testBits.Has(PermissionReadMessages) {
+	if !testBits.Contains(PermissionReadMessages) {
 		t.Fatal("does have read messages")
 	}
 
@@ -186,7 +186,7 @@ func TestPermissionBits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !testBits.Has(PermissionReadMessages) {
+	if !testBits.Contains(PermissionReadMessages) {
 		t.Fatal("does have read messages")
 	}
 }
