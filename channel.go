@@ -59,10 +59,10 @@ func (a *Attachment) DeepCopy() (copy interface{}) {
 
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
 type PermissionOverwrite struct {
-	ID    Snowflake      `json:"id"`    // role or user id
-	Type  string         `json:"type"`  // either `role` or `member`
-	Allow PermissionBits `json:"allow"` // permission bit set
-	Deny  PermissionBits `json:"deny"`  // permission bit set
+	ID    Snowflake     `json:"id"`    // role or user id
+	Type  string        `json:"type"`  // either `role` or `member`
+	Allow PermissionBit `json:"allow"` // permission bit set
+	Deny  PermissionBit `json:"deny"`  // permission bit set
 }
 
 // NewChannel ...
@@ -155,7 +155,7 @@ func (c *Channel) valid() bool {
 }
 
 // GetPermissions is used to get a members permissions in a channel.
-func (c *Channel) GetPermissions(ctx context.Context, s PermissionFetching, member *Member, flags ...Flag) (permissions PermissionBits, err error) {
+func (c *Channel) GetPermissions(ctx context.Context, s PermissionFetching, member *Member, flags ...Flag) (permissions PermissionBit, err error) {
 	// Get the guild permissions.
 	permissions, err = member.GetPermissions(ctx, s, flags...)
 	if err != nil {
@@ -414,9 +414,9 @@ func (c *Client) DeleteChannel(ctx context.Context, channelID Snowflake, flags .
 
 // UpdateChannelPermissionsParams https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
 type UpdateChannelPermissionsParams struct {
-	Allow PermissionBits `json:"allow"` // the bitwise value of all allowed permissions
-	Deny  PermissionBits `json:"deny"`  // the bitwise value of all disallowed permissions
-	Type  string         `json:"type"`  // "member" for a user or "role" for a role
+	Allow PermissionBit `json:"allow"` // the bitwise value of all allowed permissions
+	Deny  PermissionBit `json:"deny"`  // the bitwise value of all disallowed permissions
+	Type  string        `json:"type"`  // "member" for a user or "role" for a role
 }
 
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
