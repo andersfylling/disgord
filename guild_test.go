@@ -165,12 +165,26 @@ func TestGuild_DeleteChannel(t *testing.T) {
 }
 
 func TestPermissionBits(t *testing.T) {
+	// test permission bit checking
 	testBits := PermissionSendMessages | PermissionReadMessages
 	if testBits.Has(PermissionAdministrator) {
 		t.Fatal("does not have administrator")
 	}
 	if !testBits.Has(PermissionSendMessages) {
 		t.Fatal("does have send messages")
+	}
+	if !testBits.Has(PermissionReadMessages) {
+		t.Fatal("does have read messages")
+	}
+
+	// Test json marshal/unmarshal
+	b, err := json.Marshal(testBits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = json.Unmarshal(b, &testBits)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !testBits.Has(PermissionReadMessages) {
 		t.Fatal("does have read messages")
