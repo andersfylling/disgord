@@ -25,8 +25,8 @@ import (
 // PermissionBits is used to define the permission bit(s) which are set.
 type PermissionBits uint64
 
-// Has is used to check if the permission bits has the bits specified.
-func (b PermissionBits) Has(Bits PermissionBits) bool {
+// Contains is used to check if the permission bits contains the bits specified.
+func (b PermissionBits) Contains(Bits PermissionBits) bool {
 	return (b & Bits) == Bits
 }
 
