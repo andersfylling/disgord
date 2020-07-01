@@ -203,7 +203,7 @@ type Guild struct {
 	Large       bool            `json:"large,omitempty"`        // ?*|
 	Unavailable bool            `json:"unavailable"`            // ?*| omitempty?
 	MemberCount uint            `json:"member_count,omitempty"` // ?*|
-	VoiceStates []*VoiceState   `json:"voice_states,omitempty"` // ?*|
+	VoiceStates []*VoiceState   `json:"voice_states"`           // ?*|
 	Members     []*Member       `json:"members,omitempty"`      // ?*|
 	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
 	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
