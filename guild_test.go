@@ -164,7 +164,7 @@ func TestGuild_DeleteChannel(t *testing.T) {
 	}
 }
 
-func TestPermissionBits(t *testing.T) {
+func TestPermissionBit(t *testing.T) {
 	// test permission bit checking
 	testBits := PermissionSendMessages | PermissionReadMessages
 	if testBits.Contains(PermissionAdministrator) {

@@ -212,7 +212,7 @@ type Client struct {
 	botToken     string
 
 	myID        Snowflake
-	permissions PermissionBits
+	permissions PermissionBit
 
 	// reactor demultiplexer for events
 	dispatcher *dispatcher
@@ -268,7 +268,7 @@ func (c *Client) Pool() *pools {
 // This is useful for creating the bot URL.
 //
 // At the moment, this holds no other effect than aesthetics.
-func (c *Client) AddPermission(permission PermissionBits) (updatedPermissions PermissionBits) {
+func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
 	if permission < 0 {
 		permission = 0
 	}
@@ -278,7 +278,7 @@ func (c *Client) AddPermission(permission PermissionBits) (updatedPermissions Pe
 }
 
 // GetPermissions returns the minimum bot requirements.
-func (c *Client) GetPermissions() (permissions PermissionBits) {
+func (c *Client) GetPermissions() (permissions PermissionBit) {
 	return c.permissions
 }
 

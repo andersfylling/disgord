@@ -302,7 +302,7 @@ type RESTGuild interface {
 	// GetGuildRoles Returns a list of role objects for the guild.
 	GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Role, error)
 
-	GetMemberPermissions(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error)
+	GetMemberPermissions(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
 
 	// CreateGuildRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 	// Returns the new role object on success. Fires a Guild Role Create Gateway event.
@@ -514,8 +514,8 @@ type Session interface {
 	DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) error
 
 	// AddPermission is to store the permissions required by the bot to function as intended.
-	AddPermission(permission PermissionBits) (updatedPermissions PermissionBits)
-	GetPermissions() (permissions PermissionBits)
+	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
+	GetPermissions() (permissions PermissionBit)
 
 	// CreateBotURL
 	InviteURL(ctx context.Context) (url string, err error)

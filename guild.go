@@ -22,17 +22,17 @@ import (
 // Source code reference:
 //  https://github.com/bwmarrin/discordgo/blob/8325a6bf6dd6c91ed4040a1617b07287b8fb0eba/structs.go#L854
 
-// PermissionBits is used to define the permission bit(s) which are set.
-type PermissionBits uint64
+// PermissionBit is used to define the permission bit(s) which are set.
+type PermissionBit uint64
 
 // Contains is used to check if the permission bits contains the bits specified.
-func (b PermissionBits) Contains(Bits PermissionBits) bool {
+func (b PermissionBit) Contains(Bits PermissionBit) bool {
 	return (b & Bits) == Bits
 }
 
 // Constants for the different bit offsets of text channel permissions
 const (
-	PermissionReadMessages PermissionBits = 1 << (iota + 10)
+	PermissionReadMessages PermissionBit = 1 << (iota + 10)
 	PermissionSendMessages
 	PermissionSendTTSMessages
 	PermissionManageMessages
@@ -45,18 +45,18 @@ const (
 
 // Constants for the different bit offsets of voice permissions
 const (
-	PermissionVoiceConnect PermissionBits = 1 << (iota + 20)
+	PermissionVoiceConnect PermissionBit = 1 << (iota + 20)
 	PermissionVoiceSpeak
 	PermissionVoiceMuteMembers
 	PermissionVoiceDeafenMembers
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
-	PermissionVoicePrioritySpeaker PermissionBits = 1 << (iota + 2)
+	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
 )
 
 // Constants for general management.
 const (
-	PermissionChangeNickname PermissionBits = 1 << (iota + 26)
+	PermissionChangeNickname PermissionBit = 1 << (iota + 26)
 	PermissionManageNicknames
 	PermissionManageRoles
 	PermissionManageWebhooks
@@ -65,7 +65,7 @@ const (
 
 // Constants for the different bit offsets of general permissions
 const (
-	PermissionCreateInstantInvite PermissionBits = 1 << iota
+	PermissionCreateInstantInvite PermissionBit = 1 << iota
 	PermissionKickMembers
 	PermissionBanMembers
 	PermissionAdministrator
@@ -186,7 +186,7 @@ type Guild struct {
 	Splash                      string                        `json:"splash"`          //  |?, image hash
 	Owner                       bool                          `json:"owner,omitempty"` // ?|
 	OwnerID                     Snowflake                     `json:"owner_id"`
-	Permissions                 PermissionBits                `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
+	Permissions                 PermissionBit                 `json:"permissions,omitempty"` // ?|, permission flags for connected user `/users/@me/guilds`
 	Region                      string                        `json:"region"`
 	AfkChannelID                Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
@@ -935,7 +935,7 @@ type PermissionFetching interface {
 }
 
 // GetPermissions populates a uint64 with all the permission flags
-func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags ...Flag) (permissions PermissionBits, err error) {
+func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags ...Flag) (permissions PermissionBit, err error) {
 	roles, err := s.GetGuildRoles(ctx, m.GuildID, flags...)
 	if err != nil {
 		return 0, err
@@ -945,7 +945,7 @@ func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags
 	for i := range roles {
 		for j := range roleIDs {
 			if roles[i].ID == roleIDs[j] {
-				permissions |= (PermissionBits)(roles[i].Permissions)
+				permissions |= (PermissionBit)(roles[i].Permissions)
 				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
 				break
 			}
