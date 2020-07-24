@@ -941,17 +941,17 @@ func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags
 		return 0, err
 	}
 
-	roleIDs := m.Roles
-	for i := range roles {
-		for j := range roleIDs {
-			if roles[i].ID == roleIDs[j] {
-				permissions |= (PermissionBit)(roles[i].Permissions)
-				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
+	unprocessedRoles := len(m.Roles)
+	for _, roleInfo := range roles {
+		for _, roleId := range m.Roles {
+			if roleInfo.ID == roleId {
+				permissions |= (PermissionBit)(roleInfo.Permissions)
+				unprocessedRoles--
 				break
 			}
 		}
 
-		if len(roleIDs) == 0 {
+		if unprocessedRoles == 0 {
 			break
 		}
 	}
