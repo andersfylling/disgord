@@ -36,6 +36,7 @@ const (
 	PermissionReadMessageHistory
 	PermissionMentionEveryone
 	PermissionUseExternalEmojis
+	PermissionViewGuildInsights
 )
 
 // Constants for the different bit offsets of voice permissions
@@ -47,6 +48,7 @@ const (
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
 	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
+	PermissionStream
 )
 
 // Constants for general management.
