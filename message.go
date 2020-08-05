@@ -635,12 +635,11 @@ func (p *CreateMessageParams) prepare() (postBody interface{}, contentType strin
 	return
 }
 
-// AllowedMentions allows finer control over mentions in a message.
+// AllowedMentions allows finer control over mentions in a message, see
 // https://discord.com/developers/docs/resources/channel#allowed-mentions-object for more info.
+// Any strings in the Parse value must be any from ["everyone", "users", "roles"].
 type AllowedMentions struct {
-	Parse []string `json:"parse"`
-	// Any values in Parse must be any of `everyone`, `users`, `roles`.
-	// This is purposefully not marked as omitempty as to allow `parse: []` which blocks all mentions.
+	Parse []string `json:"parse"` // this is purposefully not marked as omitempty as to allow `parse: []` which blocks all mentions.
 
 	Roles []Snowflake `json:"roles,omitempty"`
 	Users []Snowflake `json:"users,omitempty"`
