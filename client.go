@@ -785,6 +785,10 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 			if s, err = msgToParams(t); err != nil {
 				return nil, err
 			}
+		case AllowedMentions:
+			params.AllowedMentions = &t
+		case *AllowedMentions:
+			params.AllowedMentions = t
 		default:
 			var mentioned bool
 			if mentionable, ok := t.(Mentioner); ok {
