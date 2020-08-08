@@ -28,6 +28,9 @@ const (
 	AuditLogEvtMemberBanRemove
 	AuditLogEvtMemberUpdate
 	AuditLogEvtMemberRoleUpdate
+	AuditLogEvtMemberMove
+	AuditLogEvtMemberDisconnect
+	AuditLogEvtBotAdd
 )
 const (
 	AuditLogEvtRoleCreate AuditLogEvt = 30 + iota
