@@ -799,8 +799,7 @@ func (c *Cache) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMess
 	if member == nil {
 		newMember = true
 		member = &Member{
-			GuildID: guildID,
-			UserID:  userID,
+			UserID: userID,
 		}
 	}
 
