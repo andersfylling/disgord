@@ -1375,7 +1375,10 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 	r.CacheRegistry = GuildMembersCache
 	r.ID = userID
 	r.factory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID:	 userID,
+		}
 	}
 
 	return getMember(r.Execute)
@@ -1537,7 +1540,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
 	r.factory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID: userID,
+		}
 	}
 	r.expectsStatusCode = http.StatusCreated
 
@@ -1567,7 +1573,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
 	builder = &updateGuildMemberBuilder{}
 	builder.r.itemFactory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID: userID,
+		}
 	}
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{

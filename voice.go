@@ -2,9 +2,9 @@ package disgord
 
 import (
 	"context"
-
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/internal/util"
 )
 
 // VoiceState Voice State structure
@@ -56,6 +56,20 @@ func (v *VoiceState) DeepCopy() (copy interface{}) {
 	v.CopyOverTo(copy)
 
 	return
+}
+
+// UnmarshalJSON is used to unmarshal Discord's JSON.
+func (v *VoiceState) UnmarshalJSON(data []byte) error {
+	type s2 VoiceState
+	err := util.Unmarshal(data, (*s2)(v))
+	if err != nil {
+		return err
+	}
+	if v.Member != nil {
+		v.Member.GuildID = v.GuildID
+		v.Member.UserID = v.UserID
+	}
+	return nil
 }
 
 // CopyOverTo see interface at struct.go#Copier

@@ -291,7 +291,14 @@ func (obj *MessageCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	return unmarshal(data, obj.Message)
+	err := unmarshal(data, obj.Message)
+	if err != nil {
+		return err
+	}
+	if obj.Message.Member != nil {
+		obj.Message.Member.GuildID = obj.Message.GuildID
+	}
+	return nil
 }
 
 // ---------------------------
@@ -312,7 +319,14 @@ func (obj *MessageUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	return unmarshal(data, obj.Message)
+	err := unmarshal(data, obj.Message)
+	if err != nil {
+		return err
+	}
+	if obj.Message.Member != nil {
+		obj.Message.Member.GuildID = obj.Message.GuildID
+	}
+	return nil
 }
 
 // ---------------------------
@@ -416,7 +430,14 @@ func (g *GuildCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	return unmarshal(data, obj.Guild)
+	err := unmarshal(data, obj.Guild)
+	if err != nil {
+		return err
+	}
+	for _, v := range obj.Guild.Members {
+		v.GuildID = obj.Guild.ID
+	}
+	return nil
 }
 
 // ---------------------------
@@ -631,6 +652,12 @@ type VoiceStateUpdate struct {
 	*VoiceState
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+// UnmarshalJSON ...
+func (h *VoiceStateUpdate) UnmarshalJSON(data []byte) error {
+	h.VoiceState = &VoiceState{}
+	return util.Unmarshal(data, h.VoiceState)
 }
 
 // ---------------------------
