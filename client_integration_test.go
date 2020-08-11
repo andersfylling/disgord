@@ -64,7 +64,7 @@ func TestClient(t *testing.T) {
 	wg.Wait()
 
 	// We need this for later.
-	guildCreateEvent := make(chan *GuildCreate, 1)
+	guildCreateEvent := make(chan *GuildCreate, 2)
 	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
 		guildCreateEvent <- evt
 	}, &Ctrl{Runs: 1})
