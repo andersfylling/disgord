@@ -61,8 +61,7 @@ func (v *VoiceState) DeepCopy() (copy interface{}) {
 // UnmarshalJSON is used to unmarshal Discord's JSON.
 func (v *VoiceState) UnmarshalJSON(data []byte) error {
 	type s2 VoiceState
-	err := util.Unmarshal(data, (*s2)(v))
-	if err != nil {
+	if err := util.Unmarshal(data, (*s2)(v)); err != nil {
 		return err
 	}
 	if v.Member != nil {

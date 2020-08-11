@@ -38,7 +38,6 @@ func TestClient(t *testing.T) {
 	}
 
 	var c *Client
-	guildCreateEvent := make(chan *GuildCreate)
 	wg.Add(1)
 	t.Run("New", func(t *testing.T) {
 		defer wg.Done()
@@ -65,9 +64,10 @@ func TestClient(t *testing.T) {
 	wg.Wait()
 
 	// We need this for later.
+	guildCreateEvent := make(chan *GuildCreate, 1)
 	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
 		guildCreateEvent <- evt
-	})
+	}, &Ctrl{Runs: 1})
 
 	defer c.Disconnect()
 	wg.Add(1)
@@ -318,23 +318,8 @@ func TestClient(t *testing.T) {
 			panic("voiceStateChan did not emit")
 		}
 
-		// Test getting a member (without cache)
+		// Test getting a member
 		member, err := c.GetMember(deadline, guildTypical.ID, c.myID, IgnoreCache)
-		if err != nil {
-			panic(err)
-		}
-		if member.GuildID == 0 {
-			panic("GuildID is zero")
-		} else if member.UserID == 0 {
-			panic("UserID is zero")
-		}
-
-		// Test getting a member (with cache)
-		member, err = c.GetMember(deadline, guildTypical.ID, c.myID)
-		if err != nil {
-			panic(err)
-		}
-		member, err = c.GetMember(deadline, guildTypical.ID, c.myID) // ensuring it's definitely cached
 		if err != nil {
 			panic(err)
 		}

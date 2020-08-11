@@ -291,8 +291,7 @@ func (obj *MessageCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	err := unmarshal(data, obj.Message)
-	if err != nil {
+	if err := unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -319,8 +318,7 @@ func (obj *MessageUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	err := unmarshal(data, obj.Message)
-	if err != nil {
+	if err := unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -430,8 +428,7 @@ func (g *GuildCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	err := unmarshal(data, obj.Guild)
-	if err != nil {
+	if err := unmarshal(data, obj.Guild); err != nil {
 		return err
 	}
 	for _, v := range obj.Guild.Members {

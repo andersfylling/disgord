@@ -120,8 +120,7 @@ func NewGuild() *Guild {
 // NewGuildFromJSON ...
 func NewGuildFromJSON(data []byte) (guild *Guild) {
 	guild = NewGuild()
-	err := unmarshal(data, guild)
-	if err != nil {
+	if err := unmarshal(data, guild); err != nil {
 		panic(err)
 	}
 
