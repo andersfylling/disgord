@@ -1377,7 +1377,7 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 	r.factory = func() interface{} {
 		return &Member{
 			GuildID: guildID,
-			UserID:	 userID,
+			UserID:  userID,
 		}
 	}
 
@@ -1542,7 +1542,7 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 	r.factory = func() interface{} {
 		return &Member{
 			GuildID: guildID,
-			UserID: userID,
+			UserID:  userID,
 		}
 	}
 	r.expectsStatusCode = http.StatusCreated
@@ -1575,7 +1575,7 @@ func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflak
 	builder.r.itemFactory = func() interface{} {
 		return &Member{
 			GuildID: guildID,
-			UserID: userID,
+			UserID:  userID,
 		}
 	}
 	builder.r.flags = flags
