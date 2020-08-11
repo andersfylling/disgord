@@ -15,11 +15,13 @@ var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 var guildTypical = struct {
 	ID                  Snowflake
+	TextChannelGeneral  Snowflake
 	VoiceChannelGeneral Snowflake
 	VoiceChannelOther1  Snowflake
 	VoiceChannelOther2  Snowflake
 }{
 	ID:                  486833611564253184,
+	TextChannelGeneral:  486833611564253186,
 	VoiceChannelGeneral: 486833611564253188,
 	VoiceChannelOther1:  673893473409171477,
 	VoiceChannelOther2:  673893496356339724,
@@ -60,6 +62,12 @@ func TestClient(t *testing.T) {
 		}
 	})
 	wg.Wait()
+
+	// We need this for later.
+	guildCreateEvent := make(chan *GuildCreate, 2)
+	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
+		guildCreateEvent <- evt
+	}, &Ctrl{Runs: 1})
 
 	defer c.Disconnect()
 	wg.Add(1)
@@ -137,6 +145,9 @@ func TestClient(t *testing.T) {
 	})
 	wg.Wait()
 
+	// Add the voice state channel for later.
+	voiceStateChan := make(chan *VoiceStateUpdate)
+
 	wg.Add(1)
 	t.Run("voice/MoveTo", func(t *testing.T) {
 		defer wg.Done()
@@ -147,7 +158,6 @@ func TestClient(t *testing.T) {
 		connectedToVoiceChannel := make(chan bool)
 		successfullyMoved := make(chan bool, 2)
 		done := make(chan bool)
-		defer close(successfullyMoved)
 
 		c.On(EvtVoiceStateUpdate, func(_ Session, evt *VoiceStateUpdate) {
 			myself, err := c.GetCurrentUser(context.Background())
@@ -168,6 +178,7 @@ func TestClient(t *testing.T) {
 				successfullyMoved <- false
 				successfullyMoved <- false
 			}
+			voiceStateChan <- evt
 		})
 
 		go func() {
@@ -222,6 +233,100 @@ func TestClient(t *testing.T) {
 		case <-done:
 		case <-deadline.Done():
 			panic("done did not emit")
+		}
+	})
+	wg.Wait()
+
+	wg.Add(1)
+	t.Run("test-member-guild-user-id-non-zero", func(t *testing.T) {
+		defer wg.Done()
+		deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(25*time.Second))
+
+		// Test guild create event
+		select {
+		case x := <-guildCreateEvent:
+			firstMember := x.Guild.Members[0]
+			if firstMember.GuildID == 0 {
+				panic("GuildID is zero")
+			} else if firstMember.UserID == 0 {
+				panic("UserID is zero")
+			}
+		case <-deadline.Done():
+			panic("guildCreateEvent did not emit")
+		}
+
+		// Test message create event
+		snowflakeChan := make(chan Snowflake, 2)
+		c.On(EvtMessageCreate, func(_ Session, evt *MessageCreate) {
+			if evt.Message.Author.Bot && evt.Message.Member != nil {
+				snowflakeChan <- evt.Message.Member.GuildID
+				snowflakeChan <- evt.Message.Member.UserID
+			}
+		}, &Ctrl{Runs: 1})
+		msg, err := c.SendMsg(deadline, guildTypical.TextChannelGeneral, "Hello World!")
+		if err != nil {
+			panic(err)
+		}
+		select {
+		case x := <-snowflakeChan:
+			if x == 0 {
+				panic("GuildID is zero")
+			}
+		case <-deadline.Done():
+			panic("snowflakeChan did not emit")
+		}
+		if <-snowflakeChan == 0 {
+			panic("UserID is zero")
+		}
+
+		// Test message update event
+		snowflakeChan = make(chan Snowflake, 2)
+		c.On(EvtMessageUpdate, func(_ Session, evt *MessageUpdate) {
+			if evt.Message.Author.Bot {
+				snowflakeChan <- evt.Message.Member.GuildID
+				snowflakeChan <- evt.Message.Member.UserID
+			}
+		}, &Ctrl{Runs: 1})
+		_, err = c.UpdateMessage(deadline, guildTypical.TextChannelGeneral, msg.ID).SetContent("world").Execute()
+		if err != nil {
+			panic(err)
+		}
+		select {
+		case x := <-snowflakeChan:
+			if x == 0 {
+				panic("GuildID is zero")
+			}
+		case <-deadline.Done():
+			panic("snowflakeChan did not emit")
+		}
+		if <-snowflakeChan == 0 {
+			panic("UserID is zero")
+		}
+
+		// GC the message
+		_ = c.DeleteMessage(deadline, guildTypical.TextChannelGeneral, msg.ID)
+
+		// Handle voice state update
+		select {
+		case x := <-voiceStateChan:
+			if x.Member.GuildID == 0 {
+				panic("GuildID is zero")
+			} else if x.Member.UserID == 0 {
+				panic("UserID is zero")
+			}
+		case <-deadline.Done():
+			panic("voiceStateChan did not emit")
+		}
+
+		// Test getting a member
+		member, err := c.GetMember(deadline, guildTypical.ID, c.myID, IgnoreCache)
+		if err != nil {
+			panic(err)
+		}
+		if member.GuildID == 0 {
+			panic("GuildID is zero")
+		} else if member.UserID == 0 {
+			panic("UserID is zero")
 		}
 	})
 	wg.Wait()
