@@ -964,7 +964,7 @@ type updateCurrentUserBuilder struct {
 
 // TODO: params should be url-params. But it works since we're using GET.
 //generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
-//generate-rest-basic-execute: Guilds:[]*Guild,
+//generate-rest-basic-execute: guilds:[]*Guild,
 type getCurrentUserGuildsBuilder struct {
 	r RESTBuilder
 }
@@ -984,7 +984,7 @@ type createDMBuilder struct {
 	r RESTBuilder
 }
 
-//generate-rest-basic-execute: Channels:[]*Channel,
+//generate-rest-basic-execute: channels:[]*Channel,
 type getUserDMsBuilder struct {
 	r RESTBuilder
 }
