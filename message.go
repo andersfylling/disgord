@@ -576,6 +576,8 @@ type CreateMessageParams struct {
 
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
+
+	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // The allowed mentions object for the message.
 }
 
 func (p *CreateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
@@ -636,6 +638,16 @@ func (p *CreateMessageParams) prepare() (postBody interface{}, contentType strin
 	contentType = mp.FormDataContentType()
 
 	return
+}
+
+// AllowedMentions allows finer control over mentions in a message, see
+// https://discord.com/developers/docs/resources/channel#allowed-mentions-object for more info.
+// Any strings in the Parse value must be any from ["everyone", "users", "roles"].
+type AllowedMentions struct {
+	Parse []string `json:"parse"` // this is purposefully not marked as omitempty as to allow `parse: []` which blocks all mentions.
+
+	Roles []Snowflake `json:"roles,omitempty"`
+	Users []Snowflake `json:"users,omitempty"`
 }
 
 // CreateMessageFileParams contains the information needed to upload a file to Discord, it is part of the
@@ -973,4 +985,10 @@ func (c *Client) SetMsgEmbed(ctx context.Context, chanID, msgID Snowflake, embed
 //generate-rest-basic-execute: message:*Message,
 type updateMessageBuilder struct {
 	r RESTBuilder
+}
+
+// SetAllowedMentions sets the allowed mentions for the updateMessageBuilder then returns the builder to allow chaining.
+func (b *updateMessageBuilder) SetAllowedMentions(mentions *AllowedMentions) *updateMessageBuilder {
+	b.r.param("allowed_mentions", mentions)
+	return b
 }

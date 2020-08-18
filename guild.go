@@ -41,6 +41,7 @@ const (
 	PermissionReadMessageHistory
 	PermissionMentionEveryone
 	PermissionUseExternalEmojis
+	PermissionViewGuildInsights
 )
 
 // Constants for the different bit offsets of voice permissions
@@ -52,6 +53,7 @@ const (
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
 	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
+	PermissionStream
 )
 
 // Constants for general management.
@@ -118,8 +120,7 @@ func NewGuild() *Guild {
 // NewGuildFromJSON ...
 func NewGuildFromJSON(data []byte) (guild *Guild) {
 	guild = NewGuild()
-	err := unmarshal(data, guild)
-	if err != nil {
+	if err := unmarshal(data, guild); err != nil {
 		panic(err)
 	}
 
@@ -941,17 +942,17 @@ func (m *Member) GetPermissions(ctx context.Context, s PermissionFetching, flags
 		return 0, err
 	}
 
-	roleIDs := m.Roles
-	for i := range roles {
-		for j := range roleIDs {
-			if roles[i].ID == roleIDs[j] {
-				permissions |= (PermissionBit)(roles[i].Permissions)
-				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
+	unprocessedRoles := len(m.Roles)
+	for _, roleInfo := range roles {
+		for _, roleId := range m.Roles {
+			if roleInfo.ID == roleId {
+				permissions |= (PermissionBit)(roleInfo.Permissions)
+				unprocessedRoles--
 				break
 			}
 		}
 
-		if len(roleIDs) == 0 {
+		if unprocessedRoles == 0 {
 			break
 		}
 	}
@@ -1329,7 +1330,10 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID:  userID,
+		}
 	}
 
 	member, err = getMember(r.Execute)
@@ -1492,7 +1496,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
 	r.factory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID:  userID,
+		}
 	}
 	r.expectsStatusCode = http.StatusCreated
 
@@ -1522,7 +1529,10 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
 	builder = &updateGuildMemberBuilder{}
 	builder.r.itemFactory = func() interface{} {
-		return &Member{}
+		return &Member{
+			GuildID: guildID,
+			UserID:  userID,
+		}
 	}
 	builder.r.flags = flags
 	builder.r.setup(c.req, &httd.Request{
