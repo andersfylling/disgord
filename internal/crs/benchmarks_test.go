@@ -8,9 +8,9 @@ import (
 
 func BenchmarkCRS(b *testing.B) {
 	// lfu
-	lfuCache := New(0)
+	lfuCache := NewLFU(0)
 	benchmarkCacheSet(b, "lfu-unlimited", lfuCache)
-	benchmarkCacheSet(b, "lfu-limited", New(10000))
+	benchmarkCacheSet(b, "lfu-limited", NewLFU(10000))
 	benchmarkCacheUpdate(b, "lfu", lfuCache)
 	benchmarkCacheGet(b, "lfu", lfuCache) // should output 1
 }

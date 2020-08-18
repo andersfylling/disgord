@@ -63,23 +63,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*guildAuditLogsBuilder:
 		s = *t
-	case *[]*Cache:
+	case *[]*CacheLFU:
 		s = *t
-	case *[]*CacheConfig:
-		s = *t
-	case *[]*ErrorCacheItemNotFound:
-		s = *t
-	case *[]*ErrorUsingDeactivatedCache:
-		s = *t
-	case *[]*channelCacheItem:
-		s = *t
-	case *[]*emptyCache:
-		s = *t
-	case *[]*guildCacheItem:
-		s = *t
-	case *[]*guildVoiceStateCacheParams:
-		s = *t
-	case *[]*guildVoiceStatesCache:
+	case *[]*idHolder:
 		s = *t
 	case *[]*Attachment:
 		s = *t
@@ -100,6 +86,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*Client:
 		s = *t
 	case *[]*Config:
+		s = *t
+	case *[]*internalHandlers:
 		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
@@ -407,6 +395,12 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
+	case []*idHolder:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*Attachment:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -497,12 +491,6 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*rest:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
 	case []*Role:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -567,7 +555,19 @@ func sortByGuildID(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*idHolder:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*Channel:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*ChannelPinsUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
@@ -734,6 +734,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 	var less func(i, j int) bool
 	switch s := v.(type) {
 	case []*AuditLogOption:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*idHolder:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {

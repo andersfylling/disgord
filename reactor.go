@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 //////////////////////////////////////////////////////
@@ -23,10 +22,10 @@ func populateResource(resource evtResource, ctx context.Context, evt *gateway.Ev
 	resource.registerContext(ctx)
 	resource.setShardID(evt.ShardID)
 
-	if err = util.Unmarshal(evt.Data, resource); err != nil {
-		return err
-	}
-	executeInternalUpdater(resource)
+	// if err = util.Unmarshal(evt.Data, resource); err != nil {
+	// 	return err
+	// }
+	// executeInternalUpdater(resource)
 
 	// TODO: updating internal states should be independent of the public reactor?
 	//  But should the public handlers wait to be triggered until all the internals are updated?
@@ -41,7 +40,7 @@ func populateResource(resource evtResource, ctx context.Context, evt *gateway.Ev
 //
 //////////////////////////////////////////////////////
 
-func demultiplexer(d *dispatcher, read <-chan *gateway.Event, cache *Cache) {
+func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 	for {
 		var evt *gateway.Event
 		var alive bool
@@ -55,22 +54,24 @@ func demultiplexer(d *dispatcher, read <-chan *gateway.Event, cache *Cache) {
 			return
 		}
 
-		var resource evtResource
-		if resource = defineResource(evt.Name); resource == nil {
-			fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name, string(evt.Data))
-			continue // move on to next event
+		// var resource evtResource
+		// if resource = defineResource(evt.Name); resource == nil {
+		// 	fmt.Printf("------\nTODO\nImplement event handler for `%s`, data: \n%+v\n------\n\n", evt.Name, string(evt.Data))
+		// 	continue // move on to next event
+		// }
+
+		if evt.Name == EvtUserUpdate {
+			_ = c.config.Encoder.unmarshalUpdate(evt.Data, c.currentUser)
 		}
+
+		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		resource := resourceI.(evtResource)
 
 		ctx := context.Background()
 		if err := populateResource(resource, ctx, evt); err != nil {
 			d.session.Logger().Error(err, "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
 			continue // ignore event
 			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
-		}
-
-		// cache
-		if cache != nil {
-			cacheEvent(cache, evt.Name, resource, evt.Data)
 		}
 
 		go d.dispatch(ctx, evt.Name, resource)
@@ -83,7 +84,7 @@ func demultiplexer(d *dispatcher, read <-chan *gateway.Event, cache *Cache) {
 //
 //////////////////////////////////////////////////////
 
-// dispatcher holds all the channels and internal state for all registered
+// dispatcher holds all the Channels and internal state for all registered
 // handlers
 type dispatcher struct {
 	sync.RWMutex
@@ -112,7 +113,7 @@ func (d *dispatcher) register(evt string, inputs ...interface{}) error {
 		// if you want to error check before you use the .On, you can use disgord.ValidateHandlerInputs(...)
 	}
 
-	// tip to users: Try to remember the handlers won't be added until the
+	// tip to Users: Try to remember the handlers won't be added until the
 	//  OnInsert(..) exits.
 	err := spec.ctrl.OnInsert(d.session)
 	if err != nil {

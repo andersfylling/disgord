@@ -124,14 +124,14 @@ func TestUser_copyOverToCache(t *testing.T) {
 		//fmt.Printf("##: %+v\n", cacheLink)
 
 		if !equals(&cache, &expected) {
-			t.Errorf("different users. \nGot \t%+v, \nWants \t%+v", cache, expected)
+			t.Errorf("different Users. \nGot \t%+v, \nWants \t%+v", cache, expected)
 		}
 	}
 }
 
 func TestGetCurrentUserGuildsParams(t *testing.T) {
 	params := &getCurrentUserGuildsBuilder{}
-	params.r.setup(nil, nil, nil, nil)
+	params.r.setup(nil, nil, nil)
 	var wants string
 
 	wants = ""

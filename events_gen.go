@@ -9,6 +9,8 @@ import (
 	"github.com/andersfylling/disgord/internal/event"
 )
 
+// helpers
+
 func AllEvents(except ...string) []string {
 	evtsMap := map[string]int8{
 

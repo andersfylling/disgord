@@ -38,7 +38,7 @@ type Invite struct {
 	// MaxUses the maximum number of times the invite can be used
 	MaxUses int `json:"max_uses"`
 
-	// Temporary whether or not the invite is temporary (invited users will be kicked on disconnect unless they're assigned a role)
+	// Temporary whether or not the invite is temporary (invited Users will be kicked on disconnect unless they're assigned a role)
 	Temporary bool `json:"temporary"`
 
 	// Uses how many times the invite has been used (always will be 0)

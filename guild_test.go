@@ -104,7 +104,7 @@ func TestGuild_sortChannels(t *testing.T) {
 	guild.sortChannels()
 	for i, c := range guild.Channels {
 		if snowflakes[i] != c.ID {
-			t.Error("channels in guild did not sort correctly")
+			t.Error("Channels in guild did not sort correctly")
 		}
 	}
 }
@@ -130,7 +130,7 @@ func TestGuild_AddChannel(t *testing.T) {
 
 	for i, c := range guild.Channels {
 		if snowflakes[i] != c.ID {
-			t.Error("channels in guild did not sort correctly")
+			t.Error("Channels in guild did not sort correctly")
 		}
 	}
 }

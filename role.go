@@ -146,7 +146,7 @@ type CreateGuildRoleParams struct {
 // CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
-//  Endpoint                /guilds/{guild.id}/roles
+//  Endpoint                /Guilds/{guild.id}/roles
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
@@ -159,13 +159,8 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 		ContentType: httd.ContentTypeJSON,
 		Reason:      params.Reason,
 	}, flags)
-	r.CacheRegistry = GuildRoleCache
 	r.factory = func() interface{} {
 		return &Role{}
-	}
-	r.preUpdateCache = func(x interface{}) {
-		r := x.(*Role)
-		r.guildID = id
 	}
 
 	return getRole(r.Execute)
@@ -174,7 +169,7 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
-//  Endpoint                /guilds/{guild.id}/roles/{role.id}
+//  Endpoint                /Guilds/{guild.id}/roles/{role.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -184,18 +179,12 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 		return &Role{}
 	}
 	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
+	builder.r.IgnoreCache().setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
-
-	builder.r.cacheMiddleware = func(resp *http.Response, v interface{}, err error) error {
-		role := v.(*Role)
-		role.guildID = guildID
-		return nil
-	}
 
 	return builder
 }
@@ -203,7 +192,7 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 // DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
-//  Endpoint                /guilds/{guild.id}/roles/{role.id}
+//  Endpoint                /Guilds/{guild.id}/roles/{role.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -221,25 +210,18 @@ func (c *Client) DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake,
 
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
-//  Endpoint                /guilds/{guild.id}/roles
+//  Endpoint                /Guilds/{guild.id}/roles
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Endpoint: "/guilds/" + guildID.String() + "/roles",
+		Endpoint: "/Guilds/" + guildID.String() + "/roles",
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = GuildRolesCache
 	r.factory = func() interface{} {
 		tmp := make([]*Role, 0)
 		return &tmp
-	}
-	r.preUpdateCache = func(x interface{}) {
-		roles := *x.(*[]*Role)
-		for i := range roles {
-			roles[i].guildID = guildID
-		}
 	}
 
 	return getRoles(r.Execute)

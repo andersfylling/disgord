@@ -3,7 +3,6 @@
 package disgord
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"testing"
 )
@@ -13,40 +12,6 @@ func TestPrepareBox(t *testing.T) {
 		//prepareBox(name, evt) // removed
 		executeInternalUpdater(evt)
 		return nil
-	})
-}
-
-type mockCacheEvent struct{}
-
-func (m *mockCacheEvent) Update(key cacheRegistry, v interface{}) (err error) {
-	return nil
-}
-func (m *mockCacheEvent) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
-	return nil, nil
-}
-func (m *mockCacheEvent) UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool {
-	return false
-}
-func (m *mockCacheEvent) DeleteChannel(channelID Snowflake)                                   {}
-func (m *mockCacheEvent) DeleteGuildChannel(guildID Snowflake, channelID Snowflake)           {}
-func (m *mockCacheEvent) AddGuildChannel(guildID Snowflake, channelID Snowflake)              {}
-func (m *mockCacheEvent) UpdateChannelPin(channelID Snowflake, lastPinTimestamp Time)         {}
-func (m *mockCacheEvent) DeleteGuild(guildID Snowflake)                                       {}
-func (m *mockCacheEvent) DeleteGuildRole(guildID Snowflake, roleID Snowflake)                 {}
-func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                          {}
-func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {}
-func (m *mockCacheEvent) AddGuildMember(guildID Snowflake, member *Member)                    {}
-func (m *mockCacheEvent) RemoveGuildMember(guildID Snowflake, memberID Snowflake)             {}
-func (m *mockCacheEvent) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage) {}
-func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                   {}
-func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
-	return nil
-}
-
-func TestCacheEvent(t *testing.T) {
-	cache := &mockCacheEvent{}
-	injectRandomEvents(t, func(name string, evt interface{}) error {
-		return cacheEvent(cache, name, evt, nil)
 	})
 }
 

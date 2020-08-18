@@ -29,7 +29,7 @@ const (
 type MessageFlag uint
 
 const (
-	// MessageFlagCrossposted this message has been published to subscribed channels (via Channel Following)
+	// MessageFlagCrossposted this message has been published to subscribed Channels (via Channel Following)
 	MessageFlagCrossposted MessageFlag = 1 << iota
 
 	// MessageFlagIsCrosspost this message originated from a message in another channel (via Channel Following)
@@ -166,7 +166,7 @@ func (m *Message) DiscordURL() (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"https://discord.com/channels/%d/%d/%d",
+		"https://discord.com/Channels/%d/%d/%d",
 		m.GuildID, m.ChannelID, m.ID,
 	), nil
 }
@@ -392,7 +392,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
 //  Method                  GET
-//  Endpoint                /channels/{channel.id}/messages
+//  Endpoint                /Channels/{channel.id}/messages
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-messages
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
@@ -527,7 +527,7 @@ func (c *Client) GetMessages(ctx context.Context, channelID Snowflake, filter *G
 // requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 // Returns a message object on success.
 //  Method                  GET
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Endpoint                /Channels/{channel.id}/messages/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -539,6 +539,11 @@ func (c *Client) GetMessage(ctx context.Context, channelID, messageID Snowflake,
 	if messageID.IsZero() {
 		err = errors.New("messageID must be set to get a specific message from a channel")
 		return
+	}
+
+	msg, _ := c.cache.GetMessage(channelID, messageID)
+	if msg != nil {
+		return msg, nil
 	}
 
 	r := c.newRESTRequest(&httd.Request{
@@ -671,7 +676,7 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 // Message Create Gateway event. See message formatting for more information on how to properly format messages.
 // The maximum request size when sending a message is 8MB.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages
+//  Endpoint                /Channels/{channel.id}/messages
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
@@ -697,7 +702,7 @@ func (c *Client) CreateMessage(ctx context.Context, channelID Snowflake, params 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
 		Ctx:         ctx,
-		Endpoint:    "/channels/" + channelID.String() + "/messages",
+		Endpoint:    "/Channels/" + channelID.String() + "/messages",
 		Body:        postBody,
 		ContentType: contentType,
 	}, flags)
@@ -712,7 +717,7 @@ func (c *Client) CreateMessage(ctx context.Context, channelID Snowflake, params 
 // UpdateMessage [REST] Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Endpoint                /Channels/{channel.id}/messages/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
@@ -725,10 +730,10 @@ func (c *Client) UpdateMessage(ctx context.Context, chanID, msgID Snowflake, fla
 	builder.r.flags = flags
 	builder.r.addPrereq(chanID.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(msgID.IsZero(), "msgID must be set to edit the message")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
-		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
+		Endpoint:    "/Channels/" + chanID.String() + "/messages/" + msgID.String(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
 
@@ -739,7 +744,7 @@ func (c *Client) UpdateMessage(ctx context.Context, chanID, msgID Snowflake, fla
 // sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
 // on success. Fires a Message Delete Gateway event.
 //  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
+//  Endpoint                /Channels/{channel.id}/messages/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -815,12 +820,12 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 }
 
 // DeleteMessages [REST] Delete multiple messages in a single request. This endpoint can only be used on guild
-// channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
+// Channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 // Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages/bulk-delete
+//  Endpoint                /Channels/{channel.id}/messages/bulk-delete
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
@@ -852,7 +857,7 @@ func (c *Client) DeleteMessages(ctx context.Context, chanID Snowflake, params *D
 // endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
 // on success. Fires a Typing Start Gateway event.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/typing
+//  Endpoint                /Channels/{channel.id}/typing
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -870,7 +875,7 @@ func (c *Client) TriggerTypingIndicator(ctx context.Context, channelID Snowflake
 
 // GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
 //  Method                  GET
-//  Endpoint                /channels/{channel.id}/pins
+//  Endpoint                /Channels/{channel.id}/pins
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-pinned-messages
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -895,7 +900,7 @@ func (c *Client) PinMessage(ctx context.Context, message *Message, flags ...Flag
 // PinMessageID [REST] Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success.
 //  Method                  PUT
-//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Endpoint                /Channels/{channel.id}/pins/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -919,7 +924,7 @@ func (c *Client) UnpinMessage(ctx context.Context, message *Message, flags ...Fl
 // UnpinMessageID [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/pins/{message.id}
+//  Endpoint                /Channels/{channel.id}/pins/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -

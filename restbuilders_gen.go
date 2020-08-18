@@ -675,7 +675,7 @@ func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) *getCurrentUserGuildsB
 	return b
 }
 
-func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*Guild, err error) {
+func (b *getCurrentUserGuildsBuilder) Execute() (Guilds []*Guild, err error) {
 	var v interface{}
 	if v, err = b.r.execute(); err != nil {
 		return nil, err
@@ -774,7 +774,7 @@ func (b *getUserDMsBuilder) Set(name string, v interface{}) *getUserDMsBuilder {
 	return b
 }
 
-func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
+func (b *getUserDMsBuilder) Execute() (Channels []*Channel, err error) {
 	var v interface{}
 	if v, err = b.r.execute(); err != nil {
 		return nil, err

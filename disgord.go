@@ -24,7 +24,7 @@
 //
 //
 //
-// Listen for events using channels
+// Listen for events using Channels
 //
 // Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a function.
 // Simply define your channel, add buffering if you need it, and register it as a handler in the `.On` method.
@@ -115,15 +115,15 @@
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
-// A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
+// A part of Disgord is the control you have; while this can be a good detail for advanced Users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
-//    Cache: &disgord.CacheConfig{
+//    CacheDefault: &disgord.CacheConfig{
 //              Mutable: false, // everything going in and out of the cache is deep copied
 //				// setting Mutable to true, might break your program as this is experimental and not supported.
 //
-//              DisableUserCaching: false, // activates caching for users
+//              DisableUserCaching: false, // activates caching for Users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
 //
 //              DisableVoiceStateCaching: true, // don't cache voice states
@@ -135,9 +135,9 @@
 //
 // If you just want to change a specific field, you can do so. The fields are always default values.
 //
-// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
+// > Note: Disabling caching for some types while activating it for others (eg. disabling Channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //
-// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
+// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's Channels are discarded. Guild Channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
 //
 //
 // Immutable cache

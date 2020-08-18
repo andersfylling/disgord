@@ -78,7 +78,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 // CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns a webhook object on success.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
+//  Endpoint                /Channels/{channel.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -107,7 +107,7 @@ func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params 
 
 // GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
+//  Endpoint                /Channels/{channel.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -126,7 +126,7 @@ func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, fl
 
 // GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  GET
-//  Endpoint                /guilds/{guild.id}/webhooks
+//  Endpoint                /Guilds/{guild.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -194,7 +194,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag)
 	}
 	builder.r.flags = flags
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Webhook(id),
@@ -219,7 +219,7 @@ func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token
 	builder.r.flags = flags
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(token == "", "given webhook token was not set")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.WebhookToken(id, token),

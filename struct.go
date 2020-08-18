@@ -21,6 +21,10 @@ type Copier interface {
 	CopyOverTo(other interface{}) error
 }
 
+// UnmarshalUpdater unmarshal the data into the object and calls
+// internal updater if possible
+type UnmarshalUpdater func(data []byte, v interface{}) error
+
 // cacheCopier is similar to Copier interface. Except that it only copies over fields which has a value, unlike Copier
 // that creates an exact copy of everything. This will also ignore arrays that can be simplified to a snowflake array.
 // An example of said simplification is Guild.Channels, as there will already exist a channel cacheLink.
