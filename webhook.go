@@ -78,7 +78,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 // CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns a webhook object on success.
 //  Method                  POST
-//  Endpoint                /Channels/{channel.id}/webhooks
+//  Endpoint                /channels/{channel.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -107,7 +107,7 @@ func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params 
 
 // GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
-//  Endpoint                /Channels/{channel.id}/webhooks
+//  Endpoint                /channels/{channel.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -
@@ -126,7 +126,7 @@ func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, fl
 
 // GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  GET
-//  Endpoint                /Guilds/{guild.id}/webhooks
+//  Endpoint                /guilds/{guild.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-guild-webhooks
 //  Reviewed                2018-08-14
 //  Comment                 -

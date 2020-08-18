@@ -327,7 +327,7 @@ func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Me
 
 // GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
 //  Method                  GET
-//  Endpoint                /Channels/{channel.id}
+//  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -358,7 +358,7 @@ func (c *Client) GetChannel(ctx context.Context, channelID Snowflake, flags ...F
 // modifying a category, individual Channel Update events will fire for each child channel that also changes.
 // For the PATCH method, all the JSON Params are optional.
 //  Method                  PUT/PATCH
-//  Endpoint                /Channels/{channel.id}
+//  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
@@ -383,7 +383,7 @@ func (c *Client) UpdateChannel(ctx context.Context, channelID Snowflake, flags .
 // Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 // Fires a Channel Delete Gateway event.
 //  Method                  Delete
-//  Endpoint                /Channels/{channel.id}
+//  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#deleteclose-channel
 //  Reviewed                2018-10-09
 //  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
@@ -420,7 +420,7 @@ type UpdateChannelPermissionsParams struct {
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.
 //  Method                  PUT
-//  Endpoint                /Channels/{channel.id}/permissions/{overwrite.id}
+//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -448,7 +448,7 @@ func (c *Client) UpdateChannelPermissions(ctx context.Context, channelID, overwr
 // GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 // guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
-//  Endpoint                /Channels/{channel.id}/invites
+//  Endpoint                /channels/{channel.id}/invites
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -485,7 +485,7 @@ type CreateChannelInvitesParams struct {
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
-//  Endpoint                /Channels/{channel.id}/invites
+//  Endpoint                /channels/{channel.id}/invites
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -517,7 +517,7 @@ func (c *Client) CreateChannelInvites(ctx context.Context, channelID Snowflake, 
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 // information about permissions, see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
-//  Endpoint                /Channels/{channel.id}/permissions/{overwrite.id}
+//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-channel-permission
 //  Reviewed                2018-06-07
 //  Comment                 -
@@ -564,7 +564,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 // AddDMParticipant [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
 // on success.
 //  Method                  PUT
-//  Endpoint                /Channels/{channel.id}/recipients/{user.id}
+//  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -594,7 +594,7 @@ func (c *Client) AddDMParticipant(ctx context.Context, channelID Snowflake, part
 
 // KickParticipant [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
-//  Endpoint                /Channels/{channel.id}/recipients/{user.id}
+//  Endpoint                /channels/{channel.id}/recipients/{user.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -

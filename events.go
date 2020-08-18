@@ -32,7 +32,7 @@ type evtResource interface {
 type Ready struct {
 	APIVersion int                 `json:"v"`
 	User       *User               `json:"user"`
-	Guilds     []*GuildUnavailable `json:"Guilds"`
+	Guilds     []*GuildUnavailable `json:"guilds"`
 
 	// not really needed, as it is handled on the socket layer.
 	SessionID string `json:"session_id"`
@@ -486,7 +486,7 @@ type PresenceUpdate struct {
 
 // UserUpdate properties about a user changed
 type UserUpdate struct {
-	User    *User
+	*User
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
 }

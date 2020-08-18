@@ -83,7 +83,7 @@ const (
 	AuditLogChangeApplicationID               AuditLogChange = "application_id"                // channel	snowflake	application id of the added or removed webhook or bot
 	AuditLogChangePermissions                 AuditLogChange = "permissions"                   // role	integer	permissions for a role changed
 	AuditLogChangeColor                       AuditLogChange = "color"                         // role	integer	role color changed
-	AuditLogChangeHoist                       AuditLogChange = "hoist"                         // role	bool	role is now displayed/no longer displayed separate from online Users
+	AuditLogChangeHoist                       AuditLogChange = "hoist"                         // role	bool	role is now displayed/no longer displayed separate from online users
 	AuditLogChangeMentionable                 AuditLogChange = "mentionable"                   // role	bool	role is now mentionable/unmentionable
 	AuditLogChangeAllow                       AuditLogChange = "allow"                         // role	integer	a permission on a text or voice channel was allowed for a role
 	AuditLogChangeDeny                        AuditLogChange = "deny"                          // role	integer	a permission on a text or voice channel was denied for a role
@@ -105,7 +105,7 @@ const (
 // AuditLog ...
 type AuditLog struct {
 	Webhooks        []*Webhook       `json:"webhooks"`
-	Users           []*User          `json:"Users"`
+	Users           []*User          `json:"users"`
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
 }
 
@@ -272,7 +272,7 @@ func auditLogFactory() interface{} {
 // GetGuildAuditLogs [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
 //  Method                   GET
-//  Endpoint                 /Guilds/{guild.id}/audit-logs
+//  Endpoint                 /guilds/{guild.id}/audit-logs
 //  Discord documentation    https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log
 //  Reviewed                 2018-06-05
 //  Comment                  -

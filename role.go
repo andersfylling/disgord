@@ -146,7 +146,7 @@ type CreateGuildRoleParams struct {
 // CreateGuildRole [REST] Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
-//  Endpoint                /Guilds/{guild.id}/roles
+//  Endpoint                /guilds/{guild.id}/roles
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
@@ -169,7 +169,7 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 // ModifyGuildRole [REST] Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
-//  Endpoint                /Guilds/{guild.id}/roles/{role.id}
+//  Endpoint                /guilds/{guild.id}/roles/{role.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -192,7 +192,7 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 // DeleteGuildRole [REST] Delete a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
-//  Endpoint                /Guilds/{guild.id}/roles/{role.id}
+//  Endpoint                /guilds/{guild.id}/roles/{role.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
@@ -210,13 +210,13 @@ func (c *Client) DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake,
 
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
-//  Endpoint                /Guilds/{guild.id}/roles
+//  Endpoint                /guilds/{guild.id}/roles
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
 func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
-		Endpoint: "/Guilds/" + guildID.String() + "/roles",
+		Endpoint: "/guilds/" + guildID.String() + "/roles",
 		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {

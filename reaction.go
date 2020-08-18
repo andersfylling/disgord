@@ -59,7 +59,7 @@ func unwrapEmoji(e string) string {
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
 // response on success. The maximum request size when sending a message is 8MB.
 //  Method                  PUT
-//  Endpoint                /Channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-reaction
 //  Reviewed                2019-01-30
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -102,7 +102,7 @@ func (c *Client) CreateReaction(ctx context.Context, channelID, messageID Snowfl
 // DeleteOwnReaction [REST] Delete a reaction the current user has made for the message.
 // Returns a 204 empty response on success.
 //  Method                  DELETE
-//  Endpoint                /Channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-own-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -144,7 +144,7 @@ func (c *Client) DeleteOwnReaction(ctx context.Context, channelID, messageID Sno
 // DeleteUserReaction [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
 // to be present on the current user. Returns a 204 empty response on success.
 //  Method                  DELETE
-//  Endpoint                /Channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-user-reaction
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -194,7 +194,7 @@ var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 
 // GetReaction [REST] Get a list of Users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
-//  Endpoint                /Channels/{channel.id}/messages/{message.id}/reactions/{emoji}
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
@@ -242,7 +242,7 @@ func (c *Client) GetReaction(ctx context.Context, channelID, messageID Snowflake
 // DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 // permission to be present on the current user.
 //  Method                  DELETE
-//  Endpoint                /Channels/{channel.id}/messages/{message.id}/reactions
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom

@@ -708,7 +708,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 // scope, which will return the object without an email, and optionally the email scope, which returns the object
 // with an email.
 //  Method                  GET
-//  Endpoint                /Users/@me
+//  Endpoint                /users/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
@@ -728,7 +728,7 @@ func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User,
 
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
-//  Endpoint                /Users/{user.id}
+//  Endpoint                /users/{user.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
@@ -745,7 +745,7 @@ func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*Use
 
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
-//  Endpoint                /Users/@me
+//  Endpoint                /users/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -767,7 +767,7 @@ func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder 
 // GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the Guilds OAuth2 scope.
 //  Method                  GET
-//  Endpoint                /Users/@me/Guilds
+//  Endpoint                /users/@me/guilds
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
 //  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
@@ -796,7 +796,7 @@ func (c *Client) GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUse
 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
-//  Endpoint                /Users/@me/Guilds/{guild.id}
+//  Endpoint                /users/@me/guilds/{guild.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
@@ -814,7 +814,7 @@ func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (e
 
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
-//  Endpoint                /Users/@me/Channels
+//  Endpoint                /users/@me/channels
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-dms
 //  Reviewed                2019-02-19
 //  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
@@ -850,7 +850,7 @@ type BodyUserCreateDM struct {
 
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
-//  Endpoint                /Users/@me/Channels
+//  Endpoint                /users/@me/channels
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
@@ -883,7 +883,7 @@ type CreateGroupDMParams struct {
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
-//  Endpoint                /Users/@me/Channels
+//  Endpoint                /users/@me/channels
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
@@ -905,7 +905,7 @@ func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams,
 
 // GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
-//  Endpoint                /Users/@me/connections
+//  Endpoint                /users/@me/connections
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
