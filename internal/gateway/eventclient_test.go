@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 	"net/http"
 	"strconv"
 	"sync"
@@ -77,12 +77,12 @@ func TestEvtIdentify(t *testing.T) {
 	i := &evtIdentity{}
 	var fields map[string]interface{}
 
-	raw, err := util.Marshal(i)
+	raw, err := json.Marshal(i)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if err := util.Unmarshal(raw, &fields); err != nil {
+	if err := json.Unmarshal(raw, &fields); err != nil {
 		t.Error(err)
 	}
 

@@ -6,14 +6,28 @@ import (
 )
 
 // New ...
-func New(size uint) *LFU {
+func NewLFU(size uint) *LFU {
 	list := &LFU{
 		limit: size,
+		table: make(map[Snowflake]int),
 	}
 
 	list.ClearSoft()
 
 	return list
+}
+
+func SetLimit(v interface{}, limit uint) {
+	switch t := v.(type) {
+	case *LFU:
+		t.limit = limit
+		if t.table == nil {
+			// this is hacky, should be initialised somewhere else!
+			t.table = make(map[Snowflake]int)
+		}
+	default:
+		panic("unsupported cache replacement system")
+	}
 }
 
 type LFU struct {

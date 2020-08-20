@@ -3,9 +3,10 @@
 package disgord
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func TestPrepareBox(t *testing.T) {
@@ -16,40 +17,6 @@ func TestPrepareBox(t *testing.T) {
 	})
 }
 
-type mockCacheEvent struct{}
-
-func (m *mockCacheEvent) Update(key cacheRegistry, v interface{}) (err error) {
-	return nil
-}
-func (m *mockCacheEvent) Get(key cacheRegistry, id Snowflake, args ...interface{}) (v interface{}, err error) {
-	return nil, nil
-}
-func (m *mockCacheEvent) UpdateGuildRole(guildID Snowflake, role *Role, messages json.RawMessage) bool {
-	return false
-}
-func (m *mockCacheEvent) DeleteChannel(channelID Snowflake)                                   {}
-func (m *mockCacheEvent) DeleteGuildChannel(guildID Snowflake, channelID Snowflake)           {}
-func (m *mockCacheEvent) AddGuildChannel(guildID Snowflake, channelID Snowflake)              {}
-func (m *mockCacheEvent) UpdateChannelPin(channelID Snowflake, lastPinTimestamp Time)         {}
-func (m *mockCacheEvent) DeleteGuild(guildID Snowflake)                                       {}
-func (m *mockCacheEvent) DeleteGuildRole(guildID Snowflake, roleID Snowflake)                 {}
-func (m *mockCacheEvent) AddGuildRole(GuildID Snowflake, role *Role)                          {}
-func (m *mockCacheEvent) UpdateChannelLastMessageID(channelID Snowflake, messageID Snowflake) {}
-func (m *mockCacheEvent) AddGuildMember(guildID Snowflake, member *Member)                    {}
-func (m *mockCacheEvent) RemoveGuildMember(guildID Snowflake, memberID Snowflake)             {}
-func (m *mockCacheEvent) UpdateMemberAndUser(guildID, userID Snowflake, data json.RawMessage) {}
-func (m *mockCacheEvent) SetGuildEmojis(guildID Snowflake, emojis []*Emoji)                   {}
-func (m *mockCacheEvent) Updates(key cacheRegistry, vs []interface{}) error {
-	return nil
-}
-
-func TestCacheEvent(t *testing.T) {
-	cache := &mockCacheEvent{}
-	injectRandomEvents(t, func(name string, evt interface{}) error {
-		return cacheEvent(cache, name, evt, nil)
-	})
-}
-
 func TestChannelCreate_UnmarshalJSON(t *testing.T) {
 	channel := &Channel{}
 	evt := &ChannelCreate{}
@@ -57,15 +24,15 @@ func TestChannelCreate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/channel_create.json")
 	check(err, t)
 
-	err = unmarshal(data, channel)
-	if err != nil {
+	if err = json.Unmarshal(data, channel); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(channel)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Channel.Name != channel.Name {
 		t.Error("different names")
@@ -83,15 +50,15 @@ func TestChannelUpdate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/update_topic.json")
 	check(err, t)
 
-	err = unmarshal(data, channel)
-	if err != nil {
+	if err = json.Unmarshal(data, channel); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(channel)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Channel.Name != channel.Name {
 		t.Error("different names")
@@ -109,15 +76,15 @@ func TestChannelDelete_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/delete.json")
 	check(err, t)
 
-	err = unmarshal(data, channel)
-	if err != nil {
+	if err = json.Unmarshal(data, channel); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(channel)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Channel.Name != channel.Name {
 		t.Error("different names")
@@ -135,15 +102,15 @@ func TestMessageCreate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/message_create_guild_invite.json")
 	check(err, t)
 
-	err = unmarshal(data, message)
-	if err != nil {
+	if err = json.Unmarshal(data, message); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(message)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Message.Content != message.Content {
 		t.Error("different content")
@@ -161,15 +128,15 @@ func TestMessageUpdate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/message_update.json")
 	check(err, t)
 
-	err = unmarshal(data, message)
-	if err != nil {
+	if err = json.Unmarshal(data, message); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(message)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Message.Content != message.Content {
 		t.Error("different content")
@@ -187,15 +154,15 @@ func TestMessageDelete_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/channel/message_delete.json")
 	check(err, t)
 
-	err = unmarshal(data, message)
-	if err != nil {
+	if err = json.Unmarshal(data, message); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(message)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.MessageID != message.ID {
 		t.Error("different ID")
@@ -217,15 +184,15 @@ func TestGuildCreate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/create.json")
 	check(err, t)
 
-	err = unmarshal(data, guild)
-	if err != nil {
+	if err = json.Unmarshal(data, guild); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(guild)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Guild.ID != guild.ID {
 		t.Error("different ID")
@@ -243,15 +210,15 @@ func TestGuildUpdate_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/update.json")
 	check(err, t)
 
-	err = unmarshal(data, guild)
-	if err != nil {
+	if err = json.Unmarshal(data, guild); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(guild)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.Guild.ID != guild.ID {
 		t.Error("different ID")
@@ -269,15 +236,15 @@ func TestGuildDelete_UnmarshalJSON(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/guild/delete_by_kick.json")
 	check(err, t)
 
-	err = unmarshal(data, guild)
-	if err != nil {
+	if err = json.Unmarshal(data, guild); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(guild)
 
-	err = unmarshal(data, evt)
-	if err != nil {
+	if err = json.Unmarshal(data, evt); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(evt)
 
 	if evt.UnavailableGuild.ID != guild.ID {
 		t.Error("different ID")

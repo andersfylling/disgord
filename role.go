@@ -159,13 +159,8 @@ func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *Crea
 		ContentType: httd.ContentTypeJSON,
 		Reason:      params.Reason,
 	}, flags)
-	r.CacheRegistry = GuildRoleCache
 	r.factory = func() interface{} {
 		return &Role{}
-	}
-	r.preUpdateCache = func(x interface{}) {
-		r := x.(*Role)
-		r.guildID = id
 	}
 
 	return getRole(r.Execute)
@@ -184,18 +179,12 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 		return &Role{}
 	}
 	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
+	builder.r.IgnoreCache().setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
-
-	builder.r.cacheMiddleware = func(resp *http.Response, v interface{}, err error) error {
-		role := v.(*Role)
-		role.guildID = guildID
-		return nil
-	}
 
 	return builder
 }
@@ -230,16 +219,9 @@ func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...
 		Endpoint: "/guilds/" + guildID.String() + "/roles",
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = GuildRolesCache
 	r.factory = func() interface{} {
 		tmp := make([]*Role, 0)
 		return &tmp
-	}
-	r.preUpdateCache = func(x interface{}) {
-		roles := *x.(*[]*Role)
-		for i := range roles {
-			roles[i].guildID = guildID
-		}
 	}
 
 	return getRoles(r.Execute)

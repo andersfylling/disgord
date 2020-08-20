@@ -261,24 +261,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (c *Channel) copyOverToCache(other interface{}) (err error) {
-	return c.CopyOverTo(other)
-}
-
-//func (c *Channel) Clear() {
-//	// TODO
-//}
-
-// Fetch check if there are any updates to the channel values
-//func (c *Channel) Fetch(Client ChannelFetcher) (err error) {
-//	if c.ID.IsZero() {
-//		err = errors.New("missing channel ID")
-//		return
-//	}
-//
-//	Client.GetChannel(c.ID)
-//}
-
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
 func (c *Channel) SendMsgString(ctx context.Context, client MessageSender, content string) (msg *Message, err error) {
 	if c.ID.IsZero() {
@@ -336,12 +318,15 @@ func (c *Client) GetChannel(ctx context.Context, channelID Snowflake, flags ...F
 		return nil, errors.New("not a valid snowflake")
 	}
 
+	channel, _ := c.cache.GetChannel(channelID)
+	if channel != nil {
+		return channel, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Channel(channelID),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = ChannelCache
-	r.ID = channelID
 	r.pool = c.pool.channel
 	r.factory = func() interface{} {
 		return &Channel{}
@@ -350,7 +335,7 @@ func (c *Client) GetChannel(ctx context.Context, channelID Snowflake, flags ...F
 	return getChannel(r.Execute)
 }
 
-// UpdateChannel [REST] Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+// UpdateChannel [REST] Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 // a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 // modifying a category, individual Channel Update events will fire for each child channel that also changes.
 // For the PATCH method, all the JSON Params are optional.
@@ -365,20 +350,18 @@ func (c *Client) UpdateChannel(ctx context.Context, channelID Snowflake, flags .
 		return c.pool.channel.Get()
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Channel(channelID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
-	builder.r.cacheRegistry = ChannelCache
-	builder.r.cacheItemID = channelID
 
 	return builder
 }
 
 // DeleteChannel [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
-// the guild. Deleting a category does not delete its child channels; they will have their parent_id removed and a
+// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 // Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 // Fires a Channel Delete Gateway event.
 //  Method                  Delete
@@ -401,10 +384,6 @@ func (c *Client) DeleteChannel(ctx context.Context, channelID Snowflake, flags .
 		Ctx:      context.Background(),
 	}, flags)
 	r.expectsStatusCode = http.StatusOK
-	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-		c.cache.DeleteChannel(id)
-		return nil
-	}
 	r.factory = func() interface{} {
 		return &Channel{}
 	}
@@ -420,7 +399,7 @@ type UpdateChannelPermissionsParams struct {
 }
 
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
-// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
+// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
@@ -443,17 +422,13 @@ func (c *Client) UpdateChannelPermissions(ctx context.Context, channelID, overwr
 		Body:        params,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
-	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-		// TODO-cache: update cache
-		return nil
-	}
 
 	_, err = r.Execute()
 	return err
 }
 
 // GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
-// guild channels. Requires the 'MANAGE_CHANNELS' permission.
+// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/invites
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
@@ -469,7 +444,6 @@ func (c *Client) GetChannelInvites(ctx context.Context, channelID Snowflake, fla
 		Endpoint: endpoint.ChannelInvites(channelID),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
 		tmp := make([]*Invite, 0)
 		return &tmp
@@ -489,7 +463,7 @@ type CreateChannelInvitesParams struct {
 	Reason string `json:"-"`
 }
 
-// CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild channels. Requires
+// CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
@@ -522,7 +496,7 @@ func (c *Client) CreateChannelInvites(ctx context.Context, channelID Snowflake, 
 }
 
 // DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
-// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
+// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 // information about permissions, see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
@@ -543,10 +517,6 @@ func (c *Client) DeleteChannelPermission(ctx context.Context, channelID, overwri
 		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
-	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-		_ = c.cache.DeleteChannelPermissionOverwrite(channelID, overwriteID)
-		return nil
-	}
 
 	_, err = r.Execute()
 	return err

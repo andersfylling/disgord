@@ -6,149 +6,20 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 )
 
 // Resource represents a discord event.
 // This is used internally for readability only.
 type resource = interface{}
 
-func cacheEvent(cache Cacher, event string, v interface{}, data json.RawMessage) (err error) {
-	// updates holds key and object to be cached
-	updates := map[cacheRegistry]([]interface{}){}
-
-	switch event {
-	case EvtReady:
-		ready := v.(*Ready)
-		updates[UserCache] = append(updates[UserCache], ready.User)
-
-		for _, guild := range ready.Guilds {
-			updates[GuildCache] = append(updates[GuildCache], guild)
-		}
-	case EvtVoiceStateUpdate:
-		update := v.(*VoiceStateUpdate)
-		updates[VoiceStateCache] = append(updates[VoiceStateCache], update.VoiceState)
-	case EvtChannelCreate, EvtChannelUpdate:
-		var channel *Channel
-		if event == EvtChannelCreate {
-			channel = (v.(*ChannelCreate)).Channel
-			if !channel.GuildID.IsZero() {
-				cache.AddGuildChannel(channel.GuildID, channel.ID)
-			}
-		} else if event == EvtChannelUpdate {
-			channel = (v.(*ChannelUpdate)).Channel
-		}
-		if len(channel.Recipients) > 0 {
-			for i := range channel.Recipients {
-				updates[UserCache] = append(updates[UserCache], channel.Recipients[i])
-			}
-		}
-
-		updates[ChannelCache] = append(updates[ChannelCache], channel)
-	case EvtChannelDelete:
-		channel := (v.(*ChannelDelete)).Channel
-		cache.DeleteChannel(channel.ID)
-		cache.DeleteGuildChannel(channel.GuildID, channel.ID)
-	case EvtChannelPinsUpdate:
-		evt := v.(*ChannelPinsUpdate)
-		cache.UpdateChannelPin(evt.ChannelID, evt.LastPinTimestamp)
-	case EvtGuildCreate, EvtGuildUpdate:
-		var guild *Guild
-		if event == EvtGuildCreate {
-			guild = (v.(*GuildCreate)).Guild
-		} else if event == EvtGuildUpdate {
-			guild = (v.(*GuildUpdate)).Guild
-		}
-		updates[GuildCache] = append(updates[GuildCache], guild)
-
-		// update all users
-		if len(guild.Members) > 0 {
-			updates[UserCache] = make([]interface{}, len(guild.Members))
-			for i := range guild.Members {
-				updates[UserCache][i] = guild.Members[i].User
-			}
-		}
-		// update all channels
-		if len(guild.Channels) > 0 {
-			updates[ChannelCache] = make([]interface{}, len(guild.Channels))
-			for i := range guild.Channels {
-				updates[ChannelCache][i] = guild.Channels[i]
-			}
-		}
-	case EvtGuildDelete:
-		uguild := (v.(*GuildDelete)).UnavailableGuild
-		cache.DeleteGuild(uguild.ID)
-	case EvtGuildRoleDelete:
-		evt := v.(*GuildRoleDelete)
-		cache.DeleteGuildRole(evt.GuildID, evt.RoleID)
-	case EvtGuildEmojisUpdate:
-		err = cacheEmoji_EventGuildEmojisUpdate(cache, v.(*GuildEmojisUpdate))
-	case EvtUserUpdate:
-		usr := v.(*UserUpdate).User
-		updates[UserCache] = append(updates[UserCache], usr)
-	case EvtMessageCreate:
-		// TODO: performance issues?
-		msg := (v.(*MessageCreate)).Message
-		cache.UpdateChannelLastMessageID(msg.ChannelID, msg.ID)
-	case EvtGuildMembersChunk:
-		evt := v.(*GuildMembersChunk)
-		updates[GuildMembersCache] = append(updates[GuildMembersCache], evt)
-
-		// update all users
-		if len(evt.Members) > 0 {
-			updates[UserCache] = make([]interface{}, len(evt.Members))
-			for i := range evt.Members {
-				updates[UserCache][i] = evt.Members[i].User
-			}
-		}
-	case EvtGuildMemberUpdate:
-		evt := v.(*GuildMemberUpdate)
-		cache.UpdateMemberAndUser(evt.GuildID, evt.User.ID, data)
-	case EvtGuildMemberAdd:
-		evt := v.(*GuildMemberAdd)
-		cache.AddGuildMember(evt.Member.GuildID, evt.Member)
-		updates[UserCache] = append(updates[UserCache], evt.Member.User)
-	case EvtGuildMemberRemove:
-		evt := v.(*GuildMemberRemove)
-		cache.RemoveGuildMember(evt.GuildID, evt.User.ID)
-	// TODO: mark user as free from guild...
-	case EvtGuildRoleCreate:
-		evt := v.(*GuildRoleCreate)
-		cache.AddGuildRole(evt.GuildID, evt.Role)
-	case EvtGuildRoleUpdate:
-		evt := v.(*GuildRoleUpdate)
-		if updated := cache.UpdateGuildRole(evt.GuildID, evt.Role, data); !updated {
-			cache.AddGuildRole(evt.GuildID, evt.Role)
-		}
-	default:
-		//case EventResumed:
-		//case EventGuildBanAdd:
-		//case EventGuildBanRemove:
-		//case EventGuildIntegrationsUpdate:
-		//case EventMessageUpdate:
-		//case EventMessageDelete:
-		//case EventMessageDeleteBulk:
-		//case EventMessageReactionAdd:
-		//case EventMessageReactionRemove:
-		//case EventMessageReactionRemoveAll:
-		//case EventPresenceUpdate:
-		//case EventTypingStart:
-		//case EventVoiceServerUpdate:
-		//case EventWebhooksUpdate:
-	}
-
-	for key, structs := range updates {
-		if err = cache.Updates(key, structs); err != nil {
-			// TODO: logging? or append all errs to the return statement?
-		}
-	}
-	return nil
-}
-
 // ---------------------------
+
+type EventType interface {
+	evtResource
+}
 
 type evtResource interface {
 	registerContext(ctx context.Context)
@@ -204,7 +75,7 @@ type ChannelCreate struct {
 // UnmarshalJSON ...
 func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -219,7 +90,7 @@ type ChannelUpdate struct {
 // UnmarshalJSON ...
 func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -234,7 +105,7 @@ type ChannelDelete struct {
 // UnmarshalJSON ...
 func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -244,8 +115,10 @@ type ChannelPinsUpdate struct {
 	// ChannelID snowflake	the id of the channel
 	ChannelID Snowflake `json:"channel_id"`
 
+	GuildID Snowflake `json:"guild_id,omitempty"`
+
 	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
-	LastPinTimestamp Time            `json:"last_pin_timestamp,omitempty"` // ?|
+	LastPinTimestamp Time            `json:"last_pin_timestamp,omitempty"`
 	Ctx              context.Context `json:"-"`
 	ShardID          uint            `json:"-"`
 }
@@ -291,7 +164,7 @@ func (obj *MessageCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	if err := unmarshal(data, obj.Message); err != nil {
+	if err := json.Unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -318,7 +191,7 @@ func (obj *MessageUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	if err := unmarshal(data, obj.Message); err != nil {
+	if err := json.Unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -409,7 +282,7 @@ func (g *GuildEmojisUpdate) updateInternals() {
 // ---------------------------
 
 // GuildCreate This event can be sent in three different scenarios:
-//  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
+//  1. When a user is initially connecting, to lazily load and backfill information for all unavailable Guilds
 //     sent in the Ready event.
 //	2. When a Guild becomes available again to the Client.
 // 	3. When the current user joins a new Guild.
@@ -428,7 +301,7 @@ func (g *GuildCreate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	if err := unmarshal(data, obj.Guild); err != nil {
+	if err := json.Unmarshal(data, obj.Guild); err != nil {
 		return err
 	}
 	for _, v := range obj.Guild.Members {
@@ -455,7 +328,7 @@ func (g *GuildUpdate) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	return unmarshal(data, obj.Guild)
+	return json.Unmarshal(data, obj.Guild)
 }
 
 // ---------------------------
@@ -475,7 +348,7 @@ func (obj *GuildDelete) UserWasRemoved() bool {
 // UnmarshalJSON ...
 func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
 	obj.UnavailableGuild = &GuildUnavailable{}
-	return unmarshal(data, obj.UnavailableGuild)
+	return json.Unmarshal(data, obj.UnavailableGuild)
 }
 
 // ---------------------------
@@ -525,7 +398,7 @@ func (g *GuildMemberAdd) updateInternals() {
 // UnmarshalJSON ...
 func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
-	return util.Unmarshal(data, obj.Member)
+	return json.Unmarshal(data, obj.Member)
 }
 
 // ---------------------------
@@ -639,7 +512,7 @@ type UserUpdate struct {
 // UnmarshalJSON ...
 func (obj *UserUpdate) UnmarshalJSON(data []byte) error {
 	obj.User = &User{}
-	return util.Unmarshal(data, obj.User)
+	return json.Unmarshal(data, obj.User)
 }
 
 // ---------------------------
@@ -654,7 +527,7 @@ type VoiceStateUpdate struct {
 // UnmarshalJSON ...
 func (h *VoiceStateUpdate) UnmarshalJSON(data []byte) error {
 	h.VoiceState = &VoiceState{}
-	return util.Unmarshal(data, h.VoiceState)
+	return json.Unmarshal(data, h.VoiceState)
 }
 
 // ---------------------------
@@ -709,7 +582,7 @@ type InviteCreate struct {
 	// MaxUses the maximum number of times the invite can be used
 	MaxUses int `json:"max_uses"`
 
-	// Temporary whether or not the invite is temporary (invited users will be kicked on disconnect unless they're assigned a role)
+	// Temporary whether or not the invite is temporary (invited Users will be kicked on disconnect unless they're assigned a role)
 	Temporary bool `json:"temporary"`
 
 	// Uses how many times the invite has been used (always will be 0)

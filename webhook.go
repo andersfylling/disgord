@@ -194,7 +194,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag)
 	}
 	builder.r.flags = flags
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Webhook(id),
@@ -219,7 +219,7 @@ func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token
 	builder.r.flags = flags
 	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(token == "", "given webhook token was not set")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.WebhookToken(id, token),

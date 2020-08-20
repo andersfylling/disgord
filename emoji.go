@@ -116,45 +116,6 @@ func (e *Emoji) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag)
 	return s.DeleteGuildEmoji(ctx, e.guildID, e.ID, flags...)
 }
 
-//func (e *Emoji) createGuildEmoji(session Session) (err error) {
-//	params := &CreateGuildEmojiParams{
-//		Name:  e.Name,
-//		Image: e.image,
-//		Roles: e.Roles,
-//	}
-//
-//	var creation *Emoji
-//	creation, err = session.CreateGuildEmoji(, params)
-//	if err != nil {
-//		return
-//	}
-//
-//	creation.CopyOverTo(e)
-//	return
-//}
-//func (e *Emoji) modifyGuildEmoji(session Session) (err error) {
-//	params := &ModifyGuildEmojiParams{
-//		Name:  e.Name,
-//		Roles: e.Roles,
-//	}
-//}
-
-// func (e *Emoji) Clear() {
-// 	// obviously don't delete the user ...
-// }
-
-// ----------------------
-// CACHE
-
-func cacheEmoji_EventGuildEmojisUpdate(cache Cacher, evt *GuildEmojisUpdate) error {
-	return cacheEmoji_SetAll(cache, evt.GuildID, evt.Emojis)
-}
-
-func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
-	cache.SetGuildEmojis(guildID, emojis)
-	return nil
-}
-
 //////////////////////////////////////////////////////
 //
 // REST Methods
@@ -174,15 +135,15 @@ func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 //  Reviewed                2019-02-20
 //  Comment                 -
 func (c *Client) GetGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
+	if emoji, _ := c.cache.GetGuildEmoji(guildID, emojiID); emoji != nil {
+		return emoji, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
 		Ctx:      ctx,
 	}, flags)
 	r.pool = c.pool.emoji
-	r.CacheRegistry = GuildEmojiCache
-	r.preUpdateCache = func(x interface{}) {
-		x.(*Emoji).guildID = guildID
-	}
 	r.factory = func() interface{} {
 		return &Emoji{}
 	}
@@ -197,27 +158,17 @@ func (c *Client) GetGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, 
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c *Client) GetGuildEmojis(ctx context.Context, guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
+	if emojis, _ := c.cache.GetGuildEmojis(guildID); emojis != nil {
+		return emojis, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmojis(guildID),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = GuildEmojiCache
-	r.checkCache = func() (v interface{}, err error) {
-		if r.flags.Ignorecache() {
-			return nil, nil
-		}
-
-		return c.cache.GetGuildEmojis(guildID)
-	}
 	r.factory = func() interface{} {
 		tmp := make([]*Emoji, 0)
 		return &tmp
-	}
-	r.preUpdateCache = func(x interface{}) {
-		es := *x.(*[]*Emoji)
-		for i := range es {
-			es[i].guildID = guildID
-		}
 	}
 
 	var vs interface{}
@@ -273,7 +224,6 @@ func (c *Client) CreateGuildEmoji(ctx context.Context, guildID Snowflake, params
 		Body:        params,
 		Reason:      params.Reason,
 	}, flags)
-	r.CacheRegistry = GuildEmojiCache
 	r.pool = c.pool.emoji
 	r.factory = func() interface{} {
 		return &Emoji{}
@@ -299,8 +249,7 @@ func (c *Client) UpdateGuildEmoji(ctx context.Context, guildID, emojiID Snowflak
 		return &Emoji{guildID: guildID}
 	}
 	builder.r.flags = flags
-	builder.r.cacheRegistry = GuildEmojiCache
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
@@ -323,10 +272,6 @@ func (c *Client) DeleteGuildEmoji(ctx context.Context, guildID, emojiID Snowflak
 		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
 		Ctx:      ctx,
 	}, flags)
-	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-		c.cache.DeleteGuildEmoji(guildID, emojiID)
-		return nil
-	}
 
 	_, err = r.Execute()
 	return

@@ -101,7 +101,7 @@ type RESTMessage interface {
 	DeleteMessage(ctx context.Context, channelID, msgID Snowflake, flags ...Flag) (err error)
 
 	// DeleteMessages Delete multiple messages in a single request. This endpoint can only be used on guild
-	// channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
+	// Channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 	// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 	// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 	// will only be counted once.
@@ -123,7 +123,7 @@ type RESTReaction interface {
 	// to be present on the current user. Returns a 204 empty response on success.
 	DeleteUserReaction(ctx context.Context, channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error)
 
-	// GetReaction Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+	// GetReaction Get a list of Users that reacted with this emoji. Returns an array of user objects on success.
 	GetReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (reactors []*User, err error)
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
@@ -162,35 +162,35 @@ type RESTChannel interface {
 	// GetChannel Get a channel by Snowflake. Returns a channel object.
 	GetChannel(ctx context.Context, id Snowflake, flags ...Flag) (ret *Channel, err error)
 
-	// UpdateChannel Update a channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// UpdateChannel Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
 	UpdateChannel(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateChannelBuilder)
 
 	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
-	// the guild. Deleting a category does not delete its child channels; they will have their parent_id removed and a
+	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 	// Fires a Channel Delete Gateway event.
 	DeleteChannel(ctx context.Context, id Snowflake, flags ...Flag) (channel *Channel, err error)
 
 	// EditChannelPermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
-	// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
+	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
 	UpdateChannelPermissions(ctx context.Context, chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error)
 
 	// GetChannelInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
-	// guild channels. Requires the 'MANAGE_CHANNELS' permission.
+	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 	GetChannelInvites(ctx context.Context, id Snowflake, flags ...Flag) (ret []*Invite, err error)
 
-	// CreateChannelInvites Create a new invite object for the channel. Only usable for guild channels. Requires
+	// CreateChannelInvites Create a new invite object for the channel. Only usable for guild Channels. Requires
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
 	CreateChannelInvites(ctx context.Context, id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error)
 
 	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
-	// for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
+	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 	// information about permissions,
 	// see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 	DeleteChannelPermission(ctx context.Context, channelID, overwriteID Snowflake, flags ...Flag) (err error)
@@ -259,7 +259,7 @@ type RESTGuild interface {
 	GetMembers(ctx context.Context, guildID Snowflake, params *GetMembersParams, flags ...Flag) ([]*Member, error)
 
 	// AddGuildMember Adds a user to the guild, provided you have a valid oauth2 access token for the user with
-	// the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
+	// the Guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
 	// already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 	// CREATE_INSTANT_INVITE permission.
 	AddGuildMember(ctx context.Context, guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
@@ -284,7 +284,7 @@ type RESTGuild interface {
 	// Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 	KickMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error
 
-	// GetGuildBans Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
+	// GetGuildBans Returns a list of ban objects for the Users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 	GetGuildBans(ctx context.Context, id Snowflake, flags ...Flag) ([]*Ban, error)
 
 	// GetGuildBan Returns a ban object for the given user or a 404 not found if the ban cannot be found.
@@ -368,7 +368,7 @@ type RESTGuild interface {
 	// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 	UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags ...Flag) *updateGuildEmbedBuilder
 
-	// GetGuildVanityURL Returns a partial invite object for guilds with that feature enabled.
+	// GetGuildVanityURL Returns a partial invite object for Guilds with that feature enabled.
 	// Requires the 'MANAGE_GUILD' permission.
 	GetGuildVanityURL(ctx context.Context, guildID Snowflake, flags ...Flag) (*PartialInvite, error)
 }
@@ -396,7 +396,7 @@ type RESTUser interface {
 	UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder)
 
 	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
-	// Requires the guilds OAuth2 scope.
+	// Requires the Guilds OAuth2 scope.
 	GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
 
 	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
@@ -408,7 +408,7 @@ type RESTUser interface {
 	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
 	CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error)
 
-	// CreateGroupDM Create a new group DM channel with multiple users. Returns a DM channel object.
+	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 	// endpoint will not be shown in the Discord Client
 	CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error)
@@ -508,7 +508,6 @@ type Session interface {
 	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
 
 	RESTRatelimitBuckets() (group map[string][]string)
-	RESTBucketGrouping() (group map[string][]string)
 
 	// Abstract REST methods for Discord structs
 	DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) error

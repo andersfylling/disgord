@@ -5,13 +5,13 @@ package disgord
 import (
 	"context"
 	"errors"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
@@ -19,7 +19,8 @@ func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
 	check(err, t)
 
 	v := AuditLog{}
-	err = util.Unmarshal(data, &v)
+	err = json.Unmarshal(data, &v)
+	executeInternalUpdater(v)
 	check(err, t)
 }
 
@@ -84,7 +85,7 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 
 func TestAuditLogParams(t *testing.T) {
 	params := &guildAuditLogsBuilder{}
-	params.r.setup(nil, nil, nil, nil)
+	params.r.setup(nil, nil, nil)
 	var wants string
 
 	wants = ""
@@ -125,7 +126,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -137,7 +138,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		if client.req.Endpoint != "/guilds/7/audit-logs" {
-			t.Error("incorrect endpoint")
+			t.Error("incorrect endpoint: ", client.req.Endpoint)
 		}
 	})
 	t.Run("success", func(t *testing.T) {
@@ -154,7 +155,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -173,24 +174,24 @@ func TestGuildAuditLogs(t *testing.T) {
 			t.Errorf("expected 10 log entries, got %d", len(logs.AuditLogEntries))
 		}
 		if len(logs.Users) != 4 {
-			t.Errorf("expected 4 users, got %d", len(logs.Users))
+			t.Errorf("expected 4 Users, got %d", len(logs.Users))
 		}
 		if len(logs.Webhooks) != 0 {
 			t.Errorf("expected 0 webhooks, got %d", len(logs.Webhooks))
 		}
 	})
 	t.Run("missing-permission", func(t *testing.T) {
-		errorMsg := "missing permissiong flag?"
+		errorMsg := "missing permission flag?"
 		client := &reqMocker{
 			body: []byte(`{"code":403,"message":"` + errorMsg + `"}`),
 			resp: &http.Response{
 				StatusCode: 403,
 			},
-			err: errors.New("permissing issue"),
+			err: errors.New("permission issue"),
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -216,7 +217,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -232,7 +233,6 @@ func TestGuildAuditLogs(t *testing.T) {
 }
 
 func TestAuditlog_Unmarshal(t *testing.T) {
-
 	data := []byte(`{
       "target_id": "547614326257877003",
       "changes": [
@@ -247,9 +247,10 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := util.Unmarshal(data, &v2); err != nil {
+	if err := json.Unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(v2)
 
 	data, err := ioutil.ReadFile("testdata/auditlog/logs-limit-10.json")
 	if err != nil {
@@ -258,9 +259,10 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := util.Unmarshal(data, &v); err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(v)
 
 	if v.Bans() != nil {
 		t.Error("these logs contains no bans")

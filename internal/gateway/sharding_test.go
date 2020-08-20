@@ -109,6 +109,7 @@ func TestRedistributeShardMessages(t *testing.T) {
 		},
 	}
 	config := ShardManagerConfig{
+		BotToken:     "test",
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
 		Logger:       &logger.Empty{},
@@ -187,6 +188,7 @@ func TestIdentifyRateLimiting(t *testing.T) {
 		},
 	}
 	config := ShardManagerConfig{
+		BotToken:     "test",
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
 		Logger:       &logger.Empty{},

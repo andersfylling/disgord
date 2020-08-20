@@ -3,9 +3,9 @@ package disgord
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -29,7 +29,7 @@ const (
 type MessageFlag uint
 
 const (
-	// MessageFlagCrossposted this message has been published to subscribed channels (via Channel Following)
+	// MessageFlagCrossposted this message has been published to subscribed Channels (via Channel Following)
 	MessageFlagCrossposted MessageFlag = 1 << iota
 
 	// MessageFlagIsCrosspost this message originated from a message in another channel (via Channel Following)
@@ -541,6 +541,11 @@ func (c *Client) GetMessage(ctx context.Context, channelID, messageID Snowflake,
 		return
 	}
 
+	msg, _ := c.cache.GetMessage(channelID, messageID)
+	if msg != nil {
+		return msg, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelMessage(channelID, messageID),
 		Ctx:      ctx,
@@ -737,7 +742,7 @@ func (c *Client) UpdateMessage(ctx context.Context, chanID, msgID Snowflake, fla
 	builder.r.flags = flags
 	builder.r.addPrereq(chanID.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(msgID.IsZero(), "msgID must be set to edit the message")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),
@@ -827,7 +832,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 }
 
 // DeleteMessages [REST] Delete multiple messages in a single request. This endpoint can only be used on guild
-// channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
+// Channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 // Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.

@@ -2,9 +2,9 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"math"
 	"net/http"
 	"sort"
@@ -117,16 +117,6 @@ func NewGuild() *Guild {
 	}
 }
 
-// NewGuildFromJSON ...
-func NewGuildFromJSON(data []byte) (guild *Guild) {
-	guild = NewGuild()
-	if err := unmarshal(data, guild); err != nil {
-		panic(err)
-	}
-
-	return guild
-}
-
 // NewPartialGuild ...
 func NewPartialGuild(ID Snowflake) (guild *Guild) {
 	guild = NewGuild()
@@ -164,7 +154,7 @@ type GuildUnavailable struct {
 // if loading is deactivated, then check state, then do a request.
 // if loading is activated, check state only.
 // type Members interface {
-// 	Member(UserID snowflake.Snowflake) *Member
+// 	Member(userID snowflake.Snowflake) *Member
 // 	MembersWithName( /*username*/ name string) map[snowflake.Snowflake]*Member
 // 	MemberByUsername( /*username#discriminator*/ username string) *Member
 // 	MemberByAlias(alias string) *Member
@@ -174,7 +164,7 @@ type GuildUnavailable struct {
 // PartialGuild see Guild
 type PartialGuild = Guild // TODO: find the actual data struct for partial guild
 
-// Guild Guilds in Discord represent an isolated collection of users and channels,
+// Guild Guilds in Discord represent an isolated collection of Users and Channels,
 //  and are often referred to as "servers" in the UI.
 // https://discord.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
@@ -214,7 +204,7 @@ type Guild struct {
 	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
 	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
 
-	//highestSnowflakeAmoungMembers Snowflake
+	//highestSnowflakeAmongMembers Snowflake
 }
 
 var _ Reseter = (*Guild)(nil)
@@ -242,53 +232,6 @@ func (g *Guild) updateInternals() {
 	}
 }
 
-func (g *Guild) copyOverToCache(other interface{}) (err error) {
-	guild := other.(*Guild)
-
-	//guild.ID = g.ID
-	if g.Name != "" {
-		guild.Name = g.Name
-	}
-	guild.Owner = g.Owner
-	// Use ownerID to check if you are the owner of the guild(!)
-	guild.OwnerID = g.OwnerID
-	guild.Permissions = g.Permissions
-	guild.Region = g.Region
-	guild.AfkTimeout = g.AfkTimeout
-	guild.EmbedEnabled = g.EmbedEnabled
-	guild.EmbedChannelID = g.EmbedChannelID
-	guild.VerificationLevel = g.VerificationLevel
-	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
-	guild.ExplicitContentFilter = g.ExplicitContentFilter
-	guild.Features = g.Features
-	guild.MFALevel = g.MFALevel
-	guild.WidgetEnabled = g.WidgetEnabled
-	guild.WidgetChannelID = g.WidgetChannelID
-	guild.SystemChannelID = g.SystemChannelID
-	guild.Large = g.Large
-	guild.Unavailable = g.Unavailable
-	guild.MemberCount = g.MemberCount
-	guild.Splash = g.Splash
-	guild.Icon = g.Icon
-
-	// pointers
-	if !g.ApplicationID.IsZero() {
-		guild.ApplicationID = g.ApplicationID
-	}
-	if !g.AfkChannelID.IsZero() {
-		guild.AfkChannelID = g.AfkChannelID
-	}
-	if !g.SystemChannelID.IsZero() {
-		guild.SystemChannelID = g.SystemChannelID
-	}
-	if g.JoinedAt != nil {
-		joined := *g.JoinedAt
-		guild.JoinedAt = &joined
-	}
-
-	return
-}
-
 // GetMemberWithHighestSnowflake finds the member with the highest snowflake value.
 func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	if len(g.Members) == 0 {
@@ -304,10 +247,6 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 
 	return highest
 }
-
-// func (g *Guild) UnmarshalJSON(data []byte) (err error) {
-// 	return json.Unmarshal(data, &g.guildJSON)
-// }
 
 // MarshalJSON see interface json.Marshaler
 // TODO: fix copying of mutex lock
@@ -930,7 +869,7 @@ func (m *Member) UpdateNick(ctx context.Context, client nickUpdater, nickname st
 	return client.UpdateGuildMember(ctx, m.GuildID, m.UserID, flags...).SetNick(nickname).Execute()
 }
 
-// PermissionFetching is an interface which only holds the method needed for fetching a users permissions
+// PermissionFetching is an interface which only holds the method needed for fetching a Users permissions
 type PermissionFetching interface {
 	GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Role, error)
 }
@@ -1042,12 +981,12 @@ type CreateGuildParams struct {
 //  Endpoint                /guilds
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild
 //  Reviewed                2018-08-16
-//  Comment                 This endpoint. can be used only by bots in less than 10 guilds. Creating channel
+//  Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
 //                          categories from this endpoint. is not supported.
 //							The params argument is optional.
 func (c *Client) CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	// TODO: check if bot
-	// TODO-2: is bot in less than 10 guilds?
+	// TODO-2: is bot in less than 10 Guilds?
 
 	if guildName == "" {
 		return nil, errors.New("guild name is required")
@@ -1071,7 +1010,6 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 	r.factory = func() interface{} {
 		return &Guild{}
 	}
-	r.CacheRegistry = GuildCache
 
 	return getGuild(r.Execute)
 }
@@ -1083,6 +1021,10 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 //  Reviewed                2018-08-17
 //  Comment                 -
 func (c *Client) GetGuild(ctx context.Context, id Snowflake, flags ...Flag) (guild *Guild, err error) {
+	if guild, _ = c.cache.GetGuild(id); guild != nil {
+		return guild, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Guild(id),
 		Ctx:      ctx,
@@ -1090,8 +1032,6 @@ func (c *Client) GetGuild(ctx context.Context, id Snowflake, flags ...Flag) (gui
 	r.factory = func() interface{} {
 		return &Guild{}
 	}
-	r.CacheRegistry = GuildCache
-	r.ID = id
 
 	return getGuild(r.Execute)
 }
@@ -1108,14 +1048,12 @@ func (c *Client) UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
 	}
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Guild(id),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
-	builder.r.cacheRegistry = GuildCache
-	builder.r.cacheItemID = id
 	builder.r.flags = flags
 
 	return builder
@@ -1146,17 +1084,19 @@ func (c *Client) DeleteGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-channels
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *Client) GetGuildChannels(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Channel, err error) {
+func (c *Client) GetGuildChannels(ctx context.Context, guildID Snowflake, flags ...Flag) (channels []*Channel, err error) {
+	if channels, _ = c.cache.GetGuildChannels(guildID); channels != nil {
+		return channels, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildChannels(guildID),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
 		tmp := make([]*Channel, 0)
 		return &tmp
 	}
-	// TODO: update guild cache
 
 	return getChannels(r.Execute)
 }
@@ -1211,8 +1151,6 @@ func (c *Client) CreateGuildChannel(ctx context.Context, guildID Snowflake, chan
 	r.factory = func() interface{} {
 		return &Channel{}
 	}
-	r.CacheRegistry = ChannelCache
-	// TODO: update guild cache
 
 	return getChannel(r.Execute)
 }
@@ -1236,8 +1174,8 @@ type UpdateGuildChannelPositionsParams struct {
 //  Endpoint                /guilds/{guild.id}/channels
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions
 //  Reviewed                2018-08-17
-//  Comment                 Only channels to be modified are required, with the minimum being a swap
-//                          between at least two channels.
+//  Comment                 Only Channels to be modified are required, with the minimum being a swap
+//                          between at least two Channels.
 func (c *Client) UpdateGuildChannelPositions(ctx context.Context, guildID Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) (err error) {
 	var reason string
 	for i := range params {
@@ -1255,7 +1193,6 @@ func (c *Client) UpdateGuildChannelPositions(ctx context.Context, guildID Snowfl
 		Reason:      reason,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
-	// TODO: update ordering of guild channels in cache
 
 	_, err = r.Execute()
 	return err
@@ -1312,53 +1249,9 @@ func (c *Client) UpdateGuildRolePositions(ctx context.Context, guildID Snowflake
 		tmp := make([]*Role, 0)
 		return &tmp
 	}
-	// TODO: update ordering of guild roles in cache
 
 	return getRoles(r.Execute)
 }
-
-// UpdateGuildRolesPos "ensures" you have all the roles required,
-//func (c *Client) UpdateGuildRolesPos(ctx context.Context, guildID Snowflake, rs []*Role, flags ...Flag) (updated []*Role, err error) {
-//	var current []*Role
-//	if current, err = c.GetGuildRoles(guildID, flags...); err != nil {
-//		return nil, err
-//	}
-//	SortRoles(current)
-//
-//	// add the changes / additions
-//	rsOld := rs
-//	for i := range current {
-//		var exist bool
-//		for j := range rs {
-//			if current[i].ID == rs[j].ID {
-//				exist = true
-//				_ = rs[j].CopyOverTo(current[i])
-//				break
-//			}
-//		}
-//		if exist {
-//			rs[i] = rs[len(rs)-1]
-//			rs[len(rs)-1] = nil
-//			rs = rs[:len(rs)-1]
-//		}
-//	}
-//	current = append(current, rs...)
-//	SortRoles(current)
-//
-//	// TODO: verify order
-//	for i := range rsOld {
-//
-//	}
-//
-//	params := make([]UpdateGuildRolePositionsParams, 0, len(current))
-//	for i := range current {
-//		params = append(params, UpdateGuildRolePositionsParams{
-//			ID:       current[i].ID,
-//			Position: current[i].Position,
-//		})
-//	}
-//	return c.UpdateGuildRolePositions(guildID, params, flags...)
-//}
 
 // GetMember [REST] Returns a guild member object for the specified user.
 //  Method                  GET
@@ -1366,13 +1259,15 @@ func (c *Client) UpdateGuildRolePositions(ctx context.Context, guildID Snowflake
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-member
 //  Reviewed                2018-08-17
 //  Comment                 -
-func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (ret *Member, err error) {
+func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (member *Member, err error) {
+	if member, _ = c.cache.GetMember(guildID, userID); member != nil {
+		return member, nil
+	}
+
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildMember(guildID, userID),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = GuildMembersCache
-	r.ID = userID
 	r.factory = func() interface{} {
 		return &Member{
 			GuildID: guildID,
@@ -1380,7 +1275,12 @@ func (c *Client) GetMember(ctx context.Context, guildID, userID Snowflake, flags
 		}
 	}
 
-	return getMember(r.Execute)
+	member, err = getMember(r.Execute)
+	if err != nil {
+		return
+	}
+	member.GuildID = guildID
+	return
 }
 
 type getGuildMembersParams struct {
@@ -1418,10 +1318,6 @@ func (c *Client) getGuildMembers(ctx context.Context, guildID Snowflake, params 
 		Endpoint: endpoint.GuildMembers(guildID) + params.URLQueryString(),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = GuildMembersCache
-	r.checkCache = func() (v interface{}, err error) {
-		return c.cache.GetGuildMembersAfter(guildID, params.After, params.Limit)
-	}
 	r.factory = func() interface{} {
 		tmp := make([]*Member, 0)
 		return &tmp
@@ -1511,7 +1407,7 @@ type AddGuildMemberParams struct {
 }
 
 // AddGuildMember [REST] Adds a user to the guild, provided you have a valid oauth2 access token for the user with
-// the guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
+// the Guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
 // already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.
 //  Method                  PUT
@@ -1566,7 +1462,7 @@ func (c *Client) AddGuildMember(ctx context.Context, guildID, userID Snowflake, 
 //  Endpoint                /guilds/{guild.id}/members/{user.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-member
 //  Reviewed                2018-08-17
-//  Comment                 All parameters to this endpoint. are optional. When moving members to channels,
+//  Comment                 All parameters to this endpoint. are optional. When moving members to Channels,
 //                          the API user must have permissions to both connect to the channel and have the
 //                          MOVE_MEMBERS permission.
 func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (builder *updateGuildMemberBuilder) {
@@ -1578,7 +1474,7 @@ func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflak
 		}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildMember(guildID, userID),
@@ -1653,7 +1549,7 @@ func (c *Client) KickMember(ctx context.Context, guildID, userID Snowflake, reas
 	return
 }
 
-// GetGuildBans [REST] Returns a list of ban objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
+// GetGuildBans [REST] Returns a list of ban objects for the Users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/bans
 //  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-bans
@@ -1768,7 +1664,7 @@ type pruneMembersParams struct {
 	// Days number of days to count prune for (1 or more)
 	Days int `urlparam:"days"`
 
-	// ComputePruneCount whether 'pruned' is returned, discouraged for large guilds
+	// ComputePruneCount whether 'pruned' is returned, discouraged for large Guilds
 	ComputePruneCount bool `urlparam:"compute_prune_count"`
 }
 
@@ -2075,7 +1971,7 @@ func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags 
 		return &GuildEmbed{}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmbed(guildID),
@@ -2085,7 +1981,7 @@ func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags 
 	return builder
 }
 
-// GetGuildVanityURL [REST] Returns a partial invite object for guilds with that feature enabled.
+// GetGuildVanityURL [REST] Returns a partial invite object for Guilds with that feature enabled.
 // Requires the 'MANAGE_GUILD' permission.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/vanity-url

@@ -3,8 +3,8 @@
 package disgord
 
 import (
-	"encoding/json"
 	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -154,10 +154,10 @@ func TestClient_Once(t *testing.T) {
 
 	dispatcher := c.dispatcher
 	input := make(chan *gateway.Event)
-	go demultiplexer(dispatcher, input, nil)
+	go c.demultiplexer(dispatcher, input)
 
 	trigger := func() {
-		input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+		input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"testing"}`)}
 	}
 
 	base := dispatcher.nrOfAliveHandlers()
@@ -204,12 +204,13 @@ func TestClient_On(t *testing.T) {
 	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
+		Cache:        &CacheNop{},
 	})
 	defer close(c.dispatcher.shutdown)
 
 	dispatcher := c.dispatcher
 	input := make(chan *gateway.Event)
-	go demultiplexer(dispatcher, input, nil)
+	go c.demultiplexer(dispatcher, input)
 
 	base := dispatcher.nrOfAliveHandlers()
 	if dispatcher.nrOfAliveHandlers() > 0+base {
@@ -236,11 +237,12 @@ func TestClient_On_Middleware(t *testing.T) {
 	c := New(Config{
 		BotToken:     "testing",
 		DisableCache: true,
+		Cache:        &CacheNop{},
 	})
 	defer close(c.dispatcher.shutdown)
 	dispatcher := c.dispatcher
 	input := make(chan *gateway.Event)
-	go demultiplexer(dispatcher, input, nil)
+	go c.demultiplexer(dispatcher, input)
 
 	const prefix = "this cool prefix"
 	var mdlwHasBotPrefix Middleware = func(evt interface{}) interface{} {
@@ -273,7 +275,7 @@ func TestClient_On_Middleware(t *testing.T) {
 	wg.Add(2)
 
 	input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"` + prefix + ` testing"}`)}
-	input <- &gateway.Event{Name: EvtReady}
+	input <- &gateway.Event{Name: EvtReady, Data: []byte(`{"content":"testing"}`)}
 	wg.Wait()
 }
 
@@ -335,10 +337,10 @@ func TestClient_System(t *testing.T) {
 			E string          `json:"t"`
 			D json.RawMessage `json:"d"`
 		}{}
-		err = json.Unmarshal(data, p)
-		if err != nil {
+		if err = json.Unmarshal(data, p); err != nil {
 			t.Fatal(err)
 		}
+		executeInternalUpdater(p)
 
 		// ignore non-event-type packets
 		if p.E == "" {
@@ -390,24 +392,24 @@ func TestInternalStateHandlers(t *testing.T) {
 	id := Snowflake(123)
 
 	if len(c.GetConnectedGuilds()) != 0 {
-		t.Errorf("expected no guilds to have been added yet. Got %d, wants %d", len(c.GetConnectedGuilds()), 0)
+		t.Errorf("expected no Guilds to have been added yet. Got %d, wants %d", len(c.GetConnectedGuilds()), 0)
 	}
 
-	c.handlerAddToConnectedGuilds(c, &GuildCreate{
+	c.handlers.saveGuildID(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
 	if len(c.GetConnectedGuilds()) != 1 {
 		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
-	c.handlerAddToConnectedGuilds(c, &GuildCreate{
+	c.handlers.saveGuildID(c, &GuildCreate{
 		Guild: NewPartialGuild(id),
 	})
 	if len(c.GetConnectedGuilds()) != 1 {
 		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
-	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
+	c.handlers.deleteGuildID(c, &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{
 			ID: 9999,
 		},
@@ -416,7 +418,7 @@ func TestInternalStateHandlers(t *testing.T) {
 		t.Errorf("Removing a unknown guild should not affect the internal state. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
-	c.handlerRemoveFromConnectedGuilds(c, &GuildDelete{
+	c.handlers.deleteGuildID(c, &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{
 			ID: id,
 		},

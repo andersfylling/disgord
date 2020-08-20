@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -322,65 +321,6 @@ func NewUser() *User {
 	return &User{}
 }
 
-func newUserJSON() *userJSON {
-	d := "-"
-	return &userJSON{
-		Avatar: &d,
-	}
-}
-
-type userJSON struct {
-	/*-*/ ID Snowflake `json:"id,omitempty"`
-	/*-*/ Username string `json:"username,omitempty"`
-	/*-*/ Discriminator Discriminator `json:"discriminator,omitempty"`
-	/*1*/ Email *string `json:"email"`
-	/*2*/ Avatar *string `json:"avatar"`
-	/*3*/ Token *string `json:"token"`
-	/*4*/ Verified *bool `json:"verified"`
-	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
-	/*6*/ Bot *bool `json:"bot"`
-	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
-	/*8*/ Locale *string `json:"locale,omitempty"`
-	/*9*/ Flags *UserFlag `json:"flags,omitempty"`
-	/*10*/ PublicFlags *UserFlag `json:"public_flags,omitempty"`
-}
-
-func (u *userJSON) extractMap() uint16 {
-	var overwritten uint16
-	if u.Email != nil {
-		overwritten |= userOEmail
-	}
-	if u.Avatar == nil || *u.Avatar != "-" {
-		overwritten |= userOAvatar
-	}
-	if u.Token != nil {
-		overwritten |= userOToken
-	}
-	if u.Verified != nil {
-		overwritten |= userOVerified
-	}
-	if u.MFAEnabled != nil {
-		overwritten |= userOMFAEnabled
-	}
-	if u.Bot != nil {
-		overwritten |= userOBot
-	}
-	if u.PremiumType != nil {
-		overwritten |= userOPremiumType
-	}
-	if u.Locale != nil {
-		overwritten |= userOLocale
-	}
-	if u.Flags != nil {
-		overwritten |= userOFlags
-	}
-	if u.PublicFlags != nil {
-		overwritten |= userOPublicFlags
-	}
-
-	return overwritten
-}
-
 // User the Discord user object which is reused in most other data structures.
 type User struct {
 	ID            Snowflake     `json:"id,omitempty"`
@@ -396,9 +336,6 @@ type User struct {
 	Locale        string        `json:"locale,omitempty"`
 	Flags         UserFlag      `json:"flag,omitempty"`
 	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
-
-	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
-	overwritten uint16 // map. see number left of field in userJSON struct.
 }
 
 var _ Reseter = (*User)(nil)
@@ -411,7 +348,7 @@ func (u *User) Mention() string {
 	return "<@" + u.ID.String() + ">"
 }
 
-// AvatarURL returns a link to the users avatar with the given size.
+// AvatarURL returns a link to the Users avatar with the given size.
 func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
 	if size > 2048 || size < 16 || (size&(size-1)) > 0 {
 		return "", errors.New("image size can be any power of two between 16 and 2048")
@@ -436,57 +373,6 @@ func (u *User) Tag() string {
 // String formats the user to Anders#1234{1234567890}
 func (u *User) String() string {
 	return u.Tag() + "{" + u.ID.String() + "}"
-}
-
-// UnmarshalJSON see interface json.Unmarshaler
-func (u *User) UnmarshalJSON(data []byte) (err error) {
-	j := userJSON{}
-	err = json.Unmarshal(data, &j)
-	if err != nil {
-		return
-	}
-
-	changes := j.extractMap()
-	u.ID = j.ID
-	if j.Username != "" {
-		u.Username = j.Username
-	}
-	if j.Discriminator != 0 {
-		u.Discriminator = j.Discriminator
-	}
-	if (changes & userOEmail) > 0 {
-		u.Email = *j.Email
-	}
-	if (changes&userOAvatar) > 0 && j.Avatar != nil {
-		u.Avatar = *j.Avatar
-	}
-	if (changes & userOToken) > 0 {
-		u.Token = *j.Token
-	}
-	if (changes & userOVerified) > 0 {
-		u.Verified = *j.Verified
-	}
-	if (changes & userOMFAEnabled) > 0 {
-		u.MFAEnabled = *j.MFAEnabled
-	}
-	if (changes & userOBot) > 0 {
-		u.Bot = *j.Bot
-	}
-	if (changes & userOPremiumType) > 0 {
-		u.PremiumType = *j.PremiumType
-	}
-	if (changes & userOLocale) > 0 {
-		u.Locale = *j.Locale
-	}
-	if (changes & userOFlags) > 0 {
-		u.Flags = *j.Flags
-	}
-	if (changes & userOPublicFlags) > 0 {
-		u.PublicFlags = *j.PublicFlags
-	}
-	u.overwritten |= changes
-
-	return
 }
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
@@ -539,55 +425,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Locale = u.Locale
 	user.Flags = u.Flags
 	user.PublicFlags = u.PublicFlags
-	user.overwritten = u.overwritten
-
-	return
-}
-
-// copyOverToCache see interface at struct.go#CacheCopier
-func (u *User) copyOverToCache(other interface{}) (err error) {
-	user := other.(*User)
-
-	if !u.ID.IsZero() {
-		user.ID = u.ID
-	}
-	if u.Username != "" {
-		user.Username = u.Username
-	}
-	if u.Discriminator != 0 {
-		user.Discriminator = u.Discriminator
-	}
-	if (u.overwritten & userOEmail) > 0 {
-		user.Email = u.Email
-	}
-	if (u.overwritten & userOAvatar) > 0 {
-		user.Avatar = u.Avatar
-	}
-	if (u.overwritten & userOToken) > 0 {
-		user.Token = u.Token
-	}
-	if (u.overwritten & userOVerified) > 0 {
-		user.Verified = u.Verified
-	}
-	if (u.overwritten & userOMFAEnabled) > 0 {
-		user.MFAEnabled = u.MFAEnabled
-	}
-	if (u.overwritten & userOBot) > 0 {
-		user.Bot = u.Bot
-	}
-	if (u.overwritten & userOPremiumType) > 0 {
-		user.PremiumType = u.PremiumType
-	}
-	if (u.overwritten & userOLocale) > 0 {
-		user.Locale = u.Locale
-	}
-	if (u.overwritten & userOFlags) > 0 {
-		user.Flags = u.Flags
-	}
-	if (u.overwritten & userOPublicFlags) > 0 {
-		user.PublicFlags = u.PublicFlags
-	}
-	user.overwritten = u.overwritten
 
 	return
 }
@@ -717,8 +554,6 @@ func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User,
 		Endpoint: endpoint.UserMe(),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = UserCache
-	r.ID = c.myID
 	r.pool = c.pool.user
 	r.factory = userFactory
 
@@ -739,8 +574,6 @@ func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*Use
 		Endpoint: endpoint.User(id),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = UserCache
-	r.ID = id
 	r.pool = c.pool.user
 	r.factory = userFactory
 
@@ -757,7 +590,7 @@ func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder 
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.UserMe(),
@@ -769,14 +602,14 @@ func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder 
 }
 
 // GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
-// Requires the guilds OAuth2 scope.
+// Requires the Guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
-//  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
-//                          guilds a non-bot user can join. Therefore, pagination is not needed for
-//                          integrations that need to get a list of users' guilds.
+//  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
+//                          Guilds a non-bot user can join. Therefore, pagination is not needed for
+//                          integrations that need to get a list of Users' Guilds.
 func (c *Client) GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
@@ -811,12 +644,6 @@ func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (e
 		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
-	r.CacheRegistry = GuildCache
-	r.ID = id
-	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-		c.cache.DeleteGuild(id)
-		return nil
-	}
 
 	_, err = r.Execute()
 	return
@@ -831,15 +658,14 @@ func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (e
 //							https://github.com/discord/discord-api-docs/issues/184
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
-// Deprecated: Needs cache checking to get the actual list of channels
+// Deprecated: Needs cache checking to get the actual list of Channels
 func (c *Client) GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeChannels(),
 		Ctx:      ctx,
 	}, flags)
-	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
-		tmp := make([]*Channel, 0) // TODO: use channel pool to get enough channels
+		tmp := make([]*Channel, 0) // TODO: use channel pool to get enough Channels
 		return &tmp
 	}
 
@@ -873,7 +699,6 @@ func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...F
 		Body:        &BodyUserCreateDM{recipientID},
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
 		return &Channel{}
 	}
@@ -884,14 +709,14 @@ func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...F
 // CreateGroupDMParams required JSON params for func CreateGroupDM
 // https://discord.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
-	// AccessTokens access tokens of users that have granted your app the gdm.join scope
+	// AccessTokens access tokens of Users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
 
 	// map[UserID] = nickname
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
-// CreateGroupDM [REST] Create a new group DM channel with multiple users. Returns a DM channel object.
+// CreateGroupDM [REST] Create a new group DM channel with multiple Users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
@@ -907,7 +732,6 @@ func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams,
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
 		return &Channel{}
 	}
@@ -951,15 +775,6 @@ func (c *Client) GetUserConnections(ctx context.Context, flags ...Flag) (connect
 
 func userFactory() interface{} {
 	return &User{}
-}
-
-func newUserRESTBuilder(userID Snowflake) *getUserBuilder {
-	builder := &getUserBuilder{}
-	builder.r.cacheRegistry = UserCache
-	builder.r.cacheItemID = userID
-	builder.r.itemFactory = userFactory
-
-	return builder
 }
 
 // getUserBuilder ...

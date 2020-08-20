@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 )
 
 func TestStateMarshalling(t *testing.T) {
@@ -14,6 +14,6 @@ func TestStateMarshalling(t *testing.T) {
 	check(err, t)
 
 	state := VoiceState{}
-	err = util.Unmarshal(data, &state)
+	err = json.Unmarshal(data, &state)
 	check(err, t)
 }

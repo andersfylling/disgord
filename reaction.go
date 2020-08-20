@@ -185,14 +185,14 @@ func (c *Client) DeleteUserReaction(ctx context.Context, channelID, messageID, u
 
 // GetReactionURLParams https://discord.com/developers/docs/resources/channel#get-reactions-query-string-params
 type GetReactionURLParams struct {
-	Before Snowflake `urlparam:"before,omitempty"` // get users before this user Snowflake
-	After  Snowflake `urlparam:"after,omitempty"`  // get users after this user Snowflake
-	Limit  int       `urlparam:"limit,omitempty"`  // max number of users to return (1-100)
+	Before Snowflake `urlparam:"before,omitempty"` // get Users before this user Snowflake
+	After  Snowflake `urlparam:"after,omitempty"`  // get Users after this user Snowflake
+	Limit  int       `urlparam:"limit,omitempty"`  // max number of Users to return (1-100)
 }
 
 var _ URLQueryStringer = (*GetReactionURLParams)(nil)
 
-// GetReaction [REST] Get a list of users that reacted with this emoji. Returns an array of user objects on success.
+// GetReaction [REST] Get a list of Users that reacted with this emoji. Returns an array of user objects on success.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-reactions

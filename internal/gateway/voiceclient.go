@@ -11,8 +11,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/util"
-
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
@@ -35,12 +33,29 @@ type VoiceConfig struct {
 	// Endpoint for establishing voice connection
 	Endpoint string
 
+	Encoder struct {
+		Unmarshal func(data []byte, v interface{}) error
+		Marshal   func(v interface{}) (data []byte, err error)
+	}
+
 	// MessageQueueLimit number of outgoing messages that can be queued and sent correctly.
 	MessageQueueLimit uint
 
 	Logger logger.Logger
 
 	SystemShutdown chan interface{}
+}
+
+func (conf *VoiceConfig) validate() {
+	if conf.Encoder.Unmarshal == nil {
+		panic("unmarshaler not defined in voice config")
+	}
+	if conf.Encoder.Marshal == nil {
+		panic("marshaler not defined in voice config")
+	}
+	if conf.SystemShutdown == nil {
+		panic("missing conf.SystemShutdown channel")
+	}
 }
 
 type VoiceClient struct {
@@ -54,9 +69,7 @@ type VoiceClient struct {
 }
 
 func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
-	if conf.SystemShutdown == nil {
-		panic("missing conf.SystemShutdown channel")
-	}
+	conf.validate()
 
 	client = &VoiceClient{
 		conf: conf,
@@ -125,7 +138,7 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	readyPk := &VoiceReady{}
-	if err = util.Unmarshal(p.Data, readyPk); err != nil {
+	if err = c.conf.Encoder.Unmarshal(p.Data, readyPk); err != nil {
 		return err
 	}
 
@@ -141,7 +154,7 @@ func (c *VoiceClient) onResumed(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	resumedPk := &voicePacket{}
-	if err = util.Unmarshal(p.Data, resumedPk); err != nil {
+	if err = c.conf.Encoder.Unmarshal(p.Data, resumedPk); err != nil {
 		return err
 	}
 
@@ -177,7 +190,7 @@ func (c *VoiceClient) onHello(v interface{}) (err error) {
 		HeartbeatInterval float32 `json:"heartbeat_interval"`
 	}
 	helloPk := &packet{}
-	if err = util.Unmarshal(p.Data, helloPk); err != nil {
+	if err = c.conf.Encoder.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 	interval := uint(helloPk.HeartbeatInterval)
@@ -201,7 +214,7 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
 	sessionPk := &VoiceSessionDescription{}
-	if err = util.Unmarshal(p.Data, sessionPk); err != nil {
+	if err = c.conf.Encoder.Unmarshal(p.Data, sessionPk); err != nil {
 		return err
 	}
 

@@ -176,7 +176,6 @@ func (u *User) Reset() {
 	u.Locale = ""
 	u.Flags = 0
 	u.PublicFlags = 0
-	u.overwritten = 0
 }
 
 func (v *VoiceState) Reset() {

@@ -2,15 +2,14 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"net/http"
 	"net/url"
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 type ErrRest = httd.ErrREST
@@ -18,14 +17,6 @@ type ErrRest = httd.ErrREST
 // URLQueryStringer converts a struct of values to a valid URL query string
 type URLQueryStringer interface {
 	URLQueryString() string
-}
-
-func unmarshal(data []byte, v interface{}) error {
-	return util.Unmarshal(data, v)
-}
-
-func marshal(v interface{}) ([]byte, error) {
-	return util.Marshal(v)
 }
 
 // AvatarParamHolder is used when handling avatar related REST structs.
@@ -36,13 +27,6 @@ type AvatarParamHolder interface {
 	Empty() bool
 	SetAvatar(avatar string)
 	UseDefaultAvatar()
-}
-
-func newRESTBuilder(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) *RESTBuilder {
-	builder := &RESTBuilder{}
-	builder.setup(cache, client, config, middleware)
-
-	return builder
 }
 
 type urlQuery map[string]interface{}
@@ -70,17 +54,11 @@ func (p urlQuery) URLQueryString() string {
 	return ""
 }
 
-type restStepCheckCache func() (v interface{}, err error)
 type restStepDoRequest func() (resp *http.Response, body []byte, err error)
-type restStepUpdateCache func(registry cacheRegistry, id Snowflake, x interface{}) (err error)
 type rest struct {
-	c     *Client
-	flags Flag // merge flags
-
-	// caching
-	ID            Snowflake
-	CacheRegistry cacheRegistry
-	httpMethod    string
+	c          *Client
+	flags      Flag // merge flags
+	httpMethod string
 
 	// item creation
 	// pool is prioritized over factory
@@ -91,11 +69,7 @@ type rest struct {
 	expectsStatusCode int
 
 	// steps
-	checkCache     restStepCheckCache
-	doRequest      restStepDoRequest
-	preUpdateCache func(x interface{})
-	updateContent  func(x interface{})
-	updateCache    restStepUpdateCache
+	doRequest restStepDoRequest
 }
 
 func (r *rest) Put(x interface{}) {
@@ -119,33 +93,13 @@ func (r *rest) init() {
 		r.conf.PopulateMissing()
 	}
 	r.httpMethod = r.conf.Method.String()
-
-	r.checkCache = r.stepCheckCache
 	r.doRequest = r.stepDoRequest
-	r.updateContent = r.stepUpdateContent
-	r.updateCache = r.stepUpdateCache
 }
 
 func (r *rest) bindParams(params interface{}) {
 	if params == nil {
 		return
 	}
-}
-
-func (r *rest) stepCheckCache() (v interface{}, err error) {
-	if r.httpMethod != httd.MethodGet.String() {
-		return nil, nil
-	}
-
-	if r.CacheRegistry == NoCacheSpecified {
-		return nil, nil
-	}
-
-	if r.ID.IsZero() {
-		return nil, nil
-	}
-
-	return r.c.cache.Get(r.CacheRegistry, r.ID)
 }
 
 func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
@@ -156,23 +110,6 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 
 	resp, body, err = r.c.req.Do(r.conf.Ctx, r.conf)
 	return
-}
-
-// stepUpdateCache id is only used when deleting an object
-func (r *rest) stepUpdateCache(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
-	if r.CacheRegistry == NoCacheSpecified {
-		return nil
-	}
-
-	if x == nil {
-		return nil
-	}
-
-	if r.preUpdateCache != nil {
-		r.preUpdateCache(x)
-	}
-
-	return r.c.cache.Update(registry, x)
 }
 
 func (r *rest) processContent(body []byte) (v interface{}, err error) {
@@ -186,30 +123,16 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = util.Unmarshal(body, obj); err != nil {
+	if err = json.Unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
-	r.updateContent(obj)
+	executeInternalUpdater(obj)
 
 	return obj, nil
 }
 
-func (r *rest) stepUpdateContent(x interface{}) {
-	if x == nil {
-		return
-	}
-	executeInternalUpdater(x)
-	executeInternalClientUpdater(r.c, x)
-}
-
 func (r *rest) Execute() (v interface{}, err error) {
-	if !r.flags.Ignorecache() {
-		if v, err = r.checkCache(); err == nil && v != nil {
-			return v, err
-		}
-	}
-
 	var resp *http.Response
 	var body []byte
 	if resp, body, err = r.doRequest(); err != nil {
@@ -227,11 +150,6 @@ func (r *rest) Execute() (v interface{}, err error) {
 	var obj interface{}
 	if obj, err = r.processContent(body); err != nil {
 		return nil, err
-	}
-
-	// save it to cache / update the cache
-	if err = r.updateCache(r.CacheRegistry, r.ID, obj); err != nil {
-		r.c.log.Error(err)
 	}
 
 	if r.flags.Sort() {
@@ -258,11 +176,6 @@ type RESTBuilder struct {
 
 	itemFactory fRESTItemFactory
 
-	cache           *Cache
-	cacheRegistry   cacheRegistry
-	cacheMiddleware fRESTCacheMiddleware
-	cacheItemID     Snowflake
-
 	body              map[string]interface{}
 	urlParams         urlQuery
 	ignoreCache       bool
@@ -278,10 +191,9 @@ func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
 	b.prerequisites = append(b.prerequisites, errorMsg)
 }
 
-func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
+func (b *RESTBuilder) setup(client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
-	b.cache = cache
 	b.client = client
 	b.config = config
 	b.middleware = middleware
@@ -294,21 +206,12 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 	}
 }
 
-func (b *RESTBuilder) cacheLink(registry cacheRegistry, middleware fRESTCacheMiddleware) {
-	b.cacheRegistry = registry
-	b.cacheMiddleware = middleware
-}
-
 func (b *RESTBuilder) prepare() {
 	// update the config
 	if b.config.ContentType != "" {
 		b.config.Body = b.body
 	}
 	b.config.Endpoint += b.urlParams.URLQueryString()
-
-	if b.cache == nil {
-		b.IgnoreCache()
-	}
 
 	flags := mergeFlags(b.flags)
 	if flags.Ignorecache() {
@@ -321,16 +224,6 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 	for i := range b.prerequisites {
 		return nil, errors.New(b.prerequisites[i])
 	}
-
-	if !b.ignoreCache && b.config.Method == http.MethodGet && !b.cacheItemID.IsZero() {
-		// cacheLink lookup. return on cacheLink hit
-		v, err = b.cache.Get(b.cacheRegistry, b.cacheItemID)
-		if v != nil && err == nil {
-			return v, nil
-		}
-		// otherwise we perform the request
-	}
-
 	b.prepare()
 
 	var resp *http.Response
@@ -348,22 +241,10 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = util.Unmarshal(body, v); err != nil {
+		if err = json.Unmarshal(body, v); err != nil {
 			return nil, err
 		}
-
 		executeInternalUpdater(v)
-		// executeInternalClientUpdater(disgord.Client, v)
-
-		if b.cacheRegistry == NoCacheSpecified {
-			return v, err
-		}
-
-		if b.cacheMiddleware != nil {
-			b.cacheMiddleware(resp, v, err)
-		}
-
-		b.cache.Update(b.cacheRegistry, v)
 	}
 	if mergeFlags(b.flags).Sort() {
 		Sort(v, b.flags...)
@@ -438,14 +319,14 @@ func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err 
 		return
 	}
 
-	err = unmarshal(body, &gateway)
+	err = json.Unmarshal(body, &gateway)
 	return
 }
 
 // GetGatewayBot [REST] Returns an object based on the information in Get Gateway, plus additional metadata
 // that can help during the operation of large or sharded bots. Unlike the Get Gateway, this route should not
 // be cached for extended periods of time as the value is not guaranteed to be the same per-call, and
-// changes as the bot joins/leaves guilds.
+// changes as the bot joins/leaves Guilds.
 //  Method                  GET
 //  Endpoint                /gateway/bot
 //  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
@@ -461,7 +342,7 @@ func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot
 		return
 	}
 
-	err = unmarshal(body, &gateway)
+	err = json.Unmarshal(body, &gateway)
 	return
 }
 
