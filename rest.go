@@ -2,9 +2,9 @@ package disgord
 
 import (
 	"context"
-	"github.com/andersfylling/disgord/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"net/http"
 	"net/url"
 

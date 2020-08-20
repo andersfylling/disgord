@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 )
 
 //UnmarshalJSON see interface json.Unmarshaler

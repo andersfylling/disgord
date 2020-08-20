@@ -3,9 +3,9 @@ package disgord
 import (
 	"bytes"
 	"context"
-	"github.com/andersfylling/disgord/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"io"
 	"mime/multipart"
 	"net/http"

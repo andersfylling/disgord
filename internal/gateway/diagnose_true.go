@@ -4,8 +4,8 @@ package gateway
 
 import (
 	"bytes"
-	"github.com/andersfylling/disgord/json"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"os"
 	"strconv"

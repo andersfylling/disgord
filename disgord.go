@@ -186,8 +186,8 @@ package disgord
 //go:generate go run generate/intents/main.go
 
 import (
-	"github.com/andersfylling/disgord/json"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/util"
 

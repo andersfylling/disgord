@@ -3,8 +3,8 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/json"
 	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"

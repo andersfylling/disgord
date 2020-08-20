@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"compress/zlib"
 	"context"
-	"github.com/andersfylling/disgord/json"
 	"errors"
+	"github.com/andersfylling/disgord/json"
 	"io"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
