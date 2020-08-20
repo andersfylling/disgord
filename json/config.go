@@ -10,7 +10,7 @@ var (
 	NewEncoder    = json.NewEncoder
 )
 
-type RawMessage = []byte
+type RawMessage = json.RawMessage
 
 type Unmarshaler interface {
 	UnmarshalJSON([]byte) error

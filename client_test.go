@@ -337,8 +337,7 @@ func TestClient_System(t *testing.T) {
 			E string          `json:"t"`
 			D json.RawMessage `json:"d"`
 		}{}
-		err = json.Unmarshal(data, p)
-		if err != nil {
+		if err = json.Unmarshal(data, p); err != nil {
 			t.Fatal(err)
 		}
 		executeInternalUpdater(p)
