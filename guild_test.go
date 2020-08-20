@@ -6,25 +6,27 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestGuildMarshal(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
 	check(err, t)
 
 	v := Guild{}
-	err = util.Unmarshal(data, &v)
+	err = unmarshal(data, &v)
 	check(err, t)
 }
 
 func TestGuildMarshalUnavailable(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/guild/guildUnavailable1.json")
 	check(err, t)
 
 	v := Guild{}
-	err = util.Unmarshal(data, &v)
+	err = unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -48,11 +50,13 @@ func TestGuild_ChannelSorting(t *testing.T) {
 
 // ---------
 func TestGuildBanObject(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
 	check(err, t)
 
 	ban := Ban{}
-	err = util.Unmarshal(data, &ban)
+	err = unmarshal(data, &ban)
 	check(err, t)
 }
 
@@ -60,6 +64,8 @@ func TestGuildBanObject(t *testing.T) {
 func TestGuildEmbed(t *testing.T) {
 	res := []byte("{\"enabled\":true,\"channel_id\":\"41771983444115456\"}")
 	expects := []byte("{\"enabled\":true,\"channel_id\":41771983444115456}")
+
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
@@ -164,6 +170,8 @@ func TestGuild_DeleteChannel(t *testing.T) {
 }
 
 func TestPermissionBit(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	// test permission bit checking
 	testBits := PermissionSendMessages | PermissionReadMessages
 	if testBits.Contains(PermissionAdministrator) {
@@ -177,11 +185,11 @@ func TestPermissionBit(t *testing.T) {
 	}
 
 	// Test json marshal/unmarshal
-	b, err := json.Marshal(testBits)
+	b, err := defaultMarshaler(testBits)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = json.Unmarshal(b, &testBits)
+	err = unmarshal(b, &testBits)
 	if err != nil {
 		t.Fatal(err)
 	}

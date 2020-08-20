@@ -261,24 +261,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-func (c *Channel) copyOverToCache(other interface{}) (err error) {
-	return c.CopyOverTo(other)
-}
-
-//func (c *Channel) Clear() {
-//	// TODO
-//}
-
-// Fetch check if there are any updates to the channel values
-//func (c *Channel) Fetch(Client ChannelFetcher) (err error) {
-//	if c.ID.IsZero() {
-//		err = errors.New("missing channel ID")
-//		return
-//	}
-//
-//	Client.GetChannel(c.ID)
-//}
-
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
 func (c *Channel) SendMsgString(ctx context.Context, client MessageSender, content string) (msg *Message, err error) {
 	if c.ID.IsZero() {
@@ -368,7 +350,7 @@ func (c *Client) UpdateChannel(ctx context.Context, channelID Snowflake, flags .
 		return c.pool.channel.Get()
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Channel(channelID),

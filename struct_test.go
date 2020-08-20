@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"strconv"
 	"testing"
-
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func check(err error, t *testing.T) {
@@ -33,6 +31,8 @@ func TestError_InterfaceImplementations(t *testing.T) {
 // unmarshalling
 
 func BenchmarkUnmarshalReflection(b *testing.B) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/user/user1.json")
 	if err != nil {
 		b.Skip("missing file for benchmarking unmarshal")
@@ -134,7 +134,7 @@ func TestTime(t *testing.T) {
 			T Time `json:"time,omitempty"`
 		}{}
 
-		bBytes, err := util.Marshal(b)
+		bBytes, err := defaultMarshaler(b)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -146,6 +146,8 @@ func TestTime(t *testing.T) {
 }
 
 func TestDiscriminator(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	t.Run("String()", func(t *testing.T) {
 		var d Discriminator
 		d = Discriminator(0)
@@ -253,6 +255,8 @@ func TestDiscriminator(t *testing.T) {
 }
 
 func BenchmarkDiscriminator(b *testing.B) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	b.Run("comparison", func(b *testing.B) {
 		b.Run("string", func(b *testing.B) {
 			val := "0401"
@@ -355,7 +359,7 @@ func BenchmarkDiscriminator(b *testing.B) {
 			var i int
 			length := len(dataSets)
 			for n := 0; n < b.N; n++ {
-				_ = json.Unmarshal(dataSets[i], foo)
+				_ = unmarshal(dataSets[i], foo)
 				if i == length {
 					i = 0
 				}
@@ -366,7 +370,7 @@ func BenchmarkDiscriminator(b *testing.B) {
 			var i int
 			length := len(dataSets)
 			for n := 0; n < b.N; n++ {
-				_ = json.Unmarshal(dataSets[i], foo)
+				_ = unmarshal(dataSets[i], foo)
 				if i == length {
 					i = 0
 				}

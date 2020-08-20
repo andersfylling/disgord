@@ -201,6 +201,11 @@ type ShardManagerConfig struct {
 	ShutdownChan chan interface{}
 	conn         Conn
 
+	Encoder struct {
+		Unmarshal func(data []byte, v interface{}) error
+		Marshal   func(v interface{}) (data []byte, err error)
+	}
+
 	// ...
 	IgnoreEvents []string
 	Intents      Intent
@@ -250,6 +255,8 @@ func (s *shardMngr) initShards() error {
 		// synchronization
 		EventChan:    s.conf.EventChan,
 		connectQueue: s.connectQueue,
+
+		Encoder: s.conf.Encoder,
 
 		// user settings
 		BotToken:   s.conf.BotToken,

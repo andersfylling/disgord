@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 // defaults and string format's for Discord interaction
@@ -81,13 +78,18 @@ func (e *ErrREST) Error() string {
 	return fmt.Sprintf("%s\n%s\n%s => %+v", e.Msg, e.Suggestion, e.HashedEndpoint, e.Bucket)
 }
 
-// Client is the httd client for handling Discord requests
+// Client for handling Discord REST requests
 type Client struct {
 	url                          string // base url with API version
 	reqHeader                    http.Header
-	httpClient                   *http.Client // TODO: decouple to allow better unit testing of REST requests
+	httpClient                   *http.Client
 	cancelRequestWhenRateLimited bool
 	buckets                      RESTBucketManager
+
+	Encoder struct {
+		Unmarshal func(data []byte, v interface{}) error
+		Marshal   func(v interface{}) (data []byte, err error)
+	}
 }
 
 func (c *Client) BucketGrouping() (group map[string][]string) {
@@ -223,8 +225,21 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 }
 
 func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body []byte, err error) {
-	if err = r.init(); err != nil {
-		return nil, nil, err
+	r.PopulateMissing()
+	if r.Body != nil && r.bodyReader == nil {
+		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
+		case io.Reader:
+			r.bodyReader = b
+		default:
+			// If the type is unknown, possibly Marshal it as JSON
+			if r.ContentType != ContentTypeJSON {
+				return nil, nil, errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
+			}
+
+			if r.bodyReader, err = convertStructToIOReader(c.Encoder.Marshal, r.Body); err != nil {
+				return nil, nil, err
+			}
+		}
 	}
 
 	// create http request
@@ -285,7 +300,7 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 
 		// store the Discord error if it exists
 		if len(body) > 0 {
-			_ = util.Unmarshal(body, err)
+			_ = c.Encoder.Unmarshal(body, err)
 		}
 		return nil, nil, err
 	}
@@ -294,8 +309,8 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 }
 
 // helper functions
-func convertStructToIOReader(v interface{}) (io.Reader, error) {
-	jsonParamsBytes, err := json.Marshal(v)
+func convertStructToIOReader(marshal func(v interface{}) ([]byte, error), v interface{}) (io.Reader, error) {
+	jsonParamsBytes, err := marshal(v)
 	if err != nil {
 		return nil, err
 	}

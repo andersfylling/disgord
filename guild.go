@@ -117,16 +117,6 @@ func NewGuild() *Guild {
 	}
 }
 
-// NewGuildFromJSON ...
-func NewGuildFromJSON(data []byte) (guild *Guild) {
-	guild = NewGuild()
-	if err := unmarshal(data, guild); err != nil {
-		panic(err)
-	}
-
-	return guild
-}
-
 // NewPartialGuild ...
 func NewPartialGuild(ID Snowflake) (guild *Guild) {
 	guild = NewGuild()
@@ -242,53 +232,6 @@ func (g *Guild) updateInternals() {
 	}
 }
 
-func (g *Guild) copyOverToCache(other interface{}) (err error) {
-	guild := other.(*Guild)
-
-	//guild.ID = g.ID
-	if g.Name != "" {
-		guild.Name = g.Name
-	}
-	guild.Owner = g.Owner
-	// Use ownerID to check if you are the owner of the guild(!)
-	guild.OwnerID = g.OwnerID
-	guild.Permissions = g.Permissions
-	guild.Region = g.Region
-	guild.AfkTimeout = g.AfkTimeout
-	guild.EmbedEnabled = g.EmbedEnabled
-	guild.EmbedChannelID = g.EmbedChannelID
-	guild.VerificationLevel = g.VerificationLevel
-	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
-	guild.ExplicitContentFilter = g.ExplicitContentFilter
-	guild.Features = g.Features
-	guild.MFALevel = g.MFALevel
-	guild.WidgetEnabled = g.WidgetEnabled
-	guild.WidgetChannelID = g.WidgetChannelID
-	guild.SystemChannelID = g.SystemChannelID
-	guild.Large = g.Large
-	guild.Unavailable = g.Unavailable
-	guild.MemberCount = g.MemberCount
-	guild.Splash = g.Splash
-	guild.Icon = g.Icon
-
-	// pointers
-	if !g.ApplicationID.IsZero() {
-		guild.ApplicationID = g.ApplicationID
-	}
-	if !g.AfkChannelID.IsZero() {
-		guild.AfkChannelID = g.AfkChannelID
-	}
-	if !g.SystemChannelID.IsZero() {
-		guild.SystemChannelID = g.SystemChannelID
-	}
-	if g.JoinedAt != nil {
-		joined := *g.JoinedAt
-		guild.JoinedAt = &joined
-	}
-
-	return
-}
-
 // GetMemberWithHighestSnowflake finds the member with the highest snowflake value.
 func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	if len(g.Members) == 0 {
@@ -304,10 +247,6 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 
 	return highest
 }
-
-// func (g *Guild) UnmarshalJSON(data []byte) (err error) {
-// 	return json.Unmarshal(data, &g.guildJSON)
-// }
 
 // MarshalJSON see interface json.Marshaler
 // TODO: fix copying of mutex lock
@@ -1109,7 +1048,7 @@ func (c *Client) UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
 	}
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Guild(id),
@@ -1535,7 +1474,7 @@ func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflak
 		}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildMember(guildID, userID),
@@ -2032,7 +1971,7 @@ func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags 
 		return &GuildEmbed{}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmbed(guildID),

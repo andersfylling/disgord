@@ -157,7 +157,7 @@ func TestClient_Once(t *testing.T) {
 	go c.demultiplexer(dispatcher, input)
 
 	trigger := func() {
-		input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{}`)}
+		input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"testing"}`)}
 	}
 
 	base := dispatcher.nrOfAliveHandlers()
@@ -275,13 +275,15 @@ func TestClient_On_Middleware(t *testing.T) {
 	wg.Add(2)
 
 	input <- &gateway.Event{Name: EvtMessageCreate, Data: []byte(`{"content":"` + prefix + ` testing"}`)}
-	input <- &gateway.Event{Name: EvtReady, Data: []byte(`{}`)}
+	input <- &gateway.Event{Name: EvtReady, Data: []byte(`{"content":"testing"}`)}
 	wg.Wait()
 }
 
 // TestClient_System looks for crashes when the Disgord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
@@ -337,7 +339,7 @@ func TestClient_System(t *testing.T) {
 			E string          `json:"t"`
 			D json.RawMessage `json:"d"`
 		}{}
-		err = json.Unmarshal(data, p)
+		err = unmarshal(data, p)
 		if err != nil {
 			t.Fatal(err)
 		}

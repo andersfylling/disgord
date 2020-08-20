@@ -4,9 +4,9 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/util"
 	"net/http"
 	"strconv"
 	"sync"
@@ -77,12 +77,12 @@ func TestEvtIdentify(t *testing.T) {
 	i := &evtIdentity{}
 	var fields map[string]interface{}
 
-	raw, err := util.Marshal(i)
+	raw, err := json.Marshal(i)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if err := util.Unmarshal(raw, &fields); err != nil {
+	if err := json.Unmarshal(raw, &fields); err != nil {
 		t.Error(err)
 	}
 
@@ -139,6 +139,11 @@ func TestEvtClient_communication(t *testing.T) {
 			<-time.After(time.Duration(10) * time.Millisecond)
 			return cb()
 		},
+
+		Encoder: struct {
+			Unmarshal func(data []byte, v interface{}) error
+			Marshal   func(v interface{}) (data []byte, err error)
+		}{Unmarshal: json.Unmarshal, Marshal: json.Marshal},
 
 		// injected for testing
 		EventChan: eChan,

@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -57,6 +56,16 @@ func createClient(conf *Config) (c *Client, err error) {
 			},
 		}
 	}
+
+	// encoder
+	if conf.Encoder.Unmarshal == nil {
+		conf.Encoder.Unmarshal = defaultUnmarshaler
+	}
+	if conf.Encoder.Marshal == nil {
+		conf.Encoder.Marshal = defaultMarshaler
+	}
+	conf.Encoder.unmarshalUpdate = createUnmarshalUpdater(conf.Encoder.Unmarshal)
+
 	httdClient, err := httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.BotToken,
@@ -83,21 +92,6 @@ func createClient(conf *Config) (c *Client, err error) {
 
 	// ignore PRESENCES_REPLACE: https://github.com/discord/discord-api-docs/issues/683
 	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
-
-	// encoder
-	if conf.Encoder.Unmarshal == nil {
-		conf.Encoder.Unmarshal = json.Unmarshal
-	}
-	if conf.Encoder.Marshal == nil {
-		conf.Encoder.Marshal = json.Marshal
-	}
-	conf.Encoder.unmarshalUpdate = func(data []byte, v interface{}) error {
-		if err := conf.Encoder.Unmarshal(data, v); err != nil {
-			return err
-		}
-		executeInternalUpdater(v)
-		return nil
-	}
 
 	// caching
 	var cache Cache
@@ -431,6 +425,9 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		ProjectName:  c.config.ProjectName,
 		BotToken:     c.config.BotToken,
 	}
+	shardMngrConf.Encoder.Marshal = c.config.Encoder.Marshal
+	shardMngrConf.Encoder.Unmarshal = c.config.Encoder.Unmarshal
+
 	if c.config.Presence != nil {
 		// assumption: error is handled when creating a new client
 		status, _ := gateway.StringToStatusType(c.config.Presence.Status)

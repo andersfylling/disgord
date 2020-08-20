@@ -186,6 +186,7 @@ package disgord
 //go:generate go run generate/intents/main.go
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/andersfylling/disgord/internal/util"
@@ -200,6 +201,9 @@ const Version = constant.Version
 func LibraryInfo() string {
 	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
+
+var defaultUnmarshaler = json.Unmarshal
+var defaultMarshaler = json.Marshal
 
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------

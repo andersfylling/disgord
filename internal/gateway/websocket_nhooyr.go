@@ -4,13 +4,12 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 
 	"go.uber.org/atomic"
-
-	"github.com/andersfylling/disgord/internal/util"
 
 	"nhooyr.io/websocket"
 )
@@ -52,8 +51,14 @@ func (g *nhooyr) WriteJSON(v interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	err = util.JSONEncode(w, v)
-	return
+
+	// TODO: implement custom json handler - switch to new gateway project
+	err1 := json.NewEncoder(w).Encode(v)
+	err2 := w.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 func (g *nhooyr) Close() (err error) {

@@ -742,7 +742,7 @@ func (c *Client) UpdateMessage(ctx context.Context, chanID, msgID Snowflake, fla
 	builder.r.flags = flags
 	builder.r.addPrereq(chanID.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(msgID.IsZero(), "msgID must be set to edit the message")
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    "/channels/" + chanID.String() + "/messages/" + msgID.String(),

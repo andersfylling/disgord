@@ -284,7 +284,7 @@ func (c *Client) GetGuildAuditLogs(ctx context.Context, guildID Snowflake, flags
 	builder = &guildAuditLogsBuilder{}
 	builder.r.itemFactory = auditLogFactory
 	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(c.req, &httd.Request{
+	builder.r.IgnoreCache().setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Ctx:      ctx,
 		Method:   httd.MethodGet,
 		Endpoint: endpoint.GuildAuditLogs(guildID),

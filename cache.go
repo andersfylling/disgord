@@ -70,8 +70,8 @@ func (c *CacheLFU) ChannelCreate(data []byte) (*ChannelCreate, error) {
 		return &ChannelCreate{Channel: c}
 	}
 
-	var channel *Channel
-	if err := c.unmarshalUpdate(data, &channel); err != nil {
+	channel := &Channel{}
+	if err := c.unmarshalUpdate(data, channel); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,8 @@ func (c *CacheLFU) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 			return nil, err
 		}
 	} else {
-		if err := c.unmarshalUpdate(data, &channel); err != nil {
+		channel = &Channel{}
+		if err := c.unmarshalUpdate(data, channel); err != nil {
 			return nil, err
 		}
 		item := c.Channels.CreateCacheableItem(channel)
@@ -123,8 +124,8 @@ func (c *CacheLFU) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 }
 
 func (c *CacheLFU) ChannelDelete(data []byte) (*ChannelDelete, error) {
-	var cd *ChannelDelete
-	if err := c.unmarshalUpdate(data, &cd); err != nil {
+	cd := &ChannelDelete{}
+	if err := c.unmarshalUpdate(data, cd); err != nil {
 		return nil, err
 	}
 
@@ -138,8 +139,8 @@ func (c *CacheLFU) ChannelDelete(data []byte) (*ChannelDelete, error) {
 func (c *CacheLFU) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) {
 	// assumption#1: not sent on deleted pins
 
-	var cpu *ChannelPinsUpdate
-	if err := c.unmarshalUpdate(data, &cpu); err != nil {
+	cpu := &ChannelPinsUpdate{}
+	if err := c.unmarshalUpdate(data, cpu); err != nil {
 		return nil, err
 	}
 
@@ -192,8 +193,8 @@ func (c *CacheLFU) UserUpdate(data []byte) (*UserUpdate, error) {
 }
 
 func (c *CacheLFU) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
-	var vsu *VoiceServerUpdate
-	if err := c.unmarshalUpdate(data, &vsu); err != nil {
+	vsu := &VoiceServerUpdate{}
+	if err := c.unmarshalUpdate(data, vsu); err != nil {
 		return nil, err
 	}
 
@@ -201,8 +202,8 @@ func (c *CacheLFU) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
 }
 
 func (c *CacheLFU) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
-	var gmr *GuildMemberRemove
-	if err := c.unmarshalUpdate(data, &gmr); err != nil {
+	gmr := &GuildMemberRemove{}
+	if err := c.unmarshalUpdate(data, gmr); err != nil {
 		return nil, err
 	}
 
@@ -225,8 +226,8 @@ func (c *CacheLFU) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
 }
 
 func (c *CacheLFU) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
-	var gmr *GuildMemberAdd
-	if err := c.unmarshalUpdate(data, &gmr); err != nil {
+	gmr := &GuildMemberAdd{}
+	if err := c.unmarshalUpdate(data, gmr); err != nil {
 		return nil, err
 	}
 
@@ -267,8 +268,8 @@ func (c *CacheLFU) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 }
 
 func (c *CacheLFU) GuildCreate(data []byte) (*GuildCreate, error) {
-	var guildEvt *GuildCreate
-	if err := c.unmarshalUpdate(data, &guildEvt); err != nil {
+	guildEvt := &GuildCreate{}
+	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
 		return nil, err
 	}
 
@@ -298,8 +299,8 @@ func (c *CacheLFU) GuildCreate(data []byte) (*GuildCreate, error) {
 }
 
 func (c *CacheLFU) GuildUpdate(data []byte) (*GuildUpdate, error) {
-	var guildEvt *GuildUpdate
-	if err := c.unmarshalUpdate(data, &guildEvt); err != nil {
+	guildEvt := &GuildUpdate{}
+	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
 		return nil, err
 	}
 
@@ -322,8 +323,8 @@ func (c *CacheLFU) GuildUpdate(data []byte) (*GuildUpdate, error) {
 }
 
 func (c *CacheLFU) GuildDelete(data []byte) (*GuildDelete, error) {
-	var guildEvt *GuildDelete
-	if err := c.unmarshalUpdate(data, &guildEvt); err != nil {
+	guildEvt := &GuildDelete{}
+	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
 		return nil, err
 	}
 

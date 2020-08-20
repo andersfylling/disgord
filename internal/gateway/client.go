@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/util"
-
 	"github.com/andersfylling/disgord/internal/logger"
 
 	"go.uber.org/atomic"
@@ -88,6 +86,11 @@ func newClient(shardID uint, conf *config, connect connectSignature) (c *client,
 
 type config struct {
 	HTTPClient *http.Client
+
+	Encoder struct {
+		Unmarshal func(data []byte, v interface{}) error
+		Marshal   func(v interface{}) (data []byte, err error)
+	}
 
 	// for testing only
 	conn Conn
@@ -548,7 +551,7 @@ func (c *client) receiver(ctx context.Context) {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		if err = util.Unmarshal(packet, evt); err != nil {
+		if err = c.conf.Encoder.Unmarshal(packet, evt); err != nil {
 			c.log.Error(c.getLogPrefix(), err, "SKIPPED ERRONEOUS PACKET CONTENT:", string(packet))
 			c.poolDiscordPkt.Put(evt)
 

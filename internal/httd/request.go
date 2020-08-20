@@ -2,7 +2,6 @@ package httd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -58,27 +57,6 @@ func (r *Request) PopulateMissing() {
 	// }
 
 	r.hashedEndpoint = r.HashEndpoint()
-}
-
-func (r *Request) init() (err error) {
-	r.PopulateMissing()
-	if r.Body != nil && r.bodyReader == nil {
-		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
-		case io.Reader:
-			r.bodyReader = b
-		default:
-			// If the type is unknown, possibly Marshal it as JSON
-			if r.ContentType != ContentTypeJSON {
-				return errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
-			}
-
-			if r.bodyReader, err = convertStructToIOReader(r.Body); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func (r *Request) HashEndpoint() string {

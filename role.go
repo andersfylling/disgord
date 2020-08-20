@@ -179,7 +179,7 @@ func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake,
 		return &Role{}
 	}
 	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(c.req, &httd.Request{
+	builder.r.IgnoreCache().setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),

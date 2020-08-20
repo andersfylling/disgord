@@ -10,7 +10,6 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 type ErrRest = httd.ErrREST
@@ -18,14 +17,6 @@ type ErrRest = httd.ErrREST
 // URLQueryStringer converts a struct of values to a valid URL query string
 type URLQueryStringer interface {
 	URLQueryString() string
-}
-
-func unmarshal(data []byte, v interface{}) error {
-	return util.Unmarshal(data, v)
-}
-
-func marshal(v interface{}) ([]byte, error) {
-	return util.Marshal(v)
 }
 
 // AvatarParamHolder is used when handling avatar related REST structs.
@@ -36,13 +27,6 @@ type AvatarParamHolder interface {
 	Empty() bool
 	SetAvatar(avatar string)
 	UseDefaultAvatar()
-}
-
-func newRESTBuilder(client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) *RESTBuilder {
-	builder := &RESTBuilder{}
-	builder.setup(client, config, middleware)
-
-	return builder
 }
 
 type urlQuery map[string]interface{}
@@ -76,6 +60,8 @@ type rest struct {
 	flags      Flag // merge flags
 	httpMethod string
 
+	unmarshal UnmarshalUpdater
+
 	// item creation
 	// pool is prioritized over factory
 	pool    Pool
@@ -85,8 +71,7 @@ type rest struct {
 	expectsStatusCode int
 
 	// steps
-	doRequest     restStepDoRequest
-	updateContent func(x interface{})
+	doRequest restStepDoRequest
 }
 
 func (r *rest) Put(x interface{}) {
@@ -110,9 +95,7 @@ func (r *rest) init() {
 		r.conf.PopulateMissing()
 	}
 	r.httpMethod = r.conf.Method.String()
-
 	r.doRequest = r.stepDoRequest
-	r.updateContent = r.stepUpdateContent
 }
 
 func (r *rest) bindParams(params interface{}) {
@@ -142,21 +125,12 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = util.Unmarshal(body, obj); err != nil {
+	if err = r.unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
-	r.updateContent(obj)
 
 	return obj, nil
-}
-
-func (r *rest) stepUpdateContent(x interface{}) {
-	if x == nil {
-		return
-	}
-	executeInternalUpdater(x)
-	executeInternalClientUpdater(r.c, x)
 }
 
 func (r *rest) Execute() (v interface{}, err error) {
@@ -203,6 +177,8 @@ type RESTBuilder struct {
 
 	itemFactory fRESTItemFactory
 
+	unmarshal UnmarshalUpdater
+
 	body              map[string]interface{}
 	urlParams         urlQuery
 	ignoreCache       bool
@@ -218,12 +194,13 @@ func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
 	b.prerequisites = append(b.prerequisites, errorMsg)
 }
 
-func (b *RESTBuilder) setup(client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
+func (b *RESTBuilder) setup(client httd.Requester, unmarshal UnmarshalUpdater, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
 	b.client = client
 	b.config = config
 	b.middleware = middleware
+	b.unmarshal = unmarshal
 
 	if b.config == nil {
 		b.config = &httd.Request{
@@ -268,12 +245,9 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = util.Unmarshal(body, v); err != nil {
+		if err = b.unmarshal(body, v); err != nil {
 			return nil, err
 		}
-
-		executeInternalUpdater(v)
-		// executeInternalClientUpdater(disgord.Client, v)
 	}
 	if mergeFlags(b.flags).Sort() {
 		Sort(v, b.flags...)
@@ -348,7 +322,7 @@ func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err 
 		return
 	}
 
-	err = unmarshal(body, &gateway)
+	err = c.config.Encoder.unmarshalUpdate(body, &gateway)
 	return
 }
 
@@ -371,7 +345,7 @@ func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot
 		return
 	}
 
-	err = unmarshal(body, &gateway)
+	err = c.config.Encoder.unmarshalUpdate(body, &gateway)
 	return
 }
 

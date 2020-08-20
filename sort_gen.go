@@ -345,8 +345,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateCurrentUserBuilder:
 		s = *t
-	case *[]*userJSON:
-		s = *t
 	case *[]*VoiceRegion:
 		s = *t
 	case *[]*VoiceState:
@@ -516,12 +514,6 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*UserConnection:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*userJSON:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {

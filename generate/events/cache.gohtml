@@ -96,7 +96,8 @@ func (c *CacheNop) RegisterUnmarshaler(unmarshaler UnmarshalUpdater) {
 {{- range .}}
 {{- if .IsDiscordEvent }}
 func (c *CacheNop) {{.}}(data []byte) (evt *{{.}}, err error) {
-    err = c.unmarshalUpdate(data, &evt)
+    evt = &{{.}}{}
+    err = c.unmarshalUpdate(data, evt)
     return evt, err
 }
 {{- end}}

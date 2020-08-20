@@ -21,18 +21,34 @@ type Copier interface {
 	CopyOverTo(other interface{}) error
 }
 
+// DeepCopier holds the DeepCopy method which creates and returns a deep copy of
+// any struct.
+type DeepCopier interface {
+	DeepCopy() interface{}
+}
+
+type Unmarshal func(data []byte, v interface{}) error
+
 // UnmarshalUpdater unmarshal the data into the object and calls
 // internal updater if possible
-type UnmarshalUpdater func(data []byte, v interface{}) error
+type UnmarshalUpdater = Unmarshal
 
-// cacheCopier is similar to Copier interface. Except that it only copies over fields which has a value, unlike Copier
-// that creates an exact copy of everything. This will also ignore arrays that can be simplified to a snowflake array.
-// An example of said simplification is Guild.Channels, as there will already exist a channel cacheLink.
-//
-// It is important to know that this should only be called by the cacheLink. The cacheLink must also make sure that the type
-// given as an argument for `other` is correct. Failure to do so results in a panic.
-type cacheCopier interface {
-	copyOverToCache(other interface{}) error
+type customUnmarshaler interface {
+	customUnmarshal(unmarshal Unmarshal, data []byte) error
+}
+
+func createUnmarshalUpdater(baseUnmarshaler Unmarshal) Unmarshal {
+	return func(data []byte, v interface{}) error {
+		if custom, ok := v.(customUnmarshaler); ok {
+			if err := custom.customUnmarshal(baseUnmarshaler, data); err != nil {
+				return err
+			}
+		} else if err := baseUnmarshaler(data, v); err != nil {
+			return err
+		}
+		executeInternalUpdater(v)
+		return nil
+	}
 }
 
 func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
@@ -50,32 +66,10 @@ func (e *ErrorUnsupportedType) Error() string {
 	return e.info
 }
 
-// DiscordUpdater holds the Update method for updating any given Discord struct
-// (fetch the latest content). If you only want to keep up to date with the
-// cacheLink use the UpdateFromCache method.
-// TODO: change param type for UpdateFromCache once caching is implemented
-//type DiscordUpdater interface {
-//	Update(session Session)
-//	UpdateFromCache(session Session)
-//}
-
-// DiscordSaver holds the method saveToDiscord that discord structs must implement
-// in order to use Client.SaveToDiscord for saving and update content.
-// WARNING! this was removed as it was too ambiguous.
-//type discordSaver interface {
-//	saveToDiscord(session Session, flags ...Flag) error
-//}
-
 // DiscordDeleter holds the DeleteFromDiscord method which deletes a given
 // object from the Discord servers.
 type discordDeleter interface {
 	deleteFromDiscord(ctx context.Context, session Session, flags ...Flag) error
-}
-
-// DeepCopier holds the DeepCopy method which creates and returns a deep copy of
-// any struct.
-type DeepCopier interface {
-	DeepCopy() interface{}
 }
 
 // hasher creates a hash for comparing objects. This excludes the identifier and object type as those are expected
@@ -142,10 +136,10 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ts + `"`), nil
 }
 
-var _ json.Unmarshaler = (*Time)(nil)
+var _ customUnmarshaler = (*Time)(nil)
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (t *Time) UnmarshalJSON(data []byte) error {
+func (t *Time) customUnmarshal(unmarshal Unmarshal, data []byte) error {
 	var ts time.Time
 
 	// Don't try to unmarshal empty strings.
@@ -315,13 +309,17 @@ func (d Discriminator) NotSet() bool {
 }
 
 // UnmarshalJSON see interface json.Unmarshaler
-func (d *Discriminator) UnmarshalJSON(data []byte) (err error) {
+func (d *Discriminator) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+	return d.UnmarshalJSON(data)
+}
+
+func (d *Discriminator) UnmarshalJSON(data []byte) error {
 	*d = 0
 	length := len(data) - 1
 	for i := 1; i < length; i++ {
 		*d = *d*10 + Discriminator(data[i]-'0')
 	}
-	return
+	return nil
 }
 
 // MarshalJSON see interface json.Marshaler

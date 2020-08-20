@@ -11,15 +11,16 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/auditlog/auditlog1.json")
 	check(err, t)
 
 	v := AuditLog{}
-	err = util.Unmarshal(data, &v)
+	err = unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -84,7 +85,7 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 
 func TestAuditLogParams(t *testing.T) {
 	params := &guildAuditLogsBuilder{}
-	params.r.setup(nil, nil, nil)
+	params.r.setup(nil, nil, nil, nil)
 	var wants string
 
 	wants = ""
@@ -114,6 +115,7 @@ func TestAuditLogParams(t *testing.T) {
 }
 
 func TestGuildAuditLogs(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 	t.Run("configuration", func(t *testing.T) {
 		// successfull response
 		client := &reqMocker{
@@ -125,7 +127,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, unmarshal, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -154,7 +156,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, unmarshal, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -190,7 +192,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		}
 
 		builder := &guildAuditLogsBuilder{}
-		builder.r.IgnoreCache().setup(client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, unmarshal, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -216,7 +218,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
-		builder.r.IgnoreCache().setup(client, &httd.Request{
+		builder.r.IgnoreCache().setup(client, unmarshal, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
@@ -232,6 +234,7 @@ func TestGuildAuditLogs(t *testing.T) {
 }
 
 func TestAuditlog_Unmarshal(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	data := []byte(`{
       "target_id": "547614326257877003",
@@ -247,7 +250,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
       "action_type": 61
     }`)
 	var v2 *AuditLogEntry
-	if err := util.Unmarshal(data, &v2); err != nil {
+	if err := unmarshal(data, &v2); err != nil {
 		t.Error(err)
 	}
 
@@ -258,7 +261,7 @@ func TestAuditlog_Unmarshal(t *testing.T) {
 	}
 
 	var v *AuditLog
-	if err := util.Unmarshal(data, &v); err != nil {
+	if err := unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
 

@@ -188,143 +188,178 @@ func (c *CacheNop) RegisterUnmarshaler(unmarshaler UnmarshalUpdater) {
 	c.unmarshalUpdate = unmarshaler
 }
 func (c *CacheNop) ChannelCreate(data []byte) (evt *ChannelCreate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &ChannelCreate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) ChannelDelete(data []byte) (evt *ChannelDelete, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &ChannelDelete{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) ChannelPinsUpdate(data []byte) (evt *ChannelPinsUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &ChannelPinsUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) ChannelUpdate(data []byte) (evt *ChannelUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &ChannelUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildBanAdd(data []byte) (evt *GuildBanAdd, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildBanAdd{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildBanRemove(data []byte) (evt *GuildBanRemove, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildBanRemove{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildCreate(data []byte) (evt *GuildCreate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildCreate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildDelete(data []byte) (evt *GuildDelete, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildDelete{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildEmojisUpdate(data []byte) (evt *GuildEmojisUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildEmojisUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildIntegrationsUpdate(data []byte) (evt *GuildIntegrationsUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildIntegrationsUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildMemberAdd(data []byte) (evt *GuildMemberAdd, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildMemberAdd{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildMemberRemove(data []byte) (evt *GuildMemberRemove, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildMemberRemove{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildMemberUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildMembersChunk{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildRoleCreate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildRoleDelete{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildRoleUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) GuildUpdate(data []byte) (evt *GuildUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &GuildUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) InviteCreate(data []byte) (evt *InviteCreate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &InviteCreate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) InviteDelete(data []byte) (evt *InviteDelete, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &InviteDelete{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageCreate(data []byte) (evt *MessageCreate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageCreate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageDelete(data []byte) (evt *MessageDelete, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageDelete{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageDeleteBulk(data []byte) (evt *MessageDeleteBulk, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageDeleteBulk{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageReactionAdd(data []byte) (evt *MessageReactionAdd, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageReactionAdd{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageReactionRemove(data []byte) (evt *MessageReactionRemove, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageReactionRemove{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageReactionRemoveAll(data []byte) (evt *MessageReactionRemoveAll, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageReactionRemoveAll{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) MessageUpdate(data []byte) (evt *MessageUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &MessageUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) PresenceUpdate(data []byte) (evt *PresenceUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &PresenceUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) Ready(data []byte) (evt *Ready, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &Ready{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) Resumed(data []byte) (evt *Resumed, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &Resumed{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) TypingStart(data []byte) (evt *TypingStart, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &TypingStart{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) UserUpdate(data []byte) (evt *UserUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &UserUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) VoiceServerUpdate(data []byte) (evt *VoiceServerUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &VoiceServerUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) VoiceStateUpdate(data []byte) (evt *VoiceStateUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &VoiceStateUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 func (c *CacheNop) WebhooksUpdate(data []byte) (evt *WebhooksUpdate, err error) {
-	err = c.unmarshalUpdate(data, &evt)
+	evt = &WebhooksUpdate{}
+	err = c.unmarshalUpdate(data, evt)
 	return evt, err
 }
 

@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"github.com/andersfylling/disgord/internal/util"
 	"testing"
 )
 
@@ -20,9 +19,11 @@ func (p *permissionTestingSession) GetGuildRoles(_ context.Context, _ Snowflake,
 }
 
 func TestChannel_GetPermissions_Overwrite(t *testing.T) {
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data := []byte(`{"permission_overwrites": [{"allow": 2048, "deny": 0, "id": "1", "type": "member"}]}`)
 	var c Channel
-	if err := util.Unmarshal(data, &c); err != nil {
+	if err := unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
 	p, err := c.GetPermissions(context.TODO(), &permissionTestingSession{}, &Member{UserID: 1, Roles: []Snowflake{}})

@@ -19,6 +19,8 @@ func TestChannelCreate_UnmarshalJSON(t *testing.T) {
 	channel := &Channel{}
 	evt := &ChannelCreate{}
 
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/channel/channel_create.json")
 	check(err, t)
 
@@ -44,6 +46,8 @@ func TestChannelCreate_UnmarshalJSON(t *testing.T) {
 func TestChannelUpdate_UnmarshalJSON(t *testing.T) {
 	channel := &Channel{}
 	evt := &ChannelUpdate{}
+
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	data, err := ioutil.ReadFile("testdata/channel/update_topic.json")
 	check(err, t)
@@ -71,6 +75,8 @@ func TestChannelDelete_UnmarshalJSON(t *testing.T) {
 	channel := &Channel{}
 	evt := &ChannelDelete{}
 
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/channel/delete.json")
 	check(err, t)
 
@@ -96,6 +102,8 @@ func TestChannelDelete_UnmarshalJSON(t *testing.T) {
 func TestMessageCreate_UnmarshalJSON(t *testing.T) {
 	message := &Message{}
 	evt := &MessageCreate{}
+
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	data, err := ioutil.ReadFile("testdata/channel/message_create_guild_invite.json")
 	check(err, t)
@@ -123,6 +131,8 @@ func TestMessageUpdate_UnmarshalJSON(t *testing.T) {
 	message := &Message{}
 	evt := &MessageUpdate{}
 
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/channel/message_update.json")
 	check(err, t)
 
@@ -148,6 +158,8 @@ func TestMessageUpdate_UnmarshalJSON(t *testing.T) {
 func TestMessageDelete_UnmarshalJSON(t *testing.T) {
 	message := &Message{}
 	evt := &MessageDelete{}
+
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	data, err := ioutil.ReadFile("testdata/channel/message_delete.json")
 	check(err, t)
@@ -179,6 +191,8 @@ func TestGuildCreate_UnmarshalJSON(t *testing.T) {
 	guild := &Guild{}
 	evt := &GuildCreate{}
 
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/guild/create.json")
 	check(err, t)
 
@@ -205,6 +219,8 @@ func TestGuildUpdate_UnmarshalJSON(t *testing.T) {
 	guild := &Guild{}
 	evt := &GuildUpdate{}
 
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
+
 	data, err := ioutil.ReadFile("testdata/guild/update.json")
 	check(err, t)
 
@@ -230,6 +246,8 @@ func TestGuildUpdate_UnmarshalJSON(t *testing.T) {
 func TestGuildDelete_UnmarshalJSON(t *testing.T) {
 	guild := &Guild{}
 	evt := &GuildDelete{}
+
+	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
 
 	data, err := ioutil.ReadFile("testdata/guild/delete_by_kick.json")
 	check(err, t)

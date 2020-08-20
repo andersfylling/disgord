@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -322,65 +321,6 @@ func NewUser() *User {
 	return &User{}
 }
 
-func newUserJSON() *userJSON {
-	d := "-"
-	return &userJSON{
-		Avatar: &d,
-	}
-}
-
-type userJSON struct {
-	/*-*/ ID Snowflake `json:"id,omitempty"`
-	/*-*/ Username string `json:"username,omitempty"`
-	/*-*/ Discriminator Discriminator `json:"discriminator,omitempty"`
-	/*1*/ Email *string `json:"email"`
-	/*2*/ Avatar *string `json:"avatar"`
-	/*3*/ Token *string `json:"token"`
-	/*4*/ Verified *bool `json:"verified"`
-	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
-	/*6*/ Bot *bool `json:"bot"`
-	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
-	/*8*/ Locale *string `json:"locale,omitempty"`
-	/*9*/ Flags *UserFlag `json:"flags,omitempty"`
-	/*10*/ PublicFlags *UserFlag `json:"public_flags,omitempty"`
-}
-
-func (u *userJSON) extractMap() uint16 {
-	var overwritten uint16
-	if u.Email != nil {
-		overwritten |= userOEmail
-	}
-	if u.Avatar == nil || *u.Avatar != "-" {
-		overwritten |= userOAvatar
-	}
-	if u.Token != nil {
-		overwritten |= userOToken
-	}
-	if u.Verified != nil {
-		overwritten |= userOVerified
-	}
-	if u.MFAEnabled != nil {
-		overwritten |= userOMFAEnabled
-	}
-	if u.Bot != nil {
-		overwritten |= userOBot
-	}
-	if u.PremiumType != nil {
-		overwritten |= userOPremiumType
-	}
-	if u.Locale != nil {
-		overwritten |= userOLocale
-	}
-	if u.Flags != nil {
-		overwritten |= userOFlags
-	}
-	if u.PublicFlags != nil {
-		overwritten |= userOPublicFlags
-	}
-
-	return overwritten
-}
-
 // User the Discord user object which is reused in most other data structures.
 type User struct {
 	ID            Snowflake     `json:"id,omitempty"`
@@ -396,9 +336,6 @@ type User struct {
 	Locale        string        `json:"locale,omitempty"`
 	Flags         UserFlag      `json:"flag,omitempty"`
 	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
-
-	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
-	overwritten uint16 // map. see number left of field in userJSON struct.
 }
 
 var _ Reseter = (*User)(nil)
@@ -436,57 +373,6 @@ func (u *User) Tag() string {
 // String formats the user to Anders#1234{1234567890}
 func (u *User) String() string {
 	return u.Tag() + "{" + u.ID.String() + "}"
-}
-
-// UnmarshalJSON see interface json.Unmarshaler
-func (u *User) UnmarshalJSON(data []byte) (err error) {
-	j := userJSON{}
-	err = json.Unmarshal(data, &j)
-	if err != nil {
-		return
-	}
-
-	changes := j.extractMap()
-	u.ID = j.ID
-	if j.Username != "" {
-		u.Username = j.Username
-	}
-	if j.Discriminator != 0 {
-		u.Discriminator = j.Discriminator
-	}
-	if (changes & userOEmail) > 0 {
-		u.Email = *j.Email
-	}
-	if (changes&userOAvatar) > 0 && j.Avatar != nil {
-		u.Avatar = *j.Avatar
-	}
-	if (changes & userOToken) > 0 {
-		u.Token = *j.Token
-	}
-	if (changes & userOVerified) > 0 {
-		u.Verified = *j.Verified
-	}
-	if (changes & userOMFAEnabled) > 0 {
-		u.MFAEnabled = *j.MFAEnabled
-	}
-	if (changes & userOBot) > 0 {
-		u.Bot = *j.Bot
-	}
-	if (changes & userOPremiumType) > 0 {
-		u.PremiumType = *j.PremiumType
-	}
-	if (changes & userOLocale) > 0 {
-		u.Locale = *j.Locale
-	}
-	if (changes & userOFlags) > 0 {
-		u.Flags = *j.Flags
-	}
-	if (changes & userOPublicFlags) > 0 {
-		u.PublicFlags = *j.PublicFlags
-	}
-	u.overwritten |= changes
-
-	return
 }
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
@@ -539,55 +425,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.Locale = u.Locale
 	user.Flags = u.Flags
 	user.PublicFlags = u.PublicFlags
-	user.overwritten = u.overwritten
-
-	return
-}
-
-// copyOverToCache see interface at struct.go#CacheCopier
-func (u *User) copyOverToCache(other interface{}) (err error) {
-	user := other.(*User)
-
-	if !u.ID.IsZero() {
-		user.ID = u.ID
-	}
-	if u.Username != "" {
-		user.Username = u.Username
-	}
-	if u.Discriminator != 0 {
-		user.Discriminator = u.Discriminator
-	}
-	if (u.overwritten & userOEmail) > 0 {
-		user.Email = u.Email
-	}
-	if (u.overwritten & userOAvatar) > 0 {
-		user.Avatar = u.Avatar
-	}
-	if (u.overwritten & userOToken) > 0 {
-		user.Token = u.Token
-	}
-	if (u.overwritten & userOVerified) > 0 {
-		user.Verified = u.Verified
-	}
-	if (u.overwritten & userOMFAEnabled) > 0 {
-		user.MFAEnabled = u.MFAEnabled
-	}
-	if (u.overwritten & userOBot) > 0 {
-		user.Bot = u.Bot
-	}
-	if (u.overwritten & userOPremiumType) > 0 {
-		user.PremiumType = u.PremiumType
-	}
-	if (u.overwritten & userOLocale) > 0 {
-		user.Locale = u.Locale
-	}
-	if (u.overwritten & userOFlags) > 0 {
-		user.Flags = u.Flags
-	}
-	if (u.overwritten & userOPublicFlags) > 0 {
-		user.PublicFlags = u.PublicFlags
-	}
-	user.overwritten = u.overwritten
 
 	return
 }
@@ -753,7 +590,7 @@ func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder 
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
-	builder.r.setup(c.req, &httd.Request{
+	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.UserMe(),
