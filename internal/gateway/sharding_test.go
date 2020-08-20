@@ -4,7 +4,6 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -114,10 +113,6 @@ func TestRedistributeShardMessages(t *testing.T) {
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
 		Logger:       &logger.Empty{},
-		Encoder: struct {
-			Unmarshal func(data []byte, v interface{}) error
-			Marshal   func(v interface{}) (data []byte, err error)
-		}{Unmarshal: json.Unmarshal, Marshal: json.Marshal},
 	}
 	defer func() {
 		close(config.ShutdownChan)
@@ -197,10 +192,6 @@ func TestIdentifyRateLimiting(t *testing.T) {
 		ShutdownChan: make(chan interface{}),
 		EventChan:    make(chan *Event),
 		Logger:       &logger.Empty{},
-		Encoder: struct {
-			Unmarshal func(data []byte, v interface{}) error
-			Marshal   func(v interface{}) (data []byte, err error)
-		}{Unmarshal: json.Unmarshal, Marshal: json.Marshal},
 	}
 	defer func() {
 		close(config.EventChan)

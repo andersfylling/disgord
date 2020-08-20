@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/json"
 )
 
 //////////////////////////////////////////////////////
@@ -61,7 +62,8 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 		// }
 
 		if evt.Name == EvtUserUpdate {
-			_ = c.config.Encoder.unmarshalUpdate(evt.Data, c.currentUser)
+			_ = json.Unmarshal(evt.Data, c.currentUser)
+			executeInternalUpdater(c.currentUser)
 		}
 
 		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)

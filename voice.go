@@ -2,9 +2,10 @@ package disgord
 
 import (
 	"context"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 )
 
 // VoiceState Voice State structure
@@ -61,7 +62,7 @@ func (v *VoiceState) DeepCopy() (copy interface{}) {
 // UnmarshalJSON is used to unmarshal Discord's JSON.
 func (v *VoiceState) UnmarshalJSON(data []byte) error {
 	type s2 VoiceState
-	if err := util.Unmarshal(data, (*s2)(v)); err != nil {
+	if err := json.Unmarshal(data, (*s2)(v)); err != nil {
 		return err
 	}
 	if v.Member != nil {

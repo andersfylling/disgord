@@ -60,8 +60,6 @@ type rest struct {
 	flags      Flag // merge flags
 	httpMethod string
 
-	unmarshal UnmarshalUpdater
-
 	// item creation
 	// pool is prioritized over factory
 	pool    Pool
@@ -125,10 +123,11 @@ func (r *rest) processContent(body []byte) (v interface{}, err error) {
 	}
 
 	obj := r.Get()
-	if err = r.unmarshal(body, obj); err != nil {
+	if err = json.Unmarshal(body, obj); err != nil {
 		r.Put(obj)
 		return nil, err
 	}
+	executeInternalUpdater(obj)
 
 	return obj, nil
 }
@@ -177,8 +176,6 @@ type RESTBuilder struct {
 
 	itemFactory fRESTItemFactory
 
-	unmarshal UnmarshalUpdater
-
 	body              map[string]interface{}
 	urlParams         urlQuery
 	ignoreCache       bool
@@ -194,13 +191,12 @@ func (b *RESTBuilder) addPrereq(condition bool, errorMsg string) {
 	b.prerequisites = append(b.prerequisites, errorMsg)
 }
 
-func (b *RESTBuilder) setup(client httd.Requester, unmarshal UnmarshalUpdater, config *httd.Request, middleware fRESTRequestMiddleware) {
+func (b *RESTBuilder) setup(client httd.Requester, config *httd.Request, middleware fRESTRequestMiddleware) {
 	b.body = make(map[string]interface{})
 	b.urlParams = make(map[string]interface{})
 	b.client = client
 	b.config = config
 	b.middleware = middleware
-	b.unmarshal = unmarshal
 
 	if b.config == nil {
 		b.config = &httd.Request{
@@ -245,9 +241,10 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	if len(body) > 1 && b.itemFactory != nil {
 		v = b.itemFactory()
-		if err = b.unmarshal(body, v); err != nil {
+		if err = json.Unmarshal(body, v); err != nil {
 			return nil, err
 		}
+		executeInternalUpdater(v)
 	}
 	if mergeFlags(b.flags).Sort() {
 		Sort(v, b.flags...)
@@ -322,7 +319,7 @@ func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err 
 		return
 	}
 
-	err = c.config.Encoder.unmarshalUpdate(body, &gateway)
+	err = json.Unmarshal(body, &gateway)
 	return
 }
 
@@ -345,7 +342,7 @@ func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot
 		return
 	}
 
-	err = c.config.Encoder.unmarshalUpdate(body, &gateway)
+	err = json.Unmarshal(body, &gateway)
 	return
 }
 

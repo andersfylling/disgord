@@ -249,6 +249,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*InviteMetadata:
 		s = *t
+	case *[]*AllowedMentions:
+		s = *t
 	case *[]*CreateMessageFileParams:
 		s = *t
 	case *[]*CreateMessageParams:

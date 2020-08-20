@@ -3,8 +3,8 @@ package disgord
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
+	"github.com/andersfylling/disgord/json"
 	"strconv"
 	"time"
 )
@@ -25,30 +25,6 @@ type Copier interface {
 // any struct.
 type DeepCopier interface {
 	DeepCopy() interface{}
-}
-
-type Unmarshal func(data []byte, v interface{}) error
-
-// UnmarshalUpdater unmarshal the data into the object and calls
-// internal updater if possible
-type UnmarshalUpdater = Unmarshal
-
-type customUnmarshaler interface {
-	customUnmarshal(unmarshal Unmarshal, data []byte) error
-}
-
-func createUnmarshalUpdater(baseUnmarshaler Unmarshal) Unmarshal {
-	return func(data []byte, v interface{}) error {
-		if custom, ok := v.(customUnmarshaler); ok {
-			if err := custom.customUnmarshal(baseUnmarshaler, data); err != nil {
-				return err
-			}
-		} else if err := baseUnmarshaler(data, v); err != nil {
-			return err
-		}
-		executeInternalUpdater(v)
-		return nil
-	}
 }
 
 func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
@@ -123,6 +99,7 @@ type Time struct {
 }
 
 var _ json.Marshaler = (*Time)(nil)
+var _ json.Unmarshaler = (*Time)(nil)
 
 // MarshalJSON implements json.Marshaler.
 // error: https://stackoverflow.com/questions/28464711/go-strange-json-hyphen-unmarshall-error
@@ -136,10 +113,8 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ts + `"`), nil
 }
 
-var _ customUnmarshaler = (*Time)(nil)
-
 // UnmarshalJSON implements json.Unmarshaler.
-func (t *Time) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (t *Time) UnmarshalJSON(data []byte) error {
 	var ts time.Time
 
 	// Don't try to unmarshal empty strings.
@@ -147,7 +122,7 @@ func (t *Time) customUnmarshal(unmarshal Unmarshal, data []byte) error {
 		return nil
 	}
 
-	if err := unmarshal(data, &ts); err != nil {
+	if err := json.Unmarshal(data, &ts); err != nil {
 		return err
 	}
 
@@ -282,6 +257,9 @@ func NewDiscriminator(d string) (discriminator Discriminator, err error) {
 // Discriminator value
 type Discriminator uint16
 
+var _ json.Unmarshaler = (*Discriminator)(nil)
+var _ json.Marshaler = (*Discriminator)(nil)
+
 func (d Discriminator) String() (str string) {
 	if d == 0 {
 		str = ""
@@ -309,10 +287,6 @@ func (d Discriminator) NotSet() bool {
 }
 
 // UnmarshalJSON see interface json.Unmarshaler
-func (d *Discriminator) customUnmarshal(unmarshal Unmarshal, data []byte) error {
-	return d.UnmarshalJSON(data)
-}
-
 func (d *Discriminator) UnmarshalJSON(data []byte) error {
 	*d = 0
 	length := len(data) - 1

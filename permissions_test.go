@@ -3,6 +3,8 @@ package disgord
 import (
 	"context"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 var fakePermissionsRole = &Role{ID: 10, Permissions: 2048}
@@ -19,13 +21,13 @@ func (p *permissionTestingSession) GetGuildRoles(_ context.Context, _ Snowflake,
 }
 
 func TestChannel_GetPermissions_Overwrite(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data := []byte(`{"permission_overwrites": [{"allow": 2048, "deny": 0, "id": "1", "type": "member"}]}`)
 	var c Channel
-	if err := unmarshal(data, &c); err != nil {
+	if err := json.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
+	executeInternalUpdater(c)
+
 	p, err := c.GetPermissions(context.TODO(), &permissionTestingSession{}, &Member{UserID: 1, Roles: []Snowflake{}})
 	if err != nil {
 		t.Fatal(err)

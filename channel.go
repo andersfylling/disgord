@@ -350,7 +350,7 @@ func (c *Client) UpdateChannel(ctx context.Context, channelID Snowflake, flags .
 		return c.pool.channel.Get()
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Channel(channelID),

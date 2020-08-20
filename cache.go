@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/andersfylling/disgord/internal/crs"
+	"github.com/andersfylling/disgord/json"
 )
 
 type idHolder struct {
@@ -57,7 +58,8 @@ func (c *CacheLFU) Ready(data []byte) (*Ready, error) {
 		User: c.CurrentUser,
 	}
 
-	err := c.unmarshalUpdate(data, rdy)
+	err := json.Unmarshal(data, rdy)
+	c.Patch(rdy)
 	return rdy, err
 }
 
@@ -71,9 +73,10 @@ func (c *CacheLFU) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	}
 
 	channel := &Channel{}
-	if err := c.unmarshalUpdate(data, channel); err != nil {
+	if err := json.Unmarshal(data, channel); err != nil {
 		return nil, err
 	}
+	c.Patch(channel)
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
@@ -81,7 +84,7 @@ func (c *CacheLFU) ChannelCreate(data []byte) (*ChannelCreate, error) {
 		// don't update it. It might overwrite a update event(!)
 		// TODO: timestamps would be helpful here(?)
 		//  or some queue of updates
-		err := c.unmarshalUpdate(data, wrapper.Val)
+		err := json.Unmarshal(data, wrapper.Val)
 		return wrap(channel), err
 	}
 
@@ -97,7 +100,7 @@ func (c *CacheLFU) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
 
 	var metadata *idHolder
-	if err := c.unmarshalUpdate(data, &metadata); err != nil {
+	if err := json.Unmarshal(data, &metadata); err != nil {
 		return nil, err
 	}
 	channelID := metadata.ID
@@ -108,14 +111,16 @@ func (c *CacheLFU) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	var channel *Channel
 	if item, exists := c.Channels.Get(channelID); exists {
 		channel = item.Val.(*Channel)
-		if err := c.unmarshalUpdate(data, channel); err != nil {
+		if err := json.Unmarshal(data, channel); err != nil {
 			return nil, err
 		}
+		c.Patch(channel)
 	} else {
 		channel = &Channel{}
-		if err := c.unmarshalUpdate(data, channel); err != nil {
+		if err := json.Unmarshal(data, channel); err != nil {
 			return nil, err
 		}
+		c.Patch(channel)
 		item := c.Channels.CreateCacheableItem(channel)
 		c.Channels.Set(channelID, item)
 	}
@@ -125,9 +130,10 @@ func (c *CacheLFU) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 
 func (c *CacheLFU) ChannelDelete(data []byte) (*ChannelDelete, error) {
 	cd := &ChannelDelete{}
-	if err := c.unmarshalUpdate(data, cd); err != nil {
+	if err := json.Unmarshal(data, cd); err != nil {
 		return nil, err
 	}
+	c.Patch(cd)
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
@@ -140,9 +146,10 @@ func (c *CacheLFU) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) {
 	// assumption#1: not sent on deleted pins
 
 	cpu := &ChannelPinsUpdate{}
-	if err := c.unmarshalUpdate(data, cpu); err != nil {
+	if err := json.Unmarshal(data, cpu); err != nil {
 		return nil, err
 	}
+	c.Patch(cpu)
 
 	if cpu.LastPinTimestamp.IsZero() {
 		return cpu, nil
@@ -185,27 +192,30 @@ func (c *CacheLFU) UserUpdate(data []byte) (*UserUpdate, error) {
 
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
-	if err := c.unmarshalUpdate(data, update); err != nil {
+	if err := json.Unmarshal(data, update); err != nil {
 		return nil, err
 	}
+	c.Patch(update)
 
 	return update, nil
 }
 
 func (c *CacheLFU) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
 	vsu := &VoiceServerUpdate{}
-	if err := c.unmarshalUpdate(data, vsu); err != nil {
+	if err := json.Unmarshal(data, vsu); err != nil {
 		return nil, err
 	}
+	c.Patch(vsu)
 
 	return vsu, nil
 }
 
 func (c *CacheLFU) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
 	gmr := &GuildMemberRemove{}
-	if err := c.unmarshalUpdate(data, gmr); err != nil {
+	if err := json.Unmarshal(data, gmr); err != nil {
 		return nil, err
 	}
+	c.Patch(gmr)
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
@@ -227,9 +237,10 @@ func (c *CacheLFU) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
 
 func (c *CacheLFU) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	gmr := &GuildMemberAdd{}
-	if err := c.unmarshalUpdate(data, gmr); err != nil {
+	if err := json.Unmarshal(data, gmr); err != nil {
 		return nil, err
 	}
+	c.Patch(gmr)
 
 	userID := gmr.Member.User.ID
 	c.Users.Lock()
@@ -248,9 +259,10 @@ func (c *CacheLFU) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 		for i := range guild.Members { // slow... map instead?
 			if guild.Members[i].UserID == gmr.Member.User.ID {
 				member = guild.Members[i]
-				if err := c.unmarshalUpdate(data, member); err != nil {
+				if err := json.Unmarshal(data, member); err != nil {
 					return nil, err
 				}
+				c.Patch(member)
 				break
 			}
 		}
@@ -269,9 +281,10 @@ func (c *CacheLFU) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 
 func (c *CacheLFU) GuildCreate(data []byte) (*GuildCreate, error) {
 	guildEvt := &GuildCreate{}
-	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
+	if err := json.Unmarshal(data, guildEvt); err != nil {
 		return nil, err
 	}
+	c.Patch(guildEvt)
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
@@ -282,7 +295,8 @@ func (c *CacheLFU) GuildCreate(data []byte) (*GuildCreate, error) {
 			if len(guild.Members) > 0 {
 				// seems like an update event came before create
 				// this kinda... isn't good
-				_ = c.unmarshalUpdate(data, item.Val)
+				_ = json.Unmarshal(data, item.Val)
+				c.Patch(item.Val)
 			} else {
 				// duplicate event
 				return guildEvt, nil
@@ -300,9 +314,10 @@ func (c *CacheLFU) GuildCreate(data []byte) (*GuildCreate, error) {
 
 func (c *CacheLFU) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	guildEvt := &GuildUpdate{}
-	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
+	if err := json.Unmarshal(data, guildEvt); err != nil {
 		return nil, err
 	}
+	c.Patch(guildEvt)
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
@@ -311,9 +326,10 @@ func (c *CacheLFU) GuildUpdate(data []byte) (*GuildUpdate, error) {
 		guild := item.Val.(*Guild)
 		if guild.Unavailable {
 			item.Val = guildEvt.Guild
-		} else if err := c.unmarshalUpdate(data, item.Val); err != nil {
+		} else if err := json.Unmarshal(data, item.Val); err != nil {
 			return nil, err
 		}
+		c.Patch(item.Val)
 	} else {
 		e := c.Guilds.CreateCacheableItem(guildEvt.Guild)
 		c.Guilds.Set(guildEvt.Guild.ID, e)
@@ -324,9 +340,10 @@ func (c *CacheLFU) GuildUpdate(data []byte) (*GuildUpdate, error) {
 
 func (c *CacheLFU) GuildDelete(data []byte) (*GuildDelete, error) {
 	guildEvt := &GuildDelete{}
-	if err := c.unmarshalUpdate(data, guildEvt); err != nil {
+	if err := json.Unmarshal(data, guildEvt); err != nil {
 		return nil, err
 	}
+	c.Patch(guildEvt)
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()

@@ -3,30 +3,26 @@
 package disgord
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"testing"
 )
 
 func TestGuildMarshal(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
 	check(err, t)
 
 	v := Guild{}
-	err = unmarshal(data, &v)
+	err = json.Unmarshal(data, &v)
 	check(err, t)
 }
 
 func TestGuildMarshalUnavailable(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data, err := ioutil.ReadFile("testdata/guild/guildUnavailable1.json")
 	check(err, t)
 
 	v := Guild{}
-	err = unmarshal(data, &v)
+	err = json.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -50,13 +46,11 @@ func TestGuild_ChannelSorting(t *testing.T) {
 
 // ---------
 func TestGuildBanObject(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
 	check(err, t)
 
 	ban := Ban{}
-	err = unmarshal(data, &ban)
+	err = json.Unmarshal(data, &ban)
 	check(err, t)
 }
 
@@ -65,11 +59,9 @@ func TestGuildEmbed(t *testing.T) {
 	res := []byte("{\"enabled\":true,\"channel_id\":\"41771983444115456\"}")
 	expects := []byte("{\"enabled\":true,\"channel_id\":41771983444115456}")
 
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	// convert to struct
 	guildEmbed := GuildEmbed{}
-	if err := unmarshal(res, &guildEmbed); err != nil {
+	if err := json.Unmarshal(res, &guildEmbed); err != nil {
 		t.Error(err)
 	}
 
@@ -170,8 +162,6 @@ func TestGuild_DeleteChannel(t *testing.T) {
 }
 
 func TestPermissionBit(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	// test permission bit checking
 	testBits := PermissionSendMessages | PermissionReadMessages
 	if testBits.Contains(PermissionAdministrator) {
@@ -189,10 +179,11 @@ func TestPermissionBit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = unmarshal(b, &testBits)
-	if err != nil {
+	if err = json.Unmarshal(b, &testBits); err != nil {
 		t.Fatal(err)
 	}
+	executeInternalUpdater(testBits)
+
 	if !testBits.Contains(PermissionReadMessages) {
 		t.Fatal("does have read messages")
 	}

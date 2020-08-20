@@ -249,7 +249,7 @@ func (c *Client) UpdateGuildEmoji(ctx context.Context, guildID, emojiID Snowflak
 		return &Emoji{guildID: guildID}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),

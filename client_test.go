@@ -282,8 +282,6 @@ func TestClient_On_Middleware(t *testing.T) {
 // TestClient_System looks for crashes when the Disgord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	c, err := NewClient(Config{
 		BotToken: "testing",
 	})
@@ -339,10 +337,11 @@ func TestClient_System(t *testing.T) {
 			E string          `json:"t"`
 			D json.RawMessage `json:"d"`
 		}{}
-		err = unmarshal(data, p)
+		err = json.Unmarshal(data, p)
 		if err != nil {
 			t.Fatal(err)
 		}
+		executeInternalUpdater(p)
 
 		// ignore non-event-type packets
 		if p.E == "" {

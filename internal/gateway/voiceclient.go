@@ -83,7 +83,6 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 				return &DiscordPacket{}
 			},
 		},
-		Encoder:           conf.Encoder,
 		messageQueueLimit: conf.MessageQueueLimit,
 		SystemShutdown:    conf.SystemShutdown,
 	}, client.internalConnect)

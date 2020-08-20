@@ -6,27 +6,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func verifyUserMashaller(t *testing.T, file string) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data, err := ioutil.ReadFile(file)
 	check(err, t)
 
-	user := User{}
-	err = unmarshal(data, &user)
+	user := &User{}
+	err = json.Unmarshal(data, user)
 	check(err, t)
 }
 
 func TestUserUpdateUnmarshal(t *testing.T) {
-	unmarshal := createUnmarshalUpdater(defaultUnmarshaler)
-
 	data, err := ioutil.ReadFile("testdata/user/user_update.json")
 	check(err, t)
 
 	u := &UserUpdate{}
-	err = unmarshal(data, &u)
+	err = json.Unmarshal(data, u)
 	check(err, t)
 }
 
@@ -65,7 +63,7 @@ func TestUserPresence_InterfaceImplementations(t *testing.T) {
 
 func TestGetCurrentUserGuildsParams(t *testing.T) {
 	params := &getCurrentUserGuildsBuilder{}
-	params.r.setup(nil, nil, nil, nil)
+	params.r.setup(nil, nil, nil)
 	var wants string
 
 	wants = ""

@@ -1048,7 +1048,7 @@ func (c *Client) UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) (
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
 	}
-	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.Guild(id),
@@ -1474,7 +1474,7 @@ func (c *Client) UpdateGuildMember(ctx context.Context, guildID, userID Snowflak
 		}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildMember(guildID, userID),
@@ -1971,7 +1971,7 @@ func (c *Client) UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags 
 		return &GuildEmbed{}
 	}
 	builder.r.flags = flags
-	builder.r.setup(c.req, c.config.Encoder.unmarshalUpdate, &httd.Request{
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmbed(guildID),

@@ -7,17 +7,6 @@ func executeInternalUpdater(x interface{}) {
 		u.updateInternals()
 	}
 	switch t := x.(type) {
-	case *Attachment:
-		update(t)
-	case []*Attachment:
-		for i := range t {
-			update(t[i])
-		}
-	case *[]*Attachment:
-		slice := *t
-		for i := range slice {
-			update(slice[i])
-		}
 	case *MessageCreate:
 		update(t)
 	case []*MessageCreate:

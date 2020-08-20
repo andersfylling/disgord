@@ -57,15 +57,6 @@ func createClient(conf *Config) (c *Client, err error) {
 		}
 	}
 
-	// encoder
-	if conf.Encoder.Unmarshal == nil {
-		conf.Encoder.Unmarshal = defaultUnmarshaler
-	}
-	if conf.Encoder.Marshal == nil {
-		conf.Encoder.Marshal = defaultMarshaler
-	}
-	conf.Encoder.unmarshalUpdate = createUnmarshalUpdater(conf.Encoder.Unmarshal)
-
 	httdClient, err := httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.BotToken,
@@ -106,7 +97,6 @@ func createClient(conf *Config) (c *Client, err error) {
 	} else {
 		cache = conf.Cache
 	}
-	cache.RegisterUnmarshaler(conf.Encoder.unmarshalUpdate)
 
 	// websocket sharding
 	evtChan := make(chan *gateway.Event, 2) // TODO: higher value when more shards?
@@ -186,12 +176,6 @@ type Config struct {
 	// ##
 	// ################################################
 	RESTBucketManager httd.RESTBucketManager
-
-	Encoder struct {
-		Unmarshal       func(data []byte, v interface{}) error
-		Marshal         func(v interface{}) (data []byte, err error)
-		unmarshalUpdate func(data []byte, v interface{}) error
-	}
 
 	DisableCache bool
 	Cache        Cache
@@ -425,8 +409,6 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		ProjectName:  c.config.ProjectName,
 		BotToken:     c.config.BotToken,
 	}
-	shardMngrConf.Encoder.Marshal = c.config.Encoder.Marshal
-	shardMngrConf.Encoder.Unmarshal = c.config.Encoder.Unmarshal
 
 	if c.config.Presence != nil {
 		// assumption: error is handled when creating a new client

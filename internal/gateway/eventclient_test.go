@@ -140,11 +140,6 @@ func TestEvtClient_communication(t *testing.T) {
 			return cb()
 		},
 
-		Encoder: struct {
-			Unmarshal func(data []byte, v interface{}) error
-			Marshal   func(v interface{}) (data []byte, err error)
-		}{Unmarshal: json.Unmarshal, Marshal: json.Marshal},
-
 		// injected for testing
 		EventChan: eChan,
 		conn:      conn,

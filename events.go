@@ -7,6 +7,8 @@ package disgord
 import (
 	"context"
 	"sync"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 // Resource represents a discord event.
@@ -71,9 +73,9 @@ type ChannelCreate struct {
 }
 
 // UnmarshalJSON ...
-func (obj *ChannelCreate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -86,9 +88,9 @@ type ChannelUpdate struct {
 }
 
 // UnmarshalJSON ...
-func (obj *ChannelUpdate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -101,9 +103,9 @@ type ChannelDelete struct {
 }
 
 // UnmarshalJSON ...
-func (obj *ChannelDelete) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
-	return unmarshal(data, obj.Channel)
+	return json.Unmarshal(data, obj.Channel)
 }
 
 // ---------------------------
@@ -160,9 +162,9 @@ func (obj *MessageCreate) updateInternals() {
 }
 
 // UnmarshalJSON ...
-func (obj *MessageCreate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *MessageCreate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	if err := unmarshal(data, obj.Message); err != nil {
+	if err := json.Unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -187,9 +189,9 @@ func (obj *MessageUpdate) updateInternals() {
 }
 
 // UnmarshalJSON ...
-func (obj *MessageUpdate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *MessageUpdate) UnmarshalJSON(data []byte) error {
 	obj.Message = &Message{}
-	if err := unmarshal(data, obj.Message); err != nil {
+	if err := json.Unmarshal(data, obj.Message); err != nil {
 		return err
 	}
 	if obj.Message.Member != nil {
@@ -297,9 +299,9 @@ func (g *GuildCreate) updateInternals() {
 }
 
 // UnmarshalJSON ...
-func (obj *GuildCreate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *GuildCreate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	if err := unmarshal(data, obj.Guild); err != nil {
+	if err := json.Unmarshal(data, obj.Guild); err != nil {
 		return err
 	}
 	for _, v := range obj.Guild.Members {
@@ -324,9 +326,9 @@ func (g *GuildUpdate) updateInternals() {
 }
 
 // UnmarshalJSON ...
-func (obj *GuildUpdate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *GuildUpdate) UnmarshalJSON(data []byte) error {
 	obj.Guild = &Guild{}
-	return unmarshal(data, obj.Guild)
+	return json.Unmarshal(data, obj.Guild)
 }
 
 // ---------------------------
@@ -344,9 +346,9 @@ func (obj *GuildDelete) UserWasRemoved() bool {
 }
 
 // UnmarshalJSON ...
-func (obj *GuildDelete) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *GuildDelete) UnmarshalJSON(data []byte) error {
 	obj.UnavailableGuild = &GuildUnavailable{}
-	return unmarshal(data, obj.UnavailableGuild)
+	return json.Unmarshal(data, obj.UnavailableGuild)
 }
 
 // ---------------------------
@@ -394,9 +396,9 @@ func (g *GuildMemberAdd) updateInternals() {
 }
 
 // UnmarshalJSON ...
-func (obj *GuildMemberAdd) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *GuildMemberAdd) UnmarshalJSON(data []byte) error {
 	obj.Member = &Member{}
-	return unmarshal(data, obj.Member)
+	return json.Unmarshal(data, obj.Member)
 }
 
 // ---------------------------
@@ -508,9 +510,9 @@ type UserUpdate struct {
 }
 
 // UnmarshalJSON ...
-func (obj *UserUpdate) customUnmarshal(unmarshal Unmarshal, data []byte) error {
+func (obj *UserUpdate) UnmarshalJSON(data []byte) error {
 	obj.User = &User{}
-	return unmarshal(data, obj.User)
+	return json.Unmarshal(data, obj.User)
 }
 
 // ---------------------------
@@ -525,7 +527,7 @@ type VoiceStateUpdate struct {
 // UnmarshalJSON ...
 func (h *VoiceStateUpdate) UnmarshalJSON(data []byte) error {
 	h.VoiceState = &VoiceState{}
-	return util.Unmarshal(data, h.VoiceState)
+	return json.Unmarshal(data, h.VoiceState)
 }
 
 // ---------------------------
