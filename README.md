@@ -7,8 +7,8 @@
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord' alt='Code coverage' />
     </a>
-    <a href='https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc'>
-      <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg' alt='Godoc' />
+    <a href='https://pkg.go.dev/github.com/andersfylling/disgord'>
+      <img src="https://pkg.go.dev/badge/andersfylling/disgord" alt="PkgGoDev">
     </a>
   </p>
   <p>
