@@ -23,7 +23,7 @@ func populateResource(resource evtResource, ctx context.Context, evt *gateway.Ev
 	resource.registerContext(ctx)
 	resource.setShardID(evt.ShardID)
 
-	// if err = util.Unmarshal(evt.Data, resource); err != nil {
+	// if err = json.Unmarshal(evt.Data, resource); err != nil {
 	// 	return err
 	// }
 	// executeInternalUpdater(resource)

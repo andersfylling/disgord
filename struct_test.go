@@ -3,7 +3,7 @@
 package disgord
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"strconv"
 	"testing"

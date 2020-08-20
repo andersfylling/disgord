@@ -4,7 +4,7 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"errors"
 	"io"
 	"net/http"

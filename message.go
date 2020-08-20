@@ -3,7 +3,7 @@ package disgord
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"errors"
 	"fmt"
 	"io"

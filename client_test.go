@@ -3,7 +3,7 @@
 package disgord
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"github.com/andersfylling/disgord/internal/logger"
 	"io/ioutil"
 	"os"

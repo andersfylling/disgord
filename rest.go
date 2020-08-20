@@ -2,7 +2,7 @@ package disgord
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"errors"
 	"fmt"
 	"net/http"

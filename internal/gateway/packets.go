@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"context"
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"errors"
 	"io"
 

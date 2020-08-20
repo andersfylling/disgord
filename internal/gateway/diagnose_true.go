@@ -4,7 +4,7 @@ package gateway
 
 import (
 	"bytes"
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"fmt"
 	"io/ioutil"
 	"os"

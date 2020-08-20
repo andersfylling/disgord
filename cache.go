@@ -173,7 +173,7 @@ func (c *CacheLFU) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) {
 //	}
 //
 //	var vsu *VoiceStateUpdate
-//	if err := util.UnmarshalUpdate(data, &vsu); err != nil {
+//	if err := json.UnmarshalUpdate(data, &vsu); err != nil {
 //		return nil, err
 //	}
 //

@@ -24,7 +24,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	for i = range t {
 		if t[i] != data[i] {
 			evt := discordPacketJSON{}
-			err = util.Unmarshal(data, &evt)
+			err = json.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -47,7 +47,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2 // skip `,"`
 	if data[i] != 's' {
 		evt := discordPacketJSON{}
-		err = util.Unmarshal(data, &evt)
+		err = json.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}
@@ -64,7 +64,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 		tmp, err = strconv.ParseUint(val.String(), 10, 32)
 		if err != nil {
 			evt := discordPacketJSON{}
-			err = util.Unmarshal(data, &evt)
+			err = json.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -75,7 +75,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2              // skip `,"`
 	if data[i] != 'o' { // o as in op
 		evt := discordPacketJSON{}
-		err = util.Unmarshal(data, &evt)
+		err = json.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}
@@ -95,7 +95,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 		tmp, err = strconv.ParseUint(val.String(), 10, 64)
 		if err != nil {
 			evt := discordPacketJSON{}
-			err = util.Unmarshal(data, &evt)
+			err = json.Unmarshal(data, &evt)
 			evt.CopyOverTo(p)
 			return
 		}
@@ -106,7 +106,7 @@ func (p *DiscordPacket) UnmarshalJSON(data []byte) (err error) {
 	i += 2 // skip `,"`
 	if data[i] != 'd' {
 		evt := discordPacketJSON{}
-		err = util.Unmarshal(data, &evt)
+		err = json.Unmarshal(data, &evt)
 		evt.CopyOverTo(p)
 		return
 	}

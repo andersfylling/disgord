@@ -3,7 +3,7 @@
 package gateway
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"strconv"
 	"sync"
