@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 // defaults and string format's for Discord interaction
@@ -85,11 +87,6 @@ type Client struct {
 	httpClient                   *http.Client
 	cancelRequestWhenRateLimited bool
 	buckets                      RESTBucketManager
-
-	Encoder struct {
-		Unmarshal func(data []byte, v interface{}) error
-		Marshal   func(v interface{}) (data []byte, err error)
-	}
 }
 
 func (c *Client) BucketGrouping() (group map[string][]string) {
@@ -236,7 +233,7 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 				return nil, nil, errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
 			}
 
-			if r.bodyReader, err = convertStructToIOReader(c.Encoder.Marshal, r.Body); err != nil {
+			if r.bodyReader, err = convertStructToIOReader(json.Marshal, r.Body); err != nil {
 				return nil, nil, err
 			}
 		}
@@ -300,7 +297,7 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 
 		// store the Discord error if it exists
 		if len(body) > 0 {
-			_ = c.Encoder.Unmarshal(body, err)
+			_ = json.Unmarshal(body, err)
 		}
 		return nil, nil, err
 	}
