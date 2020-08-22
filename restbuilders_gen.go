@@ -63,6 +63,61 @@ func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
+func (b *createChannelInviteBuilder) IgnoreCache() *createChannelInviteBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *createChannelInviteBuilder) CancelOnRatelimit() *createChannelInviteBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *createChannelInviteBuilder) URLParam(name string, v interface{}) *createChannelInviteBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *createChannelInviteBuilder) Set(name string, v interface{}) *createChannelInviteBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *createChannelInviteBuilder) SetMaxAge(maxAge int) *createChannelInviteBuilder {
+	b.r.param("max_age", maxAge)
+	return b
+}
+
+func (b *createChannelInviteBuilder) SetMaxUses(maxUses int) *createChannelInviteBuilder {
+	b.r.param("max_uses", maxUses)
+	return b
+}
+
+func (b *createChannelInviteBuilder) SetTemporary(temporary bool) *createChannelInviteBuilder {
+	b.r.param("temporary", temporary)
+	return b
+}
+
+func (b *createChannelInviteBuilder) SetUnique(unique bool) *createChannelInviteBuilder {
+	b.r.param("unique", unique)
+	return b
+}
+
+func (b *createChannelInviteBuilder) Execute() (invite *Invite, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Invite), nil
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
 func (b *updateChannelBuilder) IgnoreCache() *updateChannelBuilder {
 	b.r.IgnoreCache()
 	return b

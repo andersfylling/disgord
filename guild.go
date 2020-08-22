@@ -376,9 +376,9 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		return 0, errors.New("unable to decide which channel to create invite for")
 	}
 
-	invite, err := s.CreateChannelInvites(ctx, channelID, &CreateChannelInvitesParams{
-		MaxAge: 1,
-	})
+	invite, err := s.CreateChannelInvite(ctx, channelID).
+		SetMaxAge(1).
+		Execute()
 	if err != nil {
 		return 0, err
 	}

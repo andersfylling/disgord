@@ -71,8 +71,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Channel:
 		s = *t
-	case *[]*CreateChannelInvitesParams:
-		s = *t
 	case *[]*GroupDMParticipant:
 		s = *t
 	case *[]*PartialChannel:
@@ -80,6 +78,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*PermissionOverwrite:
 		s = *t
 	case *[]*UpdateChannelPermissionsParams:
+		s = *t
+	case *[]*createChannelInviteBuilder:
 		s = *t
 	case *[]*updateChannelBuilder:
 		s = *t

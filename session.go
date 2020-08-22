@@ -183,11 +183,11 @@ type RESTChannel interface {
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 	GetChannelInvites(ctx context.Context, id Snowflake, flags ...Flag) (ret []*Invite, err error)
 
-	// CreateChannelInvites Create a new invite object for the channel. Only usable for guild Channels. Requires
+	// CreateChannelInvite Create a new invite object for the channel. Only usable for guild Channels. Requires
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateChannelInvites(ctx context.Context, id Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error)
+	CreateChannelInvite(ctx context.Context, id Snowflake, flags ...Flag) *createChannelInviteBuilder
 
 	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more

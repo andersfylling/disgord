@@ -180,6 +180,8 @@ type RESTBuilder struct {
 	urlParams         urlQuery
 	ignoreCache       bool
 	cancelOnRatelimit bool
+
+	headerReason string
 }
 
 // addPrereq the naming here is kinda reversed..
@@ -225,6 +227,10 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		return nil, errors.New(b.prerequisites[i])
 	}
 	b.prepare()
+
+	if b.headerReason != "" {
+		b.config.Reason = b.headerReason
+	}
 
 	var resp *http.Response
 	var body []byte

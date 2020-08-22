@@ -452,18 +452,7 @@ func (c *Client) GetChannelInvites(ctx context.Context, channelID Snowflake, fla
 	return getInvites(r.Execute)
 }
 
-// CreateChannelInvitesParams https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params
-type CreateChannelInvitesParams struct {
-	MaxAge    int  `json:"max_age,omitempty"`   // duration of invite in seconds before expiry, or 0 for never. default 86400 (24 hours)
-	MaxUses   int  `json:"max_uses,omitempty"`  // max number of uses or 0 for unlimited. default 0
-	Temporary bool `json:"temporary,omitempty"` // whether this invite only grants temporary membership. default false
-	Unique    bool `json:"unique,omitempty"`    // if true, don't try to reuse a similar invite (useful for creating many unique one time use invites). default false
-
-	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
-	Reason string `json:"-"`
-}
-
-// CreateChannelInvites [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
+// CreateChannelInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
@@ -471,28 +460,20 @@ type CreateChannelInvitesParams struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) CreateChannelInvites(ctx context.Context, channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
-	if channelID.IsZero() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return nil, err
+func (c *Client) CreateChannelInvite(ctx context.Context, channelID Snowflake, flags ...Flag) (builder *createChannelInviteBuilder) {
+	builder = &createChannelInviteBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Invite{}
 	}
-	if params == nil {
-		params = &CreateChannelInvitesParams{} // have to send an empty JSON object ({}). maybe just struct{}?
-	}
-
-	r := c.newRESTRequest(&httd.Request{
+	builder.r.flags = flags
+	builder.r.setup(c.req, &httd.Request{
 		Method:      httd.MethodPost,
 		Ctx:         ctx,
 		Endpoint:    endpoint.ChannelInvites(channelID),
-		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-		Reason:      params.Reason,
-	}, flags)
-	r.factory = func() interface{} {
-		return &Invite{}
-	}
+	}, nil)
 
-	return getInvite(r.Execute)
+	return builder
 }
 
 // DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
@@ -604,6 +585,17 @@ func (c *Client) KickParticipant(ctx context.Context, channelID, userID Snowflak
 // REST Builders
 //
 //////////////////////////////////////////////////////
+
+//generate-rest-params: max_age:int, max_uses:int, temporary:bool, unique:bool,
+//generate-rest-basic-execute: invite:*Invite,
+type createChannelInviteBuilder struct {
+	r RESTBuilder
+}
+
+func (b *createChannelInviteBuilder) WithReason(reason string) *createChannelInviteBuilder {
+	b.r.headerReason = reason
+	return b
+}
 
 // updateChannelBuilder https://discord.com/developers/docs/resources/channel#modify-channel-json-params
 //generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
