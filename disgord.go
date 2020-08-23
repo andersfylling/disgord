@@ -4,7 +4,7 @@
 //
 // Create a Disgord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
 //
-// Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
+// Session interface: https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc#Session
 //  discord := disgord.New(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //  })
