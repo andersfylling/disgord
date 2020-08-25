@@ -6,7 +6,6 @@ package disgord
 
 import (
 	"context"
-	"sync"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -50,9 +49,20 @@ type Ready struct {
 	// bot can't have user settings
 	// UserSettings interface{}        `json:"user_settings"`
 
-	sync.RWMutex `json:"-"`
-	Ctx          context.Context `json:"-"`
-	ShardID      uint            `json:"-"`
+	Ctx     context.Context `json:"-"`
+	ShardID uint            `json:"-"`
+}
+
+func (h *Ready) DeepCopy() interface{} {
+	evt := *h
+	evt.User = evt.User.DeepCopy().(*User)
+
+	evt.Guilds = make([]*GuildUnavailable, len(h.Guilds))
+	for i := range evt.Guilds {
+		evt.Guilds[i] = h.Guilds[i].DeepCopy().(*GuildUnavailable)
+	}
+
+	return &evt
 }
 
 // ---------------------------
@@ -63,6 +73,11 @@ type Resumed struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *Resumed) DeepCopy() interface{} {
+	evt := *h
+	return &evt
+}
+
 // ---------------------------
 
 // ChannelCreate new channel created
@@ -70,6 +85,12 @@ type ChannelCreate struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *ChannelCreate) DeepCopy() interface{} {
+	evt := *obj
+	evt.Channel = evt.Channel.DeepCopy().(*Channel)
+	return &evt
 }
 
 // UnmarshalJSON ...
@@ -87,6 +108,10 @@ type ChannelUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (obj *ChannelUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // UnmarshalJSON ...
 func (obj *ChannelUpdate) UnmarshalJSON(data []byte) error {
 	obj.Channel = &Channel{}
@@ -100,6 +125,10 @@ type ChannelDelete struct {
 	Channel *Channel        `json:"channel"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *ChannelDelete) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // UnmarshalJSON ...
@@ -123,6 +152,10 @@ type ChannelPinsUpdate struct {
 	ShardID          uint            `json:"-"`
 }
 
+func (h *ChannelPinsUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // TypingStart user started typing in a channel
@@ -132,6 +165,10 @@ type TypingStart struct {
 	TimestampUnix int             `json:"timestamp"`
 	Ctx           context.Context `json:"-"`
 	ShardID       uint            `json:"-"`
+}
+
+func (h *TypingStart) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // ---------------------------
@@ -145,6 +182,10 @@ type InviteDelete struct {
 	ShardID   uint            `json:"-"`
 }
 
+func (h *InviteDelete) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // MessageCreate message was created
@@ -152,6 +193,10 @@ type MessageCreate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *MessageCreate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ Reseter = (*MessageCreate)(nil)
@@ -180,6 +225,10 @@ type MessageUpdate struct {
 	Message *Message
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *MessageUpdate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ internalUpdater = (*MessageUpdate)(nil)
@@ -211,6 +260,10 @@ type MessageDelete struct {
 	ShardID   uint            `json:"-"`
 }
 
+func (h *MessageDelete) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // MessageDeleteBulk multiple messages were deleted at once
@@ -219,6 +272,10 @@ type MessageDeleteBulk struct {
 	ChannelID  Snowflake       `json:"channel_id"`
 	Ctx        context.Context `json:"-"`
 	ShardID    uint            `json:"-"`
+}
+
+func (h *MessageDeleteBulk) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // ---------------------------
@@ -236,6 +293,10 @@ type MessageReactionAdd struct {
 	ShardID      uint            `json:"-"`
 }
 
+func (h *MessageReactionAdd) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // MessageReactionRemove user removed a reaction from a message
@@ -251,6 +312,10 @@ type MessageReactionRemove struct {
 	ShardID      uint            `json:"-"`
 }
 
+func (h *MessageReactionRemove) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // MessageReactionRemoveAll all reactions were explicitly removed from a message
@@ -261,6 +326,10 @@ type MessageReactionRemoveAll struct {
 	ShardID   uint            `json:"-"`
 }
 
+func (h *MessageReactionRemoveAll) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // GuildEmojisUpdate guild emojis were updated
@@ -269,6 +338,10 @@ type GuildEmojisUpdate struct {
 	Emojis  []*Emoji        `json:"emojis"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (g *GuildEmojisUpdate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ internalUpdater = (*GuildEmojisUpdate)(nil)
@@ -290,6 +363,10 @@ type GuildCreate struct {
 	Guild   *Guild          `json:"guild"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (g *GuildCreate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ internalUpdater = (*GuildCreate)(nil)
@@ -319,6 +396,10 @@ type GuildUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (g *GuildUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 var _ internalUpdater = (*GuildUpdate)(nil)
 
 func (g *GuildUpdate) updateInternals() {
@@ -338,6 +419,10 @@ type GuildDelete struct {
 	UnavailableGuild *GuildUnavailable `json:"guild_unavailable"`
 	Ctx              context.Context   `json:"-"`
 	ShardID          uint              `json:"-"`
+}
+
+func (obj *GuildDelete) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // UserWasRemoved ... TODO
@@ -361,6 +446,10 @@ type GuildBanAdd struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *GuildBanAdd) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // GuildBanRemove user was unbanned from a guild
@@ -369,6 +458,10 @@ type GuildBanRemove struct {
 	User    *User           `json:"user"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (h *GuildBanRemove) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // ---------------------------
@@ -380,6 +473,10 @@ type GuildIntegrationsUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *GuildIntegrationsUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // GuildMemberAdd new user joined a guild
@@ -387,6 +484,10 @@ type GuildMemberAdd struct {
 	Member  *Member         `json:"member"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (g *GuildMemberAdd) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ internalUpdater = (*GuildMemberAdd)(nil)
@@ -411,6 +512,10 @@ type GuildMemberRemove struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *GuildMemberRemove) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // GuildMemberUpdate guild member was updated
@@ -423,6 +528,10 @@ type GuildMemberUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *GuildMemberUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // GuildMembersChunk response to Request Guild Members
@@ -431,6 +540,10 @@ type GuildMembersChunk struct {
 	Members []*Member       `json:"members"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (g *GuildMembersChunk) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 var _ internalUpdater = (*GuildMembersChunk)(nil)
@@ -451,6 +564,10 @@ type GuildRoleCreate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (g *GuildRoleCreate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 var _ internalUpdater = (*GuildRoleCreate)(nil)
 
 func (g *GuildRoleCreate) updateInternals() {
@@ -467,6 +584,10 @@ type GuildRoleUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (g *GuildRoleUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 var _ internalUpdater = (*GuildRoleUpdate)(nil)
 
 func (g *GuildRoleUpdate) updateInternals() {
@@ -481,6 +602,10 @@ type GuildRoleDelete struct {
 	RoleID  Snowflake       `json:"role_id"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (h *GuildRoleDelete) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // ---------------------------
@@ -500,6 +625,10 @@ type PresenceUpdate struct {
 	ShardID uint            `json:"-"`
 }
 
+func (h *PresenceUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // UserUpdate properties about a user changed
@@ -507,6 +636,10 @@ type UserUpdate struct {
 	*User
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *UserUpdate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // UnmarshalJSON ...
@@ -522,6 +655,10 @@ type VoiceStateUpdate struct {
 	*VoiceState
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (obj *VoiceStateUpdate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // UnmarshalJSON ...
@@ -542,6 +679,10 @@ type VoiceServerUpdate struct {
 	ShardID  uint            `json:"-"`
 }
 
+func (h *VoiceServerUpdate) DeepCopy() interface{} {
+	panic("implement me")
+}
+
 // ---------------------------
 
 // WebhooksUpdate guild channel webhook was created, update, or deleted
@@ -550,6 +691,10 @@ type WebhooksUpdate struct {
 	ChannelID Snowflake       `json:"channel_id"`
 	Ctx       context.Context `json:"-"`
 	ShardID   uint            `json:"-"`
+}
+
+func (h *WebhooksUpdate) DeepCopy() interface{} {
+	panic("implement me")
 }
 
 // InviteCreate guild invite was created
@@ -599,4 +744,8 @@ type InviteCreate struct {
 
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (h *InviteCreate) DeepCopy() interface{} {
+	panic("implement me")
 }

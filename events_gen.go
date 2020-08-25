@@ -103,6 +103,8 @@ func AllEvents(except ...string) []string {
 //
 const EvtChannelCreate = event.ChannelCreate
 
+var _ DeepCopier = (*ChannelCreate)(nil)
+
 func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -113,6 +115,8 @@ type HandlerChannelCreate = func(Session, *ChannelCreate)
 // EvtChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
 //
 const EvtChannelDelete = event.ChannelDelete
+
+var _ DeepCopier = (*ChannelDelete)(nil)
 
 func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
@@ -129,6 +133,8 @@ type HandlerChannelDelete = func(Session, *ChannelDelete)
 //
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
+var _ DeepCopier = (*ChannelPinsUpdate)(nil)
+
 func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -139,6 +145,8 @@ type HandlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
 // EvtChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
 //
 const EvtChannelUpdate = event.ChannelUpdate
+
+var _ DeepCopier = (*ChannelUpdate)(nil)
 
 func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -151,6 +159,8 @@ type HandlerChannelUpdate = func(Session, *ChannelUpdate)
 //
 const EvtGuildBanAdd = event.GuildBanAdd
 
+var _ DeepCopier = (*GuildBanAdd)(nil)
+
 func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
 
@@ -161,6 +171,8 @@ type HandlerGuildBanAdd = func(Session, *GuildBanAdd)
 // EvtGuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
 //
 const EvtGuildBanRemove = event.GuildBanRemove
+
+var _ DeepCopier = (*GuildBanRemove)(nil)
 
 func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
@@ -177,6 +189,8 @@ type HandlerGuildBanRemove = func(Session, *GuildBanRemove)
 //
 const EvtGuildCreate = event.GuildCreate
 
+var _ DeepCopier = (*GuildCreate)(nil)
+
 func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -189,6 +203,8 @@ type HandlerGuildCreate = func(Session, *GuildCreate)
 // from the guild.
 //
 const EvtGuildDelete = event.GuildDelete
+
+var _ DeepCopier = (*GuildDelete)(nil)
 
 func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
@@ -204,6 +220,8 @@ type HandlerGuildDelete = func(Session, *GuildDelete)
 //
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
+var _ DeepCopier = (*GuildEmojisUpdate)(nil)
+
 func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -216,6 +234,8 @@ type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 //  - GuildID Snowflake
 //
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
+
+var _ DeepCopier = (*GuildIntegrationsUpdate)(nil)
 
 func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -232,6 +252,8 @@ type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
 //
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
+var _ DeepCopier = (*GuildMemberAdd)(nil)
+
 func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
 
@@ -245,6 +267,8 @@ type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 //  - User      *User
 //
 const EvtGuildMemberRemove = event.GuildMemberRemove
+
+var _ DeepCopier = (*GuildMemberRemove)(nil)
 
 func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = id }
@@ -262,6 +286,8 @@ type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
 //
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
+var _ DeepCopier = (*GuildMemberUpdate)(nil)
+
 func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -275,6 +301,8 @@ type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 //  - Members []*Member
 //
 const EvtGuildMembersChunk = event.GuildMembersChunk
+
+var _ DeepCopier = (*GuildMembersChunk)(nil)
 
 func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = id }
@@ -290,6 +318,8 @@ type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
 //
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
+var _ DeepCopier = (*GuildRoleCreate)(nil)
+
 func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -303,6 +333,8 @@ type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 //  - RoleID  Snowflake
 //
 const EvtGuildRoleDelete = event.GuildRoleDelete
+
+var _ DeepCopier = (*GuildRoleDelete)(nil)
 
 func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id }
@@ -318,6 +350,8 @@ type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
 //
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
+var _ DeepCopier = (*GuildRoleUpdate)(nil)
+
 func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -328,6 +362,8 @@ type HandlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
 // EvtGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
 //
 const EvtGuildUpdate = event.GuildUpdate
+
+var _ DeepCopier = (*GuildUpdate)(nil)
 
 func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -357,6 +393,8 @@ type HandlerGuildUpdate = func(Session, *GuildUpdate)
 //
 const EvtInviteCreate = event.InviteCreate
 
+var _ DeepCopier = (*InviteCreate)(nil)
+
 func (h *InviteCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *InviteCreate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -368,6 +406,8 @@ type HandlerInviteCreate = func(Session, *InviteCreate)
 //
 const EvtInviteDelete = event.InviteDelete
 
+var _ DeepCopier = (*InviteDelete)(nil)
+
 func (h *InviteDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *InviteDelete) setShardID(id uint)                  { h.ShardID = id }
 
@@ -378,6 +418,8 @@ type HandlerInviteDelete = func(Session, *InviteDelete)
 // EvtMessageCreate Sent when a message is created. The inner payload is a message object.
 //
 const EvtMessageCreate = event.MessageCreate
+
+var _ DeepCopier = (*MessageCreate)(nil)
 
 func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
@@ -393,6 +435,8 @@ type HandlerMessageCreate = func(Session, *MessageCreate)
 //
 const EvtMessageDelete = event.MessageDelete
 
+var _ DeepCopier = (*MessageDelete)(nil)
+
 func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
 
@@ -406,6 +450,8 @@ type HandlerMessageDelete = func(Session, *MessageDelete)
 //  - ChannelID Snowflake
 //
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
+
+var _ DeepCopier = (*MessageDeleteBulk)(nil)
 
 func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = id }
@@ -423,6 +469,8 @@ type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
 //
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
+var _ DeepCopier = (*MessageReactionAdd)(nil)
+
 func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = id }
 
@@ -439,6 +487,8 @@ type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 //
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
+var _ DeepCopier = (*MessageReactionRemove)(nil)
+
 func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID = id }
 
@@ -453,6 +503,8 @@ type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 //
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
+var _ DeepCopier = (*MessageReactionRemoveAll)(nil)
+
 func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.ShardID = id }
 
@@ -465,6 +517,8 @@ type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
 //
 const EvtMessageUpdate = event.MessageUpdate
+
+var _ DeepCopier = (*MessageUpdate)(nil)
 
 func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -482,6 +536,8 @@ type HandlerMessageUpdate = func(Session, *MessageUpdate)
 //  - Status  string
 //
 const EvtPresenceUpdate = event.PresenceUpdate
+
+var _ DeepCopier = (*PresenceUpdate)(nil)
 
 func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -503,6 +559,8 @@ type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
 //
 const EvtReady = event.Ready
 
+var _ DeepCopier = (*Ready)(nil)
+
 func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
 
@@ -516,6 +574,8 @@ type HandlerReady = func(Session, *Ready)
 //  - Trace []string
 //
 const EvtResumed = event.Resumed
+
+var _ DeepCopier = (*Resumed)(nil)
 
 func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
@@ -532,6 +592,8 @@ type HandlerResumed = func(Session, *Resumed)
 //
 const EvtTypingStart = event.TypingStart
 
+var _ DeepCopier = (*TypingStart)(nil)
+
 func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
 
@@ -542,6 +604,8 @@ type HandlerTypingStart = func(Session, *TypingStart)
 // EvtUserUpdate Sent when properties about the user change. Inner payload is a user object.
 //
 const EvtUserUpdate = event.UserUpdate
+
+var _ DeepCopier = (*UserUpdate)(nil)
 
 func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -559,6 +623,8 @@ type HandlerUserUpdate = func(Session, *UserUpdate)
 //
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
+var _ DeepCopier = (*VoiceServerUpdate)(nil)
+
 func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = id }
 
@@ -569,6 +635,8 @@ type HandlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
 // EvtVoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
 //
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
+
+var _ DeepCopier = (*VoiceStateUpdate)(nil)
 
 func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id }
@@ -583,6 +651,8 @@ type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
 //  - ChannelID Snowflake
 //
 const EvtWebhooksUpdate = event.WebhooksUpdate
+
+var _ DeepCopier = (*WebhooksUpdate)(nil)
 
 func (h *WebhooksUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *WebhooksUpdate) setShardID(id uint)                  { h.ShardID = id }

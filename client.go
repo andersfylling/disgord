@@ -94,6 +94,7 @@ func createClient(conf *Config) (c *Client, err error) {
 		}
 	} else if conf.Cache == nil {
 		cache = newSimpleLFUCache(1000000, 1000, 0, 0)
+		cache = &CacheImmutable{cache}
 	} else {
 		cache = conf.Cache
 	}

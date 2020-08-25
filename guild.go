@@ -147,6 +147,13 @@ type GuildUnavailable struct {
 	Unavailable bool      `json:"unavailable"` // ?*|
 }
 
+func (gu *GuildUnavailable) DeepCopy() interface{} {
+	return &GuildUnavailable{
+		ID:          gu.ID,
+		Unavailable: gu.Unavailable,
+	}
+}
+
 //type GuildInterface interface {
 //	Channel(ID Snowflake)
 //}

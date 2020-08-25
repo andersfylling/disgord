@@ -38,6 +38,8 @@ func AllEvents(except ...string) []string {
 {{.RenderDocs}}
 const Evt{{.}} = event.{{.}} {{end}}
 
+var _ DeepCopier = (*{{.}})(nil)
+
 func (h *{{.}}) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
