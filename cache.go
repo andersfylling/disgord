@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/andersfylling/disgord/internal/crs"
@@ -350,4 +351,136 @@ func (c *CacheLFU) GuildDelete(data []byte) (*GuildDelete, error) {
 	c.Guilds.Delete(guildEvt.UnavailableGuild.ID)
 
 	return guildEvt, nil
+}
+
+// REST lookup
+func (c *CacheLFU) GetMessage(channelID, messageID Snowflake) (*Message, error) { return nil, nil }
+func (c *CacheLFU) GetChannel(id Snowflake) (*Channel, error) {
+	c.Channels.RLock()
+	defer c.Channels.RUnlock()
+
+	if cachedItem, exists := c.Channels.Get(id); exists {
+		channel := cachedItem.Val.(*Channel)
+		return channel, nil
+	}
+	return nil, nil
+}
+func (c *CacheLFU) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
+	c.Guilds.RLock()
+	defer c.Guilds.RUnlock()
+
+	if cachedItem, exists := c.Guilds.Get(guildID); exists {
+		guild := cachedItem.Val.(*Guild)
+		emoji, _ := guild.Emoji(emojiID)
+		return emoji, nil
+	}
+	return nil, errors.New("guild does not exist")
+}
+func (c *CacheLFU) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
+	c.Guilds.RLock()
+	defer c.Guilds.RUnlock()
+
+	if cachedItem, exists := c.Guilds.Get(id); exists {
+		guild := cachedItem.Val.(*Guild)
+		return guild.Emojis, nil
+	}
+	return nil, errors.New("guild does not exist")
+}
+func (c *CacheLFU) GetGuild(id Snowflake) (*Guild, error) {
+	c.Guilds.RLock()
+	defer c.Guilds.RUnlock()
+
+	var guild *Guild
+	if cachedItem, exists := c.Guilds.Get(id); exists {
+		guild = cachedItem.Val.(*Guild)
+	}
+
+	return guild, nil
+}
+func (c *CacheLFU) GetGuildChannels(id Snowflake) ([]*Channel, error) {
+	c.Guilds.RLock()
+	defer c.Guilds.RUnlock()
+
+	if cachedItem, exists := c.Guilds.Get(id); exists {
+		guild := cachedItem.Val.(*Guild)
+		return guild.Channels, nil
+	}
+	return nil, errors.New("guild does not exist")
+}
+func (c *CacheLFU) GetMember(guildID, userID Snowflake) (*Member, error) {
+	var user *User
+	var member *Member
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		user, _ = c.GetUser(userID)
+		wg.Done()
+	}()
+
+	c.Guilds.RLock()
+	if cachedItem, exists := c.Guilds.Get(guildID); exists {
+		guild := cachedItem.Val.(*Guild)
+		member, _ = guild.Member(userID)
+	}
+	c.Guilds.RUnlock()
+
+	wg.Wait()
+
+	if member != nil {
+		member.User = user
+		return member, nil
+	} else {
+		return nil, nil
+	}
+}
+func (c *CacheLFU) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
+	c.Guilds.RLock()
+	defer c.Guilds.RUnlock()
+
+	if cachedItem, exists := c.Guilds.Get(guildID); exists {
+		guild := cachedItem.Val.(*Guild)
+		return guild.Roles, nil
+	}
+	return nil, errors.New("guild does not exist")
+}
+func (c *CacheLFU) GetCurrentUser() (*User, error) {
+	c.CurrentUserMu.Lock()
+	defer c.CurrentUserMu.Unlock()
+
+	return c.CurrentUser, nil
+}
+func (c *CacheLFU) GetUser(id Snowflake) (*User, error) {
+	currentUser := func() *User {
+		c.CurrentUserMu.Lock()
+		defer c.CurrentUserMu.Unlock()
+
+		if id == c.CurrentUser.ID {
+			return c.CurrentUser
+		}
+		return nil
+	}
+	// hmmm.. ugly
+	if match := currentUser(); match != nil {
+		return match, nil
+	}
+
+	c.Users.RLock()
+	defer c.Users.RUnlock()
+
+	var user *User
+	if cachedItem, exists := c.Users.Get(id); exists {
+		user = cachedItem.Val.(*User)
+	}
+
+	return user, nil
+}
+func (c *CacheLFU) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
+	return nil, nil
+}
+func (c *CacheLFU) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+	return nil, nil
+}
+func (c *CacheLFU) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+	return nil, nil
 }
