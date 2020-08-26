@@ -63,13 +63,6 @@ type SocketHandler interface {
 	Emitter
 }
 
-// AuditLogsRESTer REST interface for all audit-logs endpoints
-type RESTAuditLogs interface {
-	// GetGuildAuditLogs Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
-	// Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-	GetGuildAuditLogs(ctx context.Context, guildID Snowflake, flags ...Flag) *guildAuditLogsBuilder
-}
-
 type RESTMessage interface {
 	// GetMessages Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
@@ -203,174 +196,13 @@ type RESTChannel interface {
 	KickParticipant(ctx context.Context, channelID, userID Snowflake, flags ...Flag) (err error)
 }
 
-// RESTEmoji REST interface for all emoji endpoints
-type RESTEmoji interface {
-	// GetGuildEmoji Returns an emoji object for the given guild and emoji IDs.
-	GetGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error)
-
-	// GetGuildEmojis Returns a list of emoji objects for the given guild.
-	GetGuildEmojis(ctx context.Context, id Snowflake, flags ...Flag) ([]*Emoji, error)
-
-	// CreateGuildEmoji Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
-	// Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
-	CreateGuildEmoji(ctx context.Context, guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
-
-	// UpdateGuildEmoji Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
-	// Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-	UpdateGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) *updateGuildEmojiBuilder
-
-	// DeleteGuildEmoji Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
-	// success. Fires a Guild Emojis Update Gateway event.
-	DeleteGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) error
-}
-
 // RESTGuild REST interface for all guild endpoints
 type RESTGuild interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
 
-	// GetGuild Returns the guild object for the given id.
-	GetGuild(ctx context.Context, id Snowflake, flags ...Flag) (*Guild, error)
-
-	// ModifyGuild Modify a guild's settings. Requires the 'MANAGE_GUILD' permission. Returns the updated guild
-	// object on success. Fires a Guild Update Gateway event.
-	UpdateGuild(ctx context.Context, id Snowflake, flags ...Flag) *updateGuildBuilder
-
-	// DeleteGuild Delete a guild permanently. User must be owner. Returns 204 No Content on success.
-	// Fires a Guild Delete Gateway event.
-	DeleteGuild(ctx context.Context, id Snowflake, flags ...Flag) error
-
-	// GetGuildChannels Returns a list of guild channel objects.
-	GetGuildChannels(ctx context.Context, id Snowflake, flags ...Flag) ([]*Channel, error)
-
-	// CreateGuildChannel Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
-	// Returns the new channel object on success. Fires a Channel Create Gateway event.
-	CreateGuildChannel(ctx context.Context, id Snowflake, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
-
-	// UpdateGuildChannelPositions Modify the positions of a set of channel objects for the guild.
-	// Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
-	// Gateway events.
-	UpdateGuildChannelPositions(ctx context.Context, id Snowflake, params []UpdateGuildChannelPositionsParams, flags ...Flag) error
-
-	// GetMember Returns a guild member object for the specified user.
-	GetMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (*Member, error)
-
-	// GetMembers uses the GetGuildMembers endpoint iteratively until your query params are met.
-	GetMembers(ctx context.Context, guildID Snowflake, params *GetMembersParams, flags ...Flag) ([]*Member, error)
-
-	// AddGuildMember Adds a user to the guild, provided you have a valid oauth2 access token for the user with
-	// the Guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
-	// already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
-	// CREATE_INSTANT_INVITE permission.
-	AddGuildMember(ctx context.Context, guildID, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
-
-	// ModifyGuildMember Modify attributes of a guild member. Returns a 204 empty response on success.
-	// Fires a Guild Member Update Gateway event.
-	UpdateGuildMember(ctx context.Context, guildID, userID Snowflake, flags ...Flag) *updateGuildMemberBuilder
-
-	// SetCurrentUserNick Modifies the nickname of the current user in a guild. Returns a 200
-	// with the nickname on success. Fires a Guild Member Update Gateway event.
-	SetCurrentUserNick(ctx context.Context, id Snowflake, nick string, flags ...Flag) (newNick string, err error)
-
-	// AddGuildMemberRole Adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
-	// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-	AddGuildMemberRole(ctx context.Context, guildID, userID, roleID Snowflake, flags ...Flag) error
-
-	// RemoveGuildMemberRole Removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
-	// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-	RemoveGuildMemberRole(ctx context.Context, guildID, userID, roleID Snowflake, flags ...Flag) error
-
-	// RemoveGuildMember Remove a member from a guild. Requires 'KICK_MEMBERS' permission.
-	// Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
-	KickMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error
-
-	// GetGuildBans Returns a list of ban objects for the Users banned from this guild. Requires the 'BAN_MEMBERS' permission.
-	GetGuildBans(ctx context.Context, id Snowflake, flags ...Flag) ([]*Ban, error)
-
-	// GetGuildBan Returns a ban object for the given user or a 404 not found if the ban cannot be found.
-	// Requires the 'BAN_MEMBERS' permission.
-	GetGuildBan(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (*Ban, error)
-
-	// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
-	// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
-	BanMember(ctx context.Context, guildID, userID Snowflake, params *BanMemberParams, flags ...Flag) error
-
-	// UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
-	// Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
-	UnbanMember(ctx context.Context, guildID, userID Snowflake, reason string, flags ...Flag) error
-
-	// GetGuildRoles Returns a list of role objects for the guild.
-	GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) ([]*Role, error)
-
-	GetMemberPermissions(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
-
-	// CreateGuildRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
-	// Returns the new role object on success. Fires a Guild Role Create Gateway event.
-	CreateGuildRole(ctx context.Context, id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
-
-	// UpdateGuildRolePositions Modify the positions of a set of role objects for the guild.
-	// Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
-	// Fires multiple Guild Role Update Gateway events.
-	UpdateGuildRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
-
-	// ModifyGuildRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.
-	// Returns the updated role on success. Fires a Guild Role Update Gateway event.
-	UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder)
-
-	// DeleteGuildRole Delete a guild role. Requires the 'MANAGE_ROLES' permission.
-	// Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
-	DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) error
-
-	// EstimatePruneMembersCount Returns an object with one 'pruned' key indicating the number of members that would be
-	// removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
-	EstimatePruneMembersCount(ctx context.Context, id Snowflake, days int, flags ...Flag) (estimate int, err error)
-
-	// PruneMembers Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
-	// The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
-	// if you need it. Fires multiple Guild Member Remove Gateway events.
-	PruneMembers(ctx context.Context, id Snowflake, days int, reason string, flags ...Flag) error
-
-	// GetGuildVoiceRegions Returns a list of voice region objects for the guild. Unlike the similar /voice route,
-	// this returns VIP servers when the guild is VIP-enabled.
-	GetGuildVoiceRegions(ctx context.Context, id Snowflake, flags ...Flag) ([]*VoiceRegion, error)
-
-	// GetGuildInvites Returns a list of invite objects (with invite metadata) for the guild.
-	// Requires the 'MANAGE_GUILD' permission.
-	GetGuildInvites(ctx context.Context, id Snowflake, flags ...Flag) ([]*Invite, error)
-
-	// GetGuildIntegrations Returns a list of integration objects for the guild.
-	// Requires the 'MANAGE_GUILD' permission.
-	GetGuildIntegrations(ctx context.Context, id Snowflake, flags ...Flag) ([]*Integration, error)
-
-	// CreateGuildIntegration Attach an integration object from the current user to the guild.
-	// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
-	// Fires a Guild Integrations Update Gateway event.
-	CreateGuildIntegration(ctx context.Context, guildID Snowflake, params *CreateGuildIntegrationParams, flags ...Flag) error
-
-	// UpdateGuildIntegration Modify the behavior and settings of a integration object for the guild.
-	// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
-	// Fires a Guild Integrations Update Gateway event.
-	UpdateGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error
-
-	// DeleteGuildIntegration Delete the attached integration object for the guild.
-	// Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
-	// Fires a Guild Integrations Update Gateway event.
-	DeleteGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, flags ...Flag) error
-
-	// SyncGuildIntegration Sync an integration. Requires the 'MANAGE_GUILD' permission.
-	// Returns a 204 empty response on success.
-	SyncGuildIntegration(ctx context.Context, guildID, integrationID Snowflake, flags ...Flag) error
-
-	// GetGuildEmbed Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
-	GetGuildEmbed(ctx context.Context, guildID Snowflake, flags ...Flag) (*GuildEmbed, error)
-
-	// UpdateGuildEmbed Modify a guild embed object for the guild. All attributes may be passed in with JSON and
-	// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
-	UpdateGuildEmbed(ctx context.Context, guildID Snowflake, flags ...Flag) *updateGuildEmbedBuilder
-
-	// GetGuildVanityURL Returns a partial invite object for Guilds with that feature enabled.
-	// Requires the 'MANAGE_GUILD' permission.
-	GetGuildVanityURL(ctx context.Context, guildID Snowflake, flags ...Flag) (*PartialInvite, error)
+	// Guild is used to create a guild query builder.
+	Guild(id Snowflake) GuildQueryBuilder
 }
 
 // RESTInvite REST interface for all invite endpoints
@@ -432,9 +264,6 @@ type RESTWebhook interface {
 	// GetChannelWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 	GetChannelWebhooks(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Webhook, err error)
 
-	// GetGuildWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-	GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Webhook, err error)
-
 	// GetWebhook Returns the new webhook object for the given id.
 	GetWebhook(ctx context.Context, id Snowflake, flags ...Flag) (ret *Webhook, err error)
 
@@ -468,19 +297,12 @@ type RESTWebhook interface {
 
 // RESTer holds all the sub REST interfaces
 type RESTMethods interface {
-	RESTAuditLogs
 	RESTChannel
-	RESTEmoji
 	RESTGuild
 	RESTInvite
 	RESTUser
 	RESTVoice
 	RESTWebhook
-}
-
-// VoiceHandler holds all the voice connection related methods
-type VoiceHandler interface {
-	VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error)
 }
 
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
@@ -526,15 +348,10 @@ type Session interface {
 	// Custom REST functions
 	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
 
-	KickVoiceParticipant(ctx context.Context, guildID, userID Snowflake) error
-
 	// Status update functions
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
 
 	GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error)
 	GetConnectedGuilds() []Snowflake
-
-	// Voice handler, responsible for opening up new voice channel connections
-	VoiceHandler
 }

@@ -696,10 +696,6 @@ func (c *Client) GetGuilds(ctx context.Context, params *GetCurrentUserGuildsPara
 	return c.GetCurrentUserGuilds(ctx, params)
 }
 
-func (c *Client) KickVoiceParticipant(ctx context.Context, guildID, userID Snowflake) error {
-	return c.UpdateGuildMember(ctx, guildID, userID).KickFromVoice().Execute()
-}
-
 // SendMsg should convert all inputs into a single message. If you supply a object with an ID
 // such as a channel, message, role, etc. It will become a reference.  If say the Message provided
 // does not have an ID, the Message will populate a CreateMessage with it's fields.

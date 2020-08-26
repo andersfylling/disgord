@@ -1,12 +1,5 @@
 package disgord
 
-import (
-	"context"
-
-	"github.com/andersfylling/disgord/internal/endpoint"
-	"github.com/andersfylling/disgord/internal/httd"
-)
-
 type AuditLogEvt uint
 
 // Audit-log event types
@@ -270,27 +263,6 @@ func (l *AuditLogChanges) CopyOverTo(other interface{}) (err error) {
 // auditLogFactory temporary until flyweight is implemented
 func auditLogFactory() interface{} {
 	return &AuditLog{}
-}
-
-// GetGuildAuditLogs [REST] Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
-// Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-//  Method                   GET
-//  Endpoint                 /guilds/{guild.id}/audit-logs
-//  Discord documentation    https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log
-//  Reviewed                 2018-06-05
-//  Comment                  -
-//  Note                     Check the last entry in the cacheLink, to avoid fetching data we already got
-func (c *Client) GetGuildAuditLogs(ctx context.Context, guildID Snowflake, flags ...Flag) (builder *guildAuditLogsBuilder) {
-	builder = &guildAuditLogsBuilder{}
-	builder.r.itemFactory = auditLogFactory
-	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(c.req, &httd.Request{
-		Ctx:      ctx,
-		Method:   httd.MethodGet,
-		Endpoint: endpoint.GuildAuditLogs(guildID),
-	}, nil)
-
-	return builder
 }
 
 //////////////////////////////////////////////////////

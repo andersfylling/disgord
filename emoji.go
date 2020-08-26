@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/andersfylling/disgord/internal/endpoint"
-	"github.com/andersfylling/disgord/internal/httd"
 )
 
 func validEmojiName(name string) bool {
@@ -113,7 +110,7 @@ func (e *Emoji) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag)
 		return
 	}
 
-	return s.DeleteGuildEmoji(ctx, e.guildID, e.ID, flags...)
+	return s.Guild(e.guildID).DeleteEmoji(ctx, e.ID, flags...)
 }
 
 //////////////////////////////////////////////////////
@@ -128,60 +125,6 @@ func (e *Emoji) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag)
 //
 //////////////////////////////////////////////////////
 
-// GetGuildEmoji [REST] Returns an emoji object for the given guild and emoji IDs.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/emoji#get-guild-emoji
-//  Reviewed                2019-02-20
-//  Comment                 -
-func (c *Client) GetGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
-	if emoji, _ := c.cache.GetGuildEmoji(guildID, emojiID); emoji != nil {
-		return emoji, nil
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
-		Ctx:      ctx,
-	}, flags)
-	r.pool = c.pool.emoji
-	r.factory = func() interface{} {
-		return &Emoji{}
-	}
-
-	return getEmoji(r.Execute)
-}
-
-// GetGuildEmojis [REST] Returns a list of emoji objects for the given guild.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/emojis
-//  Discord documentation   https://discord.com/developers/docs/resources/emoji#list-guild-emojis
-//  Reviewed                2018-06-10
-//  Comment                 -
-func (c *Client) GetGuildEmojis(ctx context.Context, guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
-	if emojis, _ := c.cache.GetGuildEmojis(guildID); emojis != nil {
-		return emojis, nil
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildEmojis(guildID),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		tmp := make([]*Emoji, 0)
-		return &tmp
-	}
-
-	var vs interface{}
-	if vs, err = r.Execute(); err != nil {
-		return nil, err
-	}
-
-	if ems, ok := vs.(*[]*Emoji); ok {
-		return *ems, nil
-	}
-	return vs.([]*Emoji), nil
-}
-
 // CreateGuildEmojiParams JSON params for func CreateGuildEmoji
 type CreateGuildEmojiParams struct {
 	Name  string      `json:"name"`  // required
@@ -190,91 +133,6 @@ type CreateGuildEmojiParams struct {
 
 	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
 	Reason string `json:"-"`
-}
-
-// CreateGuildEmoji [REST] Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
-// Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
-//  Method                  POST
-//  Endpoint                /guilds/{guild.id}/emojis
-//  Discord documentation   https://discord.com/developers/docs/resources/emoji#create-guild-emoji
-//  Reviewed                2019-02-20
-//  Comment                 Emojis and animated emojis have a maximum file size of 256kb. Attempting to upload
-//                          an emoji larger than this limit will fail and return 400 Bad Request and an
-//                          error message, but not a JSON status code.
-func (c *Client) CreateGuildEmoji(ctx context.Context, guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (emoji *Emoji, err error) {
-	if guildID.IsZero() {
-		return nil, errors.New("guildID must be set, was " + guildID.String())
-	}
-
-	if params == nil {
-		return nil, errors.New("params object can not be nil")
-	}
-	if !validEmojiName(params.Name) {
-		return nil, errors.New("invalid emoji name")
-	}
-	if !validAvatarPrefix(params.Image) {
-		return nil, errors.New("image string must be base64 encoded with base64 prefix")
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildEmojis(guildID),
-		ContentType: httd.ContentTypeJSON,
-		Body:        params,
-		Reason:      params.Reason,
-	}, flags)
-	r.pool = c.pool.emoji
-	r.factory = func() interface{} {
-		return &Emoji{}
-	}
-
-	return getEmoji(r.Execute)
-}
-
-// UpdateGuildEmoji [REST] Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
-// Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-//  Method                  PATCH
-//  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/emoji#modify-guild-emoji
-//  Reviewed                2019-02-20
-//  Comment                 -
-func (c *Client) UpdateGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (builder *updateGuildEmojiBuilder) {
-	//if !validEmojiName(params.Name) {
-	//	err = errors.New("emoji name contains illegal characters. Did not send request")
-	//	return
-	//}
-	builder = &updateGuildEmojiBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Emoji{guildID: guildID}
-	}
-	builder.r.flags = flags
-	builder.r.setup(c.req, &httd.Request{
-		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
-
-	return builder
-}
-
-// DeleteGuildEmoji [REST] Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
-// success. Fires a Guild Emojis Update Gateway event.
-//  Method                  DELETE
-//  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/emoji#delete-guild-emoji
-//  Reviewed                2018-06-10
-//  Comment                 -
-func (c *Client) DeleteGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
-		Ctx:      ctx,
-	}, flags)
-
-	_, err = r.Execute()
-	return
 }
 
 //////////////////////////////////////////////////////
