@@ -101,7 +101,7 @@ func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 		return nil
 	}
 
-	p, err := f.s.GetMemberPermissions(context.Background(), msg.GuildID, uID)
+	p, err := f.s.Guild(msg.GuildID).GetMemberPermissions(context.Background(), uID)
 	if err != nil {
 		return nil
 	}
