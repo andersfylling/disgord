@@ -17,7 +17,7 @@ func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   log, // optional logging
-		Cache: &disgord.CacheNop{},
+		Cache:    &disgord.CacheNop{},
 	})
 	run(client)
 }

@@ -231,6 +231,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*guildPruneCount:
 		s = *t
+	case *[]*guildQueryBuilder:
+		s = *t
 	case *[]*nickNameResponse:
 		s = *t
 	case *[]*pruneMembersParams:
@@ -242,6 +244,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*updateGuildEmbedBuilder:
 		s = *t
 	case *[]*updateGuildMemberBuilder:
+		s = *t
+	case *[]*guildQueryBuilderBlank:
 		s = *t
 	case *[]*GetInviteParams:
 		s = *t
