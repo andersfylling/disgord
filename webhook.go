@@ -124,25 +124,6 @@ func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, fl
 	return getWebhooks(r.Execute)
 }
 
-// GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-guild-webhooks
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildWebhooks(guildID),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		tmp := make([]*Webhook, 0)
-		return &tmp
-	}
-
-	return getWebhooks(r.Execute)
-}
-
 // GetWebhook [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}

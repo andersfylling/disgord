@@ -170,7 +170,7 @@ func getFiles(path string) (files []string, err error) {
 
 	for i := range results {
 		isGoFile := strings.HasSuffix(results[i], ".go")
-		isInSubDir := strings.Contains(results[i], "/")
+		isInSubDir := strings.Contains(results[i], string(os.PathSeparator))
 		isTestFile := strings.HasSuffix(results[i], "_test.go")
 		isGenFile := strings.HasSuffix(results[i], "_gen.go")
 		if results[i] == path || !isGoFile || isInSubDir || isTestFile || isGenFile {

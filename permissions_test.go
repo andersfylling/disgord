@@ -13,8 +13,17 @@ type permissionTestingSession struct {
 	getFakeRole bool
 }
 
-func (p *permissionTestingSession) GetGuildRoles(_ context.Context, _ Snowflake, _ ...Flag) ([]*Role, error) {
-	if p.getFakeRole {
+type permissionTestingGuildBuilder struct {
+	guildQueryBuilderBlank
+	p *permissionTestingSession
+}
+
+func (p *permissionTestingSession) Guild(_ Snowflake) GuildQueryBuilder {
+	return &permissionTestingGuildBuilder{p: p}
+}
+
+func (p *permissionTestingGuildBuilder) GetRoles(_ context.Context, _ ...Flag) ([]*Role, error) {
+	if p.p.getFakeRole {
 		return []*Role{fakePermissionsRole}, nil
 	}
 	return []*Role{}, nil

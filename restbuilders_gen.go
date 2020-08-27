@@ -4,51 +4,64 @@ package disgord
 // Warning: This file is overwritten by the "go generate" command
 // This file holds all the basic RESTBuilder methods a builder is expected to.
 
+// GuildAuditLogsBuilder is the interface for the builder.
+type GuildAuditLogsBuilder interface {
+	Execute() (log *AuditLog, err error)
+	IgnoreCache() GuildAuditLogsBuilder
+	CancelOnRatelimit() GuildAuditLogsBuilder
+	URLParam(name string, v interface{}) GuildAuditLogsBuilder
+	Set(name string, v interface{}) GuildAuditLogsBuilder
+	SetUserID(userID Snowflake) GuildAuditLogsBuilder
+	SetActionType(actionType uint) GuildAuditLogsBuilder
+	SetBefore(before Snowflake) GuildAuditLogsBuilder
+	SetLimit(limit int) GuildAuditLogsBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *guildAuditLogsBuilder) IgnoreCache() *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) IgnoreCache() GuildAuditLogsBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *guildAuditLogsBuilder) CancelOnRatelimit() *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) CancelOnRatelimit() GuildAuditLogsBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *guildAuditLogsBuilder) URLParam(name string, v interface{}) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) URLParam(name string, v interface{}) GuildAuditLogsBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *guildAuditLogsBuilder) Set(name string, v interface{}) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) Set(name string, v interface{}) GuildAuditLogsBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *guildAuditLogsBuilder) SetUserID(userID Snowflake) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) SetUserID(userID Snowflake) GuildAuditLogsBuilder {
 	b.r.addPrereq(userID.IsZero(), "userID can not be 0")
 	b.r.param("user_id", userID)
 	return b
 }
 
-func (b *guildAuditLogsBuilder) SetActionType(actionType uint) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) SetActionType(actionType uint) GuildAuditLogsBuilder {
 	b.r.param("action_type", actionType)
 	return b
 }
 
-func (b *guildAuditLogsBuilder) SetBefore(before Snowflake) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) SetBefore(before Snowflake) GuildAuditLogsBuilder {
 	b.r.addPrereq(before.IsZero(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
 
-func (b *guildAuditLogsBuilder) SetLimit(limit int) *guildAuditLogsBuilder {
+func (b *guildAuditLogsBuilder) SetLimit(limit int) GuildAuditLogsBuilder {
 	b.r.param("limit", limit)
 	return b
 }
@@ -61,49 +74,62 @@ func (b *guildAuditLogsBuilder) Execute() (log *AuditLog, err error) {
 	return v.(*AuditLog), nil
 }
 
+// CreateChannelInviteBuilder is the interface for the builder.
+type CreateChannelInviteBuilder interface {
+	Execute() (invite *Invite, err error)
+	IgnoreCache() CreateChannelInviteBuilder
+	CancelOnRatelimit() CreateChannelInviteBuilder
+	URLParam(name string, v interface{}) CreateChannelInviteBuilder
+	Set(name string, v interface{}) CreateChannelInviteBuilder
+	SetMaxAge(maxAge int) CreateChannelInviteBuilder
+	SetMaxUses(maxUses int) CreateChannelInviteBuilder
+	SetTemporary(temporary bool) CreateChannelInviteBuilder
+	SetUnique(unique bool) CreateChannelInviteBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *createChannelInviteBuilder) IgnoreCache() *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) IgnoreCache() CreateChannelInviteBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *createChannelInviteBuilder) CancelOnRatelimit() *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) CancelOnRatelimit() CreateChannelInviteBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *createChannelInviteBuilder) URLParam(name string, v interface{}) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) URLParam(name string, v interface{}) CreateChannelInviteBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *createChannelInviteBuilder) Set(name string, v interface{}) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) Set(name string, v interface{}) CreateChannelInviteBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *createChannelInviteBuilder) SetMaxAge(maxAge int) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) SetMaxAge(maxAge int) CreateChannelInviteBuilder {
 	b.r.param("max_age", maxAge)
 	return b
 }
 
-func (b *createChannelInviteBuilder) SetMaxUses(maxUses int) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) SetMaxUses(maxUses int) CreateChannelInviteBuilder {
 	b.r.param("max_uses", maxUses)
 	return b
 }
 
-func (b *createChannelInviteBuilder) SetTemporary(temporary bool) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) SetTemporary(temporary bool) CreateChannelInviteBuilder {
 	b.r.param("temporary", temporary)
 	return b
 }
 
-func (b *createChannelInviteBuilder) SetUnique(unique bool) *createChannelInviteBuilder {
+func (b *createChannelInviteBuilder) SetUnique(unique bool) CreateChannelInviteBuilder {
 	b.r.param("unique", unique)
 	return b
 }
@@ -116,75 +142,93 @@ func (b *createChannelInviteBuilder) Execute() (invite *Invite, err error) {
 	return v.(*Invite), nil
 }
 
+// UpdateChannelBuilder is the interface for the builder.
+type UpdateChannelBuilder interface {
+	Execute() (channel *Channel, err error)
+	IgnoreCache() UpdateChannelBuilder
+	CancelOnRatelimit() UpdateChannelBuilder
+	URLParam(name string, v interface{}) UpdateChannelBuilder
+	Set(name string, v interface{}) UpdateChannelBuilder
+	SetParentID(parentID Snowflake) UpdateChannelBuilder
+	SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) UpdateChannelBuilder
+	SetUserLimit(userLimit uint) UpdateChannelBuilder
+	SetBitrate(bitrate uint) UpdateChannelBuilder
+	SetRateLimitPerUser(rateLimitPerUser uint) UpdateChannelBuilder
+	SetNsfw(nsfw bool) UpdateChannelBuilder
+	SetTopic(topic string) UpdateChannelBuilder
+	SetPosition(position int) UpdateChannelBuilder
+	SetName(name string) UpdateChannelBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateChannelBuilder) IgnoreCache() *updateChannelBuilder {
+func (b *updateChannelBuilder) IgnoreCache() UpdateChannelBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateChannelBuilder) CancelOnRatelimit() *updateChannelBuilder {
+func (b *updateChannelBuilder) CancelOnRatelimit() UpdateChannelBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateChannelBuilder) URLParam(name string, v interface{}) *updateChannelBuilder {
+func (b *updateChannelBuilder) URLParam(name string, v interface{}) UpdateChannelBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateChannelBuilder) Set(name string, v interface{}) *updateChannelBuilder {
+func (b *updateChannelBuilder) Set(name string, v interface{}) UpdateChannelBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateChannelBuilder) SetParentID(parentID Snowflake) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetParentID(parentID Snowflake) UpdateChannelBuilder {
 	b.r.addPrereq(parentID.IsZero(), "parentID can not be 0")
 	b.r.param("parent_id", parentID)
 	return b
 }
 
-func (b *updateChannelBuilder) SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) UpdateChannelBuilder {
 	b.r.param("permission_overwrites", permissionOverwrites)
 	return b
 }
 
-func (b *updateChannelBuilder) SetUserLimit(userLimit uint) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetUserLimit(userLimit uint) UpdateChannelBuilder {
 	b.r.param("user_limit", userLimit)
 	return b
 }
 
-func (b *updateChannelBuilder) SetBitrate(bitrate uint) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetBitrate(bitrate uint) UpdateChannelBuilder {
 	b.r.param("bitrate", bitrate)
 	return b
 }
 
-func (b *updateChannelBuilder) SetRateLimitPerUser(rateLimitPerUser uint) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetRateLimitPerUser(rateLimitPerUser uint) UpdateChannelBuilder {
 	b.r.param("rate_limit_per_user", rateLimitPerUser)
 	return b
 }
 
-func (b *updateChannelBuilder) SetNsfw(nsfw bool) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetNsfw(nsfw bool) UpdateChannelBuilder {
 	b.r.param("nsfw", nsfw)
 	return b
 }
 
-func (b *updateChannelBuilder) SetTopic(topic string) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetTopic(topic string) UpdateChannelBuilder {
 	b.r.param("topic", topic)
 	return b
 }
 
-func (b *updateChannelBuilder) SetPosition(position int) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetPosition(position int) UpdateChannelBuilder {
 	b.r.param("position", position)
 	return b
 }
 
-func (b *updateChannelBuilder) SetName(name string) *updateChannelBuilder {
+func (b *updateChannelBuilder) SetName(name string) UpdateChannelBuilder {
 	b.r.param("name", name)
 	return b
 }
@@ -197,34 +241,44 @@ func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// CreateGuildEmojiBuilder is the interface for the builder.
+type CreateGuildEmojiBuilder interface {
+	Execute() (emoji *Emoji, err error)
+	IgnoreCache() CreateGuildEmojiBuilder
+	CancelOnRatelimit() CreateGuildEmojiBuilder
+	URLParam(name string, v interface{}) CreateGuildEmojiBuilder
+	Set(name string, v interface{}) CreateGuildEmojiBuilder
+	SetRoles(roles []Snowflake) CreateGuildEmojiBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *createGuildEmojiBuilder) IgnoreCache() *createGuildEmojiBuilder {
+func (b *createGuildEmojiBuilder) IgnoreCache() CreateGuildEmojiBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *createGuildEmojiBuilder) CancelOnRatelimit() *createGuildEmojiBuilder {
+func (b *createGuildEmojiBuilder) CancelOnRatelimit() CreateGuildEmojiBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *createGuildEmojiBuilder) URLParam(name string, v interface{}) *createGuildEmojiBuilder {
+func (b *createGuildEmojiBuilder) URLParam(name string, v interface{}) CreateGuildEmojiBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *createGuildEmojiBuilder) Set(name string, v interface{}) *createGuildEmojiBuilder {
+func (b *createGuildEmojiBuilder) Set(name string, v interface{}) CreateGuildEmojiBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *createGuildEmojiBuilder) SetRoles(roles []Snowflake) *createGuildEmojiBuilder {
+func (b *createGuildEmojiBuilder) SetRoles(roles []Snowflake) CreateGuildEmojiBuilder {
 	b.r.param("roles", roles)
 	return b
 }
@@ -237,39 +291,50 @@ func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	return v.(*Emoji), nil
 }
 
+// UpdateGuildEmojiBuilder is the interface for the builder.
+type UpdateGuildEmojiBuilder interface {
+	Execute() (emoji *Emoji, err error)
+	IgnoreCache() UpdateGuildEmojiBuilder
+	CancelOnRatelimit() UpdateGuildEmojiBuilder
+	URLParam(name string, v interface{}) UpdateGuildEmojiBuilder
+	Set(name string, v interface{}) UpdateGuildEmojiBuilder
+	SetName(name string) UpdateGuildEmojiBuilder
+	SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildEmojiBuilder) IgnoreCache() *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) IgnoreCache() UpdateGuildEmojiBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildEmojiBuilder) CancelOnRatelimit() *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) CancelOnRatelimit() UpdateGuildEmojiBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildEmojiBuilder) URLParam(name string, v interface{}) *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) URLParam(name string, v interface{}) UpdateGuildEmojiBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildEmojiBuilder) Set(name string, v interface{}) *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) Set(name string, v interface{}) UpdateGuildEmojiBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateGuildEmojiBuilder) SetName(name string) *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) SetName(name string) UpdateGuildEmojiBuilder {
 	b.r.param("name", name)
 	return b
 }
 
-func (b *updateGuildEmojiBuilder) SetRoles(roles []Snowflake) *updateGuildEmojiBuilder {
+func (b *updateGuildEmojiBuilder) SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder {
 	b.r.param("roles", roles)
 	return b
 }
@@ -282,86 +347,106 @@ func (b *updateGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	return v.(*Emoji), nil
 }
 
+// UpdateGuildBuilder is the interface for the builder.
+type UpdateGuildBuilder interface {
+	Execute() (guild *Guild, err error)
+	IgnoreCache() UpdateGuildBuilder
+	CancelOnRatelimit() UpdateGuildBuilder
+	URLParam(name string, v interface{}) UpdateGuildBuilder
+	Set(name string, v interface{}) UpdateGuildBuilder
+	SetName(name string) UpdateGuildBuilder
+	SetRegion(region string) UpdateGuildBuilder
+	SetVerificationLevel(verificationLevel int) UpdateGuildBuilder
+	SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder
+	SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder
+	SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder
+	SetAfkTimeout(afkTimeout int) UpdateGuildBuilder
+	SetIcon(icon string) UpdateGuildBuilder
+	SetOwnerID(ownerID Snowflake) UpdateGuildBuilder
+	SetSplash(splash string) UpdateGuildBuilder
+	SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildBuilder) IgnoreCache() *updateGuildBuilder {
+func (b *updateGuildBuilder) IgnoreCache() UpdateGuildBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildBuilder) CancelOnRatelimit() *updateGuildBuilder {
+func (b *updateGuildBuilder) CancelOnRatelimit() UpdateGuildBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildBuilder) URLParam(name string, v interface{}) *updateGuildBuilder {
+func (b *updateGuildBuilder) URLParam(name string, v interface{}) UpdateGuildBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildBuilder) Set(name string, v interface{}) *updateGuildBuilder {
+func (b *updateGuildBuilder) Set(name string, v interface{}) UpdateGuildBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateGuildBuilder) SetName(name string) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetName(name string) UpdateGuildBuilder {
 	b.r.param("name", name)
 	return b
 }
 
-func (b *updateGuildBuilder) SetRegion(region string) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetRegion(region string) UpdateGuildBuilder {
 	b.r.param("region", region)
 	return b
 }
 
-func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) UpdateGuildBuilder {
 	b.r.param("verification_level", verificationLevel)
 	return b
 }
 
-func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder {
 	b.r.param("default_message_notifications", defaultMessageNotifications)
 	return b
 }
 
-func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder {
 	b.r.param("explicit_content_filter", explicitContentFilter)
 	return b
 }
 
-func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder {
 	b.r.addPrereq(afkChannelID.IsZero(), "afkChannelID can not be 0")
 	b.r.param("afk_channel_id", afkChannelID)
 	return b
 }
 
-func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) UpdateGuildBuilder {
 	b.r.param("afk_timeout", afkTimeout)
 	return b
 }
 
-func (b *updateGuildBuilder) SetIcon(icon string) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetIcon(icon string) UpdateGuildBuilder {
 	b.r.param("icon", icon)
 	return b
 }
 
-func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) UpdateGuildBuilder {
 	b.r.addPrereq(ownerID.IsZero(), "ownerID can not be 0")
 	b.r.param("owner_id", ownerID)
 	return b
 }
 
-func (b *updateGuildBuilder) SetSplash(splash string) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetSplash(splash string) UpdateGuildBuilder {
 	b.r.param("splash", splash)
 	return b
 }
 
-func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) *updateGuildBuilder {
+func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder {
 	b.r.addPrereq(systemChannelID.IsZero(), "systemChannelID can not be 0")
 	b.r.param("system_channel_id", systemChannelID)
 	return b
@@ -375,39 +460,50 @@ func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
 	return v.(*Guild), nil
 }
 
+// UpdateGuildEmbedBuilder is the interface for the builder.
+type UpdateGuildEmbedBuilder interface {
+	Execute() (embed *GuildEmbed, err error)
+	IgnoreCache() UpdateGuildEmbedBuilder
+	CancelOnRatelimit() UpdateGuildEmbedBuilder
+	URLParam(name string, v interface{}) UpdateGuildEmbedBuilder
+	Set(name string, v interface{}) UpdateGuildEmbedBuilder
+	SetEnabled(enabled bool) UpdateGuildEmbedBuilder
+	SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildEmbedBuilder) IgnoreCache() *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) IgnoreCache() UpdateGuildEmbedBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildEmbedBuilder) CancelOnRatelimit() *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) CancelOnRatelimit() UpdateGuildEmbedBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildEmbedBuilder) URLParam(name string, v interface{}) *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) URLParam(name string, v interface{}) UpdateGuildEmbedBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) UpdateGuildEmbedBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) UpdateGuildEmbedBuilder {
 	b.r.param("enabled", enabled)
 	return b
 }
 
-func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) *updateGuildEmbedBuilder {
+func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder {
 	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b
@@ -421,54 +517,71 @@ func (b *updateGuildEmbedBuilder) Execute() (embed *GuildEmbed, err error) {
 	return v.(*GuildEmbed), nil
 }
 
+// UpdateGuildMemberBuilder is the interface for the builder.
+type UpdateGuildMemberBuilder interface {
+	Execute() (err error)
+	IgnoreCache() UpdateGuildMemberBuilder
+	CancelOnRatelimit() UpdateGuildMemberBuilder
+	URLParam(name string, v interface{}) UpdateGuildMemberBuilder
+	Set(name string, v interface{}) UpdateGuildMemberBuilder
+	SetNick(nick string) UpdateGuildMemberBuilder
+	SetRoles(roles []Snowflake) UpdateGuildMemberBuilder
+	SetMute(mute bool) UpdateGuildMemberBuilder
+	SetDeaf(deaf bool) UpdateGuildMemberBuilder
+	SetChannelID(channelID Snowflake) UpdateGuildMemberBuilder
+
+	KickFromVoice() UpdateGuildMemberBuilder
+	DeleteNick() UpdateGuildMemberBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildMemberBuilder) IgnoreCache() *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) IgnoreCache() UpdateGuildMemberBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildMemberBuilder) CancelOnRatelimit() *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) CancelOnRatelimit() UpdateGuildMemberBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildMemberBuilder) URLParam(name string, v interface{}) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) URLParam(name string, v interface{}) UpdateGuildMemberBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildMemberBuilder) Set(name string, v interface{}) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) Set(name string, v interface{}) UpdateGuildMemberBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateGuildMemberBuilder) SetNick(nick string) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) SetNick(nick string) UpdateGuildMemberBuilder {
 	b.r.param("nick", nick)
 	return b
 }
 
-func (b *updateGuildMemberBuilder) SetRoles(roles []Snowflake) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) SetRoles(roles []Snowflake) UpdateGuildMemberBuilder {
 	b.r.param("roles", roles)
 	return b
 }
 
-func (b *updateGuildMemberBuilder) SetMute(mute bool) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) SetMute(mute bool) UpdateGuildMemberBuilder {
 	b.r.param("mute", mute)
 	return b
 }
 
-func (b *updateGuildMemberBuilder) SetDeaf(deaf bool) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) SetDeaf(deaf bool) UpdateGuildMemberBuilder {
 	b.r.param("deaf", deaf)
 	return b
 }
 
-func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) *updateGuildMemberBuilder {
+func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) UpdateGuildMemberBuilder {
 	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b
@@ -479,39 +592,50 @@ func (b *updateGuildMemberBuilder) Execute() (err error) {
 	return
 }
 
+// UpdateMessageBuilder is the interface for the builder.
+type UpdateMessageBuilder interface {
+	Execute() (message *Message, err error)
+	IgnoreCache() UpdateMessageBuilder
+	CancelOnRatelimit() UpdateMessageBuilder
+	URLParam(name string, v interface{}) UpdateMessageBuilder
+	Set(name string, v interface{}) UpdateMessageBuilder
+	SetContent(content string) UpdateMessageBuilder
+	SetEmbed(embed *Embed) UpdateMessageBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateMessageBuilder) IgnoreCache() *updateMessageBuilder {
+func (b *updateMessageBuilder) IgnoreCache() UpdateMessageBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateMessageBuilder) CancelOnRatelimit() *updateMessageBuilder {
+func (b *updateMessageBuilder) CancelOnRatelimit() UpdateMessageBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateMessageBuilder) URLParam(name string, v interface{}) *updateMessageBuilder {
+func (b *updateMessageBuilder) URLParam(name string, v interface{}) UpdateMessageBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateMessageBuilder) Set(name string, v interface{}) *updateMessageBuilder {
+func (b *updateMessageBuilder) Set(name string, v interface{}) UpdateMessageBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateMessageBuilder) SetContent(content string) *updateMessageBuilder {
+func (b *updateMessageBuilder) SetContent(content string) UpdateMessageBuilder {
 	b.r.param("content", content)
 	return b
 }
 
-func (b *updateMessageBuilder) SetEmbed(embed *Embed) *updateMessageBuilder {
+func (b *updateMessageBuilder) SetEmbed(embed *Embed) UpdateMessageBuilder {
 	b.r.param("embed", embed)
 	return b
 }
@@ -524,29 +648,38 @@ func (b *updateMessageBuilder) Execute() (message *Message, err error) {
 	return v.(*Message), nil
 }
 
+// BasicBuilder is the interface for the builder.
+type BasicBuilder interface {
+	Execute() (err error)
+	IgnoreCache() BasicBuilder
+	CancelOnRatelimit() BasicBuilder
+	URLParam(name string, v interface{}) BasicBuilder
+	Set(name string, v interface{}) BasicBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *basicBuilder) IgnoreCache() *basicBuilder {
+func (b *basicBuilder) IgnoreCache() BasicBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *basicBuilder) CancelOnRatelimit() *basicBuilder {
+func (b *basicBuilder) CancelOnRatelimit() BasicBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *basicBuilder) URLParam(name string, v interface{}) *basicBuilder {
+func (b *basicBuilder) URLParam(name string, v interface{}) BasicBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *basicBuilder) Set(name string, v interface{}) *basicBuilder {
+func (b *basicBuilder) Set(name string, v interface{}) BasicBuilder {
 	b.r.body[name] = v
 	return b
 }
@@ -556,54 +689,68 @@ func (b *basicBuilder) Execute() (err error) {
 	return
 }
 
+// UpdateGuildRoleBuilder is the interface for the builder.
+type UpdateGuildRoleBuilder interface {
+	Execute() (role *Role, err error)
+	IgnoreCache() UpdateGuildRoleBuilder
+	CancelOnRatelimit() UpdateGuildRoleBuilder
+	URLParam(name string, v interface{}) UpdateGuildRoleBuilder
+	Set(name string, v interface{}) UpdateGuildRoleBuilder
+	SetName(name string) UpdateGuildRoleBuilder
+	SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder
+	SetColor(color uint) UpdateGuildRoleBuilder
+	SetHoist(hoist bool) UpdateGuildRoleBuilder
+	SetMentionable(mentionable bool) UpdateGuildRoleBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildRoleBuilder) IgnoreCache() *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) IgnoreCache() UpdateGuildRoleBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildRoleBuilder) CancelOnRatelimit() *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) CancelOnRatelimit() UpdateGuildRoleBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildRoleBuilder) URLParam(name string, v interface{}) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) URLParam(name string, v interface{}) UpdateGuildRoleBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildRoleBuilder) Set(name string, v interface{}) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) Set(name string, v interface{}) UpdateGuildRoleBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetName(name string) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetName(name string) UpdateGuildRoleBuilder {
 	b.r.param("name", name)
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder {
 	b.r.param("permissions", permissions)
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetColor(color uint) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetColor(color uint) UpdateGuildRoleBuilder {
 	b.r.param("color", color)
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetHoist(hoist bool) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetHoist(hoist bool) UpdateGuildRoleBuilder {
 	b.r.param("hoist", hoist)
 	return b
 }
 
-func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) *updateGuildRoleBuilder {
+func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) UpdateGuildRoleBuilder {
 	b.r.param("mentionable", mentionable)
 	return b
 }
@@ -616,29 +763,38 @@ func (b *updateGuildRoleBuilder) Execute() (role *Role, err error) {
 	return v.(*Role), nil
 }
 
+// CreateDMBuilder is the interface for the builder.
+type CreateDMBuilder interface {
+	Execute() (channel *Channel, err error)
+	IgnoreCache() CreateDMBuilder
+	CancelOnRatelimit() CreateDMBuilder
+	URLParam(name string, v interface{}) CreateDMBuilder
+	Set(name string, v interface{}) CreateDMBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *createDMBuilder) IgnoreCache() *createDMBuilder {
+func (b *createDMBuilder) IgnoreCache() CreateDMBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *createDMBuilder) CancelOnRatelimit() *createDMBuilder {
+func (b *createDMBuilder) CancelOnRatelimit() CreateDMBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *createDMBuilder) URLParam(name string, v interface{}) *createDMBuilder {
+func (b *createDMBuilder) URLParam(name string, v interface{}) CreateDMBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *createDMBuilder) Set(name string, v interface{}) *createDMBuilder {
+func (b *createDMBuilder) Set(name string, v interface{}) CreateDMBuilder {
 	b.r.body[name] = v
 	return b
 }
@@ -651,29 +807,38 @@ func (b *createDMBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// CreateGroupDMBuilder is the interface for the builder.
+type CreateGroupDMBuilder interface {
+	Execute() (channel *Channel, err error)
+	IgnoreCache() CreateGroupDMBuilder
+	CancelOnRatelimit() CreateGroupDMBuilder
+	URLParam(name string, v interface{}) CreateGroupDMBuilder
+	Set(name string, v interface{}) CreateGroupDMBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *createGroupDMBuilder) IgnoreCache() *createGroupDMBuilder {
+func (b *createGroupDMBuilder) IgnoreCache() CreateGroupDMBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *createGroupDMBuilder) CancelOnRatelimit() *createGroupDMBuilder {
+func (b *createGroupDMBuilder) CancelOnRatelimit() CreateGroupDMBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *createGroupDMBuilder) URLParam(name string, v interface{}) *createGroupDMBuilder {
+func (b *createGroupDMBuilder) URLParam(name string, v interface{}) CreateGroupDMBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *createGroupDMBuilder) Set(name string, v interface{}) *createGroupDMBuilder {
+func (b *createGroupDMBuilder) Set(name string, v interface{}) CreateGroupDMBuilder {
 	b.r.body[name] = v
 	return b
 }
@@ -686,46 +851,58 @@ func (b *createGroupDMBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// GetCurrentUserGuildsBuilder is the interface for the builder.
+type GetCurrentUserGuildsBuilder interface {
+	Execute() (guilds []*Guild, err error)
+	IgnoreCache() GetCurrentUserGuildsBuilder
+	CancelOnRatelimit() GetCurrentUserGuildsBuilder
+	URLParam(name string, v interface{}) GetCurrentUserGuildsBuilder
+	Set(name string, v interface{}) GetCurrentUserGuildsBuilder
+	SetBefore(before Snowflake) GetCurrentUserGuildsBuilder
+	SetAfter(after Snowflake) GetCurrentUserGuildsBuilder
+	SetLimit(limit int) GetCurrentUserGuildsBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *getCurrentUserGuildsBuilder) IgnoreCache() *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) IgnoreCache() GetCurrentUserGuildsBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *getCurrentUserGuildsBuilder) CancelOnRatelimit() *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) CancelOnRatelimit() GetCurrentUserGuildsBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *getCurrentUserGuildsBuilder) URLParam(name string, v interface{}) *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) URLParam(name string, v interface{}) GetCurrentUserGuildsBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) Set(name string, v interface{}) GetCurrentUserGuildsBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) SetBefore(before Snowflake) GetCurrentUserGuildsBuilder {
 	b.r.addPrereq(before.IsZero(), "before can not be 0")
 	b.r.param("before", before)
 	return b
 }
 
-func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) SetAfter(after Snowflake) GetCurrentUserGuildsBuilder {
 	b.r.addPrereq(after.IsZero(), "after can not be 0")
 	b.r.param("after", after)
 	return b
 }
 
-func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) *getCurrentUserGuildsBuilder {
+func (b *getCurrentUserGuildsBuilder) SetLimit(limit int) GetCurrentUserGuildsBuilder {
 	b.r.param("limit", limit)
 	return b
 }
@@ -739,56 +916,73 @@ func (b *getCurrentUserGuildsBuilder) Execute() (guilds []*Guild, err error) {
 	return *tmp, nil
 }
 
+// GetUserBuilder is the interface for the builder.
+type GetUserBuilder interface {
+	IgnoreCache() GetUserBuilder
+	CancelOnRatelimit() GetUserBuilder
+	URLParam(name string, v interface{}) GetUserBuilder
+	Set(name string, v interface{}) GetUserBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *getUserBuilder) IgnoreCache() *getUserBuilder {
+func (b *getUserBuilder) IgnoreCache() GetUserBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *getUserBuilder) CancelOnRatelimit() *getUserBuilder {
+func (b *getUserBuilder) CancelOnRatelimit() GetUserBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *getUserBuilder) URLParam(name string, v interface{}) *getUserBuilder {
+func (b *getUserBuilder) URLParam(name string, v interface{}) GetUserBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *getUserBuilder) Set(name string, v interface{}) *getUserBuilder {
+func (b *getUserBuilder) Set(name string, v interface{}) GetUserBuilder {
 	b.r.body[name] = v
 	return b
 }
 
+// GetUserConnectionsBuilder is the interface for the builder.
+type GetUserConnectionsBuilder interface {
+	Execute() (cons []*UserConnection, err error)
+	IgnoreCache() GetUserConnectionsBuilder
+	CancelOnRatelimit() GetUserConnectionsBuilder
+	URLParam(name string, v interface{}) GetUserConnectionsBuilder
+	Set(name string, v interface{}) GetUserConnectionsBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *getUserConnectionsBuilder) IgnoreCache() *getUserConnectionsBuilder {
+func (b *getUserConnectionsBuilder) IgnoreCache() GetUserConnectionsBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *getUserConnectionsBuilder) CancelOnRatelimit() *getUserConnectionsBuilder {
+func (b *getUserConnectionsBuilder) CancelOnRatelimit() GetUserConnectionsBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *getUserConnectionsBuilder) URLParam(name string, v interface{}) *getUserConnectionsBuilder {
+func (b *getUserConnectionsBuilder) URLParam(name string, v interface{}) GetUserConnectionsBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *getUserConnectionsBuilder) Set(name string, v interface{}) *getUserConnectionsBuilder {
+func (b *getUserConnectionsBuilder) Set(name string, v interface{}) GetUserConnectionsBuilder {
 	b.r.body[name] = v
 	return b
 }
@@ -802,29 +996,38 @@ func (b *getUserConnectionsBuilder) Execute() (cons []*UserConnection, err error
 	return *tmp, nil
 }
 
+// GetUserDMsBuilder is the interface for the builder.
+type GetUserDMsBuilder interface {
+	Execute() (channels []*Channel, err error)
+	IgnoreCache() GetUserDMsBuilder
+	CancelOnRatelimit() GetUserDMsBuilder
+	URLParam(name string, v interface{}) GetUserDMsBuilder
+	Set(name string, v interface{}) GetUserDMsBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *getUserDMsBuilder) IgnoreCache() *getUserDMsBuilder {
+func (b *getUserDMsBuilder) IgnoreCache() GetUserDMsBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *getUserDMsBuilder) CancelOnRatelimit() *getUserDMsBuilder {
+func (b *getUserDMsBuilder) CancelOnRatelimit() GetUserDMsBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *getUserDMsBuilder) URLParam(name string, v interface{}) *getUserDMsBuilder {
+func (b *getUserDMsBuilder) URLParam(name string, v interface{}) GetUserDMsBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *getUserDMsBuilder) Set(name string, v interface{}) *getUserDMsBuilder {
+func (b *getUserDMsBuilder) Set(name string, v interface{}) GetUserDMsBuilder {
 	b.r.body[name] = v
 	return b
 }
@@ -838,39 +1041,50 @@ func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
 	return *tmp, nil
 }
 
+// UpdateCurrentUserBuilder is the interface for the builder.
+type UpdateCurrentUserBuilder interface {
+	Execute() (user *User, err error)
+	IgnoreCache() UpdateCurrentUserBuilder
+	CancelOnRatelimit() UpdateCurrentUserBuilder
+	URLParam(name string, v interface{}) UpdateCurrentUserBuilder
+	Set(name string, v interface{}) UpdateCurrentUserBuilder
+	SetUsername(username string) UpdateCurrentUserBuilder
+	SetAvatar(avatar string) UpdateCurrentUserBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateCurrentUserBuilder) IgnoreCache() *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) IgnoreCache() UpdateCurrentUserBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateCurrentUserBuilder) CancelOnRatelimit() *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) CancelOnRatelimit() UpdateCurrentUserBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateCurrentUserBuilder) URLParam(name string, v interface{}) *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) URLParam(name string, v interface{}) UpdateCurrentUserBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateCurrentUserBuilder) Set(name string, v interface{}) *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) Set(name string, v interface{}) UpdateCurrentUserBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateCurrentUserBuilder) SetUsername(username string) *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) SetUsername(username string) UpdateCurrentUserBuilder {
 	b.r.param("username", username)
 	return b
 }
 
-func (b *updateCurrentUserBuilder) SetAvatar(avatar string) *updateCurrentUserBuilder {
+func (b *updateCurrentUserBuilder) SetAvatar(avatar string) UpdateCurrentUserBuilder {
 	b.r.param("avatar", avatar)
 	return b
 }
@@ -883,44 +1097,56 @@ func (b *updateCurrentUserBuilder) Execute() (user *User, err error) {
 	return v.(*User), nil
 }
 
+// UpdateWebhookBuilder is the interface for the builder.
+type UpdateWebhookBuilder interface {
+	Execute() (webhook *Webhook, err error)
+	IgnoreCache() UpdateWebhookBuilder
+	CancelOnRatelimit() UpdateWebhookBuilder
+	URLParam(name string, v interface{}) UpdateWebhookBuilder
+	Set(name string, v interface{}) UpdateWebhookBuilder
+	SetName(name string) UpdateWebhookBuilder
+	SetAvatar(avatar string) UpdateWebhookBuilder
+	SetChannelID(channelID Snowflake) UpdateWebhookBuilder
+}
+
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
 // a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateWebhookBuilder) IgnoreCache() *updateWebhookBuilder {
+func (b *updateWebhookBuilder) IgnoreCache() UpdateWebhookBuilder {
 	b.r.IgnoreCache()
 	return b
 }
 
 // CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateWebhookBuilder) CancelOnRatelimit() *updateWebhookBuilder {
+func (b *updateWebhookBuilder) CancelOnRatelimit() UpdateWebhookBuilder {
 	b.r.CancelOnRatelimit()
 	return b
 }
 
 // URLParam adds or updates an existing URL parameter.
 // eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateWebhookBuilder) URLParam(name string, v interface{}) *updateWebhookBuilder {
+func (b *updateWebhookBuilder) URLParam(name string, v interface{}) UpdateWebhookBuilder {
 	b.r.queryParam(name, v)
 	return b
 }
 
 // Set adds or updates an existing a body parameter
 // eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateWebhookBuilder) Set(name string, v interface{}) *updateWebhookBuilder {
+func (b *updateWebhookBuilder) Set(name string, v interface{}) UpdateWebhookBuilder {
 	b.r.body[name] = v
 	return b
 }
 
-func (b *updateWebhookBuilder) SetName(name string) *updateWebhookBuilder {
+func (b *updateWebhookBuilder) SetName(name string) UpdateWebhookBuilder {
 	b.r.param("name", name)
 	return b
 }
 
-func (b *updateWebhookBuilder) SetAvatar(avatar string) *updateWebhookBuilder {
+func (b *updateWebhookBuilder) SetAvatar(avatar string) UpdateWebhookBuilder {
 	b.r.param("avatar", avatar)
 	return b
 }
 
-func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) *updateWebhookBuilder {
+func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) UpdateWebhookBuilder {
 	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
 	b.r.param("channel_id", channelID)
 	return b

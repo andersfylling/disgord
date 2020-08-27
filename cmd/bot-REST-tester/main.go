@@ -52,7 +52,7 @@ func main() {
 	// -------------------
 	// AUDIT-LOGS
 	// -------------------
-	logs, err := c.GetGuildAuditLogs(context.Background(), keys.GuildAdmin).Execute()
+	logs, err := c.Guild(keys.GuildAdmin).GetAuditLogs(context.Background()).Execute()
 	if err != nil {
 		panic(err)
 	} else if logs == nil {
@@ -76,7 +76,7 @@ func main() {
 
 	// create
 	func() {
-		channel, err := c.CreateGuildChannel(context.Background(), keys.GuildAdmin, "test", nil)
+		channel, err := c.Guild(keys.GuildAdmin).CreateChannel(context.Background(), "test", nil)
 		if err != nil {
 			panic("cannot create channel, therefore skipped")
 		} else if channel.ID.IsZero() {
@@ -213,7 +213,7 @@ func main() {
 
 	// TestListGuildEmojis
 	func() {
-		emojis, err := c.GetGuildEmojis(context.Background(), keys.GuildDefault)
+		emojis, err := c.Guild(keys.GuildDefault).GetEmojis(context.Background())
 		if err != nil && !notARateLimitIssue(err) {
 			panic("rate limited")
 		}
@@ -236,7 +236,7 @@ func main() {
 			return
 		}
 
-		emoji, err := c.GetGuildEmoji(context.Background(), keys.GuildDefault, emojiID)
+		emoji, err := c.Guild(keys.GuildDefault).GetEmoji(context.Background(), emojiID)
 		if err != nil && !notARateLimitIssue(err) {
 			panic("rate limited")
 		} else if err != nil && notARateLimitIssue(err) {
@@ -255,7 +255,7 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{Name: "testing4324", Image: randomBase64Emoji})
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(context.Background(), &disgord.CreateGuildEmojiParams{Name: "testing4324", Image: randomBase64Emoji})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -270,7 +270,7 @@ func main() {
 
 		// delete created emoji
 		func() {
-			err := c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err := c.Guild(keys.GuildDefault).DeleteEmoji(context.Background(), emoji.ID)
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -288,7 +288,7 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{Name: "test6547465", Image: randomBase64Emoji})
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(context.Background(), &disgord.CreateGuildEmojiParams{Name: "test6547465", Image: randomBase64Emoji})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -300,7 +300,7 @@ func main() {
 
 		// modify emoji
 		func() {
-			_, err = c.UpdateGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID).SetName(newName).Execute()
+			_, err = c.Guild(keys.GuildDefault).UpdateEmoji(context.Background(), emoji.ID).SetName(newName).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -311,7 +311,7 @@ func main() {
 		// delete created emoji
 		func() {
 			time.Sleep(1 * time.Second) // just ensure that this get's run
-			err = c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err = c.Guild(keys.GuildDefault).DeleteEmoji(context.Background(), emoji.ID)
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -333,7 +333,7 @@ func main() {
 		// create emoji
 		func() {
 
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{
+			emoji, err = c.Guild(keys.GuildAdmin).CreateEmoji(context.Background(), &disgord.CreateGuildEmojiParams{
 				Name:  illegalNames[0],
 				Image: randomBase64Emoji,
 			})
@@ -356,7 +356,7 @@ func main() {
 			if !mustDelete {
 				panic("no new emoji created")
 			}
-			err = c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err = c.Guild(keys.GuildDefault).DeleteEmoji(context.Background(), emoji.ID)
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
