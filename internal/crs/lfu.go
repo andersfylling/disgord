@@ -71,7 +71,7 @@ func (list *LFU) ClearTableNils() {
 			size++
 		}
 	}
-	// TODO: create a tmp slice which holds only valid entries, and loop through those instead of re-looping?
+
 	newTable := make(map[Snowflake]int, list.limit)
 	for key := range list.table {
 		if list.table[key] != -1 {

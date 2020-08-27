@@ -1,1 +1,121 @@
-{"widget_enabled":false,"widget_channel_id":null,"verification_level":0,"system_channel_id":null,"splash":null,"roles":[{"position":0,"permissions":103810048,"name":"@everyone","mentionable":false,"managed":false,"id":"244200618854580224","hoist":false,"color":0},{"position":7,"permissions":2138569855,"name":"developers","mentionable":true,"managed":false,"id":"244241390555365376","hoist":true,"color":15105570},{"position":5,"permissions":103810048,"name":"anders","mentionable":false,"managed":false,"id":"280876692501823489","hoist":false,"color":0},{"position":3,"permissions":1182133313,"name":"Tester","mentionable":true,"managed":false,"id":"284406866828722176","hoist":true,"color":3066993},{"position":4,"permissions":103810048,"name":"random","mentionable":true,"managed":false,"id":"282972162221146113","hoist":false,"color":15277667},{"position":1,"permissions":103810048,"name":"Bot","mentionable":false,"managed":false,"id":"404055264887832577","hoist":false,"color":0},{"position":2,"permissions":103812096,"name":"Member","mentionable":false,"managed":false,"id":"377890198677094401","hoist":true,"color":15158332},{"position":6,"permissions":1379400777,"name":"Bot","mentionable":true,"managed":false,"id":"244241652561084416","hoist":false,"color":15844367}],"region":"amsterdam","owner_id":"228846961774559232","name":"stackguru123","mfa_level":0,"id":"244200618854580224","icon":"70af5e246b1e7d7696571dcc60189a19","features":[],"explicit_content_filter":0,"emojis":[{"roles":[],"require_colons":true,"name":"examine_a","managed":false,"id":"364924334835236865","animated":false},{"roles":[],"require_colons":true,"name":"notable","managed":false,"id":"364926147978592256","animated":false}],"embed_enabled":false,"embed_channel_id":null,"default_message_notifications":1,"application_id":null,"afk_timeout":300,"afk_channel_id":null}
+{
+  "widget_enabled": false,
+  "widget_channel_id": null,
+  "verification_level": 0,
+  "system_channel_id": null,
+  "splash": null,
+  "roles": [
+    {
+      "position": 0,
+      "permissions": 103810048,
+      "name": "@everyone",
+      "mentionable": false,
+      "managed": false,
+      "id": "244200618854580224",
+      "hoist": false,
+      "color": 0
+    },
+    {
+      "position": 7,
+      "permissions": 2138569855,
+      "name": "developers",
+      "mentionable": true,
+      "managed": false,
+      "id": "244241390555365376",
+      "hoist": true,
+      "color": 15105570
+    },
+    {
+      "position": 5,
+      "permissions": 103810048,
+      "name": "anders",
+      "mentionable": false,
+      "managed": false,
+      "id": "280876692501823489",
+      "hoist": false,
+      "color": 0
+    },
+    {
+      "position": 3,
+      "permissions": 1182133313,
+      "name": "Tester",
+      "mentionable": true,
+      "managed": false,
+      "id": "284406866828722176",
+      "hoist": true,
+      "color": 3066993
+    },
+    {
+      "position": 4,
+      "permissions": 103810048,
+      "name": "random",
+      "mentionable": true,
+      "managed": false,
+      "id": "282972162221146113",
+      "hoist": false,
+      "color": 15277667
+    },
+    {
+      "position": 1,
+      "permissions": 103810048,
+      "name": "Bot",
+      "mentionable": false,
+      "managed": false,
+      "id": "404055264887832577",
+      "hoist": false,
+      "color": 0
+    },
+    {
+      "position": 2,
+      "permissions": 103812096,
+      "name": "Member",
+      "mentionable": false,
+      "managed": false,
+      "id": "377890198677094401",
+      "hoist": true,
+      "color": 15158332
+    },
+    {
+      "position": 6,
+      "permissions": 1379400777,
+      "name": "Bot",
+      "mentionable": true,
+      "managed": false,
+      "id": "244241652561084416",
+      "hoist": false,
+      "color": 15844367
+    }
+  ],
+  "region": "amsterdam",
+  "owner_id": "228846961774559232",
+  "name": "stackguru123",
+  "mfa_level": 0,
+  "id": "244200618854580224",
+  "icon": "70af5e246b1e7d7696571dcc60189a19",
+  "features": [],
+  "explicit_content_filter": 0,
+  "emojis": [
+    {
+      "roles": [],
+      "require_colons": true,
+      "name": "examine_a",
+      "managed": false,
+      "id": "364924334835236865",
+      "animated": false
+    },
+    {
+      "roles": [],
+      "require_colons": true,
+      "name": "notable",
+      "managed": false,
+      "id": "364926147978592256",
+      "animated": false
+    }
+  ],
+  "embed_enabled": false,
+  "embed_channel_id": null,
+  "default_message_notifications": 1,
+  "application_id": null,
+  "afk_timeout": 300,
+  "afk_channel_id": null
+}
