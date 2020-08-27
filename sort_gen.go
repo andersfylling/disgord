@@ -63,7 +63,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*guildAuditLogsBuilder:
 		s = *t
-	case *[]*CacheLFU:
+	case *[]*CacheLFUImmutable:
 		s = *t
 	case *[]*idHolder:
 		s = *t
