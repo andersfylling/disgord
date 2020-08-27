@@ -227,6 +227,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
 		s = *t
+	case *[]*channelFilterHandler:
+		s = *t
+	case *[]*emojiFilterHandler:
+		s = *t
 	case *[]*getGuildMembersParams:
 		s = *t
 	case *[]*guildPruneCount:
@@ -236,6 +240,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*nickNameResponse:
 		s = *t
 	case *[]*pruneMembersParams:
+		s = *t
+	case *[]*roleFilterHandler:
 		s = *t
 	case *[]*updateCurrentUserNickParams:
 		s = *t

@@ -196,15 +196,6 @@ type RESTChannel interface {
 	KickParticipant(ctx context.Context, channelID, userID Snowflake, flags ...Flag) (err error)
 }
 
-// RESTGuild REST interface for all guild endpoints
-type RESTGuild interface {
-	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
-
-	// Guild is used to create a guild query builder.
-	Guild(id Snowflake) GuildQueryBuilder
-}
-
 // RESTInvite REST interface for all invite endpoints
 type RESTInvite interface {
 	// GetInvite Returns an invite object for the given code.
@@ -298,7 +289,6 @@ type RESTWebhook interface {
 // RESTer holds all the sub REST interfaces
 type RESTMethods interface {
 	RESTChannel
-	RESTGuild
 	RESTInvite
 	RESTUser
 	RESTVoice
@@ -344,6 +334,12 @@ type Session interface {
 	Pool() *pools
 
 	RESTMethods
+
+	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
+	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
+
+	// Guild is used to create a guild query builder.
+	Guild(id Snowflake) GuildQueryBuilder
 
 	// Custom REST functions
 	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
