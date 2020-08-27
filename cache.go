@@ -24,7 +24,7 @@ type idHolder struct {
 	ChannelID Snowflake `json:"channel_id"`
 }
 
-func newSimpleLFUCache(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
+func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
 	lfus := &CacheLFUImmutable{
 		CurrentUser: &User{},
 	}
@@ -37,6 +37,7 @@ func newSimpleLFUCache(limitUsers, limitVoiceStates, limitChannels, limitGuilds 
 }
 
 // CacheLFUImmutable cache with CRS support for Users and voice states
+// use NewCacheLFUImmutable to instantiate it!
 type CacheLFUImmutable struct {
 	CacheNop
 
