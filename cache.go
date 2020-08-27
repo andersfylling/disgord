@@ -482,9 +482,14 @@ func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
 // }
 func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 	c.Channels.RLock()
-	defer c.Channels.RUnlock()
+	cachedItem, exists := c.Channels.Get(id)
+	c.Channels.RUnlock()
 
-	if cachedItem, exists := c.Channels.Get(id); exists {
+	if exists {
+		mutex := c.Mutex(&c.Channels, id)
+		mutex.Lock()
+		defer mutex.Lock()
+
 		channel := cachedItem.Val.(*Channel)
 		return channel.DeepCopy().(*Channel), nil
 	}
@@ -528,10 +533,15 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 }
 func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	c.Guilds.RLock()
-	defer c.Guilds.RUnlock()
+	cachedItem, exists := c.Guilds.Get(id)
+	c.Guilds.RUnlock()
 
 	var guild *Guild
-	if cachedItem, exists := c.Guilds.Get(id); exists {
+	if exists {
+		mutex := c.Mutex(&c.Guilds, id)
+		mutex.Lock()
+		defer mutex.Lock()
+
 		guild = cachedItem.Val.(*Guild).DeepCopy().(*Guild)
 	}
 
@@ -539,9 +549,14 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 }
 func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	c.Guilds.RLock()
-	defer c.Guilds.RUnlock()
+	cachedItem, exists := c.Guilds.Get(id)
+	c.Guilds.RUnlock()
 
-	if cachedItem, exists := c.Guilds.Get(id); exists {
+	if exists {
+		mutex := c.Mutex(&c.Guilds, id)
+		mutex.Lock()
+		defer mutex.Lock()
+
 		guild := cachedItem.Val.(*Guild)
 
 		channels := make([]*Channel, len(guild.Channels))
@@ -560,19 +575,34 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		if user, _ = c.GetUser(userID); user != nil {
+		c.Users.RLock()
+		user, _ = c.GetUser(userID)
+		c.Users.RUnlock()
+
+		if user != nil {
+			mutex := c.Mutex(&c.Users, userID)
+			mutex.Lock()
 			user = user.DeepCopy().(*User)
+			mutex.Unlock()
 		}
 		wg.Done()
 	}()
 
 	c.Guilds.RLock()
-	if cachedItem, exists := c.Guilds.Get(guildID); exists {
+	cachedItem, exists := c.Guilds.Get(guildID)
+	c.Guilds.RUnlock()
+
+	if exists {
+		mutex := c.Mutex(&c.Users, userID)
+		mutex.Lock()
+		defer mutex.Unlock()
+
 		guild := cachedItem.Val.(*Guild)
 		member, _ = guild.Member(userID)
-		member = member.DeepCopy().(*Member)
+		if member != nil {
+			member = member.DeepCopy().(*Member)
+		}
 	}
-	c.Guilds.RUnlock()
 
 	wg.Wait()
 
@@ -585,9 +615,14 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 }
 func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 	c.Guilds.RLock()
-	defer c.Guilds.RUnlock()
+	cachedItem, exists := c.Guilds.Get(guildID)
+	c.Guilds.RUnlock()
 
-	if cachedItem, exists := c.Guilds.Get(guildID); exists {
+	if exists {
+		mutex := c.Mutex(&c.Guilds, guildID)
+		mutex.Lock()
+		defer mutex.Unlock()
+
 		guild := cachedItem.Val.(*Guild)
 		roles := make([]*Role, len(guild.Roles))
 		for i, role := range guild.Roles {
@@ -620,11 +655,16 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 	}
 
 	c.Users.RLock()
-	defer c.Users.RUnlock()
+	item, exists := c.Users.Get(id)
+	c.Users.RUnlock()
 
 	var user *User
-	if cachedItem, exists := c.Users.Get(id); exists {
-		user = cachedItem.Val.(*User).DeepCopy().(*User)
+	if exists {
+		mutex := c.Mutex(&c.Users, id)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		user = item.Val.(*User).DeepCopy().(*User)
 	}
 
 	return user, nil
