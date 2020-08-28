@@ -120,6 +120,10 @@ func getTypes(filename string) (types []Type) {
 	}
 
 	for name, item := range file.Scope.Objects {
+		if name == "" {
+			continue
+		}
+
 		// Only continue if we are dealing with a type declaration
 		if item.Kind != ast.Typ {
 			continue
@@ -130,6 +134,10 @@ func getTypes(filename string) (types []Type) {
 		var structDecl *ast.StructType
 		var ok bool
 		if structDecl, ok = typeDecl.Type.(*ast.StructType); !ok {
+			continue
+		}
+
+		if name[0] != strings.ToUpper(name)[0] {
 			continue
 		}
 

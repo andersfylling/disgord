@@ -61,11 +61,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*AuditLogOption:
 		s = *t
-	case *[]*guildAuditLogsBuilder:
-		s = *t
 	case *[]*CacheLFUImmutable:
-		s = *t
-	case *[]*idHolder:
 		s = *t
 	case *[]*Attachment:
 		s = *t
@@ -79,15 +75,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateChannelPermissionsParams:
 		s = *t
-	case *[]*createChannelInviteBuilder:
-		s = *t
-	case *[]*updateChannelBuilder:
-		s = *t
 	case *[]*Client:
 		s = *t
 	case *[]*Config:
-		s = *t
-	case *[]*internalHandlers:
 		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
@@ -112,10 +102,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*CreateGuildEmojiParams:
 		s = *t
 	case *[]*Emoji:
-		s = *t
-	case *[]*createGuildEmojiBuilder:
-		s = *t
-	case *[]*updateGuildEmojiBuilder:
 		s = *t
 	case *[]*ChannelCreate:
 		s = *t
@@ -227,24 +213,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
 		s = *t
-	case *[]*getGuildMembersParams:
-		s = *t
-	case *[]*guildPruneCount:
-		s = *t
-	case *[]*guildQueryBuilder:
-		s = *t
-	case *[]*nickNameResponse:
-		s = *t
-	case *[]*pruneMembersParams:
-		s = *t
-	case *[]*updateCurrentUserNickParams:
-		s = *t
-	case *[]*updateGuildBuilder:
-		s = *t
-	case *[]*updateGuildEmbedBuilder:
-		s = *t
-	case *[]*updateGuildMemberBuilder:
-		s = *t
 	case *[]*GetInviteParams:
 		s = *t
 	case *[]*Invite:
@@ -271,35 +239,13 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageReference:
 		s = *t
-	case *[]*updateMessageBuilder:
-		s = *t
-	case *[]*pool:
-		s = *t
-	case *[]*pools:
-		s = *t
 	case *[]*GetReactionURLParams:
 		s = *t
 	case *[]*Reaction:
 		s = *t
 	case *[]*Ctrl:
 		s = *t
-	case *[]*dispatcher:
-		s = *t
-	case *[]*eternalHandlersCtrl:
-		s = *t
-	case *[]*guildsRdyCtrl:
-		s = *t
-	case *[]*handlerSpec:
-		s = *t
-	case *[]*rdyCtrl:
-		s = *t
 	case *[]*RESTBuilder:
-		s = *t
-	case *[]*basicBuilder:
-		s = *t
-	case *[]*rest:
-		s = *t
-	case *[]*restReqBuilderAsync:
 		s = *t
 	case *[]*CurrentUserQueryBuilderNop:
 		s = *t
@@ -310,8 +256,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*CreateGuildRoleParams:
 		s = *t
 	case *[]*Role:
-		s = *t
-	case *[]*updateGuildRoleBuilder:
 		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
@@ -339,43 +283,15 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UserPresence:
 		s = *t
-	case *[]*createDMBuilder:
-		s = *t
-	case *[]*createGroupDMBuilder:
-		s = *t
-	case *[]*currentUserQueryBuilder:
-		s = *t
-	case *[]*getCurrentUserGuildsBuilder:
-		s = *t
-	case *[]*getUserBuilder:
-		s = *t
-	case *[]*getUserConnectionsBuilder:
-		s = *t
-	case *[]*getUserDMsBuilder:
-		s = *t
-	case *[]*updateCurrentUserBuilder:
-		s = *t
-	case *[]*userQueryBuilder:
-		s = *t
 	case *[]*VoiceRegion:
 		s = *t
 	case *[]*VoiceState:
-		s = *t
-	case *[]*voiceImpl:
-		s = *t
-	case *[]*voiceRepository:
-		s = *t
-	case *[]*voiceSpeakingData:
 		s = *t
 	case *[]*CreateWebhookParams:
 		s = *t
 	case *[]*ExecuteWebhookParams:
 		s = *t
 	case *[]*Webhook:
-		s = *t
-	case *[]*execWebhookParams:
-		s = *t
-	case *[]*updateWebhookBuilder:
 		s = *t
 	default:
 		s = t
@@ -400,12 +316,6 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*AuditLogOption:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*idHolder:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -559,12 +469,6 @@ func sortByGuildID(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*idHolder:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
 	case []*Channel:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -738,12 +642,6 @@ func sortByChannelID(v interface{}, flags Flag) {
 	var less func(i, j int) bool
 	switch s := v.(type) {
 	case []*AuditLogOption:
-		if descending {
-			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
-		} else {
-			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
-		}
-	case []*idHolder:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
