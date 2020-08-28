@@ -1010,10 +1010,73 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 	return getGuild(r.Execute)
 }
 
+// Guild is used to create a guild query builder.
+func (c *Client) Guild(id Snowflake) GuildQueryBuilder {
+	return &guildQueryBuilder{client: c, gid: id}
+}
+
 // The default guild query builder.
 type guildQueryBuilder struct {
 	client *Client
 	gid    Snowflake
+}
+
+// GuildQueryBuilder defines the exposed functions from the guild query builder.
+type GuildQueryBuilder interface {
+	// TODO: Add more guild attribute things. Waiting for caching changes before then.
+	Get(ctx context.Context, flags ...Flag) (guild *Guild, err error)
+	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
+	// TODO-2: This could be much more performant in guilds with a large number of channels.
+	GetChannels(ctx context.Context, flags ...Flag) ([]*Channel, error)
+	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
+	// TODO-2: This could be much more performant in larger guilds where this is needed.
+	GetMembers(ctx context.Context, params *GetMembersParams, flags ...Flag) ([]*Member, error)
+	Update(ctx context.Context, flags ...Flag) UpdateGuildBuilder
+	Delete(ctx context.Context, flags ...Flag) error
+	CreateChannel(ctx context.Context, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
+	UpdateChannelPositions(ctx context.Context, params []UpdateGuildChannelPositionsParams, flags ...Flag) error
+	GetMember(ctx context.Context, userID Snowflake, flags ...Flag) (*Member, error)
+	AddMember(ctx context.Context, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
+	UpdateMember(ctx context.Context, userID Snowflake, flags ...Flag) UpdateGuildMemberBuilder
+	SetCurrentUserNick(ctx context.Context, nick string, flags ...Flag) (newNick string, err error)
+	AddMemberRole(ctx context.Context, userID, roleID Snowflake, flags ...Flag) error
+	KickMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
+	KickVoiceParticipant(ctx context.Context, userID Snowflake) error
+	GetBans(ctx context.Context, flags ...Flag) ([]*Ban, error)
+	GetBan(ctx context.Context, userID Snowflake, flags ...Flag) (*Ban, error)
+	BanMember(ctx context.Context, userID Snowflake, params *BanMemberParams, flags ...Flag) error
+	UnbanMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
+	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
+	// TODO-2: This could be much more performant in larger guilds where this is needed.
+	// TODO-3: Add GetRole.
+	GetRoles(ctx context.Context, flags ...Flag) ([]*Role, error)
+	GetMemberPermissions(ctx context.Context, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
+	CreateRole(ctx context.Context, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
+	UpdateRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
+	UpdateRole(ctx context.Context, roleID Snowflake, flags ...Flag) (builder UpdateGuildRoleBuilder)
+	DeleteRole(ctx context.Context, roleID Snowflake, flags ...Flag) error
+	EstimatePruneMembersCount(ctx context.Context, days int, flags ...Flag) (estimate int, err error)
+	PruneMembers(ctx context.Context, days int, reason string, flags ...Flag) error
+	GetVoiceRegions(ctx context.Context, flags ...Flag) ([]*VoiceRegion, error)
+	GetInvites(ctx context.Context, flags ...Flag) ([]*Invite, error)
+	GetIntegrations(ctx context.Context, flags ...Flag) ([]*Integration, error)
+	CreateIntegration(ctx context.Context, params *CreateGuildIntegrationParams, flags ...Flag) error
+	UpdateIntegration(ctx context.Context, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error
+	DeleteIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
+	SyncIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
+	GetEmbed(ctx context.Context, flags ...Flag) (*GuildEmbed, error)
+	UpdateEmbed(ctx context.Context, flags ...Flag) UpdateGuildEmbedBuilder
+	GetVanityURL(ctx context.Context, flags ...Flag) (*PartialInvite, error)
+	GetAuditLogs(ctx context.Context, flags ...Flag) GuildAuditLogsBuilder
+	VoiceConnect(channelID Snowflake) (ret VoiceConnection, err error)
+	GetEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) (*Emoji, error)
+	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
+	// TODO-2: This could be much more performant in guilds with a large number of channels.
+	GetEmojis(ctx context.Context, flags ...Flag) ([]*Emoji, error)
+	CreateEmoji(ctx context.Context, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
+	UpdateEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) UpdateGuildEmojiBuilder
+	DeleteEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) error
+	GetWebhooks(ctx context.Context, flags ...Flag) (ret []*Webhook, err error)
 }
 
 // Get is used to get the Guild struct containing all information from it.
@@ -1890,69 +1953,6 @@ func (g guildQueryBuilder) GetWebhooks(ctx context.Context, flags ...Flag) (ret 
 	}
 
 	return getWebhooks(r.Execute)
-}
-
-// GuildQueryBuilder defines the exposed functions from the guild query builder.
-type GuildQueryBuilder interface {
-	// TODO: Add more guild attribute things. Waiting for caching changes before then.
-	Get(ctx context.Context, flags ...Flag) (guild *Guild, err error)
-	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
-	// TODO-2: This could be much more performant in guilds with a large number of channels.
-	GetChannels(ctx context.Context, flags ...Flag) ([]*Channel, error)
-	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
-	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	GetMembers(ctx context.Context, params *GetMembersParams, flags ...Flag) ([]*Member, error)
-	Update(ctx context.Context, flags ...Flag) UpdateGuildBuilder
-	Delete(ctx context.Context, flags ...Flag) error
-	CreateChannel(ctx context.Context, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
-	UpdateChannelPositions(ctx context.Context, params []UpdateGuildChannelPositionsParams, flags ...Flag) error
-	GetMember(ctx context.Context, userID Snowflake, flags ...Flag) (*Member, error)
-	AddMember(ctx context.Context, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
-	UpdateMember(ctx context.Context, userID Snowflake, flags ...Flag) UpdateGuildMemberBuilder
-	SetCurrentUserNick(ctx context.Context, nick string, flags ...Flag) (newNick string, err error)
-	AddMemberRole(ctx context.Context, userID, roleID Snowflake, flags ...Flag) error
-	KickMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
-	KickVoiceParticipant(ctx context.Context, userID Snowflake) error
-	GetBans(ctx context.Context, flags ...Flag) ([]*Ban, error)
-	GetBan(ctx context.Context, userID Snowflake, flags ...Flag) (*Ban, error)
-	BanMember(ctx context.Context, userID Snowflake, params *BanMemberParams, flags ...Flag) error
-	UnbanMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
-	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
-	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	// TODO-3: Add GetRole.
-	GetRoles(ctx context.Context, flags ...Flag) ([]*Role, error)
-	GetMemberPermissions(ctx context.Context, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
-	CreateRole(ctx context.Context, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
-	UpdateRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
-	UpdateRole(ctx context.Context, roleID Snowflake, flags ...Flag) (builder UpdateGuildRoleBuilder)
-	DeleteRole(ctx context.Context, roleID Snowflake, flags ...Flag) error
-	EstimatePruneMembersCount(ctx context.Context, days int, flags ...Flag) (estimate int, err error)
-	PruneMembers(ctx context.Context, days int, reason string, flags ...Flag) error
-	GetVoiceRegions(ctx context.Context, flags ...Flag) ([]*VoiceRegion, error)
-	GetInvites(ctx context.Context, flags ...Flag) ([]*Invite, error)
-	GetIntegrations(ctx context.Context, flags ...Flag) ([]*Integration, error)
-	CreateIntegration(ctx context.Context, params *CreateGuildIntegrationParams, flags ...Flag) error
-	UpdateIntegration(ctx context.Context, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error
-	DeleteIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
-	SyncIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
-	GetEmbed(ctx context.Context, flags ...Flag) (*GuildEmbed, error)
-	UpdateEmbed(ctx context.Context, flags ...Flag) UpdateGuildEmbedBuilder
-	GetVanityURL(ctx context.Context, flags ...Flag) (*PartialInvite, error)
-	GetAuditLogs(ctx context.Context, flags ...Flag) GuildAuditLogsBuilder
-	VoiceConnect(channelID Snowflake) (ret VoiceConnection, err error)
-	GetEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) (*Emoji, error)
-	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
-	// TODO-2: This could be much more performant in guilds with a large number of channels.
-	GetEmojis(ctx context.Context, flags ...Flag) ([]*Emoji, error)
-	CreateEmoji(ctx context.Context, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
-	UpdateEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) UpdateGuildEmojiBuilder
-	DeleteEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) error
-	GetWebhooks(ctx context.Context, flags ...Flag) (ret []*Webhook, err error)
-}
-
-// Guild is used to create a guild query builder.
-func (c *Client) Guild(id Snowflake) GuildQueryBuilder {
-	return &guildQueryBuilder{client: c, gid: id}
 }
 
 // CreateGuildChannelParams https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params
