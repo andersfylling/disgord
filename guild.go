@@ -902,7 +902,7 @@ func (m *Member) GetUser(ctx context.Context, session Session) (usr *User, err e
 		return m.User, nil
 	}
 
-	return session.GetUser(ctx, m.UserID)
+	return session.User(m.UserID).Get(ctx)
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's

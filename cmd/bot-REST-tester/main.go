@@ -129,7 +129,7 @@ func main() {
 	// TestGetUser
 	func() {
 		const userID = 140413331470024704
-		user, err := c.GetUser(context.Background(), userID, disgord.IgnoreCache)
+		user, err := c.User(userID).Get(context.Background(), disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		} else if user.ID != userID {
@@ -191,7 +191,7 @@ func main() {
 
 	// TestCreateDM
 	func() {
-		channel, err := c.CreateDM(context.Background(), 228846961774559232)
+		channel, err := c.User(228846961774559232).CreateDM(context.Background())
 		if err != nil {
 			panic(err)
 		} else if channel == nil {

@@ -377,7 +377,7 @@ func (u *User) String() string {
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
 func (u *User) SendMsg(ctx context.Context, session Session, message *Message) (channel *Channel, msg *Message, err error) {
-	channel, err = session.CreateDM(ctx, u.ID)
+	channel, err = session.User(u.ID).CreateDM(ctx)
 	if err != nil {
 		return
 	}
@@ -532,6 +532,66 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 //
 //////////////////////////////////////////////////////
 
+// Guild is used to create a guild query builder.
+func (c *Client) User(id Snowflake) UserQueryBuilder {
+	return &userQueryBuilder{client: c, uid: id}
+}
+
+// The default guild query builder.
+type userQueryBuilder struct {
+	client *Client
+	uid    Snowflake
+}
+
+// RESTUser REST interface for all user endpoints
+type UserQueryBuilder interface {
+	// GetUser Returns a user object for a given user Snowflake.
+	Get(ctx context.Context, flags ...Flag) (*User, error)
+
+	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
+	CreateDM(ctx context.Context, flags ...Flag) (ret *Channel, err error)
+}
+
+// GetUser [REST] Returns a user object for a given user Snowflake.
+//  Method                  GET
+//  Endpoint                /users/{user.id}
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
+//  Reviewed                2018-06-10
+//  Comment                 -
+func (c *userQueryBuilder) Get(ctx context.Context, flags ...Flag) (*User, error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.User(c.uid),
+		Ctx:      ctx,
+	}, flags)
+	r.pool = c.client.pool.user
+	r.factory = userFactory
+
+	return getUser(r.Execute)
+}
+
+// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
+//  Method                  POST
+//  Endpoint                /users/@me/channels
+//  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
+//  Reviewed                2019-02-23
+//  Comment                 -
+func (c *userQueryBuilder) CreateDM(ctx context.Context, flags ...Flag) (ret *Channel, err error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:   httd.MethodPost,
+		Ctx:      ctx,
+		Endpoint: endpoint.UserMeChannels(),
+		Body: &struct {
+			RecipientID Snowflake `json:"recipient_id"`
+		}{c.uid},
+		ContentType: httd.ContentTypeJSON,
+	}, flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
+
+	return getChannel(r.Execute)
+}
+
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
 type GetCurrentUserGuildsParams struct {
 	Before Snowflake `urlparam:"before,omitempty"`
@@ -561,23 +621,6 @@ func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User,
 		c.myID = user.ID
 	}
 	return user, err
-}
-
-// GetUser [REST] Returns a user object for a given user Snowflake.
-//  Method                  GET
-//  Endpoint                /users/{user.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
-//  Reviewed                2018-06-10
-//  Comment                 -
-func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*User, error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.User(id),
-		Ctx:      ctx,
-	}, flags)
-	r.pool = c.pool.user
-	r.factory = userFactory
-
-	return getUser(r.Execute)
 }
 
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
@@ -678,32 +721,6 @@ func (c *Client) GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel,
 		return *chans, nil
 	}
 	return nil, errors.New("unable to cast guild slice")
-}
-
-// BodyUserCreateDM JSON param for func CreateDM
-type BodyUserCreateDM struct {
-	RecipientID Snowflake `json:"recipient_id"`
-}
-
-// CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
-//  Method                  POST
-//  Endpoint                /users/@me/channels
-//  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
-//  Reviewed                2019-02-23
-//  Comment                 -
-func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
-		Ctx:         ctx,
-		Endpoint:    endpoint.UserMeChannels(),
-		Body:        &BodyUserCreateDM{recipientID},
-		ContentType: httd.ContentTypeJSON,
-	}, flags)
-	r.factory = func() interface{} {
-		return &Channel{}
-	}
-
-	return getChannel(r.Execute)
 }
 
 // CreateGroupDMParams required JSON params for func CreateGroupDM

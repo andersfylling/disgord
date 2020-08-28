@@ -325,8 +325,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ActivityTimestamp:
 		s = *t
-	case *[]*BodyUserCreateDM:
-		s = *t
 	case *[]*CreateGroupDMParams:
 		s = *t
 	case *[]*GetCurrentUserGuildsParams:
@@ -350,6 +348,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*getUserDMsBuilder:
 		s = *t
 	case *[]*updateCurrentUserBuilder:
+		s = *t
+	case *[]*userQueryBuilder:
 		s = *t
 	case *[]*VoiceRegion:
 		s = *t

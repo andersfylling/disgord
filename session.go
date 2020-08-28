@@ -212,9 +212,6 @@ type RESTUser interface {
 	// with an email.
 	GetCurrentUser(ctx context.Context, flags ...Flag) (*User, error)
 
-	// GetUser Returns a user object for a given user Snowflake.
-	GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*User, error)
-
 	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
 	UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder)
 
@@ -227,9 +224,6 @@ type RESTUser interface {
 
 	// GetUserDMs Returns a list of DM channel objects.
 	GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel, err error)
-
-	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
-	CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error)
 
 	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
@@ -293,6 +287,14 @@ type RESTMethods interface {
 	RESTUser
 	RESTVoice
 	RESTWebhook
+
+	User(uid Snowflake) UserQueryBuilder
+
+	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
+	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
+
+	// Guild is used to create a guild query builder.
+	Guild(id Snowflake) GuildQueryBuilder
 }
 
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
@@ -334,12 +336,6 @@ type Session interface {
 	Pool() *pools
 
 	RESTMethods
-
-	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
-
-	// Guild is used to create a guild query builder.
-	Guild(id Snowflake) GuildQueryBuilder
 
 	// Custom REST functions
 	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
