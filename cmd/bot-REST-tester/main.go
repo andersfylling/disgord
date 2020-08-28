@@ -121,7 +121,7 @@ func main() {
 
 	// TestGetCurrentUser
 	func() {
-		_, err = c.GetCurrentUser(context.Background(), disgord.IgnoreCache)
+		_, err = c.CurrentUser().Get(context.Background(), disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		}

@@ -286,7 +286,7 @@ func (c *Client) GetPermissions() (permissions PermissionBit) {
 // for your bot to run successfully, you should utilise
 //  Client.
 func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
-	if _, err = c.GetCurrentUser(ctx); err != nil && c.myID.IsZero() {
+	if _, err = c.CurrentUser().Get(ctx); err != nil && c.myID.IsZero() {
 		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
@@ -389,7 +389,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	defer c.Unlock()
 
 	var me *User
-	if me, err = c.GetCurrentUser(ctx); err != nil {
+	if me, err = c.CurrentUser().Get(ctx); err != nil {
 		return err
 	}
 	c.myID = me.ID
@@ -690,11 +690,6 @@ func (c *Client) DeleteFromDiscord(ctx context.Context, obj discordDeleter, flag
 // customs
 //
 //////////////////////////////////////////////////////
-
-func (c *Client) GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
-	// TODO: populate these partial guild objects
-	return c.GetCurrentUserGuilds(ctx, params)
-}
 
 // SendMsg should convert all inputs into a single message. If you supply a object with an ID
 // such as a channel, message, role, etc. It will become a reference.  If say the Message provided

@@ -205,35 +205,6 @@ type RESTInvite interface {
 	DeleteInvite(ctx context.Context, inviteCode string, flags ...Flag) (deleted *Invite, err error)
 }
 
-// RESTUser REST interface for all user endpoints
-type RESTUser interface {
-	// GetCurrentUser Returns the user object of the requester's account. For OAuth2, this requires the identify
-	// scope, which will return the object without an email, and optionally the email scope, which returns the object
-	// with an email.
-	GetCurrentUser(ctx context.Context, flags ...Flag) (*User, error)
-
-	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
-	UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder)
-
-	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
-	// Requires the Guilds OAuth2 scope.
-	GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
-
-	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
-	LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error)
-
-	// GetUserDMs Returns a list of DM channel objects.
-	GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel, err error)
-
-	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
-	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
-	// endpoint will not be shown in the Discord Client
-	CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error)
-
-	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
-	GetUserConnections(ctx context.Context, flags ...Flag) (ret []*UserConnection, err error)
-}
-
 // RESTVoice REST interface for all voice endpoints
 type RESTVoice interface {
 	// GetVoiceRegionsBuilder Returns an array of voice region objects that can be used when creating servers.
@@ -284,11 +255,12 @@ type RESTWebhook interface {
 type RESTMethods interface {
 	RESTChannel
 	RESTInvite
-	RESTUser
 	RESTVoice
 	RESTWebhook
 
 	User(uid Snowflake) UserQueryBuilder
+
+	CurrentUser() CurrentUserQueryBuilder
 
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
 	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)

@@ -16,12 +16,12 @@ func NewMsgFilter(ctx context.Context, client disgord.Session) (filter *msgFilte
 	return filter, nil
 }
 
-type msgFilterdg interface {
-	GetCurrentUser(ctx context.Context, flags ...disgord.Flag) (*disgord.User, error)
+type CurrentUserRESTResource interface {
+	CurrentUser() disgord.CurrentUserQueryBuilder
 }
 
-func newMsgFilter(ctx context.Context, client msgFilterdg) (filter *msgFilter, err error) {
-	usr, err := client.GetCurrentUser(ctx)
+func newMsgFilter(ctx context.Context, client CurrentUserRESTResource) (filter *msgFilter, err error) {
+	usr, err := client.CurrentUser().Get(ctx)
 	if err != nil {
 		return nil, err
 	}
