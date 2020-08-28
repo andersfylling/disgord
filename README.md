@@ -25,10 +25,6 @@
 Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
 
 ## Warning
-The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because Disgord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
-
-There might be bugs in the cache, or the cache processing might not exist yet for some REST methods. Bypass the cache for REST methods by supplying the flag argument `disgord.IgnoreCache`. eg. `client.GetCurrentUser(disgord.IgnoreCache)`.
-
 Remember to read the docs/code for whatever version of disgord you are using. This README file reflects the latest state in the develop branch, or at least, I try to reflect the latest state.
 
 ## Data types & tips
@@ -108,12 +104,12 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.GetCurrentUser(context.Background(), disgord.IgnoreCache)
-client.GetGuildMembers(context.Background(), guildID, disgord.IgnoreCache)
+client.CurrentUser().Get(context.Background(), disgord.IgnoreCache)
+client.Guild(guildID).GetMembers(context.Background(), disgord.IgnoreCache)
 
 // always checks the local cache first
-client.GetCurrentUser(context.Background())
-client.GetGuildMembers(context.Background(), guildID)
+client.CurrentUser().Get(context.Background())
+client.Guild(guildID).GetMembers(context.Background())
 ```
 
 #### Voice
