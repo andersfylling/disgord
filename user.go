@@ -592,32 +592,6 @@ func (c *userQueryBuilder) CreateDM(ctx context.Context, flags ...Flag) (ret *Ch
 	return getChannel(r.Execute)
 }
 
-type CurrentUserQueryBuilderNop struct {
-	client *Client
-}
-
-func (c *CurrentUserQueryBuilderNop) Get(_ context.Context, _ ...Flag) (*User, error) {
-	return nil, nil
-}
-func (c *CurrentUserQueryBuilderNop) Update(_ context.Context, _ ...Flag) UpdateCurrentUserBuilder {
-	return nil
-}
-func (c *CurrentUserQueryBuilderNop) GetGuilds(_ context.Context, _ *GetCurrentUserGuildsParams, _ ...Flag) ([]*PartialGuild, error) {
-	return nil, nil
-}
-func (c *CurrentUserQueryBuilderNop) GetDMChannels(_ context.Context, _ ...Flag) ([]*Channel, error) {
-	return nil, nil
-}
-func (c *CurrentUserQueryBuilderNop) LeaveGuild(_ context.Context, _ Snowflake, _ ...Flag) error {
-	return nil
-}
-func (c *CurrentUserQueryBuilderNop) CreateGroupDM(_ context.Context, _ *CreateGroupDMParams, _ ...Flag) (*Channel, error) {
-	return nil, nil
-}
-func (c *CurrentUserQueryBuilderNop) GetUserConnections(_ context.Context, _ ...Flag) ([]*UserConnection, error) {
-	return nil, nil
-}
-
 // Guild is used to create a guild query builder.
 func (c *Client) CurrentUser() CurrentUserQueryBuilder {
 	return &currentUserQueryBuilder{client: c}

@@ -245,8 +245,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*updateGuildMemberBuilder:
 		s = *t
-	case *[]*guildQueryBuilderBlank:
-		s = *t
 	case *[]*GetInviteParams:
 		s = *t
 	case *[]*Invite:
@@ -303,6 +301,12 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*restReqBuilderAsync:
 		s = *t
+	case *[]*CurrentUserQueryBuilderNop:
+		s = *t
+	case *[]*GuildQueryBuilderNop:
+		s = *t
+	case *[]*UserQueryBuilderNop:
+		s = *t
 	case *[]*CreateGuildRoleParams:
 		s = *t
 	case *[]*Role:
@@ -338,6 +342,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*createDMBuilder:
 		s = *t
 	case *[]*createGroupDMBuilder:
+		s = *t
+	case *[]*currentUserQueryBuilder:
 		s = *t
 	case *[]*getCurrentUserGuildsBuilder:
 		s = *t
