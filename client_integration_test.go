@@ -103,7 +103,7 @@ func TestClient(t *testing.T) {
 				c.Logger().Info("was not bot")
 				return
 			}
-			usr, err := c.GetCurrentUser(context.Background())
+			usr, err := c.CurrentUser().Get(context.Background())
 			if err != nil {
 				done <- false
 				return
@@ -160,7 +160,7 @@ func TestClient(t *testing.T) {
 		done := make(chan bool)
 
 		c.On(EvtVoiceStateUpdate, func(_ Session, evt *VoiceStateUpdate) {
-			myself, err := c.GetCurrentUser(context.Background())
+			myself, err := c.CurrentUser().Get(context.Background())
 			if err != nil {
 				panic(err)
 			}
@@ -182,7 +182,7 @@ func TestClient(t *testing.T) {
 		})
 
 		go func() {
-			v, err := c.VoiceConnect(guildTypical.ID, oldChannelID)
+			v, err := c.Guild(guildTypical.ID).VoiceConnect(oldChannelID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -319,7 +319,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// Test getting a member
-		member, err := c.GetMember(deadline, guildTypical.ID, c.myID, IgnoreCache)
+		member, err := c.Guild(guildTypical.ID).GetMember(deadline, c.myID, IgnoreCache)
 		if err != nil {
 			panic(err)
 		}
