@@ -14,7 +14,7 @@ func main() {
 	})
 
 	chanID := disgord.Snowflake(540519296640614416)
-	_, err := c.CreateMessage(context.Background(), chanID, &disgord.CreateMessageParams{
+	_, err := c.Channel(chanID).CreateMessage(context.Background(), &disgord.CreateMessageParams{
 		Content:           "testing",
 		SpoilerTagContent: true,
 	})
@@ -30,7 +30,7 @@ func main() {
 	}
 	defer f2.Close()
 
-	_, _ = c.CreateMessage(context.Background(), chanID, &disgord.CreateMessageParams{
+	_, _ = c.Channel(chanID).CreateMessage(context.Background(), &disgord.CreateMessageParams{
 		Content: "with embed",
 		Files: []disgord.CreateMessageFileParams{
 			{Reader: f1, FileName: "myfavouriteimage.jpg", SpoilerTag: true},
@@ -44,7 +44,7 @@ func main() {
 		},
 	})
 
-	_, _ = c.CreateMessage(context.Background(), chanID, &disgord.CreateMessageParams{
+	_, _ = c.Channel(chanID).CreateMessage(context.Background(), &disgord.CreateMessageParams{
 		Content: "This is my favourite image, and another in an embed!",
 		Files: []disgord.CreateMessageFileParams{
 			{Reader: f1, FileName: "myfavouriteimage.jpg"},

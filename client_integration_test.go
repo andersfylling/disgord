@@ -287,7 +287,7 @@ func TestClient(t *testing.T) {
 				snowflakeChan <- evt.Message.Member.UserID
 			}
 		}, &Ctrl{Runs: 1})
-		_, err = c.UpdateMessage(deadline, guildTypical.TextChannelGeneral, msg.ID).SetContent("world").Execute()
+		_, err = c.Channel(guildTypical.TextChannelGeneral).Message(msg.ID).Update(deadline).SetContent("world").Execute()
 		if err != nil {
 			panic(err)
 		}
@@ -304,7 +304,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// GC the message
-		_ = c.DeleteMessage(deadline, guildTypical.TextChannelGeneral, msg.ID)
+		_ = c.Channel(guildTypical.TextChannelGeneral).Message(msg.ID).Delete(deadline)
 
 		// Handle voice state update
 		select {

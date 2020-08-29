@@ -50,7 +50,7 @@ func main() {
 	msgID := disgord.Snowflake(540519319814275089)
 	chanID := disgord.Snowflake(540519296640614416)
 
-	if _, err := c.GetMessage(context.Background(), chanID, msgID); err != nil {
+	if _, err := c.Channel(chanID).Message(msgID).Get(context.Background()); err != nil {
 		panic(err)
 	}
 

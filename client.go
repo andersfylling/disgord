@@ -799,7 +799,7 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 		}
 	}
 
-	return c.CreateMessage(ctx, channelID, params, flags...)
+	return c.Channel(channelID).CreateMessage(ctx, params, flags...)
 }
 
 /* status updates */

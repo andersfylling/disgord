@@ -64,7 +64,7 @@ func main() {
 	// -------------------
 	channelID := disgord.Snowflake(486833611564253186)
 	func() {
-		channel, err := c.GetChannel(context.Background(), channelID)
+		channel, err := c.Channel(channelID).Get(context.Background())
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -88,7 +88,7 @@ func main() {
 
 	// modify
 	func() {
-		channel, err := c.UpdateChannel(context.Background(), channelID).SetName("hello").Execute()
+		channel, err := c.Channel(channelID).Update(context.Background()).SetName("hello").Execute()
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -98,14 +98,14 @@ func main() {
 
 	// delete
 	func() {
-		channel, err := c.DeleteChannel(context.Background(), channelID)
+		channel, err := c.Channel(channelID).Delete(context.Background())
 		if err != nil {
 			panic(err)
 		} else if channel.ID != channelID {
 			panic("incorrect channel id")
 		}
 
-		_, err = c.GetChannel(context.Background(), channelID)
+		_, err = c.Channel(channelID).Get(context.Background())
 		if err == nil {
 			panic("able to retrieve deleted channel")
 		}

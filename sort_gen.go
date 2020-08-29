@@ -63,9 +63,19 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CacheLFUImmutable:
 		s = *t
+	case *[]*AllowedMentions:
+		s = *t
 	case *[]*Attachment:
 		s = *t
 	case *[]*Channel:
+		s = *t
+	case *[]*CreateMessageFileParams:
+		s = *t
+	case *[]*CreateMessageParams:
+		s = *t
+	case *[]*DeleteMessagesParams:
+		s = *t
+	case *[]*GetMessagesParams:
 		s = *t
 	case *[]*GroupDMParticipant:
 		s = *t
@@ -213,21 +223,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
 		s = *t
-	case *[]*GetInviteParams:
-		s = *t
 	case *[]*Invite:
 		s = *t
 	case *[]*InviteMetadata:
-		s = *t
-	case *[]*AllowedMentions:
-		s = *t
-	case *[]*CreateMessageFileParams:
-		s = *t
-	case *[]*CreateMessageParams:
-		s = *t
-	case *[]*DeleteMessagesParams:
-		s = *t
-	case *[]*GetMessagesParams:
 		s = *t
 	case *[]*MentionChannel:
 		s = *t

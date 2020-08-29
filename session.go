@@ -63,44 +63,6 @@ type SocketHandler interface {
 	Emitter
 }
 
-type RESTMessage interface {
-	// GetMessages Returns the messages for a channel. If operating on a guild channel, this endpoint requires
-	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
-	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
-	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(ctx context.Context, channelID Snowflake, params *GetMessagesParams, flags ...Flag) ([]*Message, error)
-
-	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
-	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
-	// Returns a message object on success.
-	GetMessage(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (ret *Message, err error)
-
-	// CreateMessage Post a message to a guild text or DM channel. If operating on a guild channel, this
-	// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
-	// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
-	// Message Create Gateway event. See message formatting for more information on how to properly format messages.
-	// The maximum request size when sending a message is 8MB.
-	CreateMessage(ctx context.Context, channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
-
-	// UpdateMessage Edit a previously sent message. You can only edit messages that have been sent by the
-	// current user. Returns a message object. Fires a Message Update Gateway event.
-	UpdateMessage(ctx context.Context, chanID, msgID Snowflake, flags ...Flag) *updateMessageBuilder
-	SetMsgContent(ctx context.Context, chanID, msgID Snowflake, content string) (*Message, error)
-	SetMsgEmbed(ctx context.Context, chanID, msgID Snowflake, embed *Embed) (*Message, error)
-
-	// DeleteMessage Delete a message. If operating on a guild channel and trying to delete a message that was not
-	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
-	// on success. Fires a Message Delete Gateway event.
-	DeleteMessage(ctx context.Context, channelID, msgID Snowflake, flags ...Flag) (err error)
-
-	// DeleteMessages Delete multiple messages in a single request. This endpoint can only be used on guild
-	// Channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
-	// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
-	// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
-	// will only be counted once.
-	DeleteMessages(ctx context.Context, chanID Snowflake, params *DeleteMessagesParams, flags ...Flag) (err error)
-}
-
 type RESTReaction interface {
 	// CreateReaction Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
 	// permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
@@ -122,87 +84,6 @@ type RESTReaction interface {
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 	// permission to be present on the current user.
 	DeleteAllReactions(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error)
-}
-
-// RESTChannel REST interface for all Channel endpoints
-type RESTChannel interface {
-	RESTMessage
-	RESTReaction
-
-	// TriggerTypingIndicator Post a typing indicator for the specified channel. Generally bots should not implement
-	// this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
-	// endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
-	// on success. Fires a Typing Start Gateway event.
-	TriggerTypingIndicator(ctx context.Context, channelID Snowflake, flags ...Flag) (err error)
-
-	// GetPinnedMessages Returns all pinned messages in the channel as an array of message objects.
-	GetPinnedMessages(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Message, err error)
-
-	// PinMessage same as PinMessageID
-	PinMessage(ctx context.Context, msg *Message, flags ...Flag) (err error)
-
-	// PinMessageID Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
-	// Returns a 204 empty response on success.
-	PinMessageID(ctx context.Context, channelID, msgID Snowflake, flags ...Flag) (err error)
-
-	// UnpinMessage same as UnpinMessageID
-	UnpinMessage(ctx context.Context, msg *Message, flags ...Flag) (err error)
-
-	// UnpinMessageID Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-	// Returns a 204 empty response on success. Returns a 204 empty response on success.
-	UnpinMessageID(ctx context.Context, channelID, msgID Snowflake, flags ...Flag) (err error)
-
-	// GetChannel Get a channel by Snowflake. Returns a channel object.
-	GetChannel(ctx context.Context, id Snowflake, flags ...Flag) (ret *Channel, err error)
-
-	// UpdateChannel Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
-	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
-	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
-	// For the PATCH method, all the JSON Params are optional.
-	UpdateChannel(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateChannelBuilder)
-
-	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
-	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
-	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
-	// Fires a Channel Delete Gateway event.
-	DeleteChannel(ctx context.Context, id Snowflake, flags ...Flag) (channel *Channel, err error)
-
-	// EditChannelPermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
-	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
-	// For more information about permissions, see permissions.
-	UpdateChannelPermissions(ctx context.Context, chanID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error)
-
-	// GetChannelInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
-	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
-	GetChannelInvites(ctx context.Context, id Snowflake, flags ...Flag) (ret []*Invite, err error)
-
-	// CreateChannelInvite Create a new invite object for the channel. Only usable for guild Channels. Requires
-	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
-	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
-	// Returns an invite object.
-	CreateChannelInvite(ctx context.Context, id Snowflake, flags ...Flag) *createChannelInviteBuilder
-
-	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
-	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
-	// information about permissions,
-	// see permissions: https://discord.com/developers/docs/topics/permissions#permissions
-	DeleteChannelPermission(ctx context.Context, channelID, overwriteID Snowflake, flags ...Flag) (err error)
-
-	// AddDMParticipant Adds a recipient to a Group DM using their access token. Returns a 204 empty response
-	// on success.
-	AddDMParticipant(ctx context.Context, channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) (err error)
-
-	// KickParticipant Removes a recipient from a Group DM. Returns a 204 empty response on success.
-	KickParticipant(ctx context.Context, channelID, userID Snowflake, flags ...Flag) (err error)
-}
-
-// RESTInvite REST interface for all invite endpoints
-type RESTInvite interface {
-	// GetInvite Returns an invite object for the given code.
-	GetInvite(ctx context.Context, inviteCode string, params URLQueryStringer, flags ...Flag) (*Invite, error)
-
-	// DeleteInvite Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
-	DeleteInvite(ctx context.Context, inviteCode string, flags ...Flag) (deleted *Invite, err error)
 }
 
 // RESTVoice REST interface for all voice endpoints
@@ -253,10 +134,13 @@ type RESTWebhook interface {
 
 // RESTer holds all the sub REST interfaces
 type RESTMethods interface {
-	RESTChannel
-	RESTInvite
 	RESTVoice
 	RESTWebhook
+	RESTReaction
+
+	Invite(code string) InviteQueryBuilder
+
+	Channel(cid Snowflake) ChannelQueryBuilder
 
 	User(uid Snowflake) UserQueryBuilder
 
