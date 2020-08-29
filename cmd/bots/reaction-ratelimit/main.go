@@ -59,14 +59,14 @@ func main() {
 		panic(err)
 	}
 
-	_ = c.DeleteAllReactions(context.Background(), chanID, msgID)
+	_ = c.Channel(chanID).Message(msgID).DeleteAllReactions()
 	wg := sync.WaitGroup{}
 	for i := range e {
 		wg.Add(1)
 		go func(index int) {
 			start := time.Now()
 			var msg string
-			err := c.CreateReaction(context.Background(), chanID, msgID, e[index])
+			err := c.Channel(chanID).Message(msgID).Reaction(e[index]).Create()
 			if err != nil {
 				msg = fmt.Sprint(index, ": ", err, " ### ")
 			} else {

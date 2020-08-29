@@ -63,29 +63,6 @@ type SocketHandler interface {
 	Emitter
 }
 
-type RESTReaction interface {
-	// CreateReaction Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'
-	// permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
-	// emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204
-	// empty response on success. The maximum request size when sending a message is 8MB.
-	CreateReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
-
-	// DeleteOwnReaction Delete a reaction the current user has made for the message.
-	// Returns a 204 empty response on success.
-	DeleteOwnReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, flags ...Flag) (err error)
-
-	// DeleteUserReaction Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
-	// to be present on the current user. Returns a 204 empty response on success.
-	DeleteUserReaction(ctx context.Context, channelID, messageID, userID Snowflake, emoji interface{}, flags ...Flag) (err error)
-
-	// GetReaction Get a list of Users that reacted with this emoji. Returns an array of user objects on success.
-	GetReaction(ctx context.Context, channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer, flags ...Flag) (reactors []*User, err error)
-
-	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
-	// permission to be present on the current user.
-	DeleteAllReactions(ctx context.Context, channelID, messageID Snowflake, flags ...Flag) (err error)
-}
-
 // RESTVoice REST interface for all voice endpoints
 type RESTVoice interface {
 	// GetVoiceRegionsBuilder Returns an array of voice region objects that can be used when creating servers.
@@ -136,7 +113,6 @@ type RESTWebhook interface {
 type RESTMethods interface {
 	RESTVoice
 	RESTWebhook
-	RESTReaction
 
 	Invite(code string) InviteQueryBuilder
 

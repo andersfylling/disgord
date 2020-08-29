@@ -311,7 +311,7 @@ func (m *Message) React(ctx context.Context, s Session, emoji interface{}, flags
 		return errors.New("missing channel ID")
 	}
 
-	return s.CreateReaction(ctx, m.ChannelID, m.ID, emoji, flags...)
+	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create(flags...)
 }
 
 func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, flags ...Flag) error {
@@ -321,7 +321,7 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, fla
 		return errors.New("missing channel ID")
 	}
 
-	return s.DeleteOwnReaction(ctx, m.ChannelID, m.ID, emoji, flags...)
+	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn(flags...)
 }
 
 // AddReaction adds a reaction to the message
@@ -337,6 +337,8 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, fla
 //////////////////////////////////////////////////////
 
 type MessageQueryBuilder interface {
+	WithContext(ctx context.Context) MessageQueryBuilder
+
 	// PinMessageID Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
 	// Returns a 204 empty response on success.
 	Pin(ctx context.Context, flags ...Flag) error
@@ -360,6 +362,12 @@ type MessageQueryBuilder interface {
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
 	// on success. Fires a Message Delete Gateway event.
 	Delete(ctx context.Context, flags ...Flag) error
+
+	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+	// permission to be present on the current user.
+	DeleteAllReactions(flags ...Flag) error
+
+	Reaction(emoji interface{}) ReactionQueryBuilder
 }
 
 func (c channelQueryBuilder) Message(id Snowflake) MessageQueryBuilder {
@@ -367,9 +375,15 @@ func (c channelQueryBuilder) Message(id Snowflake) MessageQueryBuilder {
 }
 
 type messageQueryBuilder struct {
+	ctx    context.Context
 	client *Client
 	cid    Snowflake
 	mid    Snowflake
+}
+
+func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilder {
+	m.ctx = ctx
+	return m
 }
 
 // Get Returns a specific message in the channel. If operating on a guild channel, this endpoints
@@ -504,6 +518,31 @@ func (m messageQueryBuilder) Unpin(ctx context.Context, flags ...Flag) (err erro
 	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
+	return err
+}
+
+// DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
+// permission to be present on the current user.
+//  Method                  DELETE
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
+//  Reviewed                2019-01-28
+func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
+	if m.cid.IsZero() {
+		return errors.New("channelID must be set to target the correct channel")
+	}
+	if m.mid.IsZero() {
+		return errors.New("messageID must be set to target the specific channel message")
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.ChannelMessageReactions(m.cid, m.mid),
+		Ctx:      m.ctx,
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err := r.Execute()
 	return err
 }
 
