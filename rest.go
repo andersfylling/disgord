@@ -307,6 +307,38 @@ type basicBuilder struct {
 	r RESTBuilder
 }
 
+type ClientQueryBuilderExecutables interface {
+	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
+	CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
+}
+
+type ClientQueryBuilder interface {
+	WithContext(ctx context.Context) ClientQueryBuilderExecutables
+
+	Invite(code string) InviteQueryBuilder
+
+	Channel(cid Snowflake) ChannelQueryBuilder
+
+	User(uid Snowflake) UserQueryBuilder
+
+	CurrentUser() CurrentUserQueryBuilder
+
+	// Guild is used to create a guild query builder.
+	Guild(id Snowflake) GuildQueryBuilder
+
+	ClientQueryBuilderExecutables
+}
+
+type clientQueryBuilder struct {
+	ctx    context.Context
+	client *Client
+}
+
+func (c clientQueryBuilder) WithContext(ctx context.Context) ClientQueryBuilderExecutables {
+	c.ctx = ctx
+	return c
+}
+
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the Client can use for Connecting.
 // Clients should cacheLink this value and only call this endpoint to retrieve a new URL if they are unable to
 // properly establish a connection using the cached version of the URL.

@@ -168,6 +168,8 @@ func inviteFactory() interface{} {
 }
 
 type InviteQueryBuilder interface {
+	WithContext(ctx context.Context) InviteQueryBuilder
+
 	// Get Returns an invite object for the given code.
 	Get(ctx context.Context, withMemberCount bool, flags ...Flag) (*Invite, error)
 
@@ -175,13 +177,19 @@ type InviteQueryBuilder interface {
 	Delete(ctx context.Context, flags ...Flag) (deleted *Invite, err error)
 }
 
-func (c *Client) Invite(code string) InviteQueryBuilder {
-	return &inviteQueryBuilder{client: c, inviteCode: code}
+func (c clientQueryBuilder) Invite(code string) InviteQueryBuilder {
+	return &inviteQueryBuilder{client: c.client, inviteCode: code}
 }
 
 type inviteQueryBuilder struct {
+	ctx        context.Context
 	client     *Client
 	inviteCode string
+}
+
+func (i inviteQueryBuilder) WithContext(ctx context.Context) InviteQueryBuilder {
+	i.ctx = ctx
+	return i
 }
 
 type getInviteParams struct {

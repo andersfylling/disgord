@@ -544,8 +544,8 @@ type UserQueryBuilder interface {
 }
 
 // Guild is used to create a guild query builder.
-func (c *Client) User(id Snowflake) UserQueryBuilder {
-	return &userQueryBuilder{client: c, uid: id}
+func (c clientQueryBuilder) User(id Snowflake) UserQueryBuilder {
+	return &userQueryBuilder{client: c.client, uid: id}
 }
 
 // The default guild query builder.
@@ -631,8 +631,8 @@ type CurrentUserQueryBuilder interface {
 }
 
 // Guild is used to create a guild query builder.
-func (c *Client) CurrentUser() CurrentUserQueryBuilder {
-	return &currentUserQueryBuilder{client: c}
+func (c clientQueryBuilder) CurrentUser() CurrentUserQueryBuilder {
+	return &currentUserQueryBuilder{client: c.client}
 }
 
 // The default guild query builder.

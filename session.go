@@ -114,19 +114,8 @@ type RESTMethods interface {
 	RESTVoice
 	RESTWebhook
 
-	Invite(code string) InviteQueryBuilder
-
-	Channel(cid Snowflake) ChannelQueryBuilder
-
-	User(uid Snowflake) UserQueryBuilder
-
-	CurrentUser() CurrentUserQueryBuilder
-
-	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
-
-	// Guild is used to create a guild query builder.
-	Guild(id Snowflake) GuildQueryBuilder
+	// TODO: move Webhook and voice into client query builder
+	ClientQueryBuilder
 }
 
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).

@@ -120,6 +120,7 @@ func createClient(conf *Config) (c *Client, err error) {
 	}
 	c.handlers.c = c // parent reference
 	c.dispatcher.addSessionInstance(c)
+	c.clientQueryBuilder.client = c
 	c.voiceRepository = newVoiceRepository(c)
 
 	return c, err
@@ -199,6 +200,8 @@ type Config struct {
 // the REST methods regards.
 type Client struct {
 	sync.RWMutex
+
+	clientQueryBuilder
 
 	shutdownChan chan interface{}
 	config       *Config

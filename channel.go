@@ -313,8 +313,8 @@ func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Me
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) Channel(id Snowflake) ChannelQueryBuilder {
-	return &channelQueryBuilder{client: c, cid: id}
+func (c clientQueryBuilder) Channel(id Snowflake) ChannelQueryBuilder {
+	return &channelQueryBuilder{client: c.client, cid: id}
 }
 
 // ChannelQueryBuilder REST interface for all Channel endpoints

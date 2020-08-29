@@ -986,7 +986,7 @@ type CreateGuildParams struct {
 //  Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
 //                          categories from this endpoint. is not supported.
 //							The params argument is optional.
-func (c *Client) CreateGuild(ctx context.Context, guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
+func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 Guilds?
 
@@ -1002,9 +1002,9 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 	}
 	params.Name = guildName
 
-	r := c.newRESTRequest(&httd.Request{
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.Guilds(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1014,18 +1014,6 @@ func (c *Client) CreateGuild(ctx context.Context, guildName string, params *Crea
 	}
 
 	return getGuild(r.Execute)
-}
-
-// Guild is used to create a guild query builder.
-func (c *Client) Guild(id Snowflake) GuildQueryBuilder {
-	return &guildQueryBuilder{client: c, gid: id}
-}
-
-// The default guild query builder.
-type guildQueryBuilder struct {
-	ctx    context.Context
-	client *Client
-	gid    Snowflake
 }
 
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
@@ -1086,6 +1074,18 @@ type GuildQueryBuilder interface {
 	Emoji(emojiID Snowflake) GuildEmojiQueryBuilder
 
 	GetWebhooks(flags ...Flag) (ret []*Webhook, err error)
+}
+
+// Guild is used to create a guild query builder.
+func (c clientQueryBuilder) Guild(id Snowflake) GuildQueryBuilder {
+	return &guildQueryBuilder{client: c.client, gid: id}
+}
+
+// The default guild query builder.
+type guildQueryBuilder struct {
+	ctx    context.Context
+	client *Client
+	gid    Snowflake
 }
 
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
