@@ -24,7 +24,11 @@ type clientRESTMock_currentUser struct {
 	id disgord.Snowflake
 }
 
-func (c *clientRESTMock_currentUser) Get(ctx context.Context, flags ...disgord.Flag) (*disgord.User, error) {
+func (c clientRESTMock_currentUser) WithContext(_ context.Context) disgord.CurrentUserQueryBuilder {
+	return c
+}
+
+func (c clientRESTMock_currentUser) Get(_ ...disgord.Flag) (*disgord.User, error) {
 	return &disgord.User{ID: c.id}, nil
 }
 

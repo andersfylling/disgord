@@ -109,8 +109,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*EmbedVideo:
 		s = *t
-	case *[]*CreateGuildEmojiParams:
-		s = *t
 	case *[]*Emoji:
 		s = *t
 	case *[]*ChannelCreate:
@@ -197,9 +195,13 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateGuildChannelParams:
 		s = *t
+	case *[]*CreateGuildEmojiParams:
+		s = *t
 	case *[]*CreateGuildIntegrationParams:
 		s = *t
 	case *[]*CreateGuildParams:
+		s = *t
+	case *[]*CreateGuildRoleParams:
 		s = *t
 	case *[]*GetMembersParams:
 		s = *t
@@ -250,8 +252,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*GuildQueryBuilderNop:
 		s = *t
 	case *[]*UserQueryBuilderNop:
-		s = *t
-	case *[]*CreateGuildRoleParams:
 		s = *t
 	case *[]*Role:
 		s = *t
@@ -787,12 +787,6 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildEmojiParams:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
 	case []*Emoji:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -805,7 +799,19 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateGuildEmojiParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*CreateGuildParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*CreateGuildRoleParams:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
@@ -836,12 +842,6 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*MessageApplication:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*CreateGuildRoleParams:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

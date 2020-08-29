@@ -377,7 +377,7 @@ func (u *User) String() string {
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
 func (u *User) SendMsg(ctx context.Context, session Session, message *Message) (channel *Channel, msg *Message, err error) {
-	channel, err = session.User(u.ID).CreateDM(ctx)
+	channel, err = session.User(u.ID).WithContext(ctx).CreateDM()
 	if err != nil {
 		return
 	}
@@ -532,6 +532,17 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 //
 //////////////////////////////////////////////////////
 
+// RESTUser REST interface for all user endpoints
+type UserQueryBuilder interface {
+	WithContext(ctx context.Context) UserQueryBuilder
+
+	// GetUser Returns a user object for a given user Snowflake.
+	Get(flags ...Flag) (*User, error)
+
+	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
+	CreateDM(flags ...Flag) (ret *Channel, err error)
+}
+
 // Guild is used to create a guild query builder.
 func (c *Client) User(id Snowflake) UserQueryBuilder {
 	return &userQueryBuilder{client: c, uid: id}
@@ -539,17 +550,14 @@ func (c *Client) User(id Snowflake) UserQueryBuilder {
 
 // The default guild query builder.
 type userQueryBuilder struct {
+	ctx    context.Context
 	client *Client
 	uid    Snowflake
 }
 
-// RESTUser REST interface for all user endpoints
-type UserQueryBuilder interface {
-	// GetUser Returns a user object for a given user Snowflake.
-	Get(ctx context.Context, flags ...Flag) (*User, error)
-
-	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
-	CreateDM(ctx context.Context, flags ...Flag) (ret *Channel, err error)
+func (c userQueryBuilder) WithContext(ctx context.Context) UserQueryBuilder {
+	c.ctx = ctx
+	return c
 }
 
 // GetUser [REST] Returns a user object for a given user Snowflake.
@@ -558,10 +566,10 @@ type UserQueryBuilder interface {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *userQueryBuilder) Get(ctx context.Context, flags ...Flag) (*User, error) {
+func (c userQueryBuilder) Get(flags ...Flag) (*User, error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.User(c.uid),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.pool = c.client.pool.user
 	r.factory = userFactory
@@ -575,10 +583,10 @@ func (c *userQueryBuilder) Get(ctx context.Context, flags ...Flag) (*User, error
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *userQueryBuilder) CreateDM(ctx context.Context, flags ...Flag) (ret *Channel, err error) {
+func (c userQueryBuilder) CreateDM(flags ...Flag) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPost,
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 		Endpoint: endpoint.UserMeChannels(),
 		Body: &struct {
 			RecipientID Snowflake `json:"recipient_id"`
@@ -592,6 +600,36 @@ func (c *userQueryBuilder) CreateDM(ctx context.Context, flags ...Flag) (ret *Ch
 	return getChannel(r.Execute)
 }
 
+type CurrentUserQueryBuilder interface {
+	WithContext(ctx context.Context) CurrentUserQueryBuilder
+
+	// GetCurrentUser Returns the user object of the requester's account. For OAuth2, this requires the identify
+	// scope, which will return the object without an email, and optionally the email scope, which returns the object
+	// with an email.
+	Get(flags ...Flag) (*User, error)
+
+	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
+	Update(flags ...Flag) UpdateCurrentUserBuilder
+
+	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
+	// Requires the Guilds OAuth2 scope.
+	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
+
+	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
+	LeaveGuild(id Snowflake, flags ...Flag) (err error)
+
+	// GetUserDMs Returns a list of DM channel objects.
+	GetDMChannels(flags ...Flag) (ret []*Channel, err error)
+
+	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
+	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
+	// endpoint will not be shown in the Discord Client
+	CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error)
+
+	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
+	GetUserConnections(flags ...Flag) (ret []*UserConnection, err error)
+}
+
 // Guild is used to create a guild query builder.
 func (c *Client) CurrentUser() CurrentUserQueryBuilder {
 	return &currentUserQueryBuilder{client: c}
@@ -599,38 +637,15 @@ func (c *Client) CurrentUser() CurrentUserQueryBuilder {
 
 // The default guild query builder.
 type currentUserQueryBuilder struct {
+	ctx    context.Context
 	client *Client
 }
 
 var _ CurrentUserQueryBuilder = (*currentUserQueryBuilder)(nil)
 
-// RESTUser REST interface for all user endpoints
-type CurrentUserQueryBuilder interface {
-	// GetCurrentUser Returns the user object of the requester's account. For OAuth2, this requires the identify
-	// scope, which will return the object without an email, and optionally the email scope, which returns the object
-	// with an email.
-	Get(ctx context.Context, flags ...Flag) (*User, error)
-
-	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
-	Update(ctx context.Context, flags ...Flag) UpdateCurrentUserBuilder
-
-	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
-	// Requires the Guilds OAuth2 scope.
-	GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
-
-	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
-	LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error)
-
-	// GetUserDMs Returns a list of DM channel objects.
-	GetDMChannels(ctx context.Context, flags ...Flag) (ret []*Channel, err error)
-
-	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
-	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
-	// endpoint will not be shown in the Discord Client
-	CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error)
-
-	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
-	GetUserConnections(ctx context.Context, flags ...Flag) (ret []*UserConnection, err error)
+func (c currentUserQueryBuilder) WithContext(ctx context.Context) CurrentUserQueryBuilder {
+	c.ctx = ctx
+	return c
 }
 
 // GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
@@ -641,10 +656,10 @@ type CurrentUserQueryBuilder interface {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *currentUserQueryBuilder) Get(ctx context.Context, flags ...Flag) (user *User, err error) {
+func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMe(),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.pool = c.client.pool.user
 	r.factory = userFactory
@@ -661,13 +676,13 @@ func (c *currentUserQueryBuilder) Get(ctx context.Context, flags ...Flag) (user 
 //  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *currentUserQueryBuilder) Update(ctx context.Context, flags ...Flag) UpdateCurrentUserBuilder {
+func (c currentUserQueryBuilder) Update(flags ...Flag) UpdateCurrentUserBuilder {
 	builder := &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
 	builder.r.setup(c.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -694,10 +709,10 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
 //                          Guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of Users' Guilds.
-func (c *currentUserQueryBuilder) GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*PartialGuild, 0)
@@ -725,10 +740,10 @@ func (c *currentUserQueryBuilder) GetGuilds(ctx context.Context, params *GetCurr
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
 // Deprecated: Needs cache checking to get the actual list of Channels
-func (c *currentUserQueryBuilder) GetDMChannels(ctx context.Context, flags ...Flag) (ret []*Channel, err error) {
+func (c currentUserQueryBuilder) GetDMChannels(flags ...Flag) (ret []*Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeChannels(),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Channel, 0) // TODO: use channel pool to get enough Channels
@@ -762,11 +777,11 @@ type CreateGroupDMParams struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *currentUserQueryBuilder) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
+func (c currentUserQueryBuilder) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.UserMeGuild(id),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -782,10 +797,10 @@ func (c *currentUserQueryBuilder) LeaveGuild(ctx context.Context, id Snowflake, 
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *currentUserQueryBuilder) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
+func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -804,10 +819,10 @@ func (c *currentUserQueryBuilder) CreateGroupDM(ctx context.Context, params *Cre
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *currentUserQueryBuilder) GetUserConnections(ctx context.Context, flags ...Flag) (connections []*UserConnection, err error) {
+func (c currentUserQueryBuilder) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeConnections(),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*UserConnection, 0)

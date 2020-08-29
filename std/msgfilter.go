@@ -21,7 +21,7 @@ type CurrentUserRESTResource interface {
 }
 
 func newMsgFilter(ctx context.Context, client CurrentUserRESTResource) (filter *msgFilter, err error) {
-	usr, err := client.CurrentUser().Get(ctx)
+	usr, err := client.CurrentUser().WithContext(ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 		return nil
 	}
 
-	p, err := f.s.Guild(msg.GuildID).GetMemberPermissions(context.Background(), uID)
+	p, err := f.s.Guild(msg.GuildID).GetMemberPermissions(uID)
 	if err != nil {
 		return nil
 	}

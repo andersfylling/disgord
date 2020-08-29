@@ -3,7 +3,11 @@ package disgord
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sort"
+
+	"github.com/andersfylling/disgord/internal/endpoint"
+	"github.com/andersfylling/disgord/internal/httd"
 )
 
 type roles []*Role
@@ -116,7 +120,7 @@ func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) 
 		return newErrorMissingSnowflake("role has no guildID")
 	}
 
-	err = s.Guild(guildID).DeleteRole(ctx, id, flags...)
+	err = s.Guild(guildID).Role(id).WithContext(ctx).Delete(flags...)
 	return err
 }
 
@@ -126,17 +130,59 @@ func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) 
 //
 //////////////////////////////////////////////////////
 
-// CreateGuildRoleParams ...
-// https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
-type CreateGuildRoleParams struct {
-	Name        string `json:"name,omitempty"`
-	Permissions uint64 `json:"permissions,omitempty"`
-	Color       uint   `json:"color,omitempty"`
-	Hoist       bool   `json:"hoist,omitempty"`
-	Mentionable bool   `json:"mentionable,omitempty"`
+type GuildRoleQueryBuilder interface {
+	WithContext(ctx context.Context) GuildRoleQueryBuilder
 
-	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
-	Reason string `json:"-"`
+	Update(flags ...Flag) (builder UpdateGuildRoleBuilder)
+	Delete(flags ...Flag) error
+}
+
+func (g guildQueryBuilder) Role(id Snowflake) GuildRoleQueryBuilder {
+	return &guildRoleQueryBuilder{client: g.client, gid: g.gid, roleID: id}
+}
+
+type guildRoleQueryBuilder struct {
+	ctx    context.Context
+	client *Client
+	gid    Snowflake
+	roleID Snowflake
+}
+
+func (g guildRoleQueryBuilder) WithContext(ctx context.Context) GuildRoleQueryBuilder {
+	g.ctx = ctx
+	return g
+}
+
+// UpdateRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.
+// Returns the updated role on success. Fires a Guild Role Update Gateway event.
+func (g guildRoleQueryBuilder) Update(flags ...Flag) UpdateGuildRoleBuilder {
+	builder := &updateGuildRoleBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Role{}
+	}
+	builder.r.flags = flags
+	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
+// DeleteRole Delete a guild role. Requires the 'MANAGE_ROLES' permission.
+// Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
+func (g guildRoleQueryBuilder) Delete(flags ...Flag) error {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:   httd.MethodDelete,
+		Endpoint: endpoint.GuildRole(g.gid, g.roleID),
+		Ctx:      g.ctx,
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err := r.Execute()
+	return err
 }
 
 //////////////////////////////////////////////////////

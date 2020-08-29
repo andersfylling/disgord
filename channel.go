@@ -214,7 +214,7 @@ func (c *Channel) deleteFromDiscord(ctx context.Context, s Session, flags ...Fla
 		return
 	}
 	var deleted *Channel
-	if deleted, err = s.Channel(id).Delete(ctx, flags...); err != nil {
+	if deleted, err = s.Channel(id).WithContext(ctx).Delete(flags...); err != nil {
 		return
 	}
 
@@ -319,84 +319,94 @@ func (c *Client) Channel(id Snowflake) ChannelQueryBuilder {
 
 // ChannelQueryBuilder REST interface for all Channel endpoints
 type ChannelQueryBuilder interface {
+	WithContext(ctx context.Context) ChannelQueryBuilder
+
 	// TriggerTypingIndicator Post a typing indicator for the specified channel. Generally bots should not implement
 	// this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
 	// endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
 	// on success. Fires a Typing Start Gateway event.
-	TriggerTypingIndicator(ctx context.Context, flags ...Flag) error
+	TriggerTypingIndicator(flags ...Flag) error
 
 	// GetChannel Get a channel by Snowflake. Returns a channel object.
-	Get(ctx context.Context, flags ...Flag) (*Channel, error)
+	Get(flags ...Flag) (*Channel, error)
 
 	// UpdateChannel Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(ctx context.Context, flags ...Flag) *updateChannelBuilder
+	Update(flags ...Flag) *updateChannelBuilder
 
 	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 	// Fires a Channel Delete Gateway event.
-	Delete(ctx context.Context, flags ...Flag) (*Channel, error)
+	Delete(flags ...Flag) (*Channel, error)
 
 	// EditChannelPermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(ctx context.Context, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) error
 
 	// GetChannelInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
-	GetInvites(ctx context.Context, flags ...Flag) ([]*Invite, error)
+	GetInvites(flags ...Flag) ([]*Invite, error)
 
 	// CreateChannelInvite Create a new invite object for the channel. Only usable for guild Channels. Requires
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite(ctx context.Context, flags ...Flag) *createChannelInviteBuilder
+	CreateInvite(flags ...Flag) *createChannelInviteBuilder
 
 	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 	// information about permissions,
 	// see permissions: https://discord.com/developers/docs/topics/permissions#permissions
-	DeletePermission(ctx context.Context, overwriteID Snowflake, flags ...Flag) error
+	DeletePermission(overwriteID Snowflake, flags ...Flag) error
 
 	// AddDMParticipant Adds a recipient to a Group DM using their access token. Returns a 204 empty response
 	// on success.
-	AddDMParticipant(ctx context.Context, participant *GroupDMParticipant, flags ...Flag) error
+	AddDMParticipant(participant *GroupDMParticipant, flags ...Flag) error
 
 	// KickParticipant Removes a recipient from a Group DM. Returns a 204 empty response on success.
-	KickParticipant(ctx context.Context, userID Snowflake, flags ...Flag) error
+	KickParticipant(userID Snowflake, flags ...Flag) error
 
 	// GetPinnedMessages Returns all pinned messages in the channel as an array of message objects.
-	GetPinnedMessages(ctx context.Context, flags ...Flag) ([]*Message, error)
+	GetPinnedMessages(flags ...Flag) ([]*Message, error)
 
 	// DeleteMessages Delete multiple messages in a single request. This endpoint can only be used on guild
 	// Channels and requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response on success. Fires multiple
 	// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 	// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 	// will only be counted once.
-	DeleteMessages(ctx context.Context, params *DeleteMessagesParams, flags ...Flag) error
+	DeleteMessages(params *DeleteMessagesParams, flags ...Flag) error
 
 	// GetMessages Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(ctx context.Context, params *GetMessagesParams, flags ...Flag) ([]*Message, error)
+	GetMessages(params *GetMessagesParams, flags ...Flag) ([]*Message, error)
 
 	// CreateMessage Post a message to a guild text or DM channel. If operating on a guild channel, this
 	// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 	// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 	// Message Create Gateway event. See message formatting for more information on how to properly format messages.
 	// The maximum request size when sending a message is 8MB.
-	CreateMessage(ctx context.Context, params *CreateMessageParams, flags ...Flag) (*Message, error)
+	CreateMessage(params *CreateMessageParams, flags ...Flag) (*Message, error)
 
 	Message(id Snowflake) MessageQueryBuilder
 }
 
 type channelQueryBuilder struct {
+	ctx    context.Context
 	client *Client
 	cid    Snowflake
+}
+
+var _ ChannelQueryBuilder = (*channelQueryBuilder)(nil)
+
+func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilder {
+	c.ctx = ctx
+	return c
 }
 
 // GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
@@ -405,7 +415,7 @@ type channelQueryBuilder struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) Get(ctx context.Context, flags ...Flag) (ret *Channel, err error) {
+func (c channelQueryBuilder) Get(flags ...Flag) (ret *Channel, err error) {
 	if c.cid.IsZero() {
 		return nil, errors.New("not a valid snowflake")
 	}
@@ -417,7 +427,7 @@ func (c channelQueryBuilder) Get(ctx context.Context, flags ...Flag) (ret *Chann
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Channel(c.cid),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.pool = c.client.pool.channel
 	r.factory = func() interface{} {
@@ -436,7 +446,7 @@ func (c channelQueryBuilder) Get(ctx context.Context, flags ...Flag) (ret *Chann
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c channelQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder *updateChannelBuilder) {
+func (c channelQueryBuilder) Update(flags ...Flag) (builder *updateChannelBuilder) {
 	builder = &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return c.client.pool.channel.Get()
@@ -444,7 +454,7 @@ func (c channelQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder
 	builder.r.flags = flags
 	builder.r.setup(c.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -464,7 +474,7 @@ func (c channelQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func (c channelQueryBuilder) Delete(ctx context.Context, flags ...Flag) (channel *Channel, err error) {
+func (c channelQueryBuilder) Delete(flags ...Flag) (channel *Channel, err error) {
 	if c.cid.IsZero() {
 		err = errors.New("not a valid snowflake")
 		return
@@ -492,11 +502,11 @@ func (c channelQueryBuilder) Delete(ctx context.Context, flags ...Flag) (channel
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c channelQueryBuilder) TriggerTypingIndicator(ctx context.Context, flags ...Flag) (err error) {
+func (c channelQueryBuilder) TriggerTypingIndicator(flags ...Flag) (err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPost,
 		Endpoint: endpoint.ChannelTyping(c.cid),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -519,7 +529,7 @@ type UpdateChannelPermissionsParams struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) UpdatePermissions(ctx context.Context, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
+func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
 	if c.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -529,7 +539,7 @@ func (c channelQueryBuilder) UpdatePermissions(ctx context.Context, overwriteID 
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPut,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelPermission(c.cid, overwriteID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -547,7 +557,7 @@ func (c channelQueryBuilder) UpdatePermissions(ctx context.Context, overwriteID 
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) GetInvites(ctx context.Context, flags ...Flag) (invites []*Invite, err error) {
+func (c channelQueryBuilder) GetInvites(flags ...Flag) (invites []*Invite, err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -555,7 +565,7 @@ func (c channelQueryBuilder) GetInvites(ctx context.Context, flags ...Flag) (inv
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelInvites(c.cid),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Invite, 0)
@@ -573,7 +583,7 @@ func (c channelQueryBuilder) GetInvites(ctx context.Context, flags ...Flag) (inv
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) CreateInvite(ctx context.Context, flags ...Flag) (builder *createChannelInviteBuilder) {
+func (c channelQueryBuilder) CreateInvite(flags ...Flag) (builder *createChannelInviteBuilder) {
 	builder = &createChannelInviteBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Invite{}
@@ -581,7 +591,7 @@ func (c channelQueryBuilder) CreateInvite(ctx context.Context, flags ...Flag) (b
 	builder.r.flags = flags
 	builder.r.setup(c.client.req, &httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelInvites(c.cid),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -597,7 +607,7 @@ func (c channelQueryBuilder) CreateInvite(ctx context.Context, flags ...Flag) (b
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-channel-permission
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) DeletePermission(ctx context.Context, overwriteID Snowflake, flags ...Flag) (err error) {
+func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake, flags ...Flag) (err error) {
 	if c.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -608,7 +618,7 @@ func (c channelQueryBuilder) DeletePermission(ctx context.Context, overwriteID S
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelPermission(c.cid, overwriteID),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -644,7 +654,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c channelQueryBuilder) AddDMParticipant(ctx context.Context, participant *GroupDMParticipant, flags ...Flag) error {
+func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant, flags ...Flag) error {
 	if c.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -657,7 +667,7 @@ func (c channelQueryBuilder) AddDMParticipant(ctx context.Context, participant *
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPut,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelRecipient(c.cid, participant.UserID),
 		Body:        participant,
 		ContentType: httd.ContentTypeJSON,
@@ -674,7 +684,7 @@ func (c channelQueryBuilder) AddDMParticipant(ctx context.Context, participant *
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c channelQueryBuilder) KickParticipant(ctx context.Context, userID Snowflake, flags ...Flag) (err error) {
+func (c channelQueryBuilder) KickParticipant(userID Snowflake, flags ...Flag) (err error) {
 	if c.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -685,7 +695,7 @@ func (c channelQueryBuilder) KickParticipant(ctx context.Context, userID Snowfla
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelRecipient(c.cid, userID),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -732,7 +742,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 The before, after, and around keys are mutually exclusive, only one may
 //                          be passed at a time. see ReqGetChannelMessagesParams.
-func (c channelQueryBuilder) getMessages(ctx context.Context, params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
+func (c channelQueryBuilder) getMessages(params URLQueryStringer, flags ...Flag) (ret []*Message, err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -745,7 +755,7 @@ func (c channelQueryBuilder) getMessages(ctx context.Context, params URLQueryStr
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelMessages(c.cid) + query,
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Message, 0)
@@ -756,7 +766,7 @@ func (c channelQueryBuilder) getMessages(ctx context.Context, params URLQueryStr
 }
 
 // GetMessages bypasses discord limitations and iteratively fetches messages until the set filters are met.
-func (c channelQueryBuilder) GetMessages(ctx context.Context, filter *GetMessagesParams, flags ...Flag) (messages []*Message, err error) {
+func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams, flags ...Flag) (messages []*Message, err error) {
 	// discord values
 	const filterLimit = 100
 	const filterDefault = 50
@@ -772,7 +782,7 @@ func (c channelQueryBuilder) GetMessages(ctx context.Context, filter *GetMessage
 	}
 
 	if filter.Limit <= filterLimit {
-		return c.getMessages(ctx, filter, flags...)
+		return c.getMessages(filter, flags...)
 	}
 
 	latestSnowflake := func(msgs []*Message) (latest Snowflake) {
@@ -803,7 +813,7 @@ func (c channelQueryBuilder) GetMessages(ctx context.Context, filter *GetMessage
 		beforeParams.Before = beforeParams.Around
 		beforeParams.Around = 0
 		beforeParams.Limit = filter.Limit / 2
-		befores, err := c.GetMessages(ctx, &beforeParams, flags...)
+		befores, err := c.GetMessages(&beforeParams, flags...)
 		if err != nil {
 			return nil, err
 		}
@@ -813,14 +823,14 @@ func (c channelQueryBuilder) GetMessages(ctx context.Context, filter *GetMessage
 		afterParams.After = afterParams.Around
 		afterParams.Around = 0
 		afterParams.Limit = filter.Limit / 2
-		afters, err := c.GetMessages(ctx, &afterParams, flags...)
+		afters, err := c.GetMessages(&afterParams, flags...)
 		if err != nil {
 			return nil, err
 		}
 		messages = append(messages, afters...)
 
 		// filter.Around includes the given ID, so should .Before and .After iterations do as well
-		if msg, _ := c.Message(filter.Around).Get(ctx, flags...); msg != nil {
+		if msg, _ := c.Message(filter.Around).Get(c.ctx, flags...); msg != nil {
 			// assumption: error here can be caused by the message ID not actually being a real message
 			//             and that it was used to get messages in the vicinity. Therefore the err is ignored.
 			// TODO: const discord errors.
@@ -840,7 +850,7 @@ func (c channelQueryBuilder) GetMessages(ctx context.Context, filter *GetMessage
 				f.Limit = 100
 			}
 			filter.Limit -= f.Limit
-			msgs, err := c.getMessages(ctx, &f, flags...)
+			msgs, err := c.getMessages(&f, flags...)
 			if err != nil {
 				return nil, err
 			}
@@ -919,7 +929,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
-func (c channelQueryBuilder) DeleteMessages(ctx context.Context, params *DeleteMessagesParams, flags ...Flag) (err error) {
+func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams, flags ...Flag) (err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return err
@@ -930,7 +940,7 @@ func (c channelQueryBuilder) DeleteMessages(ctx context.Context, params *DeleteM
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(c.cid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -1068,7 +1078,7 @@ func (p *CreateMessageParams) prepare() (postBody interface{}, contentType strin
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
-func (c channelQueryBuilder) CreateMessage(ctx context.Context, params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
+func (c channelQueryBuilder) CreateMessage(params *CreateMessageParams, flags ...Flag) (ret *Message, err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -1089,7 +1099,7 @@ func (c channelQueryBuilder) CreateMessage(ctx context.Context, params *CreateMe
 
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		Endpoint:    "/channels/" + c.cid.String() + "/messages",
 		Body:        postBody,
 		ContentType: contentType,
@@ -1108,10 +1118,10 @@ func (c channelQueryBuilder) CreateMessage(ctx context.Context, params *CreateMe
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-pinned-messages
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c channelQueryBuilder) GetPinnedMessages(ctx context.Context, flags ...Flag) (ret []*Message, err error) {
+func (c channelQueryBuilder) GetPinnedMessages(flags ...Flag) (ret []*Message, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelPins(c.cid),
-		Ctx:      ctx,
+		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Message, 0)

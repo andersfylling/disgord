@@ -54,7 +54,7 @@ func main() {
 		panic(err)
 	}
 
-	e, err := c.Guild(486833041486905345).GetEmojis(context.Background())
+	e, err := c.Guild(486833041486905345).GetEmojis()
 	if err != nil {
 		panic(err)
 	}

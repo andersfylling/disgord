@@ -32,7 +32,6 @@ var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpE
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
-	// Deprecated
 	Ctx context.Context
 
 	Method      httpMethod

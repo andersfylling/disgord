@@ -356,7 +356,7 @@ func (g *Guild) AddMember(member *Member) error {
 func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimate int, err error) {
 	var channelID Snowflake
 	if len(g.Channels) == 0 {
-		channels, err := s.Guild(g.ID).GetChannels(ctx)
+		channels, err := s.Guild(g.ID).WithContext(ctx).GetChannels()
 		if err != nil {
 			return 0, err
 		}
@@ -376,7 +376,7 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		return 0, errors.New("unable to decide which channel to create invite for")
 	}
 
-	invite, err := s.Channel(channelID).CreateInvite(ctx).
+	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite().
 		SetMaxAge(1).
 		Execute()
 	if err != nil {
@@ -835,7 +835,7 @@ type Member struct {
 	Mute         bool        `json:"mute"`
 
 	// custom
-	UserID Snowflake
+	UserID Snowflake `json:"-"`
 }
 
 var _ Reseter = (*Member)(nil)
@@ -866,13 +866,19 @@ type GuildQueryBuilderCaller interface {
 }
 
 func (m *Member) UpdateNick(ctx context.Context, client GuildQueryBuilderCaller, nickname string, flags ...Flag) error {
-	return client.Guild(m.GuildID).UpdateMember(ctx, m.UserID, flags...).SetNick(nickname).Execute()
+	return client.
+		Guild(m.GuildID).
+		Member(m.UserID).
+		WithContext(ctx).
+		Update(flags...).
+		SetNick(nickname).
+		Execute()
 }
 
 // GetPermissions populates a uint64 with all the permission flags
 func (m *Member) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller, flags ...Flag) (permissions PermissionBit, err error) {
 	// TODO: Don't deep copy channels for this in the future!
-	roles, err := s.Guild(m.GuildID).GetRoles(ctx, flags...)
+	roles, err := s.Guild(m.GuildID).WithContext(ctx).GetRoles(flags...)
 	if err != nil {
 		return 0, err
 	}
@@ -902,7 +908,7 @@ func (m *Member) GetUser(ctx context.Context, session Session) (usr *User, err e
 		return m.User, nil
 	}
 
-	return session.User(m.UserID).Get(ctx)
+	return session.User(m.UserID).WithContext(ctx).Get()
 }
 
 // Mention creates a string which is parsed into a member mention on Discord GUI's
@@ -1017,78 +1023,86 @@ func (c *Client) Guild(id Snowflake) GuildQueryBuilder {
 
 // The default guild query builder.
 type guildQueryBuilder struct {
+	ctx    context.Context
 	client *Client
 	gid    Snowflake
 }
 
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
 type GuildQueryBuilder interface {
+	WithContext(ctx context.Context) GuildQueryBuilder
+
 	// TODO: Add more guild attribute things. Waiting for caching changes before then.
-	Get(ctx context.Context, flags ...Flag) (guild *Guild, err error)
+	Get(flags ...Flag) (guild *Guild, err error)
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
-	GetChannels(ctx context.Context, flags ...Flag) ([]*Channel, error)
+	GetChannels(flags ...Flag) ([]*Channel, error)
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	GetMembers(ctx context.Context, params *GetMembersParams, flags ...Flag) ([]*Member, error)
-	Update(ctx context.Context, flags ...Flag) UpdateGuildBuilder
-	Delete(ctx context.Context, flags ...Flag) error
-	CreateChannel(ctx context.Context, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
-	UpdateChannelPositions(ctx context.Context, params []UpdateGuildChannelPositionsParams, flags ...Flag) error
-	GetMember(ctx context.Context, userID Snowflake, flags ...Flag) (*Member, error)
-	AddMember(ctx context.Context, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
-	UpdateMember(ctx context.Context, userID Snowflake, flags ...Flag) UpdateGuildMemberBuilder
-	SetCurrentUserNick(ctx context.Context, nick string, flags ...Flag) (newNick string, err error)
-	AddMemberRole(ctx context.Context, userID, roleID Snowflake, flags ...Flag) error
-	KickMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
-	KickVoiceParticipant(ctx context.Context, userID Snowflake) error
-	GetBans(ctx context.Context, flags ...Flag) ([]*Ban, error)
-	GetBan(ctx context.Context, userID Snowflake, flags ...Flag) (*Ban, error)
-	BanMember(ctx context.Context, userID Snowflake, params *BanMemberParams, flags ...Flag) error
-	UnbanMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error
+	GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error)
+	Update(flags ...Flag) UpdateGuildBuilder
+	Delete(flags ...Flag) error
+
+	CreateChannel(name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
+	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams, flags ...Flag) error
+	CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)
+	Member(userID Snowflake) GuildMemberQueryBuilder
+
+	KickVoiceParticipant(userID Snowflake) error
+	SetCurrentUserNick(nick string, flags ...Flag) (newNick string, err error)
+	GetBans(flags ...Flag) ([]*Ban, error)
+	GetBan(userID Snowflake, flags ...Flag) (*Ban, error)
+	UnbanUser(userID Snowflake, reason string, flags ...Flag) error
 	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	// TODO-3: Add GetRole.
-	GetRoles(ctx context.Context, flags ...Flag) ([]*Role, error)
-	GetMemberPermissions(ctx context.Context, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
-	CreateRole(ctx context.Context, params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
-	UpdateRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
-	UpdateRole(ctx context.Context, roleID Snowflake, flags ...Flag) (builder UpdateGuildRoleBuilder)
-	DeleteRole(ctx context.Context, roleID Snowflake, flags ...Flag) error
-	EstimatePruneMembersCount(ctx context.Context, days int, flags ...Flag) (estimate int, err error)
-	PruneMembers(ctx context.Context, days int, reason string, flags ...Flag) error
-	GetVoiceRegions(ctx context.Context, flags ...Flag) ([]*VoiceRegion, error)
-	GetInvites(ctx context.Context, flags ...Flag) ([]*Invite, error)
-	GetIntegrations(ctx context.Context, flags ...Flag) ([]*Integration, error)
-	CreateIntegration(ctx context.Context, params *CreateGuildIntegrationParams, flags ...Flag) error
-	UpdateIntegration(ctx context.Context, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error
-	DeleteIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
-	SyncIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error
-	GetEmbed(ctx context.Context, flags ...Flag) (*GuildEmbed, error)
-	UpdateEmbed(ctx context.Context, flags ...Flag) UpdateGuildEmbedBuilder
-	GetVanityURL(ctx context.Context, flags ...Flag) (*PartialInvite, error)
-	GetAuditLogs(ctx context.Context, flags ...Flag) GuildAuditLogsBuilder
+	GetRoles(flags ...Flag) ([]*Role, error)
+	GetMemberPermissions(userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
+	UpdateRolePositions(params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
+	CreateRole(params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
+	Role(roleID Snowflake) GuildRoleQueryBuilder
+
+	EstimatePruneMembersCount(days int, flags ...Flag) (estimate int, err error)
+	PruneMembers(days int, reason string, flags ...Flag) error
+	GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error)
+	GetInvites(flags ...Flag) ([]*Invite, error)
+
+	GetIntegrations(flags ...Flag) ([]*Integration, error)
+	CreateIntegration(params *CreateGuildIntegrationParams, flags ...Flag) error
+	UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error
+	DeleteIntegration(integrationID Snowflake, flags ...Flag) error
+	SyncIntegration(integrationID Snowflake, flags ...Flag) error
+
+	GetEmbed(flags ...Flag) (*GuildEmbed, error)
+	UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder
+	GetVanityURL(flags ...Flag) (*PartialInvite, error)
+	GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder
 	VoiceConnect(channelID Snowflake) (ret VoiceConnection, err error)
-	GetEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) (*Emoji, error)
+
 	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
-	GetEmojis(ctx context.Context, flags ...Flag) ([]*Emoji, error)
-	CreateEmoji(ctx context.Context, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
-	UpdateEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) UpdateGuildEmojiBuilder
-	DeleteEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) error
-	GetWebhooks(ctx context.Context, flags ...Flag) (ret []*Webhook, err error)
+	GetEmojis(flags ...Flag) ([]*Emoji, error)
+	CreateEmoji(params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error)
+	Emoji(emojiID Snowflake) GuildEmojiQueryBuilder
+
+	GetWebhooks(flags ...Flag) (ret []*Webhook, err error)
+}
+
+func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
+	g.ctx = ctx
+	return g
 }
 
 // Get is used to get the Guild struct containing all information from it.
 // Note that it's significantly quicker in most instances where you have the cache enabled (as is by default) to get the individual parts you need.
-func (g guildQueryBuilder) Get(ctx context.Context, flags ...Flag) (guild *Guild, err error) {
+func (g guildQueryBuilder) Get(flags ...Flag) (guild *Guild, err error) {
 	if guild, _ = g.client.cache.GetGuild(g.gid); guild != nil {
 		return guild, nil
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Guild(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Guild{}
@@ -1098,14 +1112,14 @@ func (g guildQueryBuilder) Get(ctx context.Context, flags ...Flag) (guild *Guild
 }
 
 // Update is used to create a guild update builder.
-func (g guildQueryBuilder) Update(ctx context.Context, flags ...Flag) UpdateGuildBuilder {
+func (g guildQueryBuilder) Update(flags ...Flag) UpdateGuildBuilder {
 	builder := &updateGuildBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
 	}
 	builder.r.setup(g.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -1115,11 +1129,11 @@ func (g guildQueryBuilder) Update(ctx context.Context, flags ...Flag) UpdateGuil
 }
 
 // Delete is used to delete a guild.
-func (g guildQueryBuilder) Delete(ctx context.Context, flags ...Flag) error {
+func (g guildQueryBuilder) Delete(flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.Guild(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1128,14 +1142,14 @@ func (g guildQueryBuilder) Delete(ctx context.Context, flags ...Flag) error {
 }
 
 // GetChannels is used to get a guilds channels.
-func (g guildQueryBuilder) GetChannels(ctx context.Context, flags ...Flag) ([]*Channel, error) {
+func (g guildQueryBuilder) GetChannels(flags ...Flag) ([]*Channel, error) {
 	if channels, _ := g.client.cache.GetGuildChannels(g.gid); channels != nil {
 		return channels, nil
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildChannels(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Channel, 0)
@@ -1147,7 +1161,7 @@ func (g guildQueryBuilder) GetChannels(ctx context.Context, flags ...Flag) ([]*C
 
 // CreateChannel Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
 // Returns the new channel object on success. Fires a Channel Create Gateway event.
-func (g guildQueryBuilder) CreateChannel(ctx context.Context, name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error) {
+func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error) {
 	if name == "" && (params == nil || params.Name == "") {
 		return nil, errors.New("channel name is required")
 	}
@@ -1164,7 +1178,7 @@ func (g guildQueryBuilder) CreateChannel(ctx context.Context, name string, param
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildChannels(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1180,7 +1194,7 @@ func (g guildQueryBuilder) CreateChannel(ctx context.Context, name string, param
 // UpdateChannelPositions Modify the positions of a set of channel objects for the guild.
 // Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
 // Gateway events.
-func (g guildQueryBuilder) UpdateChannelPositions(ctx context.Context, params []UpdateGuildChannelPositionsParams, flags ...Flag) error {
+func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPositionsParams, flags ...Flag) error {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -1190,7 +1204,7 @@ func (g guildQueryBuilder) UpdateChannelPositions(ctx context.Context, params []
 	}
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildChannels(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1202,33 +1216,8 @@ func (g guildQueryBuilder) UpdateChannelPositions(ctx context.Context, params []
 	return err
 }
 
-// GetMember Returns a guild member object for the specified user.
-func (g guildQueryBuilder) GetMember(ctx context.Context, userID Snowflake, flags ...Flag) (member *Member, err error) {
-	if member, _ = g.client.cache.GetMember(g.gid, userID); member != nil {
-		return member, nil
-	}
-
-	r := g.client.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildMember(g.gid, userID),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		return &Member{
-			GuildID: g.gid,
-			UserID:  userID,
-		}
-	}
-
-	member, err = getMember(r.Execute)
-	if err != nil {
-		return
-	}
-	member.GuildID = g.gid
-	return
-}
-
 // GetMembers uses the GetGuildMembers endpoint iteratively until your query params are met.
-func (g guildQueryBuilder) GetMembers(ctx context.Context, params *GetMembersParams, flags ...Flag) ([]*Member, error) {
+func (g guildQueryBuilder) GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error) {
 	if params == nil {
 		params = &GetMembersParams{
 			Limit: math.MaxUint32,
@@ -1257,7 +1246,7 @@ func (g guildQueryBuilder) GetMembers(ctx context.Context, params *GetMembersPar
 	var ms []*Member
 	var err error
 	for {
-		ms, err = g.client.getGuildMembers(ctx, g.gid, &p, flags...)
+		ms, err = g.getGuildMembers(&p, flags...)
 		if ms != nil {
 			members = append(members, ms...)
 		}
@@ -1288,11 +1277,11 @@ func (g guildQueryBuilder) GetMembers(ctx context.Context, params *GetMembersPar
 	return members, err
 }
 
-// AddMember Adds a user to the guild, provided you have a valid oauth2 access token for the user with
+// CreateMember Adds a user to the guild, provided you have a valid oauth2 access token for the user with
 // the Guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
 // already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.
-func (g guildQueryBuilder) AddMember(ctx context.Context, userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error) {
+func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error) {
 	if accessToken == "" && (params == nil || params.AccessToken == "") {
 		return nil, errors.New("access token is required")
 	}
@@ -1306,7 +1295,7 @@ func (g guildQueryBuilder) AddMember(ctx context.Context, userID Snowflake, acce
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPut,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, userID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1335,43 +1324,16 @@ func (g guildQueryBuilder) AddMember(ctx context.Context, userID Snowflake, acce
 	return member, err
 }
 
-// UpdateMember is used to create a builder to update a guild member.
-func (g guildQueryBuilder) UpdateMember(ctx context.Context, userID Snowflake, flags ...Flag) UpdateGuildMemberBuilder {
-	builder := &updateGuildMemberBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Member{
-			GuildID: g.gid,
-			UserID:  userID,
-		}
-	}
-	builder.r.flags = flags
-	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildMember(g.gid, userID),
-		ContentType: httd.ContentTypeJSON,
-	}, func(resp *http.Response, body []byte, err error) error {
-		if resp.StatusCode != http.StatusNoContent {
-			msg := "could not change attributes of member. Does the member exist, and do you have permissions?"
-			return errors.New(msg)
-		}
-		return nil
-	})
-
-	// TODO: cache member changes
-	return builder
-}
-
 // SetCurrentUserNick Modifies the nickname of the current user in a guild. Returns a 200
 // with the nickname on success. Fires a Guild Member Update Gateway event.
-func (g guildQueryBuilder) SetCurrentUserNick(ctx context.Context, nick string, flags ...Flag) (newNick string, err error) {
+func (g guildQueryBuilder) SetCurrentUserNick(nick string, flags ...Flag) (newNick string, err error) {
 	params := &updateCurrentUserNickParams{
 		Nick: nick,
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMembersMeNick(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1384,54 +1346,11 @@ func (g guildQueryBuilder) SetCurrentUserNick(ctx context.Context, nick string, 
 	return getNickName(r.Execute)
 }
 
-// AddGuildMemberRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
-// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-func (g guildQueryBuilder) AddMemberRole(ctx context.Context, userID, roleID Snowflake, flags ...Flag) error {
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
-		Endpoint: endpoint.GuildMemberRole(g.gid, userID, roleID),
-		Ctx:      ctx,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err := r.Execute()
-	return err
-}
-
-// RemoveMemberRole removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
-// Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-func (g guildQueryBuilder) RemoveMemberRole(ctx context.Context, userID, roleID Snowflake, flags ...Flag) error {
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: endpoint.GuildMemberRole(g.gid, userID, roleID),
-		Ctx:      ctx,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err := r.Execute()
-	return err
-}
-
-// KickMember kicks a member from a guild. Requires 'KICK_MEMBERS' permission.
-// Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
-func (g guildQueryBuilder) KickMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error {
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: endpoint.GuildMember(g.gid, userID),
-		Reason:   reason,
-		Ctx:      ctx,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err := r.Execute()
-	return err
-}
-
 // GetBans returns an array of ban objects for the Users banned from this guild. Requires the 'BAN_MEMBERS' permission.
-func (g guildQueryBuilder) GetBans(ctx context.Context, flags ...Flag) ([]*Ban, error) {
+func (g guildQueryBuilder) GetBans(flags ...Flag) ([]*Ban, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildBans(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Ban, 0)
@@ -1452,10 +1371,10 @@ func (g guildQueryBuilder) GetBans(ctx context.Context, flags ...Flag) ([]*Ban, 
 
 // GetBan Returns a ban object for the given user or a 404 not found if the ban cannot be found.
 // Requires the 'BAN_MEMBERS' permission.
-func (g guildQueryBuilder) GetBan(ctx context.Context, userID Snowflake, flags ...Flag) (*Ban, error) {
+func (g guildQueryBuilder) GetBan(userID Snowflake, flags ...Flag) (*Ban, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildBan(g.gid, userID),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Ban{User: g.client.pool.user.Get().(*User)}
@@ -1464,36 +1383,14 @@ func (g guildQueryBuilder) GetBan(ctx context.Context, userID Snowflake, flags .
 	return getBan(r.Execute)
 }
 
-// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
-// the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
-func (g guildQueryBuilder) BanMember(ctx context.Context, userID Snowflake, params *BanMemberParams, flags ...Flag) (err error) {
-	if params == nil {
-		return errors.New("params was nil")
-	}
-	if err = params.FindErrors(); err != nil {
-		return err
-	}
-
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
-		Endpoint: endpoint.GuildBan(g.gid, userID) + params.URLQueryString(),
-		Ctx:      ctx,
-		Reason:   params.Reason,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err = r.Execute()
-	return
-}
-
 // UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
-func (g guildQueryBuilder) UnbanMember(ctx context.Context, userID Snowflake, reason string, flags ...Flag) error {
+func (g guildQueryBuilder) UnbanUser(userID Snowflake, reason string, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildBan(g.gid, userID),
 		Reason:   reason,
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1502,10 +1399,10 @@ func (g guildQueryBuilder) UnbanMember(ctx context.Context, userID Snowflake, re
 }
 
 // GetRoles Returns a list of role objects for the guild.
-func (g guildQueryBuilder) GetRoles(ctx context.Context, flags ...Flag) ([]*Role, error) {
+func (g guildQueryBuilder) GetRoles(flags ...Flag) ([]*Role, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: "/guilds/" + g.gid.String() + "/roles",
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Role, 0)
@@ -1516,20 +1413,33 @@ func (g guildQueryBuilder) GetRoles(ctx context.Context, flags ...Flag) ([]*Role
 }
 
 // GetMemberPermissions is used to return the members permissions.
-func (g guildQueryBuilder) GetMemberPermissions(ctx context.Context, userID Snowflake, flags ...Flag) (permissions PermissionBit, err error) {
-	member, err := g.GetMember(ctx, userID, flags...)
+func (g guildQueryBuilder) GetMemberPermissions(userID Snowflake, flags ...Flag) (permissions PermissionBit, err error) {
+	member, err := g.Member(userID).WithContext(g.ctx).Get(flags...)
 	if err != nil {
 		return 0, err
 	}
-	return member.GetPermissions(ctx, g.client, flags...)
+	return member.GetPermissions(g.ctx, g.client, flags...)
+}
+
+// CreateGuildRoleParams ...
+// https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
+type CreateGuildRoleParams struct {
+	Name        string `json:"name,omitempty"`
+	Permissions uint64 `json:"permissions,omitempty"`
+	Color       uint   `json:"color,omitempty"`
+	Hoist       bool   `json:"hoist,omitempty"`
+	Mentionable bool   `json:"mentionable,omitempty"`
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
 }
 
 // CreateRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
-func (g guildQueryBuilder) CreateRole(ctx context.Context, params *CreateGuildRoleParams, flags ...Flag) (*Role, error) {
+func (g guildQueryBuilder) CreateRole(params *CreateGuildRoleParams, flags ...Flag) (*Role, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRoles(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1545,7 +1455,7 @@ func (g guildQueryBuilder) CreateRole(ctx context.Context, params *CreateGuildRo
 // UpdateRolePositions Modify the positions of a set of role objects for the guild.
 // Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
 // Fires multiple Guild Role Update Gateway events.
-func (g guildQueryBuilder) UpdateRolePositions(ctx context.Context, guildID Snowflake, params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error) {
+func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error) {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -1556,8 +1466,8 @@ func (g guildQueryBuilder) UpdateRolePositions(ctx context.Context, guildID Snow
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildRoles(guildID),
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildRoles(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 		Reason:      reason,
@@ -1570,41 +1480,9 @@ func (g guildQueryBuilder) UpdateRolePositions(ctx context.Context, guildID Snow
 	return getRoles(r.Execute)
 }
 
-// UpdateRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.
-// Returns the updated role on success. Fires a Guild Role Update Gateway event.
-func (g guildQueryBuilder) UpdateRole(ctx context.Context, roleID Snowflake, flags ...Flag) UpdateGuildRoleBuilder {
-	builder := &updateGuildRoleBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Role{}
-	}
-	builder.r.flags = flags
-	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildRole(g.gid, roleID),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
-
-	return builder
-}
-
-// DeleteRole Delete a guild role. Requires the 'MANAGE_ROLES' permission.
-// Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
-func (g guildQueryBuilder) DeleteRole(ctx context.Context, roleID Snowflake, flags ...Flag) error {
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: endpoint.GuildRole(g.gid, roleID),
-		Ctx:      ctx,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err := r.Execute()
-	return err
-}
-
 // EstimatePruneMembersCount Returns an object with one 'pruned' key indicating the number of members that would be
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
-func (g guildQueryBuilder) EstimatePruneMembersCount(ctx context.Context, days int, flags ...Flag) (estimate int, err error) {
+func (g guildQueryBuilder) EstimatePruneMembersCount(days int, flags ...Flag) (estimate int, err error) {
 	if g.gid.IsZero() {
 		return 0, errors.New("guildID can not be " + g.gid.String())
 	}
@@ -1615,7 +1493,7 @@ func (g guildQueryBuilder) EstimatePruneMembersCount(ctx context.Context, days i
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &guildPruneCount{}
@@ -1636,7 +1514,7 @@ func (g guildQueryBuilder) EstimatePruneMembersCount(ctx context.Context, days i
 // PruneMembers Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
 // The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
 // if you need it. Fires multiple Guild Member Remove Gateway events.
-func (g guildQueryBuilder) PruneMembers(ctx context.Context, days int, reason string, flags ...Flag) (err error) {
+func (g guildQueryBuilder) PruneMembers(days int, reason string, flags ...Flag) (err error) {
 	params := pruneMembersParams{Days: days}
 	if err = params.FindErrors(); err != nil {
 		return err
@@ -1645,7 +1523,7 @@ func (g guildQueryBuilder) PruneMembers(ctx context.Context, days int, reason st
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPost,
 		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 		Reason:   reason,
 	}, flags)
 
@@ -1655,10 +1533,10 @@ func (g guildQueryBuilder) PruneMembers(ctx context.Context, days int, reason st
 
 // GetVoiceRegions Returns a list of voice region objects for the guild. Unlike the similar /voice route,
 // this returns VIP servers when the guild is VIP-enabled.
-func (g guildQueryBuilder) GetVoiceRegions(ctx context.Context, flags ...Flag) ([]*VoiceRegion, error) {
+func (g guildQueryBuilder) GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildRegions(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*VoiceRegion, 0)
@@ -1670,10 +1548,10 @@ func (g guildQueryBuilder) GetVoiceRegions(ctx context.Context, flags ...Flag) (
 
 // GetInvites Returns a list of invite objects (with invite metadata) for the guild.
 // Requires the 'MANAGE_GUILD' permission.
-func (g guildQueryBuilder) GetInvites(ctx context.Context, flags ...Flag) ([]*Invite, error) {
+func (g guildQueryBuilder) GetInvites(flags ...Flag) ([]*Invite, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildInvites(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Invite, 0)
@@ -1685,10 +1563,10 @@ func (g guildQueryBuilder) GetInvites(ctx context.Context, flags ...Flag) ([]*In
 
 // GetIntegrations Returns a list of integration objects for the guild.
 // Requires the 'MANAGE_GUILD' permission.
-func (g guildQueryBuilder) GetIntegrations(ctx context.Context, flags ...Flag) ([]*Integration, error) {
+func (g guildQueryBuilder) GetIntegrations(flags ...Flag) ([]*Integration, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildIntegrations(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Integration, 0)
@@ -1701,10 +1579,10 @@ func (g guildQueryBuilder) GetIntegrations(ctx context.Context, flags ...Flag) (
 // CreateIntegration attaches an integration object from the current user to the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) CreateIntegration(ctx context.Context, params *CreateGuildIntegrationParams, flags ...Flag) error {
+func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParams, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegrations(g.gid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1718,10 +1596,10 @@ func (g guildQueryBuilder) CreateIntegration(ctx context.Context, params *Create
 // UpdateIntegration Modify the behavior and settings of a integration object for the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) UpdateIntegration(ctx context.Context, integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error {
+func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegration(g.gid, integrationID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -1735,10 +1613,10 @@ func (g guildQueryBuilder) UpdateIntegration(ctx context.Context, integrationID 
 // DeleteIntegration Delete the attached integration object for the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) DeleteIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error {
+func (g guildQueryBuilder) DeleteIntegration(integrationID Snowflake, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodDelete,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegration(g.gid, integrationID),
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
@@ -1750,11 +1628,11 @@ func (g guildQueryBuilder) DeleteIntegration(ctx context.Context, integrationID 
 
 // SyncIntegration Sync an integration. Requires the 'MANAGE_GUILD' permission.
 // Returns a 204 empty response on success.
-func (g guildQueryBuilder) SyncIntegration(ctx context.Context, integrationID Snowflake, flags ...Flag) error {
+func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPost,
 		Endpoint: endpoint.GuildIntegrationSync(g.gid, integrationID),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -1763,10 +1641,10 @@ func (g guildQueryBuilder) SyncIntegration(ctx context.Context, integrationID Sn
 }
 
 // GetEmbed Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
-func (g guildQueryBuilder) GetEmbed(ctx context.Context, flags ...Flag) (*GuildEmbed, error) {
+func (g guildQueryBuilder) GetEmbed(flags ...Flag) (*GuildEmbed, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmbed(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &GuildEmbed{}
@@ -1777,7 +1655,7 @@ func (g guildQueryBuilder) GetEmbed(ctx context.Context, flags ...Flag) (*GuildE
 
 // UpdateEmbed Modify a guild embed object for the guild. All attributes may be passed in with JSON and
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
-func (g guildQueryBuilder) UpdateEmbed(ctx context.Context, flags ...Flag) UpdateGuildEmbedBuilder {
+func (g guildQueryBuilder) UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder {
 	builder := &updateGuildEmbedBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &GuildEmbed{}
@@ -1785,7 +1663,7 @@ func (g guildQueryBuilder) UpdateEmbed(ctx context.Context, flags ...Flag) Updat
 	builder.r.flags = flags
 	builder.r.setup(g.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmbed(g.gid),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -1795,10 +1673,10 @@ func (g guildQueryBuilder) UpdateEmbed(ctx context.Context, flags ...Flag) Updat
 
 // GetVanityURL Returns a partial invite object for Guilds with that feature enabled.
 // Requires the 'MANAGE_GUILD' permission.
-func (g guildQueryBuilder) GetVanityURL(ctx context.Context, flags ...Flag) (*PartialInvite, error) {
+func (g guildQueryBuilder) GetVanityURL(flags ...Flag) (*PartialInvite, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildVanityURL(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &PartialInvite{}
@@ -1809,12 +1687,12 @@ func (g guildQueryBuilder) GetVanityURL(ctx context.Context, flags ...Flag) (*Pa
 
 // GetAuditLogs Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-func (g guildQueryBuilder) GetAuditLogs(ctx context.Context, flags ...Flag) GuildAuditLogsBuilder {
+func (g guildQueryBuilder) GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder {
 	builder := &guildAuditLogsBuilder{}
 	builder.r.itemFactory = auditLogFactory
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 		Method:   httd.MethodGet,
 		Endpoint: endpoint.GuildAuditLogs(g.gid),
 	}, nil)
@@ -1827,33 +1705,15 @@ func (g guildQueryBuilder) VoiceConnect(channelID Snowflake) (VoiceConnection, e
 	return g.client.VoiceConnectOptions(g.gid, channelID, true, false)
 }
 
-// GetEmoji Returns an emoji object for the given emoji ID.
-func (g guildQueryBuilder) GetEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
-	if emoji, _ := g.client.cache.GetGuildEmoji(g.gid, emojiID); emoji != nil {
-		return emoji, nil
-	}
-
-	r := g.client.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildEmoji(g.gid, emojiID),
-		Ctx:      ctx,
-	}, flags)
-	r.pool = g.client.pool.emoji
-	r.factory = func() interface{} {
-		return &Emoji{}
-	}
-
-	return getEmoji(r.Execute)
-}
-
 // GetEmojis Returns a list of emoji objects for the given guild.
-func (g guildQueryBuilder) GetEmojis(ctx context.Context, flags ...Flag) ([]*Emoji, error) {
+func (g guildQueryBuilder) GetEmojis(flags ...Flag) ([]*Emoji, error) {
 	if emojis, _ := g.client.cache.GetGuildEmojis(g.gid); emojis != nil {
 		return emojis, nil
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmojis(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Emoji, 0)
@@ -1872,9 +1732,19 @@ func (g guildQueryBuilder) GetEmojis(ctx context.Context, flags ...Flag) ([]*Emo
 	return vs.([]*Emoji), nil
 }
 
+// CreateGuildEmojiParams JSON params for func CreateGuildEmoji
+type CreateGuildEmojiParams struct {
+	Name  string      `json:"name"`  // required
+	Image string      `json:"image"` // required
+	Roles []Snowflake `json:"roles"` // optional
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
+}
+
 // CreateEmoji Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildQueryBuilder) CreateEmoji(ctx context.Context, params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error) {
+func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error) {
 	if g.gid.IsZero() {
 		return nil, errors.New("guildID must be set, was " + g.gid.String())
 	}
@@ -1891,7 +1761,7 @@ func (g guildQueryBuilder) CreateEmoji(ctx context.Context, params *CreateGuildE
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
+		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmojis(g.gid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -1905,47 +1775,16 @@ func (g guildQueryBuilder) CreateEmoji(ctx context.Context, params *CreateGuildE
 	return getEmoji(r.Execute)
 }
 
-// UpdateEmoji Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
-// Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildQueryBuilder) UpdateEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) UpdateGuildEmojiBuilder {
-	builder := &updateGuildEmojiBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Emoji{guildID: g.gid}
-	}
-	builder.r.flags = flags
-	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.GuildEmoji(g.gid, emojiID),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
-
-	return builder
-}
-
-// DeleteEmoji Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
-// success. Fires a Guild Emojis Update Gateway event.
-func (g guildQueryBuilder) DeleteEmoji(ctx context.Context, emojiID Snowflake, flags ...Flag) (err error) {
-	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: endpoint.GuildEmoji(g.gid, emojiID),
-		Ctx:      ctx,
-	}, flags)
-
-	_, err = r.Execute()
-	return
-}
-
 // KickVoiceParticipant is used to kick someone from voice.
-func (g guildQueryBuilder) KickVoiceParticipant(ctx context.Context, userID Snowflake) error {
-	return g.UpdateMember(ctx, userID).KickFromVoice().Execute()
+func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
+	return g.Member(userID).WithContext(g.ctx).Update().KickFromVoice().Execute()
 }
 
 // GetWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-func (g guildQueryBuilder) GetWebhooks(ctx context.Context, flags ...Flag) (ret []*Webhook, err error) {
+func (g guildQueryBuilder) GetWebhooks(flags ...Flag) (ret []*Webhook, err error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildWebhooks(g.gid),
-		Ctx:      ctx,
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Webhook, 0)
@@ -2029,7 +1868,7 @@ func (g *getGuildMembersParams) FindErrors() error {
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
 //  Comment#3               https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func (c *Client) getGuildMembers(ctx context.Context, guildID Snowflake, params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
+func (g guildQueryBuilder) getGuildMembers(params *getGuildMembersParams, flags ...Flag) (ret []*Member, err error) {
 	if params == nil {
 		params = &getGuildMembersParams{}
 	}
@@ -2037,9 +1876,9 @@ func (c *Client) getGuildMembers(ctx context.Context, guildID Snowflake, params 
 		return nil, err
 	}
 
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildMembers(guildID) + params.URLQueryString(),
-		Ctx:      ctx,
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.GuildMembers(g.gid) + params.URLQueryString(),
+		Ctx:      g.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*Member, 0)

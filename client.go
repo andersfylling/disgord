@@ -286,7 +286,7 @@ func (c *Client) GetPermissions() (permissions PermissionBit) {
 // for your bot to run successfully, you should utilise
 //  Client.
 func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
-	if _, err = c.CurrentUser().Get(ctx); err != nil && c.myID.IsZero() {
+	if _, err = c.CurrentUser().WithContext(ctx).Get(); err != nil && c.myID.IsZero() {
 		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
@@ -389,7 +389,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	defer c.Unlock()
 
 	var me *User
-	if me, err = c.CurrentUser().Get(ctx); err != nil {
+	if me, err = c.CurrentUser().WithContext(ctx).Get(); err != nil {
 		return err
 	}
 	c.myID = me.ID
@@ -799,7 +799,7 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 		}
 	}
 
-	return c.Channel(channelID).CreateMessage(ctx, params, flags...)
+	return c.Channel(channelID).WithContext(ctx).CreateMessage(params, flags...)
 }
 
 /* status updates */
