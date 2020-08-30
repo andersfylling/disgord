@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -408,7 +407,7 @@ func main() {
 
 	// TestListVoiceRegions
 	func() {
-		list, err := c.GetVoiceRegions(context.Background())
+		list, err := c.GetVoiceRegions()
 		if err != nil {
 			panic(err)
 		} else if len(list) == 0 {

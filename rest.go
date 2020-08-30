@@ -315,6 +315,9 @@ type ClientQueryBuilderExecutables interface {
 type ClientQueryBuilder interface {
 	WithContext(ctx context.Context) ClientQueryBuilderExecutables
 
+	// GetVoiceRegionsBuilder Returns an array of voice region objects that can be used when creating servers.
+	GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error)
+
 	Invite(code string) InviteQueryBuilder
 
 	Channel(cid Snowflake) ChannelQueryBuilder

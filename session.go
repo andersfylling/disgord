@@ -63,12 +63,6 @@ type SocketHandler interface {
 	Emitter
 }
 
-// RESTVoice REST interface for all voice endpoints
-type RESTVoice interface {
-	// GetVoiceRegionsBuilder Returns an array of voice region objects that can be used when creating servers.
-	GetVoiceRegions(ctx context.Context, flags ...Flag) ([]*VoiceRegion, error)
-}
-
 // RESTWebhook REST interface for all Webhook endpoints
 type RESTWebhook interface {
 	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -111,11 +105,7 @@ type RESTWebhook interface {
 
 // RESTer holds all the sub REST interfaces
 type RESTMethods interface {
-	RESTVoice
 	RESTWebhook
-
-	// TODO: move Webhook and voice into client query builder
-	ClientQueryBuilder
 }
 
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
@@ -156,7 +146,8 @@ type Session interface {
 
 	Pool() *pools
 
-	RESTMethods
+	RESTMethods // TODO: remove
+	ClientQueryBuilder
 
 	// Custom REST functions
 	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
