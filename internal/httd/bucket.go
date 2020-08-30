@@ -63,7 +63,7 @@ func (b *ltBucket) SelectiveGlobalLock() (locked bool, err error) {
 		b.global.mu.RLock()
 		globalLock := b.global.active()
 		b.global.mu.RUnlock()
-
+		// TODO: can this cause http 429?
 		if globalLock {
 			// so check if the globalLock has changed since the read
 			if locked = b.global.atomicLock.AcquireLock(); !locked {
@@ -98,6 +98,7 @@ func (b *ltBucket) Transaction(ctx context.Context, do bucketTransaction) (resp 
 			b.queue.Delete(token)
 			return nil, nil, errors.New("time out")
 		case <-time.After(10 * time.Millisecond):
+			// TODO-perf: this wastes a lot of CPU usage
 		}
 
 		if !b.queue.Next(token, b.AcquireLock) {
