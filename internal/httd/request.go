@@ -50,6 +50,9 @@ func (r *Request) PopulateMissing() {
 	if r.Method == "" {
 		r.Method = MethodGet
 	}
+	if r.Ctx == nil {
+		r.Ctx = context.Background()
+	}
 	// too much magic
 	// if c.Body != nil && c.ContentType == "" {
 	// 	c.ContentType = ContentTypeJSON
