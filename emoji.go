@@ -145,7 +145,7 @@ type guildEmojiQueryBuilder struct {
 
 func (g guildEmojiQueryBuilder) WithContext(ctx context.Context) GuildEmojiQueryBuilder {
 	g.ctx = ctx
-	return g
+	return &g
 }
 
 func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {

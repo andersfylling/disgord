@@ -132,7 +132,7 @@ type CurrentUserQueryBuilderNop struct{}
 var _ CurrentUserQueryBuilder = (*CurrentUserQueryBuilderNop)(nil)
 
 func (c CurrentUserQueryBuilderNop) WithContext(_ context.Context) CurrentUserQueryBuilder {
-	return c
+	return &c
 }
 func (CurrentUserQueryBuilderNop) Get(_ ...Flag) (*User, error) {
 	return nil, nil

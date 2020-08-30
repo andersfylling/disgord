@@ -383,7 +383,7 @@ type messageQueryBuilder struct {
 
 func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilder {
 	m.ctx = ctx
-	return m
+	return &m
 }
 
 // Get Returns a specific message in the channel. If operating on a guild channel, this endpoints

@@ -19,7 +19,7 @@ type permissionTestingGuildBuilder struct {
 }
 
 func (p permissionTestingGuildBuilder) WithContext(_ context.Context) GuildQueryBuilder {
-	return p
+	return &p
 }
 
 func (p permissionTestingSession) Guild(_ Snowflake) GuildQueryBuilder {

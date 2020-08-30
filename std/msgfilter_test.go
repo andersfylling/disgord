@@ -25,7 +25,7 @@ type clientRESTMock_currentUser struct {
 }
 
 func (c clientRESTMock_currentUser) WithContext(_ context.Context) disgord.CurrentUserQueryBuilder {
-	return c
+	return &c
 }
 
 func (c clientRESTMock_currentUser) Get(_ ...disgord.Flag) (*disgord.User, error) {

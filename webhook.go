@@ -93,7 +93,7 @@ type webhookQueryBuilder struct {
 
 func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilder {
 	w.ctx = ctx
-	return w
+	return &w
 }
 
 // GetWebhook [REST] Returns the new webhook object for the given id.
@@ -224,7 +224,7 @@ type webhookWithTokenQueryBuilder struct {
 
 func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
 	w.ctx = ctx
-	return w
+	return &w
 }
 
 // GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and

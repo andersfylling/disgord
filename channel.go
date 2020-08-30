@@ -413,7 +413,7 @@ var _ ChannelQueryBuilder = (*channelQueryBuilder)(nil)
 
 func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilder {
 	c.ctx = ctx
-	return c
+	return &c
 }
 
 // GetChannel [REST] Get a channel by Snowflake. Returns a channel object.

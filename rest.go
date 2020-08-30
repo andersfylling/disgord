@@ -339,7 +339,7 @@ type clientQueryBuilder struct {
 
 func (c clientQueryBuilder) WithContext(ctx context.Context) ClientQueryBuilderExecutables {
 	c.ctx = ctx
-	return c
+	return &c
 }
 
 // GetGateway [REST] Returns an object with a single valid WSS URL, which the Client can use for Connecting.

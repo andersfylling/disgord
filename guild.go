@@ -1090,7 +1090,7 @@ type guildQueryBuilder struct {
 
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
 	g.ctx = ctx
-	return g
+	return &g
 }
 
 // Get is used to get the Guild struct containing all information from it.

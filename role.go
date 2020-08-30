@@ -150,7 +150,7 @@ type guildRoleQueryBuilder struct {
 
 func (g guildRoleQueryBuilder) WithContext(ctx context.Context) GuildRoleQueryBuilder {
 	g.ctx = ctx
-	return g
+	return &g
 }
 
 // UpdateRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.

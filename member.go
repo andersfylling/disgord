@@ -33,7 +33,7 @@ type guildMemberQueryBuilder struct {
 
 func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQueryBuilder {
 	g.ctx = ctx
-	return g
+	return &g
 }
 
 // GetMember Returns a guild member object for the specified user.

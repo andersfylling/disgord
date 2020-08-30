@@ -89,7 +89,7 @@ type reactionQueryBuilder struct {
 
 func (r reactionQueryBuilder) WithContext(ctx context.Context) ReactionQueryBuilder {
 	r.ctx = ctx
-	return r
+	return &r
 }
 
 // CreateReaction [REST] Create a reaction for the message. This endpoint requires the 'READ_MESSAGE_HISTORY'

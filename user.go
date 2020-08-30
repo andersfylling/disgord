@@ -645,7 +645,7 @@ var _ CurrentUserQueryBuilder = (*currentUserQueryBuilder)(nil)
 
 func (c currentUserQueryBuilder) WithContext(ctx context.Context) CurrentUserQueryBuilder {
 	c.ctx = ctx
-	return c
+	return &c
 }
 
 // GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify

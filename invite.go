@@ -189,7 +189,7 @@ type inviteQueryBuilder struct {
 
 func (i inviteQueryBuilder) WithContext(ctx context.Context) InviteQueryBuilder {
 	i.ctx = ctx
-	return i
+	return &i
 }
 
 type getInviteParams struct {
