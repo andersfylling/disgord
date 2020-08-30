@@ -393,6 +393,13 @@ type ChannelQueryBuilder interface {
 	// The maximum request size when sending a message is 8MB.
 	CreateMessage(params *CreateMessageParams, flags ...Flag) (*Message, error)
 
+	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+	// Returns a webhook object on success.
+	CreateWebhook(params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error)
+
+	// GetChannelWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+	GetWebhooks(flags ...Flag) (ret []*Webhook, err error)
+
 	Message(id Snowflake) MessageQueryBuilder
 }
 
@@ -1129,6 +1136,75 @@ func (c channelQueryBuilder) GetPinnedMessages(flags ...Flag) (ret []*Message, e
 	}
 
 	return getMessages(r.Execute)
+}
+
+// CreateWebhookParams json params for the create webhook rest request avatar string
+// https://discord.com/developers/docs/resources/user#avatar-data
+type CreateWebhookParams struct {
+	Name   string `json:"name"`   // name of the webhook (2-32 characters)
+	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+
+	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	Reason string `json:"-"`
+}
+
+func (c *CreateWebhookParams) FindErrors() error {
+	if c.Name == "" {
+		return errors.New("webhook must have a name")
+	}
+	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
+		return errors.New("webhook name must be 2 to 32 characters long")
+	}
+	return nil
+}
+
+// CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// Returns a webhook object on success.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/webhooks
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
+//  Reviewed                2018-08-14
+//  Comment                 -
+func (c channelQueryBuilder) CreateWebhook(params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
+	if params == nil {
+		return nil, errors.New("params was nil")
+	}
+	if err = params.FindErrors(); err != nil {
+		return nil, err
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      httd.MethodPost,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelWebhooks(c.cid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
+	}, flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
+	}
+
+	return getWebhook(r.Execute)
+}
+
+// GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/webhooks
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
+//  Reviewed                2018-08-14
+//  Comment                 -
+func (c channelQueryBuilder) GetWebhooks(flags ...Flag) (ret []*Webhook, err error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.ChannelWebhooks(c.cid),
+		Ctx:      c.ctx,
+	}, flags)
+	r.factory = func() interface{} {
+		tmp := make([]*Webhook, 0)
+		return &tmp
+	}
+
+	return getWebhooks(r.Execute)
 }
 
 //////////////////////////////////////////////////////

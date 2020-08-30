@@ -73,6 +73,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateMessageParams:
 		s = *t
+	case *[]*CreateWebhookParams:
+		s = *t
 	case *[]*DeleteMessagesParams:
 		s = *t
 	case *[]*GetMessagesParams:
@@ -284,8 +286,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*VoiceRegion:
 		s = *t
 	case *[]*VoiceState:
-		s = *t
-	case *[]*CreateWebhookParams:
 		s = *t
 	case *[]*ExecuteWebhookParams:
 		s = *t
@@ -763,6 +763,12 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateWebhookParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*PartialChannel:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -872,12 +878,6 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*VoiceRegion:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*CreateWebhookParams:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

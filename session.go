@@ -63,51 +63,6 @@ type SocketHandler interface {
 	Emitter
 }
 
-// RESTWebhook REST interface for all Webhook endpoints
-type RESTWebhook interface {
-	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
-	// Returns a webhook object on success.
-	CreateWebhook(ctx context.Context, channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error)
-
-	// GetChannelWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-	GetChannelWebhooks(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Webhook, err error)
-
-	// GetWebhook Returns the new webhook object for the given id.
-	GetWebhook(ctx context.Context, id Snowflake, flags ...Flag) (ret *Webhook, err error)
-
-	// GetWebhookWithToken Same as GetWebhook, except this call does not require authentication and
-	// returns no user in the webhook object.
-	GetWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (ret *Webhook, err error)
-
-	// UpdateWebhook Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
-	// Returns the updated webhook object on success.
-	UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateWebhookBuilder)
-
-	// UpdateWebhookWithToken Same as UpdateWebhook, except this call does not require authentication,
-	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-	UpdateWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder)
-
-	// DeleteWebhook Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
-	DeleteWebhook(ctx context.Context, webhookID Snowflake, flags ...Flag) error
-
-	// DeleteWebhookWithToken Same as DeleteWebhook, except this call does not require authentication.
-	DeleteWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) error
-
-	// ExecuteWebhook Trigger a webhook in Discord.
-	ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
-
-	// ExecuteSlackWebhook Trigger a webhook in Discord from the Slack app.
-	ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
-
-	// ExecuteGitHubWebhook Trigger a webhook in Discord from the GitHub app.
-	ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
-}
-
-// RESTer holds all the sub REST interfaces
-type RESTMethods interface {
-	RESTWebhook
-}
-
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
 // Note that this interface is used after you've configured Disgord, and therefore won't allow you to configure it
 // further.
@@ -146,7 +101,6 @@ type Session interface {
 
 	Pool() *pools
 
-	RESTMethods // TODO: remove
 	ClientQueryBuilder
 
 	// Custom REST functions
