@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -33,9 +34,60 @@ const (
 	GZIPCompression = "gzip"
 )
 
+type Ratelimiter struct {
+	Existing http.RoundTripper
+}
+
+func (r *Ratelimiter) IsDiscordRequest(req *http.Request) bool {
+	return strings.HasPrefix(req.URL.String(), "https://discord.com/api/v")
+}
+
+func (r *Ratelimiter) RateLimit(req *http.Request) error {
+
+	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
+		resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
+			resp, err := c.httpClient.Do(req)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// decode body
+			body, err := c.decodeResponseBody(resp)
+			_ = resp.Body.Close()
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// normalize Discord header fields
+			resp.Header, err = NormalizeDiscordHeader(resp.StatusCode, resp.Header, body)
+			return resp, body, err
+		})
+	})
+}
+
+func (r *Ratelimiter) RoundTrip(req *http.Request) (*http.Response, error) {
+	if !r.IsDiscordRequest(req) {
+		return r.Existing.RoundTrip(req)
+	}
+
+	if err := r.RateLimit(req); err != nil {
+		return nil, err
+	}
+
+	resp, err := r.Existing.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	resp.Header, err = NormalizeDiscordHeader(resp.StatusCode, resp.Header, nil)
+	return resp, err
+}
+
+var _ http.RoundTripper = (*Ratelimiter)(nil)
+
 // Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
-	Do(ctx context.Context, req *Request) (resp *http.Response, body []byte, err error)
+	Do(req *Request) (resp *http.Response, body []byte, err error)
 }
 
 // TODO: should RESTBucket and RESTBucketManager be merged?
@@ -221,7 +273,7 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return body, nil
 }
 
-func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body []byte, err error) {
+func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 	r.PopulateMissing()
 	if r.Body != nil && r.bodyReader == nil {
 		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
@@ -240,7 +292,12 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 	}
 
 	// create http request
-	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
+	var req *http.Request
+	if r.Ctx == nil {
+		req, err = http.NewRequest(r.Method.String(), c.url+r.Endpoint, r.bodyReader)
+	} else {
+		req, err = http.NewRequestWithContext(r.Ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -255,26 +312,20 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 	}
 	req.Header = header
 
-	// queue & send request
-	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
-		resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
-			resp, err := c.httpClient.Do(req)
-			if err != nil {
-				return nil, nil, err
-			}
+	resp, err = c.httpClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
 
-			// decode body
-			body, err := c.decodeResponseBody(resp)
-			_ = resp.Body.Close()
-			if err != nil {
-				return nil, nil, err
-			}
+	// decode body
+	body, err = c.decodeResponseBody(resp)
+	_ = resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
 
-			// normalize Discord header fields
-			resp.Header, err = NormalizeDiscordHeader(resp.StatusCode, resp.Header, body)
-			return resp, body, err
-		})
-	})
+	// normalize Discord header fields
+	resp.Header, err = NormalizeDiscordHeader(resp.StatusCode, resp.Header, body)
 	if err != nil {
 		return nil, nil, err
 	}

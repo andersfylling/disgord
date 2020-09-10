@@ -25,9 +25,11 @@ type reqMocker struct {
 	req  *httd.Request
 }
 
-func (gm *reqMocker) Do(ctx context.Context, req *httd.Request) (*http.Response, []byte, error) {
+func (gm *reqMocker) Do(req *httd.Request) (*http.Response, []byte, error) {
+	if req.Ctx == nil {
+		req.Ctx = context.Background()
+	}
 	gm.req = req
-	gm.req.Ctx = ctx
 	return gm.resp, gm.body, gm.err
 }
 

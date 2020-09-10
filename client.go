@@ -44,7 +44,9 @@ func createClient(conf *Config) (c *Client, err error) {
 	}
 	if conf.HTTPClient == nil {
 		// WARNING: do not set http.Client.Timeout (!)
-		conf.HTTPClient = &http.Client{}
+		conf.HTTPClient = &http.Client{
+			Transport: NewRESTRateLimiter(http.DefaultTransport),
+		}
 	} else if conf.HTTPClient.Timeout > 0 {
 		// https://github.com/nhooyr/websocket/issues/67
 		return nil, errors.New("do not set timeout in the http.Client, use context.Context instead")
