@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -25,13 +26,14 @@ func main() {
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   disgord.DefaultLogger(true),
 	})
+	defer client.StayConnectedUntilInterrupted(context.Background())
 
 	client.On(event.MessageCreate, func() {
 		fmt.Println("this should fire on every event")
 	})
 
 	client.On(event.MessageCreate, filterTestPrefix, func() {
-		fmt.Println("this should fire on every event")
+		fmt.Println("this should fire on every test prefixed message event")
 	})
 
 }

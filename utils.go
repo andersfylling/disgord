@@ -2,13 +2,17 @@ package disgord
 
 import (
 	"errors"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
+	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 )
 
 // ShardID calculate the shard id for a given guild.
-// https://discordapp.com/developers/docs/topics/gateway#sharding-sharding-formula
+// https://discord.com/developers/docs/topics/gateway#sharding-sharding-formula
 func ShardID(guildID Snowflake, nrOfShards uint) uint {
 	return gateway.GetShardForGuildID(guildID, nrOfShards)
 }
@@ -27,7 +31,9 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 	for j := i; j < len(inputs); j++ {
 		if _, ok = inputs[j].(Middleware); ok {
 			if j != i {
-				return errors.New("middlewares can only be in the beginning. Grouped together")
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeUnexpectedMiddleware,
+					"middlewares can only be in the beginning. Grouped together")
 			}
 			i++
 		}
@@ -35,31 +41,42 @@ func ValidateHandlerInputs(inputs ...interface{}) (err error) {
 
 	// there should now be N handlers, 0 < N.
 	if len(inputs) <= i {
-		return errors.New("missing handler(s)")
+		return disgorderr.NewHandlerSpecErr(
+			disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
 	}
 
-	for ; i < len(inputs); i++ {
-		if _, ok = inputs[i].(HandlerCtrl); ok {
-			i--
+	for j := i; j < len(inputs); j++ {
+		if _, ok = inputs[j].(HandlerCtrl); ok {
+			// first element after middlewares and last in inputs
+			if j == i && len(inputs)-1 == j {
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
+			}
+			// not last
+			if len(inputs)-1 != j {
+				return disgorderr.NewHandlerSpecErr(
+					disgorderr.HandlerSpecErrCodeUnexpectedCtrl,
+					"a handlerCtrl's can only be at the end of the definition and only one")
+			}
 			break
 		}
-
-		if !isHandler(inputs[i]) {
-			return errors.New("invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
+		if _, ok = inputs[j].(Ctrl); ok {
+			return disgorderr.NewHandlerSpecErr(
+				disgorderr.HandlerSpecErrCodeNotHandlerCtrlImpl,
+				"does not implement disgord.HandlerCtrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
 		}
-	}
 
-	// check for extra controllers
-	for j := len(inputs) - 2; j >= i; j-- {
-		if _, ok = inputs[j].(HandlerCtrl); ok {
-			return errors.New("a handlerCtrl's can only be at the end of the definition. Expected a handler")
+		if !isHandler(inputs[j]) {
+			return disgorderr.NewHandlerSpecErr(
+				disgorderr.HandlerSpecErrCodeUnknownHandlerSignature,
+				"invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
 		}
 	}
 
 	return nil
 }
 
-// https://discordapp.com/developers/docs/resources/user#avatar-data
+// https://discord.com/developers/docs/resources/user#avatar-data
 func validAvatarPrefix(avatar string) (valid bool) {
 	if avatar == "" {
 		return false
@@ -88,7 +105,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 }
 
 // ValidateUsername uses Discords rule-set to verify user-names and nicknames
-// https://discordapp.com/developers/docs/resources/user#usernames-and-nicknames
+// https://discord.com/developers/docs/resources/user#usernames-and-nicknames
 //
 // Note that not all the rules are listed in the docs:
 //  There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the
@@ -175,4 +192,11 @@ func validateChannelName(name string) (err error) {
 	}
 
 	return nil
+}
+
+// CreateTermSigListener create a channel to listen for termination signals (graceful shutdown)
+func CreateTermSigListener() <-chan os.Signal {
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	return termSignal
 }

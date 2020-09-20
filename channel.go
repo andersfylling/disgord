@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,12 +9,10 @@ import (
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-
-	"github.com/andersfylling/disgord/internal/constant"
 )
 
 // Channel types
-// https://discordapp.com/developers/docs/resources/channel#channel-object-channel-types
+// https://discord.com/developers/docs/resources/channel#channel-object-channel-types
 const (
 	ChannelTypeGuildText uint = iota
 	ChannelTypeDM
@@ -24,7 +23,7 @@ const (
 	ChannelTypeGuildStore
 )
 
-// Attachment https://discordapp.com/developers/docs/resources/channel#attachment-object
+// Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
 	Filename string    `json:"filename"`
@@ -58,7 +57,7 @@ func (a *Attachment) DeepCopy() (copy interface{}) {
 	return
 }
 
-// PermissionOverwrite https://discordapp.com/developers/docs/resources/channel#overwrite-object
+// PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
 type PermissionOverwrite struct {
 	ID    Snowflake      `json:"id"`    // role or user id
 	Type  string         `json:"type"`  // either `role` or `member`
@@ -90,15 +89,13 @@ type ChannelFetcher interface {
 // //   "type": 0
 // // }
 type PartialChannel struct {
-	Lockable `json:"-"`
-	ID       Snowflake `json:"id"`
-	Name     string    `json:"name"`
-	Type     uint      `json:"type"`
+	ID   Snowflake `json:"id"`
+	Name string    `json:"name"`
+	Type uint      `json:"type"`
 }
 
 // Channel ...
 type Channel struct {
-	Lockable             `json:"-"`
 	ID                   Snowflake             `json:"id"`
 	Type                 uint                  `json:"type"`
 	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
@@ -135,6 +132,7 @@ var _ fmt.Stringer = (*Channel)(nil)
 var _ Copier = (*Channel)(nil)
 var _ DeepCopier = (*Channel)(nil)
 var _ discordDeleter = (*Channel)(nil)
+var _ Mentioner = (*Channel)(nil)
 
 func (c *Channel) String() string {
 	return "channel{name:'" + c.Name + "', id:" + c.ID.String() + "}"
@@ -156,6 +154,41 @@ func (c *Channel) valid() bool {
 	return true
 }
 
+// GetPermissions is used to get a members permissions in a channel.
+func (c *Channel) GetPermissions(ctx context.Context, s PermissionFetching, member *Member, flags ...Flag) (permissions PermissionBits, err error) {
+	// Get the guild permissions.
+	permissions, err = member.GetPermissions(ctx, s, flags...)
+	if err != nil {
+		return 0, err
+	}
+
+	// Handle permission overwrites.
+	apply := func(o PermissionOverwrite) {
+		permissions |= o.Allow
+		permissions &= (-o.Deny) - 1
+	}
+	for _, overwrite := range c.PermissionOverwrites {
+		if overwrite.Type == "member" {
+			// This is a member. Is it me?
+			if overwrite.ID == member.UserID {
+				// It is! Time to apply the overwrites.
+				apply(overwrite)
+			}
+			continue
+		}
+
+		for _, role := range member.Roles {
+			if role == overwrite.ID {
+				apply(overwrite)
+				break
+			}
+		}
+	}
+
+	// Return the result.
+	return
+}
+
 // Mention creates a channel mention string. Mention format is according the Discord protocol.
 func (c *Channel) Mention() string {
 	return "<#" + c.ID.String() + ">"
@@ -167,22 +200,15 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-func (c *Channel) deleteFromDiscord(s Session, flags ...Flag) (err error) {
-	var id Snowflake
-	if constant.LockedMethods {
-		c.Lockable.RLock()
-	}
-	id = c.ID
-	if constant.LockedMethods {
-		c.Lockable.RUnlock()
-	}
+func (c *Channel) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
+	id := c.ID
 
 	if id.IsZero() {
 		err = newErrorMissingSnowflake("channel id/snowflake is empty or missing")
 		return
 	}
 	var deleted *Channel
-	if deleted, err = s.DeleteChannel(id, flags...); err != nil {
+	if deleted, err = s.DeleteChannel(ctx, id, flags...); err != nil {
 		return
 	}
 
@@ -205,11 +231,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	if channel, valid = other.(*Channel); !valid {
 		err = newErrorUnsupportedType("argument given is not a *Channel type")
 		return
-	}
-
-	if constant.LockedMethods {
-		c.Lockable.RLock()
-		channel.Lockable.Lock()
 	}
 
 	channel.ID = c.ID
@@ -237,11 +258,6 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
 	}
 
-	if constant.LockedMethods {
-		c.Lockable.RUnlock()
-		channel.Lockable.Unlock()
-	}
-
 	return
 }
 
@@ -264,7 +280,7 @@ func (c *Channel) copyOverToCache(other interface{}) (err error) {
 //}
 
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
-func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Message, err error) {
+func (c *Channel) SendMsgString(ctx context.Context, client MessageSender, content string) (msg *Message, err error) {
 	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
@@ -273,12 +289,12 @@ func (c *Channel) SendMsgString(client MessageSender, content string) (msg *Mess
 		Content: content,
 	}
 
-	msg, err = client.CreateMessage(c.ID, params)
+	msg, err = client.CreateMessage(ctx, c.ID, params)
 	return
 }
 
 // SendMsg sends a message to a channel
-func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message, err error) {
+func (c *Channel) SendMsg(ctx context.Context, client MessageSender, message *Message) (msg *Message, err error) {
 	if c.ID.IsZero() {
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
@@ -288,7 +304,6 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 		return nil, errors.New("nonce can not be longer than 25 characters")
 	}
 
-	message.RLock()
 	params := &CreateMessageParams{
 		Content: message.Content,
 		Nonce:   nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
@@ -299,9 +314,8 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 	if len(message.Embeds) > 0 {
 		params.Embed = message.Embeds[0]
 	}
-	message.RUnlock()
 
-	msg, err = client.CreateMessage(c.ID, params)
+	msg, err = client.CreateMessage(ctx, c.ID, params)
 	return
 }
 
@@ -311,47 +325,20 @@ func (c *Channel) SendMsg(client MessageSender, message *Message) (msg *Message,
 //
 //////////////////////////////////////////////////////
 
-func ratelimitChannel(id Snowflake) string {
-	return "c:" + id.String()
-}
-func ratelimitChannelPermissions(id Snowflake) string {
-	return ratelimitChannel(id) + ":perm"
-}
-func ratelimitChannelInvites(id Snowflake) string {
-	return ratelimitChannel(id) + ":i"
-}
-func ratelimitChannelTyping(id Snowflake) string {
-	return ratelimitChannel(id) + ":t"
-}
-func ratelimitChannelPins(id Snowflake) string {
-	return ratelimitChannel(id) + ":pins"
-}
-func ratelimitChannelRecipients(id Snowflake) string {
-	return ratelimitChannel(id) + ":r"
-}
-func ratelimitChannelMessages(id Snowflake) string {
-	return ratelimitChannel(id) + ":m"
-}
-func ratelimitChannelMessagesDelete(id Snowflake) string {
-	return ratelimitChannelMessages(id) + "_"
-}
-func ratelimitChannelWebhooks(id Snowflake) string {
-	return ratelimitChannel(id) + ":w"
-}
-
 // GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) GetChannel(ctx context.Context, channelID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	if channelID.IsZero() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Channel(channelID),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.ID = channelID
@@ -369,18 +356,18 @@ func (c *Client) GetChannel(channelID Snowflake, flags ...Flag) (ret *Channel, e
 // For the PATCH method, all the JSON Params are optional.
 //  Method                  PUT/PATCH
 //  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#modify-channel
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
+func (c *Client) UpdateChannel(ctx context.Context, channelID Snowflake, flags ...Flag) (builder *updateChannelBuilder) {
 	builder = &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return c.pool.channel.Get()
 	}
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method: httd.MethodPatch,
-
+		Method:      httd.MethodPatch,
+		Ctx:         ctx,
 		Endpoint:    endpoint.Channel(channelID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -396,22 +383,22 @@ func (c *Client) UpdateChannel(channelID Snowflake, flags ...Flag) (builder *upd
 // Fires a Channel Delete Gateway event.
 //  Method                  Delete
 //  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#deleteclose-channel
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#deleteclose-channel
 //  Reviewed                2018-10-09
 //  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
 //                          is impossible to undo this action when performed on a guild channel. In
 //                          contrast, when used with a private message, it is possible to undo the
 //                          action by opening a private message with the recipient again.
-func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
+func (c *Client) DeleteChannel(ctx context.Context, channelID Snowflake, flags ...Flag) (channel *Channel, err error) {
 	if channelID.IsZero() {
 		err = errors.New("not a valid snowflake")
 		return
 	}
 
 	r := c.newRESTRequest(&httd.Request{
-		Method: httd.MethodDelete,
-
+		Method:   httd.MethodDelete,
 		Endpoint: endpoint.Channel(channelID),
+		Ctx:      context.Background(),
 	}, flags)
 	r.expectsStatusCode = http.StatusOK
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -425,7 +412,7 @@ func (c *Client) DeleteChannel(channelID Snowflake, flags ...Flag) (channel *Cha
 	return getChannel(r.Execute)
 }
 
-// UpdateChannelPermissionsParams https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions-json-params
+// UpdateChannelPermissionsParams https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
 type UpdateChannelPermissionsParams struct {
 	Allow PermissionBits `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  PermissionBits `json:"deny"`  // the bitwise value of all disallowed permissions
@@ -437,10 +424,10 @@ type UpdateChannelPermissionsParams struct {
 // For more information about permissions, see permissions.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#edit-channel-permissions
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
+func (c *Client) UpdateChannelPermissions(ctx context.Context, channelID, overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -450,6 +437,7 @@ func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPut,
+		Ctx:         ctx,
 		Endpoint:    endpoint.ChannelPermission(channelID, overwriteID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -468,10 +456,10 @@ func (c *Client) UpdateChannelPermissions(channelID, overwriteID Snowflake, para
 // guild channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#get-channel-invites
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
+func (c *Client) GetChannelInvites(ctx context.Context, channelID Snowflake, flags ...Flag) (invites []*Invite, err error) {
 	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return
@@ -479,6 +467,7 @@ func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites 
 
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelInvites(channelID),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -489,7 +478,7 @@ func (c *Client) GetChannelInvites(channelID Snowflake, flags ...Flag) (invites 
 	return getInvites(r.Execute)
 }
 
-// CreateChannelInvitesParams https://discordapp.com/developers/docs/resources/channel#create-channel-invite-json-params
+// CreateChannelInvitesParams https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params
 type CreateChannelInvitesParams struct {
 	MaxAge    int  `json:"max_age,omitempty"`   // duration of invite in seconds before expiry, or 0 for never. default 86400 (24 hours)
 	MaxUses   int  `json:"max_uses,omitempty"`  // max number of uses or 0 for unlimited. default 0
@@ -505,10 +494,10 @@ type CreateChannelInvitesParams struct {
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#create-channel-invite
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
+func (c *Client) CreateChannelInvites(ctx context.Context, channelID Snowflake, params *CreateChannelInvitesParams, flags ...Flag) (ret *Invite, err error) {
 	if channelID.IsZero() {
 		err = errors.New("channelID must be set to target the correct channel")
 		return nil, err
@@ -519,6 +508,7 @@ func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.ChannelInvites(channelID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -533,13 +523,13 @@ func (c *Client) CreateChannelInvites(channelID Snowflake, params *CreateChannel
 
 // DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
 // for guild channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
-// information about permissions, see permissions: https://discordapp.com/developers/docs/topics/permissions#permissions
+// information about permissions, see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#delete-channel-permission
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-channel-permission
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteChannelPermission(ctx context.Context, channelID, overwriteID Snowflake, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -550,6 +540,7 @@ func (c *Client) DeleteChannelPermission(channelID, overwriteID Snowflake, flags
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelPermission(channelID, overwriteID),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
@@ -570,7 +561,7 @@ type GroupDMParticipant struct {
 
 func (g *GroupDMParticipant) FindErrors() error {
 	if g.UserID.IsZero() {
-		return errors.New("missing userID")
+		return errors.New("missing UserID")
 	}
 	if g.AccessToken == "" {
 		return errors.New("missing access token")
@@ -586,10 +577,10 @@ func (g *GroupDMParticipant) FindErrors() error {
 // on success.
 //  Method                  PUT
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
+func (c *Client) AddDMParticipant(ctx context.Context, channelID Snowflake, participant *GroupDMParticipant, flags ...Flag) error {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -602,6 +593,7 @@ func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPut,
+		Ctx:         ctx,
 		Endpoint:    endpoint.ChannelRecipient(channelID, participant.UserID),
 		Body:        participant,
 		ContentType: httd.ContentTypeJSON,
@@ -615,20 +607,21 @@ func (c *Client) AddDMParticipant(channelID Snowflake, participant *GroupDMParti
 // KickParticipant [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/channel#group-dm-remove-recipient
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (err error) {
+func (c *Client) KickParticipant(ctx context.Context, channelID, userID Snowflake, flags ...Flag) (err error) {
 	if channelID.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
 	if userID.IsZero() {
-		return errors.New("userID must be set to target the specific recipient")
+		return errors.New("UserID must be set to target the specific recipient")
 	}
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelRecipient(channelID, userID),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -642,7 +635,7 @@ func (c *Client) KickParticipant(channelID, userID Snowflake, flags ...Flag) (er
 //
 //////////////////////////////////////////////////////
 
-// updateChannelBuilder https://discordapp.com/developers/docs/resources/channel#modify-channel-json-params
+// updateChannelBuilder https://discord.com/developers/docs/resources/channel#modify-channel-json-params
 //generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
 //generate-rest-basic-execute: channel:*Channel,
 type updateChannelBuilder struct {

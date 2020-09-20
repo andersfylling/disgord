@@ -1,17 +1,16 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/internal/constant"
+	"context"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
 // VoiceState Voice State structure
-// https://discordapp.com/developers/docs/resources/voice#voice-state-object
+// https://discord.com/developers/docs/resources/voice#voice-state-object
 // reviewed 2018-09-29
 type VoiceState struct {
-	Lockable `json:"-"`
-
 	// GuildID the guild id this voice state is for
 	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
 
@@ -68,11 +67,6 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		v.RLock()
-		voiceState.Lock()
-	}
-
 	voiceState.GuildID = v.GuildID
 	voiceState.ChannelID = v.ChannelID
 	voiceState.UserID = v.UserID
@@ -83,19 +77,12 @@ func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
 	voiceState.SelfMute = v.SelfMute
 	voiceState.Suppress = v.Suppress
 
-	if constant.LockedMethods {
-		v.RUnlock()
-		voiceState.Unlock()
-	}
-
 	return
 }
 
 // VoiceRegion voice region structure
-// https://discordapp.com/developers/docs/resources/voice#voice-region
+// https://discord.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
-	Lockable `json:"-"`
-
 	// Snowflake unique Snowflake for the region
 	ID string `json:"id"`
 
@@ -142,11 +129,6 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		v.RLock()
-		voice.Lock()
-	}
-
 	voice.ID = v.ID
 	voice.Name = v.Name
 	voice.SampleHostname = v.SampleHostname
@@ -156,23 +138,19 @@ func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
 	voice.Deprecated = v.Deprecated
 	voice.Custom = v.Custom
 
-	if constant.LockedMethods {
-		v.RUnlock()
-		voice.Unlock()
-	}
-
 	return
 }
 
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET
 //  Endpoint                /voice/regions
-//  Discord documentation   https://discordapp.com/developers/docs/resources/voice#list-voice-regions
+//  Discord documentation   https://discord.com/developers/docs/resources/voice#list-voice-regions
 //  Reviewed                2018-08-21
 //  Comment                 -
-func (c *Client) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegion, err error) {
+func (c *Client) GetVoiceRegions(ctx context.Context, flags ...Flag) (regions []*VoiceRegion, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.VoiceRegions(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*VoiceRegion, 0)

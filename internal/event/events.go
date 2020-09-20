@@ -43,6 +43,9 @@ const ChannelPinsUpdate = "CHANNEL_PINS_UPDATE"
 //  - TimestampUnix int
 const TypingStart = "TYPING_START"
 
+// InviteDelete Sent when an invite is deleted.
+const InviteDelete = "INVITE_DELETE"
+
 // MessageCreate Sent when a message is created. The inner payload is a message object.
 const MessageCreate = "MESSAGE_CREATE"
 
@@ -89,7 +92,7 @@ const MessageReactionRemoveAll = "MESSAGE_REACTION_REMOVE_ALL"
 //  Fields:
 //  - GuildID Snowflake
 //  - Emojis []*Emoji
-const GuildEmojisUpdate = "GUILD_EMOJI_UPDATE"
+const GuildEmojisUpdate = "GUILD_EMOJIS_UPDATE"
 
 // GuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
@@ -190,3 +193,23 @@ const VoiceServerUpdate = "VOICE_SERVER_UPDATE"
 //  - GuildID   Snowflake
 //  - ChannelID Snowflake
 const WebhooksUpdate = "WEBHOOKS_UPDATE"
+
+// InviteCreate Sent when a guild's invite is created.
+//  Fields:
+//  - Code String
+//  - GuildID   Snowflake
+//  - ChannelID Snowflake
+//  - Inviter *User
+//  - Inviter *User
+//  - Target *User
+//  - TargetType int
+//  - CreatedAt Time
+//  - MaxAge int
+//  - MaxUses int
+//  - Temporary bool
+//  - Uses int
+//  - Revoked bool
+//  - Unique bool
+//  - ApproximatePresenceCount int
+//  - ApproximateMemberCount int
+const InviteCreate = "INVITE_CREATE"

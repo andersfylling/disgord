@@ -26,7 +26,7 @@ Visually the following fields wrapped in ~~ should be ignored. The `X-RateLimit-
 ```
 
 ## Rate Limit and endpoint relationships
-Linking a given endpoint to a bucket is a serious hassle as Discord does not return the bucket hash on each response. This is really unfortunate as we can't establish relationships between buckets and endpoints before Discord decides to randomly send them (...). This also regards the HTTP methods, even tho the documentation states otherwise. [The docs are useless for insight on this matter.](https://github.com/discordapp/discord-api-docs/issues/1135)
+Linking a given endpoint to a bucket is a serious hassle as Discord does not return the bucket hash on each response. This is really unfortunate as we can't establish relationships between buckets and endpoints before Discord decides to randomly send them (...). This also regards the HTTP methods, even tho the documentation states otherwise. [The docs are useless for insight on this matter.](https://github.com/discord/discord-api-docs/issues/1135)
 
 To tackle this, every hashed endpoint is assumed to have its own bucket. To hash an endpoint before it can be linked to a bucket, the snowflakes, except major snowflakes, must be replaced with the string `{id}`.  Major snowflakes are the first snowflakes in any endpoint with the prefixes ["/channels", "/guilds", "/webhooks"].
 
@@ -45,7 +45,7 @@ This will of course cause some hashed endpoints to point to the same bucket, onc
 The list of buckets can then be consolidated, memory wise, if two or more hashed endpoints uses the same bucket key/hash. The most recent bucket should overwrite the older bucket and all related endpoints should then point to the same bucket.
 
 #### Concurrent requests
-~~Due to the above, we can only send one request (per bucket) at the time until Discord returns rate limit information for the given bucket. Once the bucket is reset after Discord DisGord must return to sending request through the same bucket sequentially to reduce potential rate limits.~~
+~~Due to the above, we can only send one request (per bucket) at the time until Discord returns rate limit information for the given bucket. Once the bucket is reset after Discord Disgord must return to sending request through the same bucket sequentially to reduce potential rate limits.~~
 
 ~~For a normal header, without any rate limit information, we can only send sequential requests for the bucket.~~
 ```markdown

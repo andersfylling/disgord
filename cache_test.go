@@ -1,6 +1,11 @@
+// +build !integration
+
 package disgord
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestCache_ChannelCreate(t *testing.T) {
 	t.Run("immutable", func(t *testing.T) {
@@ -44,4 +49,52 @@ func TestCache_ChannelCreate(t *testing.T) {
 			t.Error("channel was not affected by external changes")
 		}
 	})
+}
+
+func TestCache_MemberUpdate_MemberCachingDisabled(t *testing.T) {
+	cache, _ := newCache(&CacheConfig{
+		DisableGuildCaching: true,
+	})
+	b, err := ioutil.ReadFile("testdata/guild/member1.json")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	cache.UpdateMemberAndUser(0, 0, b)
+	u, err := cache.GetUser(0)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if u.Username != "test" {
+		t.Fatal("should be test")
+	}
+}
+
+func TestCache_MemberUpdate_MemberCachingEnabled(t *testing.T) {
+	cache, _ := newCache(&CacheConfig{})
+	b, err := ioutil.ReadFile("testdata/guild/member1.json")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	cache.SetGuild(&Guild{Name: "test"})
+	g, err := cache.GetGuild(0)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if g.Name != "test" {
+		t.Fatal("should be test")
+	}
+	cache.UpdateMemberAndUser(0, 0, b)
+	u, err := cache.GetUser(0)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if u.Username != "test" {
+		t.Fatal("should be test")
+		return
+	}
 }

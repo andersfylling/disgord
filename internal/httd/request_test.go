@@ -1,3 +1,5 @@
+// +build !integration
+
 package httd
 
 import (
@@ -23,6 +25,21 @@ func TestRequest_RateLimitID(t *testing.T) {
 		"/webhooks/345345":                 "GET:/webhooks/345345",
 		"/webhooks/345345/sdfsdf":          "GET:/webhooks/345345/sdfsdf",
 		"/webhooks/345345/sdfsdf/32987234": "GET:/webhooks/345345/sdfsdf/{id}",
+		// major + reaction
+		"/channels/540519296640614416/messages/540519319814275089/reactions/DeepinScreenshot_selectarea_2019:540519588153262081/@me":             "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/@me",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/DeepinScreenshot_selectarea_2019:540519588153262081/":                "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/DeepinScreenshot_selectarea_2019:540519588153262081":                 "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/DeepinScreenshot_selectarea_2019:540519588153262081/948387463586345": "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/{id}",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/😂/948387463586345":                                                   "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/{id}",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/😂/@me":                                                               "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/@me",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/🥰/948387463586345":                                                   "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/{id}",
+		"/channels/540519296640614416/messages/540519319814275089/reactions/🥰/@me":                                                               "GET:/channels/540519296640614416/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/🥺/@me":                                                               "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/🥺 /@me":                                                              "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/♀️/@me":                                                              "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/:smiling_face_with_3_hearts:/@me":                                    "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}/@me",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/:smiling_face_with_3_hearts:":                                        "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}",
+		"/channels/486833611564253186/messages/540519319814275089/reactions/:smiling_face_with_3_hearts:/":                                       "GET:/channels/486833611564253186/messages/{id}/reactions/{emoji}",
 	}
 
 	for endpoint, wants := range table {

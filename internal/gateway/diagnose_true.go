@@ -85,6 +85,8 @@ func saveOutgoingPacket(c *client, packet *clientPacket) {
 	if err = ioutil.WriteFile(path, data, 0644); err != nil {
 		c.log.Debug(c.getLogPrefix(), err)
 	}
+
+	c.log.Info(c.getLogPrefix(), "saved "+filename)
 }
 
 // saveIncomingPacker saves raw json content to disk
@@ -112,4 +114,6 @@ func saveIncomingPacker(c *client, evt *DiscordPacket, packet []byte) {
 	if err := ioutil.WriteFile(path, prettyJSON.Bytes(), 0644); err != nil {
 		c.log.Debug(c.getLogPrefix(), err)
 	}
+
+	c.log.Info(c.getLogPrefix(), "saved "+filename)
 }

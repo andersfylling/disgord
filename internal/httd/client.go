@@ -11,16 +11,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/andersfylling/disgord/internal/util"
 )
 
 // defaults and string format's for Discord interaction
 const (
-	BaseURL = "https://discordapp.com/api"
+	BaseURL = "https://discord.com/api"
 
-	RegexpURLSnowflakes = `\/([0-9]+)\/?`
+	RegexpSnowflakes     = `([0-9]+)`
+	RegexpURLSnowflakes  = `\/` + RegexpSnowflakes + `\/?`
+	RegexpEmoji          = `([.^/]+)\s?`
+	RegexpReactionPrefix = `\/channels\/([0-9]+)\/messages\/\{id\}\/reactions\/`
 
 	// Header
 	AuthorizationFormat = "Bot %s"
@@ -34,7 +36,7 @@ const (
 
 // Requester holds all the sub-request interface for Discord interaction
 type Requester interface {
-	Do(req *Request) (resp *http.Response, body []byte, err error)
+	Do(ctx context.Context, req *Request) (resp *http.Response, body []byte, err error)
 }
 
 // TODO: should RESTBucket and RESTBucketManager be merged?
@@ -65,16 +67,18 @@ type RESTBucketManager interface {
 }
 
 type ErrREST struct {
-	Code       int    `json:"code"`
-	Msg        string `json:"message"`
-	Suggestion string `json:"-"`
-	HTTPCode   int    `json:"-"`
+	Code           int      `json:"code"`
+	Msg            string   `json:"message"`
+	Suggestion     string   `json:"-"`
+	HTTPCode       int      `json:"-"`
+	Bucket         []string `json:"-"`
+	HashedEndpoint string   `json:"-"`
 }
 
 var _ error = (*ErrREST)(nil)
 
 func (e *ErrREST) Error() string {
-	return e.Msg + " ---- " + e.Suggestion
+	return fmt.Sprintf("%s\n%s\n%s => %+v", e.Msg, e.Suggestion, e.HashedEndpoint, e.Bucket)
 }
 
 // Client is the httd client for handling Discord requests
@@ -129,9 +133,8 @@ func NewClient(conf *Config) (*Client, error) {
 
 	// if no http client was provided, create a new one
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{
-			Timeout: time.Second * 10,
-		}
+		// no need for a timeout, everything uses context.Context now
+		conf.HTTPClient = &http.Client{}
 	}
 
 	if conf.RESTBucketManager == nil {
@@ -219,15 +222,12 @@ func (c *Client) decodeResponseBody(resp *http.Response) (body []byte, err error
 	return body, nil
 }
 
-func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
+func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body []byte, err error) {
 	if err = r.init(); err != nil {
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.httpClient.Timeout))
-	defer cancel()
-
-	// create request
+	// create http request
 	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
@@ -243,7 +243,7 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 	}
 	req.Header = header
 
-	// send request
+	// queue & send request
 	c.buckets.Bucket(r.hashedEndpoint, func(bucket RESTBucket) {
 		resp, body, err = bucket.Transaction(ctx, func() (*http.Response, []byte, error) {
 			resp, err := c.httpClient.Do(req)
@@ -276,9 +276,11 @@ func (c *Client) Do(r *Request) (resp *http.Response, body []byte, err error) {
 		msg += strconv.Itoa(resp.StatusCode)
 
 		err = &ErrREST{
-			Msg:        msg,
-			Suggestion: string(body),
-			HTTPCode:   resp.StatusCode,
+			Msg:            msg,
+			Suggestion:     string(body),
+			HTTPCode:       resp.StatusCode,
+			Bucket:         c.buckets.BucketGrouping()[r.hashedEndpoint],
+			HashedEndpoint: r.hashedEndpoint,
 		}
 
 		// store the Discord error if it exists

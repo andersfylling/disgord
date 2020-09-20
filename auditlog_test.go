@@ -1,6 +1,9 @@
+// +build !integration
+
 package disgord
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -125,6 +128,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		_, err := builder.Execute()
@@ -153,6 +157,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -188,6 +193,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		logs, err := builder.Execute()
@@ -213,6 +219,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder.r.IgnoreCache().setup(nil, client, &httd.Request{
 			Method:   httd.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
+			Ctx:      context.Background(),
 		}, nil)
 
 		_, err := builder.Execute()

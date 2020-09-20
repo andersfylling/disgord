@@ -39,5 +39,5 @@ if [[ `git status --porcelain` ]]; then
   #git commit -m "gen changelog & set version to ${VERSION}"
   git commit -m "set version to ${VERSION}"
 fi
-git tag "${VERSION}" -m "DisGord ${VERSION}"
+git tag "${VERSION}" -m "Disgord ${VERSION}"
 git push origin develop --tags

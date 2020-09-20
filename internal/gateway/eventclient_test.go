@@ -1,9 +1,12 @@
+// +build !integration
+
 package gateway
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/internal/util"
 	"net/http"
 	"strconv"
 	"sync"
@@ -70,6 +73,32 @@ func (g *testWS) Disconnected() bool {
 
 var _ Conn = (*testWS)(nil)
 
+func TestEvtIdentify(t *testing.T) {
+	i := &evtIdentity{}
+	var fields map[string]interface{}
+
+	raw, err := util.Marshal(i)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := util.Unmarshal(raw, &fields); err != nil {
+		t.Error(err)
+	}
+
+	if constant.DiscordVersion == 6 {
+		if _, ok := fields["intents"]; ok {
+			t.Error("discord gateway 6 states that intents are optional")
+			// Don't send out intents if none were specified
+		}
+	} else if constant.DiscordVersion == 7 {
+		if _, ok := fields["intents"]; !ok {
+			t.Error("discord gateway 7 states that intents are mandatory")
+			// https://discord.com/developers/docs/topics/gateway#gateway-intents
+		}
+	}
+}
+
 // TODO: rewrite. EventClient now waits for a Ready event in the Connect method
 func TestEvtClient_communication(t *testing.T) {
 	deadline := 1 * time.Second
@@ -96,7 +125,7 @@ func TestEvtClient_communication(t *testing.T) {
 		Endpoint: "sfkjsdlfsf",
 		Version:  constant.DiscordVersion,
 		Encoding: constant.JSONEncoding,
-		Logger:   logger.DefaultLogger(true),
+		Logger:   &logger.FmtPrinter{},
 
 		// user settings
 		BotToken: "sifhsdoifhsdifhsdf",
@@ -121,7 +150,7 @@ func TestEvtClient_communication(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.timeoutMultiplier = 0
-	seq := uint64(1)
+	seq := uint32(1)
 
 	// ###############################
 	// RECONNECT
@@ -144,7 +173,7 @@ func TestEvtClient_communication(t *testing.T) {
 		close(done)
 	}()
 
-	// mocked DisGord logic (shard manager and event handler)
+	// mocked Disgord logic (shard manager and event handler)
 	go func() {
 		for {
 			select {
@@ -156,7 +185,7 @@ func TestEvtClient_communication(t *testing.T) {
 	}()
 
 	// mocked websocket server.. ish
-	go func(seq *uint64) {
+	go func(seq *uint32) {
 		for {
 			var data *clientPacket
 			select {

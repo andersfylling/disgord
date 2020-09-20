@@ -1,3 +1,5 @@
+// +build !integration
+
 package disgord
 
 import (
@@ -14,6 +16,15 @@ func verifyUserMashaller(t *testing.T, file string) {
 
 	user := User{}
 	err = util.Unmarshal(data, &user)
+	check(err, t)
+}
+
+func TestUserUpdateUnmarshal(t *testing.T) {
+	data, err := ioutil.ReadFile("testdata/user/user_update.json")
+	check(err, t)
+
+	u := &UserUpdate{}
+	err = util.Unmarshal(data, &u)
 	check(err, t)
 }
 

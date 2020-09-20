@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,12 +28,12 @@ func GetShardForGuildID(guildID Snowflake, shardCount uint) (shardID uint) {
 	return uint(guildID>>22) % shardCount
 }
 
-func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
+func ConfigureShardConfig(ctx context.Context, client GatewayBotGetter, conf *ShardConfig) error {
 	if len(conf.ShardIDs) == 0 && conf.ShardCount != 0 {
 		return errors.New("ShardCount should only be set when you use distributed bots and have set the ShardIDs field - ShardCount is an optional field")
 	}
 
-	data, err := client.GetGatewayBot()
+	data, err := client.GetGatewayBot(ctx)
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func ConfigureShardConfig(client GatewayBotGetter, conf *ShardConfig) error {
 }
 
 // enableGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
-// https://discordapp.com/developers/docs/topics/gateway#guild-subscriptions
+// https://discord.com/developers/docs/topics/gateway#guild-subscriptions
 func enableGuildSubscriptions(ignore []string) (updatedIgnores []string, ok bool) {
 	requires := []string{
 		event.TypingStart, event.PresenceUpdate,
@@ -202,6 +203,7 @@ type ShardManagerConfig struct {
 
 	// ...
 	IgnoreEvents []string
+	Intents      Intent
 
 	// sync ---
 	EventChan chan<- *Event
@@ -209,7 +211,7 @@ type ShardManagerConfig struct {
 	RESTClient GatewayBotGetter
 
 	// user specific
-	DefaultBotPresence interface{}
+	DefaultBotPresence *UpdateStatusPayload
 	ProjectName        string
 	GuildSubscriptions bool
 }
@@ -242,6 +244,7 @@ func (s *shardMngr) initShards() error {
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
 		IgnoreEvents:   s.conf.IgnoreEvents,
+		Intents:        s.conf.Intents,
 		DiscordPktPool: s.DiscordPktPool,
 
 		// synchronization
@@ -451,7 +454,7 @@ func (s *shardMngr) scale(code int, reason string) {
 	s.conf.Logger.Error("discord require websocket shards to scale up - starting auto scaling:", reason)
 
 	unchandledGuilds := s.redistributeMsgs(func() {
-		data, err := s.conf.RESTClient.GetGatewayBot()
+		data, err := s.conf.RESTClient.GetGatewayBot(context.Background())
 		if err != nil {
 			s.conf.Logger.Error("autoscaling", err)
 			return

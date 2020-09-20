@@ -7,7 +7,7 @@
     <a href='https://goreportcard.com/report/github.com/andersfylling/disgord'>
       <img src='https://goreportcard.com/badge/github.com/andersfylling/disgord' alt='Code coverage' />
     </a>
-    <a href='http://godoc.org/github.com/andersfylling/disgord'>
+    <a href='https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc'>
       <img src='https://godoc.org/github.com/andersfylling/disgord?status.svg' alt='Godoc' />
     </a>
   </p>
@@ -22,10 +22,10 @@
 </div>
 
 ## About
-Go module that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
+Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
 
 ## Warning
-The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because DisGord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
+The develop branch is under continuous breaking changes, as the interface and exported funcs/consts are still undergoing planning. Because Disgord is under development and pushing for a satisfying interface, the SemVer logic is not according to spec. Until v1.0.0, every minor release is considered possibly breaking and patch releases might contain additional features. Please see the issue and current PR's to get an idea about coming changes before v1.
 
 There might be bugs in the cache, or the cache processing might not exist yet for some REST methods. Bypass the cache for REST methods by supplying the flag argument `disgord.IgnoreCache`. eg. `client.GetCurrentUser(disgord.IgnoreCache)`.
 
@@ -38,9 +38,9 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 ## Starter guide
 > This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dealing with dependencies, remember to activate module support in your IDE
 
-> Examples can be found in [docs/examples](docs/examples) and some open source projects DisGord projects in the [wiki](https://github.com/andersfylling/disgord/wiki/A-few-DisGord-Projects)
+> Examples can be found in [docs/examples](docs/examples) and some open source projects Disgord projects in the [wiki](https://github.com/andersfylling/disgord/wiki/A-few-Disgord-Projects)
 
-I highly suggest reading the [Discord API documentation](https://discordapp.com/developers/docs/intro) and the [DisGord go doc](http://godoc.org/github.com/andersfylling/disgord).
+I highly suggest reading the [Discord API documentation](https://discord.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
 
 Here is a basic bot program that prints out every message. Save it as `main.go`, run `go mod init bot` and `go mod download`. You can then start the bot by writing `go run .`
 
@@ -48,6 +48,7 @@ Here is a basic bot program that prints out every message. Save it as `main.go`,
 package main
 
 import (
+    "context"
     "fmt"
     "github.com/andersfylling/disgord"
     "os"
@@ -59,14 +60,12 @@ func printMessage(session disgord.Session, evt *disgord.MessageCreate) {
 }
 
 func main() {
+    // see docs/examples/* for more information about configuration and use cases
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        // You can inject any logger that implements disgord.Logger interface (eg. logrus)
-        // DisGord provides a simple logger to get you started. Nothing is logged if nil.
-        Logger: disgord.DefaultLogger(false), // debug=false
     })
     // connect, and stay connected until a system interrupt takes place
-    defer client.StayConnectedUntilInterrupted()
+    defer client.StayConnectedUntilInterrupted(context.Background())
     
     // create a handler and bind it to new message events
     // handlers/listener are run in sequence if you register more than one
@@ -87,15 +86,15 @@ Starter guide as a gif: https://terminalizer.com/view/469961d0695
 
 
 ## Architecture & Behavior
-Discord provide communication in different forms. DisGord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
+Discord provide communication in different forms. Disgord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
 
-You can think of DisGord as layered, in which case it will look something like:
-![Simple way to think about DisGord architecture from a layered perspective](docs/disgord-layered-version.png)
+You can think of Disgord as layered, in which case it will look something like:
+![Simple way to think about Disgord architecture from a layered perspective](docs/disgord-layered-version.png)
 
 #### Events
-For Events, DisGord uses the [reactor pattern](https://dzone.com/articles/understanding-reactor-pattern-thread-based-and-eve). Every incoming event from Discord is processed and checked if any handler is registered for it, otherwise it's discarded to save time and resource use. Once a desired event is received, DisGord starts up a Go routine and runs all the related handlers in sequence; avoiding locking the need to use mutexes the handlers. 
+For Events, Disgord uses the [reactor pattern](https://dzone.com/articles/understanding-reactor-pattern-thread-based-and-eve). Every incoming event from Discord is processed and checked if any handler is registered for it, otherwise it's discarded to save time and resource use. Once a desired event is received, Disgord starts up a Go routine and runs all the related handlers in sequence; avoiding locking the need to use mutexes the handlers. 
 
-In addition to traditional handlers, DisGord allows you to use Go channels. Note that if you use more than one channel per event, one of the channels will randomly receive the event data; this is how go channels work. It will act as a randomized load balancer.
+In addition to traditional handlers, Disgord allows you to use Go channels. Note that if you use more than one channel per event, one of the channels will randomly receive the event data; this is how go channels work. It will act as a randomized load balancer.
 
 But before either channels or handlers are triggered, the cache is updated.
 
@@ -109,12 +108,12 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.GetCurrentUser(disgord.IgnoreCache)
-client.GetGuildMembers(guildID, disgord.IgnoreCache)
+client.GetCurrentUser(context.Background(), disgord.IgnoreCache)
+client.GetGuildMembers(context.Background(), guildID, disgord.IgnoreCache)
 
 // always checks the local cache first
-client.GetCurrentUser()
-client.GetGuildMembers(guildID)
+client.GetCurrentUser(context.Background())
+client.GetGuildMembers(context.Background(), guildID)
 ```
 
 #### Voice
@@ -144,9 +143,11 @@ Tutorial here: https://github.com/andersfylling/disgord/wiki/Get-bot-token-and-a
 ```Markdown
 2. Is there an alternative Go package?
 
-Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide a minimalistic API wrapper for Discord, it does not handle multiple websocket sharding, scaling, etc. behind the scenes such as DisGord does.
-Currently I do not have a comparison chart of DisGord and DiscordGo. But I do want to create one in the 
-future, for now the biggest difference is that DisGord does not support self bots.
+Yes, it's called DiscordGo (https://github.com/bwmarrin/discordgo). Its purpose is to provide a 
+minimalistic API wrapper for Discord, it does not handle multiple websocket sharding, scaling, etc. 
+behind the scenes such as Disgord does. Currently I do not have a comparison chart of Disgord and 
+DiscordGo. But I do want to create one in the future, for now the biggest difference is that 
+Disgord does not support self bots.
 ```
 
 ```Markdown
@@ -162,11 +163,11 @@ Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
 ```
 
 ```Markdown
-5. Will DisGord support self bots?
+5. Will Disgord support self bots?
 
 No. Self bots are againts ToS and could result in account termination (see
-https://support.discordapp.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
+https://support.discord.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
 In addition, self bots aren't a part of the official Discord API, meaning support could change at any 
-time and DisGord could break unexpectedly if this feature were to be added.
+time and Disgord could break unexpectedly if this feature were to be added.
 ```
 

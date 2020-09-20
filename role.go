@@ -1,11 +1,11 @@
 package disgord
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -46,10 +46,8 @@ func NewRole() *Role {
 	return &Role{}
 }
 
-// Role https://discordapp.com/developers/docs/topics/permissions#role-object
+// Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
-	Lockable `json:"-"`
-
 	ID          Snowflake `json:"id"`
 	Name        string    `json:"name"`
 	Color       uint      `json:"color"`
@@ -62,6 +60,7 @@ type Role struct {
 	guildID Snowflake
 }
 
+var _ Mentioner = (*Role)(nil)
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
 var _ Copier = (*Role)(nil)
@@ -98,11 +97,6 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 		return newErrorUnsupportedType("given interface{} was not a *Role")
 	}
 
-	if constant.LockedMethods {
-		r.RLock()
-		role.Lock()
-	}
-
 	role.ID = r.ID
 	role.Name = r.Name
 	role.Color = r.Color
@@ -112,24 +106,12 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	role.Managed = r.Managed
 	role.Mentionable = r.Mentionable
 	role.guildID = r.guildID
-
-	if constant.LockedMethods {
-		r.RUnlock()
-		role.Unlock()
-	}
-
 	return
 }
 
-func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {
-	if constant.LockedMethods {
-		r.RLock()
-	}
+func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
 	guildID := r.guildID
 	id := r.ID
-	if constant.LockedMethods {
-		r.RUnlock()
-	}
 
 	if id.IsZero() {
 		return newErrorMissingSnowflake("role has no ID")
@@ -138,7 +120,7 @@ func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 		return newErrorMissingSnowflake("role has no guildID")
 	}
 
-	err = s.DeleteGuildRole(guildID, id, flags...)
+	err = s.DeleteGuildRole(ctx, guildID, id, flags...)
 	return err
 }
 
@@ -149,7 +131,7 @@ func (r *Role) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 //////////////////////////////////////////////////////
 
 // CreateGuildRoleParams ...
-// https://discordapp.com/developers/docs/resources/guild#create-guild-role-json-params
+// https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRoleParams struct {
 	Name        string `json:"name,omitempty"`
 	Permissions uint64 `json:"permissions,omitempty"`
@@ -165,12 +147,13 @@ type CreateGuildRoleParams struct {
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#create-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 All JSON params are optional.
-func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
+func (c *Client) CreateGuildRole(ctx context.Context, id Snowflake, params *CreateGuildRoleParams, flags ...Flag) (ret *Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.GuildRoles(id),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -192,10 +175,10 @@ func (c *Client) CreateGuildRole(id Snowflake, params *CreateGuildRoleParams, fl
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#modify-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#modify-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
+func (c *Client) UpdateGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) (builder *updateGuildRoleBuilder) {
 	builder = &updateGuildRoleBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}
@@ -203,6 +186,7 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 	builder.r.flags = flags
 	builder.r.IgnoreCache().setup(c.cache, c.req, &httd.Request{
 		Method:      httd.MethodPatch,
+		Ctx:         ctx,
 		Endpoint:    endpoint.GuildRole(guildID, roleID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -220,13 +204,14 @@ func (c *Client) UpdateGuildRole(guildID, roleID Snowflake, flags ...Flag) (buil
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/roles/{role.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#delete-guild-role
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#delete-guild-role
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteGuildRole(ctx context.Context, guildID, roleID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildRole(guildID, roleID),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -237,12 +222,13 @@ func (c *Client) DeleteGuildRole(guildID, roleID Snowflake, flags ...Flag) (err 
 // GetGuildRoles [REST] Returns a list of role objects for the guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/roles
-//  Discord documentation   https://discordapp.com/developers/docs/resources/guild#get-guild-roles
+//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-roles
 //  Reviewed                2018-08-18
 //  Comment                 -
-func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
+func (c *Client) GetGuildRoles(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Role, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: "/guilds/" + guildID.String() + "/roles",
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = GuildRolesCache
 	r.factory = func() interface{} {
@@ -260,33 +246,12 @@ func (c *Client) GetGuildRoles(guildID Snowflake, flags ...Flag) (ret []*Role, e
 }
 
 // GetMemberPermissions populates a uint64 with all the permission flags
-func (c *Client) GetMemberPermissions(guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error) {
-	roles, err := c.GetGuildRoles(guildID, flags...)
+func (c *Client) GetMemberPermissions(ctx context.Context, guildID, userID Snowflake, flags ...Flag) (permissions PermissionBits, err error) {
+	member, err := c.GetMember(ctx, guildID, userID, flags...)
 	if err != nil {
 		return 0, err
 	}
-
-	member, err := c.GetMember(guildID, userID, flags...)
-	if err != nil {
-		return 0, err
-	}
-
-	roleIDs := member.Roles
-	for i := range roles {
-		for j := range roleIDs {
-			if roles[i].ID == roleIDs[j] {
-				permissions |= roles[i].Permissions
-				roleIDs = roleIDs[:j+copy(roleIDs[j:], roleIDs[j+1:])]
-				break
-			}
-		}
-
-		if len(roleIDs) == 0 {
-			break
-		}
-	}
-
-	return permissions, nil
+	return member.GetPermissions(ctx, c, flags...)
 }
 
 //////////////////////////////////////////////////////

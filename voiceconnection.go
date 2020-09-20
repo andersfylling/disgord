@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 
@@ -34,20 +36,26 @@ type VoiceConnection interface {
 	StopSpeaking() error
 
 	// SendOpusFrame sends a single frame of opus data to the UDP server. Frames are sent every 20ms with 960 samples (48kHz).
-	SendOpusFrame(data []byte)
+	//
+	// if the bot has been disconnected or the channel removed, an error will be returned. The voice object must then be properly dealt with to avoid further issues.
+	SendOpusFrame(data []byte) error
 	// SendDCA reads from a Reader expecting a DCA encoded stream/file and sends them as frames.
 	SendDCA(r io.Reader) error
 
-	// Close closes the websocket and UDP connection. This VoiceConnection interface will no longer be usable and will
-	// panic if any other functions are called beyond this point. It is the callers responsibility to ensure there are
-	// no concurrent calls to any other methods of this interface after calling Close.
+	// MoveTo moves from the current voice channel to the given.
+	MoveTo(channelID Snowflake) error
+
+	// Close closes the websocket and UDP connection. This VoiceConnection interface will no
+	// longer be usable.
+	// It is the callers responsibility to ensure there are no concurrent calls to any other
+	// methods of this interface after calling Close.
 	Close() error
 }
 
 type voiceImpl struct {
 	sync.Mutex
 
-	ready bool
+	ready atomic.Bool
 
 	ws  *gateway.VoiceClient
 	udp net.Conn
@@ -74,8 +82,8 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 	return voice
 }
 
-func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (ret VoiceConnection, err error) {
-	return r.VoiceConnectOptions(guildID, channelID, false, false)
+func (r *voiceRepository) VoiceConnect(guildID, channelID Snowflake) (VoiceConnection, error) {
+	return r.VoiceConnectOptions(guildID, channelID, true, false)
 }
 
 func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, selfDeaf, selfMute bool) (ret VoiceConnection, err error) {
@@ -107,7 +115,7 @@ func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, self
 	_, err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
 		ChannelID: channelID,
-		SelfDeaf:  selfDeaf,
+		SelfDeaf:  true, //selfDeaf,
 		SelfMute:  selfMute,
 	})
 	if err != nil {
@@ -146,13 +154,14 @@ waiter:
 	}
 	// Defer a cleanup just in case
 	defer func(v *voiceImpl) {
-		if !v.ready {
+		if !v.ready.Load() {
 			if v.ws != nil {
 				_ = v.ws.Disconnect()
 			}
 			if v.udp != nil {
 				_ = v.udp.Close()
 			}
+			close(v.close)
 		}
 	}(&voice)
 
@@ -163,7 +172,7 @@ waiter:
 		SessionID:      state.SessionID,
 		Token:          server.Token,
 		HTTPClient:     r.c.config.HTTPClient,
-		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=3",
+		Endpoint:       "wss://" + strings.TrimSuffix(server.Endpoint, ":80") + "/?v=4",
 		Logger:         r.c.log,
 		SystemShutdown: r.c.shutdownChan,
 	})
@@ -233,20 +242,21 @@ waiter:
 	}
 
 	voice.secretKey = session.SecretKey
-	voice.ready = true
+	voice.ready.Store(true)
 
 	go voice.opusSendLoop()
+	go voice.watcherDiscordCloseEvt()
 
 	ret = &voice
 	return
 }
 
 func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
+	r.Lock()
 	if event.UserID != r.c.myID {
+		r.Unlock()
 		return
 	}
-
-	r.Lock()
 
 	if ch, exists := r.pendingStates[event.VoiceState.GuildID]; exists {
 		delete(r.pendingStates, event.VoiceState.GuildID)
@@ -283,8 +293,8 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	v.Lock()
 	defer v.Unlock()
 
-	if !v.ready {
-		panic("Attempting to interact with a closed voice connection")
+	if !v.ready.Load() {
+		return errors.New("attempting to interact with a closed voice connection")
 	}
 
 	return v.ws.Emit(cmd.VoiceSpeaking, &voiceSpeakingData{
@@ -293,16 +303,17 @@ func (v *voiceImpl) speakingImpl(b bool) error {
 	})
 }
 
-func (v *voiceImpl) SendOpusFrame(data []byte) {
-	if !v.ready {
-		panic("Attempting to send to a closed voice connection")
+func (v *voiceImpl) SendOpusFrame(data []byte) error {
+	if !v.ready.Load() {
+		return errors.New("attempting to send to a closed voice connection")
 	}
 	v.send <- data
+	return nil
 }
 
 func (v *voiceImpl) SendDCA(r io.Reader) error {
-	if !v.ready {
-		panic("Attempting to send to a closed voice connection")
+	if !v.ready.Load() {
+		return errors.New("attempting to send to a closed voice connection")
 	}
 
 	var sampleSize uint16
@@ -323,12 +334,87 @@ func (v *voiceImpl) SendDCA(r io.Reader) error {
 	}
 }
 
+func (v *voiceImpl) MoveTo(channelID Snowflake) error {
+	if channelID.IsZero() {
+		return errors.New("channelID must be set to move to a voice channel")
+	}
+
+	v.Lock()
+	defer v.Unlock()
+
+	if !v.ready.Load() {
+		return errors.New("attempting to move in a closed Voice Connection")
+	}
+
+	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
+		GuildID:   v.guildID,
+		ChannelID: channelID,
+		SelfDeaf:  true, //false,
+		SelfMute:  false,
+	})
+
+	return nil
+}
+
+func (v *voiceImpl) watcherDiscordCloseEvt() {
+	for {
+		var open bool
+		select {
+		case <-v.close:
+			return
+		case _, open = <-v.ws.Active():
+		}
+		if !open {
+			break
+		}
+	}
+
+	v.Lock()
+	defer v.Unlock()
+
+	if !v.ready.Load() {
+		return
+	}
+	v.ready.Store(false)
+
+	close(v.close)
+	// clear send channel
+	select {
+	case <-v.send:
+	default:
+	}
+
+	_ = v.udp.Close()
+	_ = v.ws.Disconnect()
+	close(v.send)
+
+	//for range v.ws.Receive() {} // drain
+
+	v.c.Logger().Info("Discord closed voice connection")
+}
+
 func (v *voiceImpl) Close() (err error) {
 	v.Lock()
 	defer v.Unlock()
 
-	if !v.ready {
-		panic("Attempting to close a closed Voice Connection")
+	if !v.ready.Load() {
+		return errors.New("attempting to close a closed Voice Connection")
+	}
+
+	defer func() {
+		close(v.close)
+		// clear send channel
+		select {
+		case <-v.send:
+		default:
+		}
+		close(v.send)
+	}()
+
+	// if discord have already closed the connection
+	// there is no need to send out a bunch of events
+	if v.ws.IsDisconnected() {
+		return v.udp.Close()
 	}
 
 	// Tell Discord we want to disconnect from channel/guild
@@ -339,8 +425,6 @@ func (v *voiceImpl) Close() (err error) {
 		SelfMute:  true,
 	})
 
-	close(v.close)
-	close(v.send)
 	err1 := v.udp.Close()
 	err2 := v.ws.Disconnect()
 
@@ -366,7 +450,7 @@ type voiceSpeakingData struct {
 }
 
 func (v *voiceImpl) opusSendLoop() {
-	// https://discordapp.com/developers/docs/topics/voice-connections#encrypting-and-sending-voice
+	// https://discord.com/developers/docs/topics/voice-connections#encrypting-and-sending-voice
 	header := make([]byte, 12)
 	header[0] = 0x80
 	header[1] = 0x78

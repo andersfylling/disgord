@@ -48,6 +48,10 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &GuildRoleUpdate{}
 	case EvtGuildUpdate:
 		resource = &GuildUpdate{}
+	case EvtInviteCreate:
+		resource = &InviteCreate{}
+	case EvtInviteDelete:
+		resource = &InviteDelete{}
 	case EvtMessageCreate:
 		resource = &MessageCreate{}
 	case EvtMessageDelete:
@@ -163,6 +167,14 @@ func isHandler(h Handler) (ok bool) {
 		ok = true
 	case chan *GuildUpdate:
 		ok = true
+	case InviteCreateHandler:
+		ok = true
+	case chan *InviteCreate:
+		ok = true
+	case InviteDeleteHandler:
+		ok = true
+	case chan *InviteDelete:
+		ok = true
 	case MessageCreateHandler:
 		ok = true
 	case chan *MessageCreate:
@@ -266,6 +278,10 @@ func closeChannel(channel interface{}) {
 	case chan *GuildRoleUpdate:
 		close(t)
 	case chan *GuildUpdate:
+		close(t)
+	case chan *InviteCreate:
+		close(t)
+	case chan *InviteDelete:
 		close(t)
 	case chan *MessageCreate:
 		close(t)
@@ -435,6 +451,18 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*GuildUpdate)
 	case chan<- *GuildUpdate:
 		t <- evt.(*GuildUpdate)
+	case InviteCreateHandler:
+		t(d.session, evt.(*InviteCreate))
+	case chan *InviteCreate:
+		t <- evt.(*InviteCreate)
+	case chan<- *InviteCreate:
+		t <- evt.(*InviteCreate)
+	case InviteDeleteHandler:
+		t(d.session, evt.(*InviteDelete))
+	case chan *InviteDelete:
+		t <- evt.(*InviteDelete)
+	case chan<- *InviteDelete:
+		t <- evt.(*InviteDelete)
 	case MessageCreateHandler:
 		t(d.session, evt.(*MessageCreate))
 	case chan *MessageCreate:
@@ -587,6 +615,12 @@ type GuildRoleUpdateHandler = func(s Session, h *GuildRoleUpdate)
 
 // GuildUpdateHandler is triggered in GuildUpdate events
 type GuildUpdateHandler = func(s Session, h *GuildUpdate)
+
+// InviteCreateHandler is triggered in InviteCreate events
+type InviteCreateHandler = func(s Session, h *InviteCreate)
+
+// InviteDeleteHandler is triggered in InviteDelete events
+type InviteDeleteHandler = func(s Session, h *InviteDelete)
 
 // MessageCreateHandler is triggered in MessageCreate events
 type MessageCreateHandler = func(s Session, h *MessageCreate)

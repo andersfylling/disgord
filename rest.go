@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -153,7 +154,7 @@ func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 		return
 	}
 
-	resp, body, err = r.c.req.Do(r.conf)
+	resp, body, err = r.c.req.Do(r.conf.Ctx, r.conf)
 	return
 }
 
@@ -287,7 +288,8 @@ func (b *RESTBuilder) setup(cache *Cache, client httd.Requester, config *httd.Re
 
 	if b.config == nil {
 		b.config = &httd.Request{
-			Method: httd.MethodGet,
+			Ctx:    context.Background(),
+			Method: http.MethodGet,
 		}
 	}
 }
@@ -333,7 +335,7 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 
 	var resp *http.Response
 	var body []byte
-	resp, body, err = b.client.Do(b.config)
+	resp, body, err = b.client.Do(b.config.Ctx, b.config)
 	if err != nil {
 		return nil, err
 	}
@@ -423,12 +425,12 @@ type basicBuilder struct {
 // properly establish a connection using the cached version of the URL.
 //  Method                  GET
 //  Endpoint                /gateway
-//  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway
+//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint does not require authentication.
-func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
+func (c *Client) GetGateway(ctx context.Context) (gateway *gateway.Gateway, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway",
 	})
@@ -446,12 +448,12 @@ func (c *Client) GetGateway() (gateway *gateway.Gateway, err error) {
 // changes as the bot joins/leaves guilds.
 //  Method                  GET
 //  Endpoint                /gateway/bot
-//  Discord documentation   https://discordapp.com/developers/docs/topics/gateway#get-gateway-bot
+//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
 //  Reviewed                2018-10-12
 //  Comment                 This endpoint requires authentication using a valid bot token.
-func (c *Client) GetGatewayBot() (gateway *gateway.GatewayBot, err error) {
+func (c *Client) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {
 	var body []byte
-	_, body, err = c.req.Do(&httd.Request{
+	_, body, err = c.req.Do(ctx, &httd.Request{
 		Method:   httd.MethodGet,
 		Endpoint: "/gateway/bot",
 	})

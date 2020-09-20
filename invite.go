@@ -1,7 +1,8 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/internal/constant"
+	"context"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -13,11 +14,9 @@ import (
 type PartialInvite = Invite
 
 // Invite Represents a code that when used, adds a user to a guild.
-// https://discordapp.com/developers/docs/resources/invite#invite-object
+// https://discord.com/developers/docs/resources/invite#invite-object
 // Reviewed: 2018-06-10
 type Invite struct {
-	Lockable `json:"-"`
-
 	// Code the invite code (unique Snowflake)
 	Code string `json:"code"`
 
@@ -26,6 +25,27 @@ type Invite struct {
 
 	// Channel the channel this invite is for
 	Channel *PartialChannel `json:"channel"`
+
+	// Inviter the user that created the invite
+	Inviter *User `json:"inviter"`
+
+	// CreatedAt the time at which the invite was created
+	CreatedAt Time `json:"created_at"`
+
+	// MaxAge how long the invite is valid for (in seconds)
+	MaxAge int `json:"max_age"`
+
+	// MaxUses the maximum number of times the invite can be used
+	MaxUses int `json:"max_uses"`
+
+	// Temporary whether or not the invite is temporary (invited users will be kicked on disconnect unless they're assigned a role)
+	Temporary bool `json:"temporary"`
+
+	// Uses how many times the invite has been used (always will be 0)
+	Uses int `json:"uses"`
+
+	Revoked bool `json:"revoked"`
+	Unique  bool `json:"unique"`
 
 	// ApproximatePresenceCount approximate count of online members
 	ApproximatePresenceCount int `json:"approximate_presence_count,omitempty"`
@@ -38,12 +58,12 @@ var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 var _ discordDeleter = (*Invite)(nil)
 
-func (i *Invite) deleteFromDiscord(s Session, flags ...Flag) error {
+func (i *Invite) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) error {
 	if i.Code == "" {
 		return &ErrorEmptyValue{info: "can not delete invite without the code field populate"}
 	}
 
-	_, err := s.DeleteInvite(i.Code, flags...)
+	_, err := s.DeleteInvite(ctx, i.Code, flags...)
 	return err
 }
 
@@ -64,11 +84,6 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
 	invite.Code = i.Code
 	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
 	invite.ApproximateMemberCount = i.ApproximateMemberCount
@@ -85,20 +100,13 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 		}
 	}
 
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
 	return nil
 }
 
 // InviteMetadata Object
-// https://discordapp.com/developers/docs/resources/invite#invite-metadata-object
+// https://discord.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
 type InviteMetadata struct {
-	Lockable `json:"-"`
-
 	// Inviter user who created the invite
 	Inviter *User `json:"inviter"`
 
@@ -141,11 +149,6 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		i.RLock()
-		invite.Lock()
-	}
-
 	invite.Uses = i.Uses
 	invite.MaxUses = i.MaxUses
 	invite.MaxAge = i.MaxAge
@@ -156,12 +159,6 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 	if i.Inviter != nil {
 		invite.Inviter = i.Inviter.DeepCopy().(*User)
 	}
-
-	if constant.LockedMethods {
-		i.RUnlock()
-		invite.Unlock()
-	}
-
 	return nil
 }
 
@@ -179,17 +176,18 @@ var _ URLQueryStringer = (*GetInviteParams)(nil)
 // GetInvite [REST] Returns an invite object for the given code.
 //  Method                  GET
 //  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#get-invite
+//  Discord documentation   https://discord.com/developers/docs/resources/invite#get-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
-func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...Flag) (invite *Invite, err error) {
+func (c *Client) GetInvite(ctx context.Context, inviteCode string, params URLQueryStringer, flags ...Flag) (invite *Invite, err error) {
 	if params == nil {
 		params = &GetInviteParams{}
 	}
 
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Invite(inviteCode) + params.URLQueryString(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = inviteFactory
 
@@ -199,13 +197,14 @@ func (c *Client) GetInvite(inviteCode string, params URLQueryStringer, flags ...
 // DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/invite#delete-invite
+//  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) DeleteInvite(inviteCode string, flags ...Flag) (deleted *Invite, err error) {
+func (c *Client) DeleteInvite(ctx context.Context, inviteCode string, flags ...Flag) (deleted *Invite, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.Invite(inviteCode),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = inviteFactory
 

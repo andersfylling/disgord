@@ -1,38 +1,19 @@
 package disgord
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
-const (
-	// StatusIdle presence status for idle
-	StatusIdle = "idle"
-	// StatusDnd presence status for dnd
-	StatusDnd = "dnd"
-	// StatusOnline presence status for online
-	StatusOnline = "online"
-	// StatusOffline presence status for offline
-	StatusOffline = "offline"
-)
-
-//type UserInterface interface {
-//	Mention() string
-//	MentionNickname() string
-//	String() string
-//}
-
 // ActivityParty ...
 type ActivityParty struct {
-	Lockable `json:"-"`
-
 	ID   string `json:"id,omitempty"`   // the id of the party
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
 }
@@ -72,26 +53,13 @@ func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		ap.RLock()
-		activity.Lock()
-	}
-
 	activity.ID = ap.ID
 	activity.Size = ap.Size
-
-	if constant.LockedMethods {
-		ap.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivityAssets ...
 type ActivityAssets struct {
-	Lockable `json:"-"`
-
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
 	LargeText  string `json:"large_text,omitempty"`  //text displayed when hovering over the large image of the activity
 	SmallImage string `json:"small_image,omitempty"` // the id for a small asset of the activity, usually a snowflake
@@ -115,28 +83,15 @@ func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.LargeImage = a.LargeImage
 	activity.LargeText = a.LargeText
 	activity.SmallImage = a.SmallImage
 	activity.SmallText = a.SmallText
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivitySecrets ...
 type ActivitySecrets struct {
-	Lockable `json:"-"`
-
 	Join     string `json:"join,omitempty"`     // the secret for joining a party
 	Spectate string `json:"spectate,omitempty"` // the secret for spectating a game
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
@@ -159,27 +114,14 @@ func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Join = a.Join
 	activity.Spectate = a.Spectate
 	activity.Match = a.Match
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
 // ActivityEmoji ...
 type ActivityEmoji struct {
-	Lockable `json:"-"`
-
 	Name     string    `json:"name"`
 	ID       Snowflake `json:"id,omitempty"`
 	Animated bool      `json:"animated,omitempty"`
@@ -187,8 +129,6 @@ type ActivityEmoji struct {
 
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
-	Lockable `json:"-"`
-
 	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
 }
@@ -210,19 +150,8 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Start = a.Start
 	activity.End = a.End
-
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
@@ -232,7 +161,7 @@ func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
 // ##
 // ######################
 
-// activityTypes https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-types
+// activityTypes https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
 type acitivityType = int // TODO-v0.15: remove = sign, make uint
 
 const (
@@ -243,7 +172,7 @@ const (
 	ActivityTypeCustom
 )
 
-// activityFlag https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-flags
+// activityFlag https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
 type activityFlag = int // TODO-v0.15: remove = sign, make uint
 
 // flags for the Activity object to signify the type of action taken place
@@ -263,10 +192,8 @@ func NewActivity() (activity *Activity) {
 	}
 }
 
-// Activity https://discordapp.com/developers/docs/topics/gateway#activity-object-activity-structure
+// Activity https://discord.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
-	Lockable `json:"-"`
-
 	Name          string             `json:"name"`                     // the activity's name
 	Type          acitivityType      `json:"type"`                     // activity type
 	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
@@ -301,11 +228,6 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		a.RLock()
-		activity.Lock()
-	}
-
 	activity.Name = a.Name
 	activity.Type = a.Type
 	activity.ApplicationID = a.ApplicationID
@@ -328,11 +250,6 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
 	}
 
-	if constant.LockedMethods {
-		a.RUnlock()
-		activity.Unlock()
-	}
-
 	return
 }
 
@@ -346,6 +263,33 @@ const (
 	userOMFAEnabled
 	userOBot
 	userOPremiumType
+	userOLocale
+	userOFlags
+	userOPublicFlags
+)
+
+type UserFlag uint64
+
+const (
+	UserFlagNone            UserFlag = 0
+	UserFlagDiscordEmployee UserFlag = 0b1 << iota
+	UserFlagDiscordPartner
+	UserFlagHypeSquadEvents
+	UserFlagBugHunterLevel1
+	_
+	_
+	UserFlagHouseBravery
+	UserFlagHouseBrilliance
+	UserFlagHouseBalance
+	UserFlagEarlySupporter
+	UserFlagTeamUser
+	_
+	UserFlagSystem
+	_
+	UserFlagBugHunterLevel2
+	_
+	UserFlagVerifiedBot
+	UserFlagVerifiedBotDeveloper
 )
 
 type PremiumType int
@@ -396,10 +340,13 @@ type userJSON struct {
 	/*5*/ MFAEnabled *bool `json:"mfa_enabled"`
 	/*6*/ Bot *bool `json:"bot"`
 	/*7*/ PremiumType *PremiumType `json:"premium_type,omitempty"`
+	/*8*/ Locale *string `json:"locale,omitempty"`
+	/*9*/ Flags *UserFlag `json:"flags,omitempty"`
+	/*10*/ PublicFlags *UserFlag `json:"public_flags,omitempty"`
 }
 
-func (u *userJSON) extractMap() uint8 {
-	var overwritten uint8
+func (u *userJSON) extractMap() uint16 {
+	var overwritten uint16
 	if u.Email != nil {
 		overwritten |= userOEmail
 	}
@@ -421,14 +368,21 @@ func (u *userJSON) extractMap() uint8 {
 	if u.PremiumType != nil {
 		overwritten |= userOPremiumType
 	}
+	if u.Locale != nil {
+		overwritten |= userOLocale
+	}
+	if u.Flags != nil {
+		overwritten |= userOFlags
+	}
+	if u.PublicFlags != nil {
+		overwritten |= userOPublicFlags
+	}
 
 	return overwritten
 }
 
 // User the Discord user object which is reused in most other data structures.
 type User struct {
-	Lockable `json:"-"`
-
 	ID            Snowflake     `json:"id,omitempty"`
 	Username      string        `json:"username,omitempty"`
 	Discriminator Discriminator `json:"discriminator,omitempty"`
@@ -439,14 +393,18 @@ type User struct {
 	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Bot           bool          `json:"bot,omitempty"`
 	PremiumType   PremiumType   `json:"premium_type,omitempty"`
+	Locale        string        `json:"locale,omitempty"`
+	Flags         UserFlag      `json:"flag,omitempty"`
+	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
 
 	// Used to identify which fields are set by Discord in partial JSON objects. Yep.
-	overwritten uint8 // map. see number left of field in userJSON struct.
+	overwritten uint16 // map. see number left of field in userJSON struct.
 }
 
 var _ Reseter = (*User)(nil)
 var _ DeepCopier = (*User)(nil)
 var _ Copier = (*User)(nil)
+var _ Mentioner = (*User)(nil)
 
 // Mention returns the a string that Discord clients can format into a valid Discord mention
 func (u *User) Mention() string {
@@ -460,7 +418,7 @@ func (u *User) AvatarURL(size int, preferGIF bool) (url string, err error) {
 	}
 
 	if u.Avatar == "" {
-		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.webp?size=%d", u.Discriminator%5, size)
+		url = fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png?size=%d", u.Discriminator%5, size)
 	} else if strings.HasPrefix(u.Avatar, "a_") && preferGIF {
 		url = fmt.Sprintf("https://cdn.discordapp.com/avatars/%d/%s.gif?size=%d", u.ID, u.Avatar, size)
 	} else {
@@ -517,25 +475,34 @@ func (u *User) UnmarshalJSON(data []byte) (err error) {
 	if (changes & userOPremiumType) > 0 {
 		u.PremiumType = *j.PremiumType
 	}
+	if (changes & userOLocale) > 0 {
+		u.Locale = *j.Locale
+	}
+	if (changes & userOFlags) > 0 {
+		u.Flags = *j.Flags
+	}
+	if (changes & userOPublicFlags) > 0 {
+		u.PublicFlags = *j.PublicFlags
+	}
 	u.overwritten |= changes
 
 	return
 }
 
 // SendMsg send a message to a user where you utilize a Message object instead of a string
-func (u *User) SendMsg(session Session, message *Message) (channel *Channel, msg *Message, err error) {
-	channel, err = session.CreateDM(u.ID)
+func (u *User) SendMsg(ctx context.Context, session Session, message *Message) (channel *Channel, msg *Message, err error) {
+	channel, err = session.CreateDM(ctx, u.ID)
 	if err != nil {
 		return
 	}
 
-	msg, err = session.SendMsg(channel.ID, message)
+	msg, err = session.SendMsg(ctx, channel.ID, message)
 	return
 }
 
 // SendMsgString send a message to given user where the message is in the form of a string.
-func (u *User) SendMsgString(session Session, content string) (channel *Channel, msg *Message, err error) {
-	channel, msg, err = u.SendMsg(session, &Message{
+func (u *User) SendMsgString(ctx context.Context, session Session, content string) (channel *Channel, msg *Message, err error) {
+	channel, msg, err = u.SendMsg(ctx, session, &Message{
 		Content: content,
 	})
 	return
@@ -559,11 +526,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		u.RLock()
-		user.Lock()
-	}
-
 	user.ID = u.ID
 	user.Username = u.Username
 	user.Discriminator = u.Discriminator
@@ -573,12 +535,11 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 	user.MFAEnabled = u.MFAEnabled
 	user.Bot = u.Bot
 	user.Avatar = u.Avatar
+	user.PremiumType = u.PremiumType
+	user.Locale = u.Locale
+	user.Flags = u.Flags
+	user.PublicFlags = u.PublicFlags
 	user.overwritten = u.overwritten
-
-	if constant.LockedMethods {
-		u.RUnlock()
-		user.Unlock()
-	}
 
 	return
 }
@@ -586,11 +547,6 @@ func (u *User) CopyOverTo(other interface{}) (err error) {
 // copyOverToCache see interface at struct.go#CacheCopier
 func (u *User) copyOverToCache(other interface{}) (err error) {
 	user := other.(*User)
-
-	if constant.LockedMethods {
-		u.RLock()
-		user.Lock()
-	}
 
 	if !u.ID.IsZero() {
 		user.ID = u.ID
@@ -619,12 +575,19 @@ func (u *User) copyOverToCache(other interface{}) (err error) {
 	if (u.overwritten & userOBot) > 0 {
 		user.Bot = u.Bot
 	}
-	user.overwritten = u.overwritten
-
-	if constant.LockedMethods {
-		u.RUnlock()
-		user.Unlock()
+	if (u.overwritten & userOPremiumType) > 0 {
+		user.PremiumType = u.PremiumType
 	}
+	if (u.overwritten & userOLocale) > 0 {
+		user.Locale = u.Locale
+	}
+	if (u.overwritten & userOFlags) > 0 {
+		user.Flags = u.Flags
+	}
+	if (u.overwritten & userOPublicFlags) > 0 {
+		user.PublicFlags = u.PublicFlags
+	}
+	user.overwritten = u.overwritten
 
 	return
 }
@@ -645,8 +608,6 @@ func NewUserPresence() *UserPresence {
 
 // UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
-	Lockable `json:"-"`
-
 	User    *User       `json:"user"`
 	Roles   []Snowflake `json:"roles"`
 	Game    *Activity   `json:"activity"`
@@ -676,11 +637,6 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		p.RLock()
-		presence.Lock()
-	}
-
 	presence.User = p.User.DeepCopy().(*User)
 	presence.Roles = p.Roles
 	presence.GuildID = p.GuildID
@@ -691,18 +647,11 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		presence.Game = p.Game.DeepCopy().(*Activity)
 	}
 
-	if constant.LockedMethods {
-		p.RUnlock()
-		presence.Unlock()
-	}
-
 	return
 }
 
 // UserConnection ...
 type UserConnection struct {
-	Lockable `json:"-"`
-
 	ID           string                `json:"id"`           // id of the connection account
 	Name         string                `json:"name"`         // the username of the connection account
 	Type         string                `json:"type"`         // the service of the connection (twitch, youtube)
@@ -727,11 +676,6 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		con.Lock()
-	}
-
 	con.ID = c.ID
 	con.Name = c.Name
 	con.Type = c.Type
@@ -742,11 +686,6 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
 	}
 
-	if constant.LockedMethods {
-		c.RUnlock()
-		con.Unlock()
-	}
-
 	return
 }
 
@@ -755,10 +694,6 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 // REST Methods
 //
 //////////////////////////////////////////////////////
-
-func ratelimitUsers() string {
-	return "u"
-}
 
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
 type GetCurrentUserGuildsParams struct {
@@ -774,19 +709,20 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 // with an email.
 //  Method                  GET
 //  Endpoint                /users/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
+func (c *Client) GetCurrentUser(ctx context.Context, flags ...Flag) (user *User, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMe(),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = c.myID
 	r.pool = c.pool.user
 	r.factory = userFactory
 
-	if user, err = getUser(r.Execute); err == nil {
+	if user, err = getUser(r.Execute); err == nil && c.myID.IsZero() {
 		c.myID = user.ID
 	}
 	return user, err
@@ -795,12 +731,13 @@ func (c *Client) GetCurrentUser(flags ...Flag) (user *User, err error) {
 // GetUser [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
+func (c *Client) GetUser(ctx context.Context, id Snowflake, flags ...Flag) (*User, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.User(id),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = UserCache
 	r.ID = id
@@ -813,15 +750,16 @@ func (c *Client) GetUser(id Snowflake, flags ...Flag) (*User, error) {
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#modify-current-user
+//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBuilder) {
+func (c *Client) UpdateCurrentUser(ctx context.Context, flags ...Flag) (builder *updateCurrentUserBuilder) {
 	builder = &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      httd.MethodPatch,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -834,14 +772,15 @@ func (c *Client) UpdateCurrentUser(flags ...Flag) (builder *updateCurrentUserBui
 // Requires the guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-current-user-guilds
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
 //  Reviewed                2019-02-18
 //  Comment                 This endpoint. returns 100 guilds by default, which is the maximum number of
 //                          guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of users' guilds.
-func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+func (c *Client) GetCurrentUserGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*PartialGuild, 0)
@@ -862,13 +801,14 @@ func (c *Client) GetCurrentUserGuilds(params *GetCurrentUserGuildsParams, flags 
 // LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /users/@me/guilds/{guild.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#leave-guild
+//  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
+func (c *Client) LeaveGuild(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.UserMeGuild(id),
+		Ctx:      ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 	r.CacheRegistry = GuildCache
@@ -885,16 +825,17 @@ func (c *Client) LeaveGuild(id Snowflake, flags ...Flag) (err error) {
 // GetUserDMs [REST] Returns a list of DM channel objects.
 //  Method                  GET
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-dms
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-dms
 //  Reviewed                2019-02-19
 //  Comment                 Apparently Discord removed support for this in 2016 and updated their docs 2 years after..
-//							https://github.com/discordapp/discord-api-docs/issues/184
+//							https://github.com/discord/discord-api-docs/issues/184
 //							For now I'll just leave this here, until I can do a cache lookup. Making this cache
 //							dependent.
 // Deprecated: Needs cache checking to get the actual list of channels
-func (c *Client) GetUserDMs(flags ...Flag) (ret []*Channel, err error) {
+func (c *Client) GetUserDMs(ctx context.Context, flags ...Flag) (ret []*Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeChannels(),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = ChannelCache
 	r.factory = func() interface{} {
@@ -921,12 +862,13 @@ type BodyUserCreateDM struct {
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-dm
+//  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
 //  Reviewed                2019-02-23
 //  Comment                 -
-func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateDM(ctx context.Context, recipientID Snowflake, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        &BodyUserCreateDM{recipientID},
 		ContentType: httd.ContentTypeJSON,
@@ -940,12 +882,12 @@ func (c *Client) CreateDM(recipientID Snowflake, flags ...Flag) (ret *Channel, e
 }
 
 // CreateGroupDMParams required JSON params for func CreateGroupDM
-// https://discordapp.com/developers/docs/resources/user#create-group-dm
+// https://discord.com/developers/docs/resources/user#create-group-dm
 type CreateGroupDMParams struct {
 	// AccessTokens access tokens of users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
 
-	// map[userID] = nickname
+	// map[UserID] = nickname
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
@@ -954,12 +896,13 @@ type CreateGroupDMParams struct {
 // endpoint will not be shown in the Discord Client
 //  Method                  POST
 //  Endpoint                /users/@me/channels
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#create-group-dm
+//  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
+func (c *Client) CreateGroupDM(ctx context.Context, params *CreateGroupDMParams, flags ...Flag) (ret *Channel, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
@@ -976,12 +919,13 @@ func (c *Client) CreateGroupDM(params *CreateGroupDMParams, flags ...Flag) (ret 
 // GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/connections
-//  Discord documentation   https://discordapp.com/developers/docs/resources/user#get-user-connections
+//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c *Client) GetUserConnections(flags ...Flag) (connections []*UserConnection, err error) {
+func (c *Client) GetUserConnections(ctx context.Context, flags ...Flag) (connections []*UserConnection, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeConnections(),
+		Ctx:      ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		tmp := make([]*UserConnection, 0)

@@ -1,4 +1,14 @@
-## Exclude generated files
+coverage:
+  status:
+    project:
+      default: off
+      unit-tests:
+        target: 30%
+        flags: unit
+      integration-tests:
+        target: 40%
+        flags: integration
+
 ignore:
 - "^.*_gen.go$"
 - "^.*_string.go$"

@@ -18,7 +18,7 @@ func (a *b) Test() bool {
 
 // endpoints/paths
 const (
-	discordAPI   = "https://discordapp.com/api"
+	discordAPI   = "https://discord.com/api"
 	auditlogs    = "/audit-logs"
 	channels     = "/channels"
 	messages     = "/messages"

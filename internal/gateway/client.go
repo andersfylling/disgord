@@ -162,7 +162,7 @@ type client struct {
 	ChannelBuffer uint
 
 	log         logger.Logger
-	logSequence atomic.Uint64
+	logSequence atomic.Uint32 // ARM 32bit causes panic with 64bit
 
 	// behaviours - optional
 	behaviors map[string]*behavior
@@ -210,7 +210,7 @@ func (c *client) operationHandlers(ctx context.Context) {
 		var p *DiscordPacket
 		var open bool
 		select {
-		case p, open = <-c.Receive():
+		case p, open = <-c.receive():
 			if !open {
 				c.log.Debug(c.getLogPrefix(), "operationChan is dead..")
 				return
@@ -254,7 +254,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	s := "s:" + strconv.FormatUint(nr, 10)
+	s := "s:" + strconv.FormatUint(uint64(nr), 10)
 	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
 	// [ws-?, s:0, shard:0]
@@ -266,18 +266,20 @@ func (c *client) getLogPrefix() string {
 // LINKING: CONNECTING / DISCONNECTING / RECONNECTING
 //
 //////////////////////////////////////////////////////
+func (c *client) IsDisconnected() bool {
+	return !c.isConnected.Load()
+}
+
 func (c *client) disconnect() (err error) {
 	c.Lock()
 	defer c.Unlock()
-	if c.conn.Disconnected() || !c.haveConnectedOnce.Load() || c.cancel == nil {
-		_ = c.conn.Close() // just to be safe, but ignore errors
-		c.isConnected.Store(false)
-		return errors.New("already disconnected")
-	}
+	alreadyDisconnected := c.conn.Disconnected() || !c.haveConnectedOnce.Load() || c.cancel == nil
 
 	// stop emitter, receiver and behaviors
-	c.cancel()
-	c.cancel = nil
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
+	}
 
 	// use the emitter to dispatch the close message
 	err = c.conn.Close()
@@ -287,8 +289,10 @@ func (c *client) disconnect() (err error) {
 	// dont use emit, such that we can call shutdown at the same time as Disconnect (See Shutdown())
 	c.isConnected.Store(false)
 
+	if alreadyDisconnected {
+		return errors.New("already disconnected")
+	}
 	c.log.Info(c.getLogPrefix(), "disconnected")
-
 	return err
 }
 
@@ -307,6 +311,7 @@ func (c *client) reconnect() (err error) {
 
 	c.log.Debug(c.getLogPrefix(), "is reconnecting")
 	if err := c.disconnect(); err != nil {
+		c.log.Debug(c.getLogPrefix(), "reconnecting failed: ", err.Error())
 		c.RLock()
 		if c.requestedDisconnect.Load() {
 			c.RUnlock()
@@ -326,15 +331,14 @@ func (c *client) reconnectLoop() (err error) {
 		if try == 0 {
 			c.log.Debug(c.getLogPrefix(), "trying to connect")
 		} else {
-			c.log.Debug(c.getLogPrefix(), "reconnect attempt", try)
+			c.log.Debug(c.getLogPrefix(), "reconnect attempt ", try)
 		}
 		if _, err = c.connect(); err == nil {
 			c.log.Debug(c.getLogPrefix(), "establishing connection succeeded")
 			break
 		}
-
-		c.log.Info(c.getLogPrefix(), "establishing connection failed, trying again in ", delay)
-		c.log.Info(c.getLogPrefix(), err)
+		c.log.Error(c.getLogPrefix(), "establishing connection failed: ", err)
+		c.log.Info(c.getLogPrefix(), "next connection attempt in ", delay)
 
 		// wait N seconds
 		select {
@@ -359,7 +363,7 @@ func (c *client) reconnectLoop() (err error) {
 //
 //////////////////////////////////////////////////////
 
-// Emit is used by DisGord users for dispatching a socket command to the Discord Gateway.
+// Emit is used by Disgord users for dispatching a socket command to the Discord Gateway.
 func (c *client) Emit(command string, data CmdPayload) (err error) {
 	return c.queueRequest(command, data)
 }
@@ -468,7 +472,7 @@ func (c *client) emitter(ctx context.Context) {
 //////////////////////////////////////////////////////
 
 // Receive returns the channel for receiving Discord packets
-func (c *client) Receive() <-chan *DiscordPacket {
+func (c *client) receive() <-chan *DiscordPacket {
 	return c.receiveChan
 }
 
@@ -486,32 +490,55 @@ func (c *client) receiver(ctx context.Context) {
 
 	for {
 		// check if application has closed
+		// and clean up
 		select {
 		case <-ctx.Done():
 			c.log.Debug(c.getLogPrefix(), "closing receiver")
-			once.Do(cancel)
+			once.Do(cancel) // free
 			return
 		case <-internal.Done():
-			go c.reconnect()
 			c.log.Debug(c.getLogPrefix(), "closing receiver after read error")
+			go func() {
+				if err := c.reconnect(); err != nil {
+					c.log.Error(c.getLogPrefix(), "reconnecting attempt failed: ", err.Error())
+				}
+			}()
 			return
 		default:
 		}
 
 		var packet []byte
 		var err error
-		if packet, err = c.conn.Read(context.Background()); err != nil {
-			if e, ok := err.(*CloseErr); ok && c.conf.discordErrListener != nil && e.code >= 4000 && e.code < 5000 {
-				go c.conf.discordErrListener(e.code, e.info)
+		if packet, err = c.conn.Read(ctx); err != nil {
+			if !errors.Is(err, context.Canceled) && ctx.Err() != nil {
+				c.log.Debug(c.getLogPrefix(), "read error: ", err.Error())
 			}
-			if _, ok := err.(*CloseErr); !ok {
-				c.log.Debug(c.getLogPrefix(), err)
+			reconnect := true
+			var closeErr *CloseErr
+			isCloseErr := errors.As(err, &closeErr)
+			if isCloseErr {
+				if c.conf.discordErrListener != nil && closeErr.code >= 4000 && closeErr.code < 5000 {
+					go c.conf.discordErrListener(closeErr.code, closeErr.info)
+				}
+				switch closeErr.code {
+				case 4014:
+					// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
+					// https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+					c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
+					_ = c.Disconnect()
+					close(c.receiveChan) // notify client
+					reconnect = false
+				default:
+				}
 			}
+
 			select {
 			case <-ctx.Done():
 				// in this case we dont want reconnect to start, only to stop
 			default:
-				once.Do(cancel)
+				if reconnect {
+					once.Do(cancel)
+				}
 			}
 			continue
 		}
@@ -631,6 +658,16 @@ func (c *client) pulsate(ctx context.Context) {
 
 		select {
 		case <-ticker.C:
+			// in case there is a race between when the ticker was started and the
+			// heartbeat interval was updated
+			c.RLock()
+			interval2 := time.Millisecond * time.Duration(c.heartbeatInterval)
+			if interval != interval2 {
+				ticker.Stop()
+				interval = interval2
+				ticker = time.NewTicker(interval)
+			}
+			c.RUnlock()
 			continue
 		case <-ctx.Done():
 		}

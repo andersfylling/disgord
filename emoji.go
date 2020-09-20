@@ -1,11 +1,11 @@
 package disgord
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 )
@@ -21,8 +21,6 @@ func validEmojiName(name string) bool {
 
 // Emoji ...
 type Emoji struct {
-	mu Lockable
-
 	ID            Snowflake   `json:"id"`
 	Name          string      `json:"name"`
 	Roles         []Snowflake `json:"roles,omitempty"`
@@ -39,6 +37,7 @@ var _ Reseter = (*Emoji)(nil)
 var _ DeepCopier = (*Emoji)(nil)
 var _ Copier = (*Emoji)(nil)
 var _ discordDeleter = (*Emoji)(nil)
+var _ Mentioner = (*Emoji)(nil)
 
 // var _ discordSaver = (*Emoji)(nil) // TODO
 var _ fmt.Stringer = (*Emoji)(nil)
@@ -62,7 +61,7 @@ func (e *Emoji) Mention() string {
 		prefix = "a:"
 	}
 
-	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 func (e *Emoji) LinkToGuild(guildID Snowflake) {
@@ -86,11 +85,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		e.mu.RLock()
-		emoji.mu.Lock()
-	}
-
 	emoji.ID = e.ID
 	emoji.Name = e.Name
 	emoji.Roles = e.Roles
@@ -102,12 +96,6 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)
 	}
-
-	if constant.LockedMethods {
-		e.mu.RUnlock()
-		emoji.mu.Unlock()
-	}
-
 	return
 }
 
@@ -115,7 +103,7 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 //func (e *Emoji) saveToDiscord(s Session) (err error) {
 //	session.Emoji
 //}
-func (e *Emoji) deleteFromDiscord(s Session, flags ...Flag) (err error) {
+func (e *Emoji) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
 	if e.guildID.IsZero() {
 		err = errors.New("missing guild ID, call Emoji.LinkToGuild")
 		return
@@ -125,7 +113,7 @@ func (e *Emoji) deleteFromDiscord(s Session, flags ...Flag) (err error) {
 		return
 	}
 
-	return s.DeleteGuildEmoji(e.guildID, e.ID, flags...)
+	return s.DeleteGuildEmoji(ctx, e.guildID, e.ID, flags...)
 }
 
 //func (e *Emoji) createGuildEmoji(session Session) (err error) {
@@ -171,7 +159,7 @@ func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 //
 // REST Methods
 //
-// https://discordapp.com/developers/docs/resources/emoji#emoji-resource
+// https://discord.com/developers/docs/resources/emoji#emoji-resource
 // Routes for controlling emojis do not follow the normal rate limit conventions.
 // These routes are specifically limited on a per-guild basis to prevent abuse.
 // This means that the quota returned by our APIs may be inaccurate,
@@ -182,12 +170,13 @@ func cacheEmoji_SetAll(cache Cacher, guildID Snowflake, emojis []*Emoji) error {
 // GetGuildEmoji [REST] Returns an emoji object for the given guild and emoji IDs.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#get-guild-emoji
+//  Discord documentation   https://discord.com/developers/docs/resources/emoji#get-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 -
-func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
+func (c *Client) GetGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (*Emoji, error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
+		Ctx:      ctx,
 	}, flags)
 	r.pool = c.pool.emoji
 	r.CacheRegistry = GuildEmojiCache
@@ -204,12 +193,13 @@ func (c *Client) GetGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (*Emoj
 // GetGuildEmojis [REST] Returns a list of emoji objects for the given guild.
 //  Method                  GET
 //  Endpoint                /guilds/{guild.id}/emojis
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis
+//  Discord documentation   https://discord.com/developers/docs/resources/emoji#list-guild-emojis
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) GetGuildEmojis(guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
+func (c *Client) GetGuildEmojis(ctx context.Context, guildID Snowflake, flags ...Flag) (emojis []*Emoji, err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmojis(guildID),
+		Ctx:      ctx,
 	}, flags)
 	r.CacheRegistry = GuildEmojiCache
 	r.checkCache = func() (v interface{}, err error) {
@@ -255,12 +245,12 @@ type CreateGuildEmojiParams struct {
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  POST
 //  Endpoint                /guilds/{guild.id}/emojis
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#create-guild-emoji
+//  Discord documentation   https://discord.com/developers/docs/resources/emoji#create-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 Emojis and animated emojis have a maximum file size of 256kb. Attempting to upload
 //                          an emoji larger than this limit will fail and return 400 Bad Request and an
 //                          error message, but not a JSON status code.
-func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (emoji *Emoji, err error) {
+func (c *Client) CreateGuildEmoji(ctx context.Context, guildID Snowflake, params *CreateGuildEmojiParams, flags ...Flag) (emoji *Emoji, err error) {
 	if guildID.IsZero() {
 		return nil, errors.New("guildID must be set, was " + guildID.String())
 	}
@@ -277,6 +267,7 @@ func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiPar
 
 	r := c.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
+		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmojis(guildID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
@@ -295,10 +286,10 @@ func (c *Client) CreateGuildEmoji(guildID Snowflake, params *CreateGuildEmojiPar
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#modify-guild-emoji
+//  Discord documentation   https://discord.com/developers/docs/resources/emoji#modify-guild-emoji
 //  Reviewed                2019-02-20
 //  Comment                 -
-func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (builder *updateGuildEmojiBuilder) {
+func (c *Client) UpdateGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (builder *updateGuildEmojiBuilder) {
 	//if !validEmojiName(params.Name) {
 	//	err = errors.New("emoji name contains illegal characters. Did not send request")
 	//	return
@@ -311,6 +302,7 @@ func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 	builder.r.cacheRegistry = GuildEmojiCache
 	builder.r.setup(c.cache, c.req, &httd.Request{
 		Method:      httd.MethodPatch,
+		Ctx:         ctx,
 		Endpoint:    endpoint.GuildEmoji(guildID, emojiID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -322,13 +314,14 @@ func (c *Client) UpdateGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (bu
 // success. Fires a Guild Emojis Update Gateway event.
 //  Method                  DELETE
 //  Endpoint                /guilds/{guild.id}/emojis/{emoji.id}
-//  Discord documentation   https://discordapp.com/developers/docs/resources/emoji#delete-guild-emoji
+//  Discord documentation   https://discord.com/developers/docs/resources/emoji#delete-guild-emoji
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (c *Client) DeleteGuildEmoji(guildID, emojiID Snowflake, flags ...Flag) (err error) {
+func (c *Client) DeleteGuildEmoji(ctx context.Context, guildID, emojiID Snowflake, flags ...Flag) (err error) {
 	r := c.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildEmoji(guildID, emojiID),
+		Ctx:      ctx,
 	}, flags)
 	r.updateCache = func(registry cacheRegistry, id Snowflake, x interface{}) (err error) {
 		c.cache.DeleteGuildEmoji(guildID, emojiID)

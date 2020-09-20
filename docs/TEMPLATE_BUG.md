@@ -3,7 +3,7 @@
   1. Debugged your code
   2. If it regards a lot of code, do create a smaller code snippet to reproduce it
   3. Checked the issues list for similar bugs
-  4. Sure that this is a issue with DisGord and not the Discord API (Most likely DisGord. Compare it against the Discord developer docs)
+  4. Sure that this is a issue with Disgord and not the Discord API (Most likely Disgord. Compare it against the Discord developer docs)
 
 ### Description
 Describe the issue in detail here.

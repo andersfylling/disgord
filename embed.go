@@ -1,22 +1,16 @@
 package disgord
 
-import (
-	"github.com/andersfylling/disgord/internal/constant"
-)
-
-// limitations: https://discordapp.com/developers/docs/resources/channel#embed-limits
+// limitations: https://discord.com/developers/docs/resources/channel#embed-limits
 // TODO: implement NewEmbedX functions that ensures limitations
 
-// Embed https://discordapp.com/developers/docs/resources/channel#embed-object
+// Embed https://discord.com/developers/docs/resources/channel#embed-object
 type Embed struct {
-	Lockable `json:"-"`
-
 	Title       string          `json:"title,omitempty"`       // title of embed
 	Type        string          `json:"type,omitempty"`        // type of embed (always "rich" for webhook embeds)
 	Description string          `json:"description,omitempty"` // description of embed
 	URL         string          `json:"url,omitempty"`         // url of embed
 	Timestamp   Time            `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
-	Color       int             `json:"color"`                 // color code of the embed
+	Color       int             `json:"color,omitempty"`       // color code of the embed
 	Footer      *EmbedFooter    `json:"footer,omitempty"`      // embed footer object	footer information
 	Image       *EmbedImage     `json:"image,omitempty"`       // embed image object	image information
 	Thumbnail   *EmbedThumbnail `json:"thumbnail,omitempty"`   // embed thumbnail object	thumbnail information
@@ -41,11 +35,6 @@ func (c *Embed) CopyOverTo(other interface{}) (err error) {
 	if embed, valid = other.(*Embed); !valid {
 		err = newErrorUnsupportedType("given interface{} is not of type *Embed")
 		return
-	}
-
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
 	}
 
 	embed.Title = c.Title
@@ -78,18 +67,11 @@ func (c *Embed) CopyOverTo(other interface{}) (err error) {
 	for i, field := range c.Fields {
 		embed.Fields[i] = field.DeepCopy().(*EmbedField)
 	}
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedThumbnail https://discordapp.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
+// EmbedThumbnail https://discord.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
 type EmbedThumbnail struct {
-	Lockable `json:"-"`
-
 	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
 	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
 	Height   int    `json:"height,omitempty"`    // ?| , height of image
@@ -113,27 +95,15 @@ func (c *EmbedThumbnail) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.URL = c.URL
 	embed.ProxyURL = c.ProxyURL
 	embed.Height = c.Height
 	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return
 }
 
-// EmbedVideo https://discordapp.com/developers/docs/resources/channel#embed-object-embed-video-structure
+// EmbedVideo https://discord.com/developers/docs/resources/channel#embed-object-embed-video-structure
 type EmbedVideo struct {
-	Lockable `json:"-"`
-
 	URL    string `json:"url,omitempty"`    // ?| , source url of video
 	Height int    `json:"height,omitempty"` // ?| , height of video
 	Width  int    `json:"width,omitempty"`  // ?| , width of video
@@ -156,26 +126,14 @@ func (c *EmbedVideo) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.URL = c.URL
 	embed.Height = c.Height
 	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedImage https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
+// EmbedImage https://discord.com/developers/docs/resources/channel#embed-object-embed-image-structure
 type EmbedImage struct {
-	Lockable `json:"-"`
-
 	URL      string `json:"url,omitempty"`       // ?| , source url of image (only supports http(s) and attachments)
 	ProxyURL string `json:"proxy_url,omitempty"` // ?| , a proxied url of the image
 	Height   int    `json:"height,omitempty"`    // ?| , height of image
@@ -199,27 +157,15 @@ func (c *EmbedImage) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.URL = c.URL
 	embed.ProxyURL = c.ProxyURL
 	embed.Height = c.Height
 	embed.Width = c.Width
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedProvider https://discordapp.com/developers/docs/resources/channel#embed-object-embed-provider-structure
+// EmbedProvider https://discord.com/developers/docs/resources/channel#embed-object-embed-provider-structure
 type EmbedProvider struct {
-	Lockable `json:"-"`
-
 	Name string `json:"name,omitempty"` // ?| , name of provider
 	URL  string `json:"url,omitempty"`  // ?| , url of provider
 }
@@ -241,25 +187,13 @@ func (c *EmbedProvider) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.URL = c.URL
 	embed.Name = c.Name
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedAuthor https://discordapp.com/developers/docs/resources/channel#embed-object-embed-author-structure
+// EmbedAuthor https://discord.com/developers/docs/resources/channel#embed-object-embed-author-structure
 type EmbedAuthor struct {
-	Lockable `json:"-"`
-
 	Name         string `json:"name,omitempty"`           // ?| , name of author
 	URL          string `json:"url,omitempty"`            // ?| , url of author
 	IconURL      string `json:"icon_url,omitempty"`       // ?| , url of author icon (only supports http(s) and attachments)
@@ -283,27 +217,15 @@ func (c *EmbedAuthor) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.Name = c.Name
 	embed.URL = c.URL
 	embed.IconURL = c.IconURL
 	embed.ProxyIconURL = c.ProxyIconURL
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedFooter https://discordapp.com/developers/docs/resources/channel#embed-object-embed-footer-structure
+// EmbedFooter https://discord.com/developers/docs/resources/channel#embed-object-embed-footer-structure
 type EmbedFooter struct {
-	Lockable `json:"-"`
-
 	Text         string `json:"text"`                     //  | , url of author
 	IconURL      string `json:"icon_url,omitempty"`       // ?| , url of footer icon (only supports http(s) and attachments)
 	ProxyIconURL string `json:"proxy_icon_url,omitempty"` // ?| , a proxied url of footer icon
@@ -326,26 +248,14 @@ func (c *EmbedFooter) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.Text = c.Text
 	embed.IconURL = c.IconURL
 	embed.ProxyIconURL = c.ProxyIconURL
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }
 
-// EmbedField https://discordapp.com/developers/docs/resources/channel#embed-object-embed-field-structure
+// EmbedField https://discord.com/developers/docs/resources/channel#embed-object-embed-field-structure
 type EmbedField struct {
-	Lockable `json:"-"`
-
 	Name   string `json:"name"`             //  | , name of the field
 	Value  string `json:"value"`            //  | , value of the field
 	Inline bool   `json:"inline,omitempty"` // ?| , whether or not this field should display inline
@@ -368,18 +278,8 @@ func (c *EmbedField) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	if constant.LockedMethods {
-		c.RLock()
-		embed.Lock()
-	}
-
 	embed.Name = c.Name
 	embed.Value = c.Value
 	embed.Inline = c.Inline
-
-	if constant.LockedMethods {
-		c.RUnlock()
-		embed.Unlock()
-	}
 	return nil
 }

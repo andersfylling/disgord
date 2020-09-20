@@ -1,6 +1,6 @@
 # Contributing
 
-The following is a set of guidelines for contributing to DisGord.
+The following is a set of guidelines for contributing to Disgord.
 These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
 > This was inspired by the [Atom Organization](https://github.com/atom) GitHub guideline.
@@ -12,7 +12,7 @@ These are mostly guidelines, not rules. Use your best judgment, and feel free to
 [I don't want to read this whole thing, I just have a question!!!](#i-dont-want-to-read-this-whole-thing-i-just-have-a-question)
 
 [What should I know before I get started?](#what-should-i-know-before-i-get-started)
-  * [Introduction to DisGord](#introduction)
+  * [Introduction to Disgord](#introduction)
   * [Design Decisions](#design-decisions)
   * [Running Unit Tests](#running-unit-tests)
 
@@ -42,16 +42,11 @@ Example (use spaces):
 //                          Gateway event.
 // Endpoint                 /guilds
 // Rate limiter             /guilds
-// Discord documentation    https://discordapp.com/developers/docs/resources/guild#create-guild
+// Discord documentation    https://discord.com/developers/docs/resources/guild#create-guild
 // Reviewed                 2018-08-16
 // Comment                  This endpoint can be used only by bots in less than 10 guilds. Creating channel
 //                          categories from this endpoint is not supported.
 ```
-
-#### Mutex
-For discord specific structs (Message, User, etc.) use Lockable. This is to allow deactivating/activating the mutex in public methods.
-
-If the mutex does not need to be publicly accessible, then use the `mu` prefix.
 
 #### Singletons
 Nope. But discussions are welcome.
@@ -60,7 +55,7 @@ Nope. But discussions are welcome.
 
 > **Note:** While you are free to ask questions, given that you add the [help] prefix. You'll get faster results by using the resources below.
 
-You can find a support channel for DisGord in Discord. We exist in both the Gopher server and the Discord API server:
+You can find a support channel for Disgord in Discord. We exist in both the Gopher server and the Discord API server:
  - [Discord Gophers](https://discord.gg/qBVmnq9)
  - [Discord API](https://discord.gg/HBTHbme)
 
@@ -78,19 +73,19 @@ Depending on what you want to contribute to, here's a few:
  * caching
 
 ### Introduction
-Compared to DiscordGo, DisGord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests). DisGord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
+Compared to DiscordGo, Disgord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests). Disgord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
 
 ### Design Decisions
-DisGord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this DisGord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoming events should go through the cache before the dev/user gets access to the data.
+Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoming events should go through the cache before the dev/user gets access to the data.
 
 None of the discord data structures can be used to marshal json data for REST request. REST requests must have dedicated structures. E.g. the message struct can not be used to create a new message, one must utilise the MessageCreateParam struct. Otherwise we end up worrying about both marshalling and unmarshalling of these structures, which creates weird/unecessary custom marshallers and string pointers. (Structures are those of Guild, Channel, Message, AuditLog, etc.)
 
 #### Event Handlers (functions and channels)
 > Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
 
-> Handlers are both functions and channels in DisGord.
+> Handlers are both functions and channels in Disgord.
 
-DisGord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence.
+Disgord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence.
 
 > Note! The handlers run in sequence per event. But events execute concurrently.
 
@@ -114,7 +109,7 @@ session.On(event.MessageCreate, middleware1, middleware2, messageChan)
 It's an alternative way of doing fail-fast are specifying requirements that can be reused. Or directly manipulate the incoming events before a handler process it, to ensure certain values are added/specified.
 
 #### Event Handlers lifetime
-DisGord allows a controller that dictates the lifetime of the handlers. Such that the handler(s) run only once, five time, or only within five minutes, or whatever kind of behaviour is desired. These are optional and are injected at the end of the registration function.
+Disgord allows a controller that dictates the lifetime of the handlers. Such that the handler(s) run only once, five time, or only within five minutes, or whatever kind of behaviour is desired. These are optional and are injected at the end of the registration function.
 
 ```go
 session.On(event.MessageCreate, messageChan, &disgord.Ctrl{Deadline:5*time.Second})
@@ -135,7 +130,7 @@ Instead, edit the templates in `generate/` or the files they're based on (see pr
 ### Running Unit Tests
 > WARNING! Please do not run the unit tests for the endpoints as these are verified to work before being pushed, and rechecking every time is just spamming the Discord API for useless information.
 
-In DisGord you will see both local unit tests and unit tests that verify directly against the Discord API. Note that the "live" tests (that depends on the Discord API) needs to be activated through environment variables. However, these should only be run when some breaking changes to the REST implementation changes. You will most likely never have to worry about it.
+In Disgord you will see both local unit tests and unit tests that verify directly against the Discord API. Note that the "live" tests (that depends on the Discord API) needs to be activated through environment variables. However, these should only be run when some breaking changes to the REST implementation changes. You will most likely never have to worry about it.
 
 But if you want to properly test all the implementations you need to provide a bot token under the environment variable: "DISGORD_TEST_BOT". Any integration tests depending on this token is skipped whenever it is missing. The following environment variables must exist in order to properly execute a complete integration test (see constant package for information):
  1. DISGORD_TEST_BOT
@@ -146,12 +141,12 @@ But if you want to properly test all the implementations you need to provide a b
 
 Editing the event handlers or rest package requires that you test with a bot token to verify success. (Note that tests aren't complete and is considered a work in progress).
 
-For the local tests (the main tests) DisGord tries to decouple.. well.. everything. The websocket connection is decoupled to allow mocking input/output socket communication with the Discord API. And the REST methods are decoupled by `Getter`, `Poster`, etc. interfaces. However, if anyone creates a solution for decoupling the `http/Client` instead of the `disgord/httd/Client` that would be a great improvement, as we could do integration tests of the entire `httd` package as well, to verify more accurate DisGord behavior.
+For the local tests (the main tests) Disgord tries to decouple.. well.. everything. The websocket connection is decoupled to allow mocking input/output socket communication with the Discord API. And the REST methods are decoupled by `Getter`, `Poster`, etc. interfaces. However, if anyone creates a solution for decoupling the `http/Client` instead of the `disgord/httd/Client` that would be a great improvement, as we could do integration tests of the entire `httd` package as well, to verify more accurate Disgord behavior.
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
-Reporting a bug should help the community improving DisGord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](docs/TEMPLATE_BUG.md).
+Reporting a bug should help the community improving Disgord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](docs/TEMPLATE_BUG.md).
 
 ### Suggesting Enhancements
 We don't currently have a template for this. Provide benchmarks or demonstrations why your suggestion is an improvement or how it can help benefit this project is of great appreciation.
@@ -160,7 +155,7 @@ We don't currently have a template for this. Provide benchmarks or demonstration
 Remember to run go fmt to properly format your code and add unit tests if you provide new content. Benchmarks are also welcome as we can use these in future decisions (!).
 
 ### Tests
-Make them readable. Tests that is for the public interface of DisGord, should be placed in the test sub-pkg, you can also do integration tests here against the Discord API. Tests for unexported or very specific/local behaviour, can be placed in the disgord pkg directly.
+Make them readable. Tests that is for the public interface of Disgord, should be placed in the test sub-pkg, you can also do integration tests here against the Discord API. Tests for unexported or very specific/local behaviour, can be placed in the disgord pkg directly.
 
 ### Pull Requests
 If your PR is not ready yet, make it a Draft.

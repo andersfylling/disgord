@@ -332,7 +332,7 @@ var _ HandlerCtrl = (*Ctrl)(nil)
 
 func (c *Ctrl) OnInsert(Session) error {
 	if c.Channel != nil && !isHandler(c.Channel) {
-		panic("Ctrl.Channel is not a valid disgord event channel")
+		panic("Ctrl.Channel is not a valid Disgord event channel")
 	}
 	if c.Runs == 0 {
 		c.Runs = -1
@@ -366,7 +366,7 @@ func (c *Ctrl) Update() {
 }
 
 // CloseChannel must be called instead of closing an event channel directly.
-// This is to make sure DisGord does not go into a deadlock
+// This is to make sure Disgord does not go into a deadlock
 func (c *Ctrl) CloseChannel() {
 	c.Runs = 0
 	closeChannel(c.Channel)
@@ -420,15 +420,13 @@ func (c *rdyCtrl) IsDead() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := true
 	for _, id := range c.localShardIDs {
 		if !c.shardReady[id] {
-			ok = false
-			break
+			return false
 		}
 	}
 
-	return ok
+	return true
 }
 
 func (c *rdyCtrl) Update() {
@@ -444,13 +442,11 @@ func (c *guildsRdyCtrl) IsDead() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	ok := true
-	for _, ok := range c.status {
-		if !ok {
-			ok = false
-			break
+	for _, ready := range c.status {
+		if !ready {
+			return false
 		}
 	}
 
-	return ok
+	return true
 }

@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
@@ -48,6 +49,7 @@ type VoiceClient struct {
 
 	haveIdentifiedOnce bool
 
+	active         chan interface{}
 	SystemShutdown chan interface{}
 }
 
@@ -86,6 +88,10 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 //
 //////////////////////////////////////////////////////
 
+func (c *VoiceClient) Active() <-chan interface{} {
+	return c.SystemShutdown
+}
+
 func (c *VoiceClient) setupBehaviors() {
 	// operation handlers
 	// we manually link event methods instead of using reflection
@@ -93,6 +99,7 @@ func (c *VoiceClient) setupBehaviors() {
 		addresses: discordOperations,
 		actions: behaviorActions{
 			opcode.VoiceReady:              c.onReady,
+			opcode.VoiceResumed:            c.onResumed,
 			opcode.VoiceHeartbeat:          c.onHeartbeatRequest,
 			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
 			opcode.VoiceHello:              c.onHello,
@@ -130,8 +137,25 @@ func (c *VoiceClient) onReady(v interface{}) (err error) {
 	return nil
 }
 
+func (c *VoiceClient) onResumed(v interface{}) (err error) {
+	p := v.(*DiscordPacket)
+
+	resumedPk := &voicePacket{}
+	if err = util.Unmarshal(p.Data, resumedPk); err != nil {
+		return err
+	}
+
+	// TODO: use resumed instead..
+	if ch := c.onceChannels.Acquire(opcode.VoiceReady); ch != nil {
+		ch <- resumedPk
+	} else {
+		panic("once channel for Resumed was missing")
+	}
+	return nil
+}
+
 func (c *VoiceClient) onHeartbeatRequest(v interface{}) error {
-	// https://discordapp.com/developers/docs/topics/gateway#heartbeating
+	// https://discord.com/developers/docs/topics/gateway#heartbeating
 	return c.emit(cmd.VoiceHeartbeat, nil)
 }
 
@@ -147,21 +171,29 @@ func (c *VoiceClient) onHeartbeatAck(v interface{}) error {
 func (c *VoiceClient) onHello(v interface{}) (err error) {
 	p := v.(*DiscordPacket)
 
-	helloPk := &helloPacket{}
+	type packet struct {
+		// sometimes discord sends a float..............
+		// How do you fuck up an integer, Discord?
+		HeartbeatInterval float32 `json:"heartbeat_interval"`
+	}
+	helloPk := &packet{}
 	if err = util.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
+	interval := uint(helloPk.HeartbeatInterval)
 	c.Lock()
-	// From: https://discordapp.com/developers/docs/topics/voice-connections#heartbeating
-	// There is currently a bug in the Hello payload heartbeat interval.
-	// Until it is fixed, please take your heartbeat interval as `heartbeat_interval` * .75.
-	// TODO This warning will be removed and a changelog published when the bug is fixed.
-	c.heartbeatInterval = uint(float64(helloPk.HeartbeatInterval) * .75)
+	if interval == c.heartbeatInterval {
+		c.Unlock()
+		return nil
+	} else if c.heartbeatInterval > 0 {
+		c.Unlock()
+		return errors.New("a new hello packet was sent, with a different interval - please make a github issue at https://github.com/andersfylling/disgord")
+	}
+	c.heartbeatInterval = interval
 	c.Unlock()
 
-	c.activateHeartbeats <- true
-
 	c.sendVoiceHelloPacket()
+	c.activateHeartbeats <- true
 	return nil
 }
 
@@ -186,7 +218,8 @@ func (c *VoiceClient) onVoiceSessionDescription(v interface{}) (err error) {
 //////////////////////////////////////////////////////
 
 func (c *VoiceClient) sendHeartbeat(i interface{}) error {
-	return c.emit(cmd.VoiceHeartbeat, nil)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return c.emit(cmd.VoiceHeartbeat, r.Uint32())
 }
 
 //////////////////////////////////////////////////////
@@ -219,7 +252,9 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 
 	waitingChan := make(chan interface{}, 2)
 	c.onceChannels.Add(opcode.VoiceReady, waitingChan)
+	// TODO: explicitly add resumed as well
 	defer func() {
+		// cleanup
 		c.onceChannels.Acquire(opcode.VoiceReady)
 		close(waitingChan)
 	}()
@@ -247,11 +282,22 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 		}
 	}()
 
+	//errIdentify := c.emit(cmd.VoiceIdentify, &voiceIdentify{
+	//	GuildID: c.conf.GuildID,
+	//	UserID: c.conf.UserID,
+	//	SessionID: c.conf.SessionID,
+	//	Token: c.conf.Token,
+	//})
+	//if errIdentify != nil {
+	//	c.log.Error(c.getLogPrefix(), "unable to send identify", errIdentify)
+	//}
+
 	select {
 	case evt = <-waitingChan:
 		c.log.Info(c.getLogPrefix(), "connected")
 	case <-ctx.Done():
 		c.isConnected.Store(false)
+		err = errors.New("context cancelled")
 	case <-time.After(5 * time.Second):
 		c.isConnected.Store(false)
 		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
@@ -283,7 +329,7 @@ func (c *VoiceClient) sendVoiceHelloPacket() {
 }
 
 func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
-	// https://discordapp.com/developers/docs/topics/gateway#identify
+	// https://discord.com/developers/docs/topics/gateway#identify
 	err = m.emit(cmd.VoiceIdentify, &voiceIdentify{
 		GuildID:   m.conf.GuildID,
 		UserID:    m.conf.UserID,
