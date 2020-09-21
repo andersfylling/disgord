@@ -2,7 +2,6 @@ package httd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,7 +32,6 @@ var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpE
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
-	// Deprecated
 	Ctx context.Context
 
 	Method      httpMethod
@@ -52,33 +50,15 @@ func (r *Request) PopulateMissing() {
 	if r.Method == "" {
 		r.Method = MethodGet
 	}
+	if r.Ctx == nil {
+		r.Ctx = context.Background()
+	}
 	// too much magic
 	// if c.Body != nil && c.ContentType == "" {
 	// 	c.ContentType = ContentTypeJSON
 	// }
 
 	r.hashedEndpoint = r.HashEndpoint()
-}
-
-func (r *Request) init() (err error) {
-	r.PopulateMissing()
-	if r.Body != nil && r.bodyReader == nil {
-		switch b := r.Body.(type) { // Determine the type of the passed body so we can treat it differently
-		case io.Reader:
-			r.bodyReader = b
-		default:
-			// If the type is unknown, possibly Marshal it as JSON
-			if r.ContentType != ContentTypeJSON {
-				return errors.New("unknown request body types and only be used in conjunction with httd.ContentTypeJSON")
-			}
-
-			if r.bodyReader, err = convertStructToIOReader(r.Body); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func (r *Request) HashEndpoint() string {

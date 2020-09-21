@@ -11,7 +11,7 @@ type randomStruct struct {
 func TestCacheList(t *testing.T) {
 	t.Run("size limit", func(t *testing.T) {
 		limit := uint(10)
-		list := New(limit)
+		list := NewLFU(limit)
 		if list.size != 0 {
 			t.Error("size if not 0")
 		}
@@ -29,7 +29,7 @@ func TestCacheList(t *testing.T) {
 	})
 	t.Run("replaces only LFU", func(t *testing.T) {
 		ids := []Snowflake{1, 3, 5, 7, 9}
-		list := New(uint(len(ids)))
+		list := NewLFU(uint(len(ids)))
 		for i := 0; i < 256; i++ {
 			usr := &randomStruct{}
 			usr.ID = Snowflake(i)

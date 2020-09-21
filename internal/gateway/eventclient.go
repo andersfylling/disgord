@@ -2,9 +2,9 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -16,17 +16,13 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/event"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/util"
-
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
 // NewManager creates a new socket client manager for handling behavior and Discord events. Note that this
 // function initiates a go routine.
 func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error) {
-	if conf.SystemShutdown == nil {
-		panic("missing conf.SystemShutdown channel")
-	}
+	conf.validate()
 
 	var eChan chan<- *Event
 	if conf.EventChan != nil {
@@ -136,6 +132,15 @@ type EvtConfig struct {
 	SystemShutdown chan interface{}
 }
 
+func (conf *EvtConfig) validate() {
+	if conf.BotToken == "" {
+		panic("missing bot token in gateway event config")
+	}
+	if conf.SystemShutdown == nil {
+		panic("missing conf.SystemShutdown channel in gateway event config")
+	}
+}
+
 type EvtClient struct {
 	evtConf *EvtConfig
 
@@ -157,7 +162,7 @@ type EvtClient struct {
 func (c *EvtClient) SetPresence(data interface{}) (err error) {
 	// marshalling is done to avoid race
 	var presence json.RawMessage
-	if presence, err = util.Marshal(data); err != nil {
+	if presence, err = json.Marshal(data); err != nil {
 		return err
 	}
 	c.idMu.Lock()
@@ -244,7 +249,7 @@ func (c *EvtClient) onReady(v interface{}) (err error) {
 
 	// always store the session id
 	ready := evtReadyPacket{}
-	if err = util.Unmarshal(p.Data, &ready); err != nil {
+	if err = json.Unmarshal(p.Data, &ready); err != nil {
 		return err
 	}
 
@@ -310,7 +315,7 @@ func (c *EvtClient) onHello(v interface{}) error {
 	p := v.(*DiscordPacket)
 
 	helloPk := &helloPacket{}
-	if err := util.Unmarshal(p.Data, helloPk); err != nil {
+	if err := json.Unmarshal(p.Data, helloPk); err != nil {
 		return err
 	}
 

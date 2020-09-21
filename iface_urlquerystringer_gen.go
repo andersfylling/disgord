@@ -2,6 +2,28 @@
 
 package disgord
 
+func (g *GetMessagesParams) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.Around == 0) {
+		params["around"] = g.Around
+	}
+
+	if !(g.Before == 0) {
+		params["before"] = g.Before
+	}
+
+	if !(g.After == 0) {
+		params["after"] = g.After
+	}
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	return params.URLQueryString()
+}
+
 func (g *getGuildMembersParams) URLQueryString() string {
 	params := make(urlQuery)
 
@@ -40,33 +62,11 @@ func (p *pruneMembersParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetInviteParams) URLQueryString() string {
+func (g *getInviteParams) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.WithMemberCount == false) {
 		params["with_count"] = g.WithMemberCount
-	}
-
-	return params.URLQueryString()
-}
-
-func (g *GetMessagesParams) URLQueryString() string {
-	params := make(urlQuery)
-
-	if !(g.Around == 0) {
-		params["around"] = g.Around
-	}
-
-	if !(g.Before == 0) {
-		params["before"] = g.Before
-	}
-
-	if !(g.After == 0) {
-		params["after"] = g.After
-	}
-
-	if !(g.Limit == 0) {
-		params["limit"] = g.Limit
 	}
 
 	return params.URLQueryString()

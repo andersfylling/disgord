@@ -55,92 +55,45 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 //
 //////////////////////////////////////////////////////
 
-// CreateWebhookParams json params for the create webhook rest request avatar string
-// https://discord.com/developers/docs/resources/user#avatar-data
-type CreateWebhookParams struct {
-	Name   string `json:"name"`   // name of the webhook (2-32 characters)
-	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
+type WebhookQueryBuilder interface {
+	WithContext(ctx context.Context) WebhookQueryBuilder
 
-	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
-	Reason string `json:"-"`
+	// GetWebhook Returns the new webhook object for the given id.
+	Get(flags ...Flag) (*Webhook, error)
+
+	// UpdateWebhook Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+	// Returns the updated webhook object on success.
+	Update(flags ...Flag) *updateWebhookBuilder
+
+	// DeleteWebhook Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
+	Delete(flags ...Flag) error
+
+	// ExecuteWebhook Trigger a webhook in Discord.
+	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
+
+	// ExecuteSlackWebhook Trigger a webhook in Discord from the Slack app.
+	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
+
+	// ExecuteGitHubWebhook Trigger a webhook in Discord from the GitHub app.
+	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
+
+	WithToken(token string) WebhookWithTokenQueryBuilder
 }
 
-func (c *CreateWebhookParams) FindErrors() error {
-	if c.Name == "" {
-		return errors.New("webhook must have a name")
-	}
-	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
-		return errors.New("webhook name must be 2 to 32 characters long")
-	}
-	return nil
+func (c clientQueryBuilder) Webhook(id Snowflake) WebhookQueryBuilder {
+	return &webhookQueryBuilder{client: c.client, webhookID: id}
 }
 
-// CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
-// Returns a webhook object on success.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) CreateWebhook(ctx context.Context, channelID Snowflake, params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error) {
-	if params == nil {
-		return nil, errors.New("params was nil")
-	}
-	if err = params.FindErrors(); err != nil {
-		return nil, err
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
-		Ctx:         ctx,
-		Endpoint:    endpoint.ChannelWebhooks(channelID),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-		Reason:      params.Reason,
-	}, flags)
-	r.factory = func() interface{} {
-		return &Webhook{}
-	}
-
-	return getWebhook(r.Execute)
+type webhookQueryBuilder struct {
+	ctx       context.Context
+	client    *Client
+	cid       Snowflake
+	webhookID Snowflake
 }
 
-// GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) GetChannelWebhooks(ctx context.Context, channelID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.ChannelWebhooks(channelID),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		tmp := make([]*Webhook, 0)
-		return &tmp
-	}
-
-	return getWebhooks(r.Execute)
-}
-
-// GetGuildWebhooks [REST] Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-guild-webhooks
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags ...Flag) (ret []*Webhook, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildWebhooks(guildID),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		tmp := make([]*Webhook, 0)
-		return &tmp
-	}
-
-	return getWebhooks(r.Execute)
+func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilder {
+	w.ctx = ctx
+	return &w
 }
 
 // GetWebhook [REST] Returns the new webhook object for the given id.
@@ -149,29 +102,10 @@ func (c *Client) GetGuildWebhooks(ctx context.Context, guildID Snowflake, flags 
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *Client) GetWebhook(ctx context.Context, id Snowflake, flags ...Flag) (ret *Webhook, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.Webhook(id),
-		Ctx:      ctx,
-	}, flags)
-	r.factory = func() interface{} {
-		return &Webhook{}
-	}
-
-	return getWebhook(r.Execute)
-}
-
-// GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
-// returns no user in the webhook object.
-//  Method                  GET
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) GetWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (ret *Webhook, err error) {
-	r := c.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.WebhookToken(id, token),
-		Ctx:      ctx,
+func (w webhookQueryBuilder) Get(flags ...Flag) (ret *Webhook, err error) {
+	r := w.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.Webhook(w.webhookID),
+		Ctx:      w.ctx,
 	}, flags)
 	r.factory = func() interface{} {
 		return &Webhook{}
@@ -187,42 +121,17 @@ func (c *Client) GetWebhookWithToken(ctx context.Context, id Snowflake, token st
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (c *Client) UpdateWebhook(ctx context.Context, id Snowflake, flags ...Flag) (builder *updateWebhookBuilder) {
+func (w webhookQueryBuilder) Update(flags ...Flag) (builder *updateWebhookBuilder) {
 	builder = &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
 	}
 	builder.r.flags = flags
-	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.setup(c.cache, c.req, &httd.Request{
+	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.setup(w.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.Webhook(id),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
-
-	return builder
-}
-
-// UpdateWebhookWithToken [REST] Same as UpdateWebhook, except this call does not require authentication,
-// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint. are optional.
-func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (builder *updateWebhookBuilder) {
-	builder = &updateWebhookBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Webhook{}
-	}
-	builder.r.flags = flags
-	builder.r.addPrereq(id.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.addPrereq(token == "", "given webhook token was not set")
-	builder.r.setup(c.cache, c.req, &httd.Request{
-		Method:      httd.MethodPatch,
-		Ctx:         ctx,
-		Endpoint:    endpoint.WebhookToken(id, token),
+		Ctx:         w.ctx,
+		Endpoint:    endpoint.Webhook(w.webhookID),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
 
@@ -235,48 +144,12 @@ func (c *Client) UpdateWebhookWithToken(ctx context.Context, id Snowflake, token
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c *Client) DeleteWebhook(ctx context.Context, id Snowflake, flags ...Flag) (err error) {
-	return c.DeleteWebhookWithToken(ctx, id, "", flags...)
-}
-
-// DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
-//  Method                  DELETE
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 -
-func (c *Client) DeleteWebhookWithToken(ctx context.Context, id Snowflake, token string, flags ...Flag) (err error) {
-	var e string
-	if token != "" {
-		e = endpoint.WebhookToken(id, token)
-	} else {
-		e = endpoint.Webhook(id)
-	}
-
-	r := c.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
-		Endpoint: e,
-		Ctx:      ctx,
-	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
-
-	_, err = r.Execute()
-	return err
-}
-
-// NewExecuteWebhookParams creates params for func ExecuteWebhook
-func NewExecuteWebhookParams(id Snowflake, token string) (ret *ExecuteWebhookParams, err error) {
-	return &ExecuteWebhookParams{
-		WebhookID: id,
-		Token:     token,
-	}, nil
+func (w webhookQueryBuilder) Delete(flags ...Flag) (err error) {
+	return w.WithToken("").WithContext(w.ctx).Delete(flags...)
 }
 
 // ExecuteWebhookParams JSON params for func ExecuteWebhook
 type ExecuteWebhookParams struct {
-	WebhookID Snowflake `json:"-"`
-	Token     string    `json:"-"`
-
 	Content   string      `json:"content"`
 	Username  string      `json:"username"`
 	AvatarURL string      `json:"avatar_url"`
@@ -291,6 +164,138 @@ type execWebhookParams struct {
 
 var _ URLQueryStringer = (*execWebhookParams)(nil)
 
+// Execute Trigger a webhook in Discord.
+func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
+	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, URLSuffix, flags...)
+}
+
+// ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
+//  Method                  POST
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
+//  Reviewed                2020-05-21
+//  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
+//                          icon_emoji, mrkdwn, or mrkdwn_in properties.
+func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
+	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, endpoint.Slack(), flags...)
+}
+
+// ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
+//  Method                  POST
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
+//  Reviewed                2020-05-21
+//  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
+//                          as the "Payload URL." You can choose what events your Discord channel receives by
+//                          choosing the "Let me select individual events" option and selecting individual
+//                          events for the new webhook you're configuring.
+func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
+	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, endpoint.GitHub(), flags...)
+}
+
+type WebhookWithTokenQueryBuilder interface {
+	WithContext(ctx context.Context) WebhookWithTokenQueryBuilder
+
+	// GetWebhookWithToken Same as GetWebhook, except this call does not require authentication and
+	// returns no user in the webhook object.
+	Get(flags ...Flag) (*Webhook, error)
+
+	// UpdateWebhookWithToken Same as UpdateWebhook, except this call does not require authentication,
+	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
+	Update(flags ...Flag) *updateWebhookBuilder
+
+	// DeleteWebhookWithToken Same as DeleteWebhook, except this call does not require authentication.
+	Delete(flags ...Flag) error
+
+	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
+}
+
+func (w webhookQueryBuilder) WithToken(token string) WebhookWithTokenQueryBuilder {
+	return &webhookWithTokenQueryBuilder{client: w.client, webhookID: w.webhookID, token: token}
+}
+
+type webhookWithTokenQueryBuilder struct {
+	ctx       context.Context
+	client    *Client
+	cid       Snowflake
+	webhookID Snowflake
+	token     string
+}
+
+func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
+	w.ctx = ctx
+	return &w
+}
+
+// GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
+// returns no user in the webhook object.
+//  Method                  GET
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
+//  Reviewed                2018-08-14
+//  Comment                 -
+func (w webhookWithTokenQueryBuilder) Get(flags ...Flag) (*Webhook, error) {
+	r := w.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.WebhookToken(w.webhookID, w.token),
+		Ctx:      w.ctx,
+	}, flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
+	}
+
+	return getWebhook(r.Execute)
+}
+
+// UpdateWebhookWithToken [REST] Same as UpdateWebhook, except this call does not require authentication,
+// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
+//  Method                  PATCH
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
+//  Reviewed                2018-08-14
+//  Comment                 All parameters to this endpoint. are optional.
+func (w webhookWithTokenQueryBuilder) Update(flags ...Flag) (builder *updateWebhookBuilder) {
+	builder = &updateWebhookBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Webhook{}
+	}
+	builder.r.flags = flags
+	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.addPrereq(w.token == "", "given webhook token was not set")
+	builder.r.setup(w.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         w.ctx,
+		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
+// DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
+//  Method                  DELETE
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
+//  Reviewed                2018-08-14
+//  Comment                 -
+func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
+	var e string
+	if w.token != "" {
+		e = endpoint.WebhookToken(w.webhookID, w.token)
+	} else {
+		e = endpoint.Webhook(w.webhookID)
+	}
+
+	r := w.client.newRESTRequest(&httd.Request{
+		Method:   httd.MethodDelete,
+		Endpoint: e,
+		Ctx:      w.ctx,
+	}, flags)
+	r.expectsStatusCode = http.StatusNoContent
+
+	_, err := r.Execute()
+	return err
+}
+
 // ExecuteWebhook [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
@@ -304,15 +309,15 @@ var _ URLQueryStringer = (*execWebhookParams)(nil)
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
+func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
 	if params == nil {
 		return nil, errors.New("params can not be nil")
 	}
 
-	if params.WebhookID.IsZero() {
+	if w.webhookID.IsZero() {
 		return nil, errors.New("webhook id is required")
 	}
-	if params.Token == "" {
+	if w.token == "" {
 		return nil, errors.New("webhook token is required")
 	}
 
@@ -324,46 +329,22 @@ func (c *Client) ExecuteWebhook(ctx context.Context, params *ExecuteWebhookParam
 	}
 
 	urlparams := &execWebhookParams{wait}
-	r := c.newRESTRequest(&httd.Request{
+	r := w.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPost,
-		Ctx:         ctx,
-		Endpoint:    endpoint.WebhookToken(params.WebhookID, params.Token) + URLSuffix + urlparams.URLQueryString(),
+		Ctx:         w.ctx,
+		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token) + URLSuffix + urlparams.URLQueryString(),
 		Body:        params,
 		ContentType: contentType,
 	}, flags)
 	// Discord only returns the message when wait=true.
 	if wait {
-		r.pool = c.pool.message
+		r.pool = w.client.pool.message
 		r.expectsStatusCode = http.StatusOK
 		return getMessage(r.Execute)
 	}
 	r.expectsStatusCode = http.StatusNoContent
 	_, err = r.Execute()
 	return nil, err
-}
-
-// ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
-//  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
-//  Reviewed                2020-05-21
-//  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
-//                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func (c *Client) ExecuteSlackWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
-	return c.ExecuteWebhook(ctx, params, wait, endpoint.Slack(), flags...)
-}
-
-// ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
-//  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
-//  Reviewed                2020-05-21
-//  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
-//                          as the "Payload URL." You can choose what events your Discord channel receives by
-//                          choosing the "Let me select individual events" option and selecting individual
-//                          events for the new webhook you're configuring.
-func (c *Client) ExecuteGitHubWebhook(ctx context.Context, params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
-	return c.ExecuteWebhook(ctx, params, wait, endpoint.GitHub(), flags...)
 }
 
 //////////////////////////////////////////////////////

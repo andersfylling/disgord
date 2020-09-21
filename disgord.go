@@ -4,7 +4,7 @@
 //
 // Create a Disgord session to get access to the REST API and socket functionality. In the following example, we listen for new messages and write a "hello" message when our handler function gets fired.
 //
-// Session interface: https://godoc.org/github.com/andersfylling/disgord/#Session
+// Session interface: https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc#Session
 //  discord := disgord.New(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
 //  })
@@ -24,7 +24,7 @@
 //
 //
 //
-// Listen for events using channels
+// Listen for events using Channels
 //
 // Disgord also provides the option to listen for events using a channel. The setup is exactly the same as registering a function.
 // Simply define your channel, add buffering if you need it, and register it as a handler in the `.On` method.
@@ -115,15 +115,15 @@
 //
 // > Note: Lifetime options does not currently work/do anything (yet).
 //
-// A part of Disgord is the control you have; while this can be a good detail for advanced users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
+// A part of Disgord is the control you have; while this can be a good detail for advanced Users, we recommend beginners to utilise the default configurations (by simply not editing the configuration).
 // Example of configuring the cache:
 //  discord, err := disgord.NewClient(&disgord.Config{
 //    BotToken: "my-secret-bot-token",
-//    Cache: &disgord.CacheConfig{
+//    CacheDefault: &disgord.CacheConfig{
 //              Mutable: false, // everything going in and out of the cache is deep copied
 //				// setting Mutable to true, might break your program as this is experimental and not supported.
 //
-//              DisableUserCaching: false, // activates caching for users
+//              DisableUserCaching: false, // activates caching for Users
 //              UserCacheLifetime: time.Duration(4) * time.Hour, // removed from cache after 9 hours, unless updated
 //
 //              DisableVoiceStateCaching: true, // don't cache voice states
@@ -135,9 +135,9 @@
 //
 // If you just want to change a specific field, you can do so. The fields are always default values.
 //
-// > Note: Disabling caching for some types while activating it for others (eg. disabling channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
+// > Note: Disabling caching for some types while activating it for others (eg. disabling Channels, but activating guild caching), can cause items extracted from the cache to not reflect the true discord state.
 //
-// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's channels are discarded. Guild channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
+// Example, activated guild but disabled channel caching: The guild is stored to the cache, but it's Channels are discarded. Guild Channels are dismantled from the guild object and otherwise stored in the channel cache to improve performance and reduce memory use. So when you extract the cached guild object, all of the channel will only hold their channel ID, and nothing more.
 //
 //
 // Immutable cache
@@ -150,10 +150,10 @@
 //
 // Whenever you call a REST method from the Session interface; the cache is always checked first. Upon a cache hit, no REST request is executed and you get the data from the cache in return. However, if this is problematic for you or there exist a bug which gives you bad/outdated data, you can bypass it by using Disgord flags.
 //  // get a user using the Session implementation (checks cache, and updates the cache on cache miss)
-//  user, err := session.GetUser(UserID)
+//  user, err := session.GetUser(userID)
 //
 //  // bypass the cache checking. Same as before, but we insert a disgord.Flag type.
-//  user, err := session.GetUser(UserID, disgord.IgnoreCache)
+//  user, err := session.GetUser(userID, disgord.IgnoreCache)
 //
 // Disgord Flags
 //
@@ -187,6 +187,7 @@ package disgord
 
 import (
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/util"
 
@@ -200,6 +201,9 @@ const Version = constant.Version
 func LibraryInfo() string {
 	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
+
+var defaultUnmarshaler = json.Unmarshal
+var defaultMarshaler = json.Marshal
 
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------

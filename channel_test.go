@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/andersfylling/disgord/internal/util"
+	"github.com/andersfylling/disgord/json"
 )
 
 func TestChannel_DeepCopy(t *testing.T) {
@@ -37,9 +37,10 @@ func TestChannel_DeepCopy(t *testing.T) {
 
 func checkForChannelUnmarshalErr(t *testing.T, data []byte) {
 	v := Channel{}
-	if err := unmarshal(data, &v); err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		t.Error(err)
 	}
+	executeInternalUpdater(v)
 }
 
 func TestChannel_UnmarshalJSON(t *testing.T) {
@@ -82,9 +83,10 @@ func TestChannel_JSONIconNull(t *testing.T) {
 		Type int       `json:"type"`
 		Icon string    `json:"icon"`
 	}
-	if err := util.Unmarshal(data, &c); err != nil {
+	if err := json.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
+	executeInternalUpdater(c)
 
 	if c.Icon != "" {
 		t.Error(c.Icon, "was not empty")

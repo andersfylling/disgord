@@ -109,7 +109,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 //
 // Note that not all the rules are listed in the docs:
 //  There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the
-//  majority of users won't encounter them. It's important to properly handle all error messages returned by
+//  majority of Users won't encounter them. It's important to properly handle all error messages returned by
 //  Discord when editing or updating names.
 func ValidateUsername(name string) (err error) {
 	if name == "" {

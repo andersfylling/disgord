@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
-	"github.com/andersfylling/disgord/internal/util"
-
 	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/json"
 
 	"go.uber.org/atomic"
 )
@@ -548,7 +547,7 @@ func (c *client) receiver(ctx context.Context) {
 		evt := c.poolDiscordPkt.Get().(*DiscordPacket)
 		evt.reset()
 		//err = evt.UnmarshalJSON(packet) // custom unmarshal
-		if err = util.Unmarshal(packet, evt); err != nil {
+		if err = json.Unmarshal(packet, evt); err != nil {
 			c.log.Error(c.getLogPrefix(), err, "SKIPPED ERRONEOUS PACKET CONTENT:", string(packet))
 			c.poolDiscordPkt.Put(evt)
 

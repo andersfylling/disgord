@@ -61,31 +61,23 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*AuditLogOption:
 		s = *t
-	case *[]*guildAuditLogsBuilder:
+	case *[]*CacheLFUImmutable:
 		s = *t
-	case *[]*Cache:
-		s = *t
-	case *[]*CacheConfig:
-		s = *t
-	case *[]*ErrorCacheItemNotFound:
-		s = *t
-	case *[]*ErrorUsingDeactivatedCache:
-		s = *t
-	case *[]*channelCacheItem:
-		s = *t
-	case *[]*emptyCache:
-		s = *t
-	case *[]*guildCacheItem:
-		s = *t
-	case *[]*guildVoiceStateCacheParams:
-		s = *t
-	case *[]*guildVoiceStatesCache:
+	case *[]*AllowedMentions:
 		s = *t
 	case *[]*Attachment:
 		s = *t
 	case *[]*Channel:
 		s = *t
-	case *[]*CreateChannelInvitesParams:
+	case *[]*CreateMessageFileParams:
+		s = *t
+	case *[]*CreateMessageParams:
+		s = *t
+	case *[]*CreateWebhookParams:
+		s = *t
+	case *[]*DeleteMessagesParams:
+		s = *t
+	case *[]*GetMessagesParams:
 		s = *t
 	case *[]*GroupDMParticipant:
 		s = *t
@@ -94,8 +86,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*PermissionOverwrite:
 		s = *t
 	case *[]*UpdateChannelPermissionsParams:
-		s = *t
-	case *[]*updateChannelBuilder:
 		s = *t
 	case *[]*Client:
 		s = *t
@@ -121,13 +111,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*EmbedVideo:
 		s = *t
-	case *[]*CreateGuildEmojiParams:
-		s = *t
 	case *[]*Emoji:
-		s = *t
-	case *[]*createGuildEmojiBuilder:
-		s = *t
-	case *[]*updateGuildEmojiBuilder:
 		s = *t
 	case *[]*ChannelCreate:
 		s = *t
@@ -213,9 +197,13 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateGuildChannelParams:
 		s = *t
+	case *[]*CreateGuildEmojiParams:
+		s = *t
 	case *[]*CreateGuildIntegrationParams:
 		s = *t
 	case *[]*CreateGuildParams:
+		s = *t
+	case *[]*CreateGuildRoleParams:
 		s = *t
 	case *[]*GetMembersParams:
 		s = *t
@@ -239,35 +227,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
 		s = *t
-	case *[]*getGuildMembersParams:
-		s = *t
-	case *[]*guildPruneCount:
-		s = *t
-	case *[]*nickNameResponse:
-		s = *t
-	case *[]*pruneMembersParams:
-		s = *t
-	case *[]*updateCurrentUserNickParams:
-		s = *t
-	case *[]*updateGuildBuilder:
-		s = *t
-	case *[]*updateGuildEmbedBuilder:
-		s = *t
-	case *[]*updateGuildMemberBuilder:
-		s = *t
-	case *[]*GetInviteParams:
-		s = *t
 	case *[]*Invite:
 		s = *t
 	case *[]*InviteMetadata:
-		s = *t
-	case *[]*CreateMessageFileParams:
-		s = *t
-	case *[]*CreateMessageParams:
-		s = *t
-	case *[]*DeleteMessagesParams:
-		s = *t
-	case *[]*GetMessagesParams:
 		s = *t
 	case *[]*MentionChannel:
 		s = *t
@@ -279,41 +241,21 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageReference:
 		s = *t
-	case *[]*updateMessageBuilder:
-		s = *t
-	case *[]*pool:
-		s = *t
-	case *[]*pools:
-		s = *t
 	case *[]*GetReactionURLParams:
 		s = *t
 	case *[]*Reaction:
 		s = *t
 	case *[]*Ctrl:
 		s = *t
-	case *[]*dispatcher:
-		s = *t
-	case *[]*eternalHandlersCtrl:
-		s = *t
-	case *[]*guildsRdyCtrl:
-		s = *t
-	case *[]*handlerSpec:
-		s = *t
-	case *[]*rdyCtrl:
-		s = *t
 	case *[]*RESTBuilder:
 		s = *t
-	case *[]*basicBuilder:
+	case *[]*CurrentUserQueryBuilderNop:
 		s = *t
-	case *[]*rest:
+	case *[]*GuildQueryBuilderNop:
 		s = *t
-	case *[]*restReqBuilderAsync:
-		s = *t
-	case *[]*CreateGuildRoleParams:
+	case *[]*UserQueryBuilderNop:
 		s = *t
 	case *[]*Role:
-		s = *t
-	case *[]*updateGuildRoleBuilder:
 		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
@@ -331,8 +273,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ActivityTimestamp:
 		s = *t
-	case *[]*BodyUserCreateDM:
-		s = *t
 	case *[]*CreateGroupDMParams:
 		s = *t
 	case *[]*GetCurrentUserGuildsParams:
@@ -343,41 +283,13 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UserPresence:
 		s = *t
-	case *[]*createDMBuilder:
-		s = *t
-	case *[]*createGroupDMBuilder:
-		s = *t
-	case *[]*getCurrentUserGuildsBuilder:
-		s = *t
-	case *[]*getUserBuilder:
-		s = *t
-	case *[]*getUserConnectionsBuilder:
-		s = *t
-	case *[]*getUserDMsBuilder:
-		s = *t
-	case *[]*updateCurrentUserBuilder:
-		s = *t
-	case *[]*userJSON:
-		s = *t
 	case *[]*VoiceRegion:
 		s = *t
 	case *[]*VoiceState:
 		s = *t
-	case *[]*voiceImpl:
-		s = *t
-	case *[]*voiceRepository:
-		s = *t
-	case *[]*voiceSpeakingData:
-		s = *t
-	case *[]*CreateWebhookParams:
-		s = *t
 	case *[]*ExecuteWebhookParams:
 		s = *t
 	case *[]*Webhook:
-		s = *t
-	case *[]*execWebhookParams:
-		s = *t
-	case *[]*updateWebhookBuilder:
 		s = *t
 	default:
 		s = t
@@ -497,12 +409,6 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*rest:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
 	case []*Role:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -528,12 +434,6 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*UserConnection:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*userJSON:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -568,6 +468,12 @@ func sortByGuildID(v interface{}, flags Flag) {
 	var less func(i, j int) bool
 	switch s := v.(type) {
 	case []*Channel:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*ChannelPinsUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
@@ -857,6 +763,12 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateWebhookParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*PartialChannel:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -881,12 +793,6 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildEmojiParams:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
 	case []*Emoji:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -899,7 +805,19 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateGuildEmojiParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*CreateGuildParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*CreateGuildRoleParams:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
@@ -935,12 +853,6 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildRoleParams:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
 	case []*Role:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -966,12 +878,6 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*VoiceRegion:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*CreateWebhookParams:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

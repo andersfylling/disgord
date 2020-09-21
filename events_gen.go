@@ -9,6 +9,8 @@ import (
 	"github.com/andersfylling/disgord/internal/event"
 )
 
+// helpers
+
 func AllEvents(except ...string) []string {
 	evtsMap := map[string]int8{
 
@@ -106,21 +108,6 @@ func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerChannelCreate = func(Session, *ChannelCreate)
 
-func (c *Client) OnChannelCreate(mdlws []Middleware, handlers []HandlerChannelCreate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtChannelCreate, inputs...)
-}
-
 // ---------------------------
 
 // EvtChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
@@ -131,21 +118,6 @@ func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerChannelDelete = func(Session, *ChannelDelete)
-
-func (c *Client) OnChannelDelete(mdlws []Middleware, handlers []HandlerChannelDelete, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtChannelDelete, inputs...)
-}
 
 // ---------------------------
 
@@ -162,21 +134,6 @@ func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = i
 
 type HandlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
 
-func (c *Client) OnChannelPinsUpdate(mdlws []Middleware, handlers []HandlerChannelPinsUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtChannelPinsUpdate, inputs...)
-}
-
 // ---------------------------
 
 // EvtChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
@@ -187,21 +144,6 @@ func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerChannelUpdate = func(Session, *ChannelUpdate)
-
-func (c *Client) OnChannelUpdate(mdlws []Middleware, handlers []HandlerChannelUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtChannelUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -214,21 +156,6 @@ func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildBanAdd = func(Session, *GuildBanAdd)
 
-func (c *Client) OnGuildBanAdd(mdlws []Middleware, handlers []HandlerGuildBanAdd, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildBanAdd, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
@@ -239,21 +166,6 @@ func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildBanRemove = func(Session, *GuildBanRemove)
-
-func (c *Client) OnGuildBanRemove(mdlws []Middleware, handlers []HandlerGuildBanRemove, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildBanRemove, inputs...)
-}
 
 // ---------------------------
 
@@ -270,21 +182,6 @@ func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildCreate = func(Session, *GuildCreate)
 
-func (c *Client) OnGuildCreate(mdlws []Middleware, handlers []HandlerGuildCreate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildCreate, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
@@ -297,21 +194,6 @@ func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildDelete = func(Session, *GuildDelete)
-
-func (c *Client) OnGuildDelete(mdlws []Middleware, handlers []HandlerGuildDelete, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildDelete, inputs...)
-}
 
 // ---------------------------
 
@@ -327,21 +209,6 @@ func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = i
 
 type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 
-func (c *Client) OnGuildEmojisUpdate(mdlws []Middleware, handlers []HandlerGuildEmojisUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildEmojisUpdate, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildIntegrationsUpdate Sent when a guild integration is updated.
@@ -354,21 +221,6 @@ func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx =
 func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
-
-func (c *Client) OnGuildIntegrationsUpdate(mdlws []Middleware, handlers []HandlerGuildIntegrationsUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildIntegrationsUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -385,21 +237,6 @@ func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 
-func (c *Client) OnGuildMemberAdd(mdlws []Middleware, handlers []HandlerGuildMemberAdd, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildMemberAdd, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
@@ -413,21 +250,6 @@ func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
-
-func (c *Client) OnGuildMemberRemove(mdlws []Middleware, handlers []HandlerGuildMemberRemove, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildMemberRemove, inputs...)
-}
 
 // ---------------------------
 
@@ -445,21 +267,6 @@ func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = i
 
 type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 
-func (c *Client) OnGuildMemberUpdate(mdlws []Middleware, handlers []HandlerGuildMemberUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildMemberUpdate, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildMembersChunk Sent in response to Gateway Request Guild Members.
@@ -473,21 +280,6 @@ func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
-
-func (c *Client) OnGuildMembersChunk(mdlws []Middleware, handlers []HandlerGuildMembersChunk, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildMembersChunk, inputs...)
-}
 
 // ---------------------------
 
@@ -503,21 +295,6 @@ func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id 
 
 type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 
-func (c *Client) OnGuildRoleCreate(mdlws []Middleware, handlers []HandlerGuildRoleCreate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildRoleCreate, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildRoleDelete Sent when a guild role is created.
@@ -531,21 +308,6 @@ func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
-
-func (c *Client) OnGuildRoleDelete(mdlws []Middleware, handlers []HandlerGuildRoleDelete, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildRoleDelete, inputs...)
-}
 
 // ---------------------------
 
@@ -561,21 +323,6 @@ func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id 
 
 type HandlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
 
-func (c *Client) OnGuildRoleUpdate(mdlws []Middleware, handlers []HandlerGuildRoleUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildRoleUpdate, inputs...)
-}
-
 // ---------------------------
 
 // EvtGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
@@ -586,21 +333,6 @@ func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerGuildUpdate = func(Session, *GuildUpdate)
-
-func (c *Client) OnGuildUpdate(mdlws []Middleware, handlers []HandlerGuildUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtGuildUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -630,21 +362,6 @@ func (h *InviteCreate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerInviteCreate = func(Session, *InviteCreate)
 
-func (c *Client) OnInviteCreate(mdlws []Middleware, handlers []HandlerInviteCreate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtInviteCreate, inputs...)
-}
-
 // ---------------------------
 
 // EvtInviteDelete Sent when an invite is deleted.
@@ -656,21 +373,6 @@ func (h *InviteDelete) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerInviteDelete = func(Session, *InviteDelete)
 
-func (c *Client) OnInviteDelete(mdlws []Middleware, handlers []HandlerInviteDelete, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtInviteDelete, inputs...)
-}
-
 // ---------------------------
 
 // EvtMessageCreate Sent when a message is created. The inner payload is a message object.
@@ -681,21 +383,6 @@ func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerMessageCreate = func(Session, *MessageCreate)
-
-func (c *Client) OnMessageCreate(mdlws []Middleware, handlers []HandlerMessageCreate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageCreate, inputs...)
-}
 
 // ---------------------------
 
@@ -711,21 +398,6 @@ func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerMessageDelete = func(Session, *MessageDelete)
 
-func (c *Client) OnMessageDelete(mdlws []Middleware, handlers []HandlerMessageDelete, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageDelete, inputs...)
-}
-
 // ---------------------------
 
 // EvtMessageDeleteBulk Sent when multiple messages are deleted at once.
@@ -739,21 +411,6 @@ func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
-
-func (c *Client) OnMessageDeleteBulk(mdlws []Middleware, handlers []HandlerMessageDeleteBulk, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageDeleteBulk, inputs...)
-}
 
 // ---------------------------
 
@@ -771,21 +428,6 @@ func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = 
 
 type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 
-func (c *Client) OnMessageReactionAdd(mdlws []Middleware, handlers []HandlerMessageReactionAdd, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageReactionAdd, inputs...)
-}
-
 // ---------------------------
 
 // EvtMessageReactionRemove Sent when a user removes a reaction from a message.
@@ -802,21 +444,6 @@ func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID
 
 type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 
-func (c *Client) OnMessageReactionRemove(mdlws []Middleware, handlers []HandlerMessageReactionRemove, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageReactionRemove, inputs...)
-}
-
 // ---------------------------
 
 // EvtMessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
@@ -831,21 +458,6 @@ func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.Shar
 
 type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 
-func (c *Client) OnMessageReactionRemoveAll(mdlws []Middleware, handlers []HandlerMessageReactionRemoveAll, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageReactionRemoveAll, inputs...)
-}
-
 // ---------------------------
 
 // EvtMessageUpdate Sent when a message is updated. The inner payload is a message object.
@@ -858,21 +470,6 @@ func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerMessageUpdate = func(Session, *MessageUpdate)
-
-func (c *Client) OnMessageUpdate(mdlws []Middleware, handlers []HandlerMessageUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtMessageUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -890,21 +487,6 @@ func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
-
-func (c *Client) OnPresenceUpdate(mdlws []Middleware, handlers []HandlerPresenceUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtPresenceUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -926,21 +508,6 @@ func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerReady = func(Session, *Ready)
 
-func (c *Client) OnReady(mdlws []Middleware, handlers []HandlerReady, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtReady, inputs...)
-}
-
 // ---------------------------
 
 // EvtResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
@@ -954,21 +521,6 @@ func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerResumed = func(Session, *Resumed)
-
-func (c *Client) OnResumed(mdlws []Middleware, handlers []HandlerResumed, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtResumed, inputs...)
-}
 
 // ---------------------------
 
@@ -985,21 +537,6 @@ func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerTypingStart = func(Session, *TypingStart)
 
-func (c *Client) OnTypingStart(mdlws []Middleware, handlers []HandlerTypingStart, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtTypingStart, inputs...)
-}
-
 // ---------------------------
 
 // EvtUserUpdate Sent when properties about the user change. Inner payload is a user object.
@@ -1010,21 +547,6 @@ func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerUserUpdate = func(Session, *UserUpdate)
-
-func (c *Client) OnUserUpdate(mdlws []Middleware, handlers []HandlerUserUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtUserUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -1042,21 +564,6 @@ func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = i
 
 type HandlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
 
-func (c *Client) OnVoiceServerUpdate(mdlws []Middleware, handlers []HandlerVoiceServerUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtVoiceServerUpdate, inputs...)
-}
-
 // ---------------------------
 
 // EvtVoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
@@ -1067,21 +574,6 @@ func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
 func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
-
-func (c *Client) OnVoiceStateUpdate(mdlws []Middleware, handlers []HandlerVoiceStateUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtVoiceStateUpdate, inputs...)
-}
 
 // ---------------------------
 
@@ -1097,57 +589,327 @@ func (h *WebhooksUpdate) setShardID(id uint)                  { h.ShardID = id }
 
 type HandlerWebhooksUpdate = func(Session, *WebhooksUpdate)
 
-func (c *Client) OnWebhooksUpdate(mdlws []Middleware, handlers []HandlerWebhooksUpdate, ctrl ...HandlerCtrl) {
-	var inputs []interface{}
-	for mdlw := range mdlws {
-		inputs = append(inputs, mdlw)
-	}
-	for handler := range handlers {
-		inputs = append(inputs, handler)
-	}
-	if len(ctrl) > 0 {
-		inputs = append(inputs, ctrl[0])
-	}
-
-	c.On(EvtWebhooksUpdate, inputs...)
-}
-
 // ---------------------------
 
-type SocketHandlerRegistrators interface {
-	OnChannelCreate([]Middleware, []HandlerChannelCreate, ...HandlerCtrl)
-	OnChannelDelete([]Middleware, []HandlerChannelDelete, ...HandlerCtrl)
-	OnChannelPinsUpdate([]Middleware, []HandlerChannelPinsUpdate, ...HandlerCtrl)
-	OnChannelUpdate([]Middleware, []HandlerChannelUpdate, ...HandlerCtrl)
-	OnGuildBanAdd([]Middleware, []HandlerGuildBanAdd, ...HandlerCtrl)
-	OnGuildBanRemove([]Middleware, []HandlerGuildBanRemove, ...HandlerCtrl)
-	OnGuildCreate([]Middleware, []HandlerGuildCreate, ...HandlerCtrl)
-	OnGuildDelete([]Middleware, []HandlerGuildDelete, ...HandlerCtrl)
-	OnGuildEmojisUpdate([]Middleware, []HandlerGuildEmojisUpdate, ...HandlerCtrl)
-	OnGuildIntegrationsUpdate([]Middleware, []HandlerGuildIntegrationsUpdate, ...HandlerCtrl)
-	OnGuildMemberAdd([]Middleware, []HandlerGuildMemberAdd, ...HandlerCtrl)
-	OnGuildMemberRemove([]Middleware, []HandlerGuildMemberRemove, ...HandlerCtrl)
-	OnGuildMemberUpdate([]Middleware, []HandlerGuildMemberUpdate, ...HandlerCtrl)
-	OnGuildMembersChunk([]Middleware, []HandlerGuildMembersChunk, ...HandlerCtrl)
-	OnGuildRoleCreate([]Middleware, []HandlerGuildRoleCreate, ...HandlerCtrl)
-	OnGuildRoleDelete([]Middleware, []HandlerGuildRoleDelete, ...HandlerCtrl)
-	OnGuildRoleUpdate([]Middleware, []HandlerGuildRoleUpdate, ...HandlerCtrl)
-	OnGuildUpdate([]Middleware, []HandlerGuildUpdate, ...HandlerCtrl)
-	OnInviteCreate([]Middleware, []HandlerInviteCreate, ...HandlerCtrl)
-	OnInviteDelete([]Middleware, []HandlerInviteDelete, ...HandlerCtrl)
-	OnMessageCreate([]Middleware, []HandlerMessageCreate, ...HandlerCtrl)
-	OnMessageDelete([]Middleware, []HandlerMessageDelete, ...HandlerCtrl)
-	OnMessageDeleteBulk([]Middleware, []HandlerMessageDeleteBulk, ...HandlerCtrl)
-	OnMessageReactionAdd([]Middleware, []HandlerMessageReactionAdd, ...HandlerCtrl)
-	OnMessageReactionRemove([]Middleware, []HandlerMessageReactionRemove, ...HandlerCtrl)
-	OnMessageReactionRemoveAll([]Middleware, []HandlerMessageReactionRemoveAll, ...HandlerCtrl)
-	OnMessageUpdate([]Middleware, []HandlerMessageUpdate, ...HandlerCtrl)
-	OnPresenceUpdate([]Middleware, []HandlerPresenceUpdate, ...HandlerCtrl)
-	OnReady([]Middleware, []HandlerReady, ...HandlerCtrl)
-	OnResumed([]Middleware, []HandlerResumed, ...HandlerCtrl)
-	OnTypingStart([]Middleware, []HandlerTypingStart, ...HandlerCtrl)
-	OnUserUpdate([]Middleware, []HandlerUserUpdate, ...HandlerCtrl)
-	OnVoiceServerUpdate([]Middleware, []HandlerVoiceServerUpdate, ...HandlerCtrl)
-	OnVoiceStateUpdate([]Middleware, []HandlerVoiceStateUpdate, ...HandlerCtrl)
-	OnWebhooksUpdate([]Middleware, []HandlerWebhooksUpdate, ...HandlerCtrl)
+type socketHandlerRegister struct {
+	evtName     string
+	middlewares []Middleware
+	handlers    []Handler
+	ctrl        HandlerCtrl
+
+	register OnSocketEventer
+}
+
+func (shr *socketHandlerRegister) build() {
+	inputs := make([]interface{}, 0, len(shr.middlewares)+len(shr.handlers)+1)
+	for _, mdlw := range shr.middlewares {
+		inputs = append(inputs, mdlw)
+	}
+	for _, handler := range shr.handlers {
+		inputs = append(inputs, handler)
+	}
+	if shr.ctrl != nil {
+		inputs = append(inputs, shr.ctrl)
+	}
+
+	shr.register.On(shr.evtName, inputs...)
+}
+
+func (shr *socketHandlerRegister) WithCtrl(ctrl HandlerCtrl) SocketHandlerRegistrator {
+	if ctrl != nil {
+		panic("a controller was already registered for this handler specification")
+	}
+	shr.ctrl = ctrl
+	return shr
+}
+
+func (shr *socketHandlerRegister) WithMdlw(mdlws ...Middleware) SocketHandlerRegistrator {
+	shr.middlewares = append(shr.middlewares, mdlws...)
+	return shr
+}
+
+func (shr *socketHandlerRegister) ChannelCreate(handlers ...HandlerChannelCreate) {
+	shr.evtName = EvtChannelCreate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) ChannelDelete(handlers ...HandlerChannelDelete) {
+	shr.evtName = EvtChannelDelete
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) ChannelPinsUpdate(handlers ...HandlerChannelPinsUpdate) {
+	shr.evtName = EvtChannelPinsUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) ChannelUpdate(handlers ...HandlerChannelUpdate) {
+	shr.evtName = EvtChannelUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildBanAdd(handlers ...HandlerGuildBanAdd) {
+	shr.evtName = EvtGuildBanAdd
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildBanRemove(handlers ...HandlerGuildBanRemove) {
+	shr.evtName = EvtGuildBanRemove
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildCreate(handlers ...HandlerGuildCreate) {
+	shr.evtName = EvtGuildCreate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildDelete(handlers ...HandlerGuildDelete) {
+	shr.evtName = EvtGuildDelete
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildEmojisUpdate(handlers ...HandlerGuildEmojisUpdate) {
+	shr.evtName = EvtGuildEmojisUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildIntegrationsUpdate(handlers ...HandlerGuildIntegrationsUpdate) {
+	shr.evtName = EvtGuildIntegrationsUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildMemberAdd(handlers ...HandlerGuildMemberAdd) {
+	shr.evtName = EvtGuildMemberAdd
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildMemberRemove(handlers ...HandlerGuildMemberRemove) {
+	shr.evtName = EvtGuildMemberRemove
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildMemberUpdate(handlers ...HandlerGuildMemberUpdate) {
+	shr.evtName = EvtGuildMemberUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildMembersChunk(handlers ...HandlerGuildMembersChunk) {
+	shr.evtName = EvtGuildMembersChunk
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildRoleCreate(handlers ...HandlerGuildRoleCreate) {
+	shr.evtName = EvtGuildRoleCreate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildRoleDelete(handlers ...HandlerGuildRoleDelete) {
+	shr.evtName = EvtGuildRoleDelete
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildRoleUpdate(handlers ...HandlerGuildRoleUpdate) {
+	shr.evtName = EvtGuildRoleUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) GuildUpdate(handlers ...HandlerGuildUpdate) {
+	shr.evtName = EvtGuildUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) InviteCreate(handlers ...HandlerInviteCreate) {
+	shr.evtName = EvtInviteCreate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) InviteDelete(handlers ...HandlerInviteDelete) {
+	shr.evtName = EvtInviteDelete
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageCreate(handlers ...HandlerMessageCreate) {
+	shr.evtName = EvtMessageCreate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageDelete(handlers ...HandlerMessageDelete) {
+	shr.evtName = EvtMessageDelete
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageDeleteBulk(handlers ...HandlerMessageDeleteBulk) {
+	shr.evtName = EvtMessageDeleteBulk
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageReactionAdd(handlers ...HandlerMessageReactionAdd) {
+	shr.evtName = EvtMessageReactionAdd
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageReactionRemove(handlers ...HandlerMessageReactionRemove) {
+	shr.evtName = EvtMessageReactionRemove
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageReactionRemoveAll(handlers ...HandlerMessageReactionRemoveAll) {
+	shr.evtName = EvtMessageReactionRemoveAll
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) MessageUpdate(handlers ...HandlerMessageUpdate) {
+	shr.evtName = EvtMessageUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) PresenceUpdate(handlers ...HandlerPresenceUpdate) {
+	shr.evtName = EvtPresenceUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) Ready(handlers ...HandlerReady) {
+	shr.evtName = EvtReady
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) Resumed(handlers ...HandlerResumed) {
+	shr.evtName = EvtResumed
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) TypingStart(handlers ...HandlerTypingStart) {
+	shr.evtName = EvtTypingStart
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) UserUpdate(handlers ...HandlerUserUpdate) {
+	shr.evtName = EvtUserUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) VoiceServerUpdate(handlers ...HandlerVoiceServerUpdate) {
+	shr.evtName = EvtVoiceServerUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) VoiceStateUpdate(handlers ...HandlerVoiceStateUpdate) {
+	shr.evtName = EvtVoiceStateUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+func (shr *socketHandlerRegister) WebhooksUpdate(handlers ...HandlerWebhooksUpdate) {
+	shr.evtName = EvtWebhooksUpdate
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
+
+type SocketHandlerRegistrator interface {
+	ChannelCreate(...HandlerChannelCreate)
+	ChannelDelete(...HandlerChannelDelete)
+	ChannelPinsUpdate(...HandlerChannelPinsUpdate)
+	ChannelUpdate(...HandlerChannelUpdate)
+	GuildBanAdd(...HandlerGuildBanAdd)
+	GuildBanRemove(...HandlerGuildBanRemove)
+	GuildCreate(...HandlerGuildCreate)
+	GuildDelete(...HandlerGuildDelete)
+	GuildEmojisUpdate(...HandlerGuildEmojisUpdate)
+	GuildIntegrationsUpdate(...HandlerGuildIntegrationsUpdate)
+	GuildMemberAdd(...HandlerGuildMemberAdd)
+	GuildMemberRemove(...HandlerGuildMemberRemove)
+	GuildMemberUpdate(...HandlerGuildMemberUpdate)
+	GuildMembersChunk(...HandlerGuildMembersChunk)
+	GuildRoleCreate(...HandlerGuildRoleCreate)
+	GuildRoleDelete(...HandlerGuildRoleDelete)
+	GuildRoleUpdate(...HandlerGuildRoleUpdate)
+	GuildUpdate(...HandlerGuildUpdate)
+	InviteCreate(...HandlerInviteCreate)
+	InviteDelete(...HandlerInviteDelete)
+	MessageCreate(...HandlerMessageCreate)
+	MessageDelete(...HandlerMessageDelete)
+	MessageDeleteBulk(...HandlerMessageDeleteBulk)
+	MessageReactionAdd(...HandlerMessageReactionAdd)
+	MessageReactionRemove(...HandlerMessageReactionRemove)
+	MessageReactionRemoveAll(...HandlerMessageReactionRemoveAll)
+	MessageUpdate(...HandlerMessageUpdate)
+	PresenceUpdate(...HandlerPresenceUpdate)
+	Ready(...HandlerReady)
+	Resumed(...HandlerResumed)
+	TypingStart(...HandlerTypingStart)
+	UserUpdate(...HandlerUserUpdate)
+	VoiceServerUpdate(...HandlerVoiceServerUpdate)
+	VoiceStateUpdate(...HandlerVoiceStateUpdate)
+	WebhooksUpdate(...HandlerWebhooksUpdate)
+	WithCtrl(HandlerCtrl) SocketHandlerRegistrator
+	WithMdlw(...Middleware) SocketHandlerRegistrator
 }

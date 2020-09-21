@@ -56,6 +56,7 @@ func createClient(conf *Config) (c *Client, err error) {
 			},
 		}
 	}
+
 	httdClient, err := httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.BotToken,
@@ -84,26 +85,17 @@ func createClient(conf *Config) (c *Client, err error) {
 	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
 
 	// caching
-	var cacher *Cache
-	if !conf.DisableCache {
-		if conf.CacheConfig == nil {
-			conf.CacheConfig = &CacheConfig{}
+	var cache Cache
+	if conf.DisableCache {
+		if _, ok := conf.Cache.(*CacheNop); !ok {
+			cache = &CacheNop{}
+		} else {
+			cache = conf.Cache
 		}
-		cacher, err = newCache(conf.CacheConfig)
-		if err != nil {
-			return nil, err
-		}
+	} else if conf.Cache == nil {
+		cache = NewCacheLFUImmutable(5000000, 10000, 0, 0)
 	} else {
-		// create an empty cache to avoid nil panics
-		cacher, err = newCache(&CacheConfig{
-			DisableUserCaching:       true,
-			DisableChannelCaching:    true,
-			DisableGuildCaching:      true,
-			DisableVoiceStateCaching: true,
-		})
-		if err != nil {
-			return nil, err
-		}
+		cache = conf.Cache
 	}
 
 	// websocket sharding
@@ -121,12 +113,14 @@ func createClient(conf *Config) (c *Client, err error) {
 		botToken:     conf.BotToken,
 		dispatcher:   dispatch,
 		req:          httdClient,
-		cache:        cacher,
+		cache:        cache,
 		log:          conf.Logger,
 		pool:         newPools(),
 		eventChan:    evtChan,
 	}
+	c.handlers.c = c // parent reference
 	c.dispatcher.addSessionInstance(c)
+	c.clientQueryBuilder.client = c
 	c.voiceRepository = newVoiceRepository(c)
 
 	return c, err
@@ -148,6 +142,9 @@ type Config struct {
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
+	// your project name, name of bot, or application
+	ProjectName string
+
 	// AlwaysParseChannelMentions will ensure that every message populates the
 	// Message.ChannelsMentions, regardless of the Discord conditions.
 	// AlwaysParseChannelMentions bool
@@ -155,7 +152,7 @@ type Config struct {
 
 	CancelRequestWhenRateLimited bool
 
-	// LoadMembersQuietly will start fetching members for all guilds in the background.
+	// LoadMembersQuietly will start fetching members for all Guilds in the background.
 	// There is currently no proper way to detect when the loading is done nor if it
 	// finished successfully.
 	LoadMembersQuietly bool
@@ -166,16 +163,13 @@ type Config struct {
 	// for cancellation
 	shutdownChan chan interface{}
 
-	// your project name, name of bot, or application
-	ProjectName string
-
 	// Logger is a dependency that must be injected to support logging.
 	// disgord.DefaultLogger() can be used
 	Logger Logger
 
 	// ################################################
 	// ##
-	// ## WARNING! For advanced users only.
+	// ## WARNING! For advanced Users only.
 	// ## This section of options might break the bot,
 	// ## make it incoherent to the Discord API requirements,
 	// ## potentially causing your bot to be banned.
@@ -185,7 +179,7 @@ type Config struct {
 	RESTBucketManager httd.RESTBucketManager
 
 	DisableCache bool
-	CacheConfig  *CacheConfig
+	Cache        Cache
 	ShardConfig  ShardConfig
 
 	// IgnoreEvents will skip events that matches the given event names.
@@ -207,12 +201,17 @@ type Config struct {
 type Client struct {
 	sync.RWMutex
 
+	clientQueryBuilder
+
 	shutdownChan chan interface{}
 	config       *Config
 	botToken     string
 
+	currentUser User
 	myID        Snowflake
-	permissions PermissionBits
+	permissions PermissionBit
+
+	handlers internalHandlers
 
 	// reactor demultiplexer for events
 	dispatcher *dispatcher
@@ -235,7 +234,7 @@ type Client struct {
 	connectedGuilds      []Snowflake
 	connectedGuildsMutex sync.RWMutex
 
-	cache *Cache
+	cache Cache
 
 	log Logger
 
@@ -268,7 +267,7 @@ func (c *Client) Pool() *pools {
 // This is useful for creating the bot URL.
 //
 // At the moment, this holds no other effect than aesthetics.
-func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBits) {
+func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
 	if permission < 0 {
 		permission = 0
 	}
@@ -278,7 +277,7 @@ func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions Per
 }
 
 // GetPermissions returns the minimum bot requirements.
-func (c *Client) GetPermissions() (permissions PermissionBits) {
+func (c *Client) GetPermissions() (permissions PermissionBit) {
 	return c.permissions
 }
 
@@ -290,7 +289,7 @@ func (c *Client) GetPermissions() (permissions PermissionBits) {
 // for your bot to run successfully, you should utilise
 //  Client.
 func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
-	if _, err = c.GetCurrentUser(ctx); err != nil && c.myID.IsZero() {
+	if _, err = c.CurrentUser().WithContext(ctx).Get(); err != nil && c.myID.IsZero() {
 		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
 	}
 
@@ -322,17 +321,15 @@ func (c *Client) HeartbeatLatencies() (latencies map[uint]time.Duration, err err
 	return c.shardManager.HeartbeatLatencies()
 }
 
-// Myself get the current user / connected user
-// Deprecated: use GetCurrentUser instead
-func (c *Client) Myself(ctx context.Context) (user *User, err error) {
-	return c.GetCurrentUser(ctx)
-}
-
 // GetConnectedGuilds get a list over guild IDs that this Client is "connected to"; or have joined through the ws connection. This will always hold the different Guild IDs, while the GetGuilds or GetCurrentUserGuilds might be affected by cache configuration.
 func (c *Client) GetConnectedGuilds() []Snowflake {
 	c.connectedGuildsMutex.RLock()
 	defer c.connectedGuildsMutex.RUnlock()
-	return c.connectedGuilds
+
+	guildIDs := make([]Snowflake, len(c.connectedGuilds))
+	copy(guildIDs, c.connectedGuilds)
+
+	return guildIDs
 }
 
 // Logger returns the log instance of Disgord.
@@ -353,11 +350,6 @@ func (c *Client) RESTRatelimitBuckets() (group map[string][]string) {
 	return c.req.BucketGrouping()
 }
 
-// @Deprecated: use Client.RESTRatelimitBuckets()
-func (c *Client) RESTBucketGrouping() (group map[string][]string) {
-	return c.req.BucketGrouping()
-}
-
 // Req return the request object. Used in REST requests to handle rate limits,
 // wrong http responses, etc.
 func (c *Client) Req() httd.Requester {
@@ -365,7 +357,7 @@ func (c *Client) Req() httd.Requester {
 }
 
 // Cache returns the cacheLink manager for the session
-func (c *Client) Cache() Cacher {
+func (c *Client) Cache() Cache {
 	return c.cache
 }
 
@@ -379,18 +371,13 @@ func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
 	if c.config.LoadMembersQuietly {
-		c.On(EvtReady, c.handlerLoadMembers)
+		c.On(EvtReady, c.handlers.loadMembers)
 	}
-	c.On(EvtUserUpdate, c.handlerUpdateSelfBot)
-	c.On(EvtGuildCreate, c.handlerAddToConnectedGuilds)
-	c.On(EvtGuildDelete, c.handlerRemoveFromConnectedGuilds)
+	c.On(EvtGuildCreate, c.handlers.saveGuildID)
+	c.On(EvtGuildDelete, c.handlers.deleteGuildID)
 
 	// start demultiplexer which also trigger dispatching
-	var cache *Cache
-	if !c.config.DisableCache {
-		cache = c.cache
-	}
-	go demultiplexer(c.dispatcher, c.eventChan, cache)
+	go c.demultiplexer(c.dispatcher, c.eventChan)
 }
 
 // Connect establishes a websocket connection to the discord API
@@ -405,7 +392,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	defer c.Unlock()
 
 	var me *User
-	if me, err = c.GetCurrentUser(ctx); err != nil {
+	if me, err = c.CurrentUser().WithContext(ctx).Get(); err != nil {
 		return err
 	}
 	c.myID = me.ID
@@ -425,6 +412,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		ProjectName:  c.config.ProjectName,
 		BotToken:     c.config.BotToken,
 	}
+
 	if c.config.Presence != nil {
 		// assumption: error is handled when creating a new client
 		status, _ := gateway.StringToStatusType(c.config.Presence.Status)
@@ -516,27 +504,33 @@ func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) 
 //
 //////////////////////////////////////////////////////
 
-// handlerAddToConnectedGuilds update internal state when joining or creating a guild
-func (c *Client) handlerAddToConnectedGuilds(_ Session, evt *GuildCreate) {
-	c.connectedGuildsMutex.Lock()
-	defer c.connectedGuildsMutex.Unlock()
+type internalHandlers struct {
+	c *Client
+}
+
+// saveGuildID update internal state when joining or creating a guild
+func (ih *internalHandlers) saveGuildID(_ Session, evt *GuildCreate) {
+	client := ih.c
+	client.connectedGuildsMutex.Lock()
+	defer client.connectedGuildsMutex.Unlock()
 
 	// don't add an entry if there already is one
-	for i := range c.connectedGuilds {
-		if c.connectedGuilds[i] == evt.Guild.ID {
+	for i := range client.connectedGuilds {
+		if client.connectedGuilds[i] == evt.Guild.ID {
 			return
 		}
 	}
 
-	c.connectedGuilds = append(c.connectedGuilds, evt.Guild.ID)
+	client.connectedGuilds = append(client.connectedGuilds, evt.Guild.ID)
 }
 
-// handlerRemoveFromConnectedGuilds update internal state when deleting or leaving a guild
-func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
-	c.connectedGuildsMutex.Lock()
-	defer c.connectedGuildsMutex.Unlock()
+// deleteGuildID update internal state when deleting or leaving a guild
+func (ih *internalHandlers) deleteGuildID(_ Session, evt *GuildDelete) {
+	client := ih.c
+	client.connectedGuildsMutex.Lock()
+	defer client.connectedGuildsMutex.Unlock()
 
-	guilds := c.connectedGuilds
+	guilds := client.connectedGuilds
 	for i := range guilds {
 		if guilds[i] != evt.UnavailableGuild.ID {
 			continue
@@ -546,20 +540,17 @@ func (c *Client) handlerRemoveFromConnectedGuilds(_ Session, evt *GuildDelete) {
 		break
 	}
 
-	c.connectedGuilds = guilds
+	client.connectedGuilds = guilds
 }
 
-func (c *Client) handlerUpdateSelfBot(_ Session, update *UserUpdate) {
-	_ = c.cache.Update(UserCache, update.User)
-}
-
-func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
+func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
+	client := ih.c
 	guildIDs := make([]Snowflake, len(evt.Guilds))
 	for i := range evt.Guilds {
 		guildIDs[i] = evt.Guilds[i].ID
 	}
 
-	c.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
+	_, _ = client.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
 		GuildIDs: guildIDs,
 	})
 }
@@ -569,6 +560,12 @@ func (c *Client) handlerLoadMembers(_ Session, evt *Ready) {
 // Socket utilities
 //
 //////////////////////////////////////////////////////
+
+func (c *Client) Event() SocketHandlerRegistrator {
+	return &socketHandlerRegister{
+		register: c,
+	}
+}
 
 // Ready triggers a given callback when all shards has gotten their first Ready event
 // Warning: Do not call Client.Connect before this.
@@ -591,7 +588,7 @@ func (c *Client) Ready(cb func()) {
 	}, ctrl)
 }
 
-// GuildsReady is triggered once all unavailable guilds given in the READY event has loaded from their respective GUILD_CREATE events.
+// GuildsReady is triggered once all unavailable Guilds given in the READY event has loaded from their respective GUILD_CREATE events.
 func (c *Client) GuildsReady(cb func()) {
 	ctrl := &guildsRdyCtrl{
 		status: make(map[Snowflake]bool),
@@ -697,15 +694,6 @@ func (c *Client) DeleteFromDiscord(ctx context.Context, obj discordDeleter, flag
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error) {
-	// TODO: populate these partial guild objects
-	return c.GetCurrentUserGuilds(ctx, params)
-}
-
-func (c *Client) KickVoiceParticipant(ctx context.Context, guildID, userID Snowflake) error {
-	return c.UpdateGuildMember(ctx, guildID, userID).KickFromVoice().Execute()
-}
-
 // SendMsg should convert all inputs into a single message. If you supply a object with an ID
 // such as a channel, message, role, etc. It will become a reference.  If say the Message provided
 // does not have an ID, the Message will populate a CreateMessage with it's fields.
@@ -779,6 +767,10 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 			if s, err = msgToParams(t); err != nil {
 				return nil, err
 			}
+		case AllowedMentions:
+			params.AllowedMentions = &t
+		case *AllowedMentions:
+			params.AllowedMentions = t
 		default:
 			var mentioned bool
 			if mentionable, ok := t.(Mentioner); ok {
@@ -810,7 +802,7 @@ func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...inter
 		}
 	}
 
-	return c.CreateMessage(ctx, channelID, params, flags...)
+	return c.Channel(channelID).WithContext(ctx).CreateMessage(params, flags...)
 }
 
 /* status updates */

@@ -3,12 +3,10 @@
 package disgord
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"strconv"
 	"testing"
-
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func check(err error, t *testing.T) {
@@ -30,111 +28,13 @@ func TestError_InterfaceImplementations(t *testing.T) {
 	})
 }
 
-// unmarshalling
-
-func BenchmarkUnmarshalReflection(b *testing.B) {
-	data, err := ioutil.ReadFile("testdata/user/user1.json")
-	if err != nil {
-		b.Skip("missing file for benchmarking unmarshal")
-		return
-	}
-
-	b.Run("using reflection", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			var user *User
-			unmarshal(data, &user)
-		}
-	})
-
-	b.Run("using interface wiring", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			user := &User{}
-			var m = make(map[string]interface{})
-			unmarshal(data, m)
-
-			var v interface{}
-			var ok bool
-
-			if v, ok = m["id"]; ok {
-				user.ID = v.(Snowflake)
-			}
-			if v, ok = m["username"]; ok {
-				user.Username = v.(string)
-			}
-			if v, ok = m["discriminator"]; ok {
-				user.Discriminator = v.(Discriminator)
-			}
-			if v, ok = m["email"]; ok {
-				user.Email = v.(string)
-			}
-			if v, ok = m["avatar"]; ok {
-				user.Avatar = v.(string)
-			}
-			if v, ok = m["token"]; ok {
-				user.Token = v.(string)
-			}
-			if v, ok = m["verified"]; ok {
-				user.Verified = v.(bool)
-			}
-			if v, ok = m["mfa_enabled"]; ok {
-				user.MFAEnabled = v.(bool)
-			}
-			if v, ok = m["bot"]; ok {
-				user.Bot = v.(bool)
-			}
-
-		}
-	})
-
-	b.Run("using string wiring", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			user := &User{}
-			var m = make(map[string]string)
-			unmarshal(data, m)
-
-			var v string
-			var ok bool
-
-			if v, ok = m["id"]; ok {
-				user.ID = ParseSnowflakeString(v)
-			}
-			if v, ok = m["username"]; ok {
-				user.Username = v
-			}
-			if v, ok = m["discriminator"]; ok {
-				d, _ := NewDiscriminator(v)
-				user.Discriminator = d
-			}
-			if v, ok = m["email"]; ok {
-				user.Email = v
-			}
-			if vv, ok := m["avatar"]; ok {
-				user.Avatar = vv
-			}
-			if v, ok = m["token"]; ok {
-				user.Token = v
-			}
-			if v, ok = m["verified"]; ok {
-				user.Verified = v == "true"
-			}
-			if v, ok = m["mfa_enabled"]; ok {
-				user.MFAEnabled = v == "true"
-			}
-			if v, ok = m["bot"]; ok {
-				user.Bot = v == "true"
-			}
-
-		}
-	})
-}
-
 func TestTime(t *testing.T) {
 	t.Run("omitempty", func(t *testing.T) {
 		b := struct {
 			T Time `json:"time,omitempty"`
 		}{}
 
-		bBytes, err := util.Marshal(b)
+		bBytes, err := defaultMarshaler(b)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -186,10 +86,11 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '0', '0', '0', '1', '"',
 		}
-		err = unmarshal(data, &d)
-		if err != nil {
+		if err = json.Unmarshal(data, &d); err != nil {
 			t.Error(err)
 		}
+		executeInternalUpdater(d)
+
 		if d.String() != "0001" {
 			t.Errorf("got %s, wants \"0001\"", d.String())
 		}
@@ -197,7 +98,7 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '0', '2', '0', '1', '"',
 		}
-		err = unmarshal(data, &d)
+		err = json.Unmarshal(data, &d)
 		if err != nil {
 			t.Error(err)
 		}
@@ -208,10 +109,11 @@ func TestDiscriminator(t *testing.T) {
 		data = []byte{
 			'"', '"',
 		}
-		err = unmarshal(data, &d)
-		if err != nil {
+		if err = json.Unmarshal(data, &d); err != nil {
 			t.Error(err)
 		}
+		executeInternalUpdater(d)
+
 		if d.String() != "" {
 			t.Errorf("got %s, wants \"\"", d.String())
 		}
@@ -356,6 +258,7 @@ func BenchmarkDiscriminator(b *testing.B) {
 			length := len(dataSets)
 			for n := 0; n < b.N; n++ {
 				_ = json.Unmarshal(dataSets[i], foo)
+				executeInternalUpdater(foo)
 				if i == length {
 					i = 0
 				}
@@ -367,6 +270,7 @@ func BenchmarkDiscriminator(b *testing.B) {
 			length := len(dataSets)
 			for n := 0; n < b.N; n++ {
 				_ = json.Unmarshal(dataSets[i], foo)
+				executeInternalUpdater(foo)
 				if i == length {
 					i = 0
 				}

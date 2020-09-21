@@ -1,8 +1,8 @@
 package httd
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/andersfylling/disgord/json"
 	"net/http"
 	"strconv"
 	"time"

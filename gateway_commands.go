@@ -13,7 +13,7 @@ type gatewayCmdName string
 
 const (
 	// GatewayCmdRequestGuildMembers Used to request offline members for a guild or
-	// a list of guilds. When initially connecting, the gateway will only send
+	// a list of Guilds. When initially connecting, the gateway will only send
 	// offline members if a guild has less than the large_threshold members
 	// (value in the Gateway Identify). If a Client wishes to receive additional
 	// members, they need to explicitly request them via this operation. The
@@ -87,7 +87,7 @@ type RequestGuildMembersPayload struct {
 	// Limit maximum number of members to send or 0 to request all members matched
 	Limit uint
 
-	// UserIDs used to specify which users you wish to fetch
+	// UserIDs used to specify which Users you wish to fetch
 	UserIDs []Snowflake
 }
 

@@ -9,6 +9,8 @@ import (
 	"github.com/andersfylling/disgord/internal/event"
 )
 
+// helpers
+
 func AllEvents(except ...string) []string {
     evtsMap := map[string]int8{
     {{- range .}}
@@ -41,27 +43,63 @@ func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
 type Handler{{.}} = func(Session, *{{.}})
 
-func (c *Client) On{{.}}(mdlws []Middleware, handlers []Handler{{.}}, ctrl ...HandlerCtrl) {
-    var inputs []interface{}
-    for mdlw := range mdlws {
-        inputs = append(inputs, mdlw)
-    }
-    for handler := range handlers {
-        inputs = append(inputs, handler)
-    }
-    if len(ctrl) > 0 {
-        inputs = append(inputs, ctrl[0])
-    }
-
-    c.On(Evt{{.}}, inputs...)
-}
-
 // --------------------------- {{end}}
 
-type SocketHandlerRegistrators interface {
+type socketHandlerRegister struct {
+    evtName string
+    middlewares []Middleware
+    handlers []Handler
+    ctrl HandlerCtrl
+
+    register OnSocketEventer
+}
+
+func (shr *socketHandlerRegister) build() {
+    inputs := make([]interface{}, 0, len(shr.middlewares) + len(shr.handlers) + 1)
+    for _, mdlw := range shr.middlewares {
+        inputs = append(inputs, mdlw)
+    }
+    for _, handler := range shr.handlers {
+        inputs = append(inputs, handler)
+    }
+    if shr.ctrl != nil {
+        inputs = append(inputs, shr.ctrl)
+    }
+
+    shr.register.On(shr.evtName, inputs...)
+}
+
+func (shr *socketHandlerRegister) WithCtrl(ctrl HandlerCtrl) SocketHandlerRegistrator {
+    if ctrl != nil {
+        panic("a controller was already registered for this handler specification")
+    }
+    shr.ctrl = ctrl
+    return shr
+}
+
+func (shr *socketHandlerRegister) WithMdlw(mdlws ...Middleware) SocketHandlerRegistrator {
+    shr.middlewares = append(shr.middlewares, mdlws...)
+    return shr
+}
+
 {{range .}}
 {{- if .IsDiscordEvent}}
-    On{{.}}([]Middleware, []Handler{{.}}, ...HandlerCtrl)
+func (shr *socketHandlerRegister) {{.}}(handlers ...Handler{{.}}) {
+    shr.evtName = Evt{{.}}
+    for _, handler := range handlers {
+        shr.handlers = append(shr.handlers, handler)
+    }
+    shr.build()
+}
 {{- end}}
 {{- end}}
+
+type SocketHandlerRegistrator interface {
+{{range .}}
+{{- if .IsDiscordEvent}}
+    {{.}}(...Handler{{.}})
+{{- end}}
+{{- end}}
+    WithCtrl(HandlerCtrl) SocketHandlerRegistrator
+    WithMdlw(...Middleware) SocketHandlerRegistrator
 }

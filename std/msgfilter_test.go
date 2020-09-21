@@ -9,19 +9,32 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-type clientMock struct {
+type clientRESTMock struct {
 	id disgord.Snowflake
 }
 
-var _ msgFilterdg = (*clientMock)(nil)
+// var _ disgord.RESTMethods = (*clientRESTMock)(nil)
 
-func (c *clientMock) GetCurrentUser(ctx context.Context, flags ...disgord.Flag) (*disgord.User, error) {
+func (c *clientRESTMock) CurrentUser() disgord.CurrentUserQueryBuilder {
+	return &clientRESTMock_currentUser{id: c.id}
+}
+
+type clientRESTMock_currentUser struct {
+	disgord.CurrentUserQueryBuilderNop
+	id disgord.Snowflake
+}
+
+func (c clientRESTMock_currentUser) WithContext(_ context.Context) disgord.CurrentUserQueryBuilder {
+	return &c
+}
+
+func (c clientRESTMock_currentUser) Get(_ ...disgord.Flag) (*disgord.User, error) {
 	return &disgord.User{ID: c.id}, nil
 }
 
 func TestNewMsgFilter(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, err := newMsgFilter(context.Background(), &clientMock{botID})
+	filter, err := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +46,7 @@ func TestNewMsgFilter(t *testing.T) {
 
 func TestMsgFilter_NotByBot(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := newMsgFilter(context.Background(), &clientMock{botID})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
 	evt := &disgord.MessageCreate{
 		Message: &disgord.Message{
 			Author: &disgord.User{Bot: true},
@@ -60,7 +73,7 @@ func TestMsgFilter_NotByBot(t *testing.T) {
 
 func TestMsgFilter_IsByBot(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := newMsgFilter(context.Background(), &clientMock{botID})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
 	evt := &disgord.MessageCreate{
 		Message: &disgord.Message{
 			Author: &disgord.User{Bot: false},
@@ -87,7 +100,7 @@ func TestMsgFilter_IsByBot(t *testing.T) {
 
 func TestMsgFilter_ContainsBotMention(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := newMsgFilter(context.Background(), &clientMock{botID})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
 	var evt interface{}
 	e := &disgord.MessageCreate{
 		Message: &disgord.Message{Content: "<@" + botID.String() + "> hello"},
@@ -114,7 +127,7 @@ func TestMsgFilter_ContainsBotMention(t *testing.T) {
 
 func TestMsgFilter_HasBotMentionPrefix(t *testing.T) {
 	var botID disgord.Snowflake = 123
-	filter, _ := newMsgFilter(context.Background(), &clientMock{botID})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
 	var evt interface{}
 	e := &disgord.MessageCreate{
 		Message: &disgord.Message{Content: "<@" + botID.String() + "> hello"},
@@ -134,7 +147,7 @@ func TestMsgFilter_HasBotMentionPrefix(t *testing.T) {
 }
 
 func TestMsgFilter_SetPrefix(t *testing.T) {
-	filter, _ := newMsgFilter(context.Background(), &clientMock{})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{})
 	if filter.prefix != "" {
 		t.Fatal("expected prefix to be empty")
 	}
@@ -147,7 +160,7 @@ func TestMsgFilter_SetPrefix(t *testing.T) {
 
 func TestMsgFilter_HasPrefix(t *testing.T) {
 	prefix := "!!"
-	filter, _ := newMsgFilter(context.Background(), &clientMock{})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{})
 	filter.SetPrefix(prefix)
 
 	var evt interface{}
@@ -170,7 +183,7 @@ func TestMsgFilter_HasPrefix(t *testing.T) {
 
 func TestMsgFilter_StripPrefix(t *testing.T) {
 	prefix := "!!"
-	filter, _ := newMsgFilter(context.Background(), &clientMock{})
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{})
 	filter.SetPrefix(prefix)
 
 	var evt interface{}

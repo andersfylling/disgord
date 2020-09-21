@@ -3,11 +3,9 @@
 package disgord
 
 import (
-	"encoding/json"
+	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"testing"
-
-	"github.com/andersfylling/disgord/internal/util"
 )
 
 func TestGuildMarshal(t *testing.T) {
@@ -15,7 +13,7 @@ func TestGuildMarshal(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = util.Unmarshal(data, &v)
+	err = json.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -24,7 +22,7 @@ func TestGuildMarshalUnavailable(t *testing.T) {
 	check(err, t)
 
 	v := Guild{}
-	err = util.Unmarshal(data, &v)
+	err = json.Unmarshal(data, &v)
 	check(err, t)
 }
 
@@ -52,7 +50,7 @@ func TestGuildBanObject(t *testing.T) {
 	check(err, t)
 
 	ban := Ban{}
-	err = util.Unmarshal(data, &ban)
+	err = json.Unmarshal(data, &ban)
 	check(err, t)
 }
 
@@ -63,8 +61,7 @@ func TestGuildEmbed(t *testing.T) {
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
-	err := unmarshal(res, &guildEmbed)
-	if err != nil {
+	if err := json.Unmarshal(res, &guildEmbed); err != nil {
 		t.Error(err)
 	}
 
@@ -104,7 +101,7 @@ func TestGuild_sortChannels(t *testing.T) {
 	guild.sortChannels()
 	for i, c := range guild.Channels {
 		if snowflakes[i] != c.ID {
-			t.Error("channels in guild did not sort correctly")
+			t.Error("Channels in guild did not sort correctly")
 		}
 	}
 }
@@ -130,7 +127,7 @@ func TestGuild_AddChannel(t *testing.T) {
 
 	for i, c := range guild.Channels {
 		if snowflakes[i] != c.ID {
-			t.Error("channels in guild did not sort correctly")
+			t.Error("Channels in guild did not sort correctly")
 		}
 	}
 }
@@ -161,5 +158,33 @@ func TestGuild_DeleteChannel(t *testing.T) {
 	_, err := guild.Channel(id)
 	if err == nil {
 		t.Error("no error given when requesting a deleted channel")
+	}
+}
+
+func TestPermissionBit(t *testing.T) {
+	// test permission bit checking
+	testBits := PermissionSendMessages | PermissionReadMessages
+	if testBits.Contains(PermissionAdministrator) {
+		t.Fatal("does not have administrator")
+	}
+	if !testBits.Contains(PermissionSendMessages) {
+		t.Fatal("does have send messages")
+	}
+	if !testBits.Contains(PermissionReadMessages) {
+		t.Fatal("does have read messages")
+	}
+
+	// Test json marshal/unmarshal
+	b, err := defaultMarshaler(testBits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = json.Unmarshal(b, &testBits); err != nil {
+		t.Fatal(err)
+	}
+	executeInternalUpdater(testBits)
+
+	if !testBits.Contains(PermissionReadMessages) {
+		t.Fatal("does have read messages")
 	}
 }

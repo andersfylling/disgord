@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -52,7 +51,7 @@ func main() {
 	// -------------------
 	// AUDIT-LOGS
 	// -------------------
-	logs, err := c.GetGuildAuditLogs(context.Background(), keys.GuildAdmin).Execute()
+	logs, err := c.Guild(keys.GuildAdmin).GetAuditLogs().Execute()
 	if err != nil {
 		panic(err)
 	} else if logs == nil {
@@ -64,7 +63,7 @@ func main() {
 	// -------------------
 	channelID := disgord.Snowflake(486833611564253186)
 	func() {
-		channel, err := c.GetChannel(context.Background(), channelID)
+		channel, err := c.Channel(channelID).Get()
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -76,7 +75,7 @@ func main() {
 
 	// create
 	func() {
-		channel, err := c.CreateGuildChannel(context.Background(), keys.GuildAdmin, "test", nil)
+		channel, err := c.Guild(keys.GuildAdmin).CreateChannel("test", nil)
 		if err != nil {
 			panic("cannot create channel, therefore skipped")
 		} else if channel.ID.IsZero() {
@@ -88,7 +87,7 @@ func main() {
 
 	// modify
 	func() {
-		channel, err := c.UpdateChannel(context.Background(), channelID).SetName("hello").Execute()
+		channel, err := c.Channel(channelID).Update().SetName("hello").Execute()
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -98,14 +97,14 @@ func main() {
 
 	// delete
 	func() {
-		channel, err := c.DeleteChannel(context.Background(), channelID)
+		channel, err := c.Channel(channelID).Delete()
 		if err != nil {
 			panic(err)
 		} else if channel.ID != channelID {
 			panic("incorrect channel id")
 		}
 
-		_, err = c.GetChannel(context.Background(), channelID)
+		_, err = c.Channel(channelID).Get()
 		if err == nil {
 			panic("able to retrieve deleted channel")
 		}
@@ -121,7 +120,7 @@ func main() {
 
 	// TestGetCurrentUser
 	func() {
-		_, err = c.GetCurrentUser(context.Background(), disgord.IgnoreCache)
+		_, err = c.CurrentUser().Get(disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		}
@@ -129,7 +128,7 @@ func main() {
 	// TestGetUser
 	func() {
 		const userID = 140413331470024704
-		user, err := c.GetUser(context.Background(), userID, disgord.IgnoreCache)
+		user, err := c.User(userID).Get(disgord.IgnoreCache)
 		if err != nil {
 			panic(err)
 		} else if user.ID != userID {
@@ -191,7 +190,7 @@ func main() {
 
 	// TestCreateDM
 	func() {
-		channel, err := c.CreateDM(context.Background(), 228846961774559232)
+		channel, err := c.User(228846961774559232).CreateDM()
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -213,7 +212,7 @@ func main() {
 
 	// TestListGuildEmojis
 	func() {
-		emojis, err := c.GetGuildEmojis(context.Background(), keys.GuildDefault)
+		emojis, err := c.Guild(keys.GuildDefault).GetEmojis()
 		if err != nil && !notARateLimitIssue(err) {
 			panic("rate limited")
 		}
@@ -236,7 +235,7 @@ func main() {
 			return
 		}
 
-		emoji, err := c.GetGuildEmoji(context.Background(), keys.GuildDefault, emojiID)
+		emoji, err := c.Guild(keys.GuildDefault).Emoji(emojiID).Get()
 		if err != nil && !notARateLimitIssue(err) {
 			panic("rate limited")
 		} else if err != nil && notARateLimitIssue(err) {
@@ -255,7 +254,10 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{Name: "testing4324", Image: randomBase64Emoji})
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmojiParams{
+				Name:  "testing4324",
+				Image: randomBase64Emoji,
+			})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -270,7 +272,7 @@ func main() {
 
 		// delete created emoji
 		func() {
-			err := c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err := c.Guild(keys.GuildDefault).Emoji(emoji.ID).Delete()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -288,7 +290,7 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{Name: "test6547465", Image: randomBase64Emoji})
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmojiParams{Name: "test6547465", Image: randomBase64Emoji})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -300,7 +302,7 @@ func main() {
 
 		// modify emoji
 		func() {
-			_, err = c.UpdateGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID).SetName(newName).Execute()
+			_, err = c.Guild(keys.GuildDefault).Emoji(emoji.ID).Update().SetName(newName).Execute()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -311,7 +313,7 @@ func main() {
 		// delete created emoji
 		func() {
 			time.Sleep(1 * time.Second) // just ensure that this get's run
-			err = c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err = c.Guild(keys.GuildDefault).Emoji(emoji.ID).Delete()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -333,7 +335,7 @@ func main() {
 		// create emoji
 		func() {
 
-			emoji, err = c.CreateGuildEmoji(context.Background(), keys.GuildAdmin, &disgord.CreateGuildEmojiParams{
+			emoji, err = c.Guild(keys.GuildAdmin).CreateEmoji(&disgord.CreateGuildEmojiParams{
 				Name:  illegalNames[0],
 				Image: randomBase64Emoji,
 			})
@@ -356,7 +358,7 @@ func main() {
 			if !mustDelete {
 				panic("no new emoji created")
 			}
-			err = c.DeleteGuildEmoji(context.Background(), keys.GuildAdmin, emoji.ID)
+			err = c.Guild(keys.GuildDefault).Emoji(emoji.ID).Delete()
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			}
@@ -405,7 +407,7 @@ func main() {
 
 	// TestListVoiceRegions
 	func() {
-		list, err := c.GetVoiceRegions(context.Background())
+		list, err := c.GetVoiceRegions()
 		if err != nil {
 			panic(err)
 		} else if len(list) == 0 {
