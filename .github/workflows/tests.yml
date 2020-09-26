@@ -26,6 +26,11 @@ jobs:
       - name: Integration tests
         env:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
+          TEST_GUILD_TYPICAL_ID: ${{ secrets.TEST_GUILD_TYPICAL_ID }}
+          TEST_GUILD_TYPICAL_TEXT_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_TEXT_GENERAL }}
+          TEST_GUILD_TYPICAL_VOICE_1: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_1 }}
+          TEST_GUILD_TYPICAL_VOICE_2: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_2 }}
+          TEST_GUILD_TYPICAL_VOICE_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_GENERAL }}
         run: go test -v -race -tags=integration -coverprofile=coverage-integration.txt -covermode=atomic ./...
       - name: Codecov
         run: bash <(curl -s https://codecov.io/bash) -t ${{secrets.CODECOV_TOKEN}} -B develop -c -F integration -f "./coverage-integration.txt" -Z
