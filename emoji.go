@@ -68,6 +68,14 @@ func (e *Emoji) LinkToGuild(guildID Snowflake) {
 	e.guildID = guildID
 }
 
+// IDReference returns a reference to the emoji usable in REST calls.
+func (e *Emoji) IDReference() string {
+	if e.ID.IsZero() {
+		return e.Name
+	}
+	return  e.Name + ":" + e.ID.String()
+}
+
 // DeepCopy see interface at struct.go#DeepCopier
 func (e *Emoji) DeepCopy() (copy interface{}) {
 	copy = &Emoji{}
