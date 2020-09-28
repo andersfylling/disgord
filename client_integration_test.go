@@ -20,14 +20,34 @@ var guildTypical = struct {
 	VoiceChannelOther1  Snowflake
 	VoiceChannelOther2  Snowflake
 }{
-	ID:                  486833611564253184,
-	TextChannelGeneral:  486833611564253186,
-	VoiceChannelGeneral: 486833611564253188,
-	VoiceChannelOther1:  673893473409171477,
-	VoiceChannelOther2:  673893496356339724,
+	ID:                  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_ID")),
+	TextChannelGeneral:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_TEXT_GENERAL")),
+	VoiceChannelGeneral: ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_GENERAL")),
+	VoiceChannelOther1:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_1")),
+	VoiceChannelOther2:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_2")),
+}
+
+func validSnowflakes() {
+	if guildTypical.ID.IsZero() {
+		panic("missing id for typical guild")
+	}
+	if guildTypical.TextChannelGeneral.IsZero() {
+		panic("missing id for typical guild TextChannelGeneral")
+	}
+	if guildTypical.VoiceChannelGeneral.IsZero() {
+		panic("missing id for typical guild VoiceChannelGeneral")
+	}
+	if guildTypical.VoiceChannelOther1.IsZero() {
+		panic("missing id for typical guild VoiceChannelOther1")
+	}
+	if guildTypical.VoiceChannelOther2.IsZero() {
+		panic("missing id for typical guild VoiceChannelOther2")
+	}
 }
 
 func TestClient(t *testing.T) {
+	validSnowflakes()
+
 	wg := &sync.WaitGroup{}
 
 	status := &UpdateStatusPayload{
@@ -103,7 +123,7 @@ func TestClient(t *testing.T) {
 				c.Logger().Info("was not bot")
 				return
 			}
-			usr, err := c.CurrentUser().Get(context.Background())
+			usr, err := c.CurrentUser().Get()
 			if err != nil {
 				done <- false
 				return
@@ -160,7 +180,7 @@ func TestClient(t *testing.T) {
 		done := make(chan bool)
 
 		c.On(EvtVoiceStateUpdate, func(_ Session, evt *VoiceStateUpdate) {
-			myself, err := c.CurrentUser().Get(context.Background())
+			myself, err := c.CurrentUser().Get()
 			if err != nil {
 				panic(err)
 			}
@@ -319,7 +339,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// Test getting a member
-		member, err := c.Guild(guildTypical.ID).GetMember(deadline, c.myID, IgnoreCache)
+		member, err := c.Guild(guildTypical.ID).Member(c.myID).WithContext(deadline).Get(IgnoreCache)
 		if err != nil {
 			panic(err)
 		}
@@ -333,6 +353,8 @@ func TestClient(t *testing.T) {
 }
 
 func TestConnectWithShards(t *testing.T) {
+	validSnowflakes()
+
 	<-time.After(6 * time.Second) // avoid identify abuse
 	c := New(Config{
 		BotToken:     token,
@@ -360,6 +382,8 @@ func TestConnectWithShards(t *testing.T) {
 }
 
 func TestConnectWithSeveralInstances(t *testing.T) {
+	validSnowflakes()
+
 	<-time.After(6 * time.Second) // avoid identify abuse
 	createInstance := func(shardIDs []uint, shardCount uint) *Client {
 		return New(Config{
