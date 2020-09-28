@@ -242,7 +242,7 @@ func (r reactionQueryBuilder) Get(params URLQueryStringer, flags ...Flag) (ret [
 
 	emojiCode := ""
 	if e, ok := r.emoji.(*Emoji); ok {
-		if e.ID != 0 {
+		if e.ID.IsZero() {
 			emojiCode = e.Name + ":" + e.ID.String()
 		} else {
 			emojiCode = e.Name
