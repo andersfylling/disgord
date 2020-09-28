@@ -243,9 +243,9 @@ func (r reactionQueryBuilder) Get(params URLQueryStringer, flags ...Flag) (ret [
 	emojiCode := ""
 	if e, ok := r.emoji.(*Emoji); ok {
 		if e.ID.IsZero() {
-			emojiCode = e.Name + ":" + e.ID.String()
-		} else {
 			emojiCode = e.Name
+		} else {
+			emojiCode = e.Name + ":" + e.ID.String()
 		}
 	} else if _, ok := r.emoji.(string); ok {
 		emojiCode = r.emoji.(string) // unicode
