@@ -171,7 +171,7 @@ func (r reactionQueryBuilder) DeleteOwn(flags ...Flag) error {
 	}, flags)
 	req.expectsStatusCode = http.StatusNoContent
 
-	_, err := req.Execute()
+	_, err = req.Execute()
 	return err
 }
 
@@ -208,7 +208,7 @@ func (r reactionQueryBuilder) DeleteUser(userID Snowflake, flags ...Flag) error 
 	}, flags)
 	req.expectsStatusCode = http.StatusNoContent
 
-	_, err := req.Execute()
+	_, err = req.Execute()
 	return err
 }
 
