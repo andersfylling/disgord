@@ -114,7 +114,7 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 
 	emojiCode := ""
 	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.Name + ":" + e.ID.String()
+		emojiCode = e.IDReference()
 	} else if _, ok := r.emoji.(string); ok {
 		emojiCode = r.emoji.(string) // unicode
 		emojiCode = unwrapEmoji(emojiCode)
@@ -153,7 +153,7 @@ func (r reactionQueryBuilder) DeleteOwn(flags ...Flag) error {
 
 	emojiCode := ""
 	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.Name + ":" + e.ID.String()
+		emojiCode = e.IDReference()
 	} else if _, ok := r.emoji.(string); ok {
 		emojiCode = r.emoji.(string) // unicode
 		emojiCode = unwrapEmoji(emojiCode)
@@ -195,7 +195,7 @@ func (r reactionQueryBuilder) DeleteUser(userID Snowflake, flags ...Flag) error 
 
 	emojiCode := ""
 	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.Name + ":" + e.ID.String()
+		emojiCode = e.IDReference()
 	} else if _, ok := r.emoji.(string); ok {
 		emojiCode = r.emoji.(string) // unicode
 		emojiCode = unwrapEmoji(emojiCode)
