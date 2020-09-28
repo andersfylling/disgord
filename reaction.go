@@ -45,6 +45,19 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
+func emojiReference(i interface{}) (string, error) {
+	emojiCode := ""
+	if e, ok := i.(*Emoji); ok {
+		emojiCode = e.IDReference()
+	} else if _, ok := i.(string); ok {
+		emojiCode = i.(string) // unicode
+		emojiCode = unwrapEmoji(emojiCode)
+	} else {
+		return "", errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	}
+	return emojiCode, nil
+}
+
 func unwrapEmoji(e string) string {
 	l := len(e)
 	if l >= 2 && e[0] == e[l-1] && e[0] == ':' {
@@ -112,14 +125,9 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
 
-	emojiCode := ""
-	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.IDReference()
-	} else if _, ok := r.emoji.(string); ok {
-		emojiCode = r.emoji.(string) // unicode
-		emojiCode = unwrapEmoji(emojiCode)
-	} else {
-		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	emojiCode, err := emojiReference(r.emoji)
+	if err != nil {
+		return  err
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
@@ -129,7 +137,7 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 	}, flags)
 	req.expectsStatusCode = http.StatusNoContent
 
-	_, err := req.Execute()
+	_, err = req.Execute()
 	return err
 }
 
@@ -151,14 +159,9 @@ func (r reactionQueryBuilder) DeleteOwn(flags ...Flag) error {
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
 
-	emojiCode := ""
-	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.IDReference()
-	} else if _, ok := r.emoji.(string); ok {
-		emojiCode = r.emoji.(string) // unicode
-		emojiCode = unwrapEmoji(emojiCode)
-	} else {
-		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	emojiCode, err := emojiReference(r.emoji)
+	if err != nil {
+		return err
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
@@ -193,14 +196,9 @@ func (r reactionQueryBuilder) DeleteUser(userID Snowflake, flags ...Flag) error 
 		return errors.New("UserID must be set to target the specific user reaction")
 	}
 
-	emojiCode := ""
-	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.IDReference()
-	} else if _, ok := r.emoji.(string); ok {
-		emojiCode = r.emoji.(string) // unicode
-		emojiCode = unwrapEmoji(emojiCode)
-	} else {
-		return errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	emojiCode, err := emojiReference(r.emoji)
+	if err != nil {
+		return err
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
@@ -240,14 +238,9 @@ func (r reactionQueryBuilder) Get(params URLQueryStringer, flags ...Flag) (ret [
 		return nil, errors.New("emoji must be set in order to create a message reaction")
 	}
 
-	emojiCode := ""
-	if e, ok := r.emoji.(*Emoji); ok {
-		emojiCode = e.IDReference()
-	} else if _, ok := r.emoji.(string); ok {
-		emojiCode = r.emoji.(string) // unicode
-		emojiCode = unwrapEmoji(emojiCode)
-	} else {
-		return nil, errors.New("emoji type can only be a unicode string or a *Emoji struct")
+	emojiCode, err := emojiReference(r.emoji)
+	if err != nil {
+		return nil, err
 	}
 
 	query := ""
