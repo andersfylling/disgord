@@ -76,14 +76,6 @@ func NewChannel() *Channel {
 	return &Channel{}
 }
 
-// ChannelMessager Methods required to create a new DM (or use an existing one) and send a DM.
-// type ChannelMessager interface {CreateMessage(*Message) error}
-
-// ChannelFetcher holds the single method for fetching a channel from the Discord REST API
-type ChannelFetcher interface {
-	GetChannel(id Snowflake) (ret *Channel, err error)
-}
-
 // type ChannelDeleter interface { DeleteChannel(id Snowflake) (err error) }
 // type ChannelUpdater interface {}
 
