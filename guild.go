@@ -379,7 +379,7 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 	if err != nil {
 		return 0, err
 	}
-	_, _ = s.Invite(invite.Code).Delete(ctx) // delete if possible
+	_, _ = s.Invite(invite.Code).WithContext(ctx).Delete() // delete if possible
 
 	return invite.ApproximateMemberCount, nil
 }

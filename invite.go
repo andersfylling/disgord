@@ -161,10 +161,10 @@ type InviteQueryBuilder interface {
 	WithContext(ctx context.Context) InviteQueryBuilder
 
 	// Get Returns an invite object for the given code.
-	Get(ctx context.Context, withMemberCount bool, flags ...Flag) (*Invite, error)
+	Get(withMemberCount bool, flags ...Flag) (*Invite, error)
 
 	// Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
-	Delete(ctx context.Context, flags ...Flag) (deleted *Invite, err error)
+	Delete(flags ...Flag) (deleted *Invite, err error)
 }
 
 func (c clientQueryBuilder) Invite(code string) InviteQueryBuilder {
@@ -195,12 +195,12 @@ var _ URLQueryStringer = (*getInviteParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
-func (i inviteQueryBuilder) Get(ctx context.Context, withMemberCount bool, flags ...Flag) (invite *Invite, err error) {
+func (i inviteQueryBuilder) Get(withMemberCount bool, flags ...Flag) (invite *Invite, err error) {
 	params := &getInviteParams{withMemberCount}
 
 	r := i.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Invite(i.inviteCode) + params.URLQueryString(),
-		Ctx:      ctx,
+		Ctx:      i.ctx,
 	}, flags)
 	r.factory = inviteFactory
 
@@ -213,11 +213,11 @@ func (i inviteQueryBuilder) Get(ctx context.Context, withMemberCount bool, flags
 //  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (i inviteQueryBuilder) Delete(ctx context.Context, flags ...Flag) (deleted *Invite, err error) {
+func (i inviteQueryBuilder) Delete(flags ...Flag) (deleted *Invite, err error) {
 	r := i.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.Invite(i.inviteCode),
-		Ctx:      ctx,
+		Ctx:      i.ctx,
 	}, flags)
 	r.factory = inviteFactory
 
