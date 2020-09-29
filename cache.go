@@ -162,7 +162,7 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		}
 		c.Patch(tmp)
 		channel = tmp.DeepCopy().(*Channel)
-		freshItem := c.Channels.CreateCacheableItem(channel)
+		freshItem := c.Channels.CreateCacheableItem(tmp)
 
 		c.Channels.Lock()
 		if existingItem, exists := c.Channels.Get(channelID); !exists {
