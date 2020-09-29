@@ -38,47 +38,7 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 
 I highly suggest reading the [Discord API documentation](https://discord.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
 
-Here is a basic bot program that prints out every message. Save it as `main.go`, run `go mod init bot` and `go mod download`. You can then start the bot by writing `go run .`
-
-```go
-package main
-
-import (
-    "context"
-    "fmt"
-    "github.com/andersfylling/disgord"
-    "os"
-)
-
-func printMessage(session disgord.Session, evt *disgord.MessageCreate) {
-    msg := evt.Message
-    fmt.Println(msg.Author.String() + ": "+ msg.Content) // Anders#7248{435358734985}: Hello there
-}
-
-func main() {
-    // see docs/examples/* for more information about configuration and use cases
-    client := disgord.New(disgord.Config{
-        BotToken: os.Getenv("DISGORD_TOKEN"),
-    })
-    // connect, and stay connected until a system interrupt takes place
-    defer client.StayConnectedUntilInterrupted(context.Background())
-    
-    // create a handler and bind it to new message events
-    // handlers/listener are run in sequence if you register more than one
-    // so you should not need to worry about locking your objects unless you do any
-    // parallel computing with said objects
-    client.On(disgord.EvtMessageCreate, printMessage)
-}
-```
-
-#### Linux script
-To create a new bot you can use the disgord.sh script to get a bot with some event middlewares and Dockerfile. Paste the following into your terminal:
-
-```bash
-bash <(curl -s -L https://git.io/disgord-script)
-``` 
-
-Starter guide as a gif: https://terminalizer.com/view/469961d0695
+Simply use [this github template](https://github.com/andersfylling/disgord-starter) to create your first new bot!
 
 
 ## Architecture & Behavior
