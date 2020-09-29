@@ -137,7 +137,6 @@ var _ Reseter = (*Channel)(nil)
 var _ fmt.Stringer = (*Channel)(nil)
 var _ Copier = (*Channel)(nil)
 var _ DeepCopier = (*Channel)(nil)
-var _ discordDeleter = (*Channel)(nil)
 var _ Mentioner = (*Channel)(nil)
 
 func (c *Channel) String() string {
@@ -204,22 +203,6 @@ func (c *Channel) Mention() string {
 func (c *Channel) Compare(other *Channel) bool {
 	// eh
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
-}
-
-func (c *Channel) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	id := c.ID
-
-	if id.IsZero() {
-		err = newErrorMissingSnowflake("channel id/snowflake is empty or missing")
-		return
-	}
-	var deleted *Channel
-	if deleted, err = s.Channel(id).WithContext(ctx).Delete(flags...); err != nil {
-		return
-	}
-
-	_ = deleted.CopyOverTo(c)
-	return
 }
 
 // DeepCopy see interface at struct.go#DeepCopier

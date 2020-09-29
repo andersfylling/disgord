@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -28,15 +27,11 @@ type Emoji struct {
 	RequireColons bool        `json:"require_colons,omitempty"`
 	Managed       bool        `json:"managed,omitempty"`
 	Animated      bool        `json:"animated,omitempty"`
-
-	//	image string // base 64 string, with prefix and everything
-	guildID Snowflake
 }
 
 var _ Reseter = (*Emoji)(nil)
 var _ DeepCopier = (*Emoji)(nil)
 var _ Copier = (*Emoji)(nil)
-var _ discordDeleter = (*Emoji)(nil)
 var _ Mentioner = (*Emoji)(nil)
 
 // var _ discordSaver = (*Emoji)(nil) // TODO
@@ -49,11 +44,6 @@ func (e *Emoji) String() string {
 // PartialEmoji see Emoji
 type PartialEmoji = Emoji
 
-// SetBase64Image use this before creating the emoji for the first time
-//func (e *Emoji) SetBase64Image(img string) {
-//	e.image = img
-//}
-
 // Mention mentions an emoji. Adds the animation prefix, if animated
 func (e *Emoji) Mention() string {
 	prefix := ""
@@ -64,16 +54,12 @@ func (e *Emoji) Mention() string {
 	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
-func (e *Emoji) LinkToGuild(guildID Snowflake) {
-	e.guildID = guildID
-}
-
 // IDReference returns a reference to the emoji usable in REST calls.
 func (e *Emoji) IDReference() string {
 	if e.ID.IsZero() {
 		return e.Name
 	}
-	return  e.Name + ":" + e.ID.String()
+	return e.Name + ":" + e.ID.String()
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
@@ -99,25 +85,11 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	emoji.RequireColons = e.RequireColons
 	emoji.Managed = e.Managed
 	emoji.Animated = e.Animated
-	emoji.guildID = e.guildID
 
 	if e.User != nil {
 		emoji.User = e.User.DeepCopy().(*User)
 	}
 	return
-}
-
-func (e *Emoji) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	if e.guildID.IsZero() {
-		err = errors.New("missing guild ID, call Emoji.LinkToGuild")
-		return
-	}
-	if e.ID.IsZero() {
-		err = errors.New("missing emoji ID, cannot delete a not identified emoji")
-		return
-	}
-
-	return s.Guild(e.guildID).Emoji(e.ID).WithContext(ctx).Delete(flags...)
 }
 
 //////////////////////////////////////////////////////
@@ -178,7 +150,7 @@ func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
 func (g guildEmojiQueryBuilder) Update(flags ...Flag) UpdateGuildEmojiBuilder {
 	builder := &updateGuildEmojiBuilder{}
 	builder.r.itemFactory = func() interface{} {
-		return &Emoji{guildID: g.gid}
+		return &Emoji{}
 	}
 	builder.r.flags = flags
 	builder.r.setup(g.client.req, &httd.Request{

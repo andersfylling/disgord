@@ -135,7 +135,6 @@ type Message struct {
 var _ Reseter = (*Message)(nil)
 var _ fmt.Stringer = (*Message)(nil)
 var _ internalUpdater = (*Message)(nil)
-var _ discordDeleter = (*Message)(nil)
 var _ Copier = (*Message)(nil)
 var _ DeepCopier = (*Message)(nil)
 
@@ -252,16 +251,6 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
 	}
 
-	return
-}
-
-func (m *Message) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	if m.ID.IsZero() {
-		err = newErrorMissingSnowflake("message is missing snowflake")
-		return
-	}
-
-	err = s.Channel(m.ChannelID).Message(m.ID).Delete(ctx, flags...)
 	return
 }
 

@@ -56,16 +56,6 @@ type Invite struct {
 
 var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
-var _ discordDeleter = (*Invite)(nil)
-
-func (i *Invite) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) error {
-	if i.Code == "" {
-		return &ErrorEmptyValue{info: "can not delete invite without the code field populate"}
-	}
-
-	_, err := s.Invite(i.Code).Delete(ctx, flags...)
-	return err
-}
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (i *Invite) DeepCopy() (copy interface{}) {

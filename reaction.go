@@ -127,7 +127,7 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 
 	emojiCode, err := emojiReference(r.emoji)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{

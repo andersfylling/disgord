@@ -89,9 +89,6 @@ type Session interface {
 
 	RESTRatelimitBuckets() (group map[string][]string)
 
-	// Abstract REST methods for Discord structs
-	DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) error
-
 	// AddPermission is to store the permissions required by the bot to function as intended.
 	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
 	GetPermissions() (permissions PermissionBit)

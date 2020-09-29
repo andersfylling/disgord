@@ -672,23 +672,6 @@ func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandle
 
 //////////////////////////////////////////////////////
 //
-// Abstract CRUD operations
-//
-//////////////////////////////////////////////////////
-
-// DeleteFromDiscord if the given object has implemented the private interface discordDeleter this method can
-// be used to delete said object.
-func (c *Client) DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) (err error) {
-	if obj == nil {
-		return errors.New("object to save can not be nil")
-	}
-
-	err = obj.deleteFromDiscord(ctx, c, flags...)
-	return
-}
-
-//////////////////////////////////////////////////////
-//
 // REST Methods
 // customs
 //

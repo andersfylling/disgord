@@ -64,7 +64,6 @@ var _ Mentioner = (*Role)(nil)
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
 var _ Copier = (*Role)(nil)
-var _ discordDeleter = (*Role)(nil)
 var _ fmt.Stringer = (*Role)(nil)
 
 func (r *Role) String() string {
@@ -107,21 +106,6 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	role.Mentionable = r.Mentionable
 	role.guildID = r.guildID
 	return
-}
-
-func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	guildID := r.guildID
-	id := r.ID
-
-	if id.IsZero() {
-		return newErrorMissingSnowflake("role has no ID")
-	}
-	if guildID.IsZero() {
-		return newErrorMissingSnowflake("role has no guildID")
-	}
-
-	err = s.Guild(guildID).Role(id).WithContext(ctx).Delete(flags...)
-	return err
 }
 
 //////////////////////////////////////////////////////
