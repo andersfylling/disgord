@@ -46,7 +46,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 }
 
 func emojiReference(i interface{}) (string, error) {
-	emojiCode := ""
+	 var emojiCode string
 	if e, ok := i.(*Emoji); ok {
 		if e.ID.IsZero() {
 			emojiCode = e.Name
