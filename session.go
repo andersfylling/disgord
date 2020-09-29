@@ -93,15 +93,9 @@ type Session interface {
 	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
 	GetPermissions() (permissions PermissionBit)
 
-	// CreateBotURL
-	InviteURL(ctx context.Context) (url string, err error)
-
 	Pool() *pools
 
 	ClientQueryBuilder
-
-	// Custom REST functions
-	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
 
 	// Status update functions
 	UpdateStatus(s *UpdateStatusPayload) error

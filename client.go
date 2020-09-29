@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
 
@@ -281,23 +279,6 @@ func (c *Client) GetPermissions() (permissions PermissionBit) {
 	return c.permissions
 }
 
-// InviteURL creates a URL that can be used to invite this bot to a guild/server.
-// Note that it depends on the bot ID to be after the Discord update where the Client ID
-// is the same as the Bot ID.
-//
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
-func (c *Client) InviteURL(ctx context.Context) (u string, err error) {
-	if _, err = c.CurrentUser().WithContext(ctx).Get(); err != nil && c.myID.IsZero() {
-		return "", disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
-	}
-
-	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u = fmt.Sprintf(format, c.myID.String(), c.permissions)
-	return u, nil
-}
-
 // AvgHeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
 // way to measure delay between the Client and Discord server
@@ -380,6 +361,16 @@ func (c *Client) setupConnectEnv() {
 	go c.demultiplexer(c.dispatcher, c.eventChan)
 }
 
+type helperGatewayBotGetter struct {
+	c *Client
+}
+
+var _ gateway.GatewayBotGetter = (*helperGatewayBotGetter)(nil)
+
+func (h helperGatewayBotGetter) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {
+	return h.c.WithContext(ctx).GetGatewayBot()
+}
+
 // Connect establishes a websocket connection to the discord API
 func (c *Client) Connect(ctx context.Context) (err error) {
 	// set the user ID upon connection
@@ -397,7 +388,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	}
 	c.myID = me.ID
 
-	if err = gateway.ConfigureShardConfig(ctx, c, &c.config.ShardConfig); err != nil {
+	if err = gateway.ConfigureShardConfig(ctx, helperGatewayBotGetter{c}, &c.config.ShardConfig); err != nil {
 		return err
 	}
 
@@ -676,117 +667,6 @@ func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandle
 // customs
 //
 //////////////////////////////////////////////////////
-
-// SendMsg should convert all inputs into a single message. If you supply a object with an ID
-// such as a channel, message, role, etc. It will become a reference.  If say the Message provided
-// does not have an ID, the Message will populate a CreateMessage with it's fields.
-//
-// If you want to affect the actual message data besides .Content; provide a
-// MessageCreateParams. The reply message will be updated by the last one provided.
-func (c *Client) SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (msg *Message, err error) {
-	var flags []Flag
-	params := &CreateMessageParams{}
-	addEmbed := func(e *Embed) error {
-		if params.Embed != nil {
-			return errors.New("can only send one embed")
-		}
-		params.Embed = e
-		return nil
-	}
-	msgToParams := func(m *Message) (s string, err error) {
-		if s, err = m.DiscordURL(); err != nil {
-			// try to reference the message, otherwise use it to
-			// populate the params
-			if len(m.Embeds) > 1 {
-				return "", errors.New("can only create a message with a single embed")
-			} else if len(m.Embeds) > 0 {
-				params.Embed = m.Embeds[0]
-			}
-
-			params.Content = m.Content
-			params.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
-			params.SpoilerTagContent = m.SpoilerTagContent
-			params.Tts = m.Tts
-			return "", nil
-		}
-		return s, nil
-	}
-	for i := range data {
-		if data[i] == nil {
-			continue
-		}
-
-		var s string
-		switch t := data[i].(type) {
-		case *CreateMessageParams:
-			*params = *t
-		case CreateMessageParams:
-			*params = t
-		case CreateMessageFileParams:
-			params.Files = append(params.Files, t)
-		case *CreateMessageFileParams:
-			params.Files = append(params.Files, *t)
-		case Embed:
-			if err = addEmbed(&t); err != nil {
-				return nil, err
-			}
-		case *Embed:
-			if err = addEmbed(t); err != nil {
-				return nil, err
-			}
-		case *os.File:
-			return nil, errors.New("can not handle *os.File, use a CreateMessageFileParams instead")
-		case string:
-			s = t
-		case *Flag:
-			flags = append(flags, *t)
-		case Flag:
-			flags = append(flags, t)
-		case Message:
-			if s, err = msgToParams(&t); err != nil {
-				return nil, err
-			}
-		case *Message:
-			if s, err = msgToParams(t); err != nil {
-				return nil, err
-			}
-		case AllowedMentions:
-			params.AllowedMentions = &t
-		case *AllowedMentions:
-			params.AllowedMentions = t
-		default:
-			var mentioned bool
-			if mentionable, ok := t.(Mentioner); ok {
-				if s = mentionable.Mention(); len(s) > 5 {
-					mentioned = true
-				}
-			}
-
-			if !mentioned {
-				if str, ok := t.(fmt.Stringer); ok {
-					s = str.String()
-				} else {
-					s = fmt.Sprint(t)
-				}
-			}
-		}
-
-		if s != "" {
-			params.Content += " " + s
-		}
-	}
-
-	// wtf?
-	if data == nil {
-		if mergeFlags(flags).IgnoreEmptyParams() {
-			params.Content = ""
-		} else {
-			return nil, errors.New("params were nil")
-		}
-	}
-
-	return c.Channel(channelID).WithContext(ctx).CreateMessage(params, flags...)
-}
 
 /* status updates */
 
