@@ -157,10 +157,10 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	} else {
 		// unlikely
 		tmp := &Channel{}
-		if err := json.Unmarshal(data, channel); err != nil {
+		if err := json.Unmarshal(data, tmp); err != nil {
 			return nil, err
 		}
-		c.Patch(channel)
+		c.Patch(tmp)
 		channel = tmp.DeepCopy().(*Channel)
 		freshItem := c.Channels.CreateCacheableItem(tmp)
 
@@ -278,6 +278,7 @@ func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, 
 				guild.MemberCount--
 				guild.Members[i] = guild.Members[len(guild.Members)-1]
 				guild.Members = guild.Members[:len(guild.Members)-1]
+				break
 			}
 		}
 	}
