@@ -283,7 +283,7 @@ func TestClient(t *testing.T) {
 				snowflakeChan <- evt.Message.Member.UserID
 			}
 		}, &Ctrl{Runs: 1})
-		msg, err := c.SendMsg(deadline, guildTypical.TextChannelGeneral, "Hello World!")
+		msg, err := c.WithContext(deadline).SendMsg(guildTypical.TextChannelGeneral, "Hello World!")
 		if err != nil {
 			panic(err)
 		}
