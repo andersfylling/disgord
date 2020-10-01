@@ -48,16 +48,15 @@ func NewRole() *Role {
 
 // Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
-	ID          Snowflake `json:"id"`
-	Name        string    `json:"name"`
-	Color       uint      `json:"color"`
-	Hoist       bool      `json:"hoist"`
-	Position    int       `json:"position"` // can be -1
-	Permissions uint64    `json:"permissions"`
-	Managed     bool      `json:"managed"`
-	Mentionable bool      `json:"mentionable"`
-
-	guildID Snowflake
+	ID          Snowflake     `json:"id"`
+	Name        string        `json:"name"`
+	Color       uint          `json:"color"`
+	Hoist       bool          `json:"hoist"`
+	Position    int           `json:"position"` // can be -1
+	Permissions PermissionBit `json:"permissions"`
+	Managed     bool          `json:"managed"`
+	Mentionable bool          `json:"mentionable"`
+	guildID     Snowflake
 }
 
 var _ Mentioner = (*Role)(nil)
@@ -83,7 +82,7 @@ func (r *Role) SetGuildID(id Snowflake) {
 // DeepCopy see interface at struct.go#DeepCopier
 func (r *Role) DeepCopy() (copy interface{}) {
 	copy = NewRole()
-	r.CopyOverTo(copy)
+	_ = r.CopyOverTo(copy)
 
 	return
 }
