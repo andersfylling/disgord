@@ -340,7 +340,6 @@ func TestClient_System(t *testing.T) {
 		if err = json.Unmarshal(data, p); err != nil {
 			t.Fatal(err)
 		}
-		executeInternalUpdater(p)
 
 		// ignore non-event-type packets
 		if p.E == "" {

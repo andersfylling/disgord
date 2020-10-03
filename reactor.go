@@ -66,7 +66,10 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 			executeInternalUpdater(c.currentUser)
 		}
 
-		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		resourceI, err := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		if err != nil {
+			fmt.Println(fmt.Errorf("failed to unmarshal event: %w", err))
+		}
 		resource := resourceI.(evtResource)
 
 		ctx := context.Background()

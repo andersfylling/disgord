@@ -34,9 +34,10 @@ func (b *PermissionBit) MarshalJSON() ([]byte, error) {
 }
 
 func (b *PermissionBit) UnmarshalJSON(bytes []byte) error {
-	str, err := strconv.Unquote(string(bytes))
+	sb := string(bytes)
+	str, err := strconv.Unquote(sb)
 	if err != nil {
-		return fmt.Errorf("unable to unquote bytes{%s}: %w", string(bytes), err)
+		return fmt.Errorf("unable to unquote bytes{%s}: %w", sb, err)
 	}
 
 	v, err := strconv.ParseUint(str, 10, 64)

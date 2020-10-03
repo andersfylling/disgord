@@ -96,7 +96,7 @@ func (c *Client) BucketGrouping() (group map[string][]string) {
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
 func SupportsDiscordAPIVersion(version int) bool {
 	supports := []int{
-		6,
+		8,
 	}
 
 	var supported bool
@@ -151,10 +151,9 @@ func NewClient(conf *Config) (*Client, error) {
 	authorization := fmt.Sprintf(AuthorizationFormat, conf.BotToken)
 	userAgent := fmt.Sprintf(UserAgentFormat, conf.UserAgentSourceURL, conf.UserAgentVersion, conf.UserAgentExtra)
 	header := map[string][]string{
-		XRateLimitPrecision: {"millisecond"},
-		"Authorization":     {authorization},
-		"User-Agent":        {userAgent},
-		"Accept-Encoding":   {"gzip"},
+		"Authorization":   {authorization},
+		"User-Agent":      {userAgent},
+		"Accept-Encoding": {"gzip"},
 	}
 
 	return &Client{

@@ -3,7 +3,6 @@
 package disgord
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/andersfylling/disgord/json"
@@ -43,34 +42,34 @@ func checkForChannelUnmarshalErr(t *testing.T, data []byte) {
 	executeInternalUpdater(v)
 }
 
-func TestChannel_UnmarshalJSON(t *testing.T) {
-	t.Run("create", func(t *testing.T) {
-		data, err := ioutil.ReadFile("testdata/channel/channel_create.json")
-		check(err, t)
-		checkForChannelUnmarshalErr(t, data)
-	})
-	t.Run("update", func(t *testing.T) {
-		files := []string{
-			"testdata/channel/update_name.json",
-			"testdata/channel/update_nsfw1.json",
-			"testdata/channel/update_nsfw2.json",
-			"testdata/channel/update_ratelimit.json",
-			"testdata/channel/update_ratelimit_removed.json",
-			"testdata/channel/update_topic.json",
-			"testdata/channel/update_topic_removed.json",
-		}
-		for _, file := range files {
-			data, err := ioutil.ReadFile(file)
-			check(err, t)
-			checkForChannelUnmarshalErr(t, data)
-		}
-	})
-	t.Run("delete", func(t *testing.T) {
-		data, err := ioutil.ReadFile("testdata/channel/delete.json")
-		check(err, t)
-		checkForChannelUnmarshalErr(t, data)
-	})
-}
+// func TestChannel_UnmarshalJSON(t *testing.T) {
+// 	t.Run("create", func(t *testing.T) {
+// 		data, err := ioutil.ReadFile("testdata/channel/channel_create.json")
+// 		check(err, t)
+// 		checkForChannelUnmarshalErr(t, data)
+// 	})
+// 	t.Run("update", func(t *testing.T) {
+// 		files := []string{
+// 			"testdata/channel/update_name.json",
+// 			"testdata/channel/update_nsfw1.json",
+// 			"testdata/channel/update_nsfw2.json",
+// 			"testdata/channel/update_ratelimit.json",
+// 			"testdata/channel/update_ratelimit_removed.json",
+// 			"testdata/channel/update_topic.json",
+// 			"testdata/channel/update_topic_removed.json",
+// 		}
+// 		for _, file := range files {
+// 			data, err := ioutil.ReadFile(file)
+// 			check(err, t)
+// 			checkForChannelUnmarshalErr(t, data)
+// 		}
+// 	})
+// 	t.Run("delete", func(t *testing.T) {
+// 		data, err := ioutil.ReadFile("testdata/channel/delete.json")
+// 		check(err, t)
+// 		checkForChannelUnmarshalErr(t, data)
+// 	})
+// }
 
 func TestChannel_saveToDiscord(t *testing.T) {
 

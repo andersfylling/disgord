@@ -3,30 +3,29 @@
 package disgord
 
 import (
-	"io/ioutil"
 	"strconv"
 	"testing"
 
 	"github.com/andersfylling/disgord/json"
 )
 
-func TestGuildMarshal(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
-	check(err, t)
-
-	v := Guild{}
-	err = json.Unmarshal(data, &v)
-	check(err, t)
-}
-
-func TestGuildMarshalUnavailable(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/guild/guildUnavailable1.json")
-	check(err, t)
-
-	v := Guild{}
-	err = json.Unmarshal(data, &v)
-	check(err, t)
-}
+// func TestGuildMarshal(t *testing.T) {
+// 	data, err := ioutil.ReadFile("testdata/guild/guild1.json")
+// 	check(err, t)
+//
+// 	v := Guild{}
+// 	err = json.Unmarshal(data, &v)
+// 	check(err, t)
+// }
+//
+// func TestGuildMarshalUnavailable(t *testing.T) {
+// 	data, err := ioutil.ReadFile("testdata/guild/guildUnavailable1.json")
+// 	check(err, t)
+//
+// 	v := Guild{}
+// 	err = json.Unmarshal(data, &v)
+// 	check(err, t)
+// }
 
 func TestGuild_ChannelSorting(t *testing.T) {
 	g := &Guild{}
@@ -47,14 +46,14 @@ func TestGuild_ChannelSorting(t *testing.T) {
 }
 
 // ---------
-func TestGuildBanObject(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
-	check(err, t)
-
-	ban := Ban{}
-	err = json.Unmarshal(data, &ban)
-	check(err, t)
-}
+// func TestGuildBanObject(t *testing.T) {
+// 	data, err := ioutil.ReadFile("testdata/guild/ban1.json")
+// 	check(err, t)
+//
+// 	ban := Ban{}
+// 	err = json.Unmarshal(data, &ban)
+// 	check(err, t)
+// }
 
 // --------
 func TestGuildEmbed(t *testing.T) {
