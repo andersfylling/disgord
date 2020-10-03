@@ -486,7 +486,6 @@ type GuildRoleDelete struct {
 type PresenceUpdate struct {
 	User       *User       `json:"user"`
 	RoleIDs    []Snowflake `json:"roles"`
-	Game       *Activity   `json:"game"`
 	GuildID    Snowflake   `json:"guild_id"`
 	Activities []*Activity `json:"activities"`
 
