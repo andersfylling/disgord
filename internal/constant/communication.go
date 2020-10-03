@@ -1,7 +1,7 @@
 package constant
 
 // DiscordVersion API version
-const DiscordVersion = 8
+const DiscordVersion = 6
 
 // JSONEncoding the json encoding identifier
 const JSONEncoding = "json"
