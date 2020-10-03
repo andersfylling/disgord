@@ -25,6 +25,29 @@ import (
 // PermissionBit is used to define the permission bit(s) which are set.
 type PermissionBit uint64
 
+var _ json.Unmarshaler = (*PermissionBit)(nil)
+var _ json.Marshaler = (*PermissionBit)(nil)
+
+func (b *PermissionBit) MarshalJSON() ([]byte, error) {
+	str := strconv.FormatUint(uint64(*b), 10)
+	return []byte(strconv.Quote(str)), nil
+}
+
+func (b *PermissionBit) UnmarshalJSON(bytes []byte) error {
+	str, err := strconv.Unquote(string(bytes))
+	if err != nil {
+		return fmt.Errorf("unable to unquote bytes{%s}: %w", string(bytes), err)
+	}
+
+	v, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return fmt.Errorf("parsing string to uint64 failed: %w", err)
+	}
+
+	*b = PermissionBit(v)
+	return nil
+}
+
 // Contains is used to check if the permission bits contains the bits specified.
 func (b PermissionBit) Contains(Bits PermissionBit) bool {
 	return (b & Bits) == Bits

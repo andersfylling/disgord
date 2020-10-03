@@ -3,9 +3,11 @@
 package disgord
 
 import (
-	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
+	"strconv"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func TestGuildMarshal(t *testing.T) {
@@ -162,29 +164,121 @@ func TestGuild_DeleteChannel(t *testing.T) {
 }
 
 func TestPermissionBit(t *testing.T) {
-	// test permission bit checking
-	testBits := PermissionSendMessages | PermissionReadMessages
-	if testBits.Contains(PermissionAdministrator) {
-		t.Fatal("does not have administrator")
-	}
-	if !testBits.Contains(PermissionSendMessages) {
-		t.Fatal("does have send messages")
-	}
-	if !testBits.Contains(PermissionReadMessages) {
-		t.Fatal("does have read messages")
-	}
+	t.Run("contains", func(t *testing.T) {
+		testBits := PermissionSendMessages | PermissionReadMessages
+		if testBits.Contains(PermissionAdministrator) {
+			t.Fatal("does not have administrator")
+		}
+		if !testBits.Contains(PermissionSendMessages) {
+			t.Fatal("does have send messages")
+		}
+		if !testBits.Contains(PermissionReadMessages) {
+			t.Fatal("does have read messages")
+		}
+	})
 
-	// Test json marshal/unmarshal
-	b, err := defaultMarshaler(testBits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err = json.Unmarshal(b, &testBits); err != nil {
-		t.Fatal(err)
-	}
-	executeInternalUpdater(testBits)
+	t.Run("unmarshal", func(t *testing.T) {
+		t.Run("single", func(t *testing.T) {
+			container := struct {
+				Permission PermissionBit `json:"permission"`
+			}{PermissionSendMessages | PermissionReadMessages}
 
-	if !testBits.Contains(PermissionReadMessages) {
-		t.Fatal("does have read messages")
-	}
+			b, err := json.Marshal(&container)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tmp := container
+			tmp.Permission = 0
+			if err := json.Unmarshal(b, &tmp); err != nil {
+				t.Fatal(err)
+			}
+
+			if tmp.Permission != container.Permission {
+				t.Fatalf("unmarshaled value was unexpected. Got %d, wants %d", tmp.Permission, container.Permission)
+			}
+		})
+		t.Run("array", func(t *testing.T) {
+			perms := []PermissionBit{
+				PermissionSendMessages | PermissionReadMessages,
+				PermissionAddReactions,
+				PermissionBanMembers,
+			}
+			container := struct {
+				Permissions []PermissionBit `json:"permissions"`
+			}{perms}
+
+			contains := func(v PermissionBit) bool {
+				for _, p := range container.Permissions {
+					if p == v {
+						return true
+					}
+				}
+				return false
+			}
+
+			b, err := json.Marshal(&container)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tmp := container
+			tmp.Permissions = nil
+			if err := json.Unmarshal(b, &tmp); err != nil {
+				t.Fatal(err)
+			}
+
+			for i := range perms {
+				if !contains(tmp.Permissions[i]) {
+					t.Errorf("unmarshaled value was not found in original. Got %d", tmp.Permissions[i])
+				}
+			}
+		})
+		t.Run("array-extra", func(t *testing.T) {
+			b := []byte(`{"permissions":["123", "4567"]}`)
+			container := struct {
+				Permissions []PermissionBit `json:"permissions"`
+			}{}
+
+			contains := func(v PermissionBit) bool {
+				for _, p := range container.Permissions {
+					if p == v {
+						return true
+					}
+				}
+				return false
+			}
+
+			if err := json.Unmarshal(b, &container); err != nil {
+				t.Fatal(err)
+			}
+
+			if !contains(123) {
+				t.Error("missing permission value 123")
+			}
+			if !contains(4567) {
+				t.Error("missing permission value 4567")
+			}
+		})
+	})
+
+	t.Run("marshal", func(t *testing.T) {
+		expects := PermissionBit(123456789)
+		data := []byte(`{"permission":"` + strconv.FormatUint(uint64(expects), 10) + `"}`)
+		container := struct {
+			Permission PermissionBit `json:"permission"`
+		}{}
+
+		if container.Permission != 0 {
+			t.Fatal("expected 0")
+		}
+
+		if err := json.Unmarshal(data, &container); err != nil {
+			t.Fatal(err)
+		}
+
+		if container.Permission != expects {
+			t.Fatalf("unmarshaled value was unexpected. Got %d, wants %d", container.Permission, expects)
+		}
+	})
 }
