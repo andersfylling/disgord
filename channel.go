@@ -29,6 +29,11 @@ const (
 	ChannelTypeGuildStore
 )
 
+const (
+	PermissionOverwriteTypeRole uint8 = iota
+	PermissionOverwriteTypeMember
+)
+
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -64,9 +69,11 @@ func (a *Attachment) DeepCopy() (copy interface{}) {
 }
 
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
+//
+// WARNING! Discord is bugged, and the Type field needs to be a string to read Permission Overwrites from audit log
 type PermissionOverwrite struct {
 	ID    Snowflake     `json:"id"`    // role or user id
-	Type  string        `json:"type"`  // either `role` or `member`
+	Type  uint8         `json:"type"`  // either 0 for `role` or 1 for `member`
 	Allow PermissionBit `json:"allow"` // permission bit set
 	Deny  PermissionBit `json:"deny"`  // permission bit set
 }
@@ -165,7 +172,7 @@ func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller,
 		permissions &= (-o.Deny) - 1
 	}
 	for _, overwrite := range c.PermissionOverwrites {
-		if overwrite.Type == "member" {
+		if overwrite.Type == PermissionOverwriteTypeMember {
 			// This is a member. Is it me?
 			if overwrite.ID == member.UserID {
 				// It is! Time to apply the overwrites.

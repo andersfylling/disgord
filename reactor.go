@@ -68,7 +68,7 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 
 		resourceI, err := cacheDispatcher(c.cache, evt.Name, evt.Data)
 		if err != nil {
-			fmt.Println(fmt.Errorf("failed to unmarshal event: %w", err))
+			fmt.Println(fmt.Errorf("failed to unmarshal event{%s}: %w", evt.Name, err))
 		}
 		resource := resourceI.(evtResource)
 

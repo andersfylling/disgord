@@ -34,7 +34,7 @@ func (p permissionTestingGuildBuilder) GetRoles(_ ...Flag) ([]*Role, error) {
 }
 
 func TestChannel_GetPermissions_Overwrite(t *testing.T) {
-	data := []byte(`{"permission_overwrites": [{"allow":"2048", "deny": "0", "id": "1", "type": "member"}]}`)
+	data := []byte(`{"permission_overwrites": [{"allow":"2048", "deny": "0", "id": "1", "type": 1}]}`)
 	var c Channel
 	if err := json.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)

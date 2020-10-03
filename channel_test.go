@@ -13,10 +13,10 @@ func TestChannel_DeepCopy(t *testing.T) {
 	icon1 := "sdljfdsjf"
 	test.Icon = icon1
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-		Type: "first",
+		Type: 0,
 	})
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-		Type: "second",
+		Type: 1,
 	})
 
 	copy := test.DeepCopy().(*Channel)
@@ -27,7 +27,7 @@ func TestChannel_DeepCopy(t *testing.T) {
 	}
 
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{
-		Type: "third",
+		Type: 2,
 	})
 	if len(copy.PermissionOverwrites) != 2 {
 		t.Error("deep copy failed")
