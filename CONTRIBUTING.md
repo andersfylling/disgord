@@ -48,9 +48,6 @@ Example (use spaces):
 //                          categories from this endpoint is not supported.
 ```
 
-#### Singletons
-Nope. But discussions are welcome.
-
 ## I don't want to read this whole thing I just have a question!!!
 
 > **Note:** While you are free to ask questions, given that you add the [help] prefix. You'll get faster results by using the resources below.
@@ -73,62 +70,108 @@ Depending on what you want to contribute to, here's a few:
  * caching
 
 ### Introduction
-Compared to DiscordGo, Disgord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests). Disgord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
+Compared to DiscordGo, Disgord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests, you'll have to do something hacky to get away with that or use the builder pattern). Disgord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
 
 ### Design Decisions
-Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. REST methods should be written idiomatic, reusing code for readability is acceptable: I want these methods to stay flexible for future changes, and there might be requirements to directly change the json data. Lastly, caching should be done behind the scenes. Any REST calls, and incoming events should go through the cache before the dev/user gets access to the data.
+Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. Caching should be done behind the scenes. 
 
-None of the discord data structures can be used to marshal json data for REST request. REST requests must have dedicated structures. E.g. the message struct can not be used to create a new message, one must utilise the MessageCreateParam struct. Otherwise we end up worrying about both marshalling and unmarshalling of these structures, which creates weird/unecessary custom marshallers and string pointers. (Structures are those of Guild, Channel, Message, AuditLog, etc.)
+#### Code flow / design
+Prefer procedural when possible. Note that disgord.Snowflake and disgord.Time, should be treated as OOP. Especially their .IsZero() implementation to avoid any potential zero checking.
 
-#### Event Handlers (functions and channels)
-> Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming conventions.
+You may see OOP code that could easily be procedural, feel to rectify this. But remember that this, is after all, Go.
+
+#### JSON encoding
+For now, Disgord will utilise JSON for Discord communication. ETF is on hold. For changing the unmarshal/marshal logic, see the disgord/json pkg.
+
+#### REST requests
+All GET REST calls, and incoming events should go through the cache before the dev/user gets access to the data. Also, the calls will most likely utilise a dedicated data structures with a "Params" suffix.
+
+All REST methods are resource based. Meaning you will see Channel(id).Update()..., Guild(id).Member(id).Kick(). This is horrible to mock, which is why you should inject your own http.RoundTripper if you have to test anything.
+
+> see ClientQueryBuilder
+
+context.Context is optional, and can injected into every resource using `.WithContext(context.Context)`. Note that the context.Context is only relevant for the depth you inject it. It does not continue to the next level. And the state is not mutable to avoid confusions.
+
+```go
+guildResource := client.Guild(id)
+guildResourceWithCtx := guildResource.WithContext(ctx) // returns a copy with ctx
+memberResource := guildResourceWithCtx.Member(uid) // does not contain the ctx
+memberResourceWithCtx := memberResource.WithContext(ctx) // now contains the ctx
+```
+
+#### Cache
+In Disgord, the caching layer is both a creational layer and a caching layer. Meaning your cache layer is responsible to initialising the incoming data structures from events and GET requests.
+
+There exists a Nop implementation - that still holds logic - but since it does not alter a local state/cache, it's given the "Nop" suffix.
+
+When creating a custom cache, remember to embed disgord.CacheNop to avoid having to implement methods you don't care about / don't need.
+
+#### Interface implementation
+Empty implementations, to e.g. satisfy some interface, should use "Nop" in it's name to signify so. 
+
+
+#### Events
+ 
+##### Handlers (functions and channels)
+> Also known as listeners/callbacks, but are named handlers to stay close to the reactor pattern naming scheme.
 
 > Handlers are both functions and channels in Disgord.
 
-Disgord gives the option to register multiple handlers per event type. But will not run handlers in parallel. All handlers are run in sequence.
-
-> Note! The handlers run in sequence per event. But events execute concurrently.
+When you register a handler, you create a handler-specification. This isolated unit contains the event, N middlewares and M handlers, all of which are executed sequentially by default. However, handler-specifications are run concurrently.
 
 ```go
-session.On(event.MessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
+client.On(disgord.EvtMessageCreate, func(session disgord.Session, evt *disgord.MessageCreate) {
     // ...
 })
 ```
 
 ```go
-session.On(event.MessageCreate, messageChan)
+messageChan := make(chan *disgord.MessageCreate)
+client.On(event.MessageCreate, messageChan)
 ```
 
-#### Event Middlewares
+##### Event Middlewares
 Middlewares are executed in sequence and can manipulate the event content directly. Once all have executed, and none returns nil, the handler(s) are executed. Middlewares only applies on a par-registration basis, meaning they only apply to the handlers/middlewares that are arguments in the same registration as them.
 
 ```go
-session.On(event.MessageCreate, middleware1, middleware2, messageChan)
+client.On(event.MessageCreate, middleware1, middleware2, messageChan)
 ```
 
 It's an alternative way of doing fail-fast are specifying requirements that can be reused. Or directly manipulate the incoming events before a handler process it, to ensure certain values are added/specified.
 
-#### Event Handlers lifetime
-Disgord allows a controller that dictates the lifetime of the handlers. Such that the handler(s) run only once, five time, or only within five minutes, or whatever kind of behaviour is desired. These are optional and are injected at the end of the registration function.
+##### Handler-specification lifetime
+Disgord allows a controller that dictates the lifetime of the handler-specification. Such that the handler(s) run only once, five time, or only within five minutes, or whatever kind of behaviour. These are optional and are injected at the end of the registration function.
 
 ```go
-session.On(event.MessageCreate, messageChan, &disgord.Ctrl{Deadline:5*time.Second})
+client.On(event.MessageCreate, messageChan, &disgord.Ctrl{Deadline:5*time.Second})
 ```
 
-#### Mutex
-Every Discord object will hold a read/write mutex. You can also disabled the mutexes by build constraints. See the main README file.
+##### Registration with compile time polymorphism
+Until there are generics, we will have to use the builder pattern. Call the .Event() method from session or client to gain access to compile time constrained handler-specification registration.
+
+```go
+client.Event().GuildUpdate(func(s Session, evt *GuildUpdate) {
+})
+client.Event().WithMdlw(excludeBots).MessageCreate(func(s Session, evt *MessageCreate) {
+})
+client.Event().WithCtrl(&Ctrl{Runs: 3}).MessageCreate(func(s Session, evt *MessageCreate) {
+})
+client.Event().WithCtrl(&Ctrl{Runs: 3}).WithMdlw(excludeBots).MessageCreate(func(s Session, evt *MessageCreate) {
+})
+```
 
 #### Go Generate
 
-If you during your contribution have changed either `events.go` or `event/events.go`, you must run `go generate` in the root folder of the project before pushing.  
-This command will ensure that all generated files have been updated accordingly.  
-If this command gives you warnings, you must correct them before pushing.
+Please run `go generate` before every commit. I recommend using a git hook.
 
-All files written by Go Generate will be suffixed with `_gen.go`, they should **NOT** be edited manually as they will be overwritten by Go Generate.  
+All files written by Go Generate will be suffixed with `_gen.go`, they should **NOT** be edited manually as they will be overwritten by Go Generate.
 Instead, edit the templates in `generate/` or the files they're based on (see previous paragraph). 
 
-### Running Unit Tests
-> WARNING! Please do not run the unit tests for the endpoints as these are verified to work before being pushed, and rechecking every time is just spamming the Discord API for useless information.
+### Unit Tests
+
+`go test ./... -race`
+
+Do not overdo it. Hardening something that interacts with the Discord API is forced to be rewritten, and possibly tests deleted as discord can suddenly change something. Public functions must be tested, but internal logic does not need a direct test as that allows the internal logic to be refactored in a productive manner. If it's complex logic large function, then yes, definitely test that.
 
 In Disgord you will see both local unit tests and unit tests that verify directly against the Discord API. Note that the "live" tests (that depends on the Discord API) needs to be activated through environment variables. However, these should only be run when some breaking changes to the REST implementation changes. You will most likely never have to worry about it.
 
