@@ -25,7 +25,7 @@
 Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
 
 ## Warning
-Remember to read the docs/code for whatever version of disgord you are using. This README file reflects the latest state in the develop branch, or at least, I try to reflect the latest state.
+Remember to read the docs/code for whatever version of disgord you are using. This README file tries reflects the latest state in the develop branch.
 
 ## Data types & tips
  - Use disgord.Snowflake, not snowflake.Snowflake.
@@ -123,7 +123,7 @@ Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
 
 No. Self bots are againts ToS and could result in account termination (see
 https://support.discord.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
-In addition, self bots aren't a part of the official Discord API, meaning support could change at any 
-time and Disgord could break unexpectedly if this feature were to be added.
+In addition, self bots aren't a part of the official Discord API, meaning support could change at
+any time and Disgord could break unexpectedly if this feature were to be added.
 ```
 
