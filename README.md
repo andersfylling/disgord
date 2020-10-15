@@ -29,7 +29,7 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 
 ## Data types & tips
  - Use disgord.Snowflake, not snowflake.Snowflake.
- - Use disgord.Time, not time.Time when dealing with Discord timestamps. This is because Discord returns a weird time format.
+ - Use disgord.Time, not time.Time when dealing with Discord timestamps.
 
 ## Starter guide
 > This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dealing with dependencies, remember to activate module support in your IDE
@@ -64,12 +64,15 @@ Some of the REST methods (updating existing data structures) will use the builde
 > Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
-client.CurrentUser().Get(context.Background(), disgord.IgnoreCache)
-client.Guild(guildID).GetMembers(context.Background(), disgord.IgnoreCache)
+client.CurrentUser().Get(disgord.IgnoreCache)
+client.Guild(guildID).GetMembers(disgord.IgnoreCache)
 
 // always checks the local cache first
-client.CurrentUser().Get(context.Background())
-client.Guild(guildID).GetMembers(context.Background())
+client.CurrentUser().Get()
+client.Guild(guildID).GetMembers()
+
+// with cancellation
+client.CurrentUser().WithContext(context.Background()).Get()
 ```
 
 #### Voice
