@@ -15,7 +15,6 @@ func main() {
     // configure a Disgord client
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger:   disgord.DefaultLogger(false), // debug=false
     })
     defer client.StayConnectedUntilInterrupted(context.Background())
     
@@ -49,7 +48,6 @@ func main() {
     // configure a Disgord client
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger:   disgord.DefaultLogger(false), // debug=false
     })
     defer client.StayConnectedUntilInterrupted(context.Background())
     
