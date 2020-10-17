@@ -89,22 +89,13 @@ type Session interface {
 
 	RESTRatelimitBuckets() (group map[string][]string)
 
-	// Abstract REST methods for Discord structs
-	DeleteFromDiscord(ctx context.Context, obj discordDeleter, flags ...Flag) error
-
 	// AddPermission is to store the permissions required by the bot to function as intended.
 	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
 	GetPermissions() (permissions PermissionBit)
 
-	// CreateBotURL
-	InviteURL(ctx context.Context) (url string, err error)
-
 	Pool() *pools
 
 	ClientQueryBuilder
-
-	// Custom REST functions
-	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (*Message, error)
 
 	// Status update functions
 	UpdateStatus(s *UpdateStatusPayload) error

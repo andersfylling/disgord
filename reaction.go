@@ -46,9 +46,13 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 }
 
 func emojiReference(i interface{}) (string, error) {
-	emojiCode := ""
+	var emojiCode string
 	if e, ok := i.(*Emoji); ok {
-		emojiCode = e.IDReference()
+		if e.ID.IsZero() {
+			emojiCode = e.Name
+		} else {
+			emojiCode = e.Name + ":" + e.ID.String()
+		}
 	} else if _, ok := i.(string); ok {
 		emojiCode = i.(string) // unicode
 		emojiCode = unwrapEmoji(emojiCode)
@@ -127,7 +131,7 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 
 	emojiCode, err := emojiReference(r.emoji)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{

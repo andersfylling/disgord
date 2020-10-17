@@ -221,9 +221,6 @@ func (g *Guild) updateInternals() {
 	for i := range g.Roles {
 		g.Roles[i].guildID = g.ID
 	}
-	for i := range g.Emojis {
-		g.Emojis[i].guildID = g.ID
-	}
 	for i := range g.Channels {
 		g.Channels[i].GuildID = g.ID
 	}
@@ -382,7 +379,7 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 	if err != nil {
 		return 0, err
 	}
-	_ = s.DeleteFromDiscord(ctx, invite) // delete if possible
+	_, _ = s.Invite(invite.Code).WithContext(ctx).Delete() // delete if possible
 
 	return invite.ApproximateMemberCount, nil
 }

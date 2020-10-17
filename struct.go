@@ -2,11 +2,11 @@ package disgord
 
 import (
 	"bytes"
-	"context"
 	"errors"
-	"github.com/andersfylling/disgord/json"
 	"strconv"
 	"time"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 // common functionality/types used by struct_*.go files goes here
@@ -40,12 +40,6 @@ type ErrorUnsupportedType struct {
 
 func (e *ErrorUnsupportedType) Error() string {
 	return e.info
-}
-
-// DiscordDeleter holds the DeleteFromDiscord method which deletes a given
-// object from the Discord servers.
-type discordDeleter interface {
-	deleteFromDiscord(ctx context.Context, session Session, flags ...Flag) error
 }
 
 // hasher creates a hash for comparing objects. This excludes the identifier and object type as those are expected

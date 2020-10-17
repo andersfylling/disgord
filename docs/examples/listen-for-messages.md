@@ -11,7 +11,6 @@ func printMessage(session disgord.Session, data *disgord.MessageCreate) {
 func main() {
     client := disgord.New(disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
     })
     // connect, and stay connected until a system interrupt takes place
     defer client.StayConnectedUntilInterrupted(context.Background())
@@ -29,7 +28,6 @@ However, be careful if you plan on closing channels, as you might put disgord in
 ```go
 client := disgord.New(disgord.Config{
     BotToken: os.Getenv("DISGORD_TOKEN"),
-    Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
 })
 
 // or use a channel to listen for events
@@ -64,7 +62,6 @@ The nice part with go channels is that they can work as a load balancer. Thanks 
 func main() {
 	client := disgord.New(&disgord.Config{
         BotToken: os.Getenv("DISGORD_TOKEN"),
-        Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
     })
     defer client.StayConnectedUntilInterrupted(context.Background())
 	

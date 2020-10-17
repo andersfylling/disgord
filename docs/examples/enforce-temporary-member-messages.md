@@ -32,7 +32,6 @@ func autoDeleteNewMessages(session disgord.Session, evt *disgord.MessageCreate) 
 func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
-		Logger:   disgord.DefaultLogger(false), // optional logging, debug=false
 	})
     defer client.StayConnectedUntilInterrupted(context.Background())
 	

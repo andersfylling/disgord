@@ -274,9 +274,6 @@ type GuildEmojisUpdate struct {
 var _ internalUpdater = (*GuildEmojisUpdate)(nil)
 
 func (g *GuildEmojisUpdate) updateInternals() {
-	for i := range g.Emojis {
-		g.Emojis[i].guildID = g.GuildID
-	}
 }
 
 // ---------------------------

@@ -35,7 +35,6 @@ func (e *Emoji) Reset() {
 	e.RequireColons = false
 	e.Managed = false
 	e.Animated = false
-	e.guildID = 0
 }
 
 func (m *MessageCreate) Reset() {

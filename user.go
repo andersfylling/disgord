@@ -382,7 +382,7 @@ func (u *User) SendMsg(ctx context.Context, session Session, message *Message) (
 		return
 	}
 
-	msg, err = session.SendMsg(ctx, channel.ID, message)
+	msg, err = session.WithContext(ctx).SendMsg(channel.ID, message)
 	return
 }
 

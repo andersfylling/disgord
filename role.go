@@ -48,23 +48,21 @@ func NewRole() *Role {
 
 // Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
-	ID          Snowflake `json:"id"`
-	Name        string    `json:"name"`
-	Color       uint      `json:"color"`
-	Hoist       bool      `json:"hoist"`
-	Position    int       `json:"position"` // can be -1
-	Permissions uint64    `json:"permissions"`
-	Managed     bool      `json:"managed"`
-	Mentionable bool      `json:"mentionable"`
-
-	guildID Snowflake
+	ID          Snowflake     `json:"id"`
+	Name        string        `json:"name"`
+	Color       uint          `json:"color"`
+	Hoist       bool          `json:"hoist"`
+	Position    int           `json:"position"` // can be -1
+	Permissions PermissionBit `json:"permissions"`
+	Managed     bool          `json:"managed"`
+	Mentionable bool          `json:"mentionable"`
+	guildID     Snowflake
 }
 
 var _ Mentioner = (*Role)(nil)
 var _ Reseter = (*Role)(nil)
 var _ DeepCopier = (*Role)(nil)
 var _ Copier = (*Role)(nil)
-var _ discordDeleter = (*Role)(nil)
 var _ fmt.Stringer = (*Role)(nil)
 
 func (r *Role) String() string {
@@ -84,7 +82,7 @@ func (r *Role) SetGuildID(id Snowflake) {
 // DeepCopy see interface at struct.go#DeepCopier
 func (r *Role) DeepCopy() (copy interface{}) {
 	copy = NewRole()
-	r.CopyOverTo(copy)
+	_ = r.CopyOverTo(copy)
 
 	return
 }
@@ -107,21 +105,6 @@ func (r *Role) CopyOverTo(other interface{}) (err error) {
 	role.Mentionable = r.Mentionable
 	role.guildID = r.guildID
 	return
-}
-
-func (r *Role) deleteFromDiscord(ctx context.Context, s Session, flags ...Flag) (err error) {
-	guildID := r.guildID
-	id := r.ID
-
-	if id.IsZero() {
-		return newErrorMissingSnowflake("role has no ID")
-	}
-	if guildID.IsZero() {
-		return newErrorMissingSnowflake("role has no guildID")
-	}
-
-	err = s.Guild(guildID).Role(id).WithContext(ctx).Delete(flags...)
-	return err
 }
 
 //////////////////////////////////////////////////////
