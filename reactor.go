@@ -67,6 +67,10 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 		}
 
 		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		if resourceI == nil {
+			d.session.Logger().Error(fmt.Errorf("no cache"), "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
+			continue
+		}
 		resource := resourceI.(evtResource)
 
 		ctx := context.Background()
