@@ -3,7 +3,6 @@
 package disgord
 
 import (
-	"context"
 	"sync"
 	"testing"
 )
@@ -43,7 +42,7 @@ func TestRegister(t *testing.T) {
 		<-handler
 		wg.Done()
 	}()
-	d.dispatch(context.Background(), EvtMessageCreate, &MessageCreate{})
+	d.dispatch(EvtMessageCreate, &MessageCreate{})
 	wg.Wait()
 }
 
@@ -62,7 +61,7 @@ func TestCtrl_CloseChannel(t *testing.T) {
 		<-handler
 		wg.Done()
 	}()
-	d.dispatch(context.Background(), EvtMessageCreate, &MessageCreate{})
+	d.dispatch(EvtMessageCreate, &MessageCreate{})
 	wg.Wait()
 
 	// close channel
@@ -72,5 +71,5 @@ func TestCtrl_CloseChannel(t *testing.T) {
 	}
 
 	// should not hang
-	d.dispatch(context.Background(), EvtMessageCreate, &MessageCreate{})
+	d.dispatch(EvtMessageCreate, &MessageCreate{})
 }

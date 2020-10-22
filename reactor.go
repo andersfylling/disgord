@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -18,22 +17,6 @@ import (
 // HandlerSpecification can hold one or more handlers, zero or more middlewares, and one controller.
 //
 //////////////////////////////////////////////////////
-
-func populateResource(resource evtResource, ctx context.Context, evt *gateway.Event) (err error) {
-	resource.registerContext(ctx)
-	resource.setShardID(evt.ShardID)
-
-	// if err = json.Unmarshal(evt.Data, resource); err != nil {
-	// 	return err
-	// }
-	// executeInternalUpdater(resource)
-
-	// TODO: updating internal states should be independent of the public reactor?
-	//  But should the public handlers wait to be triggered until all the internals are updated?
-	//executeInternalClientUpdater(c, evt)
-
-	return nil
-}
 
 //////////////////////////////////////////////////////
 //
@@ -66,21 +49,19 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 			executeInternalUpdater(c.currentUser)
 		}
 
-		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		resourceI, err := cacheDispatcher(c.cache, evt.Name, evt.Data)
 		if resourceI == nil {
-			d.session.Logger().Error(fmt.Errorf("no cache"), "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
+			err = fmt.Errorf("cache did not instantiate object. Prev error: %w", err)
+		}
+		if err != nil {
+			err = fmt.Errorf("demultiplexer{%s}: %w, data '%s'", evt.Name, err, string(evt.Data))
+			d.session.Logger().Error(err)
 			continue
 		}
 		resource := resourceI.(evtResource)
+		resource.setShardID(evt.ShardID)
 
-		ctx := context.Background()
-		if err := populateResource(resource, ctx, evt); err != nil {
-			d.session.Logger().Error(err, "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
-			continue // ignore event
-			// TODO: if an event is ignored, should it not at least send a signal for listeners with no parameters?
-		}
-
-		go d.dispatch(ctx, evt.Name, resource)
+		go d.dispatch(evt.Name, resource)
 	}
 }
 
@@ -133,7 +114,7 @@ func (d *dispatcher) register(evt string, inputs ...interface{}) error {
 	return nil
 }
 
-func (d *dispatcher) dispatch(ctx context.Context, evtName string, evt resource) {
+func (d *dispatcher) dispatch(evtName string, evt resource) {
 	// handlers
 	d.RLock()
 	specs := d.handlerSpecs[evtName]
