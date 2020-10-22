@@ -128,6 +128,7 @@ type Channel struct {
 	//    "name": "illuminati",
 	//    "type": 0
 	//  }
+	// TODO: remove
 	complete      bool
 	recipientsIDs []Snowflake
 }
