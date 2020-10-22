@@ -2,7 +2,7 @@ package endpoint
 
 // Invites /invites
 func Invites() string {
-	return invites
+	return invite
 }
 
 // Invite /invites/{invite.code}

@@ -914,7 +914,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages/bulk-delete
+//  Endpoint                /channels/{channel.id}/messages/bulk_delete
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
