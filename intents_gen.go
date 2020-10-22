@@ -7,6 +7,8 @@ import (
 	"github.com/andersfylling/disgord/internal/gateway"
 )
 
+type Intent = gateway.Intent
+
 const (
 	IntentDirectMessageReactions = gateway.IntentDirectMessageReactions
 	IntentDirectMessageTyping    = gateway.IntentDirectMessageTyping

@@ -140,6 +140,9 @@ type Config struct {
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
+	// For direct communication with you bot you must specify intents (eg.
+	Intents Intent
+
 	// your project name, name of bot, or application
 	ProjectName string
 
@@ -187,8 +190,6 @@ type Config struct {
 	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
 	// them at all due to how the identify command was defined. eg. guildS_subscriptions
 	IgnoreEvents []string
-
-	Intents gateway.Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor

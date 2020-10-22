@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	evt "github.com/andersfylling/disgord/internal/event"
+	"github.com/andersfylling/disgord/json"
 
 	"go.uber.org/atomic"
 
@@ -30,6 +32,22 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 	} else {
 		err = errors.New("missing event channel")
 		return nil, err
+	}
+
+	// figure out intents
+	for _, e := range evt.All() {
+		var exists bool
+		for _, e2 := range conf.IgnoreEvents {
+			if e == e2 {
+				exists = true
+				break
+			}
+		}
+		if exists {
+			continue
+		}
+
+		conf.Intents |= EventToIntent(e, false)
 	}
 
 	client = &EvtClient{

@@ -213,3 +213,39 @@ const WebhooksUpdate = "WEBHOOKS_UPDATE"
 //  - ApproximatePresenceCount int
 //  - ApproximateMemberCount int
 const InviteCreate = "INVITE_CREATE"
+
+func All() []string {
+	return []string{
+		GuildCreate,
+		GuildUpdate,
+		GuildDelete,
+		GuildRoleCreate,
+		GuildRoleUpdate,
+		GuildRoleDelete,
+		ChannelCreate,
+		ChannelUpdate,
+		ChannelDelete,
+		ChannelPinsUpdate,
+		GuildMemberAdd,
+		GuildMemberUpdate,
+		GuildMemberRemove,
+		GuildBanAdd,
+		GuildBanRemove,
+		GuildEmojisUpdate,
+		GuildIntegrationsUpdate,
+		WebhooksUpdate,
+		InviteCreate,
+		InviteDelete,
+		VoiceStateUpdate,
+		PresenceUpdate,
+		MessageCreate,
+		MessageUpdate,
+		MessageDelete,
+		MessageDeleteBulk,
+		MessageReactionAdd,
+		MessageReactionRemove,
+		MessageReactionRemoveAll,
+		// MessageReactionRemoveEmoji,
+		TypingStart,
+	}
+}

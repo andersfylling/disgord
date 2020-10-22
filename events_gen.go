@@ -4,8 +4,6 @@ package disgord
 // Warning: This file is overwritten at "go generate", instead adapt events.go and event/events.go and run go generate
 
 import (
-	"context"
-
 	"github.com/andersfylling/disgord/internal/event"
 )
 
@@ -103,8 +101,7 @@ func AllEvents(except ...string) []string {
 //
 const EvtChannelCreate = event.ChannelCreate
 
-func (h *ChannelCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelCreate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerChannelCreate = func(Session, *ChannelCreate)
 
@@ -114,8 +111,7 @@ type HandlerChannelCreate = func(Session, *ChannelCreate)
 //
 const EvtChannelDelete = event.ChannelDelete
 
-func (h *ChannelDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelDelete) setShardID(id uint) { h.ShardID = id }
 
 type HandlerChannelDelete = func(Session, *ChannelDelete)
 
@@ -129,8 +125,7 @@ type HandlerChannelDelete = func(Session, *ChannelDelete)
 //
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
-func (h *ChannelPinsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelPinsUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelPinsUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
 
@@ -140,8 +135,7 @@ type HandlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
 //
 const EvtChannelUpdate = event.ChannelUpdate
 
-func (h *ChannelUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *ChannelUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *ChannelUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerChannelUpdate = func(Session, *ChannelUpdate)
 
@@ -151,8 +145,7 @@ type HandlerChannelUpdate = func(Session, *ChannelUpdate)
 //
 const EvtGuildBanAdd = event.GuildBanAdd
 
-func (h *GuildBanAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildBanAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildBanAdd) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildBanAdd = func(Session, *GuildBanAdd)
 
@@ -162,8 +155,7 @@ type HandlerGuildBanAdd = func(Session, *GuildBanAdd)
 //
 const EvtGuildBanRemove = event.GuildBanRemove
 
-func (h *GuildBanRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildBanRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildBanRemove) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildBanRemove = func(Session, *GuildBanRemove)
 
@@ -177,8 +169,7 @@ type HandlerGuildBanRemove = func(Session, *GuildBanRemove)
 //
 const EvtGuildCreate = event.GuildCreate
 
-func (h *GuildCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildCreate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildCreate = func(Session, *GuildCreate)
 
@@ -190,8 +181,7 @@ type HandlerGuildCreate = func(Session, *GuildCreate)
 //
 const EvtGuildDelete = event.GuildDelete
 
-func (h *GuildDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildDelete) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildDelete = func(Session, *GuildDelete)
 
@@ -204,8 +194,7 @@ type HandlerGuildDelete = func(Session, *GuildDelete)
 //
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
-func (h *GuildEmojisUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildEmojisUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildEmojisUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 
@@ -217,8 +206,7 @@ type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 //
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
-func (h *GuildIntegrationsUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildIntegrationsUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildIntegrationsUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
 
@@ -232,8 +220,7 @@ type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
 //
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
-func (h *GuildMemberAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberAdd) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 
@@ -246,8 +233,7 @@ type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 //
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
-func (h *GuildMemberRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberRemove) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
 
@@ -262,8 +248,7 @@ type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
 //
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
-func (h *GuildMemberUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMemberUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMemberUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 
@@ -276,8 +261,7 @@ type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 //
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
-func (h *GuildMembersChunk) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildMembersChunk) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildMembersChunk) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
 
@@ -290,8 +274,7 @@ type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
 //
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
-func (h *GuildRoleCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleCreate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 
@@ -304,8 +287,7 @@ type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 //
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
-func (h *GuildRoleDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleDelete) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
 
@@ -318,8 +300,7 @@ type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
 //
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
-func (h *GuildRoleUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildRoleUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
 
@@ -329,8 +310,7 @@ type HandlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
 //
 const EvtGuildUpdate = event.GuildUpdate
 
-func (h *GuildUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *GuildUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerGuildUpdate = func(Session, *GuildUpdate)
 
@@ -357,8 +337,7 @@ type HandlerGuildUpdate = func(Session, *GuildUpdate)
 //
 const EvtInviteCreate = event.InviteCreate
 
-func (h *InviteCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *InviteCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *InviteCreate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerInviteCreate = func(Session, *InviteCreate)
 
@@ -368,8 +347,7 @@ type HandlerInviteCreate = func(Session, *InviteCreate)
 //
 const EvtInviteDelete = event.InviteDelete
 
-func (h *InviteDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *InviteDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *InviteDelete) setShardID(id uint) { h.ShardID = id }
 
 type HandlerInviteDelete = func(Session, *InviteDelete)
 
@@ -379,8 +357,7 @@ type HandlerInviteDelete = func(Session, *InviteDelete)
 //
 const EvtMessageCreate = event.MessageCreate
 
-func (h *MessageCreate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageCreate) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageCreate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageCreate = func(Session, *MessageCreate)
 
@@ -393,8 +370,7 @@ type HandlerMessageCreate = func(Session, *MessageCreate)
 //
 const EvtMessageDelete = event.MessageDelete
 
-func (h *MessageDelete) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageDelete) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageDelete) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageDelete = func(Session, *MessageDelete)
 
@@ -407,8 +383,7 @@ type HandlerMessageDelete = func(Session, *MessageDelete)
 //
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
-func (h *MessageDeleteBulk) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageDeleteBulk) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageDeleteBulk) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
 
@@ -423,8 +398,7 @@ type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
 //
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
-func (h *MessageReactionAdd) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionAdd) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionAdd) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 
@@ -439,8 +413,7 @@ type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 //
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
-func (h *MessageReactionRemove) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionRemove) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionRemove) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 
@@ -453,8 +426,7 @@ type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 //
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
-func (h *MessageReactionRemoveAll) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageReactionRemoveAll) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageReactionRemoveAll) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 
@@ -466,8 +438,7 @@ type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 //
 const EvtMessageUpdate = event.MessageUpdate
 
-func (h *MessageUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *MessageUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *MessageUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerMessageUpdate = func(Session, *MessageUpdate)
 
@@ -483,8 +454,7 @@ type HandlerMessageUpdate = func(Session, *MessageUpdate)
 //
 const EvtPresenceUpdate = event.PresenceUpdate
 
-func (h *PresenceUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *PresenceUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *PresenceUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
 
@@ -503,8 +473,7 @@ type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
 //
 const EvtReady = event.Ready
 
-func (h *Ready) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *Ready) setShardID(id uint)                  { h.ShardID = id }
+func (h *Ready) setShardID(id uint) { h.ShardID = id }
 
 type HandlerReady = func(Session, *Ready)
 
@@ -517,8 +486,7 @@ type HandlerReady = func(Session, *Ready)
 //
 const EvtResumed = event.Resumed
 
-func (h *Resumed) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *Resumed) setShardID(id uint)                  { h.ShardID = id }
+func (h *Resumed) setShardID(id uint) { h.ShardID = id }
 
 type HandlerResumed = func(Session, *Resumed)
 
@@ -532,8 +500,7 @@ type HandlerResumed = func(Session, *Resumed)
 //
 const EvtTypingStart = event.TypingStart
 
-func (h *TypingStart) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *TypingStart) setShardID(id uint)                  { h.ShardID = id }
+func (h *TypingStart) setShardID(id uint) { h.ShardID = id }
 
 type HandlerTypingStart = func(Session, *TypingStart)
 
@@ -543,8 +510,7 @@ type HandlerTypingStart = func(Session, *TypingStart)
 //
 const EvtUserUpdate = event.UserUpdate
 
-func (h *UserUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *UserUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *UserUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerUserUpdate = func(Session, *UserUpdate)
 
@@ -559,8 +525,7 @@ type HandlerUserUpdate = func(Session, *UserUpdate)
 //
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
-func (h *VoiceServerUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *VoiceServerUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *VoiceServerUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
 
@@ -570,8 +535,7 @@ type HandlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
 //
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
-func (h *VoiceStateUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *VoiceStateUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *VoiceStateUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
 
@@ -584,8 +548,7 @@ type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
 //
 const EvtWebhooksUpdate = event.WebhooksUpdate
 
-func (h *WebhooksUpdate) registerContext(ctx context.Context) { h.Ctx = ctx }
-func (h *WebhooksUpdate) setShardID(id uint)                  { h.ShardID = id }
+func (h *WebhooksUpdate) setShardID(id uint) { h.ShardID = id }
 
 type HandlerWebhooksUpdate = func(Session, *WebhooksUpdate)
 

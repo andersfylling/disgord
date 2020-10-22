@@ -23,7 +23,6 @@ type EventType interface {
 }
 
 type evtResource interface {
-	registerContext(ctx context.Context)
 	setShardID(id uint)
 }
 

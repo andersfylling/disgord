@@ -74,7 +74,9 @@ func (g *testWS) Disconnected() bool {
 var _ Conn = (*testWS)(nil)
 
 func TestEvtIdentify(t *testing.T) {
-	i := &evtIdentity{}
+	i := &evtIdentity{
+		Intents: IntentGuildMessageReactions,
+	}
 	var fields map[string]interface{}
 
 	raw, err := json.Marshal(i)
@@ -88,7 +90,7 @@ func TestEvtIdentify(t *testing.T) {
 
 	if constant.DiscordVersion == 8 {
 		if _, ok := fields["intents"]; !ok {
-			t.Error("discord gateway 7 states that intents are mandatory")
+			t.Error("discord gateway 8 states that intents are mandatory")
 			// https://discord.com/developers/docs/topics/gateway#gateway-intents
 		}
 	}
