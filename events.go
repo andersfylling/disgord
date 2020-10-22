@@ -6,6 +6,7 @@ package disgord
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/andersfylling/disgord/json"
@@ -494,6 +495,14 @@ type PresenceUpdate struct {
 	Status  string          `json:"status"`
 	Ctx     context.Context `json:"-"`
 	ShardID uint            `json:"-"`
+}
+
+func (h *PresenceUpdate) Game() (*Activity, error) {
+	if len(h.Activities) > 0 {
+		return h.Activities[0], nil
+	} else {
+		return nil, errors.New("no activities")
+	}
 }
 
 // ---------------------------

@@ -136,11 +136,13 @@ func TestClient(t *testing.T) {
 				done <- false
 				return
 			}
-			if evt.Game == nil {
+
+			game, err := evt.Game()
+			if err != nil {
 				done <- false
 				return
 			}
-			if evt.Game.Name != "hello" {
+			if game.Name != "hello" {
 				done <- false
 				return
 			}
