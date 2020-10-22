@@ -74,6 +74,8 @@ func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
 			LastMessageID: msg.ID,
 			Type:          ChannelTypeDM,
 		}
+		c.Patch(channel)
+
 		item := c.Channels.CreateCacheableItem(channel)
 		c.Channels.Set(channel.ID, item)
 	}
