@@ -12,16 +12,6 @@ import (
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
-// func TestAuditLogConvertAuditLogParamsToStr(t *testing.T) {
-// 	data, err := ioutil.ReadFile("testdata/auditlog/auditlog1.json")
-// 	check(err, t)
-//
-// 	v := AuditLog{}
-// 	err = json.Unmarshal(data, &v)
-// 	executeInternalUpdater(v)
-// 	check(err, t)
-// }
-
 func TestAuditLog_InterfaceImplementations(t *testing.T) {
 	t.Run("AuditLog", func(t *testing.T) {
 		var u interface{} = &AuditLog{}
@@ -139,45 +129,6 @@ func TestGuildAuditLogs(t *testing.T) {
 			t.Error("incorrect endpoint: ", client.req.Endpoint)
 		}
 	})
-	// t.Run("success", func(t *testing.T) {
-	// 	body, err := ioutil.ReadFile("testdata/auditlog/auditlog1.json")
-	// 	check(err, t)
-	//
-	// 	// successful response
-	// 	client := &reqMocker{
-	// 		body: body,
-	// 		resp: &http.Response{
-	// 			StatusCode: 200,
-	// 		},
-	// 	}
-	//
-	// 	builder := &guildAuditLogsBuilder{}
-	// 	builder.r.itemFactory = auditLogFactory
-	// 	builder.r.IgnoreCache().setup(client, &httd.Request{
-	// 		Method:   httd.MethodGet,
-	// 		Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
-	// 		Ctx:      context.Background(),
-	// 	}, nil)
-	//
-	// 	logs, err := builder.Execute()
-	// 	if err != nil {
-	// 		t.Error(err)
-	// 	}
-	//
-	// 	if logs == nil {
-	// 		t.Fatal("logs was nil but expected content")
-	// 	}
-	//
-	// 	if len(logs.AuditLogEntries) != 10 {
-	// 		t.Errorf("expected 10 log entries, got %d", len(logs.AuditLogEntries))
-	// 	}
-	// 	if len(logs.Users) != 4 {
-	// 		t.Errorf("expected 4 Users, got %d", len(logs.Users))
-	// 	}
-	// 	if len(logs.Webhooks) != 0 {
-	// 		t.Errorf("expected 0 webhooks, got %d", len(logs.Webhooks))
-	// 	}
-	// })
 	t.Run("missing-permission", func(t *testing.T) {
 		errorMsg := "missing permission flag?"
 		client := &reqMocker{
@@ -229,40 +180,3 @@ func TestGuildAuditLogs(t *testing.T) {
 		// TODO: implement ErrREST check
 	})
 }
-
-// func TestAuditlog_Unmarshal(t *testing.T) {
-// 	data := []byte(`{
-//       "target_id": "547614326257877003",
-//       "changes": [
-//         {
-//           "new_value": "andreesdsdsd",
-//           "old_value": "test",
-//           "key": "name"
-//         }
-//       ],
-//       "user_id": "486832262592069632",
-//       "id": "547614855067205678",
-//       "action_type": 61
-//     }`)
-// 	var v2 *AuditLogEntry
-// 	if err := json.Unmarshal(data, &v2); err != nil {
-// 		t.Error(err)
-// 	}
-// 	executeInternalUpdater(v2)
-//
-// 	data, err := ioutil.ReadFile("testdata/auditlog/logs-limit-10.json")
-// 	if err != nil {
-// 		t.Fatal("missing test data")
-// 		return
-// 	}
-//
-// 	var v *AuditLog
-// 	if err := json.Unmarshal(data, &v); err != nil {
-// 		t.Error(err)
-// 	}
-// 	executeInternalUpdater(v)
-//
-// 	if v.Bans() != nil {
-// 		t.Error("these logs contains no bans")
-// 	}
-// }

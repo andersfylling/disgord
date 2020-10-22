@@ -278,29 +278,3 @@ func BenchmarkDiscriminator(b *testing.B) {
 		})
 	})
 }
-
-// func TestIDExtraction(t *testing.T) {
-// 	data := []byte(`{"id":"80351110224678912","test":{},username":"Nelly","discriminator":"1337","email":"nelly@discordapp.com","avatar":"8342729096ea3675442027381ff50dfe","verified":true}`)
-// 	id, err := extractAttribute([]byte(`"id":"`), 0, data)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-//
-// 	if id != Snowflake(80351110224678912) {
-// 		t.Error("incorrect snowflake id")
-// 	}
-//
-// 	data, err = ioutil.ReadFile("testdata/guild/complete-guild.json")
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	id, err = extractAttribute([]byte(`"id":"`), 0, data)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-//
-// 	if id != Snowflake(244200618854580224) {
-// 		t.Error("incorrect snowflake id")
-// 	}
-//
-// }
