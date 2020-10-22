@@ -27,6 +27,13 @@ Go module with context support that handles some of the difficulties from intera
 ## Warning
 Remember to read the docs/code for whatever version of disgord you are using. This README file tries reflects the latest state in the develop branch.
 
+By default DM capabilities are disabled. If you want to activate these, or some, specify their related intent.
+```go
+client := disgord.New(disgord.Config{
+    Intents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
+})
+```
+
 ## Data types & tips
  - Use disgord.Snowflake, not snowflake.Snowflake.
  - Use disgord.Time, not time.Time when dealing with Discord timestamps.
