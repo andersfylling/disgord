@@ -165,6 +165,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageReactionRemoveAll:
 		s = *t
+	case *[]*MessageReactionRemoveEmoji:
+		s = *t
 	case *[]*MessageUpdate:
 		s = *t
 	case *[]*PresenceUpdate:
@@ -557,6 +559,12 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
+	case []*MessageReactionRemoveEmoji:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*PresenceUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -688,6 +696,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*MessageReactionRemoveAll:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*MessageReactionRemoveEmoji:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {

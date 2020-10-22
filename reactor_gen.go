@@ -64,6 +64,8 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &MessageReactionRemove{}
 	case EvtMessageReactionRemoveAll:
 		resource = &MessageReactionRemoveAll{}
+	case EvtMessageReactionRemoveEmoji:
+		resource = &MessageReactionRemoveEmoji{}
 	case EvtMessageUpdate:
 		resource = &MessageUpdate{}
 	case EvtPresenceUpdate:
@@ -199,6 +201,10 @@ func isHandler(h Handler) (ok bool) {
 		ok = true
 	case chan *MessageReactionRemoveAll:
 		ok = true
+	case MessageReactionRemoveEmojiHandler:
+		ok = true
+	case chan *MessageReactionRemoveEmoji:
+		ok = true
 	case MessageUpdateHandler:
 		ok = true
 	case chan *MessageUpdate:
@@ -294,6 +300,8 @@ func closeChannel(channel interface{}) {
 	case chan *MessageReactionRemove:
 		close(t)
 	case chan *MessageReactionRemoveAll:
+		close(t)
+	case chan *MessageReactionRemoveEmoji:
 		close(t)
 	case chan *MessageUpdate:
 		close(t)
@@ -499,6 +507,12 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*MessageReactionRemoveAll)
 	case chan<- *MessageReactionRemoveAll:
 		t <- evt.(*MessageReactionRemoveAll)
+	case MessageReactionRemoveEmojiHandler:
+		t(d.session, evt.(*MessageReactionRemoveEmoji))
+	case chan *MessageReactionRemoveEmoji:
+		t <- evt.(*MessageReactionRemoveEmoji)
+	case chan<- *MessageReactionRemoveEmoji:
+		t <- evt.(*MessageReactionRemoveEmoji)
 	case MessageUpdateHandler:
 		t(d.session, evt.(*MessageUpdate))
 	case chan *MessageUpdate:
@@ -639,6 +653,9 @@ type MessageReactionRemoveHandler = func(s Session, h *MessageReactionRemove)
 
 // MessageReactionRemoveAllHandler is triggered in MessageReactionRemoveAll events
 type MessageReactionRemoveAllHandler = func(s Session, h *MessageReactionRemoveAll)
+
+// MessageReactionRemoveEmojiHandler is triggered in MessageReactionRemoveEmoji events
+type MessageReactionRemoveEmojiHandler = func(s Session, h *MessageReactionRemoveEmoji)
 
 // MessageUpdateHandler is triggered in MessageUpdate events
 type MessageUpdateHandler = func(s Session, h *MessageUpdate)

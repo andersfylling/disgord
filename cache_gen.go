@@ -82,6 +82,7 @@ type CacheUpdater interface {
 	MessageReactionAdd(data []byte) (*MessageReactionAdd, error)
 	MessageReactionRemove(data []byte) (*MessageReactionRemove, error)
 	MessageReactionRemoveAll(data []byte) (*MessageReactionRemoveAll, error)
+	MessageReactionRemoveEmoji(data []byte) (*MessageReactionRemoveEmoji, error)
 	MessageUpdate(data []byte) (*MessageUpdate, error)
 	PresenceUpdate(data []byte) (*PresenceUpdate, error)
 	Ready(data []byte) (*Ready, error)
@@ -147,6 +148,8 @@ func cacheDispatcher(c Cache, event string, data []byte) (evt EventType, err err
 		evt, err = c.MessageReactionRemove(data)
 	case EvtMessageReactionRemoveAll:
 		evt, err = c.MessageReactionRemoveAll(data)
+	case EvtMessageReactionRemoveEmoji:
+		evt, err = c.MessageReactionRemoveEmoji(data)
 	case EvtMessageUpdate:
 		evt, err = c.MessageUpdate(data)
 	case EvtPresenceUpdate:
@@ -364,6 +367,13 @@ func (c *CacheNop) MessageReactionRemove(data []byte) (evt *MessageReactionRemov
 	return evt, nil
 }
 func (c *CacheNop) MessageReactionRemoveAll(data []byte) (evt *MessageReactionRemoveAll, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) MessageReactionRemoveEmoji(data []byte) (evt *MessageReactionRemoveEmoji, err error) {
 	if err = json.Unmarshal(data, &evt); err != nil {
 		return nil, err
 	}

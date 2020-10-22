@@ -64,6 +64,8 @@ func AllEvents(except ...string) []string {
 
 		EvtMessageReactionRemoveAll: 0,
 
+		EvtMessageReactionRemoveEmoji: 0,
+
 		EvtMessageUpdate: 0,
 
 		EvtPresenceUpdate: 0,
@@ -432,6 +434,16 @@ type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 
 // ---------------------------
 
+// EvtMessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
+//
+const EvtMessageReactionRemoveEmoji = event.MessageReactionRemoveEmoji
+
+func (h *MessageReactionRemoveEmoji) setShardID(id uint) { h.ShardID = id }
+
+type HandlerMessageReactionRemoveEmoji = func(Session, *MessageReactionRemoveEmoji)
+
+// ---------------------------
+
 // EvtMessageUpdate Sent when a message is updated. The inner payload is a message object.
 //
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
@@ -773,6 +785,13 @@ func (shr *socketHandlerRegister) MessageReactionRemoveAll(handlers ...HandlerMe
 	}
 	shr.build()
 }
+func (shr *socketHandlerRegister) MessageReactionRemoveEmoji(handlers ...HandlerMessageReactionRemoveEmoji) {
+	shr.evtName = EvtMessageReactionRemoveEmoji
+	for _, handler := range handlers {
+		shr.handlers = append(shr.handlers, handler)
+	}
+	shr.build()
+}
 func (shr *socketHandlerRegister) MessageUpdate(handlers ...HandlerMessageUpdate) {
 	shr.evtName = EvtMessageUpdate
 	for _, handler := range handlers {
@@ -864,6 +883,7 @@ type SocketHandlerRegistrator interface {
 	MessageReactionAdd(...HandlerMessageReactionAdd)
 	MessageReactionRemove(...HandlerMessageReactionRemove)
 	MessageReactionRemoveAll(...HandlerMessageReactionRemoveAll)
+	MessageReactionRemoveEmoji(...HandlerMessageReactionRemoveEmoji)
 	MessageUpdate(...HandlerMessageUpdate)
 	PresenceUpdate(...HandlerPresenceUpdate)
 	Ready(...HandlerReady)

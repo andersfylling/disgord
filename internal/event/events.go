@@ -88,6 +88,9 @@ const MessageReactionRemove = "MESSAGE_REACTION_REMOVE"
 //  - MessageID Snowflake
 const MessageReactionRemoveAll = "MESSAGE_REACTION_REMOVE_ALL"
 
+// MessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
+const MessageReactionRemoveEmoji = "MESSAGE_REACTION_REMOVE_EMOJI"
+
 // GuildEmojisUpdate Sent when a guild's emojis have been updated.
 //  Fields:
 //  - GuildID Snowflake
@@ -245,7 +248,7 @@ func All() []string {
 		MessageReactionAdd,
 		MessageReactionRemove,
 		MessageReactionRemoveAll,
-		// MessageReactionRemoveEmoji,
+		MessageReactionRemoveEmoji,
 		TypingStart,
 	}
 }

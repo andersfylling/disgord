@@ -135,8 +135,8 @@ func EventToIntent(evt string, direct bool) Intent {
 			intent = IntentGuildMessageReactions
 		case event.MessageReactionRemoveAll:
 			intent = IntentGuildMessageReactions
-		// case event.MessageReactionRemoveEmoji:
-		// 	intent = IntentGuildMessageReactions
+		case event.MessageReactionRemoveEmoji:
+			intent = IntentGuildMessageReactions
 		case event.TypingStart:
 			intent = IntentGuildMessageTyping
 		}

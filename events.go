@@ -263,6 +263,18 @@ type MessageReactionRemoveAll struct {
 
 // ---------------------------
 
+// MessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message
+type MessageReactionRemoveEmoji struct {
+	ChannelID Snowflake       `json:"channel_id"`
+	GuildID   Snowflake       `json:"guild_id"`
+	MessageID Snowflake       `json:"message_id"`
+	Emoji     *Emoji          `json:"emoji"`
+	Ctx       context.Context `json:"-"`
+	ShardID   uint            `json:"-"`
+}
+
+// ---------------------------
+
 // GuildEmojisUpdate guild emojis were updated
 type GuildEmojisUpdate struct {
 	GuildID Snowflake       `json:"guild_id"`
