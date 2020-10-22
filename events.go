@@ -6,7 +6,6 @@ package disgord
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -49,8 +48,7 @@ type Ready struct {
 	// bot can't have user settings
 	// UserSettings interface{}        `json:"user_settings"`
 
-	sync.RWMutex `json:"-"`
-	ShardID      uint `json:"-"`
+	ShardID uint `json:"-"`
 }
 
 // ---------------------------
