@@ -205,8 +205,6 @@ type Guild struct {
 	Region                      string                        `json:"region"`
 	AfkChannelID                Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
-	EmbedEnabled                bool                          `json:"embed_enabled,omit_empty"`
-	EmbedChannelID              Snowflake                     `json:"embed_channel_id,omit_empty"`
 	VerificationLevel           VerificationLvl               `json:"verification_level"`
 	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
 	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
