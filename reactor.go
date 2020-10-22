@@ -66,9 +66,10 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 			executeInternalUpdater(c.currentUser)
 		}
 
-		resourceI, err := cacheDispatcher(c.cache, evt.Name, evt.Data)
-		if err != nil {
-			fmt.Println(fmt.Errorf("failed to unmarshal event{%s}: %w", evt.Name, err))
+		resourceI, _ := cacheDispatcher(c.cache, evt.Name, evt.Data)
+		if resourceI == nil {
+			d.session.Logger().Error(fmt.Errorf("no cache"), "EVENT DATA: `", string(evt.Data), "`, EVENT: `", evt.Name, "` -- DECISION: IGNORED")
+			continue
 		}
 		resource := resourceI.(evtResource)
 

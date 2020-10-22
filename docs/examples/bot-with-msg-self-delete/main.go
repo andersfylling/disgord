@@ -7,11 +7,17 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	"github.com/sirupsen/logrus"
 )
 
-const MessageLifeTime = 5 * time.Second
+var log = &logrus.Logger{
+	Out:       os.Stderr,
+	Formatter: new(logrus.TextFormatter),
+	Hooks:     make(logrus.LevelHooks),
+	Level:     logrus.DebugLevel,
+}
 
-var log = disgord.DefaultLogger(false) // debug: false
+const MessageLifeTime = 5 * time.Second
 
 func main() {
 	client := disgord.New(disgord.Config{
