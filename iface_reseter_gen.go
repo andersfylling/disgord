@@ -57,8 +57,6 @@ func (g *Guild) Reset() {
 	g.Region = ""
 	g.AfkChannelID = 0
 	g.AfkTimeout = 0
-	g.EmbedEnabled = false
-	g.EmbedChannelID = 0
 	g.VerificationLevel = 0
 	g.DefaultMessageNotifications = 0
 	g.ExplicitContentFilter = 0
