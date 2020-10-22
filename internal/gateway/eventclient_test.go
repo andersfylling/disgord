@@ -86,12 +86,7 @@ func TestEvtIdentify(t *testing.T) {
 		t.Error(err)
 	}
 
-	if constant.DiscordVersion == 6 {
-		if _, ok := fields["intents"]; ok {
-			t.Error("discord gateway 6 states that intents are optional")
-			// Don't send out intents if none were specified
-		}
-	} else if constant.DiscordVersion == 7 {
+	if constant.DiscordVersion == 8 {
 		if _, ok := fields["intents"]; !ok {
 			t.Error("discord gateway 7 states that intents are mandatory")
 			// https://discord.com/developers/docs/topics/gateway#gateway-intents

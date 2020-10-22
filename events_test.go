@@ -3,7 +3,11 @@
 package disgord
 
 import (
+	"fmt"
+	"io/ioutil"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func TestPrepareBox(t *testing.T) {
@@ -12,6 +16,26 @@ func TestPrepareBox(t *testing.T) {
 		executeInternalUpdater(evt)
 		return nil
 	})
+}
+
+func TestGuildCreate_UnmarshalJSON(t *testing.T) {
+		evt := &GuildCreate{
+			Guild: &Guild{},
+		}
+
+		data, err := ioutil.ReadFile("testdata/v8/guild/create.json")
+		check(err, t)
+
+		fmt.Println(string(data))
+
+		if err = json.Unmarshal(data, evt.Guild); err != nil {
+			t.Error(err)
+		}
+		executeInternalUpdater(evt)
+
+		if evt.Guild.ID != 0 {
+			t.Error("id ", evt.Guild.ID)
+		}
 }
 
 // func TestChannelCreate_UnmarshalJSON(t *testing.T) {

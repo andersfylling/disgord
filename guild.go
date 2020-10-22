@@ -38,12 +38,12 @@ func (b *PermissionBit) UnmarshalJSON(bytes []byte) error {
 	sb := string(bytes)
 	str, err := strconv.Unquote(sb)
 	if err != nil {
-		return fmt.Errorf("unable to unquote bytes{%s}: %w", sb, err)
+		return fmt.Errorf("PermissionBit#UnmarshalJSON - unable to unquote bytes{%s}: %w", sb, err)
 	}
 
 	v, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {
-		return fmt.Errorf("parsing string to uint64 failed: %w", err)
+		return fmt.Errorf("PermissionBit#UnmarshalJSON - parsing string to uint64 failed: %w", err)
 	}
 
 	*b = PermissionBit(v)
@@ -235,6 +235,7 @@ var _ fmt.Stringer = (*Guild)(nil)
 var _ Copier = (*Guild)(nil)
 var _ DeepCopier = (*Guild)(nil)
 var _ internalUpdater = (*Guild)(nil)
+var _ json.Marshaler = (*Guild)(nil)
 
 func (g *Guild) String() string {
 	return g.Name + "{" + g.ID.String() + "}"

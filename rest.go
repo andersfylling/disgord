@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 
+	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/json"
 
@@ -493,6 +495,11 @@ func (c clientQueryBuilder) GetGateway() (gateway *gateway.Gateway, err error) {
 	}
 
 	err = json.Unmarshal(body, &gateway)
+
+	if gateway.URL, err = ensureDiscordGatewayURLHasQueryParams(gateway.URL); err != nil {
+		return gateway, err
+	}
+
 	return
 }
 
@@ -515,8 +522,32 @@ func (c clientQueryBuilder) GetGatewayBot() (gateway *gateway.GatewayBot, err er
 		return
 	}
 
-	err = json.Unmarshal(body, &gateway)
-	return
+	if err = json.Unmarshal(body, &gateway); err != nil {
+		return nil, err
+	}
+
+	if gateway.URL, err = ensureDiscordGatewayURLHasQueryParams(gateway.URL); err != nil {
+		return gateway, err
+	}
+
+	return gateway, nil
+}
+
+func ensureDiscordGatewayURLHasQueryParams(urlString string) (string, error) {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return urlString, err
+	}
+
+	q, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return urlString, err
+	}
+	q.Add("encoding", constant.Encoding)
+	q.Add("v", strconv.FormatUint(uint64(constant.DiscordVersion), 10))
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 func exec(f func() (interface{}, error), flags ...Flag) (v interface{}, err error) {
