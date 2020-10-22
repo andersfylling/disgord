@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"math"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -610,8 +611,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.Permissions = g.Permissions
 	guild.Region = g.Region
 	guild.AfkTimeout = g.AfkTimeout
-	guild.EmbedEnabled = g.EmbedEnabled
-	guild.EmbedChannelID = g.EmbedChannelID
 	guild.VerificationLevel = g.VerificationLevel
 	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
 	guild.ExplicitContentFilter = g.ExplicitContentFilter
