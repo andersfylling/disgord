@@ -48,9 +48,6 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 	// don't care about 2 different time delay estimates for the ltBucket reset.
 	// So lets take Retry-After and X-RateLimit-Reset-After to set the reset
 	var delay int64
-	if retryAfter := header.Get(RateLimitRetryAfter); retryAfter != "" {
-		delay, _ = strconv.ParseInt(retryAfter, 10, 64)
-	}
 	if retry := header.Get(XRateLimitResetAfter); delay == 0 && retry != "" {
 		delayF, _ := strconv.ParseFloat(retry, 64)
 		delayF *= 1000 // seconds => milliseconds
@@ -58,7 +55,7 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 	}
 
 	// sometimes the body might be populated too
-	if statusCode == http.StatusTooManyRequests && body != nil {
+	if delay == 0 && statusCode == http.StatusTooManyRequests && body != nil {
 		var rateLimitBodyInfo *RateLimitResponseStructure
 		if err = json.Unmarshal(body, &rateLimitBodyInfo); err != nil {
 			return nil, err
@@ -74,9 +71,13 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 	// convert Reset to store milliseconds and not seconds
 	// if there is no content, we create a Reset unix using the delay
 	if reset := header.Get(XRateLimitReset); reset != "" {
-		epoch, _ := strconv.ParseFloat(reset, 64)
-		epoch *= 1000 // seconds => milliseconds
-		header.Set(XRateLimitReset, strconv.FormatInt(int64(epoch), 10))
+		if delay == 0 {
+			epoch, _ := strconv.ParseFloat(reset, 64)
+			epoch *= 1000 // seconds => milliseconds
+			header.Set(XRateLimitReset, strconv.FormatInt(int64(epoch), 10))
+		} else {
+			header.Set(XRateLimitReset, strconv.FormatInt(delay, 10))
+		}
 	} else if delay > 0 {
 		timestamp, err := HeaderToTime(header)
 		if err != nil {

@@ -29,6 +29,11 @@ const (
 	ChannelTypeGuildStore
 )
 
+const (
+	PermissionOverwriteTypeRole uint8 = iota
+	PermissionOverwriteTypeMember
+)
+
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -64,9 +69,11 @@ func (a *Attachment) DeepCopy() (copy interface{}) {
 }
 
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
+//
+// WARNING! Discord is bugged, and the Type field needs to be a string to read Permission Overwrites from audit log
 type PermissionOverwrite struct {
 	ID    Snowflake     `json:"id"`    // role or user id
-	Type  string        `json:"type"`  // either `role` or `member`
+	Type  uint8         `json:"type"`  // either 0 for `role` or 1 for `member`
 	Allow PermissionBit `json:"allow"` // permission bit set
 	Deny  PermissionBit `json:"deny"`  // permission bit set
 }
@@ -121,6 +128,7 @@ type Channel struct {
 	//    "name": "illuminati",
 	//    "type": 0
 	//  }
+	// TODO: remove
 	complete      bool
 	recipientsIDs []Snowflake
 }
@@ -165,7 +173,7 @@ func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller,
 		permissions &= (-o.Deny) - 1
 	}
 	for _, overwrite := range c.PermissionOverwrites {
-		if overwrite.Type == "member" {
+		if overwrite.Type == PermissionOverwriteTypeMember {
 			// This is a member. Is it me?
 			if overwrite.ID == member.UserID {
 				// It is! Time to apply the overwrites.
@@ -906,7 +914,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.
 //  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages/bulk-delete
+//  Endpoint                /channels/{channel.id}/messages/bulk_delete
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message

@@ -59,6 +59,28 @@ type CacheLFUImmutable struct {
 
 var _ Cache = (*CacheLFUImmutable)(nil)
 
+func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
+	channelID := msg.ChannelID
+
+	c.Channels.Lock()
+	defer c.Channels.Unlock()
+	if _, exists := c.Channels.Get(channelID); !exists {
+		channel := &Channel{
+			ID: channelID,
+			Recipients: []*User{
+				c.CurrentUser.DeepCopy().(*User),
+				msg.Author.DeepCopy().(*User),
+			},
+			LastMessageID: msg.ID,
+			Type:          ChannelTypeDM,
+		}
+		c.Patch(channel)
+
+		item := c.Channels.CreateCacheableItem(channel)
+		c.Channels.Set(channel.ID, item)
+	}
+}
+
 func (c *CacheLFUImmutable) Mutex(repo *crs.LFU, id Snowflake) *sync.Mutex {
 	switch repo {
 	case &c.Users:
@@ -85,6 +107,20 @@ func (c *CacheLFUImmutable) Ready(data []byte) (*Ready, error) {
 	rdy.User = c.CurrentUser.DeepCopy().(*User)
 	c.Patch(rdy)
 	return rdy, err
+}
+func (c *CacheLFUImmutable) MessageCreate(data []byte) (*MessageCreate, error) {
+	// assumption#1: Bots don't receive Channel Create Gateway Event for DMs
+
+	msg, err := c.CacheNop.MessageCreate(data)
+	if err != nil {
+		return msg, err
+	}
+
+	if msg.Message.IsDirectMessage() {
+		c.createDMChannel(msg.Message)
+	}
+
+	return msg, nil
 }
 
 func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {

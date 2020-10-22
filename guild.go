@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"math"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -24,6 +25,30 @@ import (
 
 // PermissionBit is used to define the permission bit(s) which are set.
 type PermissionBit uint64
+
+var _ json.Unmarshaler = (*PermissionBit)(nil)
+var _ json.Marshaler = (*PermissionBit)(nil)
+
+func (b *PermissionBit) MarshalJSON() ([]byte, error) {
+	str := strconv.FormatUint(uint64(*b), 10)
+	return []byte(strconv.Quote(str)), nil
+}
+
+func (b *PermissionBit) UnmarshalJSON(bytes []byte) error {
+	sb := string(bytes)
+	str, err := strconv.Unquote(sb)
+	if err != nil {
+		return fmt.Errorf("unable to unquote bytes{%s}: %w", sb, err)
+	}
+
+	v, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return fmt.Errorf("parsing string to uint64 failed: %w", err)
+	}
+
+	*b = PermissionBit(v)
+	return nil
+}
 
 // Contains is used to check if the permission bits contains the bits specified.
 func (b PermissionBit) Contains(Bits PermissionBit) bool {
@@ -181,8 +206,6 @@ type Guild struct {
 	Region                      string                        `json:"region"`
 	AfkChannelID                Snowflake                     `json:"afk_channel_id"` // |?
 	AfkTimeout                  uint                          `json:"afk_timeout"`
-	EmbedEnabled                bool                          `json:"embed_enabled,omit_empty"`
-	EmbedChannelID              Snowflake                     `json:"embed_channel_id,omit_empty"`
 	VerificationLevel           VerificationLvl               `json:"verification_level"`
 	DefaultMessageNotifications DefaultMessageNotificationLvl `json:"default_message_notifications"`
 	ExplicitContentFilter       ExplicitContentFilterLvl      `json:"explicit_content_filter"`
@@ -588,8 +611,6 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 	guild.Permissions = g.Permissions
 	guild.Region = g.Region
 	guild.AfkTimeout = g.AfkTimeout
-	guild.EmbedEnabled = g.EmbedEnabled
-	guild.EmbedChannelID = g.EmbedChannelID
 	guild.VerificationLevel = g.VerificationLevel
 	guild.DefaultMessageNotifications = g.DefaultMessageNotifications
 	guild.ExplicitContentFilter = g.ExplicitContentFilter

@@ -22,11 +22,6 @@ func ChannelInvites(id fmt.Stringer) string {
 	return Channel(id) + invites
 }
 
-// ChannelInvite ...
-func ChannelInvite(channelID, inviteID fmt.Stringer) string {
-	return ChannelInvites(channelID) + "/" + inviteID.String()
-}
-
 // ChannelRecipients ...
 func ChannelRecipients(channelID fmt.Stringer) string {
 	return Channel(channelID) + recipients
