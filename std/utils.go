@@ -18,13 +18,11 @@ func CopyMsgEvt(evt interface{}) interface{} {
 	case *disgord.MessageCreate:
 		return &disgord.MessageCreate{
 			Message: t.Message.DeepCopy().(*disgord.Message),
-			Ctx:     t.Ctx,
 			ShardID: t.ShardID,
 		}
 	case *disgord.MessageUpdate:
 		return &disgord.MessageUpdate{
 			Message: t.Message.DeepCopy().(*disgord.Message),
-			Ctx:     t.Ctx,
 			ShardID: t.ShardID,
 		}
 	case *disgord.MessageDelete:
@@ -32,14 +30,12 @@ func CopyMsgEvt(evt interface{}) interface{} {
 			MessageID: t.MessageID,
 			ChannelID: t.ChannelID,
 			GuildID:   t.GuildID,
-			Ctx:       t.Ctx,
 			ShardID:   t.ShardID,
 		}
 	case *disgord.MessageDeleteBulk:
 		return &disgord.MessageDeleteBulk{
 			MessageIDs: t.MessageIDs,
 			ChannelID:  t.ChannelID,
-			Ctx:        t.Ctx,
 			ShardID:    t.ShardID,
 		}
 	case *disgord.MessageReactionAdd:
@@ -48,7 +44,6 @@ func CopyMsgEvt(evt interface{}) interface{} {
 			MessageID:    t.MessageID,
 			ChannelID:    t.ChannelID,
 			UserID:       t.UserID,
-			Ctx:          t.Ctx,
 			ShardID:      t.ShardID,
 		}
 	case *disgord.MessageReactionRemove:
@@ -57,16 +52,22 @@ func CopyMsgEvt(evt interface{}) interface{} {
 			MessageID:    t.MessageID,
 			ChannelID:    t.ChannelID,
 			UserID:       t.UserID,
-			Ctx:          t.Ctx,
 			ShardID:      t.ShardID,
 		}
 	case *disgord.MessageReactionRemoveAll:
 		return &disgord.MessageReactionRemoveAll{
 			MessageID: t.MessageID,
 			ChannelID: t.ChannelID,
-			Ctx:       t.Ctx,
 			ShardID:   t.ShardID,
 		}
+		// case *disgord.MessageReactionRemoveEmoji:
+		// 	return &disgord.MessageReactionRemoveEmoji{
+		// 		MessageID: t.MessageID,
+		// 		GuildID: t.GuildID,
+		// 		ChannelID: t.ChannelID,
+		// 		Emoji:  t.Emoji.DeepCopy().(*Emoji),
+		// 		ShardID:   t.ShardID,
+		// 	}
 	}
 
 	// TODO: logging might be useful

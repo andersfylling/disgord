@@ -41,7 +41,6 @@ func (m *MessageCreate) Reset() {
 	if m.Message != nil {
 		m.Message.Reset()
 	}
-	m.Ctx = nil
 	m.ShardID = 0
 }
 
