@@ -60,14 +60,14 @@ func CopyMsgEvt(evt interface{}) interface{} {
 			ChannelID: t.ChannelID,
 			ShardID:   t.ShardID,
 		}
-		// case *disgord.MessageReactionRemoveEmoji:
-		// 	return &disgord.MessageReactionRemoveEmoji{
-		// 		MessageID: t.MessageID,
-		// 		GuildID: t.GuildID,
-		// 		ChannelID: t.ChannelID,
-		// 		Emoji:  t.Emoji.DeepCopy().(*Emoji),
-		// 		ShardID:   t.ShardID,
-		// 	}
+	case *disgord.MessageReactionRemoveEmoji:
+		return &disgord.MessageReactionRemoveEmoji{
+			MessageID: t.MessageID,
+			GuildID:   t.GuildID,
+			ChannelID: t.ChannelID,
+			Emoji:     t.Emoji.DeepCopy().(*disgord.Emoji),
+			ShardID:   t.ShardID,
+		}
 	}
 
 	// TODO: logging might be useful
