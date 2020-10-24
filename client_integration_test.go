@@ -562,7 +562,7 @@ func TestREST(t *testing.T) {
 		} else if user == nil {
 			t.Error("fetched user was nil")
 		} else if user.ID != userID {
-			t.Errorf("unexpected user id. Got %s, wants %s", user.ID, userID)
+			t.Errorf("unexpected user id. Got %s, wants %s", user.ID.String(), Snowflake(userID).String())
 		}
 	})
 
