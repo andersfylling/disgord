@@ -495,7 +495,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 }
 
 func TestREST(t *testing.T) {
-	const andersfylling = Snowflake(228846961774559232)
+	const andersfylling = Snowflake(348565617005297687)
 	validSnowflakes()
 
 	c := New(Config{
