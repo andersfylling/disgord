@@ -4,8 +4,10 @@ package disgord
 
 import (
 	"context"
+	"fmt"
 	"github.com/andersfylling/disgord/internal/logger"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -255,6 +257,50 @@ func TestClient(t *testing.T) {
 		case <-done:
 		case <-deadline.Done():
 			panic("done did not emit")
+		}
+	})
+	wg.Wait()
+
+	wg.Add(1)
+	t.Run("middleware", func(t *testing.T) {
+		defer wg.Done()
+		deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+
+		const prefix = "test"
+		content := prefix + " sads sdfjsd fkjsdf"
+		channelID := guildTypical.TextChannelGeneral
+
+		gotMessage := make(chan *MessageCreate)
+		defer close(gotMessage)
+
+		filterTestPrefix := func(evt interface{}) (ret interface{}) {
+			msg := (evt.(*MessageCreate)).Message
+			if strings.HasPrefix(msg.Content, prefix) {
+				return evt
+			}
+			return nil
+		}
+		filterChannel := func(evt interface{}) (ret interface{}) {
+			msg := (evt.(*MessageCreate)).Message
+			if msg.ChannelID == channelID {
+				return evt
+			}
+			return nil
+		}
+
+		c.On(EvtMessageCreate, filterChannel, filterTestPrefix, gotMessage)
+		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+		if err != nil {
+			panic(fmt.Errorf("unable to send message. %w", err))
+		}
+
+		select {
+		case msg := <-gotMessage:
+			if msg.Message.Content != content {
+				panic("unexpected message content")
+			}
+		case <-deadline.Done():
+			panic("message create event did not trigger within the deadline")
 		}
 	})
 	wg.Wait()
