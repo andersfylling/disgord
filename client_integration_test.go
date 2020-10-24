@@ -495,6 +495,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 }
 
 func TestREST(t *testing.T) {
+	const andersfylling = Snowflake(228846961774559232)
 	validSnowflakes()
 
 	c := New(Config{
@@ -522,7 +523,7 @@ func TestREST(t *testing.T) {
 
 		// create DM & send a message
 		func() {
-			channel, err := c.User(228846961774559232).WithContext(deadline).CreateDM()
+			channel, err := c.User(andersfylling).WithContext(deadline).CreateDM()
 			if err != nil {
 				t.Error(fmt.Errorf("unable to create DM with user. %w", err))
 			} else if channel == nil {
@@ -555,14 +556,14 @@ func TestREST(t *testing.T) {
 	// User
 	// -------------------
 	t.Run("user", func(t *testing.T) {
-		const userID = 140413331470024704
+		const userID = andersfylling
 		user, err := c.User(userID).WithContext(deadline).Get(IgnoreCache)
 		if err != nil {
 			t.Error(fmt.Errorf("unable to fetch user. %w", err))
 		} else if user == nil {
 			t.Error("fetched user was nil")
 		} else if user.ID != userID {
-			t.Errorf("unexpected user id. Got %s, wants %s", user.ID.String(), Snowflake(userID).String())
+			t.Errorf("unexpected user id. Got %s, wants %s", user.ID.String(), userID.String())
 		}
 	})
 
