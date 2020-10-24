@@ -493,3 +493,95 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 	case <-done:
 	}
 }
+
+func TestREST(t *testing.T) {
+	validSnowflakes()
+
+	c := New(Config{
+		BotToken:     token,
+		DisableCache: true,
+		Logger:       &logger.FmtPrinter{},
+	})
+
+	deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(25*time.Second))
+
+	// -------------------
+	// CHANNELS
+	// -------------------
+	t.Run("channel", func(t *testing.T) {
+		func() {
+			channel, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).Get()
+			if err != nil {
+				panic(err)
+			} else if channel == nil {
+				t.Error(fmt.Errorf("fetched channel is nil. %w", err))
+			} else if channel.ID != guildTypical.TextChannelGeneral {
+				t.Errorf("incorrect channel id. Got %s, wants %s", channel.ID.String(), guildTypical.TextChannelGeneral.String())
+			}
+		}()
+
+		// create DM & send a message
+		func() {
+			channel, err := c.User(228846961774559232).WithContext(deadline).CreateDM()
+			if err != nil {
+				t.Error(fmt.Errorf("unable to create DM with user. %w", err))
+			} else if channel == nil {
+				t.Error(fmt.Errorf("returned DM channel is nil. %w", err))
+			}
+
+			content := "hi"
+			msg, err := c.Channel(channel.ID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+			if err != nil {
+				t.Error(fmt.Errorf("unable to create message in DM channel. %w", err))
+			}
+			if msg == nil {
+				t.Error("returned message was nil")
+			} else if msg.Content != content {
+				t.Errorf("unexpected message content from DM. Got %s, wants %s", msg.Content, content)
+			}
+		}()
+	})
+
+	// -------------------
+	// Current User
+	// -------------------
+	t.Run("current-user", func(t *testing.T) {
+		if _, err := c.CurrentUser().Get(IgnoreCache); err != nil {
+			t.Error(fmt.Errorf("unable to fetch current user. %w", err))
+		}
+	})
+
+	// -------------------
+	// User
+	// -------------------
+	t.Run("user", func(t *testing.T) {
+		const userID = 140413331470024704
+		user, err := c.User(userID).WithContext(deadline).Get(IgnoreCache)
+		if err != nil {
+			t.Error(fmt.Errorf("unable to fetch user. %w", err))
+		} else if user == nil {
+			t.Error("fetched user was nil")
+		} else if user.ID != userID {
+			t.Errorf("unexpected user id. Got %s, wants %s", user.ID, userID)
+		}
+	})
+
+	// -------------------
+	// Voice Region
+	// -------------------
+	t.Run("voice-region", func(t *testing.T) {
+		regions, err := c.WithContext(deadline).GetVoiceRegions(IgnoreCache)
+		if err != nil {
+			t.Error(fmt.Errorf("unable to fetch voice regions. %w", err))
+		}
+		if len(regions) < 1 {
+			t.Error("expected at least one voice region")
+		}
+	})
+
+	// -------------------
+	// Audit Logs
+	// -------------------
+	// t.Run("audit-logs", func(t *testing.T) {
+	// })
+}

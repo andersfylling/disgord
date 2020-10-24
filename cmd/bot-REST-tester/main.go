@@ -62,16 +62,6 @@ func main() {
 	// CHANNELS
 	// -------------------
 	channelID := disgord.Snowflake(486833611564253186)
-	func() {
-		channel, err := c.Channel(channelID).Get()
-		if err != nil {
-			panic(err)
-		} else if channel == nil {
-			panic("channel was nil")
-		} else if channel.ID != channelID {
-			panic("incorrect channel id")
-		}
-	}()
 
 	// create
 	func() {
@@ -108,102 +98,6 @@ func main() {
 		if err == nil {
 			panic("able to retrieve deleted channel")
 		}
-	}()
-
-	// -------------------
-	// GUILDS
-	// -------------------
-
-	// -------------------
-	// USERS
-	// -------------------
-
-	// TestGetCurrentUser
-	func() {
-		_, err = c.CurrentUser().Get(disgord.IgnoreCache)
-		if err != nil {
-			panic(err)
-		}
-	}()
-	// TestGetUser
-	func() {
-		const userID = 140413331470024704
-		user, err := c.User(userID).Get(disgord.IgnoreCache)
-		if err != nil {
-			panic(err)
-		} else if user.ID != userID {
-			panic("user ID missmatch")
-		}
-	}()
-	// TestModifyCurrentUser
-	func() {
-		// this has been verified to work
-		// however, you cannot change username often so this is
-		// can give an error
-
-		// TODO: rewrite; this was moved from the disgord root pkg, but have not been rewritten to work here yet
-		// var originalUsername string
-		// t.Run("getting original username", func(t *testing.T) {
-		// 	user, err := GetCurrentUser(client)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		//
-		// 	originalUsername = user.Username
-		// })
-		//
-		// t.Run("changing username", func(t *testing.T) {
-		// 	if originalUsername == "" {
-		// 		panic()
-		// 		return
-		// 	}
-		// 	params := &ModifyCurrentUserParams{}
-		// 	params.SetUsername("sldfhksghs")
-		// 	_, err := ModifyCurrentUser(client, params)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// })
-		//
-		// t.Run("resetting username", func(t *testing.T) {
-		// 	if originalUsername == "" {
-		// 		panic()
-		// 		return
-		// 	}
-		// 	params := &ModifyCurrentUserParams{}
-		// 	params.SetUsername(originalUsername)
-		// 	_, err := ModifyCurrentUser(client, params)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// })
-	}()
-
-	// TestLeaveGuild
-	func() {
-		// Nope. Not gonna automate this.
-	}()
-	// TestUserDMs
-	func() {
-		// TODO
-	}()
-
-	// TestCreateDM
-	func() {
-		channel, err := c.User(228846961774559232).CreateDM()
-		if err != nil {
-			panic(err)
-		} else if channel == nil {
-			panic("channel was nil")
-		}
-	}()
-	// TestCreateGroupDM
-	func() {
-		// TODO
-	}()
-	// TestGetUserConnections
-	func() {
-		// Missing OAuth2
 	}()
 
 	// -------------------
@@ -366,52 +260,5 @@ func main() {
 				panic(err)
 			}
 		}()
-	}()
-
-	// -------------------
-	// INVITES
-	// -------------------
-
-	// TestGetInvite
-	func() {
-		// TODO: invite codes....
-		// will only return 404 without an invite code
-		//
-		// inviteCode := ""
-		// _, err = GetInvite(client, inviteCode, false)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		//
-		// _, err = GetInvite(client, inviteCode, true)
-		// if err != nil {
-		// 	panic(err)
-		// }
-	}()
-
-	// TestDeleteInvite
-	func() {
-		// TODO: invite codes....
-		// will only return 404 without an invite code
-		//
-		// inviteCode := ""
-		// _, err = DeleteInvite(client, inviteCode)
-		// if err != nil {
-		// 	panic(err)
-		// }
-	}()
-
-	// -------------------
-	// VOICES
-	// -------------------
-
-	// TestListVoiceRegions
-	func() {
-		list, err := c.GetVoiceRegions()
-		if err != nil {
-			panic(err)
-		} else if len(list) == 0 {
-			panic("expected at least one voice region")
-		}
 	}()
 }
