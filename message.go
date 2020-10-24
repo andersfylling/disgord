@@ -254,13 +254,8 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	return
 }
 
-// MessageSender is an interface which only holds the method needed for creating a channel message
-type MessageSender interface {
-	CreateMessage(ctx context.Context, channelID Snowflake, params *CreateMessageParams, flags ...Flag) (ret *Message, err error)
-}
-
 // Send sends this message to discord.
-func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag) (msg *Message, err error) {
+func (m *Message) Send(ctx context.Context, s Session, flags ...Flag) (msg *Message, err error) {
 	nonce := fmt.Sprint(m.Nonce)
 	if len(nonce) > 25 {
 		return nil, errors.New("nonce can not be more than 25 characters")
@@ -280,7 +275,7 @@ func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag)
 	}
 	channelID := m.ChannelID
 
-	msg, err = client.CreateMessage(ctx, channelID, params, flags...)
+	msg, err = s.Channel(channelID).WithContext(ctx).CreateMessage(params, flags...)
 	return
 }
 
