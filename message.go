@@ -284,13 +284,9 @@ func (m *Message) Send(ctx context.Context, client MessageSender, flags ...Flag)
 	return
 }
 
-type msgSender interface {
-	SendMsg(ctx context.Context, channelID Snowflake, data ...interface{}) (msg *Message, err error)
-}
-
 // Reply input any type as an reply. int, string, an object, etc.
-func (m *Message) Reply(ctx context.Context, client msgSender, data ...interface{}) (*Message, error) {
-	return client.SendMsg(ctx, m.ChannelID, data...)
+func (m *Message) Reply(ctx context.Context, s Session, data ...interface{}) (*Message, error) {
+	return s.WithContext(ctx).SendMsg(m.ChannelID, data...)
 }
 
 func (m *Message) React(ctx context.Context, s Session, emoji interface{}, flags ...Flag) error {
