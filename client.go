@@ -198,7 +198,7 @@ type Config struct {
 // Note that this Client holds all the REST methods, and is split across files, into whatever category
 // the REST methods regards.
 type Client struct {
-	sync.RWMutex
+	mu sync.RWMutex
 
 	clientQueryBuilder
 
@@ -332,12 +332,6 @@ func (c *Client) RESTRatelimitBuckets() (group map[string][]string) {
 	return c.req.BucketGrouping()
 }
 
-// Req return the request object. Used in REST requests to handle rate limits,
-// wrong http responses, etc.
-func (c *Client) Req() httd.Requester {
-	return c.req
-}
-
 // Cache returns the cacheLink manager for the session
 func (c *Client) Cache() Cache {
 	return c.cache
@@ -380,8 +374,8 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	// also verifies that the correct credentials were supplied
 
 	// Avoid races during connection setup
-	c.Lock()
-	defer c.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	var me *User
 	if me, err = c.CurrentUser().WithContext(ctx).Get(); err != nil {
@@ -649,8 +643,8 @@ func (c *Client) On(event string, inputs ...interface{}) {
 
 // Emit sends a socket command directly to Discord.
 func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
-	c.RLock()
-	defer c.RUnlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if c.shardManager == nil {
 		return nil, errors.New("you must connect before you can Emit")
 	}

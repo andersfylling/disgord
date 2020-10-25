@@ -19,7 +19,7 @@ import (
 )
 
 type voiceRepository struct {
-	sync.Mutex
+	mu sync.Mutex
 	c *Client
 
 	pendingStates  map[Snowflake]chan *VoiceStateUpdate
@@ -95,13 +95,13 @@ func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, self
 	// Set up some listeners for this connection attempt
 	stateCh := make(chan *VoiceStateUpdate, 1)
 	serverCh := make(chan *VoiceServerUpdate, 1)
-	r.Lock()
+	r.mu.Lock()
 	r.pendingStates[guildID] = stateCh
 	r.pendingServers[guildID] = serverCh
-	r.Unlock()
+	r.mu.Unlock()
 	defer func(r *voiceRepository, guildID Snowflake) {
-		r.Lock()
-		defer r.Unlock()
+		r.mu.Lock()
+		defer r.mu.Unlock()
 
 		delete(r.pendingStates, guildID)
 		delete(r.pendingServers, guildID)
@@ -248,32 +248,32 @@ waiter:
 }
 
 func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
-	r.Lock()
+	r.mu.Lock()
 	if event.UserID != r.c.myID {
-		r.Unlock()
+		r.mu.Unlock()
 		return
 	}
 
 	if ch, exists := r.pendingStates[event.VoiceState.GuildID]; exists {
 		delete(r.pendingStates, event.VoiceState.GuildID)
-		r.Unlock()
+		r.mu.Unlock()
 
 		ch <- event
 	} else {
-		r.Unlock()
+		r.mu.Unlock()
 	}
 }
 
 func (r *voiceRepository) onVoiceServerUpdate(_ Session, event *VoiceServerUpdate) {
-	r.Lock()
+	r.mu.Lock()
 
 	if ch, exists := r.pendingServers[event.GuildID]; exists {
 		delete(r.pendingStates, event.GuildID)
-		r.Unlock()
+		r.mu.Unlock()
 
 		ch <- event
 	} else {
-		r.Unlock()
+		r.mu.Unlock()
 	}
 }
 
