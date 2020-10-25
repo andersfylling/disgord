@@ -251,12 +251,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*RESTBuilder:
 		s = *t
-	case *[]*CurrentUserQueryBuilderNop:
-		s = *t
-	case *[]*GuildQueryBuilderNop:
-		s = *t
-	case *[]*UserQueryBuilderNop:
-		s = *t
 	case *[]*Role:
 		s = *t
 	case *[]*ErrorUnsupportedType:

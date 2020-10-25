@@ -14,7 +14,7 @@ type permissionTestingSession struct {
 }
 
 type permissionTestingGuildBuilder struct {
-	GuildQueryBuilderNop
+	guildQueryBuilderNop
 	p *permissionTestingSession
 }
 

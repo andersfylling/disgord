@@ -20,7 +20,7 @@ func (c *clientRESTMock) CurrentUser() disgord.CurrentUserQueryBuilder {
 }
 
 type clientRESTMock_currentUser struct {
-	disgord.CurrentUserQueryBuilderNop
+	disgord.CurrentUserQueryBuilder
 	id disgord.Snowflake
 }
 
