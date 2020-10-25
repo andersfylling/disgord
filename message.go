@@ -360,19 +360,20 @@ func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilde
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Get(ctx context.Context, flags ...Flag) (message *Message, err error) {
+func (m messageQueryBuilder) Get(ctx context.Context, flags ...Flag) (*Message, error) {
 	if m.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		err := errors.New("channelID must be set to get channel messages")
+		return nil, err
 	}
 	if m.mid.IsZero() {
-		err = errors.New("messageID must be set to get a specific message from a channel")
-		return
+		err := errors.New("messageID must be set to get a specific message from a channel")
+		return nil, err
 	}
 
-	msg, _ := m.client.cache.GetMessage(m.cid, m.mid)
-	if msg != nil {
-		return msg, nil
+	if !ignoreCache(flags...) {
+		if msg, _ := m.client.cache.GetMessage(m.cid, m.mid); msg != nil {
+			return msg, nil
+		}
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{

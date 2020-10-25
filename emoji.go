@@ -121,8 +121,10 @@ func (g guildEmojiQueryBuilder) WithContext(ctx context.Context) GuildEmojiQuery
 }
 
 func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
-	if emoji, _ := g.client.cache.GetGuildEmoji(g.gid, g.emojiID); emoji != nil {
-		return emoji, nil
+	if !ignoreCache(flags...) {
+		if emoji, _ := g.client.cache.GetGuildEmoji(g.gid, g.emojiID); emoji != nil {
+			return emoji, nil
+		}
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{

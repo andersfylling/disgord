@@ -400,14 +400,15 @@ func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilde
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) Get(flags ...Flag) (ret *Channel, err error) {
+func (c channelQueryBuilder) Get(flags ...Flag) (*Channel, error) {
 	if c.cid.IsZero() {
 		return nil, errors.New("not a valid snowflake")
 	}
 
-	channel, _ := c.client.cache.GetChannel(c.cid)
-	if channel != nil {
-		return channel, nil
+	if !ignoreCache(flags...) {
+		if channel, _ := c.client.cache.GetChannel(c.cid); channel != nil {
+			return channel, nil
+		}
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{

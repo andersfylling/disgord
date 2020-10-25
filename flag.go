@@ -41,3 +41,7 @@ func mergeFlags(flags []Flag) (f Flag) {
 
 	return f
 }
+
+func ignoreCache(flags ...Flag) bool {
+	return (mergeFlags(flags) & IgnoreCache) > 0
+}

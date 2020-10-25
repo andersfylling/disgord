@@ -954,8 +954,10 @@ func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
 // Get is used to get the Guild struct containing all information from it.
 // Note that it's significantly quicker in most instances where you have the cache enabled (as is by default) to get the individual parts you need.
 func (g guildQueryBuilder) Get(flags ...Flag) (guild *Guild, err error) {
-	if guild, _ = g.client.cache.GetGuild(g.gid); guild != nil {
-		return guild, nil
+	if !ignoreCache(flags...) {
+		if guild, _ = g.client.cache.GetGuild(g.gid); guild != nil {
+			return guild, nil
+		}
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{

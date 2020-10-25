@@ -37,9 +37,11 @@ func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQue
 }
 
 // GetMember Returns a guild member object for the specified user.
-func (g guildMemberQueryBuilder) Get(flags ...Flag) (member *Member, err error) {
-	if member, _ = g.client.cache.GetMember(g.gid, g.uid); member != nil {
-		return member, nil
+func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
+	if !ignoreCache(flags...) {
+		if member, _ := g.client.cache.GetMember(g.gid, g.uid); member != nil {
+			return member, nil
+		}
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
@@ -53,12 +55,12 @@ func (g guildMemberQueryBuilder) Get(flags ...Flag) (member *Member, err error) 
 		}
 	}
 
-	member, err = getMember(r.Execute)
+	member, err := getMember(r.Execute)
 	if err != nil {
-		return
+		return nil, err
 	}
 	member.GuildID = g.gid
-	return
+	return member, nil
 }
 
 // UpdateMember is used to create a builder to update a guild member.

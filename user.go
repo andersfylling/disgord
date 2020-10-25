@@ -552,6 +552,12 @@ func (c userQueryBuilder) WithContext(ctx context.Context) UserQueryBuilder {
 //  Reviewed                2018-06-10
 //  Comment                 -
 func (c userQueryBuilder) Get(flags ...Flag) (*User, error) {
+	if !ignoreCache(flags...) {
+		if usr, _ := c.client.cache.GetUser(c.uid); usr != nil {
+			return usr, nil
+		}
+	}
+
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.User(c.uid),
 		Ctx:      c.ctx,
@@ -639,6 +645,12 @@ func (c currentUserQueryBuilder) WithContext(ctx context.Context) CurrentUserQue
 //  Reviewed                2019-02-23
 //  Comment                 -
 func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
+	if !ignoreCache(flags...) {
+		if usr, _ := c.client.cache.GetCurrentUser(); usr != nil {
+			return usr, nil
+		}
+	}
+
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMe(),
 		Ctx:      c.ctx,
