@@ -526,7 +526,7 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 	if exists {
 		mutex := c.Mutex(&c.Channels, id)
 		mutex.Lock()
-		defer mutex.Lock()
+		defer mutex.Unlock()
 
 		channel := cachedItem.Val.(*Channel)
 		return channel.DeepCopy().(*Channel), nil
@@ -541,7 +541,7 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 	if exists {
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
-		defer mutex.Lock()
+		defer mutex.Unlock()
 
 		guild := cachedItem.Val.(*Guild)
 		emoji, _ := guild.Emoji(emojiID)
@@ -557,7 +557,7 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
-		defer mutex.Lock()
+		defer mutex.Unlock()
 
 		guild := cachedItem.Val.(*Guild)
 		emojis := make([]*Emoji, len(guild.Emojis))
@@ -578,7 +578,7 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
-		defer mutex.Lock()
+		defer mutex.Unlock()
 
 		guild = cachedItem.Val.(*Guild).DeepCopy().(*Guild)
 	}
@@ -593,7 +593,7 @@ func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
-		defer mutex.Lock()
+		defer mutex.Unlock()
 
 		guild := cachedItem.Val.(*Guild)
 
