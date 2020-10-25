@@ -79,7 +79,8 @@ client.CurrentUser().Get()
 client.Guild(guildID).GetMembers()
 
 // with cancellation
-client.CurrentUser().WithContext(context.Background()).Get()
+deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(2*time.Second))
+client.CurrentUser().WithContext(deadline).Get()
 ```
 
 #### Voice
