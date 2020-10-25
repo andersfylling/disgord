@@ -184,13 +184,6 @@ const (
 	ActivityFlagPlay
 )
 
-// NewActivity ...
-func NewActivity() (activity *Activity) {
-	return &Activity{
-		Timestamps: &ActivityTimestamp{},
-	}
-}
-
 // Activity https://discord.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
 	Name          string             `json:"name"`                     // the activity's name
@@ -316,11 +309,6 @@ const (
 	PremiumTypeNitro PremiumType = 2
 )
 
-// NewUser creates a new, empty user object
-func NewUser() *User {
-	return &User{}
-}
-
 // User the Discord user object which is reused in most other data structures.
 type User struct {
 	ID            Snowflake     `json:"id,omitempty"`
@@ -397,7 +385,7 @@ func (u *User) SendMsgString(ctx context.Context, session Session, content strin
 // DeepCopy see interface at struct.go#DeepCopier
 // CopyOverTo see interface at struct.go#Copier
 func (u *User) DeepCopy() (copy interface{}) {
-	copy = NewUser()
+	copy = &User{}
 	u.CopyOverTo(copy)
 
 	return
@@ -436,13 +424,6 @@ func (u *User) Valid() bool {
 
 // -------
 
-// NewUserPresence creates a new user presence instance
-func NewUserPresence() *UserPresence {
-	return &UserPresence{
-		Roles: []Snowflake{},
-	}
-}
-
 // UserPresence presence info for a guild member or friend/user in a DM
 type UserPresence struct {
 	User    *User       `json:"user"`
@@ -459,8 +440,8 @@ func (p *UserPresence) String() string {
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (p *UserPresence) DeepCopy() (copy interface{}) {
-	copy = NewUserPresence()
-	p.CopyOverTo(copy)
+	copy = &UserPresence{}
+	_ = p.CopyOverTo(copy)
 
 	return
 }
@@ -475,10 +456,14 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 	}
 
 	presence.User = p.User.DeepCopy().(*User)
-	presence.Roles = p.Roles
 	presence.GuildID = p.GuildID
 	presence.Nick = p.Nick
 	presence.Status = p.Status
+
+	if len(p.Roles) > 0 {
+		presence.Roles = make([]Snowflake, len(p.Roles))
+		copy(presence.Roles, p.Roles)
+	}
 
 	if p.Game != nil {
 		presence.Game = p.Game.DeepCopy().(*Activity)
@@ -617,9 +602,6 @@ type CurrentUserQueryBuilder interface {
 
 	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
 	LeaveGuild(id Snowflake, flags ...Flag) (err error)
-
-	// GetUserDMs Returns a list of DM channel objects.
-	GetDMChannels(flags ...Flag) (ret []*Channel, err error)
 
 	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this

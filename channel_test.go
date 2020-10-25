@@ -9,7 +9,7 @@ import (
 )
 
 func TestChannel_DeepCopy(t *testing.T) {
-	test := NewChannel()
+	test := &Channel{}
 	icon1 := "sdljfdsjf"
 	test.Icon = icon1
 	test.PermissionOverwrites = append(test.PermissionOverwrites, PermissionOverwrite{

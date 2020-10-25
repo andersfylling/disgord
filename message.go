@@ -55,20 +55,6 @@ const (
 	AttachmentSpoilerPrefix = "SPOILER_"
 )
 
-// NewMessage ...
-func NewMessage() *Message {
-	return &Message{}
-}
-
-//func NewDeletedMessage() *DeletedMessage {
-//	return &DeletedMessage{}
-//}
-
-//type DeletedMessage struct {
-//	ID        Snowflake `json:"id"`
-//	ChannelID Snowflake `json:"channel_id"`
-//}
-
 // MessageActivity https://discord.com/developers/docs/resources/channel#message-object-message-activity-structure
 type MessageActivity struct {
 	Type    int    `json:"type"`
@@ -196,7 +182,7 @@ func (m *Message) IsDirectMessage() bool {
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (m *Message) DeepCopy() (copy interface{}) {
-	copy = NewMessage()
+	copy = &Message{}
 	m.CopyOverTo(copy)
 
 	return

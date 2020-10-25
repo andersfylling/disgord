@@ -26,14 +26,14 @@ func TestGuild_ChannelSorting(t *testing.T) {
 	g := &Guild{}
 	total := 1000
 	for i := total; i > 0; i-- {
-		s := NewSnowflake(uint64(i))
+		s := Snowflake(i)
 		c := &Channel{ID: s}
 		g.AddChannel(c)
 	}
 
 	chans := g.Channels
 	for i := 1; i <= total; i++ {
-		if chans[i-1].ID != NewSnowflake(uint64(i)) {
+		if chans[i-1].ID != Snowflake(i) {
 			t.Error("wrong order")
 			break
 		}
@@ -67,18 +67,18 @@ func TestGuildEmbed(t *testing.T) {
 
 func TestGuild_sortChannels(t *testing.T) {
 	snowflakes := []Snowflake{
-		NewSnowflake(6),
-		NewSnowflake(65),
-		NewSnowflake(324),
-		NewSnowflake(5435),
-		NewSnowflake(63453),
-		NewSnowflake(111111111),
+		Snowflake(6),
+		Snowflake(65),
+		Snowflake(324),
+		Snowflake(5435),
+		Snowflake(63453),
+		Snowflake(111111111),
 	}
 
 	guild := NewGuild()
 
 	for i := range snowflakes {
-		channel := NewChannel()
+		channel := &Channel{}
 		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
 
 		guild.Channels = append(guild.Channels, channel)
@@ -94,18 +94,18 @@ func TestGuild_sortChannels(t *testing.T) {
 
 func TestGuild_AddChannel(t *testing.T) {
 	snowflakes := []Snowflake{
-		NewSnowflake(6),
-		NewSnowflake(65),
-		NewSnowflake(324),
-		NewSnowflake(5435),
-		NewSnowflake(63453),
-		NewSnowflake(111111111),
+		Snowflake(6),
+		Snowflake(65),
+		Snowflake(324),
+		Snowflake(5435),
+		Snowflake(63453),
+		Snowflake(111111111),
 	}
 
 	guild := NewGuild()
 
 	for i := range snowflakes {
-		channel := NewChannel()
+		channel := &Channel{}
 		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
 
 		guild.AddChannel(channel)
@@ -120,25 +120,25 @@ func TestGuild_AddChannel(t *testing.T) {
 
 func TestGuild_DeleteChannel(t *testing.T) {
 	snowflakes := []Snowflake{
-		NewSnowflake(6),
-		NewSnowflake(65),
-		NewSnowflake(324),
-		NewSnowflake(5435),
-		NewSnowflake(63453),
-		NewSnowflake(111111111),
+		Snowflake(6),
+		Snowflake(65),
+		Snowflake(324),
+		Snowflake(5435),
+		Snowflake(63453),
+		Snowflake(111111111),
 	}
 
 	guild := NewGuild()
 
 	for i := range snowflakes {
-		channel := NewChannel()
+		channel := &Channel{}
 		channel.ID = snowflakes[len(snowflakes)-1-i] // reverse
 
 		guild.AddChannel(channel)
 	}
 
 	id := snowflakes[3]
-	channel := NewChannel()
+	channel := &Channel{}
 	channel.ID = id
 	guild.DeleteChannel(channel)
 	_, err := guild.Channel(id)

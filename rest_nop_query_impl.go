@@ -143,9 +143,6 @@ func (CurrentUserQueryBuilderNop) Update(_ ...Flag) UpdateCurrentUserBuilder {
 func (CurrentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams, _ ...Flag) ([]*Guild, error) {
 	return nil, nil
 }
-func (CurrentUserQueryBuilderNop) GetDMChannels(_ ...Flag) ([]*Channel, error) {
-	return nil, nil
-}
 func (CurrentUserQueryBuilderNop) LeaveGuild(_ Snowflake, _ ...Flag) error {
 	return nil
 }

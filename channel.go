@@ -78,11 +78,6 @@ type PermissionOverwrite struct {
 	Deny  PermissionBit `json:"deny"`  // permission bit set
 }
 
-// NewChannel ...
-func NewChannel() *Channel {
-	return &Channel{}
-}
-
 // type ChannelDeleter interface { DeleteChannel(id Snowflake) (err error) }
 // type ChannelUpdater interface {}
 
@@ -207,7 +202,7 @@ func (c *Channel) Compare(other *Channel) bool {
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (c *Channel) DeepCopy() (copy interface{}) {
-	copy = NewChannel()
+	copy = &Channel{}
 	_ = c.CopyOverTo(copy)
 
 	return

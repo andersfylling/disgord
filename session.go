@@ -101,6 +101,5 @@ type Session interface {
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
 
-	GetGuilds(ctx context.Context, params *GetCurrentUserGuildsParams, flags ...Flag) ([]*Guild, error)
 	GetConnectedGuilds() []Snowflake
 }

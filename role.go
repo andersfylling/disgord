@@ -36,16 +36,6 @@ func (r roles) Swap(i, j int) {
 	r[j] = tmp
 }
 
-// SortRoles sorts a slice of roles such that the first element is the top one in the Discord Guild Settings UI.
-func SortRoles(rs []*Role) {
-	sort.Sort(roles(rs))
-}
-
-// NewRole ...
-func NewRole() *Role {
-	return &Role{}
-}
-
 // Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
 	ID          Snowflake     `json:"id"`
@@ -81,7 +71,7 @@ func (r *Role) SetGuildID(id Snowflake) {
 
 // DeepCopy see interface at struct.go#DeepCopier
 func (r *Role) DeepCopy() (copy interface{}) {
-	copy = NewRole()
+	copy = &Role{}
 	_ = r.CopyOverTo(copy)
 
 	return

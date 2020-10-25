@@ -8,7 +8,7 @@ import (
 )
 
 func TestUserPresence_InterfaceImplementations(t *testing.T) {
-	var u interface{} = NewUserPresence()
+	var u interface{} = &UserPresence{}
 
 	t.Run("Stringer", func(t *testing.T) {
 		if _, ok := u.(fmt.Stringer); !ok {

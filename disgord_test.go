@@ -28,33 +28,33 @@ func injectRandomEvents(t *testing.T, callback func(name string, evt interface{}
 	// first wave, just empty content
 	// looks for incorrect type casting
 	events[EvtReady] = &Ready{
-		User: NewUser(),
+		User: &User{},
 	}
 	events[EvtChannelCreate] = &ChannelCreate{
-		Channel: NewChannel(),
+		Channel: &Channel{},
 	}
 	events[EvtChannelDelete] = &ChannelDelete{
-		Channel: NewChannel(),
+		Channel: &Channel{},
 	}
 	events[EvtGuildCreate] = &GuildCreate{
-		Guild: NewGuild(),
+		Guild: &Guild{},
 	}
 	events[EvtGuildDelete] = &GuildDelete{
 		UnavailableGuild: &GuildUnavailable{},
 	}
 	events[EvtGuildBanRemove] = &GuildBanRemove{
-		User: NewUser(),
+		User: &User{},
 	}
 	events[EvtGuildIntegrationsUpdate] = &GuildIntegrationsUpdate{}
 	events[EvtGuildMemberRemove] = &GuildMemberRemove{
-		User: NewUser(),
+		User: &User{},
 	}
 	events[EvtGuildMembersChunk] = &GuildMembersChunk{}
 	events[EvtGuildRoleUpdate] = &GuildRoleUpdate{
-		Role: NewRole(),
+		Role: &Role{},
 	}
 	events[EvtMessageCreate] = &MessageCreate{
-		Message: NewMessage(),
+		Message: &Message{},
 	}
 	events[EvtMessageDelete] = &MessageDelete{}
 	events[EvtMessageReactionAdd] = &MessageReactionAdd{
