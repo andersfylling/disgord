@@ -45,7 +45,7 @@ type CacheGetter interface {
 	//GetInvite(inviteCode string, params URLQueryStringer) (*Invite, error)
 	GetCurrentUser() (*User, error)
 	GetUser(id Snowflake) (*User, error)
-	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*PartialGuild, err error)
+	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
 	//GetUserDMs() (ret []*Channel, err error)
 	//GetUserConnections() (ret []*UserConnection, err error)
 	//GetVoiceRegions() ([]*VoiceRegion, error)
@@ -455,7 +455,7 @@ func (c *CacheNop) GetMember(guildID, userID Snowflake) (*Member, error)        
 func (c *CacheNop) GetGuildRoles(guildID Snowflake) ([]*Role, error)            { return nil, nil }
 func (c *CacheNop) GetCurrentUser() (*User, error)                              { return nil, nil }
 func (c *CacheNop) GetUser(id Snowflake) (*User, error)                         { return nil, nil }
-func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
+func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*Guild, error) {
 	return nil, nil
 }
 func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {

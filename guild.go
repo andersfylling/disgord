@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/andersfylling/disgord/json"
@@ -129,65 +128,11 @@ const (
 		PermissionAdministrator
 )
 
-// NewGuild ...
-func NewGuild() *Guild {
-	return &Guild{
-		Roles:       []*Role{},
-		Emojis:      []*Emoji{},
-		Features:    []string{},
-		VoiceStates: []*VoiceState{},
-		Members:     []*Member{},
-		Channels:    []*Channel{},
-		Presences:   []*UserPresence{},
-	}
-}
-
-// NewPartialGuild ...
-func NewPartialGuild(ID Snowflake) (guild *Guild) {
-	guild = NewGuild()
-	guild.ID = ID
-	guild.Unavailable = true
-
-	return
-}
-
-// NewGuildFromUnavailable converts a unavailable guild object into a normal Guild object
-func NewGuildFromUnavailable(gu *GuildUnavailable) *Guild {
-	return NewPartialGuild(gu.ID)
-}
-
-// NewGuildUnavailable ...
-func NewGuildUnavailable(ID Snowflake) *GuildUnavailable {
-	gu := &GuildUnavailable{
-		ID:          ID,
-		Unavailable: true,
-	}
-
-	return gu
-}
-
 // GuildUnavailable is a partial Guild object.
 type GuildUnavailable struct {
 	ID          Snowflake `json:"id"`
 	Unavailable bool      `json:"unavailable"` // ?*|
 }
-
-//type GuildInterface interface {
-//	Channel(ID Snowflake)
-//}
-
-// if loading is deactivated, then check state, then do a request.
-// if loading is activated, check state only.
-// type Members interface {
-// 	Member(userID snowflake.Snowflake) *Member
-// 	MembersWithName( /*username*/ name string) map[snowflake.Snowflake]*Member
-// 	MemberByUsername( /*username#discriminator*/ username string) *Member
-// 	MemberByAlias(alias string) *Member
-// 	EverythingInMemory() bool
-// }
-
-// PartialGuild see Guild
-type PartialGuild = Guild // TODO: find the actual data struct for partial guild
 
 // Guild Guilds in Discord represent an isolated collection of Users and Channels,
 //  and are often referred to as "servers" in the UI.
@@ -226,8 +171,6 @@ type Guild struct {
 	Members     []*Member       `json:"members,omitempty"`      // ?*|
 	Channels    []*Channel      `json:"channels,omitempty"`     // ?*|
 	Presences   []*UserPresence `json:"presences,omitempty"`    // ?*|
-
-	//highestSnowflakeAmongMembers Snowflake
 }
 
 var _ Reseter = (*Guild)(nil)
@@ -235,7 +178,6 @@ var _ fmt.Stringer = (*Guild)(nil)
 var _ Copier = (*Guild)(nil)
 var _ DeepCopier = (*Guild)(nil)
 var _ internalUpdater = (*Guild)(nil)
-var _ json.Marshaler = (*Guild)(nil)
 
 func (g *Guild) String() string {
 	return g.Name + "{" + g.ID.String() + "}"
@@ -269,32 +211,9 @@ func (g *Guild) GetMemberWithHighestSnowflake() *Member {
 	return highest
 }
 
-// MarshalJSON see interface json.Marshaler
-// TODO: fix copying of mutex lock
-func (g *Guild) MarshalJSON() ([]byte, error) {
-	var jsonData []byte
-	var err error
-	if g.Unavailable {
-		guildUnavailable := NewGuildUnavailable(g.ID)
-		jsonData, err = json.Marshal(guildUnavailable)
-		if err != nil {
-			return []byte(""), nil
-		}
-	} else {
-		jsonData, err = json.Marshal(Guild(*g))
-		if err != nil {
-			return []byte(""), nil
-		}
-	}
-
-	return jsonData, nil
-}
-
 // sortChannels Only while in lock
 func (g *Guild) sortChannels() {
-	sort.Slice(g.Channels, func(i, j int) bool {
-		return g.Channels[i].ID < g.Channels[j].ID
-	})
+	Sort(g.Channels, SortByID)
 }
 
 // AddChannel adds a channel to the Guild object. Note that this method does not interact with Discord.
@@ -451,16 +370,6 @@ func (g *Guild) Role(id Snowflake) (role *Role, err error) {
 	return
 }
 
-// TODO
-//func (g *Guild) UpdateRole(r *Role) {
-//	for _, role := range g.Roles {
-//		if role.ID == r.ID {
-//			*role = *r
-//			break
-//		}
-//	}
-//}
-
 // DeleteRoleByID remove a role from the guild struct
 func (g *Guild) DeleteRoleByID(ID Snowflake) {
 	index := -1
@@ -518,80 +427,10 @@ func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 	return
 }
 
-// TODO
-// func (g *Guild) UpdatePresence(p *UserPresence) {
-// 	g.RLock()
-// 	index := -1
-// 	for i, presence := range g.Presences {
-// 		if presence.User.ID == p.User.ID {
-// 			index = i
-// 			break
-// 		}
-// 	}
-// 	g.RUnlock()
-//
-// 	if index != -1 {
-// 		// update
-// 		return
-// 	}
-//
-// 	// otherwise add
-// 	g.AcquireLock()
-// 	g.Presences = append(g.Presences, p) // TODO: update the user pointer?
-// 	g.Unlock()
-// }
-
-// Clear all the pointers
-// func (g *Guild) Clear() {
-// 	g.AcquireLock() // what if another process tries to read this, but awais while locked for clearing?
-// 	defer g.Unlock()
-//
-// 	//g.Icon = nil // should this be cleared?
-// 	//g.Splash = nil // should this be cleared?
-//
-// 	for _, r := range g.Roles {
-// 		r.Clear()
-// 		r = nil
-// 	}
-// 	g.Roles = nil
-//
-// 	for _, e := range g.Emojis {
-// 		e.Clear()
-// 		e = nil
-// 	}
-// 	g.Emojis = nil
-//
-// 	for _, vst := range g.VoiceStates {
-// 		vst.Clear()
-// 		vst = nil
-// 	}
-// 	g.VoiceStates = nil
-//
-// 	var deletedUsers []Snowflake
-// 	for _, m := range g.Members {
-// 		deletedUsers = append(deletedUsers, m.Clear())
-// 		m = nil
-// 	}
-// 	g.Members = nil
-//
-// 	for _, c := range g.Channels {
-// 		c.Clear()
-// 		c = nil
-// 	}
-// 	g.Channels = nil
-//
-// 	for _, p := range g.Presences {
-// 		p.Clear()
-// 		p = nil
-// 	}
-// 	g.Presences = nil
-//
-// }
-
 // DeepCopy see interface at struct.go#DeepCopier
 func (g *Guild) DeepCopy() (copy interface{}) {
-	copy = NewGuild()
-	g.CopyOverTo(copy)
+	copy = &Guild{}
+	_ = g.CopyOverTo(copy)
 
 	return
 }
@@ -706,7 +545,7 @@ type Ban struct {
 // DeepCopy see interface at struct.go#DeepCopier
 func (b *Ban) DeepCopy() (copy interface{}) {
 	copy = &Ban{}
-	b.CopyOverTo(copy)
+	_ = b.CopyOverTo(copy)
 
 	return
 }
@@ -740,7 +579,7 @@ type GuildEmbed struct {
 // DeepCopy see interface at struct.go#DeepCopier
 func (e *GuildEmbed) DeepCopy() (copy interface{}) {
 	copy = &GuildEmbed{}
-	e.CopyOverTo(copy)
+	_ = e.CopyOverTo(copy)
 
 	return
 }
@@ -779,7 +618,7 @@ type Integration struct {
 // DeepCopy see interface at struct.go#DeepCopier
 func (i *Integration) DeepCopy() (copy interface{}) {
 	copy = &Integration{}
-	i.CopyOverTo(copy)
+	_ = i.CopyOverTo(copy)
 
 	return
 }
@@ -821,7 +660,7 @@ type IntegrationAccount struct {
 // DeepCopy see interface at struct.go#DeepCopier
 func (i *IntegrationAccount) DeepCopy() (copy interface{}) {
 	copy = &IntegrationAccount{}
-	i.CopyOverTo(copy)
+	_ = i.CopyOverTo(copy)
 
 	return
 }
@@ -945,7 +784,7 @@ func (m *Member) Mention() string {
 // DeepCopy see interface at struct.go#DeepCopier
 func (m *Member) DeepCopy() (copy interface{}) {
 	copy = &Member{}
-	m.CopyOverTo(copy)
+	_ = m.CopyOverTo(copy)
 
 	return
 }

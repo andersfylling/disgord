@@ -613,7 +613,7 @@ type CurrentUserQueryBuilder interface {
 
 	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
-	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error)
+	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error)
 
 	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
 	LeaveGuild(id Snowflake, flags ...Flag) (err error)
@@ -709,13 +709,13 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
 //                          Guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of Users' Guilds.
-func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*PartialGuild, err error) {
+func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
 		Ctx:      c.ctx,
 	}, flags)
 	r.factory = func() interface{} {
-		tmp := make([]*PartialGuild, 0)
+		tmp := make([]*Guild, 0)
 		return &tmp
 	}
 
@@ -724,7 +724,7 @@ func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams, f
 		return nil, err
 	}
 
-	if guilds, ok := vs.(*[]*PartialGuild); ok {
+	if guilds, ok := vs.(*[]*Guild); ok {
 		return *guilds, nil
 	}
 	return nil, errors.New("unable to cast guild slice")

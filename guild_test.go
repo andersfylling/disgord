@@ -9,6 +9,19 @@ import (
 	"github.com/andersfylling/disgord/json"
 )
 
+// NewGuild ...
+func NewGuild() *Guild {
+	return &Guild{
+		Roles:       []*Role{},
+		Emojis:      []*Emoji{},
+		Features:    []string{},
+		VoiceStates: []*VoiceState{},
+		Members:     []*Member{},
+		Channels:    []*Channel{},
+		Presences:   []*UserPresence{},
+	}
+}
+
 func TestGuild_ChannelSorting(t *testing.T) {
 	g := &Guild{}
 	total := 1000

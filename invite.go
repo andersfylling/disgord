@@ -21,7 +21,7 @@ type Invite struct {
 	Code string `json:"code"`
 
 	// Guild the guild this invite is for
-	Guild *PartialGuild `json:"guild"`
+	Guild *Guild `json:"guild"`
 
 	// Channel the channel this invite is for
 	Channel *PartialChannel `json:"channel"`
@@ -79,7 +79,7 @@ func (i *Invite) CopyOverTo(other interface{}) (err error) {
 	invite.ApproximateMemberCount = i.ApproximateMemberCount
 
 	if i.Guild != nil {
-		invite.Guild = NewPartialGuild(i.Guild.ID)
+		invite.Guild = &Guild{ID: i.Guild.ID}
 	}
 	if i.Channel != nil {
 		c := i.Channel

@@ -140,7 +140,7 @@ func (CurrentUserQueryBuilderNop) Get(_ ...Flag) (*User, error) {
 func (CurrentUserQueryBuilderNop) Update(_ ...Flag) UpdateCurrentUserBuilder {
 	return nil
 }
-func (CurrentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams, _ ...Flag) ([]*PartialGuild, error) {
+func (CurrentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams, _ ...Flag) ([]*Guild, error) {
 	return nil, nil
 }
 func (CurrentUserQueryBuilderNop) GetDMChannels(_ ...Flag) ([]*Channel, error) {

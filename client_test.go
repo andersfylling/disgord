@@ -395,14 +395,14 @@ func TestInternalStateHandlers(t *testing.T) {
 	}
 
 	c.handlers.saveGuildID(c, &GuildCreate{
-		Guild: NewPartialGuild(id),
+		Guild: &Guild{ID: id},
 	})
 	if len(c.GetConnectedGuilds()) != 1 {
 		t.Errorf("expected one guild to have been added. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
 	}
 
 	c.handlers.saveGuildID(c, &GuildCreate{
-		Guild: NewPartialGuild(id),
+		Guild: &Guild{ID: id},
 	})
 	if len(c.GetConnectedGuilds()) != 1 {
 		t.Errorf("Adding the same guild should not create another entry. Got %d, wants %d", len(c.GetConnectedGuilds()), 1)
