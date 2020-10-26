@@ -504,7 +504,7 @@ func (c channelQueryBuilder) TriggerTypingIndicator(flags ...Flag) (err error) {
 type UpdateChannelPermissionsParams struct {
 	Allow PermissionBit `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  PermissionBit `json:"deny"`  // the bitwise value of all disallowed permissions
-	Type  string        `json:"type"`  // "member" for a user or "role" for a role
+	Type  uint          `json:"type"`  // 0=role, 1=member
 }
 
 // EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
