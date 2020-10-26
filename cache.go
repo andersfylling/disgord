@@ -633,13 +633,14 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 	if exists {
 		mutex := c.Mutex(&c.Users, userID)
 		mutex.Lock()
-		defer mutex.Unlock()
 
 		guild := cachedItem.Val.(*Guild)
 		member, _ = guild.Member(userID)
 		if member != nil {
 			member = member.DeepCopy().(*Member)
 		}
+
+		mutex.Unlock()
 	}
 
 	wg.Wait()
