@@ -20,7 +20,7 @@ import (
 
 type voiceRepository struct {
 	mu sync.Mutex
-	c *Client
+	c  *Client
 
 	pendingStates  map[Snowflake]chan *VoiceStateUpdate
 	pendingServers map[Snowflake]chan *VoiceServerUpdate

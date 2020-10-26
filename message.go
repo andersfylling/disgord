@@ -307,27 +307,27 @@ type MessageQueryBuilder interface {
 
 	// PinMessageID Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
 	// Returns a 204 empty response on success.
-	Pin(ctx context.Context, flags ...Flag) error
+	Pin(flags ...Flag) error
 
 	// UnpinMessageID Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 	// Returns a 204 empty response on success. Returns a 204 empty response on success.
-	Unpin(ctx context.Context, flags ...Flag) error
+	Unpin(flags ...Flag) error
 
 	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
 	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 	// Returns a message object on success.
-	Get(ctx context.Context, flags ...Flag) (*Message, error)
+	Get(flags ...Flag) (*Message, error)
 
 	// UpdateMessage Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	Update(ctx context.Context, flags ...Flag) *updateMessageBuilder
-	SetContent(ctx context.Context, content string) (*Message, error)
-	SetEmbed(ctx context.Context, embed *Embed) (*Message, error)
+	Update(flags ...Flag) *updateMessageBuilder
+	SetContent(content string) (*Message, error)
+	SetEmbed(embed *Embed) (*Message, error)
 
 	// DeleteMessage Delete a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
 	// on success. Fires a Message Delete Gateway event.
-	Delete(ctx context.Context, flags ...Flag) error
+	Delete(flags ...Flag) error
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 	// permission to be present on the current user.
@@ -360,7 +360,7 @@ func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilde
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Get(ctx context.Context, flags ...Flag) (*Message, error) {
+func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 	if m.cid.IsZero() {
 		err := errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -378,7 +378,7 @@ func (m messageQueryBuilder) Get(ctx context.Context, flags ...Flag) (*Message, 
 
 	r := m.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
-		Ctx:      ctx,
+		Ctx:      m.ctx,
 	}, flags)
 	r.pool = m.client.pool.message
 	r.factory = func() interface{} {
@@ -395,8 +395,7 @@ func (m messageQueryBuilder) Get(ctx context.Context, flags ...Flag) (*Message, 
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-// TODO: verify embed is working
-func (m messageQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder *updateMessageBuilder) {
+func (m messageQueryBuilder) Update(flags ...Flag) (builder *updateMessageBuilder) {
 	builder = &updateMessageBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Message{}
@@ -406,7 +405,7 @@ func (m messageQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder
 	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(m.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
-		Ctx:         ctx,
+		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
@@ -422,7 +421,7 @@ func (m messageQueryBuilder) Update(ctx context.Context, flags ...Flag) (builder
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Delete(ctx context.Context, flags ...Flag) (err error) {
+func (m messageQueryBuilder) Delete(flags ...Flag) (err error) {
 	if m.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -435,7 +434,7 @@ func (m messageQueryBuilder) Delete(ctx context.Context, flags ...Flag) (err err
 	r := m.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
-		Ctx:      ctx,
+		Ctx:      m.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -450,11 +449,11 @@ func (m messageQueryBuilder) Delete(ctx context.Context, flags ...Flag) (err err
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Pin(ctx context.Context, flags ...Flag) (err error) {
+func (m messageQueryBuilder) Pin(flags ...Flag) (err error) {
 	r := m.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPut,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
-		Ctx:      ctx,
+		Ctx:      m.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -469,7 +468,7 @@ func (m messageQueryBuilder) Pin(ctx context.Context, flags ...Flag) (err error)
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Unpin(ctx context.Context, flags ...Flag) (err error) {
+func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 	if m.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -480,7 +479,7 @@ func (m messageQueryBuilder) Unpin(ctx context.Context, flags ...Flag) (err erro
 	r := m.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
-		Ctx:      ctx,
+		Ctx:      m.ctx,
 	}, flags)
 	r.expectsStatusCode = http.StatusNoContent
 
@@ -519,12 +518,12 @@ func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
 //
 //////////////////////////////////////////////////////
 
-func (m messageQueryBuilder) SetContent(ctx context.Context, content string) (*Message, error) {
-	return m.Update(ctx).SetContent(content).Execute()
+func (m messageQueryBuilder) SetContent(content string) (*Message, error) {
+	return m.WithContext(m.ctx).Update().SetContent(content).Execute()
 }
 
-func (m messageQueryBuilder) SetEmbed(ctx context.Context, embed *Embed) (*Message, error) {
-	return m.Update(ctx).SetEmbed(embed).Execute()
+func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
+	return m.WithContext(m.ctx).Update().SetEmbed(embed).Execute()
 }
 
 //////////////////////////////////////////////////////

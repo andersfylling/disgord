@@ -816,7 +816,7 @@ func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams, flags ...Fla
 		messages = append(messages, afters...)
 
 		// filter.Around includes the given ID, so should .Before and .After iterations do as well
-		if msg, _ := c.Message(filter.Around).Get(c.ctx, flags...); msg != nil {
+		if msg, _ := c.Message(filter.Around).WithContext(c.ctx).Get(flags...); msg != nil {
 			// assumption: error here can be caused by the message ID not actually being a real message
 			//             and that it was used to get messages in the vicinity. Therefore the err is ignored.
 			// TODO: const discord errors.
