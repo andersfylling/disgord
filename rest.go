@@ -224,6 +224,9 @@ func (b *RESTBuilder) prepare() {
 	if flags.Ignorecache() {
 		b.IgnoreCache()
 	}
+	if b.config.Ctx == nil {
+		b.config.Ctx = context.Background()
+	}
 }
 
 // execute ... v must be a nil pointer.
