@@ -162,6 +162,8 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	updateChannel := func(channelID Snowflake, item *crs.LFUItem) (*Channel, error) {
 		mutex := c.Mutex(&c.Channels, channelID)
 		mutex.Lock()
+		defer mutex.Unlock()
+
 		channel := item.Val.(*Channel)
 		if err := json.Unmarshal(data, channel); err != nil {
 			return nil, err
@@ -169,8 +171,6 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		c.Patch(channel)
 
 		channel = channel.DeepCopy().(*Channel)
-		mutex.Unlock()
-
 		return channel, nil
 	}
 
