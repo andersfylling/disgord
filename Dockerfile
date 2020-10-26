@@ -1,6 +1,7 @@
-FROM golang:1.13
+FROM golang:1.15
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
-COPY cmd/script /build
-RUN go mod download
+COPY cmd/dockermain.go /build
+RUN go mod init mybot
+RUN go test .
 RUN rm -rf /build
