@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord/internal/constant"
-	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/logger"
 )
@@ -66,33 +65,7 @@ func ConfigureShardConfig(ctx context.Context, client GatewayBotGetter, conf *Sh
 	return nil
 }
 
-// enableGuildSubscriptions if both typing event and presence event are to be ignore, we can disable GuildSubscription
-// https://discord.com/developers/docs/topics/gateway#guild-subscriptions
-func enableGuildSubscriptions(ignore []string) (updatedIgnores []string, ok bool) {
-	requires := []string{
-		event.TypingStart, event.PresenceUpdate,
-	}
-	for i := range ignore {
-		for j := range requires {
-			if ignore[i] == requires[j] {
-				// remove matched requirements
-				requires = append(requires[:j], requires[j+1:]...)
-				break
-			}
-		}
-		if len(requires) == 0 {
-			break
-		}
-	}
-	ok = len(requires) > 0
-	// TODO: remove unnecessary events from the ignore slice
-
-	return ignore, ok
-}
-
 func NewShardMngr(conf ShardManagerConfig) *shardMngr {
-	conf.IgnoreEvents, conf.GuildSubscriptions = enableGuildSubscriptions(conf.IgnoreEvents)
-
 	mngr := &shardMngr{
 		conf:   conf,
 		shards: map[shardID]*EvtClient{},
@@ -213,7 +186,6 @@ type ShardManagerConfig struct {
 	// user specific
 	DefaultBotPresence *UpdateStatusPayload
 	ProjectName        string
-	GuildSubscriptions bool
 }
 
 type shardMngr struct {
@@ -236,7 +208,6 @@ func (s *shardMngr) initShards() error {
 		GuildLargeThreshold: 0, // let's not sometimes load partial guilds info. Either load everything or nothing.
 		ShardCount:          s.conf.ShardCount,
 		Presence:            s.conf.DefaultBotPresence,
-		GuildSubscriptions:  s.conf.GuildSubscriptions,
 
 		// lib specific
 		Version:        constant.DiscordVersion,

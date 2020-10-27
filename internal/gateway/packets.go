@@ -106,7 +106,6 @@ type evtIdentity struct {
 	LargeThreshold     uint            `json:"large_threshold"`
 	Shard              *[2]uint        `json:"shard,omitempty"`
 	Presence           json.RawMessage `json:"presence,omitempty"`
-	GuildSubscriptions bool            `json:"guild_subscriptions"` // most ambiguous naming ever but ok.
 	Intents            Intent          `json:"intents,omitempty"`
 }
 

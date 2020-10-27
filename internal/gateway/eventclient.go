@@ -64,7 +64,6 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		HTTPClient:        conf.HTTPClient,
 		conn:              conf.conn,
 		messageQueueLimit: conf.MessageQueueLimit,
-
 		SystemShutdown: conf.SystemShutdown,
 	}, client.internalConnect)
 	if err != nil {
@@ -81,7 +80,6 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		}{runtime.GOOS, conf.Browser, conf.Device},
 		LargeThreshold:     conf.GuildLargeThreshold,
 		Shard:              &[2]uint{client.ShardID, conf.ShardCount},
-		GuildSubscriptions: conf.GuildSubscriptions,
 		Intents:            conf.Intents,
 	}
 	if conf.Presence != nil {
@@ -140,7 +138,6 @@ type EvtConfig struct {
 	Device              string
 	GuildLargeThreshold uint
 	ShardCount          uint
-	GuildSubscriptions  bool
 
 	DiscordPktPool *sync.Pool
 

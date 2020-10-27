@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/logger"
 )
@@ -67,34 +66,6 @@ func TestConfigureShardConfig(t *testing.T) {
 	}
 	if !conf.DisableAutoScaling {
 		t.Error("DisableAutoScaling should be true")
-	}
-}
-
-func TestEnableGuildSubscriptions(t *testing.T) {
-	ignore := []string{
-		event.TypingStart, event.PresenceUpdate,
-	}
-	if _, ok := enableGuildSubscriptions(ignore); ok {
-		t.Error("guild sub should be disabled")
-	}
-
-	ignore = []string{
-		event.TypingStart, event.PresenceUpdate, event.Ready,
-	}
-	if _, ok := enableGuildSubscriptions(ignore); ok {
-		t.Error("guild sub should be disabled")
-	}
-
-	ignore = []string{
-		event.TypingStart, event.Ready,
-	}
-	if _, ok := enableGuildSubscriptions(ignore); !ok {
-		t.Error("guild sub should be enabled")
-	}
-
-	ignore = []string{}
-	if _, ok := enableGuildSubscriptions(ignore); !ok {
-		t.Error("guild sub should be enabled")
 	}
 }
 
