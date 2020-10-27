@@ -407,7 +407,7 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 		ShardConfig:  c.config.ShardConfig,
 		Logger:       c.config.Logger,
 		ShutdownChan: c.config.shutdownChan,
-		IgnoreEvents: c.config.IgnoreEvents,
+		IgnoreEvents: c.config.RejectEvents,
 		Intents:      c.config.Intents,
 		EventChan:    c.eventChan,
 		DisgordInfo:  LibraryInfo(),
