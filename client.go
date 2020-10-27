@@ -38,11 +38,6 @@ func createClient(conf *Config) (c *Client, err error) {
 	if conf.Logger == nil {
 		conf.Logger = logger.Empty{}
 	}
-	if conf.Presence != nil {
-		if _, err := gateway.StringToStatusType(conf.Presence.Status); err != nil {
-			return nil, fmt.Errorf("use a disgord value eg. disgord.StatusOnline: %w", err)
-		}
-	}
 	if conf.HTTPClient == nil {
 		// WARNING: do not set http.Client.Timeout (!)
 		conf.HTTPClient = &http.Client{}
@@ -421,14 +416,10 @@ func (c *Client) Connect(ctx context.Context) (err error) {
 	}
 
 	if c.config.Presence != nil {
-		// assumption: error is handled when creating a new client
-		status, _ := gateway.StringToStatusType(c.config.Presence.Status)
-		shardMngrConf.DefaultBotPresence = &gateway.UpdateStatusPayload{
-			Since:  c.config.Presence.Since,
-			Game:   c.config.Presence.Game,
-			Status: status,
-			AFK:    c.config.Presence.AFK,
+		if c.config.Presence.Status == "" {
+			c.config.Presence.Status = StatusOnline // default
 		}
+		shardMngrConf.DefaultBotPresence = c.config.Presence
 	}
 
 	sharding := gateway.NewShardMngr(shardMngrConf)
@@ -663,18 +654,14 @@ func (c *Client) On(event string, inputs ...interface{}) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+func (c *Client) Emit(name gatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.shardManager == nil {
 		return nil, errors.New("you must connect before you can Emit")
 	}
 
-	p, err := prepareGatewayCommand(payload)
-	if err != nil {
-		return nil, err
-	}
-	return c.shardManager.Emit(string(name), p)
+	return c.shardManager.Emit(string(name), payload)
 }
 
 //////////////////////////////////////////////////////
@@ -689,8 +676,6 @@ func (c *Client) Emit(name gatewayCmdName, payload gatewayCmdPayload) (unchandle
 // UpdateStatus updates the Client's game status
 // note: for simple games, check out UpdateStatusString
 func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 	_, err := c.Emit(UpdateStatus, s)
 	return err
 }

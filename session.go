@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
 // Emitter for emitting data from A to B. Used in websocket connection
 type Emitter interface {
-	Emit(name gatewayCmdName, data gatewayCmdPayload) (unhandledGuildIDs []Snowflake, err error)
+	Emit(name gatewayCmdName, data gateway.CmdPayload) (unhandledGuildIDs []Snowflake, err error)
 }
 
 // Link allows basic Discord connection control. Affects all shards
