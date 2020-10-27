@@ -38,10 +38,12 @@ func prepareGatewayCommand(payload gatewayCmdPayload) (x gateway.CmdPayload, err
 	switch t := payload.(type) {
 	case *RequestGuildMembersPayload:
 		x = &gateway.RequestGuildMembersPayload{
-			GuildIDs: t.GuildIDs,
-			Query:    t.Query,
-			Limit:    t.Limit,
-			UserIDs:  t.UserIDs,
+			GuildIDs:  t.GuildIDs,
+			Query:     t.Query,
+			Limit:     t.Limit,
+			Presences: t.Presences,
+			UserIDs:   t.UserIDs,
+			Nonce:     t.Nonce,
 		}
 	case *UpdateVoiceStatePayload:
 		x = &gateway.UpdateVoiceStatePayload{
@@ -87,8 +89,12 @@ type RequestGuildMembersPayload struct {
 	// Limit maximum number of members to send or 0 to request all members matched
 	Limit uint
 
+	Presences bool
+
 	// UserIDs used to specify which Users you wish to fetch
 	UserIDs []Snowflake
+
+	Nonce string
 }
 
 var _ gatewayCmdPayload = (*RequestGuildMembersPayload)(nil)

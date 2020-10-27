@@ -125,8 +125,12 @@ type RequestGuildMembersPayload struct {
 	// Limit maximum number of members to send or 0 to request all members matched
 	Limit uint `json:"limit"`
 
+	Presences bool `json:"presences"`
+
 	// UserIDs used to specify which users you wish to fetch
 	UserIDs []Snowflake `json:"user_ids,omitempty"`
+
+	Nonce string `json:"nonce,omitempty"`
 }
 
 var _ CmdPayload = (*RequestGuildMembersPayload)(nil)
