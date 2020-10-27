@@ -55,6 +55,15 @@ func createClient(conf *Config) (c *Client, err error) {
 		}
 	}
 
+	// never ignore User Updates
+	for i := range conf.IgnoreEvents {
+		if conf.IgnoreEvents[i] == EvtUserUpdate {
+			conf.IgnoreEvents[i] = conf.IgnoreEvents[len(conf.IgnoreEvents)-1]
+			conf.IgnoreEvents = conf.IgnoreEvents[:len(conf.IgnoreEvents)-1]
+			break
+		}
+	}
+
 	httdClient, err := httd.NewClient(&httd.Config{
 		APIVersion:                   constant.DiscordVersion,
 		BotToken:                     conf.BotToken,
