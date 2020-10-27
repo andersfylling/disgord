@@ -50,6 +50,8 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		conf.Intents |= EventToIntent(e, false)
 	}
 
+	conf.Logger.Debug(fmt.Sprintf("shard %d intents: %s", shardID, conf.Intents.String()))
+
 	client = &EvtClient{
 		evtConf:      conf,
 		ignoreEvents: conf.IgnoreEvents,

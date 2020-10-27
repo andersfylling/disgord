@@ -1,10 +1,25 @@
 package gateway
 
 import (
+	"strings"
+
 	"github.com/andersfylling/disgord/internal/event"
 )
 
 type Intent uint64
+
+func (intents Intent) String() string {
+	output := "{ "
+	for i := 0; intents != 0; i++ {
+		intent := intents & (1 << i)
+		intents ^= intent // remove intent
+
+		output += intentName(intent) + " | "
+	}
+	strings.TrimSuffix(output, " | ")
+
+	return output + " }"
+}
 
 const (
 	// IntentGuilds
@@ -50,6 +65,43 @@ const (
 	IntentDirectMessageReactions
 	IntentDirectMessageTyping
 )
+
+func intentName(intent Intent) string {
+	switch intent {
+	case IntentGuilds:
+		return "Guilds"
+	case IntentGuildMembers:
+		return "GuildMembers"
+	case IntentGuildBans:
+		return "GuildBans"
+	case IntentGuildEmojis:
+		return "GuildEmojis"
+	case IntentGuildIntegrations:
+		return "GuildIntegrations"
+	case IntentGuildWebhooks:
+		return "GuildWebhooks"
+	case IntentGuildInvites:
+		return "GuildInvites"
+	case IntentGuildVoiceStates:
+		return "GuildVoiceStates"
+	case IntentGuildPresences:
+		return "GuildPresences"
+	case IntentGuildMessages:
+		return "GuildMessages"
+	case IntentGuildMessageReactions:
+		return "GuildMessageReactions"
+	case IntentGuildMessageTyping:
+		return "GuildMessageTyping"
+	case IntentDirectMessages:
+		return "DirectMessages"
+	case IntentDirectMessageReactions:
+		return "DirectMessageReactions"
+	case IntentDirectMessageTyping:
+		return "DirectMessageTyping"
+	default:
+		return ""
+	}
+}
 
 func EventToIntent(evt string, direct bool) Intent {
 	var intent Intent
