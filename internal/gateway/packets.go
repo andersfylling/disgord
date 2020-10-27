@@ -100,13 +100,13 @@ type evtReadyPacket struct {
 }
 
 type evtIdentity struct {
-	Token              string          `json:"token"`
-	Properties         interface{}     `json:"properties"`
-	Compress           bool            `json:"compress"`
-	LargeThreshold     uint            `json:"large_threshold"`
-	Shard              *[2]uint        `json:"shard,omitempty"`
-	Presence           json.RawMessage `json:"presence,omitempty"`
-	Intents            Intent          `json:"intents,omitempty"`
+	Token          string          `json:"token"`
+	Properties     interface{}     `json:"properties"`
+	Compress       bool            `json:"compress"`
+	LargeThreshold uint            `json:"large_threshold"`
+	Shard          *[2]uint        `json:"shard,omitempty"`
+	Presence       json.RawMessage `json:"presence,omitempty"`
+	Intents        Intent          `json:"intents,omitempty"`
 }
 
 type evtResume struct {

@@ -51,7 +51,7 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 	}
 
 	conf.Logger.Debug(fmt.Sprintf("shard %d intents: %s", shardID, conf.Intents.String()))
-	conf.Logger.Debug(fmt.Sprintf("shard %d discard events: { %s }", conf.IgnoreEvents))
+	conf.Logger.Debug(fmt.Sprintf("shard %d discard events: %s", shardID, conf.IgnoreEvents))
 
 	client = &EvtClient{
 		evtConf:      conf,
@@ -65,7 +65,7 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		HTTPClient:        conf.HTTPClient,
 		conn:              conf.conn,
 		messageQueueLimit: conf.MessageQueueLimit,
-		SystemShutdown: conf.SystemShutdown,
+		SystemShutdown:    conf.SystemShutdown,
 	}, client.internalConnect)
 	if err != nil {
 		return nil, err
@@ -79,9 +79,9 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 			Browser string `json:"$browser"`
 			Device  string `json:"$device"`
 		}{runtime.GOOS, conf.Browser, conf.Device},
-		LargeThreshold:     conf.GuildLargeThreshold,
-		Shard:              &[2]uint{client.ShardID, conf.ShardCount},
-		Intents:            conf.Intents,
+		LargeThreshold: conf.GuildLargeThreshold,
+		Shard:          &[2]uint{client.ShardID, conf.ShardCount},
+		Intents:        conf.Intents,
 	}
 	if conf.Presence != nil {
 		if err = client.SetPresence(conf.Presence); err != nil {

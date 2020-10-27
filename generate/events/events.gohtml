@@ -9,7 +9,11 @@ import (
 
 // helpers
 
-func AllEvents(except ...string) []string {
+func AllEvents() []string {
+    return AllEventsExcept()
+}
+
+func AllEventsExcept(except ...string) []string {
     evtsMap := map[string]int8{
     {{- range .}}
         {{if .IsDiscordEvent }}

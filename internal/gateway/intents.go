@@ -10,13 +10,18 @@ type Intent uint64
 
 func (intents Intent) String() string {
 	output := "{ "
+	const separator = " | "
 	for i := 0; intents != 0; i++ {
 		intent := intents & (1 << i)
-		intents ^= intent // remove intent
+		intents ^= intent // remove intent bit flag
 
-		output += intentName(intent) + " | "
+		if intent == 0 {
+			continue
+		}
+
+		output += intentName(intent) + separator
 	}
-	strings.TrimSuffix(output, " | ")
+	output = strings.TrimSuffix(output, separator)
 
 	return output + " }"
 }
