@@ -35,6 +35,9 @@ func NewClient(conf Config) (*Client, error) {
 
 // NewClient creates a new Disgord Client and returns an error on configuration issues
 func createClient(conf *Config) (c *Client, err error) {
+	if conf.Logger == nil {
+		conf.Logger = logger.Empty{}
+	}
 	if conf.Presence != nil {
 		if _, err := gateway.StringToStatusType(conf.Presence.Status); err != nil {
 			return nil, fmt.Errorf("use a disgord value eg. disgord.StatusOnline: %w", err)
@@ -55,13 +58,26 @@ func createClient(conf *Config) (c *Client, err error) {
 		}
 	}
 
-	// never ignore User Updates
-	for i := range conf.IgnoreEvents {
-		if conf.IgnoreEvents[i] == EvtUserUpdate {
-			conf.IgnoreEvents[i] = conf.IgnoreEvents[len(conf.IgnoreEvents)-1]
-			conf.IgnoreEvents = conf.IgnoreEvents[:len(conf.IgnoreEvents)-1]
-			break
-		}
+	if conf.IgnoreEvents != nil {
+		conf.Logger.Info("Config.IgnoreEvents has been deprecated. Use Config.RejectEvents instead")
+	}
+	conf.RejectEvents = append(conf.RejectEvents, conf.IgnoreEvents...)
+
+	// remove extra/duplicates events
+	uniqueEventNames := make(map[string]bool)
+	for _, eventName := range conf.RejectEvents {
+		uniqueEventNames[eventName] = false
+	}
+	// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
+	// 	return nil, errors.New("you can not reject the event USER_UPDATE")
+	// }
+	if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
+		// https://github.com/discord/discord-api-docs/issues/683
+		uniqueEventNames["PRESENCES_REPLACE"] = false
+	}
+	conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
+	for eventName, _ := range uniqueEventNames {
+		conf.RejectEvents = append(conf.RejectEvents, eventName)
 	}
 
 	httdClient, err := httd.NewClient(&httd.Config{
@@ -83,13 +99,6 @@ func createClient(conf *Config) (c *Client, err error) {
 	}
 
 	conf.shutdownChan = make(chan interface{})
-
-	if conf.Logger == nil {
-		conf.Logger = logger.Empty{}
-	}
-
-	// ignore PRESENCES_REPLACE: https://github.com/discord/discord-api-docs/issues/683
-	conf.IgnoreEvents = append(conf.IgnoreEvents, "PRESENCES_REPLACE")
 
 	// caching
 	var cache Cache
@@ -198,7 +207,10 @@ type Config struct {
 	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
 	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
 	// them at all due to how the identify command was defined. eg. guildS_subscriptions
+	// Deprecated: use RejectEvents instead (nothing changed, just better naming)
 	IgnoreEvents []string
+
+	RejectEvents []string
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
