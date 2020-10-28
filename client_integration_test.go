@@ -5,12 +5,13 @@ package disgord
 import (
 	"context"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/logger"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
@@ -79,7 +80,7 @@ func TestClient(t *testing.T) {
 	wg.Add(1)
 	t.Run("premature-emit", func(t *testing.T) {
 		defer wg.Done()
-		if _, err := c.Emit(UpdateStatus, &UpdateStatusPayload{}); err == nil {
+		if _, err := c.Gateway().Dispatch(UpdateStatus, &UpdateStatusPayload{}); err == nil {
 			t.Fatal("Emit should have failed as no shards have been connected (initialised)")
 		}
 	})
@@ -95,7 +96,7 @@ func TestClient(t *testing.T) {
 	wg.Add(1)
 	t.Run("connect", func(t *testing.T) {
 		defer wg.Done()
-		if err := c.Connect(context.Background()); err != nil {
+		if err := c.Gateway().Connect(); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -105,7 +106,7 @@ func TestClient(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
 		defer wg.Done()
 		ready := make(chan interface{}, 2)
-		c.Ready(func() {
+		c.Gateway().BotReady(func() {
 			ready <- true
 		})
 		select {
@@ -151,7 +152,7 @@ func TestClient(t *testing.T) {
 
 			done <- true
 		})
-		if _, err := c.Emit(UpdateStatus, status); err != nil {
+		if _, err := c.Gateway().Dispatch(UpdateStatus, status); err != nil {
 			t.Fatal(err)
 		}
 
@@ -412,13 +413,13 @@ func TestConnectWithShards(t *testing.T) {
 			ShardIDs: []uint{0, 1},
 		},
 	})
-	defer c.Disconnect()
-	if err := c.Connect(context.Background()); err != nil {
+	defer c.Gateway().Disconnect()
+	if err := c.Gateway().Connect(); err != nil {
 		t.Fatal(err)
 	}
 
 	done := make(chan interface{}, 2)
-	c.Ready(func() {
+	c.Gateway().BotReady(func() {
 		done <- true
 	})
 
@@ -471,10 +472,10 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 		instance := createInstance([]uint{i}, shardCount)
 		instances = append(instances, instance)
 
-		instance.Ready(func() {
+		instance.Gateway().BotReady(func() {
 			instanceReady <- true
 		})
-		if err := instance.Connect(context.Background()); err != nil {
+		if err := instance.Gateway().Connect(); err != nil {
 			cancel()
 			t.Error(err)
 			return
@@ -484,7 +485,7 @@ func TestConnectWithSeveralInstances(t *testing.T) {
 
 	defer func() {
 		for i := range instances {
-			_ = instances[i].Disconnect()
+			_ = instances[i].Gateway().Disconnect()
 		}
 	}()
 	select {
