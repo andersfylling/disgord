@@ -160,6 +160,15 @@ func DeepCopyOver(dst Copier, src Copier) error {
 	return src.copyOverTo(dst)
 }
 
+// Reseter Reset() zero initialises or empties a struct instance
+type Reseter interface {
+	reset()
+}
+
+func Reset(r Reseter) {
+	r.reset()
+}
+
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------
 

@@ -6,12 +6,12 @@ package disgord
 {{ if eq $enf.Name "Reseter" }}
 
 {{ range $struct := $enf.Structs }}
-func ({{ $struct.ShortName }} *{{ $struct.Name }}) Reset() {
+func ({{ $struct.ShortName }} *{{ $struct.Name }}) reset() {
     {{- range $i, $field := $struct.Fields }}
     {{- if $field.Resetable }}
     {{- if eq $field.ZeroVal "nil" }}
     if {{ $struct.ShortName }}.{{ $field.Name }} != nil {
-        {{ $struct.ShortName }}.{{ $field.Name }}.Reset()
+        Reset({{ $struct.ShortName }}.{{ $field.Name }})
     }
     {{- end }}
     {{- else }}

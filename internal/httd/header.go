@@ -15,8 +15,8 @@ const (
 	XRateLimitBucket        = "X-RateLimit-Bucket"
 	XRateLimitLimit         = "X-RateLimit-Limit"
 	XRateLimitRemaining     = "X-RateLimit-Remaining"
-	XRateLimitReset         = "X-RateLimit-Reset"
-	XRateLimitResetAfter    = "X-RateLimit-Reset-After"
+	XRateLimitReset         = "X-RateLimit-reset"
+	XRateLimitResetAfter    = "X-RateLimit-reset-After"
 	XRateLimitGlobal        = "X-RateLimit-Global"
 	RateLimitRetryAfter     = "Retry-After"
 	DisgordNormalizedHeader = "X-Disgord-Normalized-Kufdsfksduhf-S47yf"
@@ -46,7 +46,7 @@ type RateLimitResponseStructure struct {
 // uses milliseconds and not seconds. Regards rate limits only.
 func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h http.Header, err error) {
 	// don't care about 2 different time delay estimates for the ltBucket reset.
-	// So lets take Retry-After and X-RateLimit-Reset-After to set the reset
+	// So lets take Retry-After and X-RateLimit-reset-After to set the reset
 	var delay int64
 	if retry := header.Get(XRateLimitResetAfter); delay == 0 && retry != "" {
 		delayF, _ := strconv.ParseFloat(retry, 64)
@@ -68,8 +68,8 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 		}
 	}
 
-	// convert Reset to store milliseconds and not seconds
-	// if there is no content, we create a Reset unix using the delay
+	// convert reset to store milliseconds and not seconds
+	// if there is no content, we create a reset unix using the delay
 	if reset := header.Get(XRateLimitReset); reset != "" {
 		if delay == 0 {
 			epoch, _ := strconv.ParseFloat(reset, 64)

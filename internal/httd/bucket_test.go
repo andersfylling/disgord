@@ -100,7 +100,7 @@ func TestLtBucket_updateAfterResponse(t *testing.T) {
 }
 
 func TestLtBucket_RespectRateLimit(t *testing.T) {
-	// X-Ratelimit-Bucket:[f56681194ebea036dd1297f1184bf7bd] X-Ratelimit-Limit:[2] X-Ratelimit-Remaining:[0] X-Ratelimit-Reset:[1571597130835] X-Ratelimit-Reset-After:[2787.131]
+	// X-Ratelimit-Bucket:[f56681194ebea036dd1297f1184bf7bd] X-Ratelimit-Limit:[2] X-Ratelimit-Remaining:[0] X-Ratelimit-reset:[1571597130835] X-Ratelimit-reset-After:[2787.131]
 
 	mngr := NewManager(nil)
 	id := "dlfjhdskfhjdskfjsd"
