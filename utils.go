@@ -7,7 +7,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/internal/gateway"
 )
 
@@ -22,59 +21,6 @@ func ShardID(guildID Snowflake, nrOfShards uint) uint {
 // Validators
 //
 //////////////////////////////////////////////////////
-
-func ValidateHandlerInputs(inputs ...interface{}) (err error) {
-	var i int
-	var ok bool
-
-	// make sure that middlewares are only at beginning
-	for j := i; j < len(inputs); j++ {
-		if _, ok = inputs[j].(Middleware); ok {
-			if j != i {
-				return disgorderr.NewHandlerSpecErr(
-					disgorderr.HandlerSpecErrCodeUnexpectedMiddleware,
-					"middlewares can only be in the beginning. Grouped together")
-			}
-			i++
-		}
-	}
-
-	// there should now be N handlers, 0 < N.
-	if len(inputs) <= i {
-		return disgorderr.NewHandlerSpecErr(
-			disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
-	}
-
-	for j := i; j < len(inputs); j++ {
-		if _, ok = inputs[j].(HandlerCtrl); ok {
-			// first element after middlewares and last in inputs
-			if j == i && len(inputs)-1 == j {
-				return disgorderr.NewHandlerSpecErr(
-					disgorderr.HandlerSpecErrCodeMissingHandler, "missing handler(s)")
-			}
-			// not last
-			if len(inputs)-1 != j {
-				return disgorderr.NewHandlerSpecErr(
-					disgorderr.HandlerSpecErrCodeUnexpectedCtrl,
-					"a handlerCtrl's can only be at the end of the definition and only one")
-			}
-			break
-		}
-		if _, ok = inputs[j].(Ctrl); ok {
-			return disgorderr.NewHandlerSpecErr(
-				disgorderr.HandlerSpecErrCodeNotHandlerCtrlImpl,
-				"does not implement disgord.HandlerCtrl. Try to use &disgord.Ctrl instead of disgord.Ctrl")
-		}
-
-		if !isHandler(inputs[j]) {
-			return disgorderr.NewHandlerSpecErr(
-				disgorderr.HandlerSpecErrCodeUnknownHandlerSignature,
-				"invalid handler signature. General tip: no handlers can use the param type `*disgord.Session`, try `disgord.Session` instead")
-		}
-	}
-
-	return nil
-}
 
 // https://discord.com/developers/docs/resources/user#avatar-data
 func validAvatarPrefix(avatar string) (valid bool) {

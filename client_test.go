@@ -68,40 +68,33 @@ func TestOn(t *testing.T) {
 			}
 		}()
 
-		c.On(EvtChannelCreate, func(s Session, e *ChannelCreate) {})
+		c.Gateway().ChannelCreate(func(s Session, e *ChannelCreate) {})
 	})
 
 	t.Run("normal Session with ctrl", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r != nil {
-				t.Errorf("should not have triggered a panic")
+				t.Errorf("should not have triggered a panic. %s", r)
 			}
 		}()
 
-		c.On(EvtChannelCreate, func(s Session, e *ChannelCreate) {}, &Ctrl{Runs: 1})
+		c.
+			Gateway().
+			WithCtrl(&Ctrl{Runs: 1}).
+			ChannelCreate(func(s Session, e *ChannelCreate) {})
 	})
 
 	t.Run("normal Session with multiple ctrl's", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("multiple controllers should trigger a panic")
+				t.Errorf("multiple controllers should trigger a panic. %s", r)
 			}
 		}()
 
-		c.On(EvtChannelCreate,
-			func(s Session, e *ChannelCreate) {},
-			&Ctrl{Runs: 1},
-			&Ctrl{Until: time.Now().Add(1 * time.Minute)})
-	})
-
-	t.Run("Session pointer", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Did not panic on incorrect handler signature")
-			}
-		}()
-
-		c.On(EvtChannelCreate, func(s *Session, e *ChannelCreate) {})
+		c.Gateway().
+			WithCtrl(&Ctrl{Runs: 1}).
+			WithCtrl(&Ctrl{Until: time.Now().Add(1 * time.Minute)}).
+			ChannelCreate(func(s Session, e *ChannelCreate) {})
 	})
 }
 
@@ -123,7 +116,7 @@ func BenchmarkClient_On(b *testing.B) {
 	msgData := []byte(`{"attachments":[],"author":{"avatar":"69a7a0e9cb963adfdd69a2224b4ac180","discriminator":"7237","id":"228846961774559232","username":"Anders"},"channel_id":"409359688258551850","content":"https://discord.gg/kaWJsV","edited_timestamp":null,"embeds":[],"id":"409654019611688960","mention_everyone":false,"mention_roles":[],"mentions":[],"nonce":"409653919891849216","pinned":false,"timestamp":"2018-02-04T10:18:49.279000+00:00","tts":false,"type":0}`)
 
 	wg := sync.WaitGroup{}
-	c.On(EvtMessageCreate, func() {
+	c.Gateway().MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
 	})
 
@@ -162,9 +155,10 @@ func TestClient_Once(t *testing.T) {
 
 	base := dispatcher.nrOfAliveHandlers()
 	wg := sync.WaitGroup{}
-	c.On(EvtMessageCreate, func() {
+
+	c.Gateway().WithCtrl(&Ctrl{Runs: 1}).MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
-	}, &Ctrl{Runs: 1})
+	})
 	got := dispatcher.nrOfAliveHandlers() - base
 	if got != 1 {
 		t.Errorf("expected dispatch to have 1 listener. Got %d", got)
@@ -218,7 +212,7 @@ func TestClient_On(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	c.On(EvtMessageCreate, func() {
+	c.Gateway().MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
 	})
 	if dispatcher.nrOfAliveHandlers() != 1+base {
@@ -263,13 +257,14 @@ func TestClient_On_Middleware(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	c.On(EvtMessageCreate, func() {
+
+	c.Gateway().MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
 	})
-	c.On(EvtMessageCreate, mdlwHasBotPrefix, func() {
+	c.Gateway().WithMiddleware(mdlwHasBotPrefix).MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
 	})
-	c.On(EvtMessageCreate, mdlwHasDifferentPrefix, func() {
+	c.Gateway().WithMiddleware(mdlwHasDifferentPrefix).MessageCreate(func(_ Session, _ *MessageCreate) {
 		wg.Done()
 	})
 	wg.Add(2)

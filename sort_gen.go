@@ -185,12 +185,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*WebhooksUpdate:
 		s = *t
-	case *[]*RequestGuildMembersPayload:
-		s = *t
-	case *[]*UpdateStatusPayload:
-		s = *t
-	case *[]*UpdateVoiceStatePayload:
-		s = *t
 	case *[]*AddGuildMemberParams:
 		s = *t
 	case *[]*Ban:
@@ -577,12 +571,6 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*UpdateVoiceStatePayload:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
 	case []*Member:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -708,12 +696,6 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*WebhooksUpdate:
-		if descending {
-			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
-		} else {
-			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
-		}
-	case []*UpdateVoiceStatePayload:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {

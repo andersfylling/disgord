@@ -13,7 +13,6 @@ import (
 	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/json"
 
-	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
@@ -324,9 +323,6 @@ type ClientQueryBuilderExecutables interface {
 
 	BotAuthorizeURL() (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
-
-	GetGateway() (gateway *gateway.Gateway, err error)
-	GetGatewayBot() (gateway *gateway.GatewayBot, err error)
 }
 
 type ClientQueryBuilder interface {
@@ -339,6 +335,7 @@ type ClientQueryBuilder interface {
 	User(uid Snowflake) UserQueryBuilder
 	CurrentUser() CurrentUserQueryBuilder
 	Guild(id Snowflake) GuildQueryBuilder
+	Gateway() GatewayQueryBuilder
 }
 
 type clientQueryBuilder struct {
@@ -477,63 +474,6 @@ func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
 	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
 	u := fmt.Sprintf(format, c.client.myID.String(), c.client.permissions)
 	return url.Parse(u)
-}
-
-// GetGateway [REST] Returns an object with a single valid WSS URL, which the Client can use for Connecting.
-// Clients should cacheLink this value and only call this endpoint to retrieve a new URL if they are unable to
-// properly establish a connection using the cached version of the URL.
-//  Method                  GET
-//  Endpoint                /gateway
-//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway
-//  Reviewed                2018-10-12
-//  Comment                 This endpoint does not require authentication.
-func (c clientQueryBuilder) GetGateway() (gateway *gateway.Gateway, err error) {
-	var body []byte
-	_, body, err = c.client.req.Do(c.ctx, &httd.Request{
-		Method:   httd.MethodGet,
-		Endpoint: "/gateway",
-	})
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(body, &gateway)
-
-	if gateway.URL, err = ensureDiscordGatewayURLHasQueryParams(gateway.URL); err != nil {
-		return gateway, err
-	}
-
-	return
-}
-
-// GetGatewayBot [REST] Returns an object based on the information in Get Gateway, plus additional metadata
-// that can help during the operation of large or sharded bots. Unlike the Get Gateway, this route should not
-// be cached for extended periods of time as the value is not guaranteed to be the same per-call, and
-// changes as the bot joins/leaves Guilds.
-//  Method                  GET
-//  Endpoint                /gateway/bot
-//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
-//  Reviewed                2018-10-12
-//  Comment                 This endpoint requires authentication using a valid bot token.
-func (c clientQueryBuilder) GetGatewayBot() (gateway *gateway.GatewayBot, err error) {
-	var body []byte
-	_, body, err = c.client.req.Do(c.ctx, &httd.Request{
-		Method:   httd.MethodGet,
-		Endpoint: "/gateway/bot",
-	})
-	if err != nil {
-		return
-	}
-
-	if err = json.Unmarshal(body, &gateway); err != nil {
-		return nil, err
-	}
-
-	if gateway.URL, err = ensureDiscordGatewayURLHasQueryParams(gateway.URL); err != nil {
-		return gateway, err
-	}
-
-	return gateway, nil
 }
 
 func ensureDiscordGatewayURLHasQueryParams(urlString string) (string, error) {

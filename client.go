@@ -363,10 +363,10 @@ func (c *Client) setupConnectEnv() {
 	// set the user ID upon connection
 	// only works with socket logic
 	if c.config.LoadMembersQuietly {
-		c.On(EvtReady, c.handlers.loadMembers)
+		c.Gateway().Ready(c.handlers.loadMembers)
 	}
-	c.On(EvtGuildCreate, c.handlers.saveGuildID)
-	c.On(EvtGuildDelete, c.handlers.deleteGuildID)
+	c.Gateway().GuildCreate(c.handlers.saveGuildID)
+	c.Gateway().GuildDelete(c.handlers.deleteGuildID)
 
 	// start demultiplexer which also trigger dispatching
 	go c.demultiplexer(c.dispatcher, c.eventChan)
@@ -379,121 +379,7 @@ type helperGatewayBotGetter struct {
 var _ gateway.GatewayBotGetter = (*helperGatewayBotGetter)(nil)
 
 func (h helperGatewayBotGetter) GetGatewayBot(ctx context.Context) (gateway *gateway.GatewayBot, err error) {
-	return h.c.WithContext(ctx).GetGatewayBot()
-}
-
-// Connect establishes a websocket connection to the discord API
-func (c *Client) Connect(ctx context.Context) (err error) {
-	// set the user ID upon connection
-	// only works for socketing
-	//
-	// also verifies that the correct credentials were supplied
-
-	// Avoid races during connection setup
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	var me *User
-	if me, err = c.CurrentUser().WithContext(ctx).Get(); err != nil {
-		return err
-	}
-	c.myID = me.ID
-
-	if err = gateway.ConfigureShardConfig(ctx, helperGatewayBotGetter{c}, &c.config.ShardConfig); err != nil {
-		return err
-	}
-
-	shardMngrConf := gateway.ShardManagerConfig{
-		ShardConfig:  c.config.ShardConfig,
-		Logger:       c.config.Logger,
-		ShutdownChan: c.config.shutdownChan,
-		IgnoreEvents: c.config.RejectEvents,
-		Intents:      c.config.Intents,
-		EventChan:    c.eventChan,
-		DisgordInfo:  LibraryInfo(),
-		ProjectName:  c.config.ProjectName,
-		BotToken:     c.config.BotToken,
-	}
-
-	if c.config.Presence != nil {
-		if c.config.Presence.Status == "" {
-			c.config.Presence.Status = StatusOnline // default
-		}
-		shardMngrConf.DefaultBotPresence = c.config.Presence
-	}
-
-	sharding := gateway.NewShardMngr(shardMngrConf)
-
-	c.setupConnectEnv()
-
-	c.log.Info("Connecting to discord Gateway")
-	if err = sharding.Connect(); err != nil {
-		c.log.Info(err)
-		return err
-	}
-
-	c.log.Info("Connected")
-	c.shardManager = sharding
-	return nil
-}
-
-// Disconnect closes the discord websocket connection
-func (c *Client) Disconnect() (err error) {
-	fmt.Println() // to keep ^C on it's own line
-	c.log.Info("Closing Discord gateway connection")
-	close(c.dispatcher.shutdown)
-	if err = c.shardManager.Disconnect(); err != nil {
-		c.log.Error(err)
-		return err
-	}
-	close(c.shutdownChan)
-	c.log.Info("Disconnected")
-
-	return nil
-}
-
-// Suspend in case you want to temporary disconnect from the Gateway. But plan on
-// connecting again without restarting your software/application, this should be used.
-func (c *Client) Suspend() (err error) {
-	c.log.Info("Closing Discord gateway connection")
-	if err = c.shardManager.Disconnect(); err != nil {
-		return err
-	}
-	c.log.Info("Suspended")
-
-	return nil
-}
-
-// DisconnectOnInterrupt wait until a termination signal is detected
-func (c *Client) DisconnectOnInterrupt() (err error) {
-	// catches panic when being called as a deferred function
-	if r := recover(); r != nil {
-		panic("unable to connect due to above error")
-	}
-
-	<-CreateTermSigListener()
-	return c.Disconnect()
-}
-
-// StayConnectedUntilInterrupted is a simple wrapper for connect, and disconnect that listens for system interrupts.
-// When a error happens you can terminate the application without worries.
-func (c *Client) StayConnectedUntilInterrupted(ctx context.Context) (err error) {
-	// catches panic when being called as a deferred function
-	if r := recover(); r != nil {
-		panic("unable to connect due to above error")
-	}
-
-	if err = c.Connect(ctx); err != nil {
-		c.log.Error(err)
-		return err
-	}
-
-	select {
-	case <-CreateTermSigListener():
-	case <-ctx.Done():
-	}
-
-	return c.Disconnect()
+	return h.c.Gateway().WithContext(ctx).GetBot()
 }
 
 //////////////////////////////////////////////////////
@@ -555,117 +441,6 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 
 //////////////////////////////////////////////////////
 //
-// Socket utilities
-//
-//////////////////////////////////////////////////////
-
-func (c *Client) Event() SocketHandlerRegistrator {
-	return &socketHandlerRegister{
-		register: c,
-	}
-}
-
-// Ready triggers a given callback when all shards has gotten their first Ready event
-// Warning: Do not call Client.Connect before this.
-func (c *Client) Ready(cb func()) {
-	ctrl := &rdyCtrl{
-		cb: cb,
-	}
-
-	c.On(EvtReady, func(_ Session, evt *Ready) {
-		ctrl.Lock()
-		defer ctrl.Unlock()
-
-		l := c.shardManager.ShardCount()
-		if l != uint(len(ctrl.shardReady)) {
-			ctrl.shardReady = make([]bool, l)
-			ctrl.localShardIDs = c.shardManager.ShardIDs()
-		}
-
-		ctrl.shardReady[evt.ShardID] = true
-	}, ctrl)
-}
-
-// GuildsReady is triggered once all unavailable Guilds given in the READY event has loaded from their respective GUILD_CREATE events.
-func (c *Client) GuildsReady(cb func()) {
-	ctrl := &guildsRdyCtrl{
-		status: make(map[Snowflake]bool),
-	}
-	ctrl.cb = cb
-	ctrl.status[0] = false
-
-	c.On(EvtReady, func(_ Session, evt *Ready) {
-		ctrl.Lock()
-		defer ctrl.Unlock()
-
-		for _, g := range evt.Guilds {
-			if _, ok := ctrl.status[g.ID]; !ok {
-				ctrl.status[g.ID] = false
-			}
-		}
-
-		delete(ctrl.status, 0)
-	}, ctrl)
-
-	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
-		ctrl.Lock()
-		defer ctrl.Unlock()
-		ctrl.status[evt.Guild.ID] = true
-	}, ctrl)
-}
-
-// On creates a specification to be executed on the given event. The specification
-// consists of, in order, 0 or more middlewares, 1 or more handlers, 0 or 1 controller.
-// On incorrect ordering, or types, the method will panic. See reactor.go for types.
-//
-// Each of the three sub-types of a specification is run in sequence, as well as the specifications
-// registered for a event. However, the slice of specifications are executed in a goroutine to avoid
-// blocking future events. The middlewares allows manipulating the event data before it reaches the
-// handlers. The handlers executes short-running logic based on the event data (use go routine if
-// you need a long running task). The controller dictates lifetime of the specification.
-//
-//  // a handler that is executed on every Ready event
-//  Client.On(EvtReady, onReady)
-//
-//  // a handler that runs only the first three times a READY event is fired
-//  Client.On(EvtReady, onReady, &Ctrl{Runs: 3})
-//
-//  // a handler that only runs for events within the first 10 minutes
-//  Client.On(EvtReady, onReady, &Ctrl{Duration: 10*time.Minute})
-//
-// Another example is to create a voting system where you specify a deadline instead of a Runs counter:
-//  On("MESSAGE_CREATE", mdlwHasMentions, handleMsgsWithMentions, saveVoteToDB, &Ctrl{Until:time.Now().Add(time.Hour)})
-//
-// You can use your own Ctrl struct, as long as it implements disgord.HandlerCtrl. Do not execute long running tasks
-// in the methods. Use a go routine instead.
-//
-// If the HandlerCtrl.OnInsert returns an error, the related handlers are still added to the dispatcher.
-// But the error is logged to the injected logger instance (log.Error).
-//
-// This ctrl feature was inspired by https://github.com/discordjs/discord.js
-func (c *Client) On(event string, inputs ...interface{}) {
-	if err := ValidateHandlerInputs(inputs...); err != nil {
-		panic(err)
-	}
-
-	if err := c.dispatcher.register(event, inputs...); err != nil {
-		panic(err)
-	}
-}
-
-// Emit sends a socket command directly to Discord.
-func (c *Client) Emit(name gatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	if c.shardManager == nil {
-		return nil, errors.New("you must connect before you can Emit")
-	}
-
-	return c.shardManager.Emit(string(name), payload)
-}
-
-//////////////////////////////////////////////////////
-//
 // REST Methods
 // customs
 //
@@ -676,7 +451,7 @@ func (c *Client) Emit(name gatewayCmdName, payload gateway.CmdPayload) (unchandl
 // UpdateStatus updates the Client's game status
 // note: for simple games, check out UpdateStatusString
 func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
-	_, err := c.Emit(UpdateStatus, s)
+	_, err := c.Gateway().Dispatch(UpdateStatus, s)
 	return err
 }
 

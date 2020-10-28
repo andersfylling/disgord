@@ -87,11 +87,11 @@ func TestClient(t *testing.T) {
 
 	// We need this for later.
 	guildCreateEvent := make(chan *GuildCreate, 2)
-	c.On(EvtGuildCreate, func(_ Session, evt *GuildCreate) {
+	c.Gateway().WithCtrl(&Ctrl{Runs: 1}).GuildCreate(func(_ Session, evt *GuildCreate) {
 		guildCreateEvent <- evt
-	}, &Ctrl{Runs: 1})
+	})
 
-	defer c.Disconnect()
+	defer c.Gateway().Disconnect()
 	wg.Add(1)
 	t.Run("connect", func(t *testing.T) {
 		defer wg.Done()
@@ -120,7 +120,7 @@ func TestClient(t *testing.T) {
 	t.Run("default-presence", func(t *testing.T) {
 		defer wg.Done()
 		done := make(chan bool, 2)
-		c.On(EvtPresenceUpdate, func(_ Session, evt *PresenceUpdate) {
+		c.Gateway().PresenceUpdate(func(_ Session, evt *PresenceUpdate) {
 			if !evt.User.Bot {
 				c.Logger().Info("was not bot")
 				return
@@ -183,7 +183,7 @@ func TestClient(t *testing.T) {
 		successfullyMoved := make(chan bool, 2)
 		done := make(chan bool)
 
-		c.On(EvtVoiceStateUpdate, func(_ Session, evt *VoiceStateUpdate) {
+		c.Gateway().VoiceStateUpdate(func(_ Session, evt *VoiceStateUpdate) {
 			myself, err := c.CurrentUser().Get()
 			if err != nil {
 				panic(err)
@@ -288,7 +288,7 @@ func TestClient(t *testing.T) {
 			return nil
 		}
 
-		c.On(EvtMessageCreate, filterChannel, filterTestPrefix, gotMessage)
+		c.Gateway().WithMiddleware(filterChannel, filterTestPrefix).MessageCreateChan(gotMessage)
 		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
 		if err != nil {
 			panic(fmt.Errorf("unable to send message. %w", err))
@@ -325,12 +325,12 @@ func TestClient(t *testing.T) {
 
 		// Test message create event
 		snowflakeChan := make(chan Snowflake, 2)
-		c.On(EvtMessageCreate, func(_ Session, evt *MessageCreate) {
+		c.Gateway().WithCtrl(&Ctrl{Runs: 1}).MessageCreate(func(_ Session, evt *MessageCreate) {
 			if evt.Message.Author.Bot && evt.Message.Member != nil {
 				snowflakeChan <- evt.Message.Member.GuildID
 				snowflakeChan <- evt.Message.Member.UserID
 			}
-		}, &Ctrl{Runs: 1})
+		})
 		msg, err := c.WithContext(deadline).SendMsg(guildTypical.TextChannelGeneral, "Hello World!")
 		if err != nil {
 			panic(err)
@@ -349,12 +349,12 @@ func TestClient(t *testing.T) {
 
 		// Test message update event
 		snowflakeChan = make(chan Snowflake, 2)
-		c.On(EvtMessageUpdate, func(_ Session, evt *MessageUpdate) {
+		c.Gateway().WithCtrl(&Ctrl{Runs: 1}).MessageUpdate(func(_ Session, evt *MessageUpdate) {
 			if evt.Message.Author.Bot {
 				snowflakeChan <- evt.Message.Member.GuildID
 				snowflakeChan <- evt.Message.Member.UserID
 			}
-		}, &Ctrl{Runs: 1})
+		})
 		_, err = c.Channel(guildTypical.TextChannelGeneral).Message(msg.ID).WithContext(deadline).Update().SetContent("world").Execute()
 		if err != nil {
 			panic(err)

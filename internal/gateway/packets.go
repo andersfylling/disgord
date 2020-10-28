@@ -156,14 +156,12 @@ var _ CmdPayload = (*UpdateVoiceStatePayload)(nil)
 
 func (u *UpdateVoiceStatePayload) isCmdPayload() bool { return true }
 
-type updateStatusPayloadStatus string
-
 const (
-	StatusOnline    updateStatusPayloadStatus = "online"
-	StatusDND       updateStatusPayloadStatus = "dnd"
-	StatusIdle      updateStatusPayloadStatus = "idle"
-	StatusInvisible updateStatusPayloadStatus = "invisible"
-	StatusOffline   updateStatusPayloadStatus = "offline"
+	StatusOnline    = "online"
+	StatusDND       = "dnd"
+	StatusIdle      = "idle"
+	StatusInvisible = "invisible"
+	StatusOffline   = "offline"
 )
 
 type UpdateStatusPayload struct {
@@ -174,7 +172,7 @@ type UpdateStatusPayload struct {
 	Game interface{} `json:"game"`
 
 	// Status the user's new status
-	Status updateStatusPayloadStatus `json:"status"`
+	Status string `json:"status"`
 
 	// AFK whether or not the Client is afk
 	AFK bool `json:"afk"`
