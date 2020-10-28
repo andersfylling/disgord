@@ -38,13 +38,13 @@ func AllEventsExcept(except ...string) []string {
 {{range .}}
 {{if .IsDiscordEvent}}
 {{.RenderDocs}}
-const Evt{{.}} = event.{{.}} {{end}}
+const Evt{{.}} = event.{{.}}
 
 func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
 type handler{{.}} = func(Session, *{{.}})
 
-// --------------------------- {{end}}
+// --------------------------- {{end}}{{end}}
 
 type dispatchRegistrater interface {
     register(evt string, inputs ...interface{}) error
@@ -92,6 +92,7 @@ func (shr socketHandlerRegister) WithMiddleware(first Middleware, extra ...Middl
 
 {{range .}}
 {{- if .IsDiscordEvent}}
+{{.RenderDocs}}
 func (shr socketHandlerRegister) {{.}}(handler handler{{.}}, moreHandlers ...handler{{.}}) {
     shr.evtName = Evt{{.}}
     shr.handlers = append(shr.handlers, handler)
@@ -100,6 +101,7 @@ func (shr socketHandlerRegister) {{.}}(handler handler{{.}}, moreHandlers ...han
     }
     shr.build()
 }
+
 func (shr socketHandlerRegister) {{.}}Chan(handler chan *{{.}}, moreHandlers ...chan *{{.}}) {
     shr.evtName = Evt{{.}}
     shr.handlers = append(shr.handlers, handler)
