@@ -14,19 +14,6 @@ import (
 //go:generate go run generate/sorters/main.go
 //go:generate go run generate/json/main.go
 
-// Copier holds the CopyOverTo method which copies all it's content from one
-// struct to another. Note that this requires a deep copy.
-// useful when overwriting already existing content in the cacheLink to reduce GC.
-type Copier interface {
-	CopyOverTo(other interface{}) error
-}
-
-// DeepCopier holds the DeepCopy method which creates and returns a deep copy of
-// any struct.
-type DeepCopier interface {
-	DeepCopy() interface{}
-}
-
 func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
 	return &ErrorUnsupportedType{
 		info: message,

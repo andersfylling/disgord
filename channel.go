@@ -54,7 +54,7 @@ func (a *Attachment) updateInternals() {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (a *Attachment) DeepCopy() (copy interface{}) {
+func (a *Attachment) deepCopy() (copy interface{}) {
 	copy = &Attachment{
 		ID:       a.ID,
 		Filename: a.Filename,
@@ -201,15 +201,14 @@ func (c *Channel) Compare(other *Channel) bool {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *Channel) DeepCopy() (copy interface{}) {
-	copy = &Channel{}
-	_ = c.CopyOverTo(copy)
-
-	return
+func (c *Channel) deepCopy() interface{} {
+	cp := &Channel{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *Channel) CopyOverTo(other interface{}) (err error) {
+func (c *Channel) copyOverTo(other interface{}) (err error) {
 	var channel *Channel
 	var valid bool
 	if channel, valid = other.(*Channel); !valid {
@@ -239,7 +238,7 @@ func (c *Channel) CopyOverTo(other interface{}) (err error) {
 	// add recipients if it's a DM
 	channel.Recipients = make([]*User, 0, len(c.Recipients))
 	for _, recipient := range c.Recipients {
-		channel.Recipients = append(channel.Recipients, recipient.DeepCopy().(*User))
+		channel.Recipients = append(channel.Recipients, DeepCopy(recipient).(*User))
 	}
 
 	return

@@ -22,15 +22,14 @@ type Webhook struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (w *Webhook) DeepCopy() (copy interface{}) {
-	copy = &Webhook{}
-	w.CopyOverTo(copy)
-
-	return
+func (w *Webhook) deepCopy() interface{} {
+	cp := &Webhook{}
+	_ = DeepCopyOver(cp, w)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (w *Webhook) CopyOverTo(other interface{}) (err error) {
+func (w *Webhook) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var hook *Webhook
 	if hook, ok = other.(*Webhook); !ok {
@@ -41,7 +40,7 @@ func (w *Webhook) CopyOverTo(other interface{}) (err error) {
 	hook.ID = w.ID
 	hook.GuildID = w.GuildID
 	hook.ChannelID = w.ChannelID
-	hook.User = w.User.DeepCopy().(*User)
+	hook.User = DeepCopy(w.User).(*User)
 	hook.Name = w.Name
 	hook.Avatar = w.Avatar
 	hook.Token = w.Token

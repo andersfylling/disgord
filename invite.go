@@ -58,15 +58,14 @@ var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (i *Invite) DeepCopy() (copy interface{}) {
-	copy = &Invite{}
-	i.CopyOverTo(copy)
-
-	return
+func (i *Invite) deepCopy() interface{} {
+	cp := &Invite{}
+	_ = DeepCopyOver(cp, i)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (i *Invite) CopyOverTo(other interface{}) (err error) {
+func (i *Invite) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var invite *Invite
 	if invite, ok = other.(*Invite); !ok {
@@ -123,15 +122,14 @@ var _ Copier = (*InviteMetadata)(nil)
 var _ DeepCopier = (*InviteMetadata)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (i *InviteMetadata) DeepCopy() (copy interface{}) {
-	copy = &InviteMetadata{}
-	i.CopyOverTo(copy)
-
-	return
+func (i *InviteMetadata) deepCopy() interface{} {
+	cp := &InviteMetadata{}
+	_ = DeepCopyOver(cp, i)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
+func (i *InviteMetadata) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var invite *InviteMetadata
 	if invite, ok = other.(*InviteMetadata); !ok {
@@ -147,7 +145,7 @@ func (i *InviteMetadata) CopyOverTo(other interface{}) (err error) {
 	invite.Revoked = i.Revoked
 
 	if i.Inviter != nil {
-		invite.Inviter = i.Inviter.DeepCopy().(*User)
+		invite.Inviter = DeepCopy(i.Inviter).(*User)
 	}
 	return nil
 }

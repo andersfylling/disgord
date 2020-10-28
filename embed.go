@@ -21,15 +21,14 @@ type Embed struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *Embed) DeepCopy() (copy interface{}) {
-	copy = &Embed{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *Embed) deepCopy() interface{} {
+	cp := &Embed{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *Embed) CopyOverTo(other interface{}) (err error) {
+func (c *Embed) copyOverTo(other interface{}) (err error) {
 	var embed *Embed
 	var valid bool
 	if embed, valid = other.(*Embed); !valid {
@@ -45,27 +44,27 @@ func (c *Embed) CopyOverTo(other interface{}) (err error) {
 	embed.Color = c.Color
 
 	if c.Footer != nil {
-		embed.Footer = c.Footer.DeepCopy().(*EmbedFooter)
+		embed.Footer = DeepCopy(c.Footer).(*EmbedFooter)
 	}
 	if c.Image != nil {
-		embed.Image = c.Image.DeepCopy().(*EmbedImage)
+		embed.Image = DeepCopy(c.Image).(*EmbedImage)
 	}
 	if c.Thumbnail != nil {
-		embed.Thumbnail = c.Thumbnail.DeepCopy().(*EmbedThumbnail)
+		embed.Thumbnail = DeepCopy(c.Thumbnail).(*EmbedThumbnail)
 	}
 	if c.Video != nil {
-		embed.Video = c.Video.DeepCopy().(*EmbedVideo)
+		embed.Video = DeepCopy(c.Video).(*EmbedVideo)
 	}
 	if c.Provider != nil {
-		embed.Provider = c.Provider.DeepCopy().(*EmbedProvider)
+		embed.Provider = DeepCopy(c.Provider).(*EmbedProvider)
 	}
 	if c.Author != nil {
-		embed.Author = c.Author.DeepCopy().(*EmbedAuthor)
+		embed.Author = DeepCopy(c.Author).(*EmbedAuthor)
 	}
 
 	embed.Fields = make([]*EmbedField, len(c.Fields))
 	for i, field := range c.Fields {
-		embed.Fields[i] = field.DeepCopy().(*EmbedField)
+		embed.Fields[i] = DeepCopy(field).(*EmbedField)
 	}
 	return nil
 }
@@ -79,15 +78,14 @@ type EmbedThumbnail struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedThumbnail) DeepCopy() (copy interface{}) {
-	copy = &EmbedThumbnail{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedThumbnail) deepCopy() interface{} {
+	cp := &EmbedThumbnail{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedThumbnail) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedThumbnail) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedThumbnail
 	var valid bool
 	if embed, valid = other.(*EmbedThumbnail); !valid {
@@ -110,15 +108,14 @@ type EmbedVideo struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedVideo) DeepCopy() (copy interface{}) {
-	copy = &EmbedVideo{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedVideo) deepCopy() interface{} {
+	cp := &EmbedVideo{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedVideo) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedVideo) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedVideo
 	var valid bool
 	if embed, valid = other.(*EmbedVideo); !valid {
@@ -141,15 +138,14 @@ type EmbedImage struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedImage) DeepCopy() (copy interface{}) {
-	copy = &EmbedImage{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedImage) deepCopy() interface{} {
+	cp := &EmbedImage{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedImage) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedImage) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedImage
 	var valid bool
 	if embed, valid = other.(*EmbedImage); !valid {
@@ -171,15 +167,14 @@ type EmbedProvider struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedProvider) DeepCopy() (copy interface{}) {
-	copy = &EmbedProvider{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedProvider) deepCopy() interface{} {
+	cp := &EmbedProvider{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedProvider) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedProvider) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedProvider
 	var valid bool
 	if embed, valid = other.(*EmbedProvider); !valid {
@@ -201,15 +196,14 @@ type EmbedAuthor struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedAuthor) DeepCopy() (copy interface{}) {
-	copy = &EmbedAuthor{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedAuthor) deepCopy() interface{} {
+	cp := &EmbedAuthor{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedAuthor) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedAuthor) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedAuthor
 	var valid bool
 	if embed, valid = other.(*EmbedAuthor); !valid {
@@ -232,15 +226,14 @@ type EmbedFooter struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedFooter) DeepCopy() (copy interface{}) {
-	copy = &EmbedFooter{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedFooter) deepCopy() interface{} {
+	cp := &EmbedFooter{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedFooter) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedFooter) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedFooter
 	var valid bool
 	if embed, valid = other.(*EmbedFooter); !valid {
@@ -262,15 +255,14 @@ type EmbedField struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *EmbedField) DeepCopy() (copy interface{}) {
-	copy = &EmbedField{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *EmbedField) deepCopy() interface{} {
+	cp := &EmbedField{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *EmbedField) CopyOverTo(other interface{}) (err error) {
+func (c *EmbedField) copyOverTo(other interface{}) (err error) {
 	var embed *EmbedField
 	var valid bool
 	if embed, valid = other.(*EmbedField); !valid {

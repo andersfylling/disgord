@@ -119,15 +119,14 @@ func (l *AuditLog) Bans() (bans []*PartialBan) {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLog) DeepCopy() (copy interface{}) {
-	copy = &AuditLog{}
-	l.CopyOverTo(copy)
-
-	return
+func (l *AuditLog) deepCopy() interface{} {
+	cp := &AuditLog{}
+	_ = DeepCopyOver(cp, l)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
+func (l *AuditLog) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLog
 	if log, ok = other.(*AuditLog); !ok {
@@ -136,13 +135,13 @@ func (l *AuditLog) CopyOverTo(other interface{}) (err error) {
 	}
 
 	for _, webhook := range l.Webhooks {
-		log.Webhooks = append(log.Webhooks, webhook.DeepCopy().(*Webhook))
+		log.Webhooks = append(log.Webhooks, DeepCopy(webhook).(*Webhook))
 	}
 	for _, user := range l.Users {
-		log.Users = append(log.Users, user.DeepCopy().(*User))
+		log.Users = append(log.Users, DeepCopy(user).(*User))
 	}
 	for _, entry := range l.AuditLogEntries {
-		log.AuditLogEntries = append(log.AuditLogEntries, entry.DeepCopy().(*AuditLogEntry))
+		log.AuditLogEntries = append(log.AuditLogEntries, DeepCopy(entry).(*AuditLogEntry))
 	}
 	return
 }
@@ -159,15 +158,14 @@ type AuditLogEntry struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogEntry) DeepCopy() (copy interface{}) {
-	copy = &AuditLogEntry{}
-	l.CopyOverTo(copy)
-
-	return
+func (l *AuditLogEntry) deepCopy() interface{} {
+	cp := &AuditLogEntry{}
+	_ = DeepCopyOver(cp, l)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
+func (l *AuditLogEntry) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogEntry
 	if log, ok = other.(*AuditLogEntry); !ok {
@@ -182,11 +180,11 @@ func (l *AuditLogEntry) CopyOverTo(other interface{}) (err error) {
 	log.Reason = l.Reason
 
 	for _, change := range l.Changes {
-		log.Changes = append(log.Changes, change.DeepCopy().(*AuditLogChanges))
+		log.Changes = append(log.Changes, DeepCopy(change).(*AuditLogChanges))
 	}
 
 	if l.Options != nil {
-		log.Options = l.Options.DeepCopy().(*AuditLogOption)
+		log.Options = DeepCopy(l.Options).(*AuditLogOption)
 	}
 	return
 }
@@ -203,15 +201,14 @@ type AuditLogOption struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogOption) DeepCopy() (copy interface{}) {
-	copy = &AuditLogOption{}
-	l.CopyOverTo(copy)
-
-	return
+func (l *AuditLogOption) deepCopy() interface{} {
+	cp := &AuditLogOption{}
+	_ = DeepCopyOver(cp, l)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogOption) CopyOverTo(other interface{}) (err error) {
+func (l *AuditLogOption) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogOption
 	if log, ok = other.(*AuditLogOption); !ok {
@@ -237,15 +234,14 @@ type AuditLogChanges struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogChanges) DeepCopy() (copy interface{}) {
-	copy = &AuditLogChanges{}
-	l.CopyOverTo(copy)
-
-	return
+func (l *AuditLogChanges) deepCopy() interface{} {
+	cp := &AuditLogChanges{}
+	_ = DeepCopyOver(cp, l)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogChanges) CopyOverTo(other interface{}) (err error) {
+func (l *AuditLogChanges) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var log *AuditLogChanges
 	if log, ok = other.(*AuditLogChanges); !ok {

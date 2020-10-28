@@ -68,8 +68,8 @@ func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
 		channel := &Channel{
 			ID: channelID,
 			Recipients: []*User{
-				c.CurrentUser.DeepCopy().(*User),
-				msg.Author.DeepCopy().(*User),
+				DeepCopy(c.CurrentUser).(*User),
+				DeepCopy(msg.Author).(*User),
 			},
 			LastMessageID: msg.ID,
 			Type:          ChannelTypeDM,
@@ -104,7 +104,7 @@ func (c *CacheLFUImmutable) Ready(data []byte) (*Ready, error) {
 	}
 
 	err := json.Unmarshal(data, rdy)
-	rdy.User = c.CurrentUser.DeepCopy().(*User)
+	rdy.User = DeepCopy(c.CurrentUser).(*User)
 	c.Patch(rdy)
 	return rdy, err
 }
@@ -129,7 +129,7 @@ func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
 
 	wrap := func(c *Channel) *ChannelCreate {
-		return &ChannelCreate{Channel: c.DeepCopy().(*Channel)}
+		return &ChannelCreate{Channel: DeepCopy(c).(*Channel)}
 	}
 
 	channel := &Channel{}
@@ -170,7 +170,7 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		}
 		c.Patch(channel)
 
-		channel = channel.DeepCopy().(*Channel)
+		channel = DeepCopy(channel).(*Channel)
 		return channel, nil
 	}
 
@@ -197,7 +197,7 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 			return nil, err
 		}
 		c.Patch(tmp)
-		channel = tmp.DeepCopy().(*Channel)
+		channel = DeepCopy(tmp).(*Channel)
 		freshItem := c.Channels.CreateCacheableItem(tmp)
 
 		c.Channels.Lock()
@@ -280,7 +280,7 @@ func (c *CacheLFUImmutable) UserUpdate(data []byte) (*UserUpdate, error) {
 		return nil, err
 	}
 
-	update.User = c.CurrentUser.DeepCopy().(*User)
+	update.User = DeepCopy(c.CurrentUser).(*User)
 	c.Patch(update)
 
 	return update, nil
@@ -340,15 +340,15 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 		// TODO: i assume the user is partial and doesn't hold any real updates
 		usr := cachedUser.Val.(*User)
 		// if err := json.Unmarshal(data, &Member{User:usr}); err == nil {
-		// 	gmr.Member.User = usr.DeepCopy().(*User)
+		// 	gmr.Member.User = DeepCopy(usr).(*User)
 		// }
-		gmr.Member.User = usr.DeepCopy().(*User)
+		gmr.Member.User = DeepCopy(usr).(*User)
 	} else {
 		c.Users.Lock()
 		defer c.Users.Unlock()
 
 		if _, exists := c.Users.Get(userID); !exists {
-			usr := c.Users.CreateCacheableItem(gmr.Member.User.DeepCopy().(*User))
+			usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User).(*User))
 			c.Users.Set(userID, usr)
 		}
 	}
@@ -376,7 +376,7 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 			}
 		}
 		if member == nil {
-			member = gmr.Member.DeepCopy().(*Member)
+			member = DeepCopy(gmr.Member).(*Member)
 
 			guild.Members = append(guild.Members, member)
 			guild.MemberCount++
@@ -412,7 +412,7 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		guild.Unavailable = false
 		c.Patch(guild)
 
-		guild = guild.DeepCopy().(*Guild)
+		guild = DeepCopy(guild).(*Guild)
 	} else if exists {
 		// not pre-loaded from ready event
 		if err := json.Unmarshal(data, &guild); err != nil {
@@ -427,7 +427,7 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		c.Patch(guild)
 
 		e := c.Guilds.CreateCacheableItem(guild)
-		guild = guild.DeepCopy().(*Guild)
+		guild = DeepCopy(guild).(*Guild)
 
 		c.Guilds.Lock()
 		if _, exists := c.Guilds.Get(guildID); !exists {
@@ -454,7 +454,7 @@ func (c *CacheLFUImmutable) GuildUpdate(data []byte) (*GuildUpdate, error) {
 		}
 		c.Patch(guild)
 
-		return guild.DeepCopy().(*Guild), nil
+		return DeepCopy(guild).(*Guild), nil
 	}
 
 	var metadata *idHolder
@@ -484,7 +484,7 @@ func (c *CacheLFUImmutable) GuildUpdate(data []byte) (*GuildUpdate, error) {
 			guild, err = updateGuild(guildID, oldItem) // fallback
 		} else {
 			c.Guilds.Set(guildID, e)
-			guild = guild.DeepCopy().(*Guild)
+			guild = DeepCopy(guild).(*Guild)
 		}
 	}
 
@@ -529,7 +529,7 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 		defer mutex.Unlock()
 
 		channel := cachedItem.Val.(*Channel)
-		return channel.DeepCopy().(*Channel), nil
+		return DeepCopy(channel).(*Channel), nil
 	}
 	return nil, nil
 }
@@ -545,7 +545,7 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 
 		guild := cachedItem.Val.(*Guild)
 		emoji, _ := guild.Emoji(emojiID)
-		return emoji.DeepCopy().(*Emoji), nil
+		return DeepCopy(emoji).(*Emoji), nil
 	}
 	return nil, errors.New("guild does not exist")
 }
@@ -562,7 +562,7 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 		guild := cachedItem.Val.(*Guild)
 		emojis := make([]*Emoji, len(guild.Emojis))
 		for i, emoji := range emojis {
-			emojis[i] = emoji.DeepCopy().(*Emoji)
+			emojis[i] = DeepCopy(emoji).(*Emoji)
 		}
 
 		return emojis, nil
@@ -580,7 +580,7 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		guild = cachedItem.Val.(*Guild).DeepCopy().(*Guild)
+		guild = DeepCopy(cachedItem.Val.(*Guild)).(*Guild)
 	}
 
 	return guild, nil
@@ -599,7 +599,7 @@ func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 
 		channels := make([]*Channel, len(guild.Channels))
 		for i, channel := range guild.Channels {
-			channels[i] = channel.DeepCopy().(*Channel)
+			channels[i] = DeepCopy(channel).(*Channel)
 		}
 
 		return channels, nil
@@ -620,7 +620,7 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 		if user != nil {
 			mutex := c.Mutex(&c.Users, userID)
 			mutex.Lock()
-			user = user.DeepCopy().(*User)
+			user = DeepCopy(user).(*User)
 			mutex.Unlock()
 		}
 		wg.Done()
@@ -637,7 +637,7 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 		guild := cachedItem.Val.(*Guild)
 		member, _ = guild.Member(userID)
 		if member != nil {
-			member = member.DeepCopy().(*Member)
+			member = DeepCopy(member).(*Member)
 		}
 
 		mutex.Unlock()
@@ -665,7 +665,7 @@ func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 		guild := cachedItem.Val.(*Guild)
 		roles := make([]*Role, len(guild.Roles))
 		for i, role := range guild.Roles {
-			roles[i] = role.DeepCopy().(*Role)
+			roles[i] = DeepCopy(role).(*Role)
 		}
 
 		return roles, nil
@@ -676,7 +676,7 @@ func (c *CacheLFUImmutable) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 
-	return c.CurrentUser.DeepCopy().(*User), nil
+	return DeepCopy(c.CurrentUser).(*User), nil
 }
 func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 	currentUser := func() *User {
@@ -690,7 +690,7 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 	}
 	// hmmm.. ugly
 	if match := currentUser(); match != nil {
-		return match.DeepCopy().(*User), nil
+		return DeepCopy(match).(*User), nil
 	}
 
 	c.Users.RLock()
@@ -703,7 +703,7 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		user = item.Val.(*User).DeepCopy().(*User)
+		user = DeepCopy(item.Val.(*User)).(*User)
 	}
 
 	return user, nil

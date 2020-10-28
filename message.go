@@ -181,15 +181,14 @@ func (m *Message) IsDirectMessage() bool {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (m *Message) DeepCopy() (copy interface{}) {
-	copy = &Message{}
-	m.CopyOverTo(copy)
-
-	return
+func (m *Message) deepCopy() interface{} {
+	cp := &Message{}
+	_ = DeepCopyOver(cp, m)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (m *Message) CopyOverTo(other interface{}) (err error) {
+func (m *Message) copyOverTo(other interface{}) (err error) {
 	var message *Message
 	var valid bool
 	if message, valid = other.(*Message); !valid {
@@ -218,23 +217,23 @@ func (m *Message) CopyOverTo(other interface{}) (err error) {
 	message.Nonce = m.Nonce
 
 	if m.Author != nil {
-		message.Author = m.Author.DeepCopy().(*User)
+		message.Author = DeepCopy(m.Author).(*User)
 	}
 
 	for _, mention := range m.Mentions {
-		message.Mentions = append(message.Mentions, mention.DeepCopy().(*User))
+		message.Mentions = append(message.Mentions, DeepCopy(mention).(*User))
 	}
 
 	for _, attachment := range m.Attachments {
-		message.Attachments = append(message.Attachments, attachment.DeepCopy().(*Attachment))
+		message.Attachments = append(message.Attachments, DeepCopy(attachment).(*Attachment))
 	}
 
 	for _, embed := range m.Embeds {
-		message.Embeds = append(message.Embeds, embed.DeepCopy().(*Embed))
+		message.Embeds = append(message.Embeds, DeepCopy(embed).(*Embed))
 	}
 
 	for _, reaction := range m.Reactions {
-		message.Reactions = append(message.Reactions, reaction.DeepCopy().(*Reaction))
+		message.Reactions = append(message.Reactions, DeepCopy(reaction).(*Reaction))
 	}
 
 	return
@@ -257,7 +256,7 @@ func (m *Message) Send(ctx context.Context, s Session, flags ...Flag) (msg *Mess
 	}
 	if len(m.Embeds) > 0 {
 		params.Embed = &Embed{}
-		_ = m.Embeds[0].CopyOverTo(params.Embed)
+		_ = DeepCopyOver(params.Embed, m.Embeds[0])
 	}
 	channelID := m.ChannelID
 

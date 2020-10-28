@@ -55,15 +55,14 @@ func (e *Emoji) Mention() string {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (e *Emoji) DeepCopy() (copy interface{}) {
-	copy = &Emoji{}
-	e.CopyOverTo(copy)
-
-	return
+func (e *Emoji) deepCopy() interface{} {
+	cp := &Emoji{}
+	_ = DeepCopyOver(cp, e)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (e *Emoji) CopyOverTo(other interface{}) (err error) {
+func (e *Emoji) copyOverTo(other interface{}) (err error) {
 	var emoji *Emoji
 	var ok bool
 	if emoji, ok = other.(*Emoji); !ok {
@@ -79,7 +78,7 @@ func (e *Emoji) CopyOverTo(other interface{}) (err error) {
 	emoji.Animated = e.Animated
 
 	if e.User != nil {
-		emoji.User = e.User.DeepCopy().(*User)
+		emoji.User = DeepCopy(e.User).(*User)
 	}
 	return
 }

@@ -19,7 +19,7 @@ func TestChannel_DeepCopy(t *testing.T) {
 		Type: 1,
 	})
 
-	cp := test.DeepCopy().(*Channel)
+	cp := DeepCopy(test).(*Channel)
 	icon2 := "sfkjdsf"
 	test.Icon = icon2
 	if cp.Icon != icon1 {

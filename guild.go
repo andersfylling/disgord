@@ -428,15 +428,14 @@ func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (g *Guild) DeepCopy() (copy interface{}) {
-	copy = &Guild{}
-	_ = g.CopyOverTo(copy)
-
-	return
+func (g *Guild) deepCopy() interface{} {
+	cp := &Guild{}
+	_ = DeepCopyOver(cp, g)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (g *Guild) CopyOverTo(other interface{}) (err error) {
+func (g *Guild) copyOverTo(other interface{}) (err error) {
 	var guild *Guild
 	var valid bool
 	if guild, valid = other.(*Guild); !valid {
@@ -484,38 +483,38 @@ func (g *Guild) CopyOverTo(other interface{}) (err error) {
 		if roleP == nil {
 			continue
 		}
-		guild.Roles = append(guild.Roles, roleP.DeepCopy().(*Role))
+		guild.Roles = append(guild.Roles, DeepCopy(roleP).(*Role))
 	}
 	for _, emojiP := range g.Emojis {
 		if emojiP == nil {
 			continue
 		}
-		guild.Emojis = append(guild.Emojis, emojiP.DeepCopy().(*Emoji))
+		guild.Emojis = append(guild.Emojis, DeepCopy(emojiP).(*Emoji))
 	}
 
 	for _, vsP := range g.VoiceStates {
 		if vsP == nil {
 			continue
 		}
-		guild.VoiceStates = append(guild.VoiceStates, vsP.DeepCopy().(*VoiceState))
+		guild.VoiceStates = append(guild.VoiceStates, DeepCopy(vsP).(*VoiceState))
 	}
 	for _, memberP := range g.Members {
 		if memberP == nil {
 			continue
 		}
-		guild.Members = append(guild.Members, memberP.DeepCopy().(*Member))
+		guild.Members = append(guild.Members, DeepCopy(memberP).(*Member))
 	}
 	for _, channelP := range g.Channels {
 		if channelP == nil {
 			continue
 		}
-		guild.Channels = append(guild.Channels, channelP.DeepCopy().(*Channel))
+		guild.Channels = append(guild.Channels, DeepCopy(channelP).(*Channel))
 	}
 	for _, presenceP := range g.Presences {
 		if presenceP == nil {
 			continue
 		}
-		guild.Presences = append(guild.Presences, presenceP.DeepCopy().(*UserPresence))
+		guild.Presences = append(guild.Presences, DeepCopy(presenceP).(*UserPresence))
 	}
 
 	return
@@ -543,15 +542,14 @@ type Ban struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (b *Ban) DeepCopy() (copy interface{}) {
-	copy = &Ban{}
-	_ = b.CopyOverTo(copy)
-
-	return
+func (b *Ban) deepCopy() interface{} {
+	cp := &Ban{}
+	_ = DeepCopyOver(cp, b)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (b *Ban) CopyOverTo(other interface{}) (err error) {
+func (b *Ban) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var ban *Ban
 	if ban, ok = other.(*Ban); !ok {
@@ -562,7 +560,7 @@ func (b *Ban) CopyOverTo(other interface{}) (err error) {
 	ban.Reason = b.Reason
 
 	if b.User != nil {
-		ban.User = b.User.DeepCopy().(*User)
+		ban.User = DeepCopy(b.User).(*User)
 	}
 
 	return
@@ -577,15 +575,14 @@ type GuildEmbed struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (e *GuildEmbed) DeepCopy() (copy interface{}) {
-	copy = &GuildEmbed{}
-	_ = e.CopyOverTo(copy)
-
-	return
+func (e *GuildEmbed) deepCopy() interface{} {
+	cp := &GuildEmbed{}
+	_ = DeepCopyOver(cp, e)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (e *GuildEmbed) CopyOverTo(other interface{}) (err error) {
+func (e *GuildEmbed) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var embed *GuildEmbed
 	if embed, ok = other.(*GuildEmbed); !ok {
@@ -616,15 +613,14 @@ type Integration struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (i *Integration) DeepCopy() (copy interface{}) {
-	copy = &Integration{}
-	_ = i.CopyOverTo(copy)
-
-	return
+func (i *Integration) deepCopy() interface{} {
+	cp := &Integration{}
+	_ = DeepCopyOver(cp, i)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (i *Integration) CopyOverTo(other interface{}) (err error) {
+func (i *Integration) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var integration *Integration
 	if integration, ok = other.(*Integration); !ok {
@@ -642,10 +638,10 @@ func (i *Integration) CopyOverTo(other interface{}) (err error) {
 	integration.ExpireGracePeriod = i.ExpireGracePeriod
 
 	if i.User != nil {
-		integration.User = i.User.DeepCopy().(*User)
+		integration.User = DeepCopy(i.User).(*User)
 	}
 	if i.Account != nil {
-		integration.Account = i.Account.DeepCopy().(*IntegrationAccount)
+		integration.Account = DeepCopy(i.Account).(*IntegrationAccount)
 	}
 
 	return
@@ -658,15 +654,14 @@ type IntegrationAccount struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (i *IntegrationAccount) DeepCopy() (copy interface{}) {
-	copy = &IntegrationAccount{}
-	_ = i.CopyOverTo(copy)
-
-	return
+func (i *IntegrationAccount) deepCopy() interface{} {
+	cp := &IntegrationAccount{}
+	_ = DeepCopyOver(cp, i)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (i *IntegrationAccount) CopyOverTo(other interface{}) (err error) {
+func (i *IntegrationAccount) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var account *IntegrationAccount
 	if account, ok = other.(*IntegrationAccount); !ok {
@@ -782,15 +777,14 @@ func (m *Member) Mention() string {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (m *Member) DeepCopy() (copy interface{}) {
-	copy = &Member{}
-	_ = m.CopyOverTo(copy)
-
-	return
+func (m *Member) deepCopy() interface{} {
+	cp := &Member{}
+	_ = DeepCopyOver(cp, m)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (m *Member) CopyOverTo(other interface{}) (err error) {
+func (m *Member) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var member *Member
 	if member, ok = other.(*Member); !ok {
@@ -807,7 +801,7 @@ func (m *Member) CopyOverTo(other interface{}) (err error) {
 	member.UserID = m.UserID
 
 	if m.User != nil {
-		member.User = m.User.DeepCopy().(*User)
+		member.User = DeepCopy(m.User).(*User)
 	}
 	return
 }

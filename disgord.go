@@ -138,6 +138,28 @@ func LibraryInfo() string {
 	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
 
+// DeepCopier holds the DeepCopy method which creates and returns a deep copy of
+// any struct.
+type DeepCopier interface {
+	deepCopy() interface{}
+}
+
+func DeepCopy(cp DeepCopier) interface{} {
+	return cp.deepCopy()
+}
+
+// Copier holds the CopyOverTo method which copies all it's content from one
+// struct to another. Note that this requires a deep copy.
+// useful when overwriting already existing content in the cacheLink to reduce GC.
+type Copier interface {
+	copyOverTo(other interface{}) error
+}
+
+func DeepCopyOver(dst Copier, src Copier) error {
+	// TODO: make sure dst and src are of the same type!
+	return src.copyOverTo(dst)
+}
+
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------
 

@@ -50,11 +50,10 @@ var _ DeepCopier = (*VoiceState)(nil)
 //}
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceState) DeepCopy() (copy interface{}) {
-	copy = &VoiceState{}
-	v.CopyOverTo(copy)
-
-	return
+func (v *VoiceState) deepCopy() interface{} {
+	cp := &VoiceState{}
+	_ = DeepCopyOver(cp, v)
+	return cp
 }
 
 // UnmarshalJSON is used to unmarshal Discord's JSON.
@@ -71,7 +70,7 @@ func (v *VoiceState) UnmarshalJSON(data []byte) error {
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (v *VoiceState) CopyOverTo(other interface{}) (err error) {
+func (v *VoiceState) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var voiceState *VoiceState
 	if voiceState, ok = other.(*VoiceState); !ok {
@@ -125,15 +124,14 @@ var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceRegion) DeepCopy() (copy interface{}) {
-	copy = &VoiceRegion{}
-	v.CopyOverTo(copy)
-
-	return
+func (v *VoiceRegion) deepCopy() interface{} {
+	cp := &VoiceRegion{}
+	_ = DeepCopyOver(cp, v)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (v *VoiceRegion) CopyOverTo(other interface{}) (err error) {
+func (v *VoiceRegion) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var voice *VoiceRegion
 	if voice, ok = other.(*VoiceRegion); !ok {

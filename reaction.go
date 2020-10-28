@@ -20,15 +20,14 @@ type Reaction struct {
 var _ Reseter = (*Reaction)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (r *Reaction) DeepCopy() (copy interface{}) {
-	copy = &Reaction{}
-	r.CopyOverTo(copy)
-
-	return
+func (r *Reaction) deepCopy() interface{} {
+	cp := &Reaction{}
+	_ = DeepCopyOver(cp, r)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (r *Reaction) CopyOverTo(other interface{}) (err error) {
+func (r *Reaction) copyOverTo(other interface{}) (err error) {
 	var reaction *Reaction
 	var valid bool
 	if reaction, valid = other.(*Reaction); !valid {
@@ -40,7 +39,7 @@ func (r *Reaction) CopyOverTo(other interface{}) (err error) {
 	reaction.Me = r.Me
 
 	if r.Emoji != nil {
-		reaction.Emoji = r.Emoji.DeepCopy().(*Emoji)
+		reaction.Emoji = DeepCopy(r.Emoji).(*Emoji)
 	}
 	return
 }

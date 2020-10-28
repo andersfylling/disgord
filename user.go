@@ -36,15 +36,14 @@ func (ap *ActivityParty) NumberOfPeople() int {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (ap *ActivityParty) DeepCopy() (copy interface{}) {
-	copy = &ActivityParty{}
-	ap.CopyOverTo(copy)
-
-	return
+func (ap *ActivityParty) deepCopy() interface{} {
+	cp := &ActivityParty{}
+	_ = DeepCopyOver(cp, ap)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (ap *ActivityParty) CopyOverTo(other interface{}) (err error) {
+func (ap *ActivityParty) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityParty
 	if activity, ok = other.(*ActivityParty); !ok {
@@ -66,15 +65,14 @@ type ActivityAssets struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivityAssets) DeepCopy() (copy interface{}) {
-	copy = &ActivityAssets{}
-	a.CopyOverTo(copy)
-
-	return
+func (a *ActivityAssets) deepCopy() interface{} {
+	cp := &ActivityAssets{}
+	_ = DeepCopyOver(cp, a)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (a *ActivityAssets) CopyOverTo(other interface{}) (err error) {
+func (a *ActivityAssets) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityAssets
 	if activity, ok = other.(*ActivityAssets); !ok {
@@ -97,15 +95,14 @@ type ActivitySecrets struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivitySecrets) DeepCopy() (copy interface{}) {
-	copy = &ActivitySecrets{}
-	a.CopyOverTo(copy)
-
-	return
+func (a *ActivitySecrets) deepCopy() interface{} {
+	cp := &ActivitySecrets{}
+	_ = DeepCopyOver(cp, a)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (a *ActivitySecrets) CopyOverTo(other interface{}) (err error) {
+func (a *ActivitySecrets) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivitySecrets
 	if activity, ok = other.(*ActivitySecrets); !ok {
@@ -133,15 +130,14 @@ type ActivityTimestamp struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivityTimestamp) DeepCopy() (copy interface{}) {
-	copy = &ActivityTimestamp{}
-	a.CopyOverTo(copy)
-
-	return
+func (a *ActivityTimestamp) deepCopy() interface{} {
+	cp := &ActivityTimestamp{}
+	_ = DeepCopyOver(cp, a)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (a *ActivityTimestamp) CopyOverTo(other interface{}) (err error) {
+func (a *ActivityTimestamp) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *ActivityTimestamp
 	if activity, ok = other.(*ActivityTimestamp); !ok {
@@ -204,15 +200,14 @@ type Activity struct {
 var _ Reseter = (*Activity)(nil)
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (a *Activity) DeepCopy() (copy interface{}) {
-	copy = &Activity{}
-	a.CopyOverTo(copy)
-
-	return
+func (a *Activity) deepCopy() interface{} {
+	cp := &Activity{}
+	_ = DeepCopyOver(cp, a)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (a *Activity) CopyOverTo(other interface{}) (err error) {
+func (a *Activity) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var activity *Activity
 	if activity, ok = other.(*Activity); !ok {
@@ -230,16 +225,16 @@ func (a *Activity) CopyOverTo(other interface{}) (err error) {
 	activity.State = a.State
 
 	if a.Timestamps != nil {
-		activity.Timestamps = a.Timestamps.DeepCopy().(*ActivityTimestamp)
+		activity.Timestamps = DeepCopy(a.Timestamps).(*ActivityTimestamp)
 	}
 	if a.Party != nil {
-		activity.Party = a.Party.DeepCopy().(*ActivityParty)
+		activity.Party = DeepCopy(a.Party).(*ActivityParty)
 	}
 	if a.Assets != nil {
-		activity.Assets = a.Assets.DeepCopy().(*ActivityAssets)
+		activity.Assets = DeepCopy(a.Assets).(*ActivityAssets)
 	}
 	if a.Secrets != nil {
-		activity.Secrets = a.Secrets.DeepCopy().(*ActivitySecrets)
+		activity.Secrets = DeepCopy(a.Secrets).(*ActivitySecrets)
 	}
 
 	return
@@ -384,15 +379,14 @@ func (u *User) SendMsgString(ctx context.Context, session Session, content strin
 
 // DeepCopy see interface at struct.go#DeepCopier
 // CopyOverTo see interface at struct.go#Copier
-func (u *User) DeepCopy() (copy interface{}) {
-	copy = &User{}
-	u.CopyOverTo(copy)
-
-	return
+func (u *User) deepCopy() interface{} {
+	cp := &User{}
+	_ = DeepCopyOver(cp, u)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (u *User) CopyOverTo(other interface{}) (err error) {
+func (u *User) copyOverTo(other interface{}) (err error) {
 	var user *User
 	var valid bool
 	if user, valid = other.(*User); !valid {
@@ -439,15 +433,14 @@ func (p *UserPresence) String() string {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (p *UserPresence) DeepCopy() (copy interface{}) {
-	copy = &UserPresence{}
-	_ = p.CopyOverTo(copy)
-
-	return
+func (p *UserPresence) deepCopy() interface{} {
+	cp := &UserPresence{}
+	_ = DeepCopyOver(cp, p)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
+func (p *UserPresence) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var presence *UserPresence
 	if presence, ok = other.(*UserPresence); !ok {
@@ -455,7 +448,7 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 		return
 	}
 
-	presence.User = p.User.DeepCopy().(*User)
+	presence.User = DeepCopy(p.User).(*User)
 	presence.GuildID = p.GuildID
 	presence.Nick = p.Nick
 	presence.Status = p.Status
@@ -466,7 +459,7 @@ func (p *UserPresence) CopyOverTo(other interface{}) (err error) {
 	}
 
 	if p.Game != nil {
-		presence.Game = p.Game.DeepCopy().(*Activity)
+		presence.Game = DeepCopy(p.Game).(*Activity)
 	}
 
 	return
@@ -482,15 +475,14 @@ type UserConnection struct {
 }
 
 // DeepCopy see interface at struct.go#DeepCopier
-func (c *UserConnection) DeepCopy() (copy interface{}) {
-	copy = &UserConnection{}
-	c.CopyOverTo(copy)
-
-	return
+func (c *UserConnection) deepCopy() interface{} {
+	cp := &UserConnection{}
+	_ = DeepCopyOver(cp, c)
+	return cp
 }
 
 // CopyOverTo see interface at struct.go#Copier
-func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
+func (c *UserConnection) copyOverTo(other interface{}) (err error) {
 	var ok bool
 	var con *UserConnection
 	if con, ok = other.(*UserConnection); !ok {
@@ -505,7 +497,7 @@ func (c *UserConnection) CopyOverTo(other interface{}) (err error) {
 
 	con.Integrations = make([]*IntegrationAccount, len(c.Integrations))
 	for i, account := range c.Integrations {
-		con.Integrations[i] = account.DeepCopy().(*IntegrationAccount)
+		con.Integrations[i] = DeepCopy(account).(*IntegrationAccount)
 	}
 
 	return

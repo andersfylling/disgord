@@ -17,12 +17,12 @@ func CopyMsgEvt(evt interface{}) interface{} {
 	switch t := evt.(type) {
 	case *disgord.MessageCreate:
 		return &disgord.MessageCreate{
-			Message: t.Message.DeepCopy().(*disgord.Message),
+			Message: disgord.DeepCopy(t.Message).(*disgord.Message),
 			ShardID: t.ShardID,
 		}
 	case *disgord.MessageUpdate:
 		return &disgord.MessageUpdate{
-			Message: t.Message.DeepCopy().(*disgord.Message),
+			Message: disgord.DeepCopy(t.Message).(*disgord.Message),
 			ShardID: t.ShardID,
 		}
 	case *disgord.MessageDelete:
@@ -40,7 +40,7 @@ func CopyMsgEvt(evt interface{}) interface{} {
 		}
 	case *disgord.MessageReactionAdd:
 		return &disgord.MessageReactionAdd{
-			PartialEmoji: t.PartialEmoji.DeepCopy().(*disgord.PartialEmoji),
+			PartialEmoji: disgord.DeepCopy(t.PartialEmoji).(*disgord.PartialEmoji),
 			MessageID:    t.MessageID,
 			ChannelID:    t.ChannelID,
 			UserID:       t.UserID,
@@ -48,7 +48,7 @@ func CopyMsgEvt(evt interface{}) interface{} {
 		}
 	case *disgord.MessageReactionRemove:
 		return &disgord.MessageReactionRemove{
-			PartialEmoji: t.PartialEmoji.DeepCopy().(*disgord.PartialEmoji),
+			PartialEmoji: disgord.DeepCopy(t.PartialEmoji).(*disgord.PartialEmoji),
 			MessageID:    t.MessageID,
 			ChannelID:    t.ChannelID,
 			UserID:       t.UserID,
@@ -65,7 +65,7 @@ func CopyMsgEvt(evt interface{}) interface{} {
 			MessageID: t.MessageID,
 			GuildID:   t.GuildID,
 			ChannelID: t.ChannelID,
-			Emoji:     t.Emoji.DeepCopy().(*disgord.Emoji),
+			Emoji:     disgord.DeepCopy(t.Emoji).(*disgord.Emoji),
 			ShardID:   t.ShardID,
 		}
 	}
