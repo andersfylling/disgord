@@ -34,7 +34,7 @@ func TestTime(t *testing.T) {
 			T Time `json:"time,omitempty"`
 		}{}
 
-		bBytes, err := defaultMarshaler(b)
+		bBytes, err := json.Marshal(b)
 		if err != nil {
 			t.Fatal(err)
 		}

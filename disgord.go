@@ -124,7 +124,6 @@ package disgord
 
 import (
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/util"
 
@@ -138,12 +137,6 @@ const Version = constant.Version
 func LibraryInfo() string {
 	return fmt.Sprintf("%s %s", constant.Name, constant.Version)
 }
-
-// deprecated
-var defaultUnmarshaler = json.Unmarshal
-
-// deprecated
-var defaultMarshaler = json.Marshal
 
 // Wrapper for github.com/andersfylling/snowflake
 // ------------------
