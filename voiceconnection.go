@@ -109,7 +109,7 @@ func (r *voiceRepository) VoiceConnectOptions(guildID, channelID Snowflake, self
 	}(r, guildID)
 
 	// Tell Discord we want to connect to a channel
-	_, err = r.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
+	_, err = r.c.Gateway().Dispatch(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   guildID,
 		ChannelID: channelID,
 		SelfDeaf:  true, //selfDeaf,
@@ -343,7 +343,7 @@ func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 		return errors.New("attempting to move in a closed Voice Connection")
 	}
 
-	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
+	_, _ = v.c.Gateway().Dispatch(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   v.guildID,
 		ChannelID: channelID,
 		SelfDeaf:  true, //false,
@@ -415,7 +415,7 @@ func (v *voiceImpl) Close() (err error) {
 	}
 
 	// Tell Discord we want to disconnect from channel/guild
-	_, _ = v.c.Emit(UpdateVoiceState, &UpdateVoiceStatePayload{
+	_, _ = v.c.Gateway().Dispatch(UpdateVoiceState, &UpdateVoiceStatePayload{
 		GuildID:   v.guildID,
 		ChannelID: 0, // disconnect "code/value" (disgord implementation specific)
 		SelfDeaf:  true,

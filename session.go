@@ -20,9 +20,6 @@ type Session interface {
 	// to avoid nil panics.
 	Logger() logger.Logger
 
-	// Discord Gateway, web socket
-	SocketHandler
-
 	// HeartbeatLatency returns the avg. ish time used to send and receive a heartbeat signal.
 	// The latency is calculated as such:
 	// 0. start timer (start)
