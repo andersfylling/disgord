@@ -73,7 +73,7 @@ const EvtChannelCreate = event.ChannelCreate
 
 func (h *ChannelCreate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerChannelCreate = func(Session, *ChannelCreate)
+type handlerChannelCreate = func(Session, *ChannelCreate)
 
 // ---------------------------
 
@@ -83,7 +83,7 @@ const EvtChannelDelete = event.ChannelDelete
 
 func (h *ChannelDelete) setShardID(id uint) { h.ShardID = id }
 
-type HandlerChannelDelete = func(Session, *ChannelDelete)
+type handlerChannelDelete = func(Session, *ChannelDelete)
 
 // ---------------------------
 
@@ -97,7 +97,7 @@ const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
 func (h *ChannelPinsUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
+type handlerChannelPinsUpdate = func(Session, *ChannelPinsUpdate)
 
 // ---------------------------
 
@@ -107,7 +107,7 @@ const EvtChannelUpdate = event.ChannelUpdate
 
 func (h *ChannelUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerChannelUpdate = func(Session, *ChannelUpdate)
+type handlerChannelUpdate = func(Session, *ChannelUpdate)
 
 // ---------------------------
 
@@ -117,7 +117,7 @@ const EvtGuildBanAdd = event.GuildBanAdd
 
 func (h *GuildBanAdd) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildBanAdd = func(Session, *GuildBanAdd)
+type handlerGuildBanAdd = func(Session, *GuildBanAdd)
 
 // ---------------------------
 
@@ -127,7 +127,7 @@ const EvtGuildBanRemove = event.GuildBanRemove
 
 func (h *GuildBanRemove) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildBanRemove = func(Session, *GuildBanRemove)
+type handlerGuildBanRemove = func(Session, *GuildBanRemove)
 
 // ---------------------------
 
@@ -141,7 +141,7 @@ const EvtGuildCreate = event.GuildCreate
 
 func (h *GuildCreate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildCreate = func(Session, *GuildCreate)
+type handlerGuildCreate = func(Session, *GuildCreate)
 
 // ---------------------------
 
@@ -153,7 +153,7 @@ const EvtGuildDelete = event.GuildDelete
 
 func (h *GuildDelete) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildDelete = func(Session, *GuildDelete)
+type handlerGuildDelete = func(Session, *GuildDelete)
 
 // ---------------------------
 
@@ -166,7 +166,7 @@ const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
 func (h *GuildEmojisUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
+type handlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 
 // ---------------------------
 
@@ -178,7 +178,7 @@ const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 func (h *GuildIntegrationsUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
+type handlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
 
 // ---------------------------
 
@@ -192,7 +192,7 @@ const EvtGuildMemberAdd = event.GuildMemberAdd
 
 func (h *GuildMemberAdd) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
+type handlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 
 // ---------------------------
 
@@ -205,7 +205,7 @@ const EvtGuildMemberRemove = event.GuildMemberRemove
 
 func (h *GuildMemberRemove) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
+type handlerGuildMemberRemove = func(Session, *GuildMemberRemove)
 
 // ---------------------------
 
@@ -220,7 +220,7 @@ const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
 func (h *GuildMemberUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
+type handlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 
 // ---------------------------
 
@@ -233,7 +233,7 @@ const EvtGuildMembersChunk = event.GuildMembersChunk
 
 func (h *GuildMembersChunk) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
+type handlerGuildMembersChunk = func(Session, *GuildMembersChunk)
 
 // ---------------------------
 
@@ -246,7 +246,7 @@ const EvtGuildRoleCreate = event.GuildRoleCreate
 
 func (h *GuildRoleCreate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
+type handlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 
 // ---------------------------
 
@@ -259,7 +259,7 @@ const EvtGuildRoleDelete = event.GuildRoleDelete
 
 func (h *GuildRoleDelete) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
+type handlerGuildRoleDelete = func(Session, *GuildRoleDelete)
 
 // ---------------------------
 
@@ -272,7 +272,7 @@ const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
 func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
+type handlerGuildRoleUpdate = func(Session, *GuildRoleUpdate)
 
 // ---------------------------
 
@@ -282,7 +282,7 @@ const EvtGuildUpdate = event.GuildUpdate
 
 func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerGuildUpdate = func(Session, *GuildUpdate)
+type handlerGuildUpdate = func(Session, *GuildUpdate)
 
 // ---------------------------
 
@@ -309,7 +309,7 @@ const EvtInviteCreate = event.InviteCreate
 
 func (h *InviteCreate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerInviteCreate = func(Session, *InviteCreate)
+type handlerInviteCreate = func(Session, *InviteCreate)
 
 // ---------------------------
 
@@ -319,7 +319,7 @@ const EvtInviteDelete = event.InviteDelete
 
 func (h *InviteDelete) setShardID(id uint) { h.ShardID = id }
 
-type HandlerInviteDelete = func(Session, *InviteDelete)
+type handlerInviteDelete = func(Session, *InviteDelete)
 
 // ---------------------------
 
@@ -329,7 +329,7 @@ const EvtMessageCreate = event.MessageCreate
 
 func (h *MessageCreate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageCreate = func(Session, *MessageCreate)
+type handlerMessageCreate = func(Session, *MessageCreate)
 
 // ---------------------------
 
@@ -342,7 +342,7 @@ const EvtMessageDelete = event.MessageDelete
 
 func (h *MessageDelete) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageDelete = func(Session, *MessageDelete)
+type handlerMessageDelete = func(Session, *MessageDelete)
 
 // ---------------------------
 
@@ -355,7 +355,7 @@ const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
 func (h *MessageDeleteBulk) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
+type handlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
 
 // ---------------------------
 
@@ -370,7 +370,7 @@ const EvtMessageReactionAdd = event.MessageReactionAdd
 
 func (h *MessageReactionAdd) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
+type handlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 
 // ---------------------------
 
@@ -385,7 +385,7 @@ const EvtMessageReactionRemove = event.MessageReactionRemove
 
 func (h *MessageReactionRemove) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
+type handlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 
 // ---------------------------
 
@@ -398,7 +398,7 @@ const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 func (h *MessageReactionRemoveAll) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
+type handlerMessageReactionRemoveAll = func(Session, *MessageReactionRemoveAll)
 
 // ---------------------------
 
@@ -408,7 +408,7 @@ const EvtMessageReactionRemoveEmoji = event.MessageReactionRemoveEmoji
 
 func (h *MessageReactionRemoveEmoji) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageReactionRemoveEmoji = func(Session, *MessageReactionRemoveEmoji)
+type handlerMessageReactionRemoveEmoji = func(Session, *MessageReactionRemoveEmoji)
 
 // ---------------------------
 
@@ -420,7 +420,7 @@ const EvtMessageUpdate = event.MessageUpdate
 
 func (h *MessageUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerMessageUpdate = func(Session, *MessageUpdate)
+type handlerMessageUpdate = func(Session, *MessageUpdate)
 
 // ---------------------------
 
@@ -436,7 +436,7 @@ const EvtPresenceUpdate = event.PresenceUpdate
 
 func (h *PresenceUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
+type handlerPresenceUpdate = func(Session, *PresenceUpdate)
 
 // ---------------------------
 
@@ -455,7 +455,7 @@ const EvtReady = event.Ready
 
 func (h *Ready) setShardID(id uint) { h.ShardID = id }
 
-type HandlerReady = func(Session, *Ready)
+type handlerReady = func(Session, *Ready)
 
 // ---------------------------
 
@@ -468,7 +468,7 @@ const EvtResumed = event.Resumed
 
 func (h *Resumed) setShardID(id uint) { h.ShardID = id }
 
-type HandlerResumed = func(Session, *Resumed)
+type handlerResumed = func(Session, *Resumed)
 
 // ---------------------------
 
@@ -482,7 +482,7 @@ const EvtTypingStart = event.TypingStart
 
 func (h *TypingStart) setShardID(id uint) { h.ShardID = id }
 
-type HandlerTypingStart = func(Session, *TypingStart)
+type handlerTypingStart = func(Session, *TypingStart)
 
 // ---------------------------
 
@@ -492,7 +492,7 @@ const EvtUserUpdate = event.UserUpdate
 
 func (h *UserUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerUserUpdate = func(Session, *UserUpdate)
+type handlerUserUpdate = func(Session, *UserUpdate)
 
 // ---------------------------
 
@@ -507,7 +507,7 @@ const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
 func (h *VoiceServerUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
+type handlerVoiceServerUpdate = func(Session, *VoiceServerUpdate)
 
 // ---------------------------
 
@@ -517,7 +517,7 @@ const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
 func (h *VoiceStateUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
+type handlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
 
 // ---------------------------
 
@@ -530,7 +530,7 @@ const EvtWebhooksUpdate = event.WebhooksUpdate
 
 func (h *WebhooksUpdate) setShardID(id uint) { h.ShardID = id }
 
-type HandlerWebhooksUpdate = func(Session, *WebhooksUpdate)
+type handlerWebhooksUpdate = func(Session, *WebhooksUpdate)
 
 // ---------------------------
 
@@ -578,7 +578,7 @@ func (shr socketHandlerRegister) WithMiddleware(first Middleware, extra ...Middl
 	return shr
 }
 
-func (shr socketHandlerRegister) ChannelCreate(handler HandlerChannelCreate, moreHandlers ...HandlerChannelCreate) {
+func (shr socketHandlerRegister) ChannelCreate(handler handlerChannelCreate, moreHandlers ...handlerChannelCreate) {
 	shr.evtName = EvtChannelCreate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -594,7 +594,7 @@ func (shr socketHandlerRegister) ChannelCreateChan(handler chan *ChannelCreate, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) ChannelDelete(handler HandlerChannelDelete, moreHandlers ...HandlerChannelDelete) {
+func (shr socketHandlerRegister) ChannelDelete(handler handlerChannelDelete, moreHandlers ...handlerChannelDelete) {
 	shr.evtName = EvtChannelDelete
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -610,7 +610,7 @@ func (shr socketHandlerRegister) ChannelDeleteChan(handler chan *ChannelDelete, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) ChannelPinsUpdate(handler HandlerChannelPinsUpdate, moreHandlers ...HandlerChannelPinsUpdate) {
+func (shr socketHandlerRegister) ChannelPinsUpdate(handler handlerChannelPinsUpdate, moreHandlers ...handlerChannelPinsUpdate) {
 	shr.evtName = EvtChannelPinsUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -626,7 +626,7 @@ func (shr socketHandlerRegister) ChannelPinsUpdateChan(handler chan *ChannelPins
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) ChannelUpdate(handler HandlerChannelUpdate, moreHandlers ...HandlerChannelUpdate) {
+func (shr socketHandlerRegister) ChannelUpdate(handler handlerChannelUpdate, moreHandlers ...handlerChannelUpdate) {
 	shr.evtName = EvtChannelUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -642,7 +642,7 @@ func (shr socketHandlerRegister) ChannelUpdateChan(handler chan *ChannelUpdate, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildBanAdd(handler HandlerGuildBanAdd, moreHandlers ...HandlerGuildBanAdd) {
+func (shr socketHandlerRegister) GuildBanAdd(handler handlerGuildBanAdd, moreHandlers ...handlerGuildBanAdd) {
 	shr.evtName = EvtGuildBanAdd
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -658,7 +658,7 @@ func (shr socketHandlerRegister) GuildBanAddChan(handler chan *GuildBanAdd, more
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildBanRemove(handler HandlerGuildBanRemove, moreHandlers ...HandlerGuildBanRemove) {
+func (shr socketHandlerRegister) GuildBanRemove(handler handlerGuildBanRemove, moreHandlers ...handlerGuildBanRemove) {
 	shr.evtName = EvtGuildBanRemove
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -674,7 +674,7 @@ func (shr socketHandlerRegister) GuildBanRemoveChan(handler chan *GuildBanRemove
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildCreate(handler HandlerGuildCreate, moreHandlers ...HandlerGuildCreate) {
+func (shr socketHandlerRegister) GuildCreate(handler handlerGuildCreate, moreHandlers ...handlerGuildCreate) {
 	shr.evtName = EvtGuildCreate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -690,7 +690,7 @@ func (shr socketHandlerRegister) GuildCreateChan(handler chan *GuildCreate, more
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildDelete(handler HandlerGuildDelete, moreHandlers ...HandlerGuildDelete) {
+func (shr socketHandlerRegister) GuildDelete(handler handlerGuildDelete, moreHandlers ...handlerGuildDelete) {
 	shr.evtName = EvtGuildDelete
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -706,7 +706,7 @@ func (shr socketHandlerRegister) GuildDeleteChan(handler chan *GuildDelete, more
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildEmojisUpdate(handler HandlerGuildEmojisUpdate, moreHandlers ...HandlerGuildEmojisUpdate) {
+func (shr socketHandlerRegister) GuildEmojisUpdate(handler handlerGuildEmojisUpdate, moreHandlers ...handlerGuildEmojisUpdate) {
 	shr.evtName = EvtGuildEmojisUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -722,7 +722,7 @@ func (shr socketHandlerRegister) GuildEmojisUpdateChan(handler chan *GuildEmojis
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildIntegrationsUpdate(handler HandlerGuildIntegrationsUpdate, moreHandlers ...HandlerGuildIntegrationsUpdate) {
+func (shr socketHandlerRegister) GuildIntegrationsUpdate(handler handlerGuildIntegrationsUpdate, moreHandlers ...handlerGuildIntegrationsUpdate) {
 	shr.evtName = EvtGuildIntegrationsUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -738,7 +738,7 @@ func (shr socketHandlerRegister) GuildIntegrationsUpdateChan(handler chan *Guild
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildMemberAdd(handler HandlerGuildMemberAdd, moreHandlers ...HandlerGuildMemberAdd) {
+func (shr socketHandlerRegister) GuildMemberAdd(handler handlerGuildMemberAdd, moreHandlers ...handlerGuildMemberAdd) {
 	shr.evtName = EvtGuildMemberAdd
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -754,7 +754,7 @@ func (shr socketHandlerRegister) GuildMemberAddChan(handler chan *GuildMemberAdd
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildMemberRemove(handler HandlerGuildMemberRemove, moreHandlers ...HandlerGuildMemberRemove) {
+func (shr socketHandlerRegister) GuildMemberRemove(handler handlerGuildMemberRemove, moreHandlers ...handlerGuildMemberRemove) {
 	shr.evtName = EvtGuildMemberRemove
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -770,7 +770,7 @@ func (shr socketHandlerRegister) GuildMemberRemoveChan(handler chan *GuildMember
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildMemberUpdate(handler HandlerGuildMemberUpdate, moreHandlers ...HandlerGuildMemberUpdate) {
+func (shr socketHandlerRegister) GuildMemberUpdate(handler handlerGuildMemberUpdate, moreHandlers ...handlerGuildMemberUpdate) {
 	shr.evtName = EvtGuildMemberUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -786,7 +786,7 @@ func (shr socketHandlerRegister) GuildMemberUpdateChan(handler chan *GuildMember
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildMembersChunk(handler HandlerGuildMembersChunk, moreHandlers ...HandlerGuildMembersChunk) {
+func (shr socketHandlerRegister) GuildMembersChunk(handler handlerGuildMembersChunk, moreHandlers ...handlerGuildMembersChunk) {
 	shr.evtName = EvtGuildMembersChunk
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -802,7 +802,7 @@ func (shr socketHandlerRegister) GuildMembersChunkChan(handler chan *GuildMember
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildRoleCreate(handler HandlerGuildRoleCreate, moreHandlers ...HandlerGuildRoleCreate) {
+func (shr socketHandlerRegister) GuildRoleCreate(handler handlerGuildRoleCreate, moreHandlers ...handlerGuildRoleCreate) {
 	shr.evtName = EvtGuildRoleCreate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -818,7 +818,7 @@ func (shr socketHandlerRegister) GuildRoleCreateChan(handler chan *GuildRoleCrea
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildRoleDelete(handler HandlerGuildRoleDelete, moreHandlers ...HandlerGuildRoleDelete) {
+func (shr socketHandlerRegister) GuildRoleDelete(handler handlerGuildRoleDelete, moreHandlers ...handlerGuildRoleDelete) {
 	shr.evtName = EvtGuildRoleDelete
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -834,7 +834,7 @@ func (shr socketHandlerRegister) GuildRoleDeleteChan(handler chan *GuildRoleDele
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildRoleUpdate(handler HandlerGuildRoleUpdate, moreHandlers ...HandlerGuildRoleUpdate) {
+func (shr socketHandlerRegister) GuildRoleUpdate(handler handlerGuildRoleUpdate, moreHandlers ...handlerGuildRoleUpdate) {
 	shr.evtName = EvtGuildRoleUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -850,7 +850,7 @@ func (shr socketHandlerRegister) GuildRoleUpdateChan(handler chan *GuildRoleUpda
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate) {
+func (shr socketHandlerRegister) GuildUpdate(handler handlerGuildUpdate, moreHandlers ...handlerGuildUpdate) {
 	shr.evtName = EvtGuildUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -866,7 +866,7 @@ func (shr socketHandlerRegister) GuildUpdateChan(handler chan *GuildUpdate, more
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) InviteCreate(handler HandlerInviteCreate, moreHandlers ...HandlerInviteCreate) {
+func (shr socketHandlerRegister) InviteCreate(handler handlerInviteCreate, moreHandlers ...handlerInviteCreate) {
 	shr.evtName = EvtInviteCreate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -882,7 +882,7 @@ func (shr socketHandlerRegister) InviteCreateChan(handler chan *InviteCreate, mo
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) InviteDelete(handler HandlerInviteDelete, moreHandlers ...HandlerInviteDelete) {
+func (shr socketHandlerRegister) InviteDelete(handler handlerInviteDelete, moreHandlers ...handlerInviteDelete) {
 	shr.evtName = EvtInviteDelete
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -898,7 +898,7 @@ func (shr socketHandlerRegister) InviteDeleteChan(handler chan *InviteDelete, mo
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageCreate(handler HandlerMessageCreate, moreHandlers ...HandlerMessageCreate) {
+func (shr socketHandlerRegister) MessageCreate(handler handlerMessageCreate, moreHandlers ...handlerMessageCreate) {
 	shr.evtName = EvtMessageCreate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -914,7 +914,7 @@ func (shr socketHandlerRegister) MessageCreateChan(handler chan *MessageCreate, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageDelete(handler HandlerMessageDelete, moreHandlers ...HandlerMessageDelete) {
+func (shr socketHandlerRegister) MessageDelete(handler handlerMessageDelete, moreHandlers ...handlerMessageDelete) {
 	shr.evtName = EvtMessageDelete
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -930,7 +930,7 @@ func (shr socketHandlerRegister) MessageDeleteChan(handler chan *MessageDelete, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageDeleteBulk(handler HandlerMessageDeleteBulk, moreHandlers ...HandlerMessageDeleteBulk) {
+func (shr socketHandlerRegister) MessageDeleteBulk(handler handlerMessageDeleteBulk, moreHandlers ...handlerMessageDeleteBulk) {
 	shr.evtName = EvtMessageDeleteBulk
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -946,7 +946,7 @@ func (shr socketHandlerRegister) MessageDeleteBulkChan(handler chan *MessageDele
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageReactionAdd(handler HandlerMessageReactionAdd, moreHandlers ...HandlerMessageReactionAdd) {
+func (shr socketHandlerRegister) MessageReactionAdd(handler handlerMessageReactionAdd, moreHandlers ...handlerMessageReactionAdd) {
 	shr.evtName = EvtMessageReactionAdd
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -962,7 +962,7 @@ func (shr socketHandlerRegister) MessageReactionAddChan(handler chan *MessageRea
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageReactionRemove(handler HandlerMessageReactionRemove, moreHandlers ...HandlerMessageReactionRemove) {
+func (shr socketHandlerRegister) MessageReactionRemove(handler handlerMessageReactionRemove, moreHandlers ...handlerMessageReactionRemove) {
 	shr.evtName = EvtMessageReactionRemove
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -978,7 +978,7 @@ func (shr socketHandlerRegister) MessageReactionRemoveChan(handler chan *Message
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageReactionRemoveAll(handler HandlerMessageReactionRemoveAll, moreHandlers ...HandlerMessageReactionRemoveAll) {
+func (shr socketHandlerRegister) MessageReactionRemoveAll(handler handlerMessageReactionRemoveAll, moreHandlers ...handlerMessageReactionRemoveAll) {
 	shr.evtName = EvtMessageReactionRemoveAll
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -994,7 +994,7 @@ func (shr socketHandlerRegister) MessageReactionRemoveAllChan(handler chan *Mess
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageReactionRemoveEmoji(handler HandlerMessageReactionRemoveEmoji, moreHandlers ...HandlerMessageReactionRemoveEmoji) {
+func (shr socketHandlerRegister) MessageReactionRemoveEmoji(handler handlerMessageReactionRemoveEmoji, moreHandlers ...handlerMessageReactionRemoveEmoji) {
 	shr.evtName = EvtMessageReactionRemoveEmoji
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1010,7 +1010,7 @@ func (shr socketHandlerRegister) MessageReactionRemoveEmojiChan(handler chan *Me
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) MessageUpdate(handler HandlerMessageUpdate, moreHandlers ...HandlerMessageUpdate) {
+func (shr socketHandlerRegister) MessageUpdate(handler handlerMessageUpdate, moreHandlers ...handlerMessageUpdate) {
 	shr.evtName = EvtMessageUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1026,7 +1026,7 @@ func (shr socketHandlerRegister) MessageUpdateChan(handler chan *MessageUpdate, 
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) PresenceUpdate(handler HandlerPresenceUpdate, moreHandlers ...HandlerPresenceUpdate) {
+func (shr socketHandlerRegister) PresenceUpdate(handler handlerPresenceUpdate, moreHandlers ...handlerPresenceUpdate) {
 	shr.evtName = EvtPresenceUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1042,7 +1042,7 @@ func (shr socketHandlerRegister) PresenceUpdateChan(handler chan *PresenceUpdate
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) Ready(handler HandlerReady, moreHandlers ...HandlerReady) {
+func (shr socketHandlerRegister) Ready(handler handlerReady, moreHandlers ...handlerReady) {
 	shr.evtName = EvtReady
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1058,7 +1058,7 @@ func (shr socketHandlerRegister) ReadyChan(handler chan *Ready, moreHandlers ...
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) Resumed(handler HandlerResumed, moreHandlers ...HandlerResumed) {
+func (shr socketHandlerRegister) Resumed(handler handlerResumed, moreHandlers ...handlerResumed) {
 	shr.evtName = EvtResumed
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1074,7 +1074,7 @@ func (shr socketHandlerRegister) ResumedChan(handler chan *Resumed, moreHandlers
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) TypingStart(handler HandlerTypingStart, moreHandlers ...HandlerTypingStart) {
+func (shr socketHandlerRegister) TypingStart(handler handlerTypingStart, moreHandlers ...handlerTypingStart) {
 	shr.evtName = EvtTypingStart
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1090,7 +1090,7 @@ func (shr socketHandlerRegister) TypingStartChan(handler chan *TypingStart, more
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) UserUpdate(handler HandlerUserUpdate, moreHandlers ...HandlerUserUpdate) {
+func (shr socketHandlerRegister) UserUpdate(handler handlerUserUpdate, moreHandlers ...handlerUserUpdate) {
 	shr.evtName = EvtUserUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1106,7 +1106,7 @@ func (shr socketHandlerRegister) UserUpdateChan(handler chan *UserUpdate, moreHa
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) VoiceServerUpdate(handler HandlerVoiceServerUpdate, moreHandlers ...HandlerVoiceServerUpdate) {
+func (shr socketHandlerRegister) VoiceServerUpdate(handler handlerVoiceServerUpdate, moreHandlers ...handlerVoiceServerUpdate) {
 	shr.evtName = EvtVoiceServerUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1122,7 +1122,7 @@ func (shr socketHandlerRegister) VoiceServerUpdateChan(handler chan *VoiceServer
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) VoiceStateUpdate(handler HandlerVoiceStateUpdate, moreHandlers ...HandlerVoiceStateUpdate) {
+func (shr socketHandlerRegister) VoiceStateUpdate(handler handlerVoiceStateUpdate, moreHandlers ...handlerVoiceStateUpdate) {
 	shr.evtName = EvtVoiceStateUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1138,7 +1138,7 @@ func (shr socketHandlerRegister) VoiceStateUpdateChan(handler chan *VoiceStateUp
 	}
 	shr.build()
 }
-func (shr socketHandlerRegister) WebhooksUpdate(handler HandlerWebhooksUpdate, moreHandlers ...HandlerWebhooksUpdate) {
+func (shr socketHandlerRegister) WebhooksUpdate(handler handlerWebhooksUpdate, moreHandlers ...handlerWebhooksUpdate) {
 	shr.evtName = EvtWebhooksUpdate
 	shr.handlers = append(shr.handlers, handler)
 	for _, h := range moreHandlers {
@@ -1156,77 +1156,77 @@ func (shr socketHandlerRegister) WebhooksUpdateChan(handler chan *WebhooksUpdate
 }
 
 type SocketHandlerRegistrator interface {
-	ChannelCreate(handler HandlerChannelCreate, moreHandlers ...HandlerChannelCreate)
+	ChannelCreate(handler handlerChannelCreate, moreHandlers ...handlerChannelCreate)
 	ChannelCreateChan(handler chan *ChannelCreate, moreHandlers ...chan *ChannelCreate)
-	ChannelDelete(handler HandlerChannelDelete, moreHandlers ...HandlerChannelDelete)
+	ChannelDelete(handler handlerChannelDelete, moreHandlers ...handlerChannelDelete)
 	ChannelDeleteChan(handler chan *ChannelDelete, moreHandlers ...chan *ChannelDelete)
-	ChannelPinsUpdate(handler HandlerChannelPinsUpdate, moreHandlers ...HandlerChannelPinsUpdate)
+	ChannelPinsUpdate(handler handlerChannelPinsUpdate, moreHandlers ...handlerChannelPinsUpdate)
 	ChannelPinsUpdateChan(handler chan *ChannelPinsUpdate, moreHandlers ...chan *ChannelPinsUpdate)
-	ChannelUpdate(handler HandlerChannelUpdate, moreHandlers ...HandlerChannelUpdate)
+	ChannelUpdate(handler handlerChannelUpdate, moreHandlers ...handlerChannelUpdate)
 	ChannelUpdateChan(handler chan *ChannelUpdate, moreHandlers ...chan *ChannelUpdate)
-	GuildBanAdd(handler HandlerGuildBanAdd, moreHandlers ...HandlerGuildBanAdd)
+	GuildBanAdd(handler handlerGuildBanAdd, moreHandlers ...handlerGuildBanAdd)
 	GuildBanAddChan(handler chan *GuildBanAdd, moreHandlers ...chan *GuildBanAdd)
-	GuildBanRemove(handler HandlerGuildBanRemove, moreHandlers ...HandlerGuildBanRemove)
+	GuildBanRemove(handler handlerGuildBanRemove, moreHandlers ...handlerGuildBanRemove)
 	GuildBanRemoveChan(handler chan *GuildBanRemove, moreHandlers ...chan *GuildBanRemove)
-	GuildCreate(handler HandlerGuildCreate, moreHandlers ...HandlerGuildCreate)
+	GuildCreate(handler handlerGuildCreate, moreHandlers ...handlerGuildCreate)
 	GuildCreateChan(handler chan *GuildCreate, moreHandlers ...chan *GuildCreate)
-	GuildDelete(handler HandlerGuildDelete, moreHandlers ...HandlerGuildDelete)
+	GuildDelete(handler handlerGuildDelete, moreHandlers ...handlerGuildDelete)
 	GuildDeleteChan(handler chan *GuildDelete, moreHandlers ...chan *GuildDelete)
-	GuildEmojisUpdate(handler HandlerGuildEmojisUpdate, moreHandlers ...HandlerGuildEmojisUpdate)
+	GuildEmojisUpdate(handler handlerGuildEmojisUpdate, moreHandlers ...handlerGuildEmojisUpdate)
 	GuildEmojisUpdateChan(handler chan *GuildEmojisUpdate, moreHandlers ...chan *GuildEmojisUpdate)
-	GuildIntegrationsUpdate(handler HandlerGuildIntegrationsUpdate, moreHandlers ...HandlerGuildIntegrationsUpdate)
+	GuildIntegrationsUpdate(handler handlerGuildIntegrationsUpdate, moreHandlers ...handlerGuildIntegrationsUpdate)
 	GuildIntegrationsUpdateChan(handler chan *GuildIntegrationsUpdate, moreHandlers ...chan *GuildIntegrationsUpdate)
-	GuildMemberAdd(handler HandlerGuildMemberAdd, moreHandlers ...HandlerGuildMemberAdd)
+	GuildMemberAdd(handler handlerGuildMemberAdd, moreHandlers ...handlerGuildMemberAdd)
 	GuildMemberAddChan(handler chan *GuildMemberAdd, moreHandlers ...chan *GuildMemberAdd)
-	GuildMemberRemove(handler HandlerGuildMemberRemove, moreHandlers ...HandlerGuildMemberRemove)
+	GuildMemberRemove(handler handlerGuildMemberRemove, moreHandlers ...handlerGuildMemberRemove)
 	GuildMemberRemoveChan(handler chan *GuildMemberRemove, moreHandlers ...chan *GuildMemberRemove)
-	GuildMemberUpdate(handler HandlerGuildMemberUpdate, moreHandlers ...HandlerGuildMemberUpdate)
+	GuildMemberUpdate(handler handlerGuildMemberUpdate, moreHandlers ...handlerGuildMemberUpdate)
 	GuildMemberUpdateChan(handler chan *GuildMemberUpdate, moreHandlers ...chan *GuildMemberUpdate)
-	GuildMembersChunk(handler HandlerGuildMembersChunk, moreHandlers ...HandlerGuildMembersChunk)
+	GuildMembersChunk(handler handlerGuildMembersChunk, moreHandlers ...handlerGuildMembersChunk)
 	GuildMembersChunkChan(handler chan *GuildMembersChunk, moreHandlers ...chan *GuildMembersChunk)
-	GuildRoleCreate(handler HandlerGuildRoleCreate, moreHandlers ...HandlerGuildRoleCreate)
+	GuildRoleCreate(handler handlerGuildRoleCreate, moreHandlers ...handlerGuildRoleCreate)
 	GuildRoleCreateChan(handler chan *GuildRoleCreate, moreHandlers ...chan *GuildRoleCreate)
-	GuildRoleDelete(handler HandlerGuildRoleDelete, moreHandlers ...HandlerGuildRoleDelete)
+	GuildRoleDelete(handler handlerGuildRoleDelete, moreHandlers ...handlerGuildRoleDelete)
 	GuildRoleDeleteChan(handler chan *GuildRoleDelete, moreHandlers ...chan *GuildRoleDelete)
-	GuildRoleUpdate(handler HandlerGuildRoleUpdate, moreHandlers ...HandlerGuildRoleUpdate)
+	GuildRoleUpdate(handler handlerGuildRoleUpdate, moreHandlers ...handlerGuildRoleUpdate)
 	GuildRoleUpdateChan(handler chan *GuildRoleUpdate, moreHandlers ...chan *GuildRoleUpdate)
-	GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate)
+	GuildUpdate(handler handlerGuildUpdate, moreHandlers ...handlerGuildUpdate)
 	GuildUpdateChan(handler chan *GuildUpdate, moreHandlers ...chan *GuildUpdate)
-	InviteCreate(handler HandlerInviteCreate, moreHandlers ...HandlerInviteCreate)
+	InviteCreate(handler handlerInviteCreate, moreHandlers ...handlerInviteCreate)
 	InviteCreateChan(handler chan *InviteCreate, moreHandlers ...chan *InviteCreate)
-	InviteDelete(handler HandlerInviteDelete, moreHandlers ...HandlerInviteDelete)
+	InviteDelete(handler handlerInviteDelete, moreHandlers ...handlerInviteDelete)
 	InviteDeleteChan(handler chan *InviteDelete, moreHandlers ...chan *InviteDelete)
-	MessageCreate(handler HandlerMessageCreate, moreHandlers ...HandlerMessageCreate)
+	MessageCreate(handler handlerMessageCreate, moreHandlers ...handlerMessageCreate)
 	MessageCreateChan(handler chan *MessageCreate, moreHandlers ...chan *MessageCreate)
-	MessageDelete(handler HandlerMessageDelete, moreHandlers ...HandlerMessageDelete)
+	MessageDelete(handler handlerMessageDelete, moreHandlers ...handlerMessageDelete)
 	MessageDeleteChan(handler chan *MessageDelete, moreHandlers ...chan *MessageDelete)
-	MessageDeleteBulk(handler HandlerMessageDeleteBulk, moreHandlers ...HandlerMessageDeleteBulk)
+	MessageDeleteBulk(handler handlerMessageDeleteBulk, moreHandlers ...handlerMessageDeleteBulk)
 	MessageDeleteBulkChan(handler chan *MessageDeleteBulk, moreHandlers ...chan *MessageDeleteBulk)
-	MessageReactionAdd(handler HandlerMessageReactionAdd, moreHandlers ...HandlerMessageReactionAdd)
+	MessageReactionAdd(handler handlerMessageReactionAdd, moreHandlers ...handlerMessageReactionAdd)
 	MessageReactionAddChan(handler chan *MessageReactionAdd, moreHandlers ...chan *MessageReactionAdd)
-	MessageReactionRemove(handler HandlerMessageReactionRemove, moreHandlers ...HandlerMessageReactionRemove)
+	MessageReactionRemove(handler handlerMessageReactionRemove, moreHandlers ...handlerMessageReactionRemove)
 	MessageReactionRemoveChan(handler chan *MessageReactionRemove, moreHandlers ...chan *MessageReactionRemove)
-	MessageReactionRemoveAll(handler HandlerMessageReactionRemoveAll, moreHandlers ...HandlerMessageReactionRemoveAll)
+	MessageReactionRemoveAll(handler handlerMessageReactionRemoveAll, moreHandlers ...handlerMessageReactionRemoveAll)
 	MessageReactionRemoveAllChan(handler chan *MessageReactionRemoveAll, moreHandlers ...chan *MessageReactionRemoveAll)
-	MessageReactionRemoveEmoji(handler HandlerMessageReactionRemoveEmoji, moreHandlers ...HandlerMessageReactionRemoveEmoji)
+	MessageReactionRemoveEmoji(handler handlerMessageReactionRemoveEmoji, moreHandlers ...handlerMessageReactionRemoveEmoji)
 	MessageReactionRemoveEmojiChan(handler chan *MessageReactionRemoveEmoji, moreHandlers ...chan *MessageReactionRemoveEmoji)
-	MessageUpdate(handler HandlerMessageUpdate, moreHandlers ...HandlerMessageUpdate)
+	MessageUpdate(handler handlerMessageUpdate, moreHandlers ...handlerMessageUpdate)
 	MessageUpdateChan(handler chan *MessageUpdate, moreHandlers ...chan *MessageUpdate)
-	PresenceUpdate(handler HandlerPresenceUpdate, moreHandlers ...HandlerPresenceUpdate)
+	PresenceUpdate(handler handlerPresenceUpdate, moreHandlers ...handlerPresenceUpdate)
 	PresenceUpdateChan(handler chan *PresenceUpdate, moreHandlers ...chan *PresenceUpdate)
-	Ready(handler HandlerReady, moreHandlers ...HandlerReady)
+	Ready(handler handlerReady, moreHandlers ...handlerReady)
 	ReadyChan(handler chan *Ready, moreHandlers ...chan *Ready)
-	Resumed(handler HandlerResumed, moreHandlers ...HandlerResumed)
+	Resumed(handler handlerResumed, moreHandlers ...handlerResumed)
 	ResumedChan(handler chan *Resumed, moreHandlers ...chan *Resumed)
-	TypingStart(handler HandlerTypingStart, moreHandlers ...HandlerTypingStart)
+	TypingStart(handler handlerTypingStart, moreHandlers ...handlerTypingStart)
 	TypingStartChan(handler chan *TypingStart, moreHandlers ...chan *TypingStart)
-	UserUpdate(handler HandlerUserUpdate, moreHandlers ...HandlerUserUpdate)
+	UserUpdate(handler handlerUserUpdate, moreHandlers ...handlerUserUpdate)
 	UserUpdateChan(handler chan *UserUpdate, moreHandlers ...chan *UserUpdate)
-	VoiceServerUpdate(handler HandlerVoiceServerUpdate, moreHandlers ...HandlerVoiceServerUpdate)
+	VoiceServerUpdate(handler handlerVoiceServerUpdate, moreHandlers ...handlerVoiceServerUpdate)
 	VoiceServerUpdateChan(handler chan *VoiceServerUpdate, moreHandlers ...chan *VoiceServerUpdate)
-	VoiceStateUpdate(handler HandlerVoiceStateUpdate, moreHandlers ...HandlerVoiceStateUpdate)
+	VoiceStateUpdate(handler handlerVoiceStateUpdate, moreHandlers ...handlerVoiceStateUpdate)
 	VoiceStateUpdateChan(handler chan *VoiceStateUpdate, moreHandlers ...chan *VoiceStateUpdate)
-	WebhooksUpdate(handler HandlerWebhooksUpdate, moreHandlers ...HandlerWebhooksUpdate)
+	WebhooksUpdate(handler handlerWebhooksUpdate, moreHandlers ...handlerWebhooksUpdate)
 	WebhooksUpdateChan(handler chan *WebhooksUpdate, moreHandlers ...chan *WebhooksUpdate)
 	WithCtrl(HandlerCtrl) SocketHandlerRegistrator
 	WithMiddleware(first Middleware, extra ...Middleware) SocketHandlerRegistrator

@@ -42,7 +42,7 @@ const Evt{{.}} = event.{{.}} {{end}}
 
 func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
 
-type Handler{{.}} = func(Session, *{{.}})
+type handler{{.}} = func(Session, *{{.}})
 
 // --------------------------- {{end}}
 
@@ -92,7 +92,7 @@ func (shr socketHandlerRegister) WithMiddleware(first Middleware, extra ...Middl
 
 {{range .}}
 {{- if .IsDiscordEvent}}
-func (shr socketHandlerRegister) {{.}}(handler Handler{{.}}, moreHandlers ...Handler{{.}}) {
+func (shr socketHandlerRegister) {{.}}(handler handler{{.}}, moreHandlers ...handler{{.}}) {
     shr.evtName = Evt{{.}}
     shr.handlers = append(shr.handlers, handler)
     for _, h := range moreHandlers {
@@ -114,7 +114,7 @@ func (shr socketHandlerRegister) {{.}}Chan(handler chan *{{.}}, moreHandlers ...
 type SocketHandlerRegistrator interface {
 {{range .}}
 {{- if .IsDiscordEvent}}
-    {{.}}(handler Handler{{.}}, moreHandlers ...Handler{{.}})
+    {{.}}(handler handler{{.}}, moreHandlers ...handler{{.}})
     {{.}}Chan(handler chan *{{.}}, moreHandlers ... chan *{{.}})
 {{- end}}
 {{- end}}
