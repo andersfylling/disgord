@@ -1,6 +1,6 @@
 module logging
 
-go 1.14
+go 1.15
 
 require (
 	github.com/andersfylling/disgord v0.16.5

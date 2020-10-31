@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - develop
-name: integration tests
+name: tests
 jobs:
   integration-tests:
     name: Integration tests & code coverage
