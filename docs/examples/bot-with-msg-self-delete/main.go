@@ -29,19 +29,19 @@ func main() {
 }
 
 func run(client *disgord.Client) {
-	mdlw, err := NewMiddlewareHolder(client, context.Background())
+	deadline, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+	mdlw, err := NewMiddlewareHolder(client, deadline)
 	if err != nil {
 		panic(err)
 	}
 
 	// listen for messages
-	client.On(disgord.EvtMessageCreate,
-		mdlw.filterOutHumans,
-		mdlw.filterOutOthersMsgs,
-		autoDeleteNewMessages)
+	client.Gateway().
+		WithMiddleware(mdlw.filterOutHumans, mdlw.filterOutOthersMsgs).
+		MessageCreate(autoDeleteNewMessages)
 
 	// connect now, and disconnect on system interrupt
-	client.StayConnectedUntilInterrupted(context.Background())
+	client.Gateway().StayConnectedUntilInterrupted()
 }
 
 //////////////////////////////////////////////////////
@@ -53,8 +53,8 @@ func autoDeleteNewMessages(s disgord.Session, evt *disgord.MessageCreate) {
 	// delete message after N seconds
 	<-time.After(MessageLifeTime)
 
-	err := s.DeleteFromDiscord(context.Background(), evt.Message)
-	if err != nil {
+	msg := evt.Message
+	if err := s.Channel(msg.ChannelID).Message(msg.ID).Delete(); err != nil {
 		log.Error(err)
 	}
 }
@@ -66,7 +66,7 @@ func autoDeleteNewMessages(s disgord.Session, evt *disgord.MessageCreate) {
 //////////////////////////////////////////////////////
 func NewMiddlewareHolder(s disgord.Session, ctx context.Context) (m *MiddlewareHolder, err error) {
 	m = &MiddlewareHolder{session: s}
-	if m.myself, err = s.GetCurrentUser(ctx); err != nil {
+	if m.myself, err = s.CurrentUser().WithContext(ctx).Get(); err != nil {
 		return nil, errors.New("unable to fetch info about the bot instance")
 	}
 
