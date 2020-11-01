@@ -8,6 +8,7 @@ echo "$DIR"
 
 for d in docs/examples/*/; do
   cd "./$d"
+  go fmt .
   go build .
   cd "$DIR"
 done

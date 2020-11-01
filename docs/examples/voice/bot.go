@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	MyGuildID = disgord.Snowflake(26854385)
+	MyGuildID   = disgord.Snowflake(26854385)
 	MyChannelID = disgord.Snowflake(93284097324)
 )
 
@@ -32,8 +32,8 @@ func main() {
 			defer f.Close()
 
 			_ = voice.StartSpeaking() // Sending a speaking signal is mandatory before sending voice data
-			_ = voice.SendDCA(f) // Or use voice.SendOpusFrame, this blocks until done sending (realtime audio duration)
-			_ = voice.StopSpeaking() // Tell Discord we are done sending data.
+			_ = voice.SendDCA(f)      // Or use voice.SendOpusFrame, this blocks until done sending (realtime audio duration)
+			_ = voice.StopSpeaking()  // Tell Discord we are done sending data.
 		}
 	})
 }

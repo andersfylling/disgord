@@ -29,7 +29,7 @@ func main() {
 }
 
 func run(client *disgord.Client) {
-	deadline, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+	deadline, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	mdlw, err := NewMiddlewareHolder(client, deadline)
 	if err != nil {
 		panic(err)
