@@ -1,30 +1,31 @@
-In this example code example, you can see how to let the bot send an audio fragment after receiving a command.
-
-**Please note that for the sake of brevity error handling in this example has been omitted,
-you should never do this in actual code**
-
-```go
 package main
 
 import (
-	"context"
 	"os"
 
 	"github.com/andersfylling/disgord"
 )
 
+const (
+	MyGuildID = disgord.Snowflake(26854385)
+	MyChannelID = disgord.Snowflake(93284097324)
+)
+
+// In this example code example, you can see how to let the bot send an audio fragment after receiving a command.
 func main() {
-	// Set up a new Disgord client
-	discord := disgord.New(disgord.Config{
-		BotToken: os.Getenv("DISGORD_TOKEN"),
+	client := disgord.New(disgord.Config{
+		BotToken: os.Getenv("DISCORD_TOKEN"),
 	})
+	gateway := client.Gateway()
+	defer gateway.StayConnectedUntilInterrupted()
 
 	var voice disgord.VoiceConnection
-	discord.Ready(func() {
+	gateway.BotReady(func() {
 		// Once the bot has connected to the websocket, also connect to the voice channel
-		voice, _ = discord.VoiceConnect(myGuildID, myChannelID)
+		voice, _ = client.VoiceConnectOptions(MyGuildID, MyChannelID, false, true)
 	})
-	discord.On(disgord.EvtMessageCreate, func(_ disgord.Session, m *disgord.MessageCreate) {
+
+	gateway.MessageCreate(func(_ disgord.Session, m *disgord.MessageCreate) {
 		// Upon receiving a message with content !airhorn, play a sound to the connection made earlier
 		if m.Message.Content == "!airhorn" {
 			f, _ := os.Open("airhorn.dca")
@@ -35,9 +36,4 @@ func main() {
 			_ = voice.StopSpeaking() // Tell Discord we are done sending data.
 		}
 	})
-
-	_ = discord.Connect(context.Background())
-	_ = discord.DisconnectOnInterrupt()
 }
-
-```
