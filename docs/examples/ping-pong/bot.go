@@ -13,7 +13,6 @@ import (
 // ping-pong bot. This snippet will contain the main
 // function's body.
 func main() {
-	// configure a Disgord client
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISCORD_TOKEN"),
 	})
