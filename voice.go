@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"context"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 	"github.com/andersfylling/disgord/json"
@@ -176,4 +178,29 @@ func (c clientQueryBuilder) GetVoiceRegions(flags ...Flag) (regions []*VoiceRegi
 		return *ems, nil
 	}
 	return vs.([]*VoiceRegion), nil
+}
+
+// VoiceConnect is used to handle making a voice connection.
+func (g guildQueryBuilder) VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder {
+	vc := &voiceChannelQueryBuilder{}
+	vc.gid = g.gid
+	vc.cid = channelID
+	vc.client = g.client
+	vc.ctx = context.Background()
+	return vc
+}
+
+type VoiceChannelQueryBuilder interface {
+	ChannelQueryBuilder
+	Connect(mute, deaf bool) (VoiceConnection, error)
+}
+
+type voiceChannelQueryBuilder struct {
+	channelQueryBuilder
+	gid Snowflake
+}
+
+// VoiceConnect is used to handle making a voice connection.
+func (v voiceChannelQueryBuilder) Connect(mute, deaf bool) (VoiceConnection, error) {
+	return v.client.voiceConnectOptions(v.gid, v.cid, deaf, mute)
 }

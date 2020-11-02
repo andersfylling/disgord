@@ -14,6 +14,9 @@ var _ GuildQueryBuilder = (*guildQueryBuilderNop)(nil)
 func (g guildQueryBuilderNop) WithContext(_ context.Context) GuildQueryBuilder {
 	return g
 }
+func (guildQueryBuilderNop) VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder {
+	return nil
+}
 func (guildQueryBuilderNop) Get(flags ...Flag) (guild *Guild, err error) {
 	return nil, nil
 }
