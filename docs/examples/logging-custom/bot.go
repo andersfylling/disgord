@@ -1,11 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/andersfylling/disgord"
-	"go.uber.org/zap"
 	"os"
+
+	"go.uber.org/zap"
+
+	"github.com/andersfylling/disgord"
 )
 
 // DefaultLogger create a new logger instance for Disgord with the option to activate debugging.
@@ -52,5 +53,5 @@ func main() {
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   MyInjectableLogger(logConf),
 	})
-	defer client.StayConnectedUntilInterrupted(context.Background())
+	defer client.Gateway().StayConnectedUntilInterrupted()
 }

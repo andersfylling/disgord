@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/andersfylling/disgord"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -20,5 +19,5 @@ func main() {
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   log,
 	})
-	defer client.StayConnectedUntilInterrupted(context.Background())
+	defer client.Gateway().StayConnectedUntilInterrupted()
 }
