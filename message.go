@@ -49,6 +49,13 @@ const (
 	MessageTypeUserPremiumGuildSubscriptionTier2
 	MessageTypeUserPremiumGuildSubscriptionTier3
 	MessageTypeChannelFollowAdd
+	_
+	MessageTypeGuildDiscoveryDisqualified
+	MessageTypeGuildDiscoveryRequalified
+	_
+	_
+	_
+	MessageTypeInlineReply
 )
 
 const (
@@ -85,29 +92,30 @@ type MessageApplication struct {
 
 // Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
-	ID               Snowflake          `json:"id"`
-	ChannelID        Snowflake          `json:"channel_id"`
-	Author           *User              `json:"author"`
-	Member           *Member            `json:"member"`
-	Content          string             `json:"content"`
-	Timestamp        Time               `json:"timestamp"`
-	EditedTimestamp  Time               `json:"edited_timestamp"` // ?
-	Tts              bool               `json:"tts"`
-	MentionEveryone  bool               `json:"mention_everyone"`
-	Mentions         []*User            `json:"mentions"`
-	MentionRoles     []Snowflake        `json:"mention_roles"`
-	MentionChannels  []*MentionChannel  `json:"mention_channels"`
-	Attachments      []*Attachment      `json:"attachments"`
-	Embeds           []*Embed           `json:"embeds"`
-	Reactions        []*Reaction        `json:"reactions"` // ?
-	Nonce            interface{}        `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
-	Pinned           bool               `json:"pinned"`
-	WebhookID        Snowflake          `json:"webhook_id"` // ?
-	Type             MessageType        `json:"type"`
-	Activity         MessageActivity    `json:"activity"`
-	Application      MessageApplication `json:"application"`
-	MessageReference *MessageReference  `json:"message_reference"`
-	Flags            MessageFlag        `json:"flags"`
+	ID                Snowflake          `json:"id"`
+	ChannelID         Snowflake          `json:"channel_id"`
+	Author            *User              `json:"author"`
+	Member            *Member            `json:"member"`
+	Content           string             `json:"content"`
+	Timestamp         Time               `json:"timestamp"`
+	EditedTimestamp   Time               `json:"edited_timestamp"` // ?
+	Tts               bool               `json:"tts"`
+	MentionEveryone   bool               `json:"mention_everyone"`
+	Mentions          []*User            `json:"mentions"`
+	MentionRoles      []Snowflake        `json:"mention_roles"`
+	MentionChannels   []*MentionChannel  `json:"mention_channels"`
+	Attachments       []*Attachment      `json:"attachments"`
+	Embeds            []*Embed           `json:"embeds"`
+	Reactions         []*Reaction        `json:"reactions"` // ?
+	Nonce             interface{}        `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
+	Pinned            bool               `json:"pinned"`
+	WebhookID         Snowflake          `json:"webhook_id"` // ?
+	Type              MessageType        `json:"type"`
+	Activity          MessageActivity    `json:"activity"`
+	Application       MessageApplication `json:"application"`
+	MessageReference  *MessageReference  `json:"message_reference"`
+	ReferencedMessage *Message           `json:"referenced_message"`
+	Flags             MessageFlag        `json:"flags"`
 
 	// GuildID is not set when using a REST request. Only socket events.
 	GuildID Snowflake `json:"guild_id"`

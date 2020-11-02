@@ -117,6 +117,9 @@ func (m *Message) reset() {
 	m.Activity = MessageActivity{}
 	m.Application = MessageApplication{}
 	m.MessageReference = nil
+	if m.ReferencedMessage != nil {
+		Reset(m.ReferencedMessage)
+	}
 	m.Flags = 0
 	m.GuildID = 0
 	m.SpoilerTagContent = false
