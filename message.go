@@ -90,6 +90,26 @@ type MessageApplication struct {
 	Name        string    `json:"name"`
 }
 
+type MessageStickerFormatType int
+
+const (
+	_ MessageStickerFormatType = iota
+	MessageStickerFormatPNG
+	MessageStickerFormatAPNG
+	MessageStickerFormatLOTTIE
+)
+
+type messageSticker struct {
+	ID           Snowflake                `json:"id"`
+	PackID       Snowflake                `json:"pack_id"`
+	Name         string                   `json:"name"`
+	Description  string                   `json:"description"`
+	Tags         string                   `json:"tags"`
+	Asset        string                   `json:"asset"`
+	PreviewAsset string                   `json:"preview_asset"`
+	FormatType   MessageStickerFormatType `json:"format_type"`
+}
+
 // Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
 	ID                Snowflake          `json:"id"`
@@ -116,6 +136,7 @@ type Message struct {
 	MessageReference  *MessageReference  `json:"message_reference"`
 	ReferencedMessage *Message           `json:"referenced_message"`
 	Flags             MessageFlag        `json:"flags"`
+	Stickers          []*messageSticker  `json:"stickers"`
 
 	// GuildID is not set when using a REST request. Only socket events.
 	GuildID Snowflake `json:"guild_id"`
