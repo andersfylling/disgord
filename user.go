@@ -638,7 +638,7 @@ func (c currentUserQueryBuilder) WithContext(ctx context.Context) CurrentUserQue
 //  Comment                 -
 func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
 	if !ignoreCache(flags...) {
-		if usr, _ := c.client.cache.GetCurrentUser(); usr != nil {
+		if usr, err := c.client.cache.GetCurrentUser(); err != nil && usr != nil {
 			return usr, nil
 		}
 	}
@@ -650,10 +650,7 @@ func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
 	r.pool = c.client.pool.user
 	r.factory = userFactory
 
-	if user, err = getUser(r.Execute); err == nil && c.client.myID.IsZero() {
-		c.client.myID = user.ID
-	}
-	return user, err
+	return getUser(r.Execute)
 }
 
 // UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.

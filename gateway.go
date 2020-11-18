@@ -59,12 +59,6 @@ func (g gatewayQueryBuilder) Connect() (err error) {
 	g.client.mu.Lock()
 	defer g.client.mu.Unlock()
 
-	var me *User
-	if me, err = g.client.CurrentUser().WithContext(g.ctx).Get(); err != nil {
-		return err
-	}
-	g.client.myID = me.ID
-
 	if err = gateway.ConfigureShardConfig(g.ctx, helperGatewayBotGetter{g.client}, &g.client.config.ShardConfig); err != nil {
 		return err
 	}
