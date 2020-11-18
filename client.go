@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/proxy"
+
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
-
-	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/internal/constant"
 
@@ -21,7 +21,7 @@ import (
 
 // New create a Client. But panics on configuration/setup errors.
 func New(conf Config) *Client {
-	client, err := createClient(&conf)
+	client, err := createClient(context.Background(), &conf)
 	if err != nil {
 		panic(err)
 	}
@@ -29,12 +29,30 @@ func New(conf Config) *Client {
 }
 
 // NewClient creates a new Disgord Client and returns an error on configuration issues
-func NewClient(conf Config) (*Client, error) {
-	return createClient(&conf)
+// context is required since a single external request is made to verify bot details
+func NewClient(ctx context.Context, conf Config) (*Client, error) {
+	return createClient(ctx, &conf)
 }
 
+func verifyClientProduction(ctx context.Context, client *Client) (Snowflake, error) {
+	usr, err := client.CurrentUser().WithContext(ctx).Get(IgnoreCache)
+	if err != nil {
+		return 0, err
+	}
+	if usr == nil {
+		return 0, fmt.Errorf("unable to gather bot information")
+	}
+	if usr.ID.IsZero() {
+		return 0, fmt.Errorf("for some reason the bot ID is unknown")
+	}
+
+	return usr.ID, nil
+}
+
+var verifyClient func(ctx context.Context, client *Client) (Snowflake, error) = verifyClientProduction
+
 // NewClient creates a new Disgord Client and returns an error on configuration issues
-func createClient(conf *Config) (c *Client, err error) {
+func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 	if conf.Logger == nil {
 		conf.Logger = logger.Empty{}
 	}
@@ -69,6 +87,9 @@ func createClient(conf *Config) (c *Client, err error) {
 	if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
 		// https://github.com/discord/discord-api-docs/issues/683
 		uniqueEventNames["PRESENCES_REPLACE"] = false
+	}
+	if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
+		return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
 	}
 	conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
 	for eventName, _ := range uniqueEventNames {
@@ -134,7 +155,19 @@ func createClient(conf *Config) (c *Client, err error) {
 	c.clientQueryBuilder.client = c
 	c.voiceRepository = newVoiceRepository(c)
 
-	return c, err
+	// this external requests ensures two things:
+	//  - the bot token is valid (a disgord instance is locked to a bot token)
+	//  - that the bot id is always known
+	if c.id, err = verifyClient(ctx, c); err != nil {
+		return nil, err
+	}
+
+	// TODO: this is just waiting to fail
+	if internalCache, ok := c.cache.(*CacheLFUImmutable); ok {
+		internalCache.currentUserID = c.id
+	}
+
+	return c, nil
 }
 
 type ShardConfig = gateway.ShardConfig
@@ -216,14 +249,15 @@ type Config struct {
 type Client struct {
 	mu sync.RWMutex
 
+	// current bot id
+	id Snowflake
+
 	clientQueryBuilder
 
 	shutdownChan chan interface{}
 	config       *Config
 	botToken     string
 
-	currentUser User
-	myID        Snowflake
 	permissions PermissionBit
 
 	handlers internalHandlers
