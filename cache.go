@@ -48,6 +48,10 @@ type CacheLFUImmutable struct {
 		VoiceStates [12]sync.Mutex
 	}
 
+	// set via disgord.createClient
+	// must never be overwritten
+	currentUserID Snowflake // dangerous: no verification that id is set
+
 	CurrentUserMu sync.Mutex
 	CurrentUser   *User
 
@@ -675,22 +679,15 @@ func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 func (c *CacheLFUImmutable) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
+	if c.CurrentUser == nil {
+		return nil, nil
+	}
 
 	return DeepCopy(c.CurrentUser).(*User), nil
 }
 func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
-	currentUser := func() *User {
-		c.CurrentUserMu.Lock()
-		defer c.CurrentUserMu.Unlock()
-
-		if id == c.CurrentUser.ID {
-			return c.CurrentUser
-		}
-		return nil
-	}
-	// hmmm.. ugly
-	if match := currentUser(); match != nil {
-		return DeepCopy(match).(*User), nil
+	if id == c.currentUserID {
+		return c.GetCurrentUser()
 	}
 
 	c.Users.RLock()

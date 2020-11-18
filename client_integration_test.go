@@ -14,6 +14,13 @@ import (
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
+func init() {
+	// TODO
+	verifyClient = func(_ context.Context, _ *Client) (Snowflake, error) {
+		return 0, nil
+	}
+}
+
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 var guildTypical = struct {
@@ -65,7 +72,7 @@ func TestClient(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		defer wg.Done()
 		var err error
-		c, err = NewClient(Config{
+		c, err = NewClient(context.Background(), Config{
 			BotToken:     token,
 			DisableCache: true,
 			Logger:       &logger.FmtPrinter{},
@@ -388,7 +395,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// Test getting a member
-		member, err := c.Guild(guildTypical.ID).Member(c.myID).WithContext(deadline).Get(IgnoreCache)
+		member, err := c.Guild(guildTypical.ID).Member(c.id).WithContext(deadline).Get(IgnoreCache)
 		if err != nil {
 			panic(err)
 		}

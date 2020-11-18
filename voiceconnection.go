@@ -165,7 +165,7 @@ waiter:
 	// Connect to the websocket
 	voice.ws, err = gateway.NewVoiceClient(&gateway.VoiceConfig{
 		GuildID:        server.GuildID,
-		UserID:         r.c.myID,
+		UserID:         r.c.botID,
 		SessionID:      state.SessionID,
 		Token:          server.Token,
 		HTTPClient:     r.c.config.HTTPClient,
@@ -250,13 +250,14 @@ waiter:
 
 func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
 	r.mu.Lock()
-	if event.UserID != r.c.myID {
+	if event.UserID != r.c.botID {
 		r.mu.Unlock()
 		return
 	}
 
-	if ch, exists := r.pendingStates[event.VoiceState.GuildID]; exists {
-		delete(r.pendingStates, event.VoiceState.GuildID)
+	gid := event.VoiceState.GuildID
+	if ch, exists := r.pendingStates[gid]; exists {
+		delete(r.pendingStates, gid)
 		r.mu.Unlock()
 
 		ch <- event
@@ -268,8 +269,9 @@ func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate)
 func (r *voiceRepository) onVoiceServerUpdate(_ Session, event *VoiceServerUpdate) {
 	r.mu.Lock()
 
-	if ch, exists := r.pendingServers[event.GuildID]; exists {
-		delete(r.pendingStates, event.GuildID)
+	gid := event.GuildID
+	if ch, exists := r.pendingServers[gid]; exists {
+		delete(r.pendingServers, gid)
 		r.mu.Unlock()
 
 		ch <- event
