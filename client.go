@@ -21,7 +21,7 @@ import (
 
 // New create a Client. But panics on configuration/setup errors.
 func New(conf Config) *Client {
-	client, err := createClient(context.Background(), &conf)
+	client, err := NewClient(context.Background(), conf)
 	if err != nil {
 		panic(err)
 	}
