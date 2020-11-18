@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/andersfylling/disgord/internal/constant"
-	"github.com/andersfylling/disgord/internal/disgorderr"
 	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/httd"
@@ -467,12 +466,8 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 // for your bot to run successfully, you should utilise
 //  Client.
 func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
-	if _, err := c.CurrentUser().WithContext(c.ctx).Get(); err != nil && c.client.myID.IsZero() {
-		return nil, disgorderr.Wrap(err, "can't create invite url without fetching the bot id")
-	}
-
 	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.myID.String(), c.client.permissions)
+	u := fmt.Sprintf(format, c.client.botID.String(), c.client.permissions)
 	return url.Parse(u)
 }
 

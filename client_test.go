@@ -3,6 +3,7 @@
 package disgord
 
 import (
+	"context"
 	"github.com/andersfylling/disgord/internal/logger"
 	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
@@ -17,6 +18,13 @@ import (
 
 	"github.com/andersfylling/disgord/internal/gateway"
 )
+
+func init() {
+	// TODO
+	verifyClient = func(_ context.Context, _ *Client) (Snowflake, error) {
+		return 0, nil
+	}
+}
 
 //////////////////////////////////////////////////////
 //
@@ -277,7 +285,7 @@ func TestClient_On_Middleware(t *testing.T) {
 // TestClient_System looks for crashes when the Disgord system starts up.
 // the websocket logic is excluded to avoid crazy rewrites. At least, for now.
 func TestClient_System(t *testing.T) {
-	c, err := NewClient(Config{
+	c, err := NewClient(context.Background(), Config{
 		BotToken: "testing",
 	})
 	if err != nil {
@@ -376,7 +384,7 @@ func TestClient_System(t *testing.T) {
 }
 
 func TestInternalStateHandlers(t *testing.T) {
-	c, err := NewClient(Config{
+	c, err := NewClient(context.Background(), Config{
 		BotToken: "testing",
 	})
 	if err != nil {
