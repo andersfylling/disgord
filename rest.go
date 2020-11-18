@@ -467,7 +467,7 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 //  Client.
 func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
 	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.id.String(), c.client.permissions)
+	u := fmt.Sprintf(format, c.client.botID.String(), c.client.permissions)
 	return url.Parse(u)
 }
 

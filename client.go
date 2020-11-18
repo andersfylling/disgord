@@ -158,13 +158,13 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 	// this external requests ensures two things:
 	//  - the bot token is valid (a disgord instance is locked to a bot token)
 	//  - that the bot id is always known
-	if c.id, err = verifyClient(ctx, c); err != nil {
+	if c.botID, err = verifyClient(ctx, c); err != nil {
 		return nil, err
 	}
 
 	// TODO: this is just waiting to fail
 	if internalCache, ok := c.cache.(*CacheLFUImmutable); ok {
-		internalCache.currentUserID = c.id
+		internalCache.currentUserID = c.botID
 	}
 
 	return c, nil
@@ -250,7 +250,7 @@ type Client struct {
 	mu sync.RWMutex
 
 	// current bot id
-	id Snowflake
+	botID Snowflake
 
 	clientQueryBuilder
 

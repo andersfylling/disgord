@@ -3,7 +3,6 @@ package disgord
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -131,12 +130,10 @@ waiter:
 	for {
 		select {
 		case state = <-stateCh:
-			fmt.Println("got stateCh")
 			if server != nil {
 				break waiter
 			}
 		case server = <-serverCh:
-			fmt.Println("got serverCh")
 			if state != nil {
 				break waiter
 			}
@@ -168,7 +165,7 @@ waiter:
 	// Connect to the websocket
 	voice.ws, err = gateway.NewVoiceClient(&gateway.VoiceConfig{
 		GuildID:        server.GuildID,
-		UserID:         r.c.id,
+		UserID:         r.c.botID,
 		SessionID:      state.SessionID,
 		Token:          server.Token,
 		HTTPClient:     r.c.config.HTTPClient,
@@ -252,11 +249,9 @@ waiter:
 }
 
 func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate) {
-	fmt.Println("got voice state")
 	r.mu.Lock()
-	if event.UserID != r.c.id {
+	if event.UserID != r.c.botID {
 		r.mu.Unlock()
-		fmt.Println("wrong user id", event.UserID, r.c.id)
 		return
 	}
 
@@ -268,12 +263,10 @@ func (r *voiceRepository) onVoiceStateUpdate(_ Session, event *VoiceStateUpdate)
 		ch <- event
 	} else {
 		r.mu.Unlock()
-		fmt.Println("doesnt exists")
 	}
 }
 
 func (r *voiceRepository) onVoiceServerUpdate(_ Session, event *VoiceServerUpdate) {
-	fmt.Println("got voice server")
 	r.mu.Lock()
 
 	gid := event.GuildID
