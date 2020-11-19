@@ -5,12 +5,13 @@ package disgord
 import (
 	"context"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/logger"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/logger"
 )
 
 func init() {
@@ -394,7 +395,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// Test getting a member
-		member, err := c.Guild(guildTypical.ID).Member(c.id).WithContext(deadline).Get(IgnoreCache)
+		member, err := c.Guild(guildTypical.ID).Member(c.botID).WithContext(deadline).Get(IgnoreCache)
 		if err != nil {
 			panic(err)
 		}
