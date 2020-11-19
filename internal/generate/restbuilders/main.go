@@ -28,7 +28,7 @@ func main() {
 		builders = append(builders, getAllRESTBuilders(files[i])...)
 	}
 
-	makeFile(builders, "generate/restbuilders/methods.gotpl", "restbuilders_gen.go")
+	makeFile(builders, "internal/generate/restbuilders/methods.gotpl", "restbuilders_gen.go")
 }
 
 type condition struct {

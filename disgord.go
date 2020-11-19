@@ -120,7 +120,7 @@
 //
 package disgord
 
-//go:generate go run generate/intents/main.go
+//go:generate go run internal/generate/intents/main.go
 
 import (
 	"fmt"
