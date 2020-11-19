@@ -14,13 +14,6 @@ import (
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
-func init() {
-	// TODO
-	verifyClient = func(_ context.Context, _ *Client) (Snowflake, error) {
-		return 0, nil
-	}
-}
-
 var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
 
 var guildTypical = struct {
