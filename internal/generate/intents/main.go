@@ -33,7 +33,7 @@ func main() {
 	})
 
 	// And finally pass the event information to different templates to generate some files
-	makeFile(intents, "generate/intents/intents.gohtml", "intents_gen.go")
+	makeFile(intents, "internal/generate/intents/intents.gohtml", "intents_gen.go")
 }
 
 func makeFile(intents []string, tplFile, target string) {

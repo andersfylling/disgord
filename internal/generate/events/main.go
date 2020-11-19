@@ -87,9 +87,10 @@ func main() {
 	}
 
 	// And finally pass the event information to different templates to generate some files
-	makeFile(events, "generate/events/events.gohtml", "events_gen.go")
-	makeFile(events, "generate/events/cache.gohtml", "cache_gen.go")
-	makeFile(events, "generate/events/reactor.gotpl", "reactor_gen.go")
+	makeFile(events, "internal/generate/events/events.gohtml", "events_gen.go")
+	makeFile(events, "internal/generate/events/events_internal.gohtml", "internal/event/events_gen.go")
+	makeFile(events, "internal/generate/events/cache.gohtml", "cache_gen.go")
+	makeFile(events, "internal/generate/events/reactor.gotpl", "reactor_gen.go")
 }
 
 func makeFile(events []*eventName, tplFile, target string) {

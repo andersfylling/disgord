@@ -121,6 +121,7 @@ func (m *Message) reset() {
 		Reset(m.ReferencedMessage)
 	}
 	m.Flags = 0
+	m.Stickers = nil
 	m.GuildID = 0
 	m.SpoilerTagContent = false
 	m.SpoilerTagAllAttachments = false

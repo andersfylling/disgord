@@ -1,6 +1,6 @@
 package disgord
 
-//go:generate go run generate/events/main.go
+//go:generate go run internal/generate/events/main.go
 
 // This file contains resource objects for the event reactor
 

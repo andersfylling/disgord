@@ -10,58 +10,11 @@ import (
 // helpers
 
 func AllEvents() []string {
-	return AllEventsExcept()
+	return event.All()
 }
 
 func AllEventsExcept(except ...string) []string {
-	evtsMap := map[string]int8{
-		EvtChannelCreate:              0,
-		EvtChannelDelete:              0,
-		EvtChannelPinsUpdate:          0,
-		EvtChannelUpdate:              0,
-		EvtGuildBanAdd:                0,
-		EvtGuildBanRemove:             0,
-		EvtGuildCreate:                0,
-		EvtGuildDelete:                0,
-		EvtGuildEmojisUpdate:          0,
-		EvtGuildIntegrationsUpdate:    0,
-		EvtGuildMemberAdd:             0,
-		EvtGuildMemberRemove:          0,
-		EvtGuildMemberUpdate:          0,
-		EvtGuildMembersChunk:          0,
-		EvtGuildRoleCreate:            0,
-		EvtGuildRoleDelete:            0,
-		EvtGuildRoleUpdate:            0,
-		EvtGuildUpdate:                0,
-		EvtInviteCreate:               0,
-		EvtInviteDelete:               0,
-		EvtMessageCreate:              0,
-		EvtMessageDelete:              0,
-		EvtMessageDeleteBulk:          0,
-		EvtMessageReactionAdd:         0,
-		EvtMessageReactionRemove:      0,
-		EvtMessageReactionRemoveAll:   0,
-		EvtMessageReactionRemoveEmoji: 0,
-		EvtMessageUpdate:              0,
-		EvtPresenceUpdate:             0,
-		EvtReady:                      0,
-		EvtResumed:                    0,
-		EvtTypingStart:                0,
-		EvtUserUpdate:                 0,
-		EvtVoiceServerUpdate:          0,
-		EvtVoiceStateUpdate:           0,
-		EvtWebhooksUpdate:             0,
-	}
-
-	for i := range except {
-		delete(evtsMap, except[i])
-	}
-
-	evts := make([]string, 0, len(evtsMap))
-	for k := range evtsMap {
-		evts = append(evts, k)
-	}
-	return evts
+	return event.AllExcept(except...)
 }
 
 // ---------------------------
@@ -163,7 +116,7 @@ type handlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 
 // ---------------------------
 
-// GuildIntegrationsUpdate Sent when a guild integration is updated
+// GuildIntegrationsUpdate Sent when a guild integration is updated.
 //
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
@@ -368,13 +321,6 @@ type handlerPresenceUpdate = func(Session, *PresenceUpdate)
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.
-// //  Fields:
-// //  - V int
-// //  - User *User
-// //  - PrivateChannels []*Channel
-// //  - Guilds []*GuildUnavailable
-// //  - SessionID string
-// //  - Trace []string
 //
 const EvtReady = event.Ready
 
@@ -677,7 +623,7 @@ func (shr socketHandlerRegister) GuildEmojisUpdateChan(handler chan *GuildEmojis
 	shr.build()
 }
 
-// GuildIntegrationsUpdate Sent when a guild integration is updated
+// GuildIntegrationsUpdate Sent when a guild integration is updated.
 //
 func (shr socketHandlerRegister) GuildIntegrationsUpdate(handler handlerGuildIntegrationsUpdate, moreHandlers ...handlerGuildIntegrationsUpdate) {
 	shr.evtName = EvtGuildIntegrationsUpdate
@@ -1082,13 +1028,6 @@ func (shr socketHandlerRegister) PresenceUpdateChan(handler chan *PresenceUpdate
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.
-// //  Fields:
-// //  - V int
-// //  - User *User
-// //  - PrivateChannels []*Channel
-// //  - Guilds []*GuildUnavailable
-// //  - SessionID string
-// //  - Trace []string
 //
 func (shr socketHandlerRegister) Ready(handler handlerReady, moreHandlers ...handlerReady) {
 	shr.evtName = EvtReady

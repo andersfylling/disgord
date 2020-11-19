@@ -10,9 +10,9 @@ import (
 )
 
 // common functionality/types used by struct_*.go files goes here
-//go:generate go run generate/interfaces/main.go
-//go:generate go run generate/sorters/main.go
-//go:generate go run generate/json/main.go
+//go:generate go run internal/generate/interfaces/main.go
+//go:generate go run internal/generate/sorters/main.go
+//go:generate go run internal/generate/json/main.go
 
 func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
 	return &ErrorUnsupportedType{

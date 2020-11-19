@@ -115,9 +115,9 @@ func main() {
 		addStructs(enforcers, file)
 	}
 
-	makeFile(enforcers, "generate/interfaces/Reseter.gotpl", "iface_reseter_gen.go")
-	makeFile(enforcers, "generate/interfaces/URLQueryStringer.gotpl", "iface_urlquerystringer_gen.go")
-	makeFile(enforcers, "generate/interfaces/internalUpdaters.gotpl", "iface_internalupdaters_gen.go")
+	makeFile(enforcers, "internal/generate/interfaces/Reseter.gotpl", "iface_reseter_gen.go")
+	makeFile(enforcers, "internal/generate/interfaces/URLQueryStringer.gotpl", "iface_urlquerystringer_gen.go")
+	makeFile(enforcers, "internal/generate/interfaces/internalUpdaters.gotpl", "iface_internalupdaters_gen.go")
 }
 
 func addStructs(enforcers []Enforcer, file *ast.File) {

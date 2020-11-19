@@ -4,13 +4,6 @@ package event
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 //// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 //// required for a client to begin interacting with the rest of the platform.
-////  Fields:
-////  - V int
-////  - User *User
-////  - PrivateChannels []*Channel
-////  - Guilds []*GuildUnavailable
-////  - SessionID string
-////  - Trace []string
 const Ready = "READY"
 
 // Resumed The resumed event is dispatched when a client has sent a resume payload to the gateway
@@ -86,7 +79,7 @@ const GuildBanAdd = "GUILD_BAN_ADD"
 // GuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
 const GuildBanRemove = "GUILD_BAN_REMOVE"
 
-// GuildIntegrationsUpdate Sent when a guild integration is updated
+// GuildIntegrationsUpdate Sent when a guild integration is updated.
 const GuildIntegrationsUpdate = "GUILD_INTEGRATIONS_UPDATE"
 
 // GuildMemberAdd Sent when a new user joins a guild.
@@ -128,39 +121,3 @@ const WebhooksUpdate = "WEBHOOKS_UPDATE"
 
 // InviteCreate Sent when a guild's invite is created.
 const InviteCreate = "INVITE_CREATE"
-
-func All() []string {
-	return []string{
-		GuildCreate,
-		GuildUpdate,
-		GuildDelete,
-		GuildRoleCreate,
-		GuildRoleUpdate,
-		GuildRoleDelete,
-		ChannelCreate,
-		ChannelUpdate,
-		ChannelDelete,
-		ChannelPinsUpdate,
-		GuildMemberAdd,
-		GuildMemberUpdate,
-		GuildMemberRemove,
-		GuildBanAdd,
-		GuildBanRemove,
-		GuildEmojisUpdate,
-		GuildIntegrationsUpdate,
-		WebhooksUpdate,
-		InviteCreate,
-		InviteDelete,
-		VoiceStateUpdate,
-		PresenceUpdate,
-		MessageCreate,
-		MessageUpdate,
-		MessageDelete,
-		MessageDeleteBulk,
-		MessageReactionAdd,
-		MessageReactionRemove,
-		MessageReactionRemoveAll,
-		MessageReactionRemoveEmoji,
-		TypingStart,
-	}
-}
