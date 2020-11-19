@@ -21,14 +21,14 @@ func defineResource(evt string) (resource evtResource) {
 
 func isHandler(h Handler) (ok bool) {
 	switch h.(type) {
-    case SimpleHandler:
+    case HandlerSimple:
         ok = true
-    case SimplestHandler:
+    case HandlerSimplest:
         ok = true
     case chan interface{}:
         ok = true
     {{- range .}} {{if .IsDiscordEvent}}
-    case {{.}}Handler:
+    case Handler{{.}}:
         ok = true
     case chan *{{.}}:
         ok = true
@@ -67,16 +67,16 @@ func newDispatcher() *dispatcher {
 
 func (d *dispatcher) trigger(h Handler, evt resource) {
 	switch t := h.(type) {
-    case SimpleHandler:
+    case HandlerSimple:
         t(d.session)
-    case SimplestHandler:
+    case HandlerSimplest:
         t()
     case chan interface{}:
         t <- evt
     case chan<- interface{}:
         t <- evt
     {{- range .}} {{if .IsDiscordEvent}}
-    case {{.}}Handler:
+    case Handler{{.}}:
         t(d.session, evt.(*{{.}}))
     case chan *{{.}}:
         t <- evt.(*{{.}})
@@ -92,6 +92,10 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 //
 //////////////////////////////////////////////////////
 
+// these "simple" handler can be used, if you don't care about the actual event data
+type HandlerSimplest = func()
+type HandlerSimple = func(Session)
+
 {{range .}}
-// {{.}}Handler is triggered in {{.}} events
-type {{.}}Handler = func(s Session, h *{{.}}){{end}}
+// Handler{{.}} is triggered in {{.}} events
+type Handler{{.}} = func(s Session, h *{{.}}){{end}}

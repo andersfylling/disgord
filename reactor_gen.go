@@ -91,153 +91,153 @@ func defineResource(evt string) (resource evtResource) {
 
 func isHandler(h Handler) (ok bool) {
 	switch h.(type) {
-	case SimpleHandler:
+	case HandlerSimple:
 		ok = true
-	case SimplestHandler:
+	case HandlerSimplest:
 		ok = true
 	case chan interface{}:
 		ok = true
-	case ChannelCreateHandler:
+	case HandlerChannelCreate:
 		ok = true
 	case chan *ChannelCreate:
 		ok = true
-	case ChannelDeleteHandler:
+	case HandlerChannelDelete:
 		ok = true
 	case chan *ChannelDelete:
 		ok = true
-	case ChannelPinsUpdateHandler:
+	case HandlerChannelPinsUpdate:
 		ok = true
 	case chan *ChannelPinsUpdate:
 		ok = true
-	case ChannelUpdateHandler:
+	case HandlerChannelUpdate:
 		ok = true
 	case chan *ChannelUpdate:
 		ok = true
-	case GuildBanAddHandler:
+	case HandlerGuildBanAdd:
 		ok = true
 	case chan *GuildBanAdd:
 		ok = true
-	case GuildBanRemoveHandler:
+	case HandlerGuildBanRemove:
 		ok = true
 	case chan *GuildBanRemove:
 		ok = true
-	case GuildCreateHandler:
+	case HandlerGuildCreate:
 		ok = true
 	case chan *GuildCreate:
 		ok = true
-	case GuildDeleteHandler:
+	case HandlerGuildDelete:
 		ok = true
 	case chan *GuildDelete:
 		ok = true
-	case GuildEmojisUpdateHandler:
+	case HandlerGuildEmojisUpdate:
 		ok = true
 	case chan *GuildEmojisUpdate:
 		ok = true
-	case GuildIntegrationsUpdateHandler:
+	case HandlerGuildIntegrationsUpdate:
 		ok = true
 	case chan *GuildIntegrationsUpdate:
 		ok = true
-	case GuildMemberAddHandler:
+	case HandlerGuildMemberAdd:
 		ok = true
 	case chan *GuildMemberAdd:
 		ok = true
-	case GuildMemberRemoveHandler:
+	case HandlerGuildMemberRemove:
 		ok = true
 	case chan *GuildMemberRemove:
 		ok = true
-	case GuildMemberUpdateHandler:
+	case HandlerGuildMemberUpdate:
 		ok = true
 	case chan *GuildMemberUpdate:
 		ok = true
-	case GuildMembersChunkHandler:
+	case HandlerGuildMembersChunk:
 		ok = true
 	case chan *GuildMembersChunk:
 		ok = true
-	case GuildRoleCreateHandler:
+	case HandlerGuildRoleCreate:
 		ok = true
 	case chan *GuildRoleCreate:
 		ok = true
-	case GuildRoleDeleteHandler:
+	case HandlerGuildRoleDelete:
 		ok = true
 	case chan *GuildRoleDelete:
 		ok = true
-	case GuildRoleUpdateHandler:
+	case HandlerGuildRoleUpdate:
 		ok = true
 	case chan *GuildRoleUpdate:
 		ok = true
-	case GuildUpdateHandler:
+	case HandlerGuildUpdate:
 		ok = true
 	case chan *GuildUpdate:
 		ok = true
-	case InviteCreateHandler:
+	case HandlerInviteCreate:
 		ok = true
 	case chan *InviteCreate:
 		ok = true
-	case InviteDeleteHandler:
+	case HandlerInviteDelete:
 		ok = true
 	case chan *InviteDelete:
 		ok = true
-	case MessageCreateHandler:
+	case HandlerMessageCreate:
 		ok = true
 	case chan *MessageCreate:
 		ok = true
-	case MessageDeleteHandler:
+	case HandlerMessageDelete:
 		ok = true
 	case chan *MessageDelete:
 		ok = true
-	case MessageDeleteBulkHandler:
+	case HandlerMessageDeleteBulk:
 		ok = true
 	case chan *MessageDeleteBulk:
 		ok = true
-	case MessageReactionAddHandler:
+	case HandlerMessageReactionAdd:
 		ok = true
 	case chan *MessageReactionAdd:
 		ok = true
-	case MessageReactionRemoveHandler:
+	case HandlerMessageReactionRemove:
 		ok = true
 	case chan *MessageReactionRemove:
 		ok = true
-	case MessageReactionRemoveAllHandler:
+	case HandlerMessageReactionRemoveAll:
 		ok = true
 	case chan *MessageReactionRemoveAll:
 		ok = true
-	case MessageReactionRemoveEmojiHandler:
+	case HandlerMessageReactionRemoveEmoji:
 		ok = true
 	case chan *MessageReactionRemoveEmoji:
 		ok = true
-	case MessageUpdateHandler:
+	case HandlerMessageUpdate:
 		ok = true
 	case chan *MessageUpdate:
 		ok = true
-	case PresenceUpdateHandler:
+	case HandlerPresenceUpdate:
 		ok = true
 	case chan *PresenceUpdate:
 		ok = true
-	case ReadyHandler:
+	case HandlerReady:
 		ok = true
 	case chan *Ready:
 		ok = true
-	case ResumedHandler:
+	case HandlerResumed:
 		ok = true
 	case chan *Resumed:
 		ok = true
-	case TypingStartHandler:
+	case HandlerTypingStart:
 		ok = true
 	case chan *TypingStart:
 		ok = true
-	case UserUpdateHandler:
+	case HandlerUserUpdate:
 		ok = true
 	case chan *UserUpdate:
 		ok = true
-	case VoiceServerUpdateHandler:
+	case HandlerVoiceServerUpdate:
 		ok = true
 	case chan *VoiceServerUpdate:
 		ok = true
-	case VoiceStateUpdateHandler:
+	case HandlerVoiceStateUpdate:
 		ok = true
 	case chan *VoiceStateUpdate:
 		ok = true
-	case WebhooksUpdateHandler:
+	case HandlerWebhooksUpdate:
 		ok = true
 	case chan *WebhooksUpdate:
 		ok = true
@@ -343,225 +343,225 @@ func newDispatcher() *dispatcher {
 
 func (d *dispatcher) trigger(h Handler, evt resource) {
 	switch t := h.(type) {
-	case SimpleHandler:
+	case HandlerSimple:
 		t(d.session)
-	case SimplestHandler:
+	case HandlerSimplest:
 		t()
 	case chan interface{}:
 		t <- evt
 	case chan<- interface{}:
 		t <- evt
-	case ChannelCreateHandler:
+	case HandlerChannelCreate:
 		t(d.session, evt.(*ChannelCreate))
 	case chan *ChannelCreate:
 		t <- evt.(*ChannelCreate)
 	case chan<- *ChannelCreate:
 		t <- evt.(*ChannelCreate)
-	case ChannelDeleteHandler:
+	case HandlerChannelDelete:
 		t(d.session, evt.(*ChannelDelete))
 	case chan *ChannelDelete:
 		t <- evt.(*ChannelDelete)
 	case chan<- *ChannelDelete:
 		t <- evt.(*ChannelDelete)
-	case ChannelPinsUpdateHandler:
+	case HandlerChannelPinsUpdate:
 		t(d.session, evt.(*ChannelPinsUpdate))
 	case chan *ChannelPinsUpdate:
 		t <- evt.(*ChannelPinsUpdate)
 	case chan<- *ChannelPinsUpdate:
 		t <- evt.(*ChannelPinsUpdate)
-	case ChannelUpdateHandler:
+	case HandlerChannelUpdate:
 		t(d.session, evt.(*ChannelUpdate))
 	case chan *ChannelUpdate:
 		t <- evt.(*ChannelUpdate)
 	case chan<- *ChannelUpdate:
 		t <- evt.(*ChannelUpdate)
-	case GuildBanAddHandler:
+	case HandlerGuildBanAdd:
 		t(d.session, evt.(*GuildBanAdd))
 	case chan *GuildBanAdd:
 		t <- evt.(*GuildBanAdd)
 	case chan<- *GuildBanAdd:
 		t <- evt.(*GuildBanAdd)
-	case GuildBanRemoveHandler:
+	case HandlerGuildBanRemove:
 		t(d.session, evt.(*GuildBanRemove))
 	case chan *GuildBanRemove:
 		t <- evt.(*GuildBanRemove)
 	case chan<- *GuildBanRemove:
 		t <- evt.(*GuildBanRemove)
-	case GuildCreateHandler:
+	case HandlerGuildCreate:
 		t(d.session, evt.(*GuildCreate))
 	case chan *GuildCreate:
 		t <- evt.(*GuildCreate)
 	case chan<- *GuildCreate:
 		t <- evt.(*GuildCreate)
-	case GuildDeleteHandler:
+	case HandlerGuildDelete:
 		t(d.session, evt.(*GuildDelete))
 	case chan *GuildDelete:
 		t <- evt.(*GuildDelete)
 	case chan<- *GuildDelete:
 		t <- evt.(*GuildDelete)
-	case GuildEmojisUpdateHandler:
+	case HandlerGuildEmojisUpdate:
 		t(d.session, evt.(*GuildEmojisUpdate))
 	case chan *GuildEmojisUpdate:
 		t <- evt.(*GuildEmojisUpdate)
 	case chan<- *GuildEmojisUpdate:
 		t <- evt.(*GuildEmojisUpdate)
-	case GuildIntegrationsUpdateHandler:
+	case HandlerGuildIntegrationsUpdate:
 		t(d.session, evt.(*GuildIntegrationsUpdate))
 	case chan *GuildIntegrationsUpdate:
 		t <- evt.(*GuildIntegrationsUpdate)
 	case chan<- *GuildIntegrationsUpdate:
 		t <- evt.(*GuildIntegrationsUpdate)
-	case GuildMemberAddHandler:
+	case HandlerGuildMemberAdd:
 		t(d.session, evt.(*GuildMemberAdd))
 	case chan *GuildMemberAdd:
 		t <- evt.(*GuildMemberAdd)
 	case chan<- *GuildMemberAdd:
 		t <- evt.(*GuildMemberAdd)
-	case GuildMemberRemoveHandler:
+	case HandlerGuildMemberRemove:
 		t(d.session, evt.(*GuildMemberRemove))
 	case chan *GuildMemberRemove:
 		t <- evt.(*GuildMemberRemove)
 	case chan<- *GuildMemberRemove:
 		t <- evt.(*GuildMemberRemove)
-	case GuildMemberUpdateHandler:
+	case HandlerGuildMemberUpdate:
 		t(d.session, evt.(*GuildMemberUpdate))
 	case chan *GuildMemberUpdate:
 		t <- evt.(*GuildMemberUpdate)
 	case chan<- *GuildMemberUpdate:
 		t <- evt.(*GuildMemberUpdate)
-	case GuildMembersChunkHandler:
+	case HandlerGuildMembersChunk:
 		t(d.session, evt.(*GuildMembersChunk))
 	case chan *GuildMembersChunk:
 		t <- evt.(*GuildMembersChunk)
 	case chan<- *GuildMembersChunk:
 		t <- evt.(*GuildMembersChunk)
-	case GuildRoleCreateHandler:
+	case HandlerGuildRoleCreate:
 		t(d.session, evt.(*GuildRoleCreate))
 	case chan *GuildRoleCreate:
 		t <- evt.(*GuildRoleCreate)
 	case chan<- *GuildRoleCreate:
 		t <- evt.(*GuildRoleCreate)
-	case GuildRoleDeleteHandler:
+	case HandlerGuildRoleDelete:
 		t(d.session, evt.(*GuildRoleDelete))
 	case chan *GuildRoleDelete:
 		t <- evt.(*GuildRoleDelete)
 	case chan<- *GuildRoleDelete:
 		t <- evt.(*GuildRoleDelete)
-	case GuildRoleUpdateHandler:
+	case HandlerGuildRoleUpdate:
 		t(d.session, evt.(*GuildRoleUpdate))
 	case chan *GuildRoleUpdate:
 		t <- evt.(*GuildRoleUpdate)
 	case chan<- *GuildRoleUpdate:
 		t <- evt.(*GuildRoleUpdate)
-	case GuildUpdateHandler:
+	case HandlerGuildUpdate:
 		t(d.session, evt.(*GuildUpdate))
 	case chan *GuildUpdate:
 		t <- evt.(*GuildUpdate)
 	case chan<- *GuildUpdate:
 		t <- evt.(*GuildUpdate)
-	case InviteCreateHandler:
+	case HandlerInviteCreate:
 		t(d.session, evt.(*InviteCreate))
 	case chan *InviteCreate:
 		t <- evt.(*InviteCreate)
 	case chan<- *InviteCreate:
 		t <- evt.(*InviteCreate)
-	case InviteDeleteHandler:
+	case HandlerInviteDelete:
 		t(d.session, evt.(*InviteDelete))
 	case chan *InviteDelete:
 		t <- evt.(*InviteDelete)
 	case chan<- *InviteDelete:
 		t <- evt.(*InviteDelete)
-	case MessageCreateHandler:
+	case HandlerMessageCreate:
 		t(d.session, evt.(*MessageCreate))
 	case chan *MessageCreate:
 		t <- evt.(*MessageCreate)
 	case chan<- *MessageCreate:
 		t <- evt.(*MessageCreate)
-	case MessageDeleteHandler:
+	case HandlerMessageDelete:
 		t(d.session, evt.(*MessageDelete))
 	case chan *MessageDelete:
 		t <- evt.(*MessageDelete)
 	case chan<- *MessageDelete:
 		t <- evt.(*MessageDelete)
-	case MessageDeleteBulkHandler:
+	case HandlerMessageDeleteBulk:
 		t(d.session, evt.(*MessageDeleteBulk))
 	case chan *MessageDeleteBulk:
 		t <- evt.(*MessageDeleteBulk)
 	case chan<- *MessageDeleteBulk:
 		t <- evt.(*MessageDeleteBulk)
-	case MessageReactionAddHandler:
+	case HandlerMessageReactionAdd:
 		t(d.session, evt.(*MessageReactionAdd))
 	case chan *MessageReactionAdd:
 		t <- evt.(*MessageReactionAdd)
 	case chan<- *MessageReactionAdd:
 		t <- evt.(*MessageReactionAdd)
-	case MessageReactionRemoveHandler:
+	case HandlerMessageReactionRemove:
 		t(d.session, evt.(*MessageReactionRemove))
 	case chan *MessageReactionRemove:
 		t <- evt.(*MessageReactionRemove)
 	case chan<- *MessageReactionRemove:
 		t <- evt.(*MessageReactionRemove)
-	case MessageReactionRemoveAllHandler:
+	case HandlerMessageReactionRemoveAll:
 		t(d.session, evt.(*MessageReactionRemoveAll))
 	case chan *MessageReactionRemoveAll:
 		t <- evt.(*MessageReactionRemoveAll)
 	case chan<- *MessageReactionRemoveAll:
 		t <- evt.(*MessageReactionRemoveAll)
-	case MessageReactionRemoveEmojiHandler:
+	case HandlerMessageReactionRemoveEmoji:
 		t(d.session, evt.(*MessageReactionRemoveEmoji))
 	case chan *MessageReactionRemoveEmoji:
 		t <- evt.(*MessageReactionRemoveEmoji)
 	case chan<- *MessageReactionRemoveEmoji:
 		t <- evt.(*MessageReactionRemoveEmoji)
-	case MessageUpdateHandler:
+	case HandlerMessageUpdate:
 		t(d.session, evt.(*MessageUpdate))
 	case chan *MessageUpdate:
 		t <- evt.(*MessageUpdate)
 	case chan<- *MessageUpdate:
 		t <- evt.(*MessageUpdate)
-	case PresenceUpdateHandler:
+	case HandlerPresenceUpdate:
 		t(d.session, evt.(*PresenceUpdate))
 	case chan *PresenceUpdate:
 		t <- evt.(*PresenceUpdate)
 	case chan<- *PresenceUpdate:
 		t <- evt.(*PresenceUpdate)
-	case ReadyHandler:
+	case HandlerReady:
 		t(d.session, evt.(*Ready))
 	case chan *Ready:
 		t <- evt.(*Ready)
 	case chan<- *Ready:
 		t <- evt.(*Ready)
-	case ResumedHandler:
+	case HandlerResumed:
 		t(d.session, evt.(*Resumed))
 	case chan *Resumed:
 		t <- evt.(*Resumed)
 	case chan<- *Resumed:
 		t <- evt.(*Resumed)
-	case TypingStartHandler:
+	case HandlerTypingStart:
 		t(d.session, evt.(*TypingStart))
 	case chan *TypingStart:
 		t <- evt.(*TypingStart)
 	case chan<- *TypingStart:
 		t <- evt.(*TypingStart)
-	case UserUpdateHandler:
+	case HandlerUserUpdate:
 		t(d.session, evt.(*UserUpdate))
 	case chan *UserUpdate:
 		t <- evt.(*UserUpdate)
 	case chan<- *UserUpdate:
 		t <- evt.(*UserUpdate)
-	case VoiceServerUpdateHandler:
+	case HandlerVoiceServerUpdate:
 		t(d.session, evt.(*VoiceServerUpdate))
 	case chan *VoiceServerUpdate:
 		t <- evt.(*VoiceServerUpdate)
 	case chan<- *VoiceServerUpdate:
 		t <- evt.(*VoiceServerUpdate)
-	case VoiceStateUpdateHandler:
+	case HandlerVoiceStateUpdate:
 		t(d.session, evt.(*VoiceStateUpdate))
 	case chan *VoiceStateUpdate:
 		t <- evt.(*VoiceStateUpdate)
 	case chan<- *VoiceStateUpdate:
 		t <- evt.(*VoiceStateUpdate)
-	case WebhooksUpdateHandler:
+	case HandlerWebhooksUpdate:
 		t(d.session, evt.(*WebhooksUpdate))
 	case chan *WebhooksUpdate:
 		t <- evt.(*WebhooksUpdate)
@@ -576,110 +576,114 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 //
 //////////////////////////////////////////////////////
 
-// ChannelCreateHandler is triggered in ChannelCreate events
-type ChannelCreateHandler = func(s Session, h *ChannelCreate)
+// these "simple" handler can be used, if you don't care about the actual event data
+type HandlerSimplest = func()
+type HandlerSimple = func(Session)
 
-// ChannelDeleteHandler is triggered in ChannelDelete events
-type ChannelDeleteHandler = func(s Session, h *ChannelDelete)
+// HandlerChannelCreate is triggered in ChannelCreate events
+type HandlerChannelCreate = func(s Session, h *ChannelCreate)
 
-// ChannelPinsUpdateHandler is triggered in ChannelPinsUpdate events
-type ChannelPinsUpdateHandler = func(s Session, h *ChannelPinsUpdate)
+// HandlerChannelDelete is triggered in ChannelDelete events
+type HandlerChannelDelete = func(s Session, h *ChannelDelete)
 
-// ChannelUpdateHandler is triggered in ChannelUpdate events
-type ChannelUpdateHandler = func(s Session, h *ChannelUpdate)
+// HandlerChannelPinsUpdate is triggered in ChannelPinsUpdate events
+type HandlerChannelPinsUpdate = func(s Session, h *ChannelPinsUpdate)
 
-// GuildBanAddHandler is triggered in GuildBanAdd events
-type GuildBanAddHandler = func(s Session, h *GuildBanAdd)
+// HandlerChannelUpdate is triggered in ChannelUpdate events
+type HandlerChannelUpdate = func(s Session, h *ChannelUpdate)
 
-// GuildBanRemoveHandler is triggered in GuildBanRemove events
-type GuildBanRemoveHandler = func(s Session, h *GuildBanRemove)
+// HandlerGuildBanAdd is triggered in GuildBanAdd events
+type HandlerGuildBanAdd = func(s Session, h *GuildBanAdd)
 
-// GuildCreateHandler is triggered in GuildCreate events
-type GuildCreateHandler = func(s Session, h *GuildCreate)
+// HandlerGuildBanRemove is triggered in GuildBanRemove events
+type HandlerGuildBanRemove = func(s Session, h *GuildBanRemove)
 
-// GuildDeleteHandler is triggered in GuildDelete events
-type GuildDeleteHandler = func(s Session, h *GuildDelete)
+// HandlerGuildCreate is triggered in GuildCreate events
+type HandlerGuildCreate = func(s Session, h *GuildCreate)
 
-// GuildEmojisUpdateHandler is triggered in GuildEmojisUpdate events
-type GuildEmojisUpdateHandler = func(s Session, h *GuildEmojisUpdate)
+// HandlerGuildDelete is triggered in GuildDelete events
+type HandlerGuildDelete = func(s Session, h *GuildDelete)
 
-// GuildIntegrationsUpdateHandler is triggered in GuildIntegrationsUpdate events
-type GuildIntegrationsUpdateHandler = func(s Session, h *GuildIntegrationsUpdate)
+// HandlerGuildEmojisUpdate is triggered in GuildEmojisUpdate events
+type HandlerGuildEmojisUpdate = func(s Session, h *GuildEmojisUpdate)
 
-// GuildMemberAddHandler is triggered in GuildMemberAdd events
-type GuildMemberAddHandler = func(s Session, h *GuildMemberAdd)
+// HandlerGuildIntegrationsUpdate is triggered in GuildIntegrationsUpdate events
+type HandlerGuildIntegrationsUpdate = func(s Session, h *GuildIntegrationsUpdate)
 
-// GuildMemberRemoveHandler is triggered in GuildMemberRemove events
-type GuildMemberRemoveHandler = func(s Session, h *GuildMemberRemove)
+// HandlerGuildMemberAdd is triggered in GuildMemberAdd events
+type HandlerGuildMemberAdd = func(s Session, h *GuildMemberAdd)
 
-// GuildMemberUpdateHandler is triggered in GuildMemberUpdate events
-type GuildMemberUpdateHandler = func(s Session, h *GuildMemberUpdate)
+// HandlerGuildMemberRemove is triggered in GuildMemberRemove events
+type HandlerGuildMemberRemove = func(s Session, h *GuildMemberRemove)
 
-// GuildMembersChunkHandler is triggered in GuildMembersChunk events
-type GuildMembersChunkHandler = func(s Session, h *GuildMembersChunk)
+// HandlerGuildMemberUpdate is triggered in GuildMemberUpdate events
+type HandlerGuildMemberUpdate = func(s Session, h *GuildMemberUpdate)
 
-// GuildRoleCreateHandler is triggered in GuildRoleCreate events
-type GuildRoleCreateHandler = func(s Session, h *GuildRoleCreate)
+// HandlerGuildMembersChunk is triggered in GuildMembersChunk events
+type HandlerGuildMembersChunk = func(s Session, h *GuildMembersChunk)
 
-// GuildRoleDeleteHandler is triggered in GuildRoleDelete events
-type GuildRoleDeleteHandler = func(s Session, h *GuildRoleDelete)
+// HandlerGuildRoleCreate is triggered in GuildRoleCreate events
+type HandlerGuildRoleCreate = func(s Session, h *GuildRoleCreate)
 
-// GuildRoleUpdateHandler is triggered in GuildRoleUpdate events
-type GuildRoleUpdateHandler = func(s Session, h *GuildRoleUpdate)
+// HandlerGuildRoleDelete is triggered in GuildRoleDelete events
+type HandlerGuildRoleDelete = func(s Session, h *GuildRoleDelete)
 
-// GuildUpdateHandler is triggered in GuildUpdate events
-type GuildUpdateHandler = func(s Session, h *GuildUpdate)
+// HandlerGuildRoleUpdate is triggered in GuildRoleUpdate events
+type HandlerGuildRoleUpdate = func(s Session, h *GuildRoleUpdate)
 
-// InviteCreateHandler is triggered in InviteCreate events
-type InviteCreateHandler = func(s Session, h *InviteCreate)
+// HandlerGuildUpdate is triggered in GuildUpdate events
+type HandlerGuildUpdate = func(s Session, h *GuildUpdate)
 
-// InviteDeleteHandler is triggered in InviteDelete events
-type InviteDeleteHandler = func(s Session, h *InviteDelete)
+// HandlerInviteCreate is triggered in InviteCreate events
+type HandlerInviteCreate = func(s Session, h *InviteCreate)
 
-// MessageCreateHandler is triggered in MessageCreate events
-type MessageCreateHandler = func(s Session, h *MessageCreate)
+// HandlerInviteDelete is triggered in InviteDelete events
+type HandlerInviteDelete = func(s Session, h *InviteDelete)
 
-// MessageDeleteHandler is triggered in MessageDelete events
-type MessageDeleteHandler = func(s Session, h *MessageDelete)
+// HandlerMessageCreate is triggered in MessageCreate events
+type HandlerMessageCreate = func(s Session, h *MessageCreate)
 
-// MessageDeleteBulkHandler is triggered in MessageDeleteBulk events
-type MessageDeleteBulkHandler = func(s Session, h *MessageDeleteBulk)
+// HandlerMessageDelete is triggered in MessageDelete events
+type HandlerMessageDelete = func(s Session, h *MessageDelete)
 
-// MessageReactionAddHandler is triggered in MessageReactionAdd events
-type MessageReactionAddHandler = func(s Session, h *MessageReactionAdd)
+// HandlerMessageDeleteBulk is triggered in MessageDeleteBulk events
+type HandlerMessageDeleteBulk = func(s Session, h *MessageDeleteBulk)
 
-// MessageReactionRemoveHandler is triggered in MessageReactionRemove events
-type MessageReactionRemoveHandler = func(s Session, h *MessageReactionRemove)
+// HandlerMessageReactionAdd is triggered in MessageReactionAdd events
+type HandlerMessageReactionAdd = func(s Session, h *MessageReactionAdd)
 
-// MessageReactionRemoveAllHandler is triggered in MessageReactionRemoveAll events
-type MessageReactionRemoveAllHandler = func(s Session, h *MessageReactionRemoveAll)
+// HandlerMessageReactionRemove is triggered in MessageReactionRemove events
+type HandlerMessageReactionRemove = func(s Session, h *MessageReactionRemove)
 
-// MessageReactionRemoveEmojiHandler is triggered in MessageReactionRemoveEmoji events
-type MessageReactionRemoveEmojiHandler = func(s Session, h *MessageReactionRemoveEmoji)
+// HandlerMessageReactionRemoveAll is triggered in MessageReactionRemoveAll events
+type HandlerMessageReactionRemoveAll = func(s Session, h *MessageReactionRemoveAll)
 
-// MessageUpdateHandler is triggered in MessageUpdate events
-type MessageUpdateHandler = func(s Session, h *MessageUpdate)
+// HandlerMessageReactionRemoveEmoji is triggered in MessageReactionRemoveEmoji events
+type HandlerMessageReactionRemoveEmoji = func(s Session, h *MessageReactionRemoveEmoji)
 
-// PresenceUpdateHandler is triggered in PresenceUpdate events
-type PresenceUpdateHandler = func(s Session, h *PresenceUpdate)
+// HandlerMessageUpdate is triggered in MessageUpdate events
+type HandlerMessageUpdate = func(s Session, h *MessageUpdate)
 
-// ReadyHandler is triggered in Ready events
-type ReadyHandler = func(s Session, h *Ready)
+// HandlerPresenceUpdate is triggered in PresenceUpdate events
+type HandlerPresenceUpdate = func(s Session, h *PresenceUpdate)
 
-// ResumedHandler is triggered in Resumed events
-type ResumedHandler = func(s Session, h *Resumed)
+// HandlerReady is triggered in Ready events
+type HandlerReady = func(s Session, h *Ready)
 
-// TypingStartHandler is triggered in TypingStart events
-type TypingStartHandler = func(s Session, h *TypingStart)
+// HandlerResumed is triggered in Resumed events
+type HandlerResumed = func(s Session, h *Resumed)
 
-// UserUpdateHandler is triggered in UserUpdate events
-type UserUpdateHandler = func(s Session, h *UserUpdate)
+// HandlerTypingStart is triggered in TypingStart events
+type HandlerTypingStart = func(s Session, h *TypingStart)
 
-// VoiceServerUpdateHandler is triggered in VoiceServerUpdate events
-type VoiceServerUpdateHandler = func(s Session, h *VoiceServerUpdate)
+// HandlerUserUpdate is triggered in UserUpdate events
+type HandlerUserUpdate = func(s Session, h *UserUpdate)
 
-// VoiceStateUpdateHandler is triggered in VoiceStateUpdate events
-type VoiceStateUpdateHandler = func(s Session, h *VoiceStateUpdate)
+// HandlerVoiceServerUpdate is triggered in VoiceServerUpdate events
+type HandlerVoiceServerUpdate = func(s Session, h *VoiceServerUpdate)
 
-// WebhooksUpdateHandler is triggered in WebhooksUpdate events
-type WebhooksUpdateHandler = func(s Session, h *WebhooksUpdate)
+// HandlerVoiceStateUpdate is triggered in VoiceStateUpdate events
+type HandlerVoiceStateUpdate = func(s Session, h *VoiceStateUpdate)
+
+// HandlerWebhooksUpdate is triggered in WebhooksUpdate events
+type HandlerWebhooksUpdate = func(s Session, h *WebhooksUpdate)

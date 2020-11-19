@@ -200,10 +200,6 @@ type HandlerCtrl interface {
 	Update()
 }
 
-// these "simple" handler can be used, if you don't care about the actual event data
-type SimplestHandler = func()
-type SimpleHandler = func(Session)
-
 // Handler needs to match one of the *Handler signatures
 type Handler = interface{}
 
