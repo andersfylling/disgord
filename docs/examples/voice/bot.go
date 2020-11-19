@@ -22,7 +22,7 @@ func main() {
 	var voice disgord.VoiceConnection
 	gateway.BotReady(func() {
 		// Once the bot has connected to the websocket, also connect to the voice channel
-		voice, _ = client.VoiceConnectOptions(MyGuildID, MyChannelID, false, true)
+		voice, _ = client.Guild(MyGuildID).VoiceChannel(MyChannelID).Connect(false, true)
 	})
 
 	gateway.MessageCreate(func(_ disgord.Session, m *disgord.MessageCreate) {

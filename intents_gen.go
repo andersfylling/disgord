@@ -27,8 +27,12 @@ const (
 	IntentGuilds                 = gateway.IntentGuilds
 )
 
-func AllIntents(except ...gateway.Intent) gateway.Intent {
-	IntentsMap := map[gateway.Intent]int8{
+func AllIntents() Intent {
+	return AllIntentsExcept()
+}
+
+func AllIntentsExcept(exceptions ...Intent) Intent {
+	IntentsMap := map[Intent]int8{
 		IntentDirectMessageReactions: 0,
 		IntentDirectMessageTyping:    0,
 		IntentDirectMessages:         0,
@@ -46,8 +50,8 @@ func AllIntents(except ...gateway.Intent) gateway.Intent {
 		IntentGuilds:                 0,
 	}
 
-	for i := range except {
-		delete(IntentsMap, except[i])
+	for i := range exceptions {
+		delete(IntentsMap, exceptions[i])
 	}
 
 	var intents gateway.Intent

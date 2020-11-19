@@ -917,7 +917,8 @@ type GuildQueryBuilder interface {
 	UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder
 	GetVanityURL(flags ...Flag) (*PartialInvite, error)
 	GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder
-	VoiceConnect(channelID Snowflake) (ret VoiceConnection, err error)
+
+	VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder
 
 	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
@@ -1552,11 +1553,6 @@ func (g guildQueryBuilder) GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder {
 	}, nil)
 
 	return builder
-}
-
-// VoiceConnect is used to handle making a voice connection.
-func (g guildQueryBuilder) VoiceConnect(channelID Snowflake) (VoiceConnection, error) {
-	return g.client.VoiceConnectOptions(g.gid, channelID, true, false)
 }
 
 // GetEmojis Returns a list of emoji objects for the given guild.

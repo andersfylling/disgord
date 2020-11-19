@@ -19,7 +19,7 @@ type pool struct {
 // Put resets the object before it is put back into the pool. We reset it here
 // to quickly detect if there are other owners than the pool as it is inserted.
 func (p *pool) Put(x Reseter) {
-	x.Reset()
+	Reset(x)
 	p.pool.Put(x)
 }
 

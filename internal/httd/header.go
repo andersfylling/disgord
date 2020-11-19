@@ -68,8 +68,8 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 		}
 	}
 
-	// convert Reset to store milliseconds and not seconds
-	// if there is no content, we create a Reset unix using the delay
+	// convert reset to store milliseconds and not seconds
+	// if there is no content, we create a reset unix using the delay
 	if reset := header.Get(XRateLimitReset); reset != "" {
 		if delay == 0 {
 			epoch, _ := strconv.ParseFloat(reset, 64)

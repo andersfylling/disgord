@@ -132,10 +132,30 @@ func (e eventName) IsDiscordEvent() bool {
 	return e.Docs != nil
 }
 
-func (e eventName) RenderDocs() string {
+func (e eventName) RenderDoc() string {
+	return e.renderDocWithPrefix("")
+}
+
+func (e eventName) RenderEvtDoc() string {
+	return e.renderDocWithPrefix("Evt")
+}
+
+func (e eventName) renderDocWithPrefix(prefix string) string {
 	if e.Docs == nil {
 		return ""
 	}
 
-	return "// Evt" + strings.Replace(*e.Docs, "\n", "\n// ", -1)
+	doc := *e.Docs
+	// print := func() {
+	// 	fmt.Println("...", doc, "...")
+	// }
+	//
+	// print()
+	// doc = strings.Replace(*e.Docs, "\n ", "", -1)
+	// print()
+	doc = strings.Replace(*e.Docs, "\n", "\n// ", -1)
+	// print()
+	// fmt.Println("==========================\n")
+
+	return "// " + prefix + doc
 }

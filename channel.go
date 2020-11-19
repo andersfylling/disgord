@@ -940,10 +940,10 @@ func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams, flags 
 // https://discord.com/developers/docs/resources/channel#allowed-mentions-object for more info.
 // Any strings in the Parse value must be any from ["everyone", "users", "roles"].
 type AllowedMentions struct {
-	Parse []string `json:"parse"` // this is purposefully not marked as omitempty as to allow `parse: []` which blocks all mentions.
-
-	Roles []Snowflake `json:"roles,omitempty"`
-	Users []Snowflake `json:"users,omitempty"`
+	Parse       []string    `json:"parse"` // this is purposefully not marked as omitempty as to allow `parse: []` which blocks all mentions.
+	Roles       []Snowflake `json:"roles,omitempty"`
+	Users       []Snowflake `json:"users,omitempty"`
+	RepliedUser bool        `json:"replied_user,omitempty"`
 }
 
 // CreateMessageFileParams contains the information needed to upload a file to Discord, it is part of the
@@ -990,7 +990,8 @@ type CreateMessageParams struct {
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
 
-	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // The allowed mentions object for the message.
+	AllowedMentions  *AllowedMentions  `json:"allowed_mentions,omitempty"` // The allowed mentions object for the message.
+	MessageReference *MessageReference `json:"message_reference,omitempty"`
 }
 
 func (p *CreateMessageParams) prepare() (postBody interface{}, contentType string, err error) {

@@ -301,7 +301,6 @@ type Client struct {
 //////////////////////////////////////////////////////
 var _ fmt.Stringer = (*Client)(nil)
 var _ Session = (*Client)(nil)
-var _ Link = (*Client)(nil)
 
 //////////////////////////////////////////////////////
 //
@@ -468,7 +467,7 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 		guildIDs[i] = evt.Guilds[i].ID
 	}
 
-	_, _ = client.Emit(RequestGuildMembers, &RequestGuildMembersPayload{
+	_, _ = client.Gateway().Dispatch(RequestGuildMembers, &RequestGuildMembersPayload{
 		GuildIDs: guildIDs,
 	})
 }

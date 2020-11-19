@@ -2,7 +2,7 @@
 
 package disgord
 
-func (c *Channel) Reset() {
+func (c *Channel) reset() {
 	c.ID = 0
 	c.Type = 0
 	c.GuildID = 0
@@ -25,26 +25,26 @@ func (c *Channel) Reset() {
 	c.recipientsIDs = nil
 }
 
-func (e *Emoji) Reset() {
+func (e *Emoji) reset() {
 	e.ID = 0
 	e.Name = ""
 	e.Roles = nil
 	if e.User != nil {
-		e.User.Reset()
+		Reset(e.User)
 	}
 	e.RequireColons = false
 	e.Managed = false
 	e.Animated = false
 }
 
-func (m *MessageCreate) Reset() {
+func (m *MessageCreate) reset() {
 	if m.Message != nil {
-		m.Message.Reset()
+		Reset(m.Message)
 	}
 	m.ShardID = 0
 }
 
-func (g *Guild) Reset() {
+func (g *Guild) reset() {
 	g.ID = 0
 	g.ApplicationID = 0
 	g.Name = ""
@@ -76,10 +76,10 @@ func (g *Guild) Reset() {
 	g.Presences = nil
 }
 
-func (m *Member) Reset() {
+func (m *Member) reset() {
 	m.GuildID = 0
 	if m.User != nil {
-		m.User.Reset()
+		Reset(m.User)
 	}
 	m.Nick = ""
 	m.Roles = nil
@@ -90,14 +90,14 @@ func (m *Member) Reset() {
 	m.UserID = 0
 }
 
-func (m *Message) Reset() {
+func (m *Message) reset() {
 	m.ID = 0
 	m.ChannelID = 0
 	if m.Author != nil {
-		m.Author.Reset()
+		Reset(m.Author)
 	}
 	if m.Member != nil {
-		m.Member.Reset()
+		Reset(m.Member)
 	}
 	m.Content = ""
 	m.Timestamp = Time{}
@@ -117,20 +117,24 @@ func (m *Message) Reset() {
 	m.Activity = MessageActivity{}
 	m.Application = MessageApplication{}
 	m.MessageReference = nil
+	if m.ReferencedMessage != nil {
+		Reset(m.ReferencedMessage)
+	}
 	m.Flags = 0
+	m.Stickers = nil
 	m.GuildID = 0
 	m.SpoilerTagContent = false
 	m.SpoilerTagAllAttachments = false
 	m.HasSpoilerImage = false
 }
 
-func (r *Reaction) Reset() {
+func (r *Reaction) reset() {
 	r.Count = 0
 	r.Me = false
 	r.Emoji = nil
 }
 
-func (r *Role) Reset() {
+func (r *Role) reset() {
 	r.ID = 0
 	r.Name = ""
 	r.Color = 0
@@ -142,7 +146,7 @@ func (r *Role) Reset() {
 	r.guildID = 0
 }
 
-func (a *Activity) Reset() {
+func (a *Activity) reset() {
 	a.Name = ""
 	a.Type = 0
 	a.URL = ""
@@ -158,7 +162,7 @@ func (a *Activity) Reset() {
 	a.Flags = 0
 }
 
-func (u *User) Reset() {
+func (u *User) reset() {
 	u.ID = 0
 	u.Username = ""
 	u.Discriminator = 0
@@ -174,12 +178,12 @@ func (u *User) Reset() {
 	u.PublicFlags = 0
 }
 
-func (v *VoiceState) Reset() {
+func (v *VoiceState) reset() {
 	v.GuildID = 0
 	v.ChannelID = 0
 	v.UserID = 0
 	if v.Member != nil {
-		v.Member.Reset()
+		Reset(v.Member)
 	}
 	v.SessionID = ""
 	v.Deaf = false
@@ -189,7 +193,7 @@ func (v *VoiceState) Reset() {
 	v.Suppress = false
 }
 
-func (v *VoiceRegion) Reset() {
+func (v *VoiceRegion) reset() {
 	v.ID = ""
 	v.Name = ""
 	v.SampleHostname = ""
