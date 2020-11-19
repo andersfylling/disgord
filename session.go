@@ -3,14 +3,8 @@ package disgord
 import (
 	"time"
 
-	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/logger"
 )
-
-// Emitter for emitting data from A to B. Used in websocket connection
-type Emitter interface {
-	Emit(name gatewayCmdName, data gateway.CmdPayload) (unhandledGuildIDs []Snowflake, err error)
-}
 
 // Session Is the runtime interface for Disgord. It allows you to interact with a live session (using sockets or not).
 // Note that this interface is used after you've configured Disgord, and therefore won't allow you to configure it
