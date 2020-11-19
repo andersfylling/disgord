@@ -207,7 +207,7 @@ func TestClient(t *testing.T) {
 		})
 
 		go func() {
-			v, err := c.Guild(guildTypical.ID).VoiceConnect(oldChannelID)
+			v, err := c.Guild(guildTypical.ID).VoiceChannel(oldChannelID).Connect(false, true)
 			if err != nil {
 				t.Fatal(err)
 			}

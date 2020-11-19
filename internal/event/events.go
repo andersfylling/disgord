@@ -2,8 +2,8 @@
 package event
 
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
-//// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
-//// required for a client to begin interacting with the rest of the platform.
+// The ready event can be the largest and most complex event the gateway will send, as it contains all the state
+// required for a client to begin interacting with the rest of the platform.
 const Ready = "READY"
 
 // Resumed The resumed event is dispatched when a client has sent a resume payload to the gateway
