@@ -19,7 +19,7 @@ func AllEventsExcept(except ...string) []string {
 
 // ---------------------------
 
-// ChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
+// EvtChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
 // guild channel object.
 //
 const EvtChannelCreate = event.ChannelCreate
@@ -28,7 +28,7 @@ func (h *ChannelCreate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// ChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
+// EvtChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
 //
 const EvtChannelDelete = event.ChannelDelete
 
@@ -36,7 +36,7 @@ func (h *ChannelDelete) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// ChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
+// EvtChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
 //
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
@@ -44,7 +44,7 @@ func (h *ChannelPinsUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// ChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
+// EvtChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
 //
 const EvtChannelUpdate = event.ChannelUpdate
 
@@ -52,7 +52,7 @@ func (h *ChannelUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildBanAdd Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
+// EvtGuildBanAdd Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
 //
 const EvtGuildBanAdd = event.GuildBanAdd
 
@@ -60,7 +60,7 @@ func (h *GuildBanAdd) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
+// EvtGuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
 //
 const EvtGuildBanRemove = event.GuildBanRemove
 
@@ -68,7 +68,7 @@ func (h *GuildBanRemove) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildCreate This event can be sent in three different scenarios:
+// EvtGuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
 // 	2. When a Guild becomes available again to the client.
@@ -80,7 +80,7 @@ func (h *GuildCreate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
+// EvtGuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
 // The inner payload is an unavailable guild object. If the unavailable field is not set, the user was removed
 // from the guild.
 //
@@ -90,7 +90,7 @@ func (h *GuildDelete) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildEmojisUpdate Sent when a guild's emojis have been updated.
+// EvtGuildEmojisUpdate Sent when a guild's emojis have been updated.
 //
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
@@ -98,7 +98,7 @@ func (h *GuildEmojisUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildIntegrationsUpdate Sent when a guild integration is updated.
+// EvtGuildIntegrationsUpdate Sent when a guild integration is updated.
 //
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
@@ -106,7 +106,7 @@ func (h *GuildIntegrationsUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildMemberAdd Sent when a new user joins a guild.
+// EvtGuildMemberAdd Sent when a new user joins a guild.
 //
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
@@ -114,7 +114,7 @@ func (h *GuildMemberAdd) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
+// EvtGuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
 //
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
@@ -122,7 +122,7 @@ func (h *GuildMemberRemove) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildMemberUpdate Sent when a guild member is updated.
+// EvtGuildMemberUpdate Sent when a guild member is updated.
 //
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
@@ -130,7 +130,7 @@ func (h *GuildMemberUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildMembersChunk Sent in response to Gateway Request Guild Members.
+// EvtGuildMembersChunk Sent in response to Gateway Request Guild Members.
 //
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
@@ -138,7 +138,7 @@ func (h *GuildMembersChunk) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildRoleCreate Sent when a guild role is created.
+// EvtGuildRoleCreate Sent when a guild role is created.
 //
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
@@ -146,7 +146,7 @@ func (h *GuildRoleCreate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildRoleDelete Sent when a guild role is created.
+// EvtGuildRoleDelete Sent when a guild role is created.
 //
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
@@ -154,7 +154,7 @@ func (h *GuildRoleDelete) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildRoleUpdate Sent when a guild role is created.
+// EvtGuildRoleUpdate Sent when a guild role is created.
 //
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
@@ -162,7 +162,7 @@ func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// GuildUpdate Sent when a guild is updated. The inner payload is a guild object.
+// EvtGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
 //
 const EvtGuildUpdate = event.GuildUpdate
 
@@ -170,7 +170,7 @@ func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// InviteCreate Sent when a guild's invite is created.
+// EvtInviteCreate Sent when a guild's invite is created.
 //
 const EvtInviteCreate = event.InviteCreate
 
@@ -178,7 +178,7 @@ func (h *InviteCreate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// InviteDelete Sent when an invite is deleted.
+// EvtInviteDelete Sent when an invite is deleted.
 //
 const EvtInviteDelete = event.InviteDelete
 
@@ -186,7 +186,7 @@ func (h *InviteDelete) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageCreate Sent when a message is created. The inner payload is a message object.
+// EvtMessageCreate Sent when a message is created. The inner payload is a message object.
 //
 const EvtMessageCreate = event.MessageCreate
 
@@ -194,7 +194,7 @@ func (h *MessageCreate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageDelete Sent when a message is deleted.
+// EvtMessageDelete Sent when a message is deleted.
 //
 const EvtMessageDelete = event.MessageDelete
 
@@ -202,7 +202,7 @@ func (h *MessageDelete) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageDeleteBulk Sent when multiple messages are deleted at once.
+// EvtMessageDeleteBulk Sent when multiple messages are deleted at once.
 //
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
@@ -210,7 +210,7 @@ func (h *MessageDeleteBulk) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageReactionAdd Sent when a user adds a reaction to a message.
+// EvtMessageReactionAdd Sent when a user adds a reaction to a message.
 //
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
@@ -218,7 +218,7 @@ func (h *MessageReactionAdd) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageReactionRemove Sent when a user removes a reaction from a message.
+// EvtMessageReactionRemove Sent when a user removes a reaction from a message.
 //
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
@@ -226,7 +226,7 @@ func (h *MessageReactionRemove) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
+// EvtMessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
 //
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
@@ -234,7 +234,7 @@ func (h *MessageReactionRemoveAll) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
+// EvtMessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
 //
 const EvtMessageReactionRemoveEmoji = event.MessageReactionRemoveEmoji
 
@@ -242,7 +242,7 @@ func (h *MessageReactionRemoveEmoji) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// MessageUpdate Sent when a message is updated. The inner payload is a message object.
+// EvtMessageUpdate Sent when a message is updated. The inner payload is a message object.
 //
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
 //
@@ -252,7 +252,7 @@ func (h *MessageUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// PresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
+// EvtPresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
 //
 const EvtPresenceUpdate = event.PresenceUpdate
 
@@ -260,7 +260,7 @@ func (h *PresenceUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
+// EvtReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // required for a client to begin interacting with the rest of the platform.
 //
@@ -270,7 +270,7 @@ func (h *Ready) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// Resumed The resumed event is dispatched when a client has sent a resume payload to the gateway
+// EvtResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
 //
 const EvtResumed = event.Resumed
@@ -279,7 +279,7 @@ func (h *Resumed) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// TypingStart Sent when a user starts typing in a channel.
+// EvtTypingStart Sent when a user starts typing in a channel.
 //
 const EvtTypingStart = event.TypingStart
 
@@ -287,7 +287,7 @@ func (h *TypingStart) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// UserUpdate Sent when properties about the user change. Inner payload is a user object.
+// EvtUserUpdate Sent when properties about the user change. Inner payload is a user object.
 //
 const EvtUserUpdate = event.UserUpdate
 
@@ -295,7 +295,7 @@ func (h *UserUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// VoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
+// EvtVoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
 //
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
@@ -304,7 +304,7 @@ func (h *VoiceServerUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// VoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
+// EvtVoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
 //
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
@@ -312,7 +312,7 @@ func (h *VoiceStateUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
-// WebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
+// EvtWebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
 //
 const EvtWebhooksUpdate = event.WebhooksUpdate
 

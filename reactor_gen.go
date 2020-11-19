@@ -580,110 +580,110 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 type HandlerSimplest = func()
 type HandlerSimple = func(Session)
 
-// HandlerChannelCreate is triggered in ChannelCreate events
+// HandlerChannelCreate is triggered by ChannelCreate events
 type HandlerChannelCreate = func(s Session, h *ChannelCreate)
 
-// HandlerChannelDelete is triggered in ChannelDelete events
+// HandlerChannelDelete is triggered by ChannelDelete events
 type HandlerChannelDelete = func(s Session, h *ChannelDelete)
 
-// HandlerChannelPinsUpdate is triggered in ChannelPinsUpdate events
+// HandlerChannelPinsUpdate is triggered by ChannelPinsUpdate events
 type HandlerChannelPinsUpdate = func(s Session, h *ChannelPinsUpdate)
 
-// HandlerChannelUpdate is triggered in ChannelUpdate events
+// HandlerChannelUpdate is triggered by ChannelUpdate events
 type HandlerChannelUpdate = func(s Session, h *ChannelUpdate)
 
-// HandlerGuildBanAdd is triggered in GuildBanAdd events
+// HandlerGuildBanAdd is triggered by GuildBanAdd events
 type HandlerGuildBanAdd = func(s Session, h *GuildBanAdd)
 
-// HandlerGuildBanRemove is triggered in GuildBanRemove events
+// HandlerGuildBanRemove is triggered by GuildBanRemove events
 type HandlerGuildBanRemove = func(s Session, h *GuildBanRemove)
 
-// HandlerGuildCreate is triggered in GuildCreate events
+// HandlerGuildCreate is triggered by GuildCreate events
 type HandlerGuildCreate = func(s Session, h *GuildCreate)
 
-// HandlerGuildDelete is triggered in GuildDelete events
+// HandlerGuildDelete is triggered by GuildDelete events
 type HandlerGuildDelete = func(s Session, h *GuildDelete)
 
-// HandlerGuildEmojisUpdate is triggered in GuildEmojisUpdate events
+// HandlerGuildEmojisUpdate is triggered by GuildEmojisUpdate events
 type HandlerGuildEmojisUpdate = func(s Session, h *GuildEmojisUpdate)
 
-// HandlerGuildIntegrationsUpdate is triggered in GuildIntegrationsUpdate events
+// HandlerGuildIntegrationsUpdate is triggered by GuildIntegrationsUpdate events
 type HandlerGuildIntegrationsUpdate = func(s Session, h *GuildIntegrationsUpdate)
 
-// HandlerGuildMemberAdd is triggered in GuildMemberAdd events
+// HandlerGuildMemberAdd is triggered by GuildMemberAdd events
 type HandlerGuildMemberAdd = func(s Session, h *GuildMemberAdd)
 
-// HandlerGuildMemberRemove is triggered in GuildMemberRemove events
+// HandlerGuildMemberRemove is triggered by GuildMemberRemove events
 type HandlerGuildMemberRemove = func(s Session, h *GuildMemberRemove)
 
-// HandlerGuildMemberUpdate is triggered in GuildMemberUpdate events
+// HandlerGuildMemberUpdate is triggered by GuildMemberUpdate events
 type HandlerGuildMemberUpdate = func(s Session, h *GuildMemberUpdate)
 
-// HandlerGuildMembersChunk is triggered in GuildMembersChunk events
+// HandlerGuildMembersChunk is triggered by GuildMembersChunk events
 type HandlerGuildMembersChunk = func(s Session, h *GuildMembersChunk)
 
-// HandlerGuildRoleCreate is triggered in GuildRoleCreate events
+// HandlerGuildRoleCreate is triggered by GuildRoleCreate events
 type HandlerGuildRoleCreate = func(s Session, h *GuildRoleCreate)
 
-// HandlerGuildRoleDelete is triggered in GuildRoleDelete events
+// HandlerGuildRoleDelete is triggered by GuildRoleDelete events
 type HandlerGuildRoleDelete = func(s Session, h *GuildRoleDelete)
 
-// HandlerGuildRoleUpdate is triggered in GuildRoleUpdate events
+// HandlerGuildRoleUpdate is triggered by GuildRoleUpdate events
 type HandlerGuildRoleUpdate = func(s Session, h *GuildRoleUpdate)
 
-// HandlerGuildUpdate is triggered in GuildUpdate events
+// HandlerGuildUpdate is triggered by GuildUpdate events
 type HandlerGuildUpdate = func(s Session, h *GuildUpdate)
 
-// HandlerInviteCreate is triggered in InviteCreate events
+// HandlerInviteCreate is triggered by InviteCreate events
 type HandlerInviteCreate = func(s Session, h *InviteCreate)
 
-// HandlerInviteDelete is triggered in InviteDelete events
+// HandlerInviteDelete is triggered by InviteDelete events
 type HandlerInviteDelete = func(s Session, h *InviteDelete)
 
-// HandlerMessageCreate is triggered in MessageCreate events
+// HandlerMessageCreate is triggered by MessageCreate events
 type HandlerMessageCreate = func(s Session, h *MessageCreate)
 
-// HandlerMessageDelete is triggered in MessageDelete events
+// HandlerMessageDelete is triggered by MessageDelete events
 type HandlerMessageDelete = func(s Session, h *MessageDelete)
 
-// HandlerMessageDeleteBulk is triggered in MessageDeleteBulk events
+// HandlerMessageDeleteBulk is triggered by MessageDeleteBulk events
 type HandlerMessageDeleteBulk = func(s Session, h *MessageDeleteBulk)
 
-// HandlerMessageReactionAdd is triggered in MessageReactionAdd events
+// HandlerMessageReactionAdd is triggered by MessageReactionAdd events
 type HandlerMessageReactionAdd = func(s Session, h *MessageReactionAdd)
 
-// HandlerMessageReactionRemove is triggered in MessageReactionRemove events
+// HandlerMessageReactionRemove is triggered by MessageReactionRemove events
 type HandlerMessageReactionRemove = func(s Session, h *MessageReactionRemove)
 
-// HandlerMessageReactionRemoveAll is triggered in MessageReactionRemoveAll events
+// HandlerMessageReactionRemoveAll is triggered by MessageReactionRemoveAll events
 type HandlerMessageReactionRemoveAll = func(s Session, h *MessageReactionRemoveAll)
 
-// HandlerMessageReactionRemoveEmoji is triggered in MessageReactionRemoveEmoji events
+// HandlerMessageReactionRemoveEmoji is triggered by MessageReactionRemoveEmoji events
 type HandlerMessageReactionRemoveEmoji = func(s Session, h *MessageReactionRemoveEmoji)
 
-// HandlerMessageUpdate is triggered in MessageUpdate events
+// HandlerMessageUpdate is triggered by MessageUpdate events
 type HandlerMessageUpdate = func(s Session, h *MessageUpdate)
 
-// HandlerPresenceUpdate is triggered in PresenceUpdate events
+// HandlerPresenceUpdate is triggered by PresenceUpdate events
 type HandlerPresenceUpdate = func(s Session, h *PresenceUpdate)
 
-// HandlerReady is triggered in Ready events
+// HandlerReady is triggered by Ready events
 type HandlerReady = func(s Session, h *Ready)
 
-// HandlerResumed is triggered in Resumed events
+// HandlerResumed is triggered by Resumed events
 type HandlerResumed = func(s Session, h *Resumed)
 
-// HandlerTypingStart is triggered in TypingStart events
+// HandlerTypingStart is triggered by TypingStart events
 type HandlerTypingStart = func(s Session, h *TypingStart)
 
-// HandlerUserUpdate is triggered in UserUpdate events
+// HandlerUserUpdate is triggered by UserUpdate events
 type HandlerUserUpdate = func(s Session, h *UserUpdate)
 
-// HandlerVoiceServerUpdate is triggered in VoiceServerUpdate events
+// HandlerVoiceServerUpdate is triggered by VoiceServerUpdate events
 type HandlerVoiceServerUpdate = func(s Session, h *VoiceServerUpdate)
 
-// HandlerVoiceStateUpdate is triggered in VoiceStateUpdate events
+// HandlerVoiceStateUpdate is triggered by VoiceStateUpdate events
 type HandlerVoiceStateUpdate = func(s Session, h *VoiceStateUpdate)
 
-// HandlerWebhooksUpdate is triggered in WebhooksUpdate events
+// HandlerWebhooksUpdate is triggered by WebhooksUpdate events
 type HandlerWebhooksUpdate = func(s Session, h *WebhooksUpdate)

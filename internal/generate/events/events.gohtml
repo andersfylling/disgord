@@ -21,7 +21,7 @@ func AllEventsExcept(except ...string) []string {
 
 {{range .}}
 {{if .IsDiscordEvent}}
-{{.RenderDocs}}
+{{.RenderEvtDoc}}
 const Evt{{.}} = event.{{.}}
 
 func (h *{{.}}) setShardID(id uint) { h.ShardID = id }
@@ -74,7 +74,7 @@ func (shr socketHandlerRegister) WithMiddleware(first Middleware, extra ...Middl
 
 {{range .}}
 {{- if .IsDiscordEvent}}
-{{.RenderDocs}}
+{{.RenderDoc}}
 func (shr socketHandlerRegister) {{.}}(handler Handler{{.}}, moreHandlers ...Handler{{.}}) {
     shr.evtName = Evt{{.}}
     shr.handlers = append(shr.handlers, handler)

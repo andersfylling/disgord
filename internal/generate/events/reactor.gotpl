@@ -97,5 +97,5 @@ type HandlerSimplest = func()
 type HandlerSimple = func(Session)
 
 {{range .}}
-// Handler{{.}} is triggered in {{.}} events
+// Handler{{.}} is triggered by {{.}} events
 type Handler{{.}} = func(s Session, h *{{.}}){{end}}
