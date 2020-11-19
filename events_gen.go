@@ -10,58 +10,11 @@ import (
 // helpers
 
 func AllEvents() []string {
-	return AllEventsExcept()
+	return event.All()
 }
 
 func AllEventsExcept(except ...string) []string {
-	evtsMap := map[string]int8{
-		EvtChannelCreate:              0,
-		EvtChannelDelete:              0,
-		EvtChannelPinsUpdate:          0,
-		EvtChannelUpdate:              0,
-		EvtGuildBanAdd:                0,
-		EvtGuildBanRemove:             0,
-		EvtGuildCreate:                0,
-		EvtGuildDelete:                0,
-		EvtGuildEmojisUpdate:          0,
-		EvtGuildIntegrationsUpdate:    0,
-		EvtGuildMemberAdd:             0,
-		EvtGuildMemberRemove:          0,
-		EvtGuildMemberUpdate:          0,
-		EvtGuildMembersChunk:          0,
-		EvtGuildRoleCreate:            0,
-		EvtGuildRoleDelete:            0,
-		EvtGuildRoleUpdate:            0,
-		EvtGuildUpdate:                0,
-		EvtInviteCreate:               0,
-		EvtInviteDelete:               0,
-		EvtMessageCreate:              0,
-		EvtMessageDelete:              0,
-		EvtMessageDeleteBulk:          0,
-		EvtMessageReactionAdd:         0,
-		EvtMessageReactionRemove:      0,
-		EvtMessageReactionRemoveAll:   0,
-		EvtMessageReactionRemoveEmoji: 0,
-		EvtMessageUpdate:              0,
-		EvtPresenceUpdate:             0,
-		EvtReady:                      0,
-		EvtResumed:                    0,
-		EvtTypingStart:                0,
-		EvtUserUpdate:                 0,
-		EvtVoiceServerUpdate:          0,
-		EvtVoiceStateUpdate:           0,
-		EvtWebhooksUpdate:             0,
-	}
-
-	for i := range except {
-		delete(evtsMap, except[i])
-	}
-
-	evts := make([]string, 0, len(evtsMap))
-	for k := range evtsMap {
-		evts = append(evts, k)
-	}
-	return evts
+	return event.AllExcept(except...)
 }
 
 // ---------------------------
@@ -88,10 +41,6 @@ type HandlerChannelDelete = func(Session, *ChannelDelete)
 // ---------------------------
 
 // EvtChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
-//  Fields:
-//  - ChannelID int64 or Snowflake
-//  - LastPinTimestamp time.Now().UTC().Format(time.RFC3339)
-// TODO fix.
 //
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
@@ -158,9 +107,6 @@ type HandlerGuildDelete = func(Session, *GuildDelete)
 // ---------------------------
 
 // EvtGuildEmojisUpdate Sent when a guild's emojis have been updated.
-//  Fields:
-//  - GuildID Snowflake
-//  - Emojis []*Emoji
 //
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
@@ -171,8 +117,6 @@ type HandlerGuildEmojisUpdate = func(Session, *GuildEmojisUpdate)
 // ---------------------------
 
 // EvtGuildIntegrationsUpdate Sent when a guild integration is updated.
-//  Fields:
-//  - GuildID Snowflake
 //
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
@@ -182,11 +126,7 @@ type HandlerGuildIntegrationsUpdate = func(Session, *GuildIntegrationsUpdate)
 
 // ---------------------------
 
-// EvtGuildMemberAdd Sent when a new user joins a guild. The inner payload is a guild member object with these extra fields:
-//  - GuildID Snowflake
-//
-//  Fields:
-//  - Member *Member
+// EvtGuildMemberAdd Sent when a new user joins a guild. The inner payload is a guild member object.
 //
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
@@ -197,9 +137,6 @@ type HandlerGuildMemberAdd = func(Session, *GuildMemberAdd)
 // ---------------------------
 
 // EvtGuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
-//  Fields:
-//  - GuildID   Snowflake
-//  - User      *User
 //
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
@@ -210,11 +147,6 @@ type HandlerGuildMemberRemove = func(Session, *GuildMemberRemove)
 // ---------------------------
 
 // EvtGuildMemberUpdate Sent when a guild member is updated.
-//  Fields:
-//  - GuildID   Snowflake
-//  - Roles     []Snowflake
-//  - User      *User
-//  - Nick      string
 //
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
@@ -225,9 +157,6 @@ type HandlerGuildMemberUpdate = func(Session, *GuildMemberUpdate)
 // ---------------------------
 
 // EvtGuildMembersChunk Sent in response to Gateway Request Guild Members.
-//  Fields:
-//  - GuildID Snowflake
-//  - Members []*Member
 //
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
@@ -238,9 +167,6 @@ type HandlerGuildMembersChunk = func(Session, *GuildMembersChunk)
 // ---------------------------
 
 // EvtGuildRoleCreate Sent when a guild role is created.
-//  Fields:
-//  - GuildID   Snowflake
-//  - Role      *Role
 //
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
@@ -251,9 +177,6 @@ type HandlerGuildRoleCreate = func(Session, *GuildRoleCreate)
 // ---------------------------
 
 // EvtGuildRoleDelete Sent when a guild role is created.
-//  Fields:
-//  - GuildID Snowflake
-//  - RoleID  Snowflake
 //
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
@@ -264,9 +187,6 @@ type HandlerGuildRoleDelete = func(Session, *GuildRoleDelete)
 // ---------------------------
 
 // EvtGuildRoleUpdate Sent when a guild role is created.
-//  Fields:
-//  - GuildID Snowflake
-//  - Role    *Role
 //
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
@@ -287,23 +207,6 @@ type HandlerGuildUpdate = func(Session, *GuildUpdate)
 // ---------------------------
 
 // EvtInviteCreate Sent when a guild's invite is created.
-//  Fields:
-//  - Code String
-//  - GuildID   Snowflake
-//  - ChannelID Snowflake
-//  - Inviter *User
-//  - Inviter *User
-//  - Target *User
-//  - TargetType int
-//  - CreatedAt Time
-//  - MaxAge int
-//  - MaxUses int
-//  - Temporary bool
-//  - Uses int
-//  - Revoked bool
-//  - Unique bool
-//  - ApproximatePresenceCount int
-//  - ApproximateMemberCount int
 //
 const EvtInviteCreate = event.InviteCreate
 
@@ -334,9 +237,6 @@ type HandlerMessageCreate = func(Session, *MessageCreate)
 // ---------------------------
 
 // EvtMessageDelete Sent when a message is deleted.
-//  Fields:
-//  - ID        Snowflake
-//  - ChannelID Snowflake
 //
 const EvtMessageDelete = event.MessageDelete
 
@@ -347,9 +247,6 @@ type HandlerMessageDelete = func(Session, *MessageDelete)
 // ---------------------------
 
 // EvtMessageDeleteBulk Sent when multiple messages are deleted at once.
-//  Fields:
-//  - IDs       []Snowflake
-//  - ChannelID Snowflake
 //
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
@@ -360,11 +257,6 @@ type HandlerMessageDeleteBulk = func(Session, *MessageDeleteBulk)
 // ---------------------------
 
 // EvtMessageReactionAdd Sent when a user adds a reaction to a message.
-//  Fields:
-//  - UserID     Snowflake
-//  - ChannelID  Snowflake
-//  - MessageID  Snowflake
-//  - Emoji      *Emoji
 //
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
@@ -375,11 +267,6 @@ type HandlerMessageReactionAdd = func(Session, *MessageReactionAdd)
 // ---------------------------
 
 // EvtMessageReactionRemove Sent when a user removes a reaction from a message.
-//  Fields:
-//  - UserID     Snowflake
-//  - ChannelID  Snowflake
-//  - MessageID  Snowflake
-//  - Emoji      *Emoji
 //
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
@@ -390,9 +277,6 @@ type HandlerMessageReactionRemove = func(Session, *MessageReactionRemove)
 // ---------------------------
 
 // EvtMessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
-//  Fields:
-//  - ChannelID Snowflake
-//  - MessageID Snowflake
 //
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
@@ -425,12 +309,6 @@ type HandlerMessageUpdate = func(Session, *MessageUpdate)
 // ---------------------------
 
 // EvtPresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
-//  Fields:
-//  - User    *User
-//  - Roles   []Snowflake
-//  - Game    *Activity
-//  - GuildID Snowflake
-//  - Status  string
 //
 const EvtPresenceUpdate = event.PresenceUpdate
 
@@ -443,13 +321,6 @@ type HandlerPresenceUpdate = func(Session, *PresenceUpdate)
 // EvtReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // // required for a client to begin interacting with the rest of the platform.
-// //  Fields:
-// //  - V int
-// //  - User *User
-// //  - PrivateChannels []*Channel
-// //  - Guilds []*GuildUnavailable
-// //  - SessionID string
-// //  - Trace []string
 //
 const EvtReady = event.Ready
 
@@ -461,8 +332,6 @@ type HandlerReady = func(Session, *Ready)
 
 // EvtResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
-//  Fields:
-//  - Trace []string
 //
 const EvtResumed = event.Resumed
 
@@ -473,10 +342,6 @@ type HandlerResumed = func(Session, *Resumed)
 // ---------------------------
 
 // EvtTypingStart Sent when a user starts typing in a channel.
-//  Fields:
-//  - ChannelID     Snowflake
-//  - UserID        Snowflake
-//  - TimestampUnix int
 //
 const EvtTypingStart = event.TypingStart
 
@@ -498,10 +363,6 @@ type HandlerUserUpdate = func(Session, *UserUpdate)
 
 // EvtVoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
-//  Fields:
-//  - Token     string
-//  - ChannelID Snowflake
-//  - Endpoint  string
 //
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
@@ -522,9 +383,6 @@ type HandlerVoiceStateUpdate = func(Session, *VoiceStateUpdate)
 // ---------------------------
 
 // EvtWebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
-//  Fields:
-//  - GuildID   Snowflake
-//  - ChannelID Snowflake
 //
 const EvtWebhooksUpdate = event.WebhooksUpdate
 
