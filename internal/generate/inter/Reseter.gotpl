@@ -11,7 +11,7 @@ func ({{ $type.ShortName }} *{{ $type.Name.Name }}) reset() {
         Reset({{ $type.ShortName }}.{{ $field.Name }})
     }
     {{- else }}
-    {{ $type.ShortName }}.{{ $field.Name }} = {{ $field.ZeroValue }}
+    {{ $type.ShortName }}.{{ $field.Name }} = {{ if eq $field.ZeroValue "" }} "" {{ else }}{{ $field.ZeroValue }}{{ end }}
     {{- end }}
     {{- end }}
 }

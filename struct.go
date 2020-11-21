@@ -11,6 +11,7 @@ import (
 
 // common functionality/types used by struct_*.go files goes here
 //go:generate go run internal/generate/interfaces/main.go
+//go:generate go run internal/generate/inter/main.go
 //go:generate go run internal/generate/sorters/main.go
 //go:generate go run internal/generate/json/main.go
 

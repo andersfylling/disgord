@@ -116,7 +116,7 @@ func main() {
 		wg.Done()
 	}()
 
-	files, getFilesErr := getFiles("/home/anders/dev/disgord/")
+	files, getFilesErr := getFiles(".")
 
 	typeImplementations := map[string]([]string){}
 	for i := range files {
@@ -150,7 +150,7 @@ func main() {
 		}
 	}
 
-	makeFile(enforcers["Reseter"], "internal/generate/inter/Reseter.gotpl", "iface2_reseter_gen.go")
+	makeFile(enforcers["Reseter"], "internal/generate/inter/Reseter.gotpl", "iface_reseter_gen.go")
 }
 
 func makeFile(implementers []*TypeWrapper, tplFile, target string) {
@@ -212,6 +212,21 @@ type FieldWrapper struct {
 }
 
 func (f *FieldWrapper) Resetable() bool {
+	matches := func(kinds ...types.Kind) bool {
+		for _, k := range kinds {
+			if f.Type.Kind == k {
+				return true
+			}
+		}
+
+		return false
+	}
+
+
+	if matches(types.Slice) {
+		return false
+	}
+
 	typeImplementations := f.Type.typeImplementations
 	if interfaces, ok := typeImplementations[f.TypeName()]; ok {
 		for _, inter := range interfaces {
@@ -224,8 +239,34 @@ func (f *FieldWrapper) Resetable() bool {
 	return false
 }
 
-func (f *FieldWrapper) ZeroValue() string {
-	return "0"
+func (f *FieldWrapper) ZeroValue() (v string) {
+	switch f.Type.Kind {
+	case types.Slice:
+		v = "nil"
+	case types.Pointer, types.Interface:
+		// TODO: check for non-pointers
+		v = "nil"
+	case types.Struct:
+		v = f.TypeName() + "{}"
+	case types.Alias:
+		v = (&FieldWrapper{Type: &TypeWrapper{f.Type.Underlying, f.Type.typeImplementations}, Name: f.Name}).ZeroValue()
+	case types.Builtin:
+		switch f.Type.Name.Name {
+		case "bool":
+			v = "false"
+		case "int", "uint", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64":
+			v = "0"
+		case "float64", "float32":
+			v = "0.0"
+		case "string":
+			v = ""
+		default:
+			v = "0 // ++"
+		}
+	default:
+		v = "0  // -"
+	}
+	return v
 }
 
 func (f *FieldWrapper) TypeName() string {

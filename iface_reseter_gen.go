@@ -2,48 +2,6 @@
 
 package disgord
 
-func (c *Channel) reset() {
-	c.ID = 0
-	c.Type = 0
-	c.GuildID = 0
-	c.Position = 0
-	c.PermissionOverwrites = nil
-	c.Name = ""
-	c.Topic = ""
-	c.NSFW = false
-	c.LastMessageID = 0
-	c.Bitrate = 0
-	c.UserLimit = 0
-	c.RateLimitPerUser = 0
-	c.Recipients = nil
-	c.Icon = ""
-	c.OwnerID = 0
-	c.ApplicationID = 0
-	c.ParentID = 0
-	c.LastPinTimestamp = Time{}
-	c.complete = false
-	c.recipientsIDs = nil
-}
-
-func (e *Emoji) reset() {
-	e.ID = 0
-	e.Name = ""
-	e.Roles = nil
-	if e.User != nil {
-		Reset(e.User)
-	}
-	e.RequireColons = false
-	e.Managed = false
-	e.Animated = false
-}
-
-func (m *MessageCreate) reset() {
-	if m.Message != nil {
-		Reset(m.Message)
-	}
-	m.ShardID = 0
-}
-
 func (g *Guild) reset() {
 	g.ID = 0
 	g.ApplicationID = 0
@@ -76,18 +34,70 @@ func (g *Guild) reset() {
 	g.Presences = nil
 }
 
-func (m *Member) reset() {
-	m.GuildID = 0
-	if m.User != nil {
-		Reset(m.User)
+func (r *Reaction) reset() {
+	r.Count = 0
+	r.Me = false
+	if r.Emoji != nil {
+		Reset(r.Emoji)
 	}
-	m.Nick = ""
-	m.Roles = nil
-	m.JoinedAt = Time{}
-	m.PremiumSince = Time{}
-	m.Deaf = false
-	m.Mute = false
-	m.UserID = 0
+}
+
+func (v *VoiceRegion) reset() {
+	v.ID = ""
+	v.Name = ""
+	v.SampleHostname = ""
+	v.SamplePort = 0
+	v.VIP = false
+	v.Optimal = false
+	v.Deprecated = false
+	v.Custom = false
+}
+
+func (m *MessageCreate) reset() {
+	if m.Message != nil {
+		Reset(m.Message)
+	}
+	m.ShardID = 0
+}
+
+func (u *User) reset() {
+	u.ID = 0
+	u.Username = ""
+	u.Discriminator = 0
+	u.Email = ""
+	u.Avatar = ""
+	u.Token = ""
+	u.Verified = false
+	u.MFAEnabled = false
+	u.Bot = false
+	u.PremiumType = 0
+	u.Locale = ""
+	u.Flags = 0
+	u.PublicFlags = 0
+}
+
+func (r *Role) reset() {
+	r.ID = 0
+	r.Name = ""
+	r.Color = 0
+	r.Hoist = false
+	r.Position = 0
+	r.Permissions = 0
+	r.Managed = false
+	r.Mentionable = false
+	r.guildID = 0
+}
+
+func (e *Emoji) reset() {
+	e.ID = 0
+	e.Name = ""
+	e.Roles = nil
+	if e.User != nil {
+		Reset(e.User)
+	}
+	e.RequireColons = false
+	e.Managed = false
+	e.Animated = false
 }
 
 func (m *Message) reset() {
@@ -128,24 +138,6 @@ func (m *Message) reset() {
 	m.HasSpoilerImage = false
 }
 
-func (r *Reaction) reset() {
-	r.Count = 0
-	r.Me = false
-	r.Emoji = nil
-}
-
-func (r *Role) reset() {
-	r.ID = 0
-	r.Name = ""
-	r.Color = 0
-	r.Hoist = false
-	r.Position = 0
-	r.Permissions = 0
-	r.Managed = false
-	r.Mentionable = false
-	r.guildID = 0
-}
-
 func (a *Activity) reset() {
 	a.Name = ""
 	a.Type = 0
@@ -162,20 +154,41 @@ func (a *Activity) reset() {
 	a.Flags = 0
 }
 
-func (u *User) reset() {
-	u.ID = 0
-	u.Username = ""
-	u.Discriminator = 0
-	u.Email = ""
-	u.Avatar = ""
-	u.Token = ""
-	u.Verified = false
-	u.MFAEnabled = false
-	u.Bot = false
-	u.PremiumType = 0
-	u.Locale = ""
-	u.Flags = 0
-	u.PublicFlags = 0
+func (m *Member) reset() {
+	m.GuildID = 0
+	if m.User != nil {
+		Reset(m.User)
+	}
+	m.Nick = ""
+	m.Roles = nil
+	m.JoinedAt = Time{}
+	m.PremiumSince = Time{}
+	m.Deaf = false
+	m.Mute = false
+	m.UserID = 0
+}
+
+func (c *Channel) reset() {
+	c.ID = 0
+	c.Type = 0
+	c.GuildID = 0
+	c.Position = 0
+	c.PermissionOverwrites = nil
+	c.Name = ""
+	c.Topic = ""
+	c.NSFW = false
+	c.LastMessageID = 0
+	c.Bitrate = 0
+	c.UserLimit = 0
+	c.RateLimitPerUser = 0
+	c.Recipients = nil
+	c.Icon = ""
+	c.OwnerID = 0
+	c.ApplicationID = 0
+	c.ParentID = 0
+	c.LastPinTimestamp = Time{}
+	c.complete = false
+	c.recipientsIDs = nil
 }
 
 func (v *VoiceState) reset() {
@@ -191,15 +204,4 @@ func (v *VoiceState) reset() {
 	v.SelfDeaf = false
 	v.SelfMute = false
 	v.Suppress = false
-}
-
-func (v *VoiceRegion) reset() {
-	v.ID = ""
-	v.Name = ""
-	v.SampleHostname = ""
-	v.SamplePort = 0
-	v.VIP = false
-	v.Optimal = false
-	v.Deprecated = false
-	v.Custom = false
 }
