@@ -57,13 +57,6 @@ type Invite struct {
 var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (i *Invite) deepCopy() interface{} {
-	cp := &Invite{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (i *Invite) copyOverTo(other interface{}) (err error) {
 	var ok bool
@@ -120,13 +113,6 @@ type InviteMetadata struct {
 
 var _ Copier = (*InviteMetadata)(nil)
 var _ DeepCopier = (*InviteMetadata)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (i *InviteMetadata) deepCopy() interface{} {
-	cp := &InviteMetadata{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
 
 // CopyOverTo see interface at struct.go#Copier
 func (i *InviteMetadata) copyOverTo(other interface{}) (err error) {

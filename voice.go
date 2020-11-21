@@ -47,17 +47,6 @@ var _ Reseter = (*VoiceState)(nil)
 var _ Copier = (*VoiceState)(nil)
 var _ DeepCopier = (*VoiceState)(nil)
 
-//func (vst *VoiceState) Clear() {
-//
-//}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceState) deepCopy() interface{} {
-	cp := &VoiceState{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
-
 // UnmarshalJSON is used to unmarshal Discord's JSON.
 func (v *VoiceState) UnmarshalJSON(data []byte) error {
 	type s2 VoiceState
@@ -124,13 +113,6 @@ type VoiceRegion struct {
 var _ Reseter = (*VoiceRegion)(nil)
 var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceRegion) deepCopy() interface{} {
-	cp := &VoiceRegion{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
 
 // CopyOverTo see interface at struct.go#Copier
 func (v *VoiceRegion) copyOverTo(other interface{}) (err error) {

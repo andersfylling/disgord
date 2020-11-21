@@ -151,6 +151,7 @@ func main() {
 	}
 
 	makeFile(enforcers["Reseter"], "internal/generate/inter/Reseter.gotpl", "iface_reseter_gen.go")
+	makeFile(enforcers["DeepCopier"], "internal/generate/inter/DeepCopier.gotpl", "iface_deepcopier_gen.go")
 }
 
 func makeFile(implementers []*TypeWrapper, tplFile, target string) {
@@ -221,7 +222,6 @@ func (f *FieldWrapper) Resetable() bool {
 
 		return false
 	}
-
 
 	if matches(types.Slice) {
 		return false

@@ -200,13 +200,6 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (c *Channel) deepCopy() interface{} {
-	cp := &Channel{}
-	_ = DeepCopyOver(cp, c)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (c *Channel) copyOverTo(other interface{}) (err error) {
 	var channel *Channel

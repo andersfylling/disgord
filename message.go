@@ -209,13 +209,6 @@ func (m *Message) IsDirectMessage() bool {
 	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (m *Message) deepCopy() interface{} {
-	cp := &Message{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (m *Message) copyOverTo(other interface{}) (err error) {
 	var message *Message

@@ -427,13 +427,6 @@ func (g *Guild) Emoji(id Snowflake) (emoji *Emoji, err error) {
 	return
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (g *Guild) deepCopy() interface{} {
-	cp := &Guild{}
-	_ = DeepCopyOver(cp, g)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (g *Guild) copyOverTo(other interface{}) (err error) {
 	var guild *Guild

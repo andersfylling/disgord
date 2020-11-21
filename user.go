@@ -377,14 +377,6 @@ func (u *User) SendMsgString(ctx context.Context, session Session, content strin
 	return
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-// CopyOverTo see interface at struct.go#Copier
-func (u *User) deepCopy() interface{} {
-	cp := &User{}
-	_ = DeepCopyOver(cp, u)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (u *User) copyOverTo(other interface{}) (err error) {
 	var user *User

@@ -69,13 +69,6 @@ func (r *Role) SetGuildID(id Snowflake) {
 	r.guildID = id
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (r *Role) deepCopy() interface{} {
-	cp := &Role{}
-	_ = DeepCopyOver(cp, r)
-	return cp
-}
-
 // CopyOverTo see interface at struct.go#Copier
 func (r *Role) copyOverTo(other interface{}) (err error) {
 	var ok bool
