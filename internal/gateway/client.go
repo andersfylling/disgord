@@ -519,15 +519,31 @@ func (c *client) receiver(ctx context.Context) {
 				if c.conf.discordErrListener != nil && closeErr.code >= 4000 && closeErr.code < 5000 {
 					go c.conf.discordErrListener(closeErr.code, closeErr.info)
 				}
-				switch closeErr.code {
-				case 4014:
-					// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
-					// https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
-					c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
-					_ = c.Disconnect()
-					close(c.receiveChan) // notify client
-					reconnect = false
-				default:
+				if c.clientType == clientTypeEvent {
+					switch closeErr.code {
+					case 4013:
+						c.log.Error(c.getLogPrefix(), "you sent an invalid intent for a Gateway Intent. You may have incorrectly calculated the bitwise value.")
+						_ = c.Disconnect()
+						close(c.receiveChan) // notify client
+						reconnect = false
+					case 4014:
+						c.log.Error(c.getLogPrefix(), "you sent a disallowed intent for a Gateway Intent. You may have tried to specify an intent that you have not enabled or are not whitelisted for.")
+						_ = c.Disconnect()
+						close(c.receiveChan) // notify client
+						reconnect = false
+					default:
+					}
+				} else if c.clientType == clientTypeVoice {
+					switch closeErr.code {
+					case 4014:
+						// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
+						// https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes
+						c.log.Debug(c.getLogPrefix(), "discord sent a 4014 websocket code and the bot will now disconnect")
+						_ = c.Disconnect()
+						close(c.receiveChan) // notify client
+						reconnect = false
+					default:
+					}
 				}
 			}
 
