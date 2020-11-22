@@ -521,6 +521,14 @@ func (c *client) receiver(ctx context.Context) {
 				}
 				if c.clientType == clientTypeEvent {
 					switch closeErr.code {
+					case 4008:
+						c.log.Error(c.getLogPrefix(), "Woah nelly! You're sending payloads to us too quickly. Slow it down! You will be disconnected on receiving this.")
+						_ = c.Disconnect()
+					case 4010:
+						c.log.Error(c.getLogPrefix(), "You sent us an invalid shard when identifying.")
+						_ = c.Disconnect()
+						close(c.receiveChan) // notify client
+						reconnect = false
 					case 4013:
 						c.log.Error(c.getLogPrefix(), "you sent an invalid intent for a Gateway Intent. You may have incorrectly calculated the bitwise value.")
 						_ = c.Disconnect()
