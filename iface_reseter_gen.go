@@ -2,63 +2,12 @@
 
 package disgord
 
-func (g *Guild) reset() {
-	g.ID = 0
-	g.ApplicationID = 0
-	g.Name = ""
-	g.Icon = ""
-	g.Splash = ""
-	g.Owner = false
-	g.OwnerID = 0
-	g.Permissions = 0
-	g.Region = ""
-	g.AfkChannelID = 0
-	g.AfkTimeout = 0
-	g.VerificationLevel = 0
-	g.DefaultMessageNotifications = 0
-	g.ExplicitContentFilter = 0
-	g.Roles = nil
-	g.Emojis = nil
-	g.Features = nil
-	g.MFALevel = 0
-	g.WidgetEnabled = false
-	g.WidgetChannelID = 0
-	g.SystemChannelID = 0
-	g.JoinedAt = nil
-	g.Large = false
-	g.Unavailable = false
-	g.MemberCount = 0
-	g.VoiceStates = nil
-	g.Members = nil
-	g.Channels = nil
-	g.Presences = nil
-}
-
 func (r *Reaction) reset() {
 	r.Count = 0
 	r.Me = false
 	if r.Emoji != nil {
 		Reset(r.Emoji)
 	}
-}
-
-func (r *Role) reset() {
-	r.ID = 0
-	r.Name = ""
-	r.Color = 0
-	r.Hoist = false
-	r.Position = 0
-	r.Permissions = 0
-	r.Managed = false
-	r.Mentionable = false
-	r.guildID = 0
-}
-
-func (m *MessageCreate) reset() {
-	if m.Message != nil {
-		Reset(m.Message)
-	}
-	m.ShardID = 0
 }
 
 func (m *Member) reset() {
@@ -73,6 +22,18 @@ func (m *Member) reset() {
 	m.Deaf = false
 	m.Mute = false
 	m.UserID = 0
+}
+
+func (e *Emoji) reset() {
+	e.ID = 0
+	e.Name = ""
+	e.Roles = nil
+	if e.User != nil {
+		Reset(e.User)
+	}
+	e.RequireColons = false
+	e.Managed = false
+	e.Animated = false
 }
 
 func (c *Channel) reset() {
@@ -98,22 +59,6 @@ func (c *Channel) reset() {
 	c.recipientsIDs = nil
 }
 
-func (a *Activity) reset() {
-	a.Name = ""
-	a.Type = 0
-	a.URL = ""
-	a.Timestamps = nil
-	a.ApplicationID = 0
-	a.Details = ""
-	a.State = ""
-	a.Emoji = nil
-	a.Party = nil
-	a.Assets = nil
-	a.Secrets = nil
-	a.Instance = false
-	a.Flags = 0
-}
-
 func (u *User) reset() {
 	u.ID = 0
 	u.Username = ""
@@ -128,6 +73,22 @@ func (u *User) reset() {
 	u.Locale = ""
 	u.Flags = 0
 	u.PublicFlags = 0
+}
+
+func (a *Activity) reset() {
+	a.Name = ""
+	a.Type = 0
+	a.URL = ""
+	a.Timestamps = nil
+	a.ApplicationID = 0
+	a.Details = ""
+	a.State = ""
+	a.Emoji = nil
+	a.Party = nil
+	a.Assets = nil
+	a.Secrets = nil
+	a.Instance = false
+	a.Flags = 0
 }
 
 func (m *Message) reset() {
@@ -183,6 +144,45 @@ func (v *VoiceState) reset() {
 	v.Suppress = false
 }
 
+func (g *Guild) reset() {
+	g.ID = 0
+	g.ApplicationID = 0
+	g.Name = ""
+	g.Icon = ""
+	g.Splash = ""
+	g.Owner = false
+	g.OwnerID = 0
+	g.Permissions = 0
+	g.Region = ""
+	g.AfkChannelID = 0
+	g.AfkTimeout = 0
+	g.VerificationLevel = 0
+	g.DefaultMessageNotifications = 0
+	g.ExplicitContentFilter = 0
+	g.Roles = nil
+	g.Emojis = nil
+	g.Features = nil
+	g.MFALevel = 0
+	g.WidgetEnabled = false
+	g.WidgetChannelID = 0
+	g.SystemChannelID = 0
+	g.JoinedAt = nil
+	g.Large = false
+	g.Unavailable = false
+	g.MemberCount = 0
+	g.VoiceStates = nil
+	g.Members = nil
+	g.Channels = nil
+	g.Presences = nil
+}
+
+func (m *MessageCreate) reset() {
+	if m.Message != nil {
+		Reset(m.Message)
+	}
+	m.ShardID = 0
+}
+
 func (v *VoiceRegion) reset() {
 	v.ID = ""
 	v.Name = ""
@@ -194,14 +194,14 @@ func (v *VoiceRegion) reset() {
 	v.Custom = false
 }
 
-func (e *Emoji) reset() {
-	e.ID = 0
-	e.Name = ""
-	e.Roles = nil
-	if e.User != nil {
-		Reset(e.User)
-	}
-	e.RequireColons = false
-	e.Managed = false
-	e.Animated = false
+func (r *Role) reset() {
+	r.ID = 0
+	r.Name = ""
+	r.Color = 0
+	r.Hoist = false
+	r.Position = 0
+	r.Permissions = 0
+	r.Managed = false
+	r.Mentionable = false
+	r.guildID = 0
 }

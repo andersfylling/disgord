@@ -152,6 +152,7 @@ func main() {
 
 	makeFile(enforcers["Reseter"], "internal/generate/inter/Reseter.gotpl", "iface_reseter_gen.go")
 	makeFile(enforcers["DeepCopier"], "internal/generate/inter/DeepCopier.gotpl", "iface_deepcopier_gen.go")
+	makeFile(enforcers["Copier"], "internal/generate/inter/Copier.gotpl", "iface_copier_gen.go")
 }
 
 func makeFile(implementers []*TypeWrapper, tplFile, target string) {

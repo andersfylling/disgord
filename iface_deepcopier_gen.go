@@ -8,21 +8,9 @@ func (i *InviteMetadata) deepCopy() interface{} {
 	return cp
 }
 
-func (g *Guild) deepCopy() interface{} {
-	cp := &Guild{}
-	_ = DeepCopyOver(cp, g)
-	return cp
-}
-
-func (r *Role) deepCopy() interface{} {
-	cp := &Role{}
-	_ = DeepCopyOver(cp, r)
-	return cp
-}
-
-func (i *Invite) deepCopy() interface{} {
-	cp := &Invite{}
-	_ = DeepCopyOver(cp, i)
+func (e *Emoji) deepCopy() interface{} {
+	cp := &Emoji{}
+	_ = DeepCopyOver(cp, e)
 	return cp
 }
 
@@ -38,6 +26,12 @@ func (u *User) deepCopy() interface{} {
 	return cp
 }
 
+func (i *Invite) deepCopy() interface{} {
+	cp := &Invite{}
+	_ = DeepCopyOver(cp, i)
+	return cp
+}
+
 func (m *Message) deepCopy() interface{} {
 	cp := &Message{}
 	_ = DeepCopyOver(cp, m)
@@ -50,14 +44,20 @@ func (v *VoiceState) deepCopy() interface{} {
 	return cp
 }
 
+func (g *Guild) deepCopy() interface{} {
+	cp := &Guild{}
+	_ = DeepCopyOver(cp, g)
+	return cp
+}
+
 func (v *VoiceRegion) deepCopy() interface{} {
 	cp := &VoiceRegion{}
 	_ = DeepCopyOver(cp, v)
 	return cp
 }
 
-func (e *Emoji) deepCopy() interface{} {
-	cp := &Emoji{}
-	_ = DeepCopyOver(cp, e)
+func (r *Role) deepCopy() interface{} {
+	cp := &Role{}
+	_ = DeepCopyOver(cp, r)
 	return cp
 }
