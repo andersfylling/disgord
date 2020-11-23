@@ -7,13 +7,13 @@ import (
 	"go/format"
 	goparser "go/parser"
 	"go/token"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+	"text/template"
 
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
@@ -44,7 +44,7 @@ var (
 	}
 )
 
-func ExportedTypes() (typesList []*types.Type, err error) {
+func RelevantTypes() (typesList []*types.Type, err error) {
 	builder := parser.New()
 	if err := builder.AddDir(PKGName); err != nil {
 		return nil, fmt.Errorf("unable to add disgord package to gengo-parser builder. %w", err)
@@ -56,15 +56,15 @@ func ExportedTypes() (typesList []*types.Type, err error) {
 	}
 
 	disgord := universe.Package(PKGName)
-	for name, typeData := range disgord.Types {
+	for _, typeData := range disgord.Types {
 		if accepted, ok := validTypes[typeData.Kind]; !ok || !accepted {
 			continue
 		}
 
 		// skip unexported types
-		if strings.ToUpper(name[:1]) != name[:1] {
-			continue
-		}
+		// if strings.ToUpper(name[:1]) != name[:1] {
+		// 	continue
+		// }
 
 		typesList = append(typesList, typeData)
 	}
@@ -110,12 +110,13 @@ func main() {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		if exportedTypes, exportedTypesErr = ExportedTypes(); exportedTypesErr != nil {
+		if exportedTypes, exportedTypesErr = RelevantTypes(); exportedTypesErr != nil {
 			exportedTypesErr = fmt.Errorf("unable to extract exported types: %w", exportedTypesErr)
 		}
 		wg.Done()
 	}()
 
+	// files, getFilesErr := getFiles("/home/anders/dev/disgord/")
 	files, getFilesErr := getFiles(".")
 
 	typeImplementations := map[string]([]string){}
@@ -189,7 +190,8 @@ type TypeWrapper struct {
 }
 
 func (t *TypeWrapper) ShortName() string {
-	return strings.ToLower(t.Name.Name[:1])
+	char := strings.ToLower(t.Name.Name[:1])
+	return char
 }
 
 func (t *TypeWrapper) TypeName() string {
@@ -224,7 +226,7 @@ func (f *FieldWrapper) Resetable() bool {
 		return false
 	}
 
-	if matches(types.Slice) {
+	if matches(types.Slice, types.Array) {
 		return false
 	}
 
@@ -272,4 +274,80 @@ func (f *FieldWrapper) ZeroValue() (v string) {
 
 func (f *FieldWrapper) TypeName() string {
 	return f.Type.TypeName()
+}
+
+func (f *FieldWrapper) IsSlice() bool {
+	return f.Type.Kind == types.Slice
+}
+
+func (f *FieldWrapper) IsArray() bool {
+	return f.Type.Kind == types.Array
+}
+
+func (f *FieldWrapper) MustCopyEach() bool {
+	t := f.Type.Elem.Kind
+	return (f.IsSlice() || f.IsArray()) && (t == types.Interface || t == types.Pointer)
+}
+
+func (f *FieldWrapper) ElemIsPointer() bool {
+	t := f.Type.Elem.Kind
+	return (f.IsSlice() || f.IsArray()) && t == types.Pointer
+}
+
+func (f *FieldWrapper) EventualBuiltin() bool {
+	return f.eventual(types.Builtin)
+}
+
+func (f *FieldWrapper) EventualInterface() bool {
+	return f.eventual(types.Interface)
+}
+
+func (f *FieldWrapper) eventual(kind types.Kind) bool {
+	var is func(*types.Type) bool
+	is = func(t *types.Type) bool {
+		if t == nil {
+			return false
+		} else if t.Kind == kind {
+			return true
+		}
+
+		return is(t.Elem)
+	}
+	return is(f.Type.Elem)
+}
+
+func (f *FieldWrapper) SliceType() string {
+	if f.Type.Type.Kind != types.Slice {
+		panic("this is not a slice!")
+	}
+
+	// the type definition after the slice prefix: "[]"
+	//  "[]" + "*uint64"
+	//  "[]" + "uint64"
+	//  "[]" + "interface{}"
+
+	var typeData func(*types.Type) string
+	typeData = func(t *types.Type) string {
+		if t.Kind == types.Slice {
+			return "[]" + typeData(t.Elem)
+		}
+
+		var v string
+		if t.Kind == types.Pointer {
+			v += "*"
+		}
+		name := t.Name.Name
+		if strings.Contains(name, "*") {
+			name = name[1:]
+		}
+		if strings.Contains(name, ".") {
+			s := strings.Split(name, ".")
+			name = s[len(s)-1]
+		}
+
+		return v + name
+	}
+
+	e := f.Type.Type.Elem
+	return typeData(e)
 }

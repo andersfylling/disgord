@@ -60,28 +60,6 @@ func (v *VoiceState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceState) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voiceState *VoiceState
-	if voiceState, ok = other.(*VoiceState); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceState")
-		return
-	}
-
-	voiceState.GuildID = v.GuildID
-	voiceState.ChannelID = v.ChannelID
-	voiceState.UserID = v.UserID
-	voiceState.SessionID = v.SessionID
-	voiceState.Deaf = v.Deaf
-	voiceState.Mute = v.Mute
-	voiceState.SelfDeaf = v.SelfDeaf
-	voiceState.SelfMute = v.SelfMute
-	voiceState.Suppress = v.Suppress
-
-	return
-}
-
 // VoiceRegion voice region structure
 // https://discord.com/developers/docs/resources/voice#voice-region
 type VoiceRegion struct {
@@ -113,27 +91,6 @@ type VoiceRegion struct {
 var _ Reseter = (*VoiceRegion)(nil)
 var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
-
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceRegion) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voice *VoiceRegion
-	if voice, ok = other.(*VoiceRegion); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
-		return
-	}
-
-	voice.ID = v.ID
-	voice.Name = v.Name
-	voice.SampleHostname = v.SampleHostname
-	voice.SamplePort = v.SamplePort
-	voice.VIP = v.VIP
-	voice.Optimal = v.Optimal
-	voice.Deprecated = v.Deprecated
-	voice.Custom = v.Custom
-
-	return
-}
 
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET

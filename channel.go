@@ -200,43 +200,6 @@ func (c *Channel) Compare(other *Channel) bool {
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
 }
 
-// CopyOverTo see interface at struct.go#Copier
-func (c *Channel) copyOverTo(other interface{}) (err error) {
-	var channel *Channel
-	var valid bool
-	if channel, valid = other.(*Channel); !valid {
-		err = newErrorUnsupportedType("argument given is not a *Channel type")
-		return
-	}
-
-	channel.ID = c.ID
-	channel.Type = c.Type
-	channel.GuildID = c.GuildID
-	channel.Position = c.Position
-	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
-	channel.Name = c.Name
-	channel.Topic = c.Topic
-	channel.NSFW = c.NSFW
-	channel.LastMessageID = c.LastMessageID
-	channel.Bitrate = c.Bitrate
-	channel.UserLimit = c.UserLimit
-	channel.RateLimitPerUser = c.RateLimitPerUser
-	channel.Icon = c.Icon
-	channel.OwnerID = c.OwnerID
-	channel.ApplicationID = c.ApplicationID
-	channel.ParentID = c.ParentID
-	channel.LastPinTimestamp = c.LastPinTimestamp
-	channel.LastMessageID = c.LastMessageID
-
-	// add recipients if it's a DM
-	channel.Recipients = make([]*User, 0, len(c.Recipients))
-	for _, recipient := range c.Recipients {
-		channel.Recipients = append(channel.Recipients, DeepCopy(recipient).(*User))
-	}
-
-	return
-}
-
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
 func (c *Channel) SendMsgString(ctx context.Context, s Session, content string) (msg *Message, err error) {
 	if c.ID.IsZero() {

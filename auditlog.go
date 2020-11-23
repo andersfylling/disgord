@@ -105,6 +105,9 @@ type AuditLog struct {
 	AuditLogEntries []*AuditLogEntry `json:"audit_log_entries"`
 }
 
+var _ Copier = (*AuditLog)(nil)
+var _ DeepCopier = (*AuditLog)(nil)
+
 func (l *AuditLog) Bans() (bans []*PartialBan) {
 	for _, e := range l.AuditLogEntries {
 		if e.Event == AuditLogEvtMemberBanAdd {
@@ -118,34 +121,6 @@ func (l *AuditLog) Bans() (bans []*PartialBan) {
 	return bans
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLog) deepCopy() interface{} {
-	cp := &AuditLog{}
-	_ = DeepCopyOver(cp, l)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLog) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLog
-	if log, ok = other.(*AuditLog); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLog")
-		return
-	}
-
-	for _, webhook := range l.Webhooks {
-		log.Webhooks = append(log.Webhooks, DeepCopy(webhook).(*Webhook))
-	}
-	for _, user := range l.Users {
-		log.Users = append(log.Users, DeepCopy(user).(*User))
-	}
-	for _, entry := range l.AuditLogEntries {
-		log.AuditLogEntries = append(log.AuditLogEntries, DeepCopy(entry).(*AuditLogEntry))
-	}
-	return
-}
-
 // AuditLogEntry ...
 type AuditLogEntry struct {
 	TargetID Snowflake          `json:"target_id"`
@@ -157,37 +132,8 @@ type AuditLogEntry struct {
 	Reason   string             `json:"reason,omitempty"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogEntry) deepCopy() interface{} {
-	cp := &AuditLogEntry{}
-	_ = DeepCopyOver(cp, l)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogEntry) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogEntry
-	if log, ok = other.(*AuditLogEntry); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogEntry")
-		return
-	}
-
-	log.TargetID = l.TargetID
-	log.UserID = l.UserID
-	log.ID = l.ID
-	log.Event = l.Event
-	log.Reason = l.Reason
-
-	for _, change := range l.Changes {
-		log.Changes = append(log.Changes, DeepCopy(change).(*AuditLogChanges))
-	}
-
-	if l.Options != nil {
-		log.Options = DeepCopy(l.Options).(*AuditLogOption)
-	}
-	return
-}
+var _ Copier = (*AuditLogEntry)(nil)
+var _ DeepCopier = (*AuditLogEntry)(nil)
 
 // AuditLogOption ...
 type AuditLogOption struct {
@@ -200,31 +146,8 @@ type AuditLogOption struct {
 	RoleName         string    `json:"role_name"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogOption) deepCopy() interface{} {
-	cp := &AuditLogOption{}
-	_ = DeepCopyOver(cp, l)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogOption) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogOption
-	if log, ok = other.(*AuditLogOption); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogOption")
-		return
-	}
-
-	log.DeleteMemberDays = l.DeleteMemberDays
-	log.MembersRemoved = l.MembersRemoved
-	log.ChannelID = l.ChannelID
-	log.Count = l.Count
-	log.ID = l.ID
-	log.Type = l.Type
-	log.RoleName = l.RoleName
-	return
-}
+var _ Copier = (*AuditLogOption)(nil)
+var _ DeepCopier = (*AuditLogOption)(nil)
 
 // AuditLogChanges ...
 type AuditLogChanges struct {
@@ -233,28 +156,8 @@ type AuditLogChanges struct {
 	Key      string      `json:"key"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (l *AuditLogChanges) deepCopy() interface{} {
-	cp := &AuditLogChanges{}
-	_ = DeepCopyOver(cp, l)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (l *AuditLogChanges) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var log *AuditLogChanges
-	if log, ok = other.(*AuditLogChanges); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *AuditLogChanges")
-		return
-	}
-
-	log.NewValue = l.NewValue
-	log.OldValue = l.OldValue
-	log.Key = l.Key
-
-	return
-}
+var _ Copier = (*AuditLogChanges)(nil)
+var _ DeepCopier = (*AuditLogChanges)(nil)
 
 // auditLogFactory temporary until flyweight is implemented
 func auditLogFactory() interface{} {

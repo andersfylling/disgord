@@ -57,34 +57,6 @@ type Invite struct {
 var _ Copier = (*Invite)(nil)
 var _ DeepCopier = (*Invite)(nil)
 
-// CopyOverTo see interface at struct.go#Copier
-func (i *Invite) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var invite *Invite
-	if invite, ok = other.(*Invite); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Invite")
-		return
-	}
-
-	invite.Code = i.Code
-	invite.ApproximatePresenceCount = i.ApproximatePresenceCount
-	invite.ApproximateMemberCount = i.ApproximateMemberCount
-
-	if i.Guild != nil {
-		invite.Guild = &Guild{ID: i.Guild.ID}
-	}
-	if i.Channel != nil {
-		c := i.Channel
-		invite.Channel = &PartialChannel{
-			ID:   c.ID,
-			Name: c.Name,
-			Type: c.Type,
-		}
-	}
-
-	return nil
-}
-
 // InviteMetadata Object
 // https://discord.com/developers/docs/resources/invite#invite-metadata-object
 // Reviewed: 2018-06-10
@@ -113,28 +85,6 @@ type InviteMetadata struct {
 
 var _ Copier = (*InviteMetadata)(nil)
 var _ DeepCopier = (*InviteMetadata)(nil)
-
-// CopyOverTo see interface at struct.go#Copier
-func (i *InviteMetadata) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var invite *InviteMetadata
-	if invite, ok = other.(*InviteMetadata); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *InviteMetadata")
-		return
-	}
-
-	invite.Uses = i.Uses
-	invite.MaxUses = i.MaxUses
-	invite.MaxAge = i.MaxAge
-	invite.Temporary = i.Temporary
-	invite.CreatedAt = i.CreatedAt
-	invite.Revoked = i.Revoked
-
-	if i.Inviter != nil {
-		invite.Inviter = DeepCopy(i.Inviter).(*User)
-	}
-	return nil
-}
 
 // voiceRegionsFactory temporary until flyweight is implemented
 func inviteFactory() interface{} {

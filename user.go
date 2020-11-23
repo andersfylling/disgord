@@ -377,32 +377,6 @@ func (u *User) SendMsgString(ctx context.Context, session Session, content strin
 	return
 }
 
-// CopyOverTo see interface at struct.go#Copier
-func (u *User) copyOverTo(other interface{}) (err error) {
-	var user *User
-	var valid bool
-	if user, valid = other.(*User); !valid {
-		err = newErrorUnsupportedType("argument given is not a *User type")
-		return
-	}
-
-	user.ID = u.ID
-	user.Username = u.Username
-	user.Discriminator = u.Discriminator
-	user.Email = u.Email
-	user.Token = u.Token
-	user.Verified = u.Verified
-	user.MFAEnabled = u.MFAEnabled
-	user.Bot = u.Bot
-	user.Avatar = u.Avatar
-	user.PremiumType = u.PremiumType
-	user.Locale = u.Locale
-	user.Flags = u.Flags
-	user.PublicFlags = u.PublicFlags
-
-	return
-}
-
 // Valid ensure the user object has enough required information to be used in Discord interactions
 func (u *User) Valid() bool {
 	return u.ID > 0

@@ -69,26 +69,6 @@ func (r *Role) SetGuildID(id Snowflake) {
 	r.guildID = id
 }
 
-// CopyOverTo see interface at struct.go#Copier
-func (r *Role) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var role *Role
-	if role, ok = other.(*Role); !ok {
-		return newErrorUnsupportedType("given interface{} was not a *Role")
-	}
-
-	role.ID = r.ID
-	role.Name = r.Name
-	role.Color = r.Color
-	role.Hoist = r.Hoist
-	role.Position = r.Position
-	role.Permissions = r.Permissions
-	role.Managed = r.Managed
-	role.Mentionable = r.Mentionable
-	role.guildID = r.guildID
-	return
-}
-
 //////////////////////////////////////////////////////
 //
 // REST Methods
