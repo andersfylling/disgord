@@ -14,7 +14,7 @@ var log = &logrus.Logger{
 	Out:       os.Stderr,
 	Formatter: new(logrus.TextFormatter),
 	Hooks:     make(logrus.LevelHooks),
-	Level:     logrus.DebugLevel,
+	Level:     logrus.InfoLevel,
 }
 
 const MessageLifeTime = 5 * time.Second

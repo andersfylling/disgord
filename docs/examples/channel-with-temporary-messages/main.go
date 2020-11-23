@@ -1,25 +1,30 @@
-If you ever want to create a channel where the messages are deleted after N seconds, kinda like snapchat, see the code below.
 
-
-```go
 package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 )
 
+var log = &logrus.Logger{
+	Out:       os.Stderr,
+	Formatter: new(logrus.TextFormatter),
+	Hooks:     make(logrus.LevelHooks),
+	Level:     logrus.InfoLevel,
+}
+
 const MessageLifeTime = 5 // seconds
 
-func deleteDeadMessage(session disgord.Session, message *disgord.Message, lifetime time.Duration) {
+func deleteDeadMessage(session disgord.Session, msg *disgord.Message, lifetime time.Duration) {
 	<-time.After(lifetime)
-	if err := session.DeleteFromDiscord(context.Background(), message); err != nil {
-		fmt.Println(err)
+	if err := session.Channel(msg.ChannelID).Message(msg.ID).Delete(); err != nil {
+		log.Errorf("failed to delete message: %w", err)
 	}
 }
 
@@ -33,11 +38,12 @@ func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 	})
-    defer client.StayConnectedUntilInterrupted(context.Background())
-	
+	defer client.Gateway().StayConnectedUntilInterrupted()
+
 	filter, _ := std.NewMsgFilter(context.Background(), client)
 	filter.SetMinPermissions(disgord.PermissionManageMessages) // make sure u can actually delete messages
 
-	client.On(disgord.EvtMessageCreate, filter.HasPermissions, autoDeleteNewMessages)
+	client.Gateway().
+		WithMiddleware(filter.HasPermissions).
+		MessageCreate(autoDeleteNewMessages)
 }
-```

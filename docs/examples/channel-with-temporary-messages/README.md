@@ -1,0 +1,1 @@
+If you ever want to create a channel where the messages are deleted after N seconds, kinda like snapchat, see the code below.
