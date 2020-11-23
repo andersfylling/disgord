@@ -18,31 +18,8 @@ type Reaction struct {
 }
 
 var _ Reseter = (*Reaction)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (r *Reaction) deepCopy() interface{} {
-	cp := &Reaction{}
-	_ = DeepCopyOver(cp, r)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (r *Reaction) copyOverTo(other interface{}) (err error) {
-	var reaction *Reaction
-	var valid bool
-	if reaction, valid = other.(*Reaction); !valid {
-		err = newErrorUnsupportedType("given interface{} is not of type *Reaction")
-		return
-	}
-
-	reaction.Count = r.Count
-	reaction.Me = r.Me
-
-	if r.Emoji != nil {
-		reaction.Emoji = DeepCopy(r.Emoji).(*Emoji)
-	}
-	return
-}
+var _ Copier = (*Reaction)(nil)
+var _ DeepCopier = (*Reaction)(nil)
 
 func emojiReference(i interface{}) (string, error) {
 	var emojiCode string

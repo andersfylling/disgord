@@ -17,6 +17,9 @@ type ActivityParty struct {
 	Size []int  `json:"size,omitempty"` // used to show the party's current and maximum size
 }
 
+var _ Copier = (*ActivityParty)(nil)
+var _ DeepCopier = (*ActivityParty)(nil)
+
 // Limit shows the maximum number of guests/people allowed
 func (ap *ActivityParty) Limit() int {
 	if len(ap.Size) != 2 {
@@ -35,27 +38,6 @@ func (ap *ActivityParty) NumberOfPeople() int {
 	return ap.Size[0]
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (ap *ActivityParty) deepCopy() interface{} {
-	cp := &ActivityParty{}
-	_ = DeepCopyOver(cp, ap)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (ap *ActivityParty) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivityParty
-	if activity, ok = other.(*ActivityParty); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivityParty")
-		return
-	}
-
-	activity.ID = ap.ID
-	activity.Size = ap.Size
-	return
-}
-
 // ActivityAssets ...
 type ActivityAssets struct {
 	LargeImage string `json:"large_image,omitempty"` // the id for a large asset of the activity, usually a snowflake
@@ -64,28 +46,8 @@ type ActivityAssets struct {
 	SmallText  string `json:"small_text,omitempty"`  //	text displayed when hovering over the small image of the activity
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivityAssets) deepCopy() interface{} {
-	cp := &ActivityAssets{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *ActivityAssets) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivityAssets
-	if activity, ok = other.(*ActivityAssets); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivityAssets")
-		return
-	}
-
-	activity.LargeImage = a.LargeImage
-	activity.LargeText = a.LargeText
-	activity.SmallImage = a.SmallImage
-	activity.SmallText = a.SmallText
-	return
-}
+var _ Copier = (*ActivityAssets)(nil)
+var _ DeepCopier = (*ActivityAssets)(nil)
 
 // ActivitySecrets ...
 type ActivitySecrets struct {
@@ -94,27 +56,8 @@ type ActivitySecrets struct {
 	Match    string `json:"match,omitempty"`    // the secret for a specific instanced match
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivitySecrets) deepCopy() interface{} {
-	cp := &ActivitySecrets{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *ActivitySecrets) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivitySecrets
-	if activity, ok = other.(*ActivitySecrets); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivitySecrets")
-		return
-	}
-
-	activity.Join = a.Join
-	activity.Spectate = a.Spectate
-	activity.Match = a.Match
-	return
-}
+var _ Copier = (*ActivitySecrets)(nil)
+var _ DeepCopier = (*ActivitySecrets)(nil)
 
 // ActivityEmoji ...
 type ActivityEmoji struct {
@@ -123,32 +66,17 @@ type ActivityEmoji struct {
 	Animated bool      `json:"animated,omitempty"`
 }
 
+var _ Copier = (*ActivityEmoji)(nil)
+var _ DeepCopier = (*ActivityEmoji)(nil)
+
 // ActivityTimestamp ...
 type ActivityTimestamp struct {
 	Start int `json:"start,omitempty"` // unix time (in milliseconds) of when the activity started
 	End   int `json:"end,omitempty"`   // unix time (in milliseconds) of when the activity ends
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *ActivityTimestamp) deepCopy() interface{} {
-	cp := &ActivityTimestamp{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *ActivityTimestamp) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *ActivityTimestamp
-	if activity, ok = other.(*ActivityTimestamp); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *ActivityTimestamp")
-		return
-	}
-
-	activity.Start = a.Start
-	activity.End = a.End
-	return
-}
+var _ Copier = (*ActivityTimestamp)(nil)
+var _ DeepCopier = (*ActivityTimestamp)(nil)
 
 // ######################
 // ##
@@ -198,47 +126,8 @@ type Activity struct {
 }
 
 var _ Reseter = (*Activity)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *Activity) deepCopy() interface{} {
-	cp := &Activity{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (a *Activity) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var activity *Activity
-	if activity, ok = other.(*Activity); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Activity")
-		return
-	}
-
-	activity.Name = a.Name
-	activity.Type = a.Type
-	activity.ApplicationID = a.ApplicationID
-	activity.Instance = a.Instance
-	activity.Flags = a.Flags
-	activity.URL = a.URL
-	activity.Details = a.Details
-	activity.State = a.State
-
-	if a.Timestamps != nil {
-		activity.Timestamps = DeepCopy(a.Timestamps).(*ActivityTimestamp)
-	}
-	if a.Party != nil {
-		activity.Party = DeepCopy(a.Party).(*ActivityParty)
-	}
-	if a.Assets != nil {
-		activity.Assets = DeepCopy(a.Assets).(*ActivityAssets)
-	}
-	if a.Secrets != nil {
-		activity.Secrets = DeepCopy(a.Secrets).(*ActivitySecrets)
-	}
-
-	return
-}
+var _ Copier = (*Activity)(nil)
+var _ DeepCopier = (*Activity)(nil)
 
 // ---------
 
@@ -394,41 +283,11 @@ type UserPresence struct {
 	Status  string      `json:"status"`
 }
 
+var _ Copier = (*UserPresence)(nil)
+var _ DeepCopier = (*UserPresence)(nil)
+
 func (p *UserPresence) String() string {
 	return p.Status
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (p *UserPresence) deepCopy() interface{} {
-	cp := &UserPresence{}
-	_ = DeepCopyOver(cp, p)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (p *UserPresence) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var presence *UserPresence
-	if presence, ok = other.(*UserPresence); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *UserPresence")
-		return
-	}
-
-	presence.User = DeepCopy(p.User).(*User)
-	presence.GuildID = p.GuildID
-	presence.Nick = p.Nick
-	presence.Status = p.Status
-
-	if len(p.Roles) > 0 {
-		presence.Roles = make([]Snowflake, len(p.Roles))
-		copy(presence.Roles, p.Roles)
-	}
-
-	if p.Game != nil {
-		presence.Game = DeepCopy(p.Game).(*Activity)
-	}
-
-	return
 }
 
 // UserConnection ...

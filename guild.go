@@ -448,30 +448,8 @@ type Ban struct {
 	User   *User  `json:"user"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (b *Ban) deepCopy() interface{} {
-	cp := &Ban{}
-	_ = DeepCopyOver(cp, b)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (b *Ban) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var ban *Ban
-	if ban, ok = other.(*Ban); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Ban")
-		return
-	}
-
-	ban.Reason = b.Reason
-
-	if b.User != nil {
-		ban.User = DeepCopy(b.User).(*User)
-	}
-
-	return
-}
+var _ Copier = (*Ban)(nil)
+var _ DeepCopier = (*Ban)(nil)
 
 // ------------
 
@@ -481,27 +459,8 @@ type GuildEmbed struct {
 	ChannelID Snowflake `json:"channel_id"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (e *GuildEmbed) deepCopy() interface{} {
-	cp := &GuildEmbed{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (e *GuildEmbed) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var embed *GuildEmbed
-	if embed, ok = other.(*GuildEmbed); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *GuildEmbed")
-		return
-	}
-
-	embed.Enabled = e.Enabled
-	embed.ChannelID = e.ChannelID
-
-	return
-}
+var _ Copier = (*GuildEmbed)(nil)
+var _ DeepCopier = (*GuildEmbed)(nil)
 
 // -------
 
@@ -519,40 +478,8 @@ type Integration struct {
 	Account           *IntegrationAccount `json:"account"`
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (i *Integration) deepCopy() interface{} {
-	cp := &Integration{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (i *Integration) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var integration *Integration
-	if integration, ok = other.(*Integration); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Integration")
-		return
-	}
-
-	integration.ID = i.ID
-	integration.Name = i.Name
-	integration.Type = i.Type
-	integration.Enabled = i.Enabled
-	integration.Syncing = i.Syncing
-	integration.RoleID = i.RoleID
-	integration.ExpireBehavior = i.ExpireBehavior
-	integration.ExpireGracePeriod = i.ExpireGracePeriod
-
-	if i.User != nil {
-		integration.User = DeepCopy(i.User).(*User)
-	}
-	if i.Account != nil {
-		integration.Account = DeepCopy(i.Account).(*IntegrationAccount)
-	}
-
-	return
-}
+var _ Copier = (*Integration)(nil)
+var _ DeepCopier = (*Integration)(nil)
 
 // IntegrationAccount https://discord.com/developers/docs/resources/guild#integration-account-object
 type IntegrationAccount struct {
@@ -560,26 +487,8 @@ type IntegrationAccount struct {
 	Name string `json:"name"` // name of the account
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (i *IntegrationAccount) deepCopy() interface{} {
-	cp := &IntegrationAccount{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (i *IntegrationAccount) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var account *IntegrationAccount
-	if account, ok = other.(*IntegrationAccount); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *IntegrationAccount")
-		return
-	}
-
-	account.ID = i.ID
-	account.Name = i.Name
-	return
-}
+var _ Copier = (*IntegrationAccount)(nil)
+var _ DeepCopier = (*IntegrationAccount)(nil)
 
 // -------
 
@@ -602,6 +511,8 @@ var _ Reseter = (*Member)(nil)
 var _ fmt.Stringer = (*Member)(nil)
 var _ internalUpdater = (*Member)(nil)
 var _ Mentioner = (*Member)(nil)
+var _ Copier = (*Member)(nil)
+var _ DeepCopier = (*Member)(nil)
 
 func (m *Member) updateInternals() {
 	if m.User != nil {
@@ -681,36 +592,6 @@ func (m *Member) Mention() string {
 	}
 
 	return "<@!" + id.String() + ">"
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (m *Member) deepCopy() interface{} {
-	cp := &Member{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (m *Member) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var member *Member
-	if member, ok = other.(*Member); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Member")
-		return
-	}
-
-	member.GuildID = m.GuildID
-	member.Nick = m.Nick
-	member.Roles = m.Roles
-	member.JoinedAt = m.JoinedAt
-	member.Deaf = m.Deaf
-	member.Mute = m.Mute
-	member.UserID = m.UserID
-
-	if m.User != nil {
-		member.User = DeepCopy(m.User).(*User)
-	}
-	return
 }
 
 //////////////////////////////////////////////////////

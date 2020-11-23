@@ -21,32 +21,8 @@ type Webhook struct {
 	Token     string    `json:"token"`              //  |
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (w *Webhook) deepCopy() interface{} {
-	cp := &Webhook{}
-	_ = DeepCopyOver(cp, w)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (w *Webhook) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var hook *Webhook
-	if hook, ok = other.(*Webhook); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *Webhook")
-		return
-	}
-
-	hook.ID = w.ID
-	hook.GuildID = w.GuildID
-	hook.ChannelID = w.ChannelID
-	hook.User = DeepCopy(w.User).(*User)
-	hook.Name = w.Name
-	hook.Avatar = w.Avatar
-	hook.Token = w.Token
-
-	return
-}
+var _ Copier = (*Webhook)(nil)
+var _ DeepCopier = (*Webhook)(nil)
 
 //////////////////////////////////////////////////////
 //
