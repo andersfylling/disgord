@@ -75,6 +75,9 @@ type MentionChannel struct {
 	Name    string    `json:"name"`
 }
 
+var _ Copier = (*MentionChannel)(nil)
+var _ DeepCopier = (*MentionChannel)(nil)
+
 type MessageReference struct {
 	MessageID Snowflake `json:"message_id"`
 	ChannelID Snowflake `json:"channel_id"`
@@ -109,6 +112,9 @@ type messageSticker struct {
 	PreviewAsset string                   `json:"preview_asset"`
 	FormatType   MessageStickerFormatType `json:"format_type"`
 }
+
+var _ Copier = (*messageSticker)(nil)
+var _ DeepCopier = (*messageSticker)(nil)
 
 // Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
@@ -207,65 +213,6 @@ func (m *Message) updateInternals() {
 // guildID might be empty -> giving a false positive.
 func (m *Message) IsDirectMessage() bool {
 	return m.Type == MessageTypeDefault && m.GuildID.IsZero()
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (m *Message) deepCopy() interface{} {
-	cp := &Message{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (m *Message) copyOverTo(other interface{}) (err error) {
-	var message *Message
-	var valid bool
-	if message, valid = other.(*Message); !valid {
-		err = newErrorUnsupportedType("argument given is not a *Message type")
-		return
-	}
-
-	message.ID = m.ID
-	message.ChannelID = m.ChannelID
-	message.Content = m.Content
-	message.Timestamp = m.Timestamp
-	message.EditedTimestamp = m.EditedTimestamp
-	message.Tts = m.Tts
-	message.MentionEveryone = m.MentionEveryone
-	message.MentionRoles = m.MentionRoles
-	message.Pinned = m.Pinned
-	message.WebhookID = m.WebhookID
-	message.Type = m.Type
-	message.Activity = m.Activity
-	message.Application = m.Application
-	message.GuildID = m.GuildID
-	message.HasSpoilerImage = m.HasSpoilerImage
-	message.Nonce = m.Nonce
-	message.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
-	message.SpoilerTagContent = m.SpoilerTagContent
-	message.Nonce = m.Nonce
-
-	if m.Author != nil {
-		message.Author = DeepCopy(m.Author).(*User)
-	}
-
-	for _, mention := range m.Mentions {
-		message.Mentions = append(message.Mentions, DeepCopy(mention).(*User))
-	}
-
-	for _, attachment := range m.Attachments {
-		message.Attachments = append(message.Attachments, DeepCopy(attachment).(*Attachment))
-	}
-
-	for _, embed := range m.Embeds {
-		message.Embeds = append(message.Embeds, DeepCopy(embed).(*Embed))
-	}
-
-	for _, reaction := range m.Reactions {
-		message.Reactions = append(message.Reactions, DeepCopy(reaction).(*Reaction))
-	}
-
-	return
 }
 
 // Send sends this message to discord.

@@ -47,17 +47,6 @@ var _ Reseter = (*VoiceState)(nil)
 var _ Copier = (*VoiceState)(nil)
 var _ DeepCopier = (*VoiceState)(nil)
 
-//func (vst *VoiceState) Clear() {
-//
-//}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceState) deepCopy() interface{} {
-	cp := &VoiceState{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
-
 // UnmarshalJSON is used to unmarshal Discord's JSON.
 func (v *VoiceState) UnmarshalJSON(data []byte) error {
 	type s2 VoiceState
@@ -69,28 +58,6 @@ func (v *VoiceState) UnmarshalJSON(data []byte) error {
 		v.Member.UserID = v.UserID
 	}
 	return nil
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceState) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voiceState *VoiceState
-	if voiceState, ok = other.(*VoiceState); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceState")
-		return
-	}
-
-	voiceState.GuildID = v.GuildID
-	voiceState.ChannelID = v.ChannelID
-	voiceState.UserID = v.UserID
-	voiceState.SessionID = v.SessionID
-	voiceState.Deaf = v.Deaf
-	voiceState.Mute = v.Mute
-	voiceState.SelfDeaf = v.SelfDeaf
-	voiceState.SelfMute = v.SelfMute
-	voiceState.Suppress = v.Suppress
-
-	return
 }
 
 // VoiceRegion voice region structure
@@ -124,34 +91,6 @@ type VoiceRegion struct {
 var _ Reseter = (*VoiceRegion)(nil)
 var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (v *VoiceRegion) deepCopy() interface{} {
-	cp := &VoiceRegion{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (v *VoiceRegion) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var voice *VoiceRegion
-	if voice, ok = other.(*VoiceRegion); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *VoiceRegion")
-		return
-	}
-
-	voice.ID = v.ID
-	voice.Name = v.Name
-	voice.SampleHostname = v.SampleHostname
-	voice.SamplePort = v.SamplePort
-	voice.VIP = v.VIP
-	voice.Optimal = v.Optimal
-	voice.Deprecated = v.Deprecated
-	voice.Custom = v.Custom
-
-	return
-}
 
 // GetVoiceRegionsBuilder [REST] Returns an array of voice region objects that can be used when creating servers.
 //  Method                  GET

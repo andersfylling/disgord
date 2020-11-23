@@ -54,35 +54,6 @@ func (e *Emoji) Mention() string {
 	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (e *Emoji) deepCopy() interface{} {
-	cp := &Emoji{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (e *Emoji) copyOverTo(other interface{}) (err error) {
-	var emoji *Emoji
-	var ok bool
-	if emoji, ok = other.(*Emoji); !ok {
-		err = newErrorUnsupportedType("given type is not *Emoji")
-		return
-	}
-
-	emoji.ID = e.ID
-	emoji.Name = e.Name
-	emoji.Roles = e.Roles
-	emoji.RequireColons = e.RequireColons
-	emoji.Managed = e.Managed
-	emoji.Animated = e.Animated
-
-	if e.User != nil {
-		emoji.User = DeepCopy(e.User).(*User)
-	}
-	return
-}
-
 //////////////////////////////////////////////////////
 //
 // REST Methods

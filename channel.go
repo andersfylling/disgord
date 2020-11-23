@@ -48,24 +48,11 @@ type Attachment struct {
 }
 
 var _ internalUpdater = (*Attachment)(nil)
+var _ Copier = (*Attachment)(nil)
+var _ DeepCopier = (*Attachment)(nil)
 
 func (a *Attachment) updateInternals() {
 	a.SpoilerTag = strings.HasPrefix(a.Filename, AttachmentSpoilerPrefix)
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *Attachment) deepCopy() (copy interface{}) {
-	copy = &Attachment{
-		ID:       a.ID,
-		Filename: a.Filename,
-		Size:     a.Size,
-		URL:      a.URL,
-		ProxyURL: a.ProxyURL,
-		Height:   a.Height,
-		Width:    a.Width,
-	}
-
-	return
 }
 
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
@@ -198,50 +185,6 @@ func (c *Channel) Mention() string {
 func (c *Channel) Compare(other *Channel) bool {
 	// eh
 	return (c == nil && other == nil) || (other != nil && c.ID == other.ID)
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (c *Channel) deepCopy() interface{} {
-	cp := &Channel{}
-	_ = DeepCopyOver(cp, c)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *Channel) copyOverTo(other interface{}) (err error) {
-	var channel *Channel
-	var valid bool
-	if channel, valid = other.(*Channel); !valid {
-		err = newErrorUnsupportedType("argument given is not a *Channel type")
-		return
-	}
-
-	channel.ID = c.ID
-	channel.Type = c.Type
-	channel.GuildID = c.GuildID
-	channel.Position = c.Position
-	channel.PermissionOverwrites = c.PermissionOverwrites // TODO: check for pointer
-	channel.Name = c.Name
-	channel.Topic = c.Topic
-	channel.NSFW = c.NSFW
-	channel.LastMessageID = c.LastMessageID
-	channel.Bitrate = c.Bitrate
-	channel.UserLimit = c.UserLimit
-	channel.RateLimitPerUser = c.RateLimitPerUser
-	channel.Icon = c.Icon
-	channel.OwnerID = c.OwnerID
-	channel.ApplicationID = c.ApplicationID
-	channel.ParentID = c.ParentID
-	channel.LastPinTimestamp = c.LastPinTimestamp
-	channel.LastMessageID = c.LastMessageID
-
-	// add recipients if it's a DM
-	channel.Recipients = make([]*User, 0, len(c.Recipients))
-	for _, recipient := range c.Recipients {
-		channel.Recipients = append(channel.Recipients, DeepCopy(recipient).(*User))
-	}
-
-	return
 }
 
 // SendMsgString same as SendMsg, however this only takes the message content (string) as a argument for the message
