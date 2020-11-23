@@ -299,34 +299,8 @@ type UserConnection struct {
 	Integrations []*IntegrationAccount `json:"integrations"` // an array of partial server integrations
 }
 
-// DeepCopy see interface at struct.go#DeepCopier
-func (c *UserConnection) deepCopy() interface{} {
-	cp := &UserConnection{}
-	_ = DeepCopyOver(cp, c)
-	return cp
-}
-
-// CopyOverTo see interface at struct.go#Copier
-func (c *UserConnection) copyOverTo(other interface{}) (err error) {
-	var ok bool
-	var con *UserConnection
-	if con, ok = other.(*UserConnection); !ok {
-		err = newErrorUnsupportedType("given interface{} was not of type *UserConnection")
-		return
-	}
-
-	con.ID = c.ID
-	con.Name = c.Name
-	con.Type = c.Type
-	con.Revoked = c.Revoked
-
-	con.Integrations = make([]*IntegrationAccount, len(c.Integrations))
-	for i, account := range c.Integrations {
-		con.Integrations[i] = DeepCopy(account).(*IntegrationAccount)
-	}
-
-	return
-}
+var _ Copier = (*UserConnection)(nil)
+var _ DeepCopier = (*UserConnection)(nil)
 
 //////////////////////////////////////////////////////
 //

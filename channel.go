@@ -48,24 +48,11 @@ type Attachment struct {
 }
 
 var _ internalUpdater = (*Attachment)(nil)
+var _ Copier = (*Attachment)(nil)
+var _ DeepCopier = (*Attachment)(nil)
 
 func (a *Attachment) updateInternals() {
 	a.SpoilerTag = strings.HasPrefix(a.Filename, AttachmentSpoilerPrefix)
-}
-
-// DeepCopy see interface at struct.go#DeepCopier
-func (a *Attachment) deepCopy() (copy interface{}) {
-	copy = &Attachment{
-		ID:       a.ID,
-		Filename: a.Filename,
-		Size:     a.Size,
-		URL:      a.URL,
-		ProxyURL: a.ProxyURL,
-		Height:   a.Height,
-		Width:    a.Width,
-	}
-
-	return
 }
 
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
