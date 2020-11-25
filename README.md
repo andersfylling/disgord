@@ -48,27 +48,23 @@ I highly suggest reading the [Discord API documentation](https://discord.com/dev
 Simply use [this github template](https://github.com/andersfylling/disgord-starter) to create your first new bot!
 
 
-## Architecture & Behavior
-Discord provide communication in different forms. Disgord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
+## API / Interface
 
-You can think of Disgord as layered, in which case it will look something like:
-![Simple way to think about Disgord architecture from a layered perspective](docs/disgord-layered-version.png)
+> In short Disgord uses the builder pattern by respecting resources
 
-#### Events
-For Events, Disgord uses the [reactor pattern](https://dzone.com/articles/understanding-reactor-pattern-thread-based-and-eve). Every incoming event from Discord is processed and checked if any handler is registered for it, otherwise it's discarded to save time and resource use. Once a desired event is received, Disgord starts up a Go routine and runs all the related handlers in sequence; avoiding locking the need to use mutexes the handlers. 
+The `Client` or `Session` holds are the relevant methods for interacting with Discord. The API is split by resource, such that Guild related information is found in `Client.Guild(guild_id)`, while user related info is found in `Client.User(user_id)`, gateway interaction is found in `Client.Gateway()`, the same for Channel, CurrentUser, Emoji, AuditLog, etc.
 
-In addition to traditional handlers, Disgord allows you to use Go channels. Note that if you use more than one channel per event, one of the channels will randomly receive the event data; this is how go channels work. It will act as a randomized load balancer.
+Cancellation is supported by calling `.WithContext(context.Context` before the final REST call (.Get(), .Update(), etc.).
 
-But before either channels or handlers are triggered, the cache is updated.
+### Events
 
-#### REST
-The "REST manager", or the `httd.Client`, handles rate limiting for outgoing requests, and updated the internal logic on responses. All the REST methods are defined on the `disgord.Client` and checks for issues before the request is sent out.
+> every event goes through the cache layer!
 
+For Events, Disgord uses the [reactor pattern](https://dzone.com/articles/understanding-reactor-pattern-thread-based-and-eve). This supports both channels and functions. You chose your preference.
+
+### REST
 If the request is a standard GET request, the cache is always checked first to reduce delay, network traffic and load on the Discord servers. And on responses, regardless of the http method, the data is copied into the cache.
 
-Some of the REST methods (updating existing data structures) will use the builder+command pattern. While the remaining will take a simple config struct. 
-
-> Note: Methods that update a single field, like SetCurrentUserNick, does not use the builder pattern.
 ```go
 // bypasses local cache
 client.CurrentUser().Get(disgord.IgnoreCache)
@@ -83,10 +79,10 @@ deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(2*time.
 client.CurrentUser().WithContext(deadline).Get()
 ```
 
-#### Voice
+### Voice
 Whenever you want the bot to join a voice channel, a websocket and UDP connection is established. So if your bot is currently in 5 voice channels, then you have 5 websocket connections and 5 udp connections open to handle the voice traffic.
 
-#### Cache
+### Cache
 The cache tries to represent the Discord state as accurate as it can. Because of this, the cache is immutable by default. Meaning the does not allow you to reference any cached objects directly, and every incoming and outgoing data of the cache is deep copied.
 
 ## Contributing

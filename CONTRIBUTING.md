@@ -72,6 +72,13 @@ Depending on what you want to contribute to, here's a few:
 ### Introduction
 Compared to DiscordGo, Disgord does not focus on having a minimalistic implementation that should represent the discord docs. Mostly because this isn't possible (eg. setting default values in REST requests, you'll have to do something hacky to get away with that or use the builder pattern). Disgord hopes to simplify development and give developers a very configurable system. The goal is to support everything that DiscordGo does, and ontop of that; helper functions, methods, event channels, etc.
 
+
+## Architecture & Behavior
+Discord provide communication in different forms. Disgord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
+
+You can think of Disgord as layered, in which case it will look something like:
+![Simple way to think about Disgord architecture from a layered perspective](docs/disgord-layered-version.png)
+
 ### Design Decisions
 Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. Caching should be done behind the scenes. 
 
