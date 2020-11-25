@@ -189,6 +189,7 @@ func (c *client) addBehavior(b *behavior) {
 
 const (
 	discordOperations string = "discord-ops"
+	discordCloseOperations string = "discord-closed-ops"
 	heartbeating      string = "heartbeats"
 	sendHeartbeat            = 0
 )
@@ -542,7 +543,16 @@ func (c *client) receiver(ctx context.Context) {
 					default:
 					}
 				} else if c.clientType == clientTypeVoice {
+					if handler, defined := c.behaviors[discordCloseOperations].actions[closeErr.code]; defined {
+						if err := handler(closeErr); err != nil {
+							c.log.Error(c.getLogPrefix(), "did not properly handle close operation: ", closeErr)
+						}
+					}
 					switch closeErr.code {
+					case 4006:
+						// session is no longer valid, and should do a normal identify
+						c.log.Debug(c.getLogPrefix(), "discord sent a 4006 websocket code and the bot will now reconnect")
+						_ = c.Disconnect()
 					case 4014:
 						// Disconnected: Either the channel was deleted or you were kicked. Should not reconnect.
 						// https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes

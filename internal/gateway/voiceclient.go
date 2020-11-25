@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
 	"github.com/andersfylling/disgord/internal/logger"
@@ -52,7 +54,7 @@ type VoiceClient struct {
 	*client
 	conf *VoiceConfig
 
-	haveIdentifiedOnce bool
+	haveIdentifiedOnce atomic.Bool
 
 	active         chan interface{}
 	SystemShutdown chan interface{}
@@ -127,6 +129,20 @@ func (c *VoiceClient) setupBehaviors() {
 		addresses: heartbeating,
 		actions: behaviorActions{
 			sendHeartbeat: c.sendHeartbeat,
+		},
+	})
+
+	c.addBehavior(&behavior{
+		addresses: discordCloseOperations,
+		actions: behaviorActions{
+			4006: func(e interface{}) error {
+				c.haveIdentifiedOnce.Store(false)
+				return nil
+			},
+			4009: func(e interface{}) error {
+				c.haveIdentifiedOnce.Store(false)
+				return nil
+			},
 		},
 	})
 }
@@ -308,13 +324,19 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	//	c.log.Error(c.getLogPrefix(), "unable to send identify", errIdentify)
 	//}
 
+	var delayPenalty time.Duration
+	if c.haveIdentifiedOnce.Load() {
+		delayPenalty = 30 * time.Second
+		c.log.Debug(c.getLogPrefix(), "might try to resume. Increase timeout by " + delayPenalty.String())
+	}
+
 	select {
 	case evt = <-waitingChan:
 		c.log.Info(c.getLogPrefix(), "connected")
 	case <-ctx.Done():
 		c.isConnected.Store(false)
 		err = errors.New("context cancelled")
-	case <-time.After(5 * time.Second):
+	case <-time.After(5 * time.Second + delayPenalty):
 		c.isConnected.Store(false)
 		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
 	}
@@ -329,7 +351,7 @@ func (c *VoiceClient) Emit(name string, data interface{}) error {
 
 func (c *VoiceClient) sendVoiceHelloPacket() {
 	// if this is a new connection we can drop the resume packet
-	if !c.haveIdentifiedOnce {
+	if !c.haveIdentifiedOnce.Load() {
 		if err := sendVoiceIdentityPacket(c); err != nil {
 			c.log.Error(c.getLogPrefix(), err)
 		}
@@ -353,7 +375,7 @@ func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 		Token:     m.conf.Token,
 	})
 
-	m.haveIdentifiedOnce = true
+	m.haveIdentifiedOnce.Store(true)
 	return
 }
 
