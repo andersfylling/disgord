@@ -861,6 +861,8 @@ func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPos
 
 // GetMembers uses the GetGuildMembers endpoint iteratively until your query params are met.
 func (g guildQueryBuilder) GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error) {
+	const QueryLimit uint32 = 1000
+
 	if params == nil {
 		params = &GetMembersParams{
 			Limit: math.MaxUint32,
@@ -879,8 +881,8 @@ func (g guildQueryBuilder) GetMembers(params *GetMembersParams, flags ...Flag) (
 	p := getGuildMembersParams{
 		After: params.After,
 	}
-	if params.Limit == 0 || params.Limit > 1000 {
-		p.Limit = 1000
+	if params.Limit == 0 || params.Limit > QueryLimit {
+		p.Limit = int(QueryLimit)
 	} else {
 		p.Limit = int(params.Limit)
 	}
@@ -898,7 +900,7 @@ func (g guildQueryBuilder) GetMembers(params *GetMembersParams, flags ...Flag) (
 		}
 
 		// stop if we're on the last page/block of members
-		if len(ms) < 1000 {
+		if len(ms) < int(QueryLimit) {
 			break
 		}
 
@@ -906,7 +908,7 @@ func (g guildQueryBuilder) GetMembers(params *GetMembersParams, flags ...Flag) (
 		max := params.Limit << 1
 		max = max >> 1
 		lim := int(max) - len(members)
-		if lim < 1000 {
+		if lim < int(QueryLimit) {
 			if lim <= 0 {
 				// should never be less than 0
 				break

@@ -188,10 +188,10 @@ func (c *client) addBehavior(b *behavior) {
 }
 
 const (
-	discordOperations string = "discord-ops"
+	discordOperations      string = "discord-ops"
 	discordCloseOperations string = "discord-closed-ops"
-	heartbeating      string = "heartbeats"
-	sendHeartbeat            = 0
+	heartbeating           string = "heartbeats"
+	sendHeartbeat                 = 0
 )
 
 func (c *client) startBehaviors(ctx context.Context) {

@@ -327,7 +327,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	var delayPenalty time.Duration
 	if c.haveIdentifiedOnce.Load() {
 		delayPenalty = 30 * time.Second
-		c.log.Debug(c.getLogPrefix(), "might try to resume. Increase timeout by " + delayPenalty.String())
+		c.log.Debug(c.getLogPrefix(), "might try to resume. Increase timeout by "+delayPenalty.String())
 	}
 
 	select {
@@ -336,7 +336,7 @@ func (c *VoiceClient) internalConnect() (evt interface{}, err error) {
 	case <-ctx.Done():
 		c.isConnected.Store(false)
 		err = errors.New("context cancelled")
-	case <-time.After(5 * time.Second + delayPenalty):
+	case <-time.After(5*time.Second + delayPenalty):
 		c.isConnected.Store(false)
 		err = errors.New("did not receive desired event in time. opcode " + strconv.Itoa(int(opcode.VoiceReady)))
 	}
