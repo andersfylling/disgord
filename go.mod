@@ -7,6 +7,7 @@ require (
 	go.uber.org/atomic v1.4.0
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
+	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	k8s.io/gengo v0.0.0-20201113003025-83324d819ded
 	nhooyr.io/websocket v1.8.6
 )
