@@ -96,6 +96,10 @@ func (c *VoiceClient) Active() <-chan interface{} {
 }
 
 func (c *VoiceClient) setupBehaviors() {
+	nop := func(_ interface{}) error {
+		return nil
+	}
+
 	// operation handlers
 	// we manually link event methods instead of using reflection
 	c.addBehavior(&behavior{
@@ -107,6 +111,15 @@ func (c *VoiceClient) setupBehaviors() {
 			opcode.VoiceHeartbeatAck:       c.onHeartbeatAck,
 			opcode.VoiceHello:              c.onHello,
 			opcode.VoiceSessionDescription: c.onVoiceSessionDescription,
+			opcode.VoiceSpeaking:           nop,
+			opcode.VoiceClientDisconnect:   nop,
+
+			// undocumented operations
+			opcode.OpCode(10): nop,
+			opcode.OpCode(11): nop,
+			opcode.OpCode(12): nop,
+			opcode.OpCode(14): nop,
+			opcode.OpCode(15): nop,
 		},
 	})
 
