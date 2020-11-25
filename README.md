@@ -120,12 +120,6 @@ I'm trying to take over the world and then become a intergalactic war lord. Have
 ```
 
 ```Markdown
-4. Does this project re-use any code from DiscordGo?
-
-Yes. See guild.go. The permission consts are pretty much a copy from DiscordGo.
-```
-
-```Markdown
 5. Will Disgord support self bots?
 
 No. Self bots are againts ToS and could result in account termination (see
