@@ -59,9 +59,6 @@ func (guildQueryBuilderNop) UnbanUser(userID Snowflake, reason string, flags ...
 func (guildQueryBuilderNop) GetRoles(flags ...Flag) ([]*Role, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetMemberPermissions(userID Snowflake, flags ...Flag) (permissions PermissionBit, err error) {
-	return 0, nil
-}
 func (guildQueryBuilderNop) CreateRole(params *CreateGuildRoleParams, flags ...Flag) (*Role, error) {
 	return nil, nil
 }

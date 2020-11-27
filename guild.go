@@ -685,7 +685,6 @@ type GuildQueryBuilder interface {
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	// TODO-3: Add GetRole.
 	GetRoles(flags ...Flag) ([]*Role, error)
-	GetMemberPermissions(userID Snowflake, flags ...Flag) (permissions PermissionBit, err error)
 	UpdateRolePositions(params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error)
 	CreateRole(params *CreateGuildRoleParams, flags ...Flag) (*Role, error)
 	Role(roleID Snowflake) GuildRoleQueryBuilder
@@ -1055,15 +1054,6 @@ func (g guildQueryBuilder) GetRoles(flags ...Flag) ([]*Role, error) {
 	}
 
 	return getRoles(r.Execute)
-}
-
-// GetMemberPermissions is used to return the members permissions.
-func (g guildQueryBuilder) GetMemberPermissions(userID Snowflake, flags ...Flag) (permissions PermissionBit, err error) {
-	member, err := g.Member(userID).WithContext(g.ctx).Get(flags...)
-	if err != nil {
-		return 0, err
-	}
-	return member.GetPermissions(g.ctx, g.client, flags...)
 }
 
 // CreateGuildRoleParams ...

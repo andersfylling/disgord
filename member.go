@@ -18,6 +18,7 @@ type GuildMemberQueryBuilder interface {
 	RemoveRole(roleID Snowflake, flags ...Flag) error
 	Kick(reason string, flags ...Flag) error
 	Ban(params *BanMemberParams, flags ...Flag) error
+	GetPermissions(flags ...Flag) (PermissionBit, error)
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -153,4 +154,13 @@ func (g guildMemberQueryBuilder) Ban(params *BanMemberParams, flags ...Flag) (er
 
 	_, err = r.Execute()
 	return
+}
+
+// GetPermissions is used to return the members permissions.
+func (g guildMemberQueryBuilder) GetPermissions(flags ...Flag) (PermissionBit, error) {
+	member, err := g.Get(flags...)
+	if err != nil {
+		return 0, err
+	}
+	return member.GetPermissions(g.ctx, g.client, flags...)
 }
