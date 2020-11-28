@@ -20,6 +20,7 @@ const (
 	XRateLimitGlobal        = "X-RateLimit-Global"
 	RateLimitRetryAfter     = "Retry-After"
 	DisgordNormalizedHeader = "X-Disgord-Normalized-Kufdsfksduhf-S47yf"
+	XDisgordNow             = "X-Disgord-Now-fsagkhf"
 )
 
 // HeaderToTime takes the response header from Discord and extracts the
@@ -37,21 +38,37 @@ func HeaderToTime(header http.Header) (t time.Time, err error) {
 }
 
 type RateLimitResponseStructure struct {
-	Message    string `json:"message"`     // A message saying you are being rate limited.
-	RetryAfter int64  `json:"retry_after"` // The number of milliseconds to wait before submitting another request.
-	Global     bool   `json:"global"`      // A value indicating if you are being globally rate limited or not
+	Message    string  `json:"message"`     // A message saying you are being rate limited.
+	RetryAfter float64 `json:"retry_after"` // The number of seconds to wait before submitting another request.
+	Global     bool    `json:"global"`      // A value indicating if you are being globally rate limited or not
 }
 
 // NormalizeDiscordHeader overrides header fields with body content and make sure every header field
 // uses milliseconds and not seconds. Regards rate limits only.
 func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h http.Header, err error) {
+	secondsToMilli := func(s float64) int64 {
+		s *= 1000
+		return int64(s)
+	}
+
+	var now time.Time
+	if field := header.Get(XDisgordNow); field != "" {
+		n, err := strconv.ParseUint(field, 10, 64)
+		if err != nil {
+			now = time.Now()
+		} else {
+			now = time.Unix(0, int64(time.Duration(n)*time.Millisecond))
+		}
+	} else {
+		now = time.Now()
+	}
+
 	// don't care about 2 different time delay estimates for the ltBucket reset.
 	// So lets take Retry-After and X-RateLimit-Reset-After to set the reset
 	var delay int64
 	if retry := header.Get(XRateLimitResetAfter); delay == 0 && retry != "" {
 		delayF, _ := strconv.ParseFloat(retry, 64)
-		delayF *= 1000 // seconds => milliseconds
-		delay = int64(delayF)
+		delay = secondsToMilli(delayF)
 	}
 
 	// sometimes the body might be populated too
@@ -64,7 +81,7 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 			header.Set(XRateLimitGlobal, "true")
 		}
 		if delay == 0 && rateLimitBodyInfo.RetryAfter > 0 {
-			delay = rateLimitBodyInfo.RetryAfter
+			delay = secondsToMilli(rateLimitBodyInfo.RetryAfter)
 		}
 	}
 
@@ -73,17 +90,18 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 	if reset := header.Get(XRateLimitReset); reset != "" {
 		if delay == 0 {
 			epoch, _ := strconv.ParseFloat(reset, 64)
-			epoch *= 1000 // seconds => milliseconds
-			header.Set(XRateLimitReset, strconv.FormatInt(int64(epoch), 10))
+			epochMilli := secondsToMilli(epoch)
+			header.Set(XRateLimitReset, strconv.FormatInt(epochMilli, 10))
 		} else {
-			header.Set(XRateLimitReset, strconv.FormatInt(delay, 10))
+			epochNow := now.UnixNano() / int64(time.Millisecond)
+			header.Set(XRateLimitReset, strconv.FormatInt(epochNow+delay, 10))
 		}
 	} else if delay > 0 {
 		timestamp, err := HeaderToTime(header)
 		if err != nil {
 			// does add an delay, but there is no reason
 			// to go insane if timestamp could not be handled
-			timestamp = time.Now()
+			timestamp = now
 		}
 
 		reset := timestamp.Add(time.Duration(delay) * time.Millisecond)

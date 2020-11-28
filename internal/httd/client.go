@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -261,6 +262,10 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 			if err != nil {
 				return nil, nil, err
 			}
+
+			// store the current timestamp
+			epochMs := time.Now().UnixNano() / int64(time.Millisecond)
+			resp.Header.Set(XDisgordNow, strconv.FormatInt(epochMs, 10))
 
 			// decode body
 			body, err := c.decodeResponseBody(resp)
