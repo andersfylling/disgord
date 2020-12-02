@@ -12,7 +12,6 @@ const (
 	pins         = "/pins"
 	typing       = "/typing"
 	permissions  = "/permissions"
-	invite       = "/invite"
 	invites      = "/invites"
 	reactions    = "/reactions"
 	me           = "/@me"
