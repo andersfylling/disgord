@@ -42,6 +42,10 @@ type VoiceConfig struct {
 	Logger logger.Logger
 
 	SystemShutdown chan interface{}
+
+
+	// for testing only
+	conn Conn
 }
 
 func (conf *VoiceConfig) validate() {
@@ -67,6 +71,7 @@ func NewVoiceClient(conf *VoiceConfig) (client *VoiceClient, err error) {
 		conf: conf,
 	}
 	client.client, err = newClient(0, &config{
+		conn: conf.conn,
 		Logger:     conf.Logger,
 		Endpoint:   conf.Endpoint,
 		HTTPClient: conf.HTTPClient,

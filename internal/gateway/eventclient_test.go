@@ -116,7 +116,7 @@ func TestEvtClient_communication(t *testing.T) {
 		// identity
 		Browser:             "disgord",
 		Device:              "disgord",
-		GuildLargeThreshold: 250,
+		GuildLargeThreshold: 0,
 
 		// lib specific
 		Endpoint: "sfkjsdlfsf",
