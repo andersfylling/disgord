@@ -101,8 +101,8 @@ A Special thanks to the following companies for sponsoring this project!
 
 
 <div align='left'>
-  <a href="ttps://www.jetbrains.com/?from=github.com/andersfylling/disgord">
-    <img src="/docs/jetbrains-variant-4.svg" alt="JetBrains" width="200px">
+  <a href="https://www.jetbrains.com/?from=github.com/andersfylling/disgord">
+    <img src="/docs/jetbrains-variant-4.svg" alt="JetBrains" width="200px" />
   </a>
 </div>
 
@@ -110,7 +110,7 @@ A Special thanks to the following companies for sponsoring this project!
 
 <div align='left'>
   <a href="https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord">
-    <img src="/docs/icon-goland.svg" alt="GoLand" width="150px">
+    <img src="/docs/icon-goland.svg" alt="GoLand" width="150px" />
   </a>
 </div>
 
