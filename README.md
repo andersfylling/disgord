@@ -106,7 +106,7 @@ A Special thanks to the following companies for sponsoring this project!
   </a>
 </div>
 
-#### Sponsored software
+#### Software used
 
 <div align='left'>
   <a href="https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord">
