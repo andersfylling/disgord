@@ -94,10 +94,21 @@ To notify about bugs or suggesting enhancements, simply create a issue. The more
 
 To contribute with code, always create an issue before you open a pull request. This allows automating change logs and releases.
 
-## Sponsor
-A Special thanks to [JetBrains](https://www.jetbrains.com/?from=github.com/andersfylling/disgord) for sponsoring this project with a [GoLand](https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord) license!
+## Sponsors
+> [JetBrains](https://www.jetbrains.com/?from=github.com/andersfylling/disgord)
 
-<img src="/docs/icon-goland.svg" href="https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord" width="150px">
+A Special thanks to the following companies for sponsoring this project!
+
+
+<div align='left'>
+<img src="/docs/jetbrains-variant-4.svg" href="ttps://www.jetbrains.com/?from=github.com/andersfylling/disgord" alt="JetBrains" width="200px">
+</div>
+
+#### Sponsored software
+
+<div align='left'>
+<img src="/docs/icon-goland.svg" href="https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord" alt="GoLand" width="150px">
+</div>
 
 ## Q&A
 > **NOTE:** To see more examples go to the [docs/examples folder](docs/examples). See the GoDoc for a in-depth introduction on the various topics.
