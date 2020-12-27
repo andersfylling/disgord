@@ -400,6 +400,7 @@ type GuildMemberUpdate struct {
 	Roles   []Snowflake `json:"roles"`
 	User    *User       `json:"user"`
 	Nick    string      `json:"nick"`
+	Pending bool        `json:"pending"`
 	ShardID uint        `json:"-"`
 }
 

@@ -502,6 +502,7 @@ type Member struct {
 	PremiumSince Time        `json:"premium_since,omitempty"`
 	Deaf         bool        `json:"deaf"`
 	Mute         bool        `json:"mute"`
+	Pending      bool        `json:"pending"`
 
 	// custom
 	UserID Snowflake `json:"-"`
