@@ -11,6 +11,8 @@ These are mostly guidelines, not rules. Use your best judgment, and feel free to
 
 [I don't want to read this whole thing, I just have a question!!!](#i-dont-want-to-read-this-whole-thing-i-just-have-a-question)
 
+[Development environment](#development-environment)
+
 [What should I know before I get started?](#what-should-i-know-before-i-get-started)
   * [Introduction to Disgord](#introduction)
   * [Design Decisions](#design-decisions)
@@ -33,15 +35,13 @@ Use the GoLang formatter tool. Regarding commenting on REST functionality, do fo
  1. The date it was reviewed/created/updated (just write reviewed)
  2. A description of what the endpoint does (copy paste from the discord docs if possible)
  3. The complete endpoint
- 4. The rate limiter
- 5. optionally, comments. (Comment#1, Comment#2, etc.)
+ 4. optionally, comments. (Comment#1, Comment#2, etc.)
 
 Example (use spaces):
 ```go
 // CreateGuild [POST]       Create a new guild. Returns a guild object on success. Fires a Guild Create
 //                          Gateway event.
 // Endpoint                 /guilds
-// Rate limiter             /guilds
 // Discord documentation    https://discord.com/developers/docs/resources/guild#create-guild
 // Reviewed                 2018-08-16
 // Comment                  This endpoint can be used only by bots in less than 10 guilds. Creating channel
@@ -57,6 +57,57 @@ You can find a support channel for Disgord in Discord. We exist in both the Goph
  - [Discord API](https://discord.gg/HBTHbme)
 
 Using the live chat application will most likely give you a result quicker.
+
+## Development environment
+
+I personally use pre-commit, a python script that triggers a bunch of go tools on `git commit`; [https://pre-commit.com/](https://pre-commit.com/).
+
+The project is already configured so you can simply run `pre-commit install`.
+
+### testing with a live bot
+Generally you simply need to create a fork and clone it to start development. However, sometimes you might want to test the changes you've made to disgord with an actual bot.
+
+The following text assumes the directory layout:
+```go
++-+dev
+|
++-+disgord (your fork)
+|
++-+bot (some bot project)
+  +-go.mod
+  +-main.go
+```
+
+Here we see that your disgord folder and bot folder lays under the parent directory "dev". The namings are not important, it is just to illustrate the relative path between "bot" and "disgord".
+
+your `bot/go.mod` file will include at least disgord as a dependency. However, this links to the github repository found online. To change this to your local fork of disgord, a "replace directive" can be added to the `bot/go.mod` file.
+
+Before:
+```go
+module github.com/myusername/bot
+
+go 1.15
+
+require (
+	github.com/andersfylling/disgord v0.24.0
+)
+```
+
+After:
+```go
+module github.com/myusername/bot
+
+go 1.15
+
+require (
+	github.com/andersfylling/disgord v0.24.0
+)
+
+replace github.com/andersfylling/disgord => ../disgord
+```
+
+We have now stated that the `github.com/andersfylling/disgord` dependency can be found at the relative path `../disgord`. Such that any time you make changes to your disgord folder and run/build your bot, it will fetch the disgord code from `../disgord`. This allows you to test your changes immediately.
+
 
 ## What Should I Know Before I Get Started?
 Depending on what you want to contribute to, here's a few:
@@ -178,7 +229,7 @@ Instead, edit the templates in `generate/` or the files they're based on (see pr
 
 `go test ./... -race`
 
-Do not overdo it. Hardening something that interacts with the Discord API is forced to be rewritten, and possibly tests deleted as discord can suddenly change something. Public functions must be tested, but internal logic does not need a direct test as that allows the internal logic to be refactored in a productive manner. If it's complex logic large function, then yes, definitely test that.
+Do not overdo it. Hardening something that interacts with the Discord API is forced to be rewritten, and possibly tests deleted as discord can suddenly change something. Public functions should however be well tested.
 
 In Disgord you will see both local unit tests and unit tests that verify directly against the Discord API. Note that the "live" tests (that depends on the Discord API) needs to be activated through environment variables. However, these should only be run when some breaking changes to the REST implementation changes. You will most likely never have to worry about it.
 
@@ -205,7 +256,7 @@ We don't currently have a template for this. Provide benchmarks or demonstration
 Remember to run go fmt to properly format your code and add unit tests if you provide new content. Benchmarks are also welcome as we can use these in future decisions (!).
 
 ### Tests
-Make them readable. Tests that is for the public interface of Disgord, should be placed in the test sub-pkg, you can also do integration tests here against the Discord API. Tests for unexported or very specific/local behaviour, can be placed in the disgord pkg directly.
+Make them readable. Tests that is for the public interface of Disgord, should be placed in a file with _integration_test suffix (also remember the integration build tag!).
 
 ### Pull Requests
 If your PR is not ready yet, make it a Draft.
