@@ -82,4 +82,4 @@ repos:
         # Style Checkers
         #
         #-   id: go-lint
-        -   id: go-critic
+        #-   id: go-critic

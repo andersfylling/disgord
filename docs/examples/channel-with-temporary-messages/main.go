@@ -1,8 +1,8 @@
-
 package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -24,7 +24,7 @@ const MessageLifeTime = 5 // seconds
 func deleteDeadMessage(session disgord.Session, msg *disgord.Message, lifetime time.Duration) {
 	<-time.After(lifetime)
 	if err := session.Channel(msg.ChannelID).Message(msg.ID).Delete(); err != nil {
-		log.Errorf("failed to delete message: %w", err)
+		log.Error(fmt.Errorf("failed to delete message: %w", err))
 	}
 }
 
