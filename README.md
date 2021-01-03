@@ -140,7 +140,7 @@ I'm trying to take over the world and then become a intergalactic war lord. Have
 ```
 
 ```Markdown
-5. Will Disgord support self bots?
+4. Will Disgord support self bots?
 
 No. Self bots are againts ToS and could result in account termination (see
 https://support.discord.com/hc/en-us/articles/115002192352-Automated-user-accounts-self-bots-). 
