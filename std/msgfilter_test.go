@@ -98,6 +98,52 @@ func TestMsgFilter_IsByBot(t *testing.T) {
 	}
 }
 
+func TestMsgFilter_NotByWebhook(t *testing.T) {
+	var botID disgord.Snowflake = 123
+	var webhookID disgord.Snowflake = 456
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
+	evt := &disgord.MessageCreate{
+		Message: &disgord.Message{
+			Author:    &disgord.User{Bot: false},
+			WebhookID: webhookID,
+		},
+	}
+
+	result := filter.NotByWebhook(evt)
+	if result != nil {
+		t.Error("expected a match")
+	}
+
+	evt.Message.WebhookID = 0
+	result = filter.NotByWebhook(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+}
+
+func TestMsgFilter_IsByWebhook(t *testing.T) {
+	var botID disgord.Snowflake = 123
+	var webhookID disgord.Snowflake = 456
+	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
+	evt := &disgord.MessageCreate{
+		Message: &disgord.Message{
+			Author:    &disgord.User{Bot: false},
+			WebhookID: 0,
+		},
+	}
+
+	result := filter.IsByWebhook(evt)
+	if result != nil {
+		t.Error("expected a match")
+	}
+
+	evt.Message.WebhookID = webhookID
+	result = filter.IsByWebhook(evt)
+	if result == nil {
+		t.Error("expected pass-through")
+	}
+}
+
 func TestMsgFilter_ContainsBotMention(t *testing.T) {
 	var botID disgord.Snowflake = 123
 	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})

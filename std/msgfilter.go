@@ -68,6 +68,14 @@ func (f *msgFilter) IsByBot(evt interface{}) interface{} {
 	return messageIsBot(evt, true)
 }
 
+func (f *msgFilter) NotByWebhook(evt interface{}) interface{} {
+	return messageIsWebhook(evt, false)
+}
+
+func (f *msgFilter) IsByWebhook(evt interface{}) interface{} {
+	return messageIsWebhook(evt, true)
+}
+
 func (f *msgFilter) HasBotMentionPrefix(evt interface{}) interface{} {
 	return messageHasPrefix(evt, mentionString(f.botID))
 }
