@@ -99,48 +99,82 @@ func TestMsgFilter_IsByBot(t *testing.T) {
 }
 
 func TestMsgFilter_NotByWebhook(t *testing.T) {
-	var botID disgord.Snowflake = 123
 	var webhookID disgord.Snowflake = 456
+	var botID disgord.Snowflake = 123
+
+	messageWithWebhookID := &disgord.Message{
+		Author:    &disgord.User{},
+		WebhookID: webhookID,
+	}
+
+	messageWithoutWebhookID := &disgord.Message{
+		Author:    &disgord.User{},
+		WebhookID: 0,
+	}
+
+	testCases := []struct {
+		name              string
+		evt               interface{}
+		shouldPassThrough bool
+	}{
+		{"MessageCreate_FromWebhook", &disgord.MessageCreate{Message: messageWithWebhookID}, false},
+		{"MessageUpdate_FromWebhook", &disgord.MessageUpdate{Message: messageWithWebhookID}, false},
+		{"MessageCreate_NotWebhook", &disgord.MessageCreate{Message: messageWithoutWebhookID}, true},
+		{"MessageUpdate_NotWebhook", &disgord.MessageUpdate{Message: messageWithoutWebhookID}, true},
+	}
+
 	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
-	evt := &disgord.MessageCreate{
-		Message: &disgord.Message{
-			Author:    &disgord.User{Bot: false},
-			WebhookID: webhookID,
-		},
-	}
 
-	result := filter.NotByWebhook(evt)
-	if result != nil {
-		t.Error("expected a match")
-	}
-
-	evt.Message.WebhookID = 0
-	result = filter.NotByWebhook(evt)
-	if result == nil {
-		t.Error("expected pass-through")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := filter.NotByWebhook(tc.evt)
+			if tc.shouldPassThrough && result == nil {
+				t.Error("expected to passthrough")
+			}
+			if !tc.shouldPassThrough && result != nil {
+				t.Error("expected a filter match")
+			}
+		})
 	}
 }
 
 func TestMsgFilter_IsByWebhook(t *testing.T) {
-	var botID disgord.Snowflake = 123
 	var webhookID disgord.Snowflake = 456
+	var botID disgord.Snowflake = 123
+
+	messageWithWebhookID := &disgord.Message{
+		Author:    &disgord.User{},
+		WebhookID: webhookID,
+	}
+
+	messageWithoutWebhookID := &disgord.Message{
+		Author:    &disgord.User{},
+		WebhookID: 0,
+	}
+
+	testCases := []struct {
+		name              string
+		evt               interface{}
+		shouldPassThrough bool
+	}{
+		{"MessageCreate_FromWebhook", &disgord.MessageCreate{Message: messageWithWebhookID}, true},
+		{"MessageUpdate_FromWebhook", &disgord.MessageUpdate{Message: messageWithWebhookID}, true},
+		{"MessageCreate_NotWebhook", &disgord.MessageCreate{Message: messageWithoutWebhookID}, false},
+		{"MessageUpdate_NotWebhook", &disgord.MessageUpdate{Message: messageWithoutWebhookID}, false},
+	}
+
 	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{id: botID})
-	evt := &disgord.MessageCreate{
-		Message: &disgord.Message{
-			Author:    &disgord.User{Bot: false},
-			WebhookID: 0,
-		},
-	}
 
-	result := filter.IsByWebhook(evt)
-	if result != nil {
-		t.Error("expected a match")
-	}
-
-	evt.Message.WebhookID = webhookID
-	result = filter.IsByWebhook(evt)
-	if result == nil {
-		t.Error("expected pass-through")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := filter.IsByWebhook(tc.evt)
+			if tc.shouldPassThrough && result == nil {
+				t.Error("expected to passthrough")
+			}
+			if !tc.shouldPassThrough && result != nil {
+				t.Error("expected a filter match")
+			}
+		})
 	}
 }
 
