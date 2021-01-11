@@ -590,7 +590,7 @@ func TestREST(t *testing.T) {
 			t.Error("failed to fetched members over REST, ", err)
 		}
 
-		if len(members) > 0 {
+		if len(members) == 0 {
 			t.Error("expected there to be members. None found.")
 		}
 	})
