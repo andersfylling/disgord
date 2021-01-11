@@ -582,6 +582,20 @@ func TestREST(t *testing.T) {
 	})
 
 	// -------------------
+	// Members
+	// -------------------
+	t.Run("members", func(t *testing.T) {
+		members, err := c.Guild(guildTypical.ID).GetMembers(nil, IgnoreCache)
+		if err != nil {
+			t.Error("failed to fetched members over REST, ", err)
+		}
+
+		if len(members) > 0 {
+			t.Error("expected there to be members. None found.")
+		}
+	})
+
+	// -------------------
 	// Audit Logs
 	// -------------------
 	// t.Run("audit-logs", func(t *testing.T) {

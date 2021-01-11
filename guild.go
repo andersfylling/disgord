@@ -1508,6 +1508,14 @@ func (g guildQueryBuilder) getGuildMembers(params *getGuildMembersParams, flags 
 		return nil, err
 	}
 
+	if !ignoreCache(flags...) {
+		p := &GetMembersParams{After: params.After, Limit: uint32(params.Limit)}
+		members, err := g.client.cache.GetMembers(g.gid, p)
+		if err == nil && len(members) > 0 {
+			return members, nil
+		}
+	}
+
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildMembers(g.gid) + params.URLQueryString(),
 		Ctx:      g.ctx,
