@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"errors"
+	"sort"
 	"sync"
 
 	"github.com/andersfylling/disgord/internal/crs"
@@ -298,6 +299,50 @@ func (c *CacheLFUImmutable) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, 
 	c.Patch(vsu)
 
 	return vsu, nil
+}
+
+func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err error) {
+	if evt, err = c.CacheNop.GuildMembersChunk(data); err != nil {
+		return nil, err
+	}
+	for i := range evt.Members {
+		evt.Members[i].User = nil
+	}
+	sort.Slice(evt.Members, func(i, j int) bool {
+		return evt.Members[i].UserID < evt.Members[j].UserID
+	})
+
+	c.Guilds.Lock()
+	cachedGuild, exists := c.Guilds.Get(evt.GuildID)
+	if !exists || cachedGuild == nil {
+		cachedGuild = c.Guilds.CreateCacheableItem(&Guild{
+			ID: evt.GuildID,
+		})
+		c.Guilds.Set(evt.GuildID, cachedGuild)
+	}
+	c.Guilds.Unlock()
+
+	guild := cachedGuild.Val.(*Guild)
+
+	mutex := c.Mutex(&c.Guilds, evt.GuildID)
+	mutex.Lock()
+
+	// TODO: replace instead of re-allocating?
+	//  should be designed for large guilds
+	members := make([]*Member, 0, len(guild.Members)+len(evt.Members))
+	for i := range guild.Members {
+		pos := sort.Search(len(evt.Members), func(si int) bool {
+			return evt.Members[si].UserID >= guild.Members[i].UserID
+		})
+		if pos == len(evt.Members) {
+			members = append(members, guild.Members[i])
+		}
+	}
+	members = append(members, evt.Members...)
+	guild.Members = members
+
+	mutex.Unlock()
+	return c.CacheNop.GuildMembersChunk(data)
 }
 
 func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {

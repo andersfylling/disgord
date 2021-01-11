@@ -77,7 +77,7 @@ repos:
         #
         # Formatters
         -   id: go-fmt
-        -   id: go-imports # Replaces go-fmt
+        #-   id: go-imports
         #
         # Style Checkers
         #
