@@ -191,6 +191,7 @@ func (g *Guild) updateInternals() {
 		g.Channels[i].GuildID = g.ID
 	}
 	for i := range g.Members {
+		g.Members[i].GuildID = g.ID
 		g.Members[i].updateInternals()
 	}
 }
