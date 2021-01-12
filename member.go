@@ -41,7 +41,6 @@ func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQue
 func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
 	if !ignoreCache(flags...) {
 		if member, _ := g.client.cache.GetMember(g.gid, g.uid); member != nil {
-			member.GuildID = g.gid
 			return member, nil
 		}
 	}
