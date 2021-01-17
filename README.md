@@ -22,7 +22,11 @@
 </div>
 
 ## About
-Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching, helper functions, middlewares and lifetime controllers for event handlers, etc.
+Go module with context support that handles some of the difficulties from interacting with Discord's bot interface for you; websocket sharding, auto-scaling of websocket connections, advanced caching (cache replacement strategies to restrict memory usage), helper functions, middlewares and lifetime controllers for event handlers, etc.
+
+This package is intented to be used with the gateway to keep the cache up to date. You should treat data as read only, since they simply represent the discord state. To change the discord state you can use the REST methods and the gateway commands, which will eventually update your local state as well.
+
+If you want a more lightweight experience you can disable/reject events that you do not need or want to keep track of. Be careful as this might break certain things.
 
 ## Warning
 Remember to read the docs/code for whatever version of disgord you are using. This README file tries reflects the latest state in the develop branch.
@@ -30,7 +34,7 @@ Remember to read the docs/code for whatever version of disgord you are using. Th
 By default DM capabilities are disabled. If you want to activate these, or some, specify their related intent.
 ```go
 client := disgord.New(disgord.Config{
-    Intents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
+    DMIntents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
 })
 ```
 
