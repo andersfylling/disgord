@@ -133,19 +133,6 @@ var _ DeepCopier = (*Activity)(nil)
 
 // ---------
 
-const (
-	userOEmail = 0x1 << iota
-	userOAvatar
-	userOToken
-	userOVerified
-	userOMFAEnabled
-	userOBot
-	userOPremiumType
-	userOLocale
-	userOFlags
-	userOPublicFlags
-)
-
 type UserFlag uint64
 
 const (
