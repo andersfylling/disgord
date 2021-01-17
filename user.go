@@ -114,7 +114,7 @@ type Activity struct {
 	Name          string             `json:"name"`
 	Type          ActivityType       `json:"type"`
 	URL           string             `json:"url"`
-	CreatedAt int `json:"created_at"`
+	CreatedAt     int                `json:"created_at"`
 	Timestamps    *ActivityTimestamp `json:"timestamps"`
 	ApplicationID Snowflake          `json:"application_id"`
 	Details       string             `json:"details"`
@@ -137,7 +137,7 @@ type UserFlag uint64
 
 const (
 	UserFlagNone            UserFlag = 0
-	UserFlagDiscordEmployee UserFlag = 0b1 << iota
+	UserFlagDiscordEmployee UserFlag = 1 << iota
 	UserFlagDiscordPartner
 	UserFlagHypeSquadEvents
 	UserFlagBugHunterLevel1
@@ -161,6 +161,8 @@ type PremiumType int
 
 func (p PremiumType) String() (t string) {
 	switch p {
+	case PremiumTypeNone:
+		t = "None"
 	case PremiumTypeNitroClassic:
 		t = "Nitro Classic"
 	case PremiumTypeNitro:
@@ -175,11 +177,9 @@ func (p PremiumType) String() (t string) {
 var _ fmt.Stringer = (*PremiumType)(nil)
 
 const (
-	// PremiumTypeNitroClassic includes app perks like animated emojis and avatars, but not games
-	PremiumTypeNitroClassic PremiumType = 1
-
-	// PremiumTypeNitro includes app perks as well as the games subscription service
-	PremiumTypeNitro PremiumType = 2
+	PremiumTypeNone PremiumType = iota
+	PremiumTypeNitroClassic
+	PremiumTypeNitro
 )
 
 // User the Discord user object which is reused in most other data structures.
@@ -187,15 +187,15 @@ type User struct {
 	ID            Snowflake     `json:"id,omitempty"`
 	Username      string        `json:"username,omitempty"`
 	Discriminator Discriminator `json:"discriminator,omitempty"`
-	Email         string        `json:"email,omitempty"`
-	Avatar        string        `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA //TODO: pointer?
-	Token         string        `json:"token,omitempty"`
-	Verified      bool          `json:"verified,omitempty"`
-	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
+	Avatar        string        `json:"avatar"` // data:image/jpeg;base64,BASE64_ENCODED_JPEG_IMAGE_DATA
 	Bot           bool          `json:"bot,omitempty"`
-	PremiumType   PremiumType   `json:"premium_type,omitempty"`
+	System        bool          `json:"system,omitempty"`
+	MFAEnabled    bool          `json:"mfa_enabled,omitempty"`
 	Locale        string        `json:"locale,omitempty"`
+	Verified      bool          `json:"verified,omitempty"`
+	Email         string        `json:"email,omitempty"`
 	Flags         UserFlag      `json:"flag,omitempty"`
+	PremiumType   PremiumType   `json:"premium_type,omitempty"`
 	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
 }
 

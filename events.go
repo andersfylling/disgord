@@ -474,18 +474,18 @@ type GuildRoleDelete struct {
 
 type ClientStatus struct {
 	Desktop string `json:"desktop"`
-	Mobile string `json:"mobile"`
-	Web string `json:"web"`
+	Mobile  string `json:"mobile"`
+	Web     string `json:"web"`
 }
 
 // PresenceUpdate user's presence was updated in a guild
 type PresenceUpdate struct {
-	User       *User       `json:"user"`
-	GuildID    Snowflake   `json:"guild_id"`
-	Status     string      `json:"status"`
-	Activities []*Activity `json:"activities"`
+	User         *User        `json:"user"`
+	GuildID      Snowflake    `json:"guild_id"`
+	Status       string       `json:"status"`
+	Activities   []*Activity  `json:"activities"`
 	ClientStatus ClientStatus `json:"client_status"`
-	ShardID uint `json:"-"`
+	ShardID      uint         `json:"-"`
 }
 
 func (h *PresenceUpdate) Game() (*Activity, error) {
