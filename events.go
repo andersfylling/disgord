@@ -475,14 +475,10 @@ type GuildRoleDelete struct {
 // PresenceUpdate user's presence was updated in a guild
 type PresenceUpdate struct {
 	User       *User       `json:"user"`
-	RoleIDs    []Snowflake `json:"roles"`
 	GuildID    Snowflake   `json:"guild_id"`
+	Status     string      `json:"status"`
 	Activities []*Activity `json:"activities"`
-
-	// Status either "idle", "dnd", "online", or "offline"
-	// TODO: constants somewhere..
-	Status  string `json:"status"`
-	ShardID uint   `json:"-"`
+	ShardID uint `json:"-"`
 }
 
 func (h *PresenceUpdate) Game() (*Activity, error) {
