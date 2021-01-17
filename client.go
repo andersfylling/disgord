@@ -71,6 +71,15 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		}
 	}
 
+	if conf.Intents > 0 {
+		conf.DMIntents |= conf.Intents
+	}
+
+	const DMIntents = IntentDirectMessageReactions | IntentDirectMessages | IntentDirectMessageTyping
+	if validRange := conf.DMIntents & DMIntents; (conf.DMIntents ^ validRange) > 0 {
+		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
+	}
+
 	if conf.IgnoreEvents != nil {
 		conf.Logger.Info("Config.IgnoreEvents has been deprecated. Use Config.RejectEvents instead")
 	}
@@ -187,8 +196,16 @@ type Config struct {
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
-	// For direct communication with you bot you must specify intents (eg.
+	// For direct communication with you bot you must specify intents
+	// deprecated: use DMIntents (values here are copied to DMIntents for now)
 	Intents Intent
+
+	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
+	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
+	// such optimizations can be handled in the background).
+	//
+	// You can see sent intents by enabling debug logging. Remember that derived from RejectIntents are appended.
+	DMIntents Intent
 
 	// your project name, name of bot, or application
 	ProjectName string

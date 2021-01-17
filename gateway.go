@@ -68,7 +68,7 @@ func (g gatewayQueryBuilder) Connect() (err error) {
 		Logger:       g.client.config.Logger,
 		ShutdownChan: g.client.config.shutdownChan,
 		IgnoreEvents: g.client.config.RejectEvents,
-		Intents:      g.client.config.Intents,
+		Intents:      g.client.config.DMIntents,
 		EventChan:    g.client.eventChan,
 		DisgordInfo:  LibraryInfo(),
 		ProjectName:  g.client.config.ProjectName,

@@ -63,6 +63,49 @@ func ensure(inputs ...interface{}) {
 //
 //////////////////////////////////////////////////////
 
+func TestClient_ConfigDMIntent(t *testing.T) {
+	t.Run("transfer-old", func(t *testing.T) {
+		client, err := NewClient(context.Background(), Config{
+			Intents: IntentDirectMessages,
+			BotToken: "test",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if client.config.DMIntents != IntentDirectMessages {
+			t.Error("config.Intents was not transferred to config.DMIntents")
+		}
+	})
+	t.Run("valid", func(t *testing.T) {
+		_, err := NewClient(context.Background(), Config{
+			DMIntents: IntentDirectMessages | IntentDirectMessageTyping | IntentDirectMessageReactions,
+			BotToken: "test",
+		})
+		if err != nil {
+			t.Error(err)
+		}
+	})
+	t.Run("invalid", func(t *testing.T) {
+		_, err := NewClient(context.Background(), Config{
+			DMIntents: IntentGuildBans,
+			BotToken: "test",
+		})
+		if err == nil {
+			t.Error("guild related intents did not cause an error")
+		}
+	})
+	t.Run("invalid-old", func(t *testing.T) {
+		_, err := NewClient(context.Background(), Config{
+			Intents: IntentGuildBans,
+			BotToken: "test",
+		})
+		if err == nil {
+			t.Error("guild related intents did not cause an error")
+		}
+	})
+}
+
 func TestOn(t *testing.T) {
 	c := New(Config{
 		BotToken:     "sdkjfhdksfhskdjfhdkfjsd",
