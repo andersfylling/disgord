@@ -409,9 +409,14 @@ type GuildMemberUpdate struct {
 
 // GuildMembersChunk response to Request Guild Members
 type GuildMembersChunk struct {
-	GuildID Snowflake `json:"guild_id"`
-	Members []*Member `json:"members"`
-	ShardID uint      `json:"-"`
+	GuildID    Snowflake         `json:"guild_id"`
+	Members    []*Member         `json:"members"`
+	ChunkIndex uint              `json:"chunk_index"`
+	ChunkCount uint              `json:"chunk_count"`
+	NotFound   []interface{}     `json:"not_found"`
+	Presences  []*PresenceUpdate `json:"presences"`
+	Nonce      string            `json:"nonce"`
+	ShardID    uint              `json:"-"`
 }
 
 var _ internalUpdater = (*GuildMembersChunk)(nil)
