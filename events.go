@@ -423,7 +423,11 @@ var _ internalUpdater = (*GuildMembersChunk)(nil)
 
 func (g *GuildMembersChunk) updateInternals() {
 	for i := range g.Members {
+		g.Members[i].GuildID = g.GuildID
 		g.Members[i].updateInternals()
+	}
+	for i := range g.Presences {
+		executeInternalUpdater(g.Presences[i])
 	}
 }
 
