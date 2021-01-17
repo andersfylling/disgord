@@ -78,8 +78,11 @@ func (r *Role) SetGuildID(id Snowflake) {
 type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 
-	Update(flags ...Flag) (builder UpdateGuildRoleBuilder)
+	UpdateBuilder(flags ...Flag) (builder UpdateGuildRoleBuilder)
 	Delete(flags ...Flag) error
+
+	// Deprecated: use UpdateBuilder
+	Update(flags ...Flag) UpdateGuildRoleBuilder
 }
 
 func (g guildQueryBuilder) Role(id Snowflake) GuildRoleQueryBuilder {
@@ -100,7 +103,7 @@ func (g guildRoleQueryBuilder) WithContext(ctx context.Context) GuildRoleQueryBu
 
 // UpdateRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
-func (g guildRoleQueryBuilder) Update(flags ...Flag) UpdateGuildRoleBuilder {
+func (g guildRoleQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildRoleBuilder {
 	builder := &updateGuildRoleBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Role{}

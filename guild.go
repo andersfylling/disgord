@@ -539,11 +539,8 @@ type GuildQueryBuilderCaller interface {
 }
 
 func (m *Member) UpdateNick(ctx context.Context, client GuildQueryBuilderCaller, nickname string, flags ...Flag) error {
-	return client.
-		Guild(m.GuildID).
-		Member(m.UserID).
-		WithContext(ctx).
-		Update(flags...).
+	builder := client.Guild(m.GuildID).Member(m.UserID).WithContext(ctx).UpdateBuilder(flags...)
+	return builder.
 		SetNick(nickname).
 		Execute()
 }
@@ -670,8 +667,11 @@ type GuildQueryBuilder interface {
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error)
-	Update(flags ...Flag) UpdateGuildBuilder
+	UpdateBuilder(flags ...Flag) UpdateGuildBuilder
 	Delete(flags ...Flag) error
+
+	// Deprecated: Use UpdateBuilder
+	Update(flags ...Flag) UpdateGuildBuilder
 
 	CreateChannel(name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
 	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams, flags ...Flag) error
@@ -703,7 +703,7 @@ type GuildQueryBuilder interface {
 	SyncIntegration(integrationID Snowflake, flags ...Flag) error
 
 	GetEmbed(flags ...Flag) (*GuildEmbed, error)
-	UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder
+	UpdateEmbedBuilder(flags ...Flag) UpdateGuildEmbedBuilder
 	GetVanityURL(flags ...Flag) (*PartialInvite, error)
 	GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder
 
@@ -756,7 +756,7 @@ func (g guildQueryBuilder) Get(flags ...Flag) (guild *Guild, err error) {
 }
 
 // Update is used to create a guild update builder.
-func (g guildQueryBuilder) Update(flags ...Flag) UpdateGuildBuilder {
+func (g guildQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildBuilder {
 	builder := &updateGuildBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Guild{}
@@ -1292,7 +1292,7 @@ func (g guildQueryBuilder) GetEmbed(flags ...Flag) (*GuildEmbed, error) {
 
 // UpdateEmbed Modify a guild embed object for the guild. All attributes may be passed in with JSON and
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
-func (g guildQueryBuilder) UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder {
+func (g guildQueryBuilder) UpdateEmbedBuilder(flags ...Flag) UpdateGuildEmbedBuilder {
 	builder := &updateGuildEmbedBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &GuildEmbed{}
@@ -1409,7 +1409,10 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmojiParams, flags ...
 
 // KickVoiceParticipant is used to kick someone from voice.
 func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
-	return g.Member(userID).WithContext(g.ctx).Update().KickFromVoice().Execute()
+	builder := g.Member(userID).WithContext(g.ctx).UpdateBuilder()
+	return builder.
+		KickFromVoice().
+		Execute()
 }
 
 // GetWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.

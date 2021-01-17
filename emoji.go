@@ -70,8 +70,11 @@ type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder
 
 	Get(flags ...Flag) (*Emoji, error)
-	Update(flags ...Flag) UpdateGuildEmojiBuilder
+	UpdateBuilder(flags ...Flag) UpdateGuildEmojiBuilder
 	Delete(flags ...Flag) error
+
+	// Deprecated: use UpdateBuilder
+	Update(flags ...Flag) UpdateGuildEmojiBuilder
 }
 
 func (g guildQueryBuilder) Emoji(emojiID Snowflake) GuildEmojiQueryBuilder {
@@ -111,7 +114,7 @@ func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
 
 // UpdateEmoji Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) Update(flags ...Flag) UpdateGuildEmojiBuilder {
+func (g guildEmojiQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildEmojiBuilder {
 	builder := &updateGuildEmojiBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Emoji{}

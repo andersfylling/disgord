@@ -26,7 +26,7 @@ func (guildQueryBuilderNop) GetChannels(flags ...Flag) ([]*Channel, error) {
 func (guildQueryBuilderNop) GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) Update(flags ...Flag) UpdateGuildBuilder {
+func (guildQueryBuilderNop) UpdateBuilder(flags ...Flag) UpdateGuildBuilder {
 	return nil
 }
 func (guildQueryBuilderNop) Delete(flags ...Flag) error {
@@ -95,7 +95,7 @@ func (guildQueryBuilderNop) SyncIntegration(integrationID Snowflake, flags ...Fl
 func (guildQueryBuilderNop) GetEmbed(flags ...Flag) (*GuildEmbed, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UpdateEmbed(flags ...Flag) UpdateGuildEmbedBuilder {
+func (guildQueryBuilderNop) UpdateEmbedBuilder(flags ...Flag) UpdateGuildEmbedBuilder {
 	return nil
 }
 func (guildQueryBuilderNop) GetVanityURL(flags ...Flag) (*PartialInvite, error) {
@@ -137,7 +137,7 @@ func (c currentUserQueryBuilderNop) WithContext(_ context.Context) CurrentUserQu
 func (currentUserQueryBuilderNop) Get(_ ...Flag) (*User, error) {
 	return nil, nil
 }
-func (currentUserQueryBuilderNop) Update(_ ...Flag) UpdateCurrentUserBuilder {
+func (currentUserQueryBuilderNop) UpdateBuilder(_ ...Flag) UpdateCurrentUserBuilder {
 	return nil
 }
 func (currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams, _ ...Flag) ([]*Guild, error) {

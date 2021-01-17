@@ -139,6 +139,9 @@ type VoiceChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
+	UpdateBuilder(flags ...Flag) *updateChannelBuilder
+
+	// Deprecated: use UpdateBuilder
 	Update(flags ...Flag) *updateChannelBuilder
 
 	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for

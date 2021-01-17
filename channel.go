@@ -253,6 +253,9 @@ type ChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
+	UpdateBuilder(flags ...Flag) *updateChannelBuilder
+
+	// Deprecated: use UpdateBuilder
 	Update(flags ...Flag) *updateChannelBuilder
 
 	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -373,7 +376,7 @@ func (c channelQueryBuilder) Get(flags ...Flag) (*Channel, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2018-06-07
 //  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c channelQueryBuilder) Update(flags ...Flag) (builder *updateChannelBuilder) {
+func (c channelQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateChannelBuilder) {
 	builder = &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return c.client.pool.channel.Get()

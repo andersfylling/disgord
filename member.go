@@ -13,12 +13,15 @@ type GuildMemberQueryBuilder interface {
 	WithContext(ctx context.Context) GuildMemberQueryBuilder
 
 	Get(flags ...Flag) (*Member, error)
-	Update(flags ...Flag) UpdateGuildMemberBuilder
+	UpdateBuilder(flags ...Flag) UpdateGuildMemberBuilder
 	AddRole(roleID Snowflake, flags ...Flag) error
 	RemoveRole(roleID Snowflake, flags ...Flag) error
 	Kick(reason string, flags ...Flag) error
 	Ban(params *BanMemberParams, flags ...Flag) error
 	GetPermissions(flags ...Flag) (PermissionBit, error)
+
+	// Deprecated: use UpdateBuilder
+	Update(flags ...Flag) UpdateGuildMemberBuilder
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -65,7 +68,7 @@ func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
 }
 
 // UpdateMember is used to create a builder to update a guild member.
-func (g guildMemberQueryBuilder) Update(flags ...Flag) UpdateGuildMemberBuilder {
+func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberBuilder {
 	builder := &updateGuildMemberBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Member{

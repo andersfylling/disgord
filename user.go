@@ -387,6 +387,9 @@ type CurrentUserQueryBuilder interface {
 	Get(flags ...Flag) (*User, error)
 
 	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
+	UpdateBuilder(flags ...Flag) UpdateCurrentUserBuilder
+
+	// Deprecated: use UpdateBuilder
 	Update(flags ...Flag) UpdateCurrentUserBuilder
 
 	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
@@ -454,7 +457,7 @@ func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
 //  Reviewed                2019-02-18
 //  Comment                 -
-func (c currentUserQueryBuilder) Update(flags ...Flag) UpdateCurrentUserBuilder {
+func (c currentUserQueryBuilder) UpdateBuilder(flags ...Flag) UpdateCurrentUserBuilder {
 	builder := &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = flags

@@ -292,7 +292,7 @@ type MessageQueryBuilder interface {
 
 	// UpdateMessage Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	Update(flags ...Flag) *updateMessageBuilder
+	UpdateBuilder(flags ...Flag) *updateMessageBuilder
 	SetContent(content string) (*Message, error)
 	SetEmbed(embed *Embed) (*Message, error)
 
@@ -367,7 +367,7 @@ func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) Update(flags ...Flag) (builder *updateMessageBuilder) {
+func (m messageQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateMessageBuilder) {
 	builder = &updateMessageBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Message{}
@@ -491,11 +491,17 @@ func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
 //////////////////////////////////////////////////////
 
 func (m messageQueryBuilder) SetContent(content string) (*Message, error) {
-	return m.WithContext(m.ctx).Update().SetContent(content).Execute()
+	builder := m.WithContext(m.ctx).UpdateBuilder()
+	return builder.
+		SetContent(content).
+		Execute()
 }
 
 func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
-	return m.WithContext(m.ctx).Update().SetEmbed(embed).Execute()
+	builder := m.WithContext(m.ctx).UpdateBuilder()
+	return builder.
+		SetEmbed(embed).
+		Execute()
 }
 
 //////////////////////////////////////////////////////
