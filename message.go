@@ -55,7 +55,8 @@ const (
 	_
 	_
 	_
-	MessageTypeInlineReply
+	MessageTypeReply
+	MessageTypeApplicationCommand
 )
 
 const (
