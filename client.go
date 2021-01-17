@@ -196,8 +196,8 @@ type Config struct {
 	HTTPClient *http.Client
 	Proxy      proxy.Dialer
 
+	// Deprecated: use DMIntents (values here are copied to DMIntents for now)
 	// For direct communication with you bot you must specify intents
-	// deprecated: use DMIntents (values here are copied to DMIntents for now)
 	Intents Intent
 
 	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
