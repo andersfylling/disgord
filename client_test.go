@@ -66,7 +66,7 @@ func ensure(inputs ...interface{}) {
 func TestClient_ConfigDMIntent(t *testing.T) {
 	t.Run("transfer-old", func(t *testing.T) {
 		client, err := NewClient(context.Background(), Config{
-			Intents: IntentDirectMessages,
+			Intents:  IntentDirectMessages,
 			BotToken: "test",
 		})
 		if err != nil {
@@ -80,7 +80,7 @@ func TestClient_ConfigDMIntent(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		_, err := NewClient(context.Background(), Config{
 			DMIntents: IntentDirectMessages | IntentDirectMessageTyping | IntentDirectMessageReactions,
-			BotToken: "test",
+			BotToken:  "test",
 		})
 		if err != nil {
 			t.Error(err)
@@ -89,7 +89,7 @@ func TestClient_ConfigDMIntent(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		_, err := NewClient(context.Background(), Config{
 			DMIntents: IntentGuildBans,
-			BotToken: "test",
+			BotToken:  "test",
 		})
 		if err == nil {
 			t.Error("guild related intents did not cause an error")
@@ -97,7 +97,7 @@ func TestClient_ConfigDMIntent(t *testing.T) {
 	})
 	t.Run("invalid-old", func(t *testing.T) {
 		_, err := NewClient(context.Background(), Config{
-			Intents: IntentGuildBans,
+			Intents:  IntentGuildBans,
 			BotToken: "test",
 		})
 		if err == nil {

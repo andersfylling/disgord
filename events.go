@@ -396,11 +396,13 @@ type GuildMemberRemove struct {
 
 // GuildMemberUpdate guild member was updated
 type GuildMemberUpdate struct {
-	GuildID Snowflake   `json:"guild_id"`
-	Roles   []Snowflake `json:"roles"`
-	User    *User       `json:"user"`
-	Nick    string      `json:"nick"`
-	ShardID uint        `json:"-"`
+	GuildID      Snowflake   `json:"guild_id"`
+	Roles        []Snowflake `json:"roles"`
+	User         *User       `json:"user"`
+	Nick         string      `json:"nick"`
+	JoinedAt     Time        `json:"joined_at"`
+	PremiumSince Time        `json:"premium_since"`
+	ShardID      uint        `json:"-"`
 }
 
 // ---------------------------
