@@ -31,6 +31,8 @@ const (
 	ChannelTypeGuildStore
 )
 
+// Deprecated: use PermissionOverwrite* instead (note the Type keyword is removed)
+// PermissionOverwriteTypeMember => PermissionOverwriteMember
 const (
 	PermissionOverwriteTypeRole uint8 = iota
 	PermissionOverwriteTypeMember
@@ -152,7 +154,7 @@ func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller,
 		permissions &= (-o.Deny) - 1
 	}
 	for _, overwrite := range c.PermissionOverwrites {
-		if overwrite.Type == PermissionOverwriteTypeMember {
+		if overwrite.Type == PermissionOverwriteMember {
 			// This is a member. Is it me?
 			if overwrite.ID == member.UserID {
 				// It is! Time to apply the overwrites.
