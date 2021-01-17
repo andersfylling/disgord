@@ -102,16 +102,12 @@ func (obj *ChannelDelete) UnmarshalJSON(data []byte) error {
 
 // ---------------------------
 
-// ChannelPinsUpdate message was pinned or unpinned
+// ChannelPinsUpdate message was pinned or unpinned. Not sent when a message is deleted.
 type ChannelPinsUpdate struct {
-	// ChannelID snowflake	the id of the channel
-	ChannelID Snowflake `json:"channel_id"`
-
-	GuildID Snowflake `json:"guild_id,omitempty"`
-
-	// LastPinTimestamp	ISO8601 timestamp	the time at which the most recent pinned message was pinned
-	LastPinTimestamp Time `json:"last_pin_timestamp,omitempty"`
-	ShardID          uint `json:"-"`
+	ChannelID        Snowflake `json:"channel_id"`
+	GuildID          Snowflake `json:"guild_id,omitempty"`
+	LastPinTimestamp Time      `json:"last_pin_timestamp,omitempty"`
+	ShardID          uint      `json:"-"`
 }
 
 // ---------------------------
