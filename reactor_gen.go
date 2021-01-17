@@ -592,9 +592,6 @@ type HandlerChannelPinsUpdate = func(s Session, h *ChannelPinsUpdate)
 // HandlerChannelUpdate is triggered by ChannelUpdate events
 type HandlerChannelUpdate = func(s Session, h *ChannelUpdate)
 
-// HandlerClientStatus is triggered by ClientStatus events
-type HandlerClientStatus = func(s Session, h *ClientStatus)
-
 // HandlerGuildBanAdd is triggered by GuildBanAdd events
 type HandlerGuildBanAdd = func(s Session, h *GuildBanAdd)
 

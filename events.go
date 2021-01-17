@@ -468,12 +468,6 @@ type GuildRoleDelete struct {
 
 // ---------------------------
 
-type ClientStatus struct {
-	Desktop string `json:"desktop"`
-	Mobile  string `json:"mobile"`
-	Web     string `json:"web"`
-}
-
 // PresenceUpdate user's presence was updated in a guild
 type PresenceUpdate struct {
 	User         *User        `json:"user"`

@@ -11,6 +11,12 @@ import (
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
+type ClientStatus struct {
+	Desktop string `json:"desktop"`
+	Mobile  string `json:"mobile"`
+	Web     string `json:"web"`
+}
+
 // ActivityParty ...
 type ActivityParty struct {
 	ID   string `json:"id,omitempty"`   // the id of the party

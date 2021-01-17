@@ -121,8 +121,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ChannelUpdate:
 		s = *t
-	case *[]*ClientStatus:
-		s = *t
 	case *[]*GuildBanAdd:
 		s = *t
 	case *[]*GuildBanRemove:
@@ -264,6 +262,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*ActivitySecrets:
 		s = *t
 	case *[]*ActivityTimestamp:
+		s = *t
+	case *[]*ClientStatus:
 		s = *t
 	case *[]*CreateGroupDMParams:
 		s = *t
