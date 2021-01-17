@@ -19,8 +19,10 @@ import (
 
 // Channel types
 // https://discord.com/developers/docs/resources/channel#channel-object-channel-types
+type ChannelType uint
+
 const (
-	ChannelTypeGuildText uint = iota
+	ChannelTypeGuildText ChannelType = iota
 	ChannelTypeDM
 	ChannelTypeGuildVoice
 	ChannelTypeGroupDM
@@ -55,14 +57,21 @@ func (a *Attachment) updateInternals() {
 	a.SpoilerTag = strings.HasPrefix(a.Filename, AttachmentSpoilerPrefix)
 }
 
+type PermissionOverwriteType uint8
+
+const (
+	PermissionOverwriteRole PermissionOverwriteType = iota
+	PermissionOverwriteMember
+)
+
 // PermissionOverwrite https://discord.com/developers/docs/resources/channel#overwrite-object
 //
 // WARNING! Discord is bugged, and the Type field needs to be a string to read Permission Overwrites from audit log
 type PermissionOverwrite struct {
-	ID    Snowflake     `json:"id"`    // role or user id
-	Type  uint8         `json:"type"`  // either 0 for `role` or 1 for `member`
-	Allow PermissionBit `json:"allow"` // permission bit set
-	Deny  PermissionBit `json:"deny"`  // permission bit set
+	ID    Snowflake               `json:"id"` // role or user id
+	Type  PermissionOverwriteType `json:"type"`
+	Allow PermissionBit           `json:"allow"`
+	Deny  PermissionBit           `json:"deny"`
 }
 
 // type ChannelDeleter interface { DeleteChannel(id Snowflake) (err error) }
@@ -84,35 +93,23 @@ type PartialChannel struct {
 // Channel ...
 type Channel struct {
 	ID                   Snowflake             `json:"id"`
-	Type                 uint                  `json:"type"`
-	GuildID              Snowflake             `json:"guild_id,omitempty"`              // ?|
-	Position             int                   `json:"position,omitempty"`              // ?| can be less than 0
-	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"` // ?|
-	Name                 string                `json:"name,omitempty"`                  // ?|
-	Topic                string                `json:"topic,omitempty"`                 // ?|?
-	NSFW                 bool                  `json:"nsfw,omitempty"`                  // ?|
-	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`       // ?|?
-	Bitrate              uint                  `json:"bitrate,omitempty"`               // ?|
-	UserLimit            uint                  `json:"user_limit,omitempty"`            // ?|
-	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`   // ?|
-	Recipients           []*User               `json:"recipient,omitempty"`             // ?| , empty if not DM/GroupDM
-	Icon                 string                `json:"icon,omitempty"`                  // ?|?
-	OwnerID              Snowflake             `json:"owner_id,omitempty"`              // ?|
-	ApplicationID        Snowflake             `json:"application_id,omitempty"`        // ?|
-	ParentID             Snowflake             `json:"parent_id,omitempty"`             // ?|?
-	LastPinTimestamp     Time                  `json:"last_pin_timestamp,omitempty"`    // ?|
-
-	// set to true when the object is not incomplete. Used in situations
-	// like cacheLink to avoid overwriting correct information.
-	// A partial or incomplete channel can be
-	//  "channel": {
-	//    "id": "165176875973476352",
-	//    "name": "illuminati",
-	//    "type": 0
-	//  }
-	// TODO: remove
-	complete      bool
-	recipientsIDs []Snowflake
+	Type                 ChannelType           `json:"type"`
+	GuildID              Snowflake             `json:"guild_id,omitempty"`
+	Position             int                   `json:"position,omitempty"` // can be less than 0
+	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	Name                 string                `json:"name,omitempty"`
+	Topic                string                `json:"topic,omitempty"`
+	NSFW                 bool                  `json:"nsfw,omitempty"`
+	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`
+	Bitrate              uint                  `json:"bitrate,omitempty"`
+	UserLimit            uint                  `json:"user_limit,omitempty"`
+	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`
+	Recipients           []*User               `json:"recipient,omitempty"` // empty if not DM/GroupDM
+	Icon                 string                `json:"icon,omitempty"`
+	OwnerID              Snowflake             `json:"owner_id,omitempty"`
+	ApplicationID        Snowflake             `json:"application_id,omitempty"`
+	ParentID             Snowflake             `json:"parent_id,omitempty"`
+	LastPinTimestamp     Time                  `json:"last_pin_timestamp,omitempty"`
 }
 
 var _ Reseter = (*Channel)(nil)
