@@ -84,23 +84,24 @@ var _ DeepCopier = (*ActivityTimestamp)(nil)
 // ##
 // ######################
 
-// activityTypes https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
-type acitivityType = int // TODO-v0.15: remove = sign, make uint
+// ActivityType https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
+type ActivityType uint
 
 const (
-	ActivityTypeGame acitivityType = iota
+	ActivityTypeGame ActivityType = iota
 	ActivityTypeStreaming
 	ActivityTypeListening
 	_
 	ActivityTypeCustom
+	ActivityTypeCompeting
 )
 
-// activityFlag https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
-type activityFlag = int // TODO-v0.15: remove = sign, make uint
+// ActivityFlag https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
+type ActivityFlag uint
 
 // flags for the Activity object to signify the type of action taken place
 const (
-	ActivityFlagInstance activityFlag = 1 << iota
+	ActivityFlagInstance ActivityFlag = 1 << iota
 	ActivityFlagJoin
 	ActivityFlagSpectate
 	ActivityFlagJoinRequest
@@ -110,19 +111,20 @@ const (
 
 // Activity https://discord.com/developers/docs/topics/gateway#activity-object-activity-structure
 type Activity struct {
-	Name          string             `json:"name"`                     // the activity's name
-	Type          acitivityType      `json:"type"`                     // activity type
-	URL           string             `json:"url,omitempty"`            //stream url, is validated when type is 1
-	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`     // timestamps object	unix timestamps for start and/or end of the game
-	ApplicationID Snowflake          `json:"application_id,omitempty"` //?	snowflake	application id for the game
-	Details       string             `json:"details,omitempty"`        //?	?string	what the player is currently doing
-	State         string             `json:"state,omitempty"`          //state?	?string	the user's current party status
+	Name          string             `json:"name"`
+	Type          ActivityType       `json:"type"`
+	URL           string             `json:"url"`
+	CreatedAt int `json:"created_at"`
+	Timestamps    *ActivityTimestamp `json:"timestamps"`
+	ApplicationID Snowflake          `json:"application_id"`
+	Details       string             `json:"details"`
+	State         string             `json:"state"`
 	Emoji         *ActivityEmoji     `json:"emoji"`
-	Party         *ActivityParty     `json:"party,omitempty"`    //party?	party object	information for the current party of the player
-	Assets        *ActivityAssets    `json:"assets,omitempty"`   // assets?	assets object	images for the presence and their hover texts
-	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`  // secrets?	secrets object	secrets for Rich Presence joining and spectating
-	Instance      bool               `json:"instance,omitempty"` // instance?	boolean	whether or not the activity is an instanced game session
-	Flags         activityFlag       `json:"flags,omitempty"`    // flags?	int	activity flags ORd together, describes what the payload includes
+	Party         *ActivityParty     `json:"party"`
+	Assets        *ActivityAssets    `json:"assets"`
+	Secrets       *ActivitySecrets   `json:"secrets"`
+	Instance      bool               `json:"instance"`
+	Flags         ActivityFlag       `json:"flags"`
 }
 
 var _ Reseter = (*Activity)(nil)
