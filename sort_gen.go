@@ -237,6 +237,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageReference:
 		s = *t
+	case *[]*MessageSticker:
+		s = *t
 	case *[]*GetReactionURLParams:
 		s = *t
 	case *[]*Reaction:
@@ -396,6 +398,12 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*MessageApplication:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*MessageSticker:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -840,6 +848,12 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*MessageApplication:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*MessageSticker:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

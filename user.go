@@ -203,6 +203,7 @@ type User struct {
 	Flags         UserFlag      `json:"flag,omitempty"`
 	PremiumType   PremiumType   `json:"premium_type,omitempty"`
 	PublicFlags   UserFlag      `json:"public_flag,omitempty"`
+	PartialMember *Member       `json:"member"` // may be populated by Message
 }
 
 var _ Reseter = (*User)(nil)

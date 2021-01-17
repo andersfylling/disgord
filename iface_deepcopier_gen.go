@@ -2,140 +2,8 @@
 
 package disgord
 
-func (v *VoiceState) deepCopy() interface{} {
-	cp := &VoiceState{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
-
-func (g *Guild) deepCopy() interface{} {
-	cp := &Guild{}
-	_ = DeepCopyOver(cp, g)
-	return cp
-}
-
-func (a *AuditLogChanges) deepCopy() interface{} {
-	cp := &AuditLogChanges{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (v *VoiceRegion) deepCopy() interface{} {
-	cp := &VoiceRegion{}
-	_ = DeepCopyOver(cp, v)
-	return cp
-}
-
-func (a *AuditLogEntry) deepCopy() interface{} {
-	cp := &AuditLogEntry{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (a *Activity) deepCopy() interface{} {
-	cp := &Activity{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (e *Emoji) deepCopy() interface{} {
-	cp := &Emoji{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (e *EmbedFooter) deepCopy() interface{} {
-	cp := &EmbedFooter{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (e *EmbedAuthor) deepCopy() interface{} {
-	cp := &EmbedAuthor{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (e *EmbedField) deepCopy() interface{} {
-	cp := &EmbedField{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (m *messageSticker) deepCopy() interface{} {
-	cp := &messageSticker{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
-func (i *Integration) deepCopy() interface{} {
-	cp := &Integration{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
-func (c *Channel) deepCopy() interface{} {
-	cp := &Channel{}
-	_ = DeepCopyOver(cp, c)
-	return cp
-}
-
-func (r *Reaction) deepCopy() interface{} {
-	cp := &Reaction{}
-	_ = DeepCopyOver(cp, r)
-	return cp
-}
-
-func (a *ActivitySecrets) deepCopy() interface{} {
-	cp := &ActivitySecrets{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (i *Invite) deepCopy() interface{} {
-	cp := &Invite{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
-func (a *AuditLogOption) deepCopy() interface{} {
-	cp := &AuditLogOption{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (e *EmbedImage) deepCopy() interface{} {
-	cp := &EmbedImage{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (e *EmbedThumbnail) deepCopy() interface{} {
-	cp := &EmbedThumbnail{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (u *UserPresence) deepCopy() interface{} {
-	cp := &UserPresence{}
-	_ = DeepCopyOver(cp, u)
-	return cp
-}
-
-func (e *Embed) deepCopy() interface{} {
-	cp := &Embed{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (e *EmbedProvider) deepCopy() interface{} {
-	cp := &EmbedProvider{}
-	_ = DeepCopyOver(cp, e)
-	return cp
-}
-
-func (a *ActivityAssets) deepCopy() interface{} {
-	cp := &ActivityAssets{}
+func (a *AuditLog) deepCopy() interface{} {
+	cp := &AuditLog{}
 	_ = DeepCopyOver(cp, a)
 	return cp
 }
@@ -146,51 +14,9 @@ func (u *UserConnection) deepCopy() interface{} {
 	return cp
 }
 
-func (i *IntegrationAccount) deepCopy() interface{} {
-	cp := &IntegrationAccount{}
-	_ = DeepCopyOver(cp, i)
-	return cp
-}
-
-func (r *Role) deepCopy() interface{} {
-	cp := &Role{}
-	_ = DeepCopyOver(cp, r)
-	return cp
-}
-
-func (a *ActivityEmoji) deepCopy() interface{} {
-	cp := &ActivityEmoji{}
+func (a *AuditLogChanges) deepCopy() interface{} {
+	cp := &AuditLogChanges{}
 	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (b *Ban) deepCopy() interface{} {
-	cp := &Ban{}
-	_ = DeepCopyOver(cp, b)
-	return cp
-}
-
-func (m *MentionChannel) deepCopy() interface{} {
-	cp := &MentionChannel{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
-func (m *Member) deepCopy() interface{} {
-	cp := &Member{}
-	_ = DeepCopyOver(cp, m)
-	return cp
-}
-
-func (a *AuditLog) deepCopy() interface{} {
-	cp := &AuditLog{}
-	_ = DeepCopyOver(cp, a)
-	return cp
-}
-
-func (e *EmbedVideo) deepCopy() interface{} {
-	cp := &EmbedVideo{}
-	_ = DeepCopyOver(cp, e)
 	return cp
 }
 
@@ -200,9 +26,15 @@ func (a *Attachment) deepCopy() interface{} {
 	return cp
 }
 
-func (g *GuildEmbed) deepCopy() interface{} {
-	cp := &GuildEmbed{}
-	_ = DeepCopyOver(cp, g)
+func (e *EmbedImage) deepCopy() interface{} {
+	cp := &EmbedImage{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (i *Invite) deepCopy() interface{} {
+	cp := &Invite{}
+	_ = DeepCopyOver(cp, i)
 	return cp
 }
 
@@ -212,9 +44,45 @@ func (u *User) deepCopy() interface{} {
 	return cp
 }
 
+func (a *AuditLogOption) deepCopy() interface{} {
+	cp := &AuditLogOption{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (v *VoiceRegion) deepCopy() interface{} {
+	cp := &VoiceRegion{}
+	_ = DeepCopyOver(cp, v)
+	return cp
+}
+
+func (e *EmbedFooter) deepCopy() interface{} {
+	cp := &EmbedFooter{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (a *ActivityAssets) deepCopy() interface{} {
+	cp := &ActivityAssets{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
 func (a *ActivityTimestamp) deepCopy() interface{} {
 	cp := &ActivityTimestamp{}
 	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (e *Emoji) deepCopy() interface{} {
+	cp := &Emoji{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (e *EmbedField) deepCopy() interface{} {
+	cp := &EmbedField{}
+	_ = DeepCopyOver(cp, e)
 	return cp
 }
 
@@ -236,8 +104,140 @@ func (m *Message) deepCopy() interface{} {
 	return cp
 }
 
+func (r *Reaction) deepCopy() interface{} {
+	cp := &Reaction{}
+	_ = DeepCopyOver(cp, r)
+	return cp
+}
+
+func (u *UserPresence) deepCopy() interface{} {
+	cp := &UserPresence{}
+	_ = DeepCopyOver(cp, u)
+	return cp
+}
+
+func (e *EmbedThumbnail) deepCopy() interface{} {
+	cp := &EmbedThumbnail{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (e *Embed) deepCopy() interface{} {
+	cp := &Embed{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (e *EmbedVideo) deepCopy() interface{} {
+	cp := &EmbedVideo{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (m *Member) deepCopy() interface{} {
+	cp := &Member{}
+	_ = DeepCopyOver(cp, m)
+	return cp
+}
+
+func (g *GuildEmbed) deepCopy() interface{} {
+	cp := &GuildEmbed{}
+	_ = DeepCopyOver(cp, g)
+	return cp
+}
+
+func (a *ActivitySecrets) deepCopy() interface{} {
+	cp := &ActivitySecrets{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (e *EmbedAuthor) deepCopy() interface{} {
+	cp := &EmbedAuthor{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (g *Guild) deepCopy() interface{} {
+	cp := &Guild{}
+	_ = DeepCopyOver(cp, g)
+	return cp
+}
+
+func (i *IntegrationAccount) deepCopy() interface{} {
+	cp := &IntegrationAccount{}
+	_ = DeepCopyOver(cp, i)
+	return cp
+}
+
 func (a *ActivityParty) deepCopy() interface{} {
 	cp := &ActivityParty{}
 	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (r *Role) deepCopy() interface{} {
+	cp := &Role{}
+	_ = DeepCopyOver(cp, r)
+	return cp
+}
+
+func (m *MentionChannel) deepCopy() interface{} {
+	cp := &MentionChannel{}
+	_ = DeepCopyOver(cp, m)
+	return cp
+}
+
+func (c *Channel) deepCopy() interface{} {
+	cp := &Channel{}
+	_ = DeepCopyOver(cp, c)
+	return cp
+}
+
+func (a *Activity) deepCopy() interface{} {
+	cp := &Activity{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (e *EmbedProvider) deepCopy() interface{} {
+	cp := &EmbedProvider{}
+	_ = DeepCopyOver(cp, e)
+	return cp
+}
+
+func (v *VoiceState) deepCopy() interface{} {
+	cp := &VoiceState{}
+	_ = DeepCopyOver(cp, v)
+	return cp
+}
+
+func (a *AuditLogEntry) deepCopy() interface{} {
+	cp := &AuditLogEntry{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (a *ActivityEmoji) deepCopy() interface{} {
+	cp := &ActivityEmoji{}
+	_ = DeepCopyOver(cp, a)
+	return cp
+}
+
+func (b *Ban) deepCopy() interface{} {
+	cp := &Ban{}
+	_ = DeepCopyOver(cp, b)
+	return cp
+}
+
+func (m *MessageSticker) deepCopy() interface{} {
+	cp := &MessageSticker{}
+	_ = DeepCopyOver(cp, m)
+	return cp
+}
+
+func (i *Integration) deepCopy() interface{} {
+	cp := &Integration{}
+	_ = DeepCopyOver(cp, i)
 	return cp
 }
