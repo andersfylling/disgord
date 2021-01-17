@@ -3,10 +3,21 @@ package disgord
 // limitations: https://discord.com/developers/docs/resources/channel#embed-limits
 // TODO: implement NewEmbedX functions that ensures limitations
 
+type EmbedType string
+
+const (
+	EmbedTypeRich    EmbedType = "rich"
+	EmbedTypeImage   EmbedType = "image"
+	EmbedTypeVideo   EmbedType = "video"
+	EmbedTypeGIFV    EmbedType = "gifv"
+	EmbedTypeArticle EmbedType = "article"
+	EmbedTypeLink    EmbedType = "link"
+)
+
 // Embed https://discord.com/developers/docs/resources/channel#embed-object
 type Embed struct {
 	Title       string          `json:"title,omitempty"`       // title of embed
-	Type        string          `json:"type,omitempty"`        // type of embed (always "rich" for webhook embeds)
+	Type        EmbedType       `json:"type,omitempty"`        // type of embed (always "rich" for webhook embeds)
 	Description string          `json:"description,omitempty"` // description of embed
 	URL         string          `json:"url,omitempty"`         // url of embed
 	Timestamp   Time            `json:"timestamp,omitempty"`   // timestamp	timestamp of embed content
