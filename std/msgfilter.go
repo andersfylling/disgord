@@ -122,7 +122,7 @@ func (f *msgFilter) HasPermissions(evt interface{}) interface{} {
 		return nil
 	}
 
-	return msg
+	return evt
 }
 
 // SetMinPermissions enforces message authors to have at least the given permission flags
