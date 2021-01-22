@@ -408,6 +408,10 @@ func TestMsgFilter_StripPrefix(t *testing.T) {
 	}{
 		{"MessageCreate", messageCreate(prefix + "hello")},
 		{"MessageUpdate", messageUpdate(prefix + "hello")},
+		{"MessageUpdate", messageUpdate("   " + prefix + "hello")},
+		{"MessageCreate", messageCreate("   " + prefix + "  hello")},
+		{"MessageUpdate", messageUpdate(prefix + "  hello")},
+		{"MessageUpdate", messageUpdate("  hello")},
 	}
 
 	filter, _ := newMsgFilter(context.Background(), &clientRESTMock{})
@@ -416,10 +420,7 @@ func TestMsgFilter_StripPrefix(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := filter.StripPrefix(tc.evt)
-			if result == nil {
-				t.Error("expected to passthrough")
-			}
-			if filter.HasPrefix(tc.evt) != nil {
+			if filter.HasPrefix(result) != nil {
 				t.Error("Did not strip prefix off message")
 			}
 		})
