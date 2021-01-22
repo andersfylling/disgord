@@ -97,8 +97,15 @@ func (f *msgFilter) StripPrefix(evt interface{}) interface{} {
 		return nil
 	}
 
-	msg := getMsg(evt)
+	var msg *disgord.Message
+	if msg = getMsg(evt); msg == nil {
+		return nil
+	}
+
+	// handle whitespaces before the prefix
+	msg.Content = strings.TrimLeft(msg.Content, " ")
 	msg.Content = msg.Content[len(f.prefix):]
+
 	return evt
 }
 
