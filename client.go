@@ -511,9 +511,11 @@ func (c *Client) UpdateStatus(s *UpdateStatusPayload) error {
 func (c *Client) UpdateStatusString(s string) error {
 	updateData := &UpdateStatusPayload{
 		Since: nil,
-		Game: &Activity{
-			Name: s,
-			Type: 0,
+		Game: []*Activity{
+			{
+				Name: s,
+				Type: ActivityTypeGame,
+			},
 		},
 		Status: StatusOnline,
 		AFK:    false,

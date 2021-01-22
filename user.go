@@ -119,18 +119,18 @@ const (
 type Activity struct {
 	Name          string             `json:"name"`
 	Type          ActivityType       `json:"type"`
-	URL           string             `json:"url"`
+	URL           string             `json:"url,omitempty"`
 	CreatedAt     int                `json:"created_at"`
-	Timestamps    *ActivityTimestamp `json:"timestamps"`
-	ApplicationID Snowflake          `json:"application_id"`
-	Details       string             `json:"details"`
-	State         string             `json:"state"`
-	Emoji         *ActivityEmoji     `json:"emoji"`
-	Party         *ActivityParty     `json:"party"`
-	Assets        *ActivityAssets    `json:"assets"`
-	Secrets       *ActivitySecrets   `json:"secrets"`
-	Instance      bool               `json:"instance"`
-	Flags         ActivityFlag       `json:"flags"`
+	Timestamps    *ActivityTimestamp `json:"timestamps,omitempty"`
+	ApplicationID Snowflake          `json:"application_id,omitempty"`
+	Details       string             `json:"details,omitempty"`
+	State         string             `json:"state,omitempty"`
+	Emoji         *ActivityEmoji     `json:"emoji,omitempty"`
+	Party         *ActivityParty     `json:"party,omitempty"`
+	Assets        *ActivityAssets    `json:"assets,omitempty"`
+	Secrets       *ActivitySecrets   `json:"secrets,omitempty"`
+	Instance      bool               `json:"instance,omitempty"`
+	Flags         ActivityFlag       `json:"flags,omitempty"`
 }
 
 var _ Reseter = (*Activity)(nil)

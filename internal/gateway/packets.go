@@ -169,7 +169,7 @@ type UpdateStatusPayload struct {
 	Since *uint `json:"since"`
 
 	// Game null, or the user's new activity
-	Game interface{} `json:"game"`
+	Game interface{} `json:"activities"`
 
 	// Status the user's new status
 	Status string `json:"status"`
