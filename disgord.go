@@ -169,7 +169,7 @@ func Reset(r Reseter) {
 	r.reset()
 }
 
-// Wrapper for github.com/andersfylling/snowflake
+// Wrapper for snowflake
 // ------------------
 
 // Snowflake twitter snowflake identification for Discord
