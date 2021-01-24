@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/andersfylling/snowflake/v4"
+	"github.com/andersfylling/snowflake/v5"
 )
 
 type Snowflake = snowflake.Snowflake

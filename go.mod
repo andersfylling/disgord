@@ -3,7 +3,7 @@ module github.com/andersfylling/disgord
 go 1.13
 
 require (
-	github.com/andersfylling/snowflake/v4 v4.0.3
+	github.com/andersfylling/snowflake/v5 v5.0.1
 	go.uber.org/atomic v1.7.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/mod v0.4.1 // indirect

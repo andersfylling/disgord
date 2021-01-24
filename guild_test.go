@@ -42,8 +42,8 @@ func TestGuild_ChannelSorting(t *testing.T) {
 
 // --------
 func TestGuildEmbed(t *testing.T) {
-	res := []byte("{\"enabled\":true,\"channel_id\":\"41771983444115456\"}")
-	expects := []byte("{\"enabled\":true,\"channel_id\":41771983444115456}")
+	res := []byte(`{"enabled":true,"channel_id":"41771983444115456"}`)
+	expects := []byte(`{"enabled":true,"channel_id":"41771983444115456"}`)
 
 	// convert to struct
 	guildEmbed := GuildEmbed{}
@@ -67,12 +67,12 @@ func TestGuildEmbed(t *testing.T) {
 
 func TestGuild_sortChannels(t *testing.T) {
 	snowflakes := []Snowflake{
-		Snowflake(6),
-		Snowflake(65),
-		Snowflake(324),
-		Snowflake(5435),
-		Snowflake(63453),
-		Snowflake(111111111),
+		6,
+		65,
+		324,
+		5435,
+		63453,
+		111111111,
 	}
 
 	guild := NewGuild()
