@@ -87,9 +87,9 @@ type PermissionOverwrite struct {
 // //   "type": 0
 // // }
 type PartialChannel struct {
-	ID   Snowflake `json:"id"`
-	Name string    `json:"name"`
-	Type uint      `json:"type"`
+	ID   Snowflake   `json:"id"`
+	Name string      `json:"name"`
+	Type ChannelType `json:"type"`
 }
 
 // Channel ...
