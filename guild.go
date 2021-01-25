@@ -1432,7 +1432,7 @@ func (g guildQueryBuilder) GetWebhooks(flags ...Flag) (ret []*Webhook, err error
 // CreateGuildChannelParams https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params
 type CreateGuildChannelParams struct {
 	Name                 string                `json:"name"` // required
-	Type                 ChannelType                  `json:"type,omitempty"`
+	Type                 ChannelType           `json:"type,omitempty"`
 	Topic                string                `json:"topic,omitempty"`
 	Bitrate              uint                  `json:"bitrate,omitempty"`
 	UserLimit            uint                  `json:"user_limit,omitempty"`
