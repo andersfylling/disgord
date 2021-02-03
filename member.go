@@ -102,7 +102,6 @@ func (g guildMemberQueryBuilder) AddRole(roleID Snowflake, flags ...Flag) error 
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -116,7 +115,6 @@ func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake, flags ...Flag) err
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -131,7 +129,6 @@ func (g guildMemberQueryBuilder) Kick(reason string, flags ...Flag) error {
 		Reason:   reason,
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -153,7 +150,6 @@ func (g guildMemberQueryBuilder) Ban(params *BanMemberParams, flags ...Flag) (er
 		Ctx:      g.ctx,
 		Reason:   params.Reason,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return

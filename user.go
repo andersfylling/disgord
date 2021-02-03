@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -533,7 +532,6 @@ func (c currentUserQueryBuilder) LeaveGuild(id Snowflake, flags ...Flag) (err er
 		Endpoint: endpoint.UserMeGuild(id),
 		Ctx:      c.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return

@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sort"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -127,7 +126,6 @@ func (g guildRoleQueryBuilder) Delete(flags ...Flag) error {
 		Endpoint: endpoint.GuildRole(g.gid, g.roleID),
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err

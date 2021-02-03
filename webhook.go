@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -271,7 +270,6 @@ func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
 		Endpoint: e,
 		Ctx:      w.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -320,10 +318,8 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait
 	// Discord only returns the message when wait=true.
 	if wait {
 		r.pool = w.client.pool.message
-		r.expectsStatusCode = http.StatusOK
 		return getMessage(r.Execute)
 	}
-	r.expectsStatusCode = http.StatusNoContent
 	_, err = r.Execute()
 	return nil, err
 }

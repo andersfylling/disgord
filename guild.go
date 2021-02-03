@@ -779,7 +779,6 @@ func (g guildQueryBuilder) Delete(flags ...Flag) error {
 		Endpoint: endpoint.Guild(g.gid),
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -854,7 +853,6 @@ func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPos
 		ContentType: httd.ContentTypeJSON,
 		Reason:      reason,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -952,7 +950,6 @@ func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, pa
 			UserID:  userID,
 		}
 	}
-	r.expectsStatusCode = http.StatusCreated
 
 	// TODO: update guild cache
 	var member *Member
@@ -984,7 +981,6 @@ func (g guildQueryBuilder) SetCurrentUserNick(nick string, flags ...Flag) (newNi
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.expectsStatusCode = http.StatusOK
 	r.factory = func() interface{} {
 		return &nickNameResponse{}
 	}
@@ -1038,7 +1034,6 @@ func (g guildQueryBuilder) UnbanUser(userID Snowflake, reason string, flags ...F
 		Reason:   reason,
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -1224,7 +1219,6 @@ func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParam
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -1241,7 +1235,6 @@ func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *Up
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -1257,7 +1250,6 @@ func (g guildQueryBuilder) DeleteIntegration(integrationID Snowflake, flags ...F
 		Endpoint:    endpoint.GuildIntegration(g.gid, integrationID),
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -1271,7 +1263,6 @@ func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake, flags ...Fla
 		Endpoint: endpoint.GuildIntegrationSync(g.gid, integrationID),
 		Ctx:      g.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -411,7 +410,6 @@ func (m messageQueryBuilder) Delete(flags ...Flag) (err error) {
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -430,7 +428,6 @@ func (m messageQueryBuilder) Pin(flags ...Flag) (err error) {
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -456,7 +453,6 @@ func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -481,7 +477,6 @@ func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
 		Endpoint: endpoint.ChannelMessageReactions(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err

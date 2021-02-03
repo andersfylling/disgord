@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -415,7 +414,6 @@ func (c channelQueryBuilder) Delete(flags ...Flag) (channel *Channel, err error)
 		Endpoint: endpoint.Channel(c.cid),
 		Ctx:      context.Background(),
 	}, flags)
-	r.expectsStatusCode = http.StatusOK
 	r.factory = func() interface{} {
 		return &Channel{}
 	}
@@ -438,7 +436,6 @@ func (c channelQueryBuilder) TriggerTypingIndicator(flags ...Flag) (err error) {
 		Endpoint: endpoint.ChannelTyping(c.cid),
 		Ctx:      c.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -474,7 +471,6 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -550,7 +546,6 @@ func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake, flags ...Fl
 		Endpoint: endpoint.ChannelPermission(c.cid, overwriteID),
 		Ctx:      c.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -602,7 +597,6 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant, f
 		Body:        participant,
 		ContentType: httd.ContentTypeJSON,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err := r.Execute()
 	return err
@@ -627,7 +621,6 @@ func (c channelQueryBuilder) KickParticipant(userID Snowflake, flags ...Flag) (e
 		Endpoint: endpoint.ChannelRecipient(c.cid, userID),
 		Ctx:      c.ctx,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err
@@ -875,7 +868,6 @@ func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams, flags 
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
 	}, flags)
-	r.expectsStatusCode = http.StatusNoContent
 
 	_, err = r.Execute()
 	return err

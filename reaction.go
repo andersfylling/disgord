@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -115,7 +114,6 @@ func (r reactionQueryBuilder) Create(flags ...Flag) error {
 		Endpoint: endpoint.ChannelMessageReactionMe(r.cid, r.mid, emojiCode),
 		Ctx:      r.ctx,
 	}, flags)
-	req.expectsStatusCode = http.StatusNoContent
 
 	_, err = req.Execute()
 	return err
@@ -149,7 +147,6 @@ func (r reactionQueryBuilder) DeleteOwn(flags ...Flag) error {
 		Endpoint: endpoint.ChannelMessageReactionMe(r.cid, r.mid, emojiCode),
 		Ctx:      r.ctx,
 	}, flags)
-	req.expectsStatusCode = http.StatusNoContent
 
 	_, err = req.Execute()
 	return err
@@ -186,7 +183,6 @@ func (r reactionQueryBuilder) DeleteUser(userID Snowflake, flags ...Flag) error 
 		Endpoint: endpoint.ChannelMessageReactionUser(r.cid, r.mid, emojiCode, userID),
 		Ctx:      r.ctx,
 	}, flags)
-	req.expectsStatusCode = http.StatusNoContent
 
 	_, err = req.Execute()
 	return err

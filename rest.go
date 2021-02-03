@@ -68,8 +68,7 @@ type rest struct {
 	pool    Pool
 	factory func() interface{}
 
-	conf              *httd.Request
-	expectsStatusCode int
+	conf *httd.Request
 
 	// steps
 	doRequest restStepDoRequest
@@ -142,10 +141,14 @@ func (r *rest) Execute() (v interface{}, err error) {
 		return nil, err
 	}
 
-	if r.expectsStatusCode > 0 && resp.StatusCode != r.expectsStatusCode {
+	successful := func(code int) bool {
+		return code >= http.StatusOK && code < 300
+	}
+
+	if !successful(resp.StatusCode) {
 		err = &httd.ErrREST{
 			HTTPCode: resp.StatusCode,
-			Msg:      "unexpected http response code. Got " + resp.Status + ", wants " + http.StatusText(r.expectsStatusCode),
+			Msg:      "unexpected http response code. Got " + resp.Status,
 		}
 		return nil, err
 	}
