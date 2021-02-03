@@ -48,6 +48,18 @@ func (c *Client) demultiplexer(d *dispatcher, read <-chan *gateway.Event) {
 			err = fmt.Errorf("cache did not instantiate object. Prev error: %w", err)
 		}
 		if err != nil {
+			// skip unknown events
+			var knownEvent bool
+			evts := AllEvents()
+			for _, e := range evts {
+				if knownEvent = e == evt.Name; knownEvent {
+					break
+				}
+			}
+			if !knownEvent {
+				continue
+			}
+
 			err = fmt.Errorf("demultiplexer{%s}: %w, data '%s'", evt.Name, err, string(evt.Data))
 			d.session.Logger().Error(err)
 			continue
