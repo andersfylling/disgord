@@ -25,6 +25,10 @@ type idHolder struct {
 	ChannelID Snowflake `json:"channel_id"`
 }
 
+type userHolder struct {
+	User *User `json:"user"`
+}
+
 func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
 	lfus := &CacheLFUImmutable{
 		CurrentUser: &User{},
@@ -371,6 +375,79 @@ func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, 
 	return gmr, nil
 }
 
+func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err error) {
+	if evt, err = c.CacheNop.GuildMemberUpdate(data); err != nil {
+		return nil, err
+	}
+
+	uid := evt.User.ID
+	gid := evt.GuildID
+
+	userwrap := &userHolder{}
+
+	c.Users.RLock()
+	cachedUser, userExists := c.Users.Get(uid)
+	c.Users.RUnlock()
+
+	if userExists {
+		mutex := c.Mutex(&c.Users, uid)
+		mutex.Lock()
+		userwrap.User = cachedUser.Val.(*User)
+		if err := json.Unmarshal(data, userwrap); err == nil {
+			c.Patch(userwrap.User)
+		}
+		mutex.Unlock()
+		userwrap = nil
+	} else {
+		userwrap.User = &User{}
+		if err := json.Unmarshal(data, userwrap); err == nil {
+			c.Patch(userwrap.User)
+			usr := c.Users.CreateCacheableItem(userwrap.User)
+
+			c.Users.Lock()
+			if _, exists := c.Users.Get(uid); !exists {
+				c.Users.Set(uid, usr)
+			}
+			c.Users.Unlock()
+		}
+		userwrap = nil
+	}
+
+	c.Guilds.RLock()
+	item, exists := c.Guilds.Get(gid)
+	c.Guilds.RUnlock()
+
+	if exists {
+		mutex := c.Mutex(&c.Guilds, gid)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		guild := item.Val.(*Guild)
+
+		var member *Member
+		for i := range guild.Members { // slow... map instead?
+			if guild.Members[i].UserID == uid {
+				member = guild.Members[i]
+				break
+			}
+		}
+		if member == nil {
+			member = &Member{}
+
+			guild.Members = append(guild.Members, member)
+			guild.MemberCount++
+		}
+
+		if err := json.Unmarshal(data, member); err != nil {
+			return nil, err
+		}
+		c.Patch(member)
+		member.User = nil
+	}
+
+	return evt, nil
+}
+
 func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	gmr := &GuildMemberAdd{}
 	if err := json.Unmarshal(data, gmr); err != nil {
@@ -386,20 +463,24 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 	c.Users.RUnlock()
 
 	if userExists {
+		mutex := c.Mutex(&c.Users, userID)
+		mutex.Lock()
 		// TODO: i assume the user is partial and doesn't hold any real updates
 		usr := cachedUser.Val.(*User)
 		// if err := json.Unmarshal(data, &Member{User:usr}); err == nil {
 		// 	gmr.Member.User = DeepCopy(usr).(*User)
 		// }
 		gmr.Member.User = DeepCopy(usr).(*User)
+		mutex.Unlock()
 	} else {
-		c.Users.Lock()
-		defer c.Users.Unlock()
+		usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User).(*User))
 
+		c.Users.Lock()
 		if _, exists := c.Users.Get(userID); !exists {
-			usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User).(*User))
 			c.Users.Set(userID, usr)
 		}
+		// TODO: if it now exists, the data is discarded
+		c.Users.Unlock()
 	}
 
 	c.Guilds.RLock()
