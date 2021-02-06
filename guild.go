@@ -340,7 +340,7 @@ func (g *Guild) AddRole(role *Role) error {
 // Member return a member by his/her userid
 func (g *Guild) Member(id Snowflake) (*Member, error) {
 	for _, member := range g.Members {
-		if member.User.ID == id {
+		if member.UserID == id {
 			return member, nil
 		}
 	}
