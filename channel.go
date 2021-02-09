@@ -105,7 +105,7 @@ type Channel struct {
 	Bitrate              uint                  `json:"bitrate,omitempty"`
 	UserLimit            uint                  `json:"user_limit,omitempty"`
 	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`
-	Recipients           []*User               `json:"recipient,omitempty"` // empty if not DM/GroupDM
+	Recipients           []*User               `json:"recipients,omitempty"` // empty if not DM/GroupDM
 	Icon                 string                `json:"icon,omitempty"`
 	OwnerID              Snowflake             `json:"owner_id,omitempty"`
 	ApplicationID        Snowflake             `json:"application_id,omitempty"`
