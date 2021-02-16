@@ -136,31 +136,27 @@ func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	// assumption#1: Create may take place after an update to the channel
 	// assumption#2: The set of fields in both ChannelCreate and ChannelUpdate are the same
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
-
-	wrap := func(c *Channel) *ChannelCreate {
-		return &ChannelCreate{Channel: DeepCopy(c).(*Channel)}
-	}
-
 	channel := &Channel{}
 	if err := json.Unmarshal(data, channel); err != nil {
 		return nil, err
 	}
 	c.Patch(channel)
 
+	_ = c.saveChannel(channel)
+	return &ChannelCreate{Channel: DeepCopy(channel).(*Channel)}, nil
+}
+
+func (c *CacheLFUImmutable) saveChannel(channel *Channel) error {
+	item := c.Channels.CreateCacheableItem(channel)
+
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
-	if wrapper, exists := c.Channels.Get(channel.ID); exists {
-		// don't update it. It might overwrite a update event(!)
-		// TODO: timestamps would be helpful here(?)
-		//  or some queue of updates
-		err := json.Unmarshal(data, wrapper.Val)
-		return wrap(channel), err
+	if _, exists := c.Channels.Get(channel.ID); exists {
+		return errors.New("already exists")
 	}
 
-	item := c.Channels.CreateCacheableItem(channel)
 	c.Channels.Set(channel.ID, item)
-
-	return wrap(channel), nil
+	return nil
 }
 
 func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
@@ -545,7 +541,8 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		guild = DeepCopy(guild).(*Guild)
 	} else if exists {
 		// not pre-loaded from ready event
-		if err := json.Unmarshal(data, &guild); err != nil {
+		// data should somehow already exist, duplicate create event maybe?
+		if err := json.Unmarshal(data, guild); err != nil {
 			return nil, err
 		}
 		c.Patch(guild)
@@ -564,6 +561,12 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 			c.Guilds.Set(guildID, e)
 		} // TODO: unmarshal if unavailable
 		c.Guilds.Unlock()
+	}
+
+	// cache channels
+	for i := range guild.Channels {
+		channel := DeepCopy(guild.Channels[i]).(*Channel)
+		_ = c.saveChannel(channel)
 	}
 
 	return &GuildCreate{Guild: guild}, nil

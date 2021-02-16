@@ -334,14 +334,41 @@ func TestClient_System(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	wg := &sync.WaitGroup{}
+	cache := c.Cache()
 
-	input := make(chan *gateway.Event, 1)
-	c.eventChan = input
+	wg.Add(3) // *_0_GUILD_CREATE.json files
+	c.Gateway().GuildCreate(func(s Session, g *GuildCreate) {
+		guild := g.Guild
+
+		cachedGuild, err := cache.GetGuild(guild.ID)
+		if err != nil {
+			t.Error("guild was not cached on guild create", err)
+		} else if cachedGuild == nil {
+			t.Error("cache returned a nil value for guild")
+		} else if cachedGuild.ID != guild.ID {
+			t.Errorf("guild id differs. Got %d, wants %d", guild.ID, cachedGuild.ID)
+		}
+
+		for _, channel := range guild.Channels {
+			cachedChannel, err := cache.GetChannel(channel.ID)
+			if err != nil {
+				t.Error("channel was not cached on guild create", err)
+			} else if cachedChannel == nil {
+				t.Error("cache returned a nil value for channel")
+			} else if cachedChannel.ID != channel.ID {
+				t.Errorf("channel id differs. Got %d, wants %d", channel.ID, cachedChannel.ID)
+			}
+		}
+		wg.Done()
+	})
+
+	input := c.eventChan
 	c.setupConnectEnv()
 
 	var files []string
 
-	root := "testdata/phases/startup-smooth-1"
+	root := "testdata/v8/phases/startup-smooth-1"
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
@@ -397,33 +424,10 @@ func TestClient_System(t *testing.T) {
 			Data: p.D,
 		}
 	}
+	defer close(c.dispatcher.shutdown)
+	defer close(c.shutdownChan)
 
-	// TODO: race - / don't have another way to "sync" the go routines
-	//if _, err = c.cache.GetGuild(244200618854580224); err != nil {
-	//	t.Error(err)
-	//}
-
-	//wg := sync.WaitGroup{}
-	//wg.Add(1)
-	//c.On(event.GuildMembersChunk, func(s Session, evt *GuildMembersChunk) {
-	//	var msg string
-	//	for i := range evt.Members {
-	//		if evt.Members[i].User == nil {
-	//			msg = fmt.Sprintf("expected user in member to not be nil. Got %+v", evt.Members[i])
-	//			break
-	//		}
-	//	}
-	//
-	//	if msg != "" {
-	//		t.Error(msg)
-	//	}
-	//	wg.Done()
-	//})
-	//wg.Wait()
-
-	// cleanup
-	close(c.dispatcher.shutdown)
-	close(c.shutdownChan)
+	wg.Wait()
 }
 
 func TestInternalStateHandlers(t *testing.T) {
