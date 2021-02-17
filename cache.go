@@ -325,13 +325,13 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	if evt, err = c.CacheNop.GuildMembersChunk(data); err != nil {
 		return nil, err
 	}
-	
+
 	users := make([]*User, 0, len(evt.Members))
 	for i := range evt.Members {
 		users = append(users, evt.Members[i].User)
 		evt.Members[i].User = nil
 	}
-	
+
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -348,6 +348,7 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	if !exists || cachedGuild == nil {
 		cachedGuild = c.Guilds.CreateCacheableItem(&Guild{
 			ID: evt.GuildID,
+			Unavailable: true,
 		})
 		c.Guilds.Set(evt.GuildID, cachedGuild)
 	}
@@ -371,9 +372,8 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	}
 	members = append(members, evt.Members...)
 	guild.Members = members
-	
-	mutex.Unlock()
 
+	mutex.Unlock()
 
 	wg.Wait()
 	return c.CacheNop.GuildMembersChunk(data)
@@ -563,14 +563,7 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		c.Patch(guild)
 
 		guild = DeepCopy(guild).(*Guild)
-	} else if exists {
-		// not pre-loaded from ready event
-		// data should somehow already exist, duplicate create event maybe?
-		if err := json.Unmarshal(data, guild); err != nil {
-			return nil, err
-		}
-		c.Patch(guild)
-	} else {
+	} else if !exists {
 		// must create it
 		if err := json.Unmarshal(data, &guild); err != nil {
 			return nil, err
@@ -583,8 +576,15 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		c.Guilds.Lock()
 		if _, exists := c.Guilds.Get(guildID); !exists {
 			c.Guilds.Set(guildID, e)
-		} // TODO: unmarshal if unavailable
+		}
 		c.Guilds.Unlock()
+	} else {
+		// derp - this is really.. not supposed to happen but just in case
+		evt, err := c.CacheNop.GuildCreate(data)
+		if err != nil {
+			return nil, err
+		}
+		guild = evt.Guild
 	}
 
 	// cache channels
