@@ -5,7 +5,9 @@ package disgord
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -30,7 +32,16 @@ var guildTypical = struct {
 	VoiceChannelOther2:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_2")),
 }
 
+var guildAdmin = struct {
+	ID Snowflake
+}{
+	ID: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
+}
+
 func validSnowflakes() {
+	if guildAdmin.ID.IsZero() {
+		panic("missing id for admin guild")
+	}
 	if guildTypical.ID.IsZero() {
 		panic("missing id for typical guild")
 	}
@@ -66,10 +77,9 @@ func TestClient(t *testing.T) {
 		defer wg.Done()
 		var err error
 		c, err = NewClient(context.Background(), Config{
-			BotToken:     token,
-			DisableCache: true,
-			Logger:       &logger.FmtPrinter{},
-			Presence:     status,
+			BotToken: token,
+			Logger:   &logger.FmtPrinter{},
+			Presence: status,
 		})
 		if err != nil {
 			t.Fatal("failed to initiate a client")
@@ -113,6 +123,50 @@ func TestClient(t *testing.T) {
 		case <-time.After(10 * time.Second):
 			t.Fatal("unable to connect within time frame of 10s")
 		case <-ready:
+		}
+	})
+	wg.Wait()
+
+	wg.Add(1)
+	t.Run("role-create", func(t *testing.T) {
+		defer wg.Done()
+		roleName := "t-" + strconv.Itoa(rand.Int())
+		if len(roleName) > 10 {
+			roleName = roleName[:10]
+		}
+
+		createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
+			Name:   roleName,
+			Reason: "integration test",
+		})
+		if err != nil {
+			t.Error(fmt.Errorf("unable to create role. %w", err))
+			return
+		}
+
+		created := make(chan interface{}, 2)
+		c.Gateway().GuildRoleCreate(func(s Session, h *GuildRoleCreate) {
+			created <- 0
+		})
+		select {
+		case <-time.After(10 * time.Second):
+			t.Error("failed to get role create event within time frame of 10s")
+		case <-created:
+			close(created)
+		}
+
+		guild, err := c.Cache().GetGuild(guildAdmin.ID)
+		if err != nil {
+			t.Error("somehow the admin guild is not in the cache")
+		}
+
+		r, err := guild.Role(createdRole.ID)
+		if err != nil {
+			t.Fatal("role does not exist in cache")
+		}
+
+		if r.Name != roleName {
+			t.Errorf("role name differs. Got %s, wants %s", r.Name, roleName)
 		}
 	})
 	wg.Wait()
