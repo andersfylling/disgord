@@ -296,6 +296,21 @@ func (c *CacheLFUImmutable) UserUpdate(data []byte) (*UserUpdate, error) {
 	return update, nil
 }
 
+func (c *CacheLFUImmutable) saveUsers(users []*User) error {
+	c.Users.Lock()
+	defer c.Users.Unlock()
+
+	// as slow as it gets
+	for i := range users {
+		if _, exists := c.Users.Get(users[i].ID); exists {
+			continue
+		}
+
+		c.Users.Set(users[i].ID, c.Users.CreateCacheableItem(users[i]))
+	}
+	return nil
+}
+
 func (c *CacheLFUImmutable) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
 	vsu := &VoiceServerUpdate{}
 	if err := json.Unmarshal(data, vsu); err != nil {
@@ -310,9 +325,20 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	if evt, err = c.CacheNop.GuildMembersChunk(data); err != nil {
 		return nil, err
 	}
+	
+	users := make([]*User, 0, len(evt.Members))
 	for i := range evt.Members {
+		users = append(users, evt.Members[i].User)
 		evt.Members[i].User = nil
 	}
+	
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		_ = c.saveUsers(users)
+		wg.Done()
+	}()
+
 	sort.Slice(evt.Members, func(i, j int) bool {
 		return evt.Members[i].UserID < evt.Members[j].UserID
 	})
@@ -345,8 +371,11 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	}
 	members = append(members, evt.Members...)
 	guild.Members = members
-
+	
 	mutex.Unlock()
+
+
+	wg.Wait()
 	return c.CacheNop.GuildMembersChunk(data)
 }
 
