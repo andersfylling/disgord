@@ -347,7 +347,7 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	cachedGuild, exists := c.Guilds.Get(evt.GuildID)
 	if !exists || cachedGuild == nil {
 		cachedGuild = c.Guilds.CreateCacheableItem(&Guild{
-			ID: evt.GuildID,
+			ID:          evt.GuildID,
 			Unavailable: true,
 		})
 		c.Guilds.Set(evt.GuildID, cachedGuild)

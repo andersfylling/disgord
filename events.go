@@ -115,6 +115,7 @@ type ChannelPinsUpdate struct {
 // TypingStart user started typing in a channel
 type TypingStart struct {
 	ChannelID     Snowflake `json:"channel_id"`
+	GuildID       Snowflake `json:"guild_id"`
 	UserID        Snowflake `json:"user_id"`
 	TimestampUnix int       `json:"timestamp"`
 	ShardID       uint      `json:"-"`
