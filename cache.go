@@ -680,10 +680,30 @@ func (c *CacheLFUImmutable) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, 
 }
 
 func (c *CacheLFUImmutable) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
-	if err = json.Unmarshal(data, &evt); err != nil {
+	if evt, err = c.CacheNop.GuildRoleUpdate(data); err != nil {
 		return nil, err
 	}
-	c.Patch(evt)
+
+	item, exists := c.getGuild(evt.GuildID)
+	if exists {
+		mutex := c.Mutex(&c.Guilds, evt.GuildID)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		guild := item.Val.(*Guild)
+		role, err := guild.Role(evt.Role.ID)
+		if err != nil {
+			// role does not exist
+			_ = guild.AddRole(DeepCopy(evt.Role).(*Role)) // TODO: how do i handle this?
+		} else {
+			tmp := &GuildRoleUpdate{Role: role}
+			if err = json.Unmarshal(data, tmp); err != nil {
+				return nil, err
+			}
+			c.Patch(evt)
+		}
+	}
+
 	return evt, nil
 }
 
