@@ -661,6 +661,32 @@ func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
 	return guildEvt, nil
 }
 
+func (c *CacheLFUImmutable) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err error) {
+	if evt, err = c.CacheNop.GuildRoleCreate(data); err != nil {
+		return nil, err
+	}
+
+	item, exists := c.getGuild(evt.GuildID)
+	if exists {
+		mutex := c.Mutex(&c.Guilds, evt.GuildID)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		guild := item.Val.(*Guild)
+		_ = guild.AddRole(evt.Role) // TODO: how do i handle this?
+	}
+
+	return evt, nil
+}
+
+func (c *CacheLFUImmutable) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+
 func (c *CacheLFUImmutable) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error) {
 	if evt, err = c.CacheNop.GuildRoleDelete(data); err != nil {
 		return nil, err
