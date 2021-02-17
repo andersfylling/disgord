@@ -117,7 +117,7 @@ type TypingStart struct {
 	ChannelID     Snowflake `json:"channel_id"`
 	GuildID       Snowflake `json:"guild_id"`
 	UserID        Snowflake `json:"user_id"`
-	Member        *Member `json:"member"`
+	Member        *Member   `json:"member"`
 	TimestampUnix int       `json:"timestamp"`
 	ShardID       uint      `json:"-"`
 }

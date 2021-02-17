@@ -147,6 +147,45 @@ func TestGuild_DeleteChannel(t *testing.T) {
 	}
 }
 
+func TestGuild_DeleteRoleByID(t *testing.T) {
+	snowflakes := []Snowflake{
+		Snowflake(6),
+		Snowflake(65),
+		Snowflake(324),
+		Snowflake(5435),
+		Snowflake(63453),
+		Snowflake(111111111),
+	}
+
+	guild := NewGuild()
+	for _, id := range snowflakes {
+		if err := guild.AddRole(&Role{ID: id}); err != nil {
+			t.Fatal("unable to add role")
+		}
+		if _, err := guild.Role(id); err != nil {
+			t.Fatal("role does not exist")
+		}
+	}
+
+	id := snowflakes[3]
+	if _, err := guild.Role(id); err != nil {
+		t.Fatal("role does not exist")
+	}
+
+	guild.DeleteRoleByID(id)
+	if _, err := guild.Role(id); err == nil {
+		t.Error("unable to delete role that exists")
+	}
+
+	// make sure everything can be deleted
+	for _, id := range snowflakes {
+		guild.DeleteRoleByID(id)
+	}
+	if len(guild.Roles) != 0 {
+		t.Error("unable to delete all roles")
+	}
+}
+
 func TestPermissionBit(t *testing.T) {
 	t.Run("contains", func(t *testing.T) {
 		testBits := PermissionSendMessages | PermissionReadMessages

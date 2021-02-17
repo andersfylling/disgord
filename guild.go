@@ -360,15 +360,13 @@ func (g *Guild) MembersByName(name string) (members []*Member) {
 }
 
 // Role retrieve a role based on role id
-func (g *Guild) Role(id Snowflake) (role *Role, err error) {
-	for _, role = range g.Roles {
+func (g *Guild) Role(id Snowflake) (*Role, error) {
+	for _, role := range g.Roles {
 		if role.ID == id {
-			return
+			return role, nil
 		}
 	}
-
-	err = errors.New("role not found in guild")
-	return
+	return nil, errors.New("role not found in guild")
 }
 
 // DeleteRoleByID remove a role from the guild struct

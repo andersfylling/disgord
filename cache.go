@@ -661,6 +661,24 @@ func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
 	return guildEvt, nil
 }
 
+func (c *CacheLFUImmutable) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error) {
+	if evt, err = c.CacheNop.GuildRoleDelete(data); err != nil {
+		return nil, err
+	}
+
+	item, exists := c.getGuild(evt.GuildID)
+	if exists {
+		mutex := c.Mutex(&c.Guilds, evt.GuildID)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		guild := item.Val.(*Guild)
+		guild.DeleteRoleByID(evt.RoleID)
+	}
+
+	return evt, nil
+}
+
 // REST lookup
 // func (c *CacheLFUImmutable) GetMessage(channelID, messageID Snowflake) (*Message, error) {
 // 	return nil, nil
