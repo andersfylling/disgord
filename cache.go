@@ -68,6 +68,12 @@ type CacheLFUImmutable struct {
 
 var _ Cache = (*CacheLFUImmutable)(nil)
 
+func (c *CacheLFUImmutable) getGuild(id Snowflake) (*crs.LFUItem, bool) {
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
+	return c.Guilds.Get(id)
+}
+
 func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
 	channelID := msg.ChannelID
 
@@ -142,15 +148,14 @@ func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	}
 	c.Patch(channel)
 
+	c.Channels.Lock()
+	defer c.Channels.Unlock()
 	_ = c.saveChannel(channel)
 	return &ChannelCreate{Channel: DeepCopy(channel).(*Channel)}, nil
 }
 
 func (c *CacheLFUImmutable) saveChannel(channel *Channel) error {
 	item := c.Channels.CreateCacheableItem(channel)
-
-	c.Channels.Lock()
-	defer c.Channels.Unlock()
 	if _, exists := c.Channels.Get(channel.ID); exists {
 		return errors.New("already exists")
 	}
@@ -185,9 +190,9 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	}
 	channelID := metadata.ID
 
-	c.Channels.RLock()
+	c.Channels.Lock()
 	item, exists := c.Channels.Get(channelID)
-	c.Channels.RUnlock()
+	c.Channels.Unlock()
 
 	var channel *Channel
 	var err error
@@ -381,9 +386,9 @@ func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpda
 
 	userwrap := &userHolder{}
 
-	c.Users.RLock()
+	c.Users.Lock()
 	cachedUser, userExists := c.Users.Get(uid)
-	c.Users.RUnlock()
+	c.Users.Unlock()
 
 	if userExists {
 		mutex := c.Mutex(&c.Users, uid)
@@ -393,7 +398,6 @@ func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpda
 			c.Patch(userwrap.User)
 		}
 		mutex.Unlock()
-		userwrap = nil
 	} else {
 		userwrap.User = &User{}
 		if err := json.Unmarshal(data, userwrap); err == nil {
@@ -406,13 +410,10 @@ func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpda
 			}
 			c.Users.Unlock()
 		}
-		userwrap = nil
 	}
+	userwrap = nil
 
-	c.Guilds.RLock()
-	item, exists := c.Guilds.Get(gid)
-	c.Guilds.RUnlock()
-
+	item, exists := c.getGuild(gid)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, gid)
 		mutex.Lock()
@@ -454,9 +455,9 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 	userID := gmr.Member.User.ID
 	guildID := gmr.Member.GuildID
 
-	c.Users.RLock()
+	c.Users.Lock()
 	cachedUser, userExists := c.Users.Get(userID)
-	c.Users.RUnlock()
+	c.Users.Unlock()
 
 	if userExists {
 		mutex := c.Mutex(&c.Users, userID)
@@ -479,10 +480,7 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 		c.Users.Unlock()
 	}
 
-	c.Guilds.RLock()
-	item, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	item, exists := c.getGuild(guildID)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
@@ -520,10 +518,7 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 	}
 	guildID := metadata.ID
 
-	c.Guilds.RLock()
-	item, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	item, exists := c.getGuild(guildID)
 	var guild *Guild
 	if exists && item.Val.(*Guild).Unavailable {
 		// pre-loaded from ready event
@@ -564,10 +559,12 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 	}
 
 	// cache channels
+	c.Channels.Lock()
 	for i := range guild.Channels {
 		channel := DeepCopy(guild.Channels[i]).(*Channel)
 		_ = c.saveChannel(channel)
 	}
+	c.Channels.Unlock()
 
 	return &GuildCreate{Guild: guild}, nil
 }
@@ -596,10 +593,7 @@ func (c *CacheLFUImmutable) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	}
 	guildID := metadata.ID
 
-	c.Guilds.RLock()
-	item, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	item, exists := c.getGuild(guildID)
 	var guild *Guild
 	var err error
 	if exists {
@@ -652,9 +646,9 @@ func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
 // 	return nil, nil
 // }
 func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
-	c.Channels.RLock()
+	c.Channels.Lock()
 	cachedItem, exists := c.Channels.Get(id)
-	c.Channels.RUnlock()
+	c.Channels.Unlock()
 
 	if exists {
 		mutex := c.Mutex(&c.Channels, id)
@@ -667,10 +661,7 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 	return nil, nil
 }
 func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(guildID)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
@@ -683,10 +674,7 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 	return nil, errors.New("guild does not exist")
 }
 func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(id)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(id)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
@@ -703,10 +691,7 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	return nil, errors.New("guild does not exist")
 }
 func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(id)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(id)
 	var guild *Guild
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
@@ -719,10 +704,7 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	return guild, nil
 }
 func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(id)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(id)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
@@ -746,23 +728,11 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		c.Users.RLock()
 		user, _ = c.GetUser(userID)
-		c.Users.RUnlock()
-
-		if user != nil {
-			mutex := c.Mutex(&c.Users, userID)
-			mutex.Lock()
-			user = DeepCopy(user).(*User)
-			mutex.Unlock()
-		}
 		wg.Done()
 	}()
 
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(guildID)
 	if exists {
 		mutex := c.Mutex(&c.Users, userID)
 		mutex.Lock()
@@ -775,7 +745,6 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 
 		mutex.Unlock()
 	}
-
 	wg.Wait()
 
 	if member != nil {
@@ -786,10 +755,7 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 	}
 }
 func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
-	c.Guilds.RLock()
-	cachedItem, exists := c.Guilds.Get(guildID)
-	c.Guilds.RUnlock()
-
+	cachedItem, exists := c.getGuild(guildID)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
@@ -819,9 +785,9 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 		return c.GetCurrentUser()
 	}
 
-	c.Users.RLock()
+	c.Users.Lock()
 	item, exists := c.Users.Get(id)
-	c.Users.RUnlock()
+	c.Users.Unlock()
 
 	var user *User
 	if exists {

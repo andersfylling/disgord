@@ -31,7 +31,7 @@ func SetLimit(v interface{}, limit uint) {
 }
 
 type LFU struct {
-	sync.RWMutex
+	sync.Mutex
 	items    []LFUItem
 	table    map[Snowflake]int
 	nilTable []int
