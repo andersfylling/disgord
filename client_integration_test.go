@@ -135,6 +135,11 @@ func TestClient(t *testing.T) {
 			roleName = roleName[:10]
 		}
 
+		created := make(chan interface{}, 2)
+		c.Gateway().GuildRoleCreate(func(s Session, h *GuildRoleCreate) {
+			created <- 0
+		})
+
 		createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
 			Name:   roleName,
 			Reason: "integration test",
@@ -144,10 +149,6 @@ func TestClient(t *testing.T) {
 			return
 		}
 
-		created := make(chan interface{}, 2)
-		c.Gateway().GuildRoleCreate(func(s Session, h *GuildRoleCreate) {
-			created <- 0
-		})
 		select {
 		case <-time.After(10 * time.Second):
 			t.Error("failed to get role create event within time frame of 10s")
@@ -156,8 +157,9 @@ func TestClient(t *testing.T) {
 		}
 
 		guild, err := c.Cache().GetGuild(guildAdmin.ID)
-		if err != nil {
+		if err != nil || guild == nil {
 			t.Error("somehow the admin guild is not in the cache")
+			return
 		}
 
 		r, err := guild.Role(createdRole.ID)
