@@ -128,7 +128,7 @@ func TestClient(t *testing.T) {
 	wg.Wait()
 
 	wg.Add(1)
-	t.Run("role-create", func(t *testing.T) {
+	t.Run("role", func(t *testing.T) {
 		defer wg.Done()
 		roleName := "t-" + strconv.Itoa(rand.Int())
 		if len(roleName) > 10 {
@@ -140,36 +140,74 @@ func TestClient(t *testing.T) {
 			created <- 0
 		})
 
-		createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
-			Name:   roleName,
-			Reason: "integration test",
+		deleted := make(chan interface{}, 2)
+		c.Gateway().GuildRoleDelete(func(s Session, h *GuildRoleDelete) {
+			deleted <- 0
 		})
-		if err != nil {
-			t.Error(fmt.Errorf("unable to create role. %w", err))
-			return
-		}
 
-		select {
-		case <-time.After(10 * time.Second):
-			t.Error("failed to get role create event within time frame of 10s")
-		case <-created:
-			close(created)
-		}
+		var roleID Snowflake
+		t.Run("create", func(t *testing.T) {
+			createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
+				Name:   roleName,
+				Reason: "integration test",
+			})
+			if err != nil {
+				t.Error(fmt.Errorf("unable to create role. %w", err))
+				return
+			}
 
-		guild, err := c.Cache().GetGuild(guildAdmin.ID)
-		if err != nil || guild == nil {
-			t.Error("somehow the admin guild is not in the cache")
-			return
-		}
+			select {
+			case <-time.After(10 * time.Second):
+				t.Error("failed to get role create event within time frame of 10s")
+			case <-created:
+				close(created)
+			}
 
-		r, err := guild.Role(createdRole.ID)
-		if err != nil {
-			t.Fatal("role does not exist in cache")
-		}
+			guild, err := c.Cache().GetGuild(guildAdmin.ID)
+			if err != nil || guild == nil {
+				t.Error("somehow the admin guild is not in the cache")
+				return
+			}
 
-		if r.Name != roleName {
-			t.Errorf("role name differs. Got %s, wants %s", r.Name, roleName)
-		}
+			r, err := guild.Role(createdRole.ID)
+			if err != nil {
+				t.Fatal("role does not exist in cache")
+			}
+
+			if r.Name != roleName {
+				t.Errorf("role name differs. Got %s, wants %s", r.Name, roleName)
+			}
+
+			roleID = createdRole.ID
+		})
+
+		t.Run("delete", func(t *testing.T) {
+			if roleID.IsZero() {
+				t.Fatal("unable to test role delete, as role create failed")
+			}
+
+			if err := c.Guild(guildAdmin.ID).Role(roleID).Delete(); err != nil {
+				t.Error(fmt.Errorf("unable to delete role. %w", err))
+				return
+			}
+
+			select {
+			case <-time.After(10 * time.Second):
+				t.Error("failed to get role deleted event within time frame of 10s")
+			case <-deleted:
+				close(deleted)
+			}
+
+			guild, err := c.Cache().GetGuild(guildAdmin.ID)
+			if err != nil || guild == nil {
+				t.Error("somehow the admin guild is not in the cache")
+				return
+			}
+
+			if r, _ := guild.Role(roleID); r != nil {
+				t.Fatal("role exist in cache")
+			}
+		})
 	})
 	wg.Wait()
 
