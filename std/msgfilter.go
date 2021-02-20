@@ -77,7 +77,7 @@ func (f *msgFilter) IsByWebhook(evt interface{}) interface{} {
 }
 
 func (f *msgFilter) HasBotMentionPrefix(evt interface{}) interface{} {
-	return messageHasPrefix(evt, mentionString(f.botID))
+	return messageHasPrefix(evt, mentionString(f.botID), nicknameMentionString(f.botID))
 }
 
 func (f *msgFilter) HasPrefix(evt interface{}) interface{} {

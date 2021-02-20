@@ -294,6 +294,11 @@ func TestMsgFilter_HasBotMentionPrefix(t *testing.T) {
 			true,
 		},
 		{
+			"MessageCreate_BotHello_nickname",
+			messageCreate(fmt.Sprintf("<@!%s> hello", botID.String())),
+			true,
+		},
+		{
 			"MessageUpdate_BotHello",
 			messageUpdate(fmt.Sprintf("<@%s> hello", botID.String())),
 			true,

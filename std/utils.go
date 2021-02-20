@@ -78,6 +78,10 @@ func mentionString(id disgord.Snowflake) string {
 	return "<@" + id.String() + ">"
 }
 
+func nicknameMentionString(id disgord.Snowflake) string {
+	return "<@!" + id.String() + ">"
+}
+
 func getMsg(evt interface{}) (msg *disgord.Message) {
 	switch t := evt.(type) {
 	case *disgord.MessageCreate:
@@ -91,18 +95,19 @@ func getMsg(evt interface{}) (msg *disgord.Message) {
 	return msg
 }
 
-func messageHasPrefix(evt interface{}, prefix string) interface{} {
+func messageHasPrefix(evt interface{}, prefix string, altPrefixes ...string) interface{} {
 	var msg *disgord.Message
 	if msg = getMsg(evt); msg == nil {
 		return nil
 	}
 
 	content := strings.TrimSpace(msg.Content)
-	if !strings.HasPrefix(content, prefix) {
-		return nil
+	for _, p := range append(altPrefixes, prefix) {
+		if strings.HasPrefix(content, p) {
+			return evt
+		}
 	}
-
-	return evt
+	return nil
 }
 
 func messageIsBot(evt interface{}, isBot bool) interface{} {
