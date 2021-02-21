@@ -53,11 +53,12 @@ func (f *msgFilter) ContainsBotMention(evt interface{}) interface{} {
 		return nil
 	}
 
-	if !strings.Contains(msg.Content, mentionString(f.botID)) {
-		return nil
+	for _, p := range []string{mentionString(f.botID), nicknameMentionString(f.botID)} {
+		if strings.Contains(msg.Content, p) {
+			return evt
+		}
 	}
-
-	return evt
+	return nil
 }
 
 func (f *msgFilter) NotByBot(evt interface{}) interface{} {
