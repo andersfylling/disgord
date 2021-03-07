@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -173,6 +174,8 @@ type VoiceChannelQueryBuilder interface {
 
 	// param{deaf} is deprecated
 	Connect(mute, deaf bool) (VoiceConnection, error)
+
+	JoinManual(ctx context.Context, mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error)
 }
 
 type voiceChannelQueryBuilder struct {
@@ -183,4 +186,64 @@ type voiceChannelQueryBuilder struct {
 // VoiceConnect is used to handle making a voice connection.
 func (v voiceChannelQueryBuilder) Connect(mute, deaf bool) (VoiceConnection, error) {
 	return v.client.voiceConnectOptions(v.gid, v.cid, deaf, mute)
+}
+
+// JoinManual Tells Discord we want to start a new voice connection. However, it is the caller that
+// is responsible for handling the voice connection compared to Connect(..).
+//
+// Useful for cases where third party libs, like Lavalink, is the preferred way to handle voice connections.
+func (v voiceChannelQueryBuilder) JoinManual(ctx context.Context, mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error) {
+	state := make(chan *VoiceStateUpdate, 2)
+	stateCtrl := &Ctrl{Channel: state}
+	defer stateCtrl.CloseChannel()
+
+	server := make(chan *VoiceServerUpdate, 2)
+	serverCtrl := &Ctrl{Channel: state}
+	defer serverCtrl.CloseChannel()
+
+	v.client.Gateway().WithCtrl(stateCtrl).VoiceStateUpdate(func(_ Session, evt *VoiceStateUpdate) {
+		if evt.GuildID != v.gid {
+			return
+		}
+		if evt.ChannelID != v.cid {
+			return
+		}
+		state <- evt
+	})
+
+	v.client.Gateway().WithCtrl(serverCtrl).VoiceServerUpdate(func(_ Session, evt *VoiceServerUpdate) {
+		if evt.GuildID != v.gid {
+			return
+		}
+		server <- evt
+	})
+
+	_, err := v.client.Gateway().Dispatch(UpdateVoiceState, &UpdateVoiceStatePayload{
+		GuildID:   v.gid,
+		ChannelID: v.cid,
+		SelfDeaf:  deaf,
+		SelfMute:  mute,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to send op 4 to discord: %w", err)
+	}
+
+	var (
+		stateData  *VoiceStateUpdate
+		serverData *VoiceServerUpdate
+	)
+
+	select {
+	case serverData = <-server:
+	case <-ctx.Done():
+		return nil, nil, ctx.Err()
+	}
+
+	select {
+	case stateData = <-state:
+	case <-ctx.Done():
+		return nil, serverData, ctx.Err()
+	}
+
+	return stateData, serverData, nil
 }
