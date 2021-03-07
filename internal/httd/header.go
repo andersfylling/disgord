@@ -2,10 +2,11 @@ package httd
 
 import (
 	"errors"
-	"github.com/andersfylling/disgord/json"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 // http rate limit identifiers

@@ -4,8 +4,6 @@ package disgord
 
 import (
 	"context"
-	"github.com/andersfylling/disgord/internal/logger"
-	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,6 +13,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/logger"
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/gateway"
 )

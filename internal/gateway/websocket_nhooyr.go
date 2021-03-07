@@ -5,9 +5,10 @@ package gateway
 import (
 	"context"
 	"errors"
-	"github.com/andersfylling/disgord/json"
 	"io"
 	"net/http"
+
+	"github.com/andersfylling/disgord/json"
 
 	"go.uber.org/atomic"
 

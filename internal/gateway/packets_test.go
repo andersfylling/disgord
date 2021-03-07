@@ -3,11 +3,12 @@
 package gateway
 
 import (
-	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"strconv"
 	"sync"
 	"testing"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func getAllJSONFiles(t *testing.T) (files [][]byte) {

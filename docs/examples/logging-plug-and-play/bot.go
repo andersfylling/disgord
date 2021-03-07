@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/andersfylling/disgord"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 var log = &logrus.Logger{

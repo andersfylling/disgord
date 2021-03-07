@@ -5,12 +5,13 @@ package gateway
 import (
 	"bytes"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/gateway/opcode"
 )
