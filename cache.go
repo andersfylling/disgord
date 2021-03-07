@@ -486,59 +486,58 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 	userID := gmr.Member.User.ID
 	guildID := gmr.Member.GuildID
 
-	c.Users.Lock()
-	cachedUser, userExists := c.Users.Get(userID)
-	c.Users.Unlock()
+	// upsert user
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		if user, mu := c.get(&c.Users, userID); user != nil {
+			mu.Lock()
+			defer mu.Unlock()
 
-	if userExists {
-		mutex := c.Mutex(&c.Users, userID)
-		mutex.Lock()
-		// TODO: i assume the user is partial and doesn't hold any real updates
-		usr := cachedUser.Val.(*User)
-		// if err := json.Unmarshal(data, &Member{User:usr}); err == nil {
-		// 	gmr.Member.User = DeepCopy(usr).(*User)
-		// }
-		gmr.Member.User = DeepCopy(usr).(*User)
-		mutex.Unlock()
-	} else {
-		usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User).(*User))
+			gmr.Member.User = user.(*User)
+			_ = json.Unmarshal(data, gmr)
+			c.Patch(gmr)
+		} else {
+			usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User))
 
-		c.Users.Lock()
-		if _, exists := c.Users.Get(userID); !exists {
-			c.Users.Set(userID, usr)
+			c.Users.Lock()
+			if _, exists := c.Users.Get(userID); !exists {
+				c.Users.Set(userID, usr)
+			}
+			c.Users.Unlock()
 		}
-		// TODO: if it now exists, the data is discarded
-		c.Users.Unlock()
-	}
+		wg.Done()
+	}()
 
-	item, exists := c.getGuild(guildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, guildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	// upsert member
+	if guildI, mu := c.get(&c.Guilds, guildID); guildI != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := item.Val.(*Guild)
+		guild := guildI.(*Guild)
 
 		var member *Member
-		for i := range guild.Members { // slow... map instead?
+		for i := range guild.Members { // TODO-slow:
 			if guild.Members[i].UserID == gmr.Member.User.ID {
 				member = guild.Members[i]
 				if err := json.Unmarshal(data, member); err != nil {
 					return nil, err
 				}
 				c.Patch(member)
+				member.User = nil
 				break
 			}
 		}
 		if member == nil {
 			member = DeepCopy(gmr.Member).(*Member)
+			member.User = nil
 
 			guild.Members = append(guild.Members, member)
 			guild.MemberCount++
 		}
-		member.User = nil
 	}
 
+	wg.Wait()
 	return gmr, nil
 }
 
