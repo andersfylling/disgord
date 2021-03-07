@@ -738,21 +738,31 @@ func (c *CacheLFUImmutable) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, 
 // func (c *CacheLFUImmutable) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
 // 	return nil, nil
 // }
-func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
-	c.Channels.Lock()
-	cachedItem, exists := c.Channels.Get(id)
-	c.Channels.Unlock()
+func (c *CacheLFUImmutable) get(set *crs.LFU, id Snowflake) (interface{}, *sync.Mutex) {
+	set.Lock()
+	cachedItem, exists := set.Get(id)
+	var val interface{}
+	if exists {
+		val = cachedItem.Val
+	}
+	set.Unlock()
 
 	if exists {
-		mutex := c.Mutex(&c.Channels, id)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		channel := cachedItem.Val.(*Channel)
-		return DeepCopy(channel).(*Channel), nil
+		return val, c.Mutex(set, id)
 	}
 	return nil, nil
 }
+
+func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
+	if channel, mu := c.get(&c.Channels, id); channel != nil {
+		mu.Lock()
+		defer mu.Unlock()
+
+		return DeepCopy(channel.(*Channel)).(*Channel), nil
+	}
+	return nil, nil
+}
+
 func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
 	cachedItem, exists := c.getGuild(guildID)
 	if exists {
