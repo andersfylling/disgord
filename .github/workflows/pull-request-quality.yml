@@ -3,7 +3,7 @@ on: [pull_request]
 jobs:
   none:
     name: No build tags
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
       matrix:
