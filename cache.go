@@ -388,12 +388,11 @@ func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, 
 	}
 	c.Patch(gmr)
 
-	c.Guilds.Lock()
-	defer c.Guilds.Unlock()
+	if guildI, mu := c.get(&c.Guilds, gmr.GuildID); guildI != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-	if item, exists := c.Guilds.Get(gmr.GuildID); exists {
-		guild := item.Val.(*Guild)
-
+		guild := guildI.(*Guild)
 		for i := range guild.Members {
 			if guild.Members[i].UserID == gmr.User.ID {
 				guild.MemberCount--
