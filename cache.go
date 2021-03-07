@@ -889,16 +889,11 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 		return c.GetCurrentUser()
 	}
 
-	c.Users.Lock()
-	item, exists := c.Users.Get(id)
-	c.Users.Unlock()
+	if user, mu := c.get(&c.Users, id); user != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-	if exists {
-		mutex := c.Mutex(&c.Users, id)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		return DeepCopy(item.Val.(*User)).(*User), nil
+		return DeepCopy(user.(*User)).(*User), nil
 	}
 	return nil, ErrCacheMiss
 }
