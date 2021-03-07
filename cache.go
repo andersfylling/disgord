@@ -171,12 +171,12 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	// assumption#2: The set of fields in both ChannelCreate and ChannelUpdate are the same
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
 
-	updateChannel := func(channelID Snowflake, item *crs.LFUItem) (*Channel, error) {
+	updateChannel := func(channelID Snowflake, item interface{}) (*Channel, error) {
 		mutex := c.Mutex(&c.Channels, channelID)
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		channel := item.Val.(*Channel)
+		channel := item.(*Channel)
 		if err := json.Unmarshal(data, channel); err != nil {
 			return nil, err
 		}
@@ -192,14 +192,13 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	}
 	channelID := metadata.ID
 
-	c.Channels.Lock()
-	item, exists := c.Channels.Get(channelID)
-	c.Channels.Unlock()
-
 	var channel *Channel
 	var err error
-	if exists {
-		if channel, err = updateChannel(channelID, item); err != nil {
+	if channelI, mu := c.get(&c.Channels, channelID); channelI != nil {
+		mu.Lock()
+		defer mu.Unlock()
+
+		if channel, err = updateChannel(channelID, channelI); err != nil {
 			return nil, err
 		}
 	} else {
@@ -215,7 +214,7 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		c.Channels.Lock()
 		if existingItem, exists := c.Channels.Get(channelID); !exists {
 			c.Channels.Set(channelID, freshItem)
-		} else if channel, err = updateChannel(channelID, existingItem); err != nil { // double lock
+		} else if channel, err = updateChannel(channelID, existingItem.Val); err != nil { // double lock
 			return nil, err
 		}
 		c.Channels.Unlock()
