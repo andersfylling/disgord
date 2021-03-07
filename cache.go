@@ -781,16 +781,17 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
-	cachedItem, exists := c.getGuild(id)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, id)
-		mutex.Lock()
-		defer mutex.Unlock()
+	if guild, mu := c.get(&c.Guilds, id); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := cachedItem.Val.(*Guild)
-		emojis := make([]*Emoji, len(guild.Emojis))
-		for i, emoji := range emojis {
-			emojis[i] = DeepCopy(emoji).(*Emoji)
+		g := guild.(*Guild)
+		emojis := make([]*Emoji, 0, len(g.Emojis))
+		for _, emoji := range emojis {
+			if emoji == nil { // shouldn't happen, but let's just be safe
+				continue
+			}
+			emojis = append(emojis, DeepCopy(emoji).(*Emoji))
 		}
 
 		return emojis, nil
