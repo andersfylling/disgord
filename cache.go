@@ -799,13 +799,11 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
-	cachedItem, exists := c.getGuild(id)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, id)
-		mutex.Lock()
-		defer mutex.Unlock()
+	if guild, mu := c.get(&c.Guilds, id); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		return DeepCopy(cachedItem.Val.(*Guild)).(*Guild), nil
+		return DeepCopy(guild.(*Guild)).(*Guild), nil
 	}
 	return nil, ErrCacheMiss
 }
