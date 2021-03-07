@@ -198,7 +198,7 @@ func (v voiceChannelQueryBuilder) JoinManual(mute, deaf bool) (*VoiceStateUpdate
 	defer stateCtrl.CloseChannel()
 
 	server := make(chan *VoiceServerUpdate, 2)
-	serverCtrl := &Ctrl{Channel: state}
+	serverCtrl := &Ctrl{Channel: server}
 	defer serverCtrl.CloseChannel()
 
 	v.client.Gateway().WithCtrl(stateCtrl).VoiceStateUpdate(func(_ Session, evt *VoiceStateUpdate) {
