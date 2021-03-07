@@ -859,16 +859,17 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 	}
 }
 func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
-	cachedItem, exists := c.getGuild(guildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, guildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := cachedItem.Val.(*Guild)
-		roles := make([]*Role, len(guild.Roles))
-		for i, role := range guild.Roles {
-			roles[i] = DeepCopy(role).(*Role)
+		g := guild.(*Guild)
+		roles := make([]*Role, 0, len(g.Roles))
+		for _, role := range roles {
+			if role == nil { // shouldn't happen, but let's just be safe
+				continue
+			}
+			roles = append(roles, DeepCopy(role).(*Role))
 		}
 
 		return roles, nil
