@@ -354,9 +354,8 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 		})
 		c.Guilds.Set(evt.GuildID, cachedGuild)
 	}
-	c.Guilds.Unlock()
-
 	guild := cachedGuild.Val.(*Guild)
+	c.Guilds.Unlock()
 
 	mutex := c.Mutex(&c.Guilds, evt.GuildID)
 	mutex.Lock()
