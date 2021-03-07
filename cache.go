@@ -825,6 +825,9 @@ func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	}
 	return nil, ErrCacheMiss
 }
+
+// GetMember fetches member and related user data from cache. User is not guaranteed to be populated.
+// Tip: use Member.GetUser(..) instead of Member.User
 func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error) {
 	var user *User
 	var member *Member
@@ -836,18 +839,14 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 		wg.Done()
 	}()
 
-	cachedItem, exists := c.getGuild(guildID)
-	if exists {
-		mutex := c.Mutex(&c.Users, userID)
-		mutex.Lock()
+	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := cachedItem.Val.(*Guild)
-		member, _ = guild.Member(userID)
-		if member != nil {
+		g := guild.(*Guild)
+		if member, _ = g.Member(userID); member != nil {
 			member = DeepCopy(member).(*Member)
 		}
-
-		mutex.Unlock()
 	}
 	wg.Wait()
 
