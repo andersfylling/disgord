@@ -175,7 +175,7 @@ type VoiceChannelQueryBuilder interface {
 	// param{deaf} is deprecated
 	Connect(mute, deaf bool) (VoiceConnection, error)
 
-	JoinManual(ctx context.Context, mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error)
+	JoinManual(mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error)
 }
 
 type voiceChannelQueryBuilder struct {
@@ -192,7 +192,7 @@ func (v voiceChannelQueryBuilder) Connect(mute, deaf bool) (VoiceConnection, err
 // is responsible for handling the voice connection compared to Connect(..).
 //
 // Useful for cases where third party libs, like Lavalink, is the preferred way to handle voice connections.
-func (v voiceChannelQueryBuilder) JoinManual(ctx context.Context, mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error) {
+func (v voiceChannelQueryBuilder) JoinManual(mute, deaf bool) (*VoiceStateUpdate, *VoiceServerUpdate, error) {
 	state := make(chan *VoiceStateUpdate, 2)
 	stateCtrl := &Ctrl{Channel: state}
 	defer stateCtrl.CloseChannel()
@@ -235,14 +235,14 @@ func (v voiceChannelQueryBuilder) JoinManual(ctx context.Context, mute, deaf boo
 
 	select {
 	case serverData = <-server:
-	case <-ctx.Done():
-		return nil, nil, ctx.Err()
+	case <-v.ctx.Done():
+		return nil, nil, v.ctx.Err()
 	}
 
 	select {
 	case stateData = <-state:
-	case <-ctx.Done():
-		return nil, serverData, ctx.Err()
+	case <-v.ctx.Done():
+		return nil, serverData, v.ctx.Err()
 	}
 
 	return stateData, serverData, nil
