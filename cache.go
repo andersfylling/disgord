@@ -766,14 +766,16 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 }
 
 func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
-	cachedItem, exists := c.getGuild(guildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, guildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := cachedItem.Val.(*Guild)
-		emoji, _ := guild.Emoji(emojiID)
+		g := guild.(*Guild)
+		emoji, err := g.Emoji(emojiID)
+		if err != nil || emoji == nil {
+			return nil, ErrCacheMiss
+		}
+
 		return DeepCopy(emoji).(*Emoji), nil
 	}
 	return nil, ErrCacheMiss
