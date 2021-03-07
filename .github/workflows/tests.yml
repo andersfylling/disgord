@@ -6,11 +6,11 @@ name: tests
 jobs:
   integration-tests:
     name: Integration tests & code coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.15']
+        go: ['1.16']
     steps:
       - name: Setup Go
         uses: actions/setup-go@v1
