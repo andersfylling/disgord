@@ -808,17 +808,17 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
-	cachedItem, exists := c.getGuild(id)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, id)
-		mutex.Lock()
-		defer mutex.Unlock()
+	if guild, mu := c.get(&c.Guilds, id); guild != nil {
+		mu.Lock()
+		defer mu.Unlock()
 
-		guild := cachedItem.Val.(*Guild)
-
-		channels := make([]*Channel, len(guild.Channels))
-		for i, channel := range guild.Channels {
-			channels[i] = DeepCopy(channel).(*Channel)
+		g := guild.(*Guild)
+		channels := make([]*Channel, 0, len(g.Channels))
+		for _, channel := range channels {
+			if channel == nil { // shouldn't happen, but let's just be safe
+				continue
+			}
+			channels = append(channels, DeepCopy(channel).(*Channel))
 		}
 
 		return channels, nil
