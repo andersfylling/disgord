@@ -9,6 +9,8 @@ import (
 	"github.com/andersfylling/disgord/json"
 )
 
+var ErrCacheMiss = errors.New("no matching entry found in cache")
+
 type idHolder struct {
 	ID      Snowflake `json:"id"`
 	Channel struct {
@@ -760,7 +762,7 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 
 		return DeepCopy(channel.(*Channel)).(*Channel), nil
 	}
-	return nil, nil
+	return nil, ErrCacheMiss
 }
 
 func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
@@ -774,7 +776,7 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 		emoji, _ := guild.Emoji(emojiID)
 		return DeepCopy(emoji).(*Emoji), nil
 	}
-	return nil, errors.New("guild does not exist")
+	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	cachedItem, exists := c.getGuild(id)
@@ -791,20 +793,18 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 
 		return emojis, nil
 	}
-	return nil, errors.New("guild does not exist")
+	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	cachedItem, exists := c.getGuild(id)
-	var guild *Guild
 	if exists {
 		mutex := c.Mutex(&c.Guilds, id)
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		guild = DeepCopy(cachedItem.Val.(*Guild)).(*Guild)
+		return DeepCopy(cachedItem.Val.(*Guild)).(*Guild), nil
 	}
-
-	return guild, nil
+	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	cachedItem, exists := c.getGuild(id)
@@ -822,7 +822,7 @@ func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 
 		return channels, nil
 	}
-	return nil, errors.New("guild does not exist")
+	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error) {
 	var user *User
@@ -854,7 +854,7 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 		member.User = user
 		return member, nil
 	} else {
-		return nil, nil
+		return nil, ErrCacheMiss
 	}
 }
 func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
@@ -872,13 +872,13 @@ func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 
 		return roles, nil
 	}
-	return nil, errors.New("guild does not exist")
+	return nil, ErrCacheMiss
 }
 func (c *CacheLFUImmutable) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 	if c.CurrentUser == nil {
-		return nil, nil
+		return nil, ErrCacheMiss
 	}
 
 	return DeepCopy(c.CurrentUser).(*User), nil
@@ -892,14 +892,12 @@ func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
 	item, exists := c.Users.Get(id)
 	c.Users.Unlock()
 
-	var user *User
 	if exists {
 		mutex := c.Mutex(&c.Users, id)
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		user = DeepCopy(item.Val.(*User)).(*User)
+		return DeepCopy(item.Val.(*User)).(*User), nil
 	}
-
-	return user, nil
+	return nil, ErrCacheMiss
 }
