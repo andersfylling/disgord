@@ -19,6 +19,8 @@ import (
 	"github.com/andersfylling/disgord/internal/httd"
 )
 
+var DefaultHttpClient = &http.Client{}
+
 // New create a Client. But panics on configuration/setup errors.
 func New(conf Config) *Client {
 	client, err := NewClient(context.Background(), conf)
@@ -58,7 +60,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 	}
 	if conf.HTTPClient == nil {
 		// WARNING: do not set http.Client.Timeout (!)
-		conf.HTTPClient = &http.Client{}
+		conf.HTTPClient = DefaultHttpClient
 	} else if conf.HTTPClient.Timeout > 0 {
 		// https://github.com/nhooyr/websocket/issues/67
 		return nil, errors.New("do not set timeout in the http.Client, use context.Context instead")
@@ -69,6 +71,16 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 				return conf.Proxy.Dial(network, addr)
 			},
 		}
+	}
+	if conf.HttpClient == nil {
+		if conf.HTTPClient != nil {
+			conf.HttpClient = conf.HTTPClient
+		} else {
+			return nil, errors.New("missing configured HTTP client")
+		}
+	}
+	if conf.WebsocketHttpClient == nil {
+		conf.WebsocketHttpClient = DefaultHttpClient
 	}
 
 	if conf.Intents > 0 {
@@ -111,7 +123,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		UserAgentSourceURL:           constant.GitHubURL,
 		UserAgentVersion:             constant.Version,
 		UserAgentExtra:               conf.ProjectName,
-		HTTPClient:                   conf.HTTPClient,
+		HttpClient:                   conf.HTTPClient,
 		CancelRequestWhenRateLimited: conf.CancelRequestWhenRateLimited,
 		RESTBucketManager:            conf.RESTBucketManager,
 	})
@@ -148,17 +160,16 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 
 	// create a disgord Client/instance/session
 	c = &Client{
-		shutdownChan: conf.shutdownChan,
-		config:       conf,
-		httpClient:   conf.HTTPClient,
-		proxy:        conf.Proxy,
-		botToken:     conf.BotToken,
-		dispatcher:   dispatch,
-		req:          httdClient,
-		cache:        cache,
-		log:          conf.Logger,
-		pool:         newPools(),
-		eventChan:    evtChan,
+		shutdownChan:        conf.shutdownChan,
+		config:              conf,
+		WebsocketHttpClient: conf.WebsocketHttpClient,
+		botToken:            conf.BotToken,
+		dispatcher:          dispatch,
+		req:                 httdClient,
+		cache:               cache,
+		log:                 conf.Logger,
+		pool:                newPools(),
+		eventChan:           evtChan,
 	}
 	c.handlers.c = c // parent reference
 	c.dispatcher.addSessionInstance(c)
@@ -182,6 +193,10 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 
 type ShardConfig = gateway.ShardConfig
 
+type HttpClientDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Config Configuration for the Disgord Client
 type Config struct {
 	// ################################################
@@ -192,9 +207,16 @@ type Config struct {
 	// ## what they are doing.
 	// ##
 	// ################################################
-	BotToken   string
+	BotToken string
+
+	HttpClient          HttpClientDoer
+	WebsocketHttpClient *http.Client
+
+	// Deprecated: use WebsocketHttpClient and HttpClient
 	HTTPClient *http.Client
-	Proxy      proxy.Dialer
+
+	// Deprecated: use WebsocketHttpClient and HttpClient
+	Proxy proxy.Dialer
 
 	// Deprecated: use DMIntents (values here are copied to DMIntents for now)
 	// For direct communication with you bot you must specify intents
@@ -291,9 +313,7 @@ type Client struct {
 	// req holds the rate limiting logic and error parsing unique for Discord
 	req *httd.Client
 
-	// http Client used for connections
-	httpClient *http.Client
-	proxy      proxy.Dialer
+	WebsocketHttpClient *http.Client
 
 	shardManager gateway.ShardManager
 	eventChan    chan *gateway.Event

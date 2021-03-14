@@ -81,11 +81,15 @@ func (e *ErrREST) Error() string {
 	return fmt.Sprintf("%s\n%s\n%s => %+v", e.Msg, e.Suggestion, e.HashedEndpoint, e.Bucket)
 }
 
+type HttpClientDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client for handling Discord REST requests
 type Client struct {
 	url                          string // base url with API version
 	reqHeader                    http.Header
-	httpClient                   *http.Client
+	httpClient                   HttpClientDoer
 	cancelRequestWhenRateLimited bool
 	buckets                      RESTBucketManager
 }
@@ -131,10 +135,8 @@ func NewClient(conf *Config) (*Client, error) {
 		return nil, errors.New("no Discord Bot Token was provided")
 	}
 
-	// if no http client was provided, create a new one
-	if conf.HTTPClient == nil {
-		// no need for a timeout, everything uses context.Context now
-		conf.HTTPClient = &http.Client{}
+	if conf.HttpClient == nil {
+		return nil, errors.New("missing http client")
 	}
 
 	if conf.RESTBucketManager == nil {
@@ -160,7 +162,7 @@ func NewClient(conf *Config) (*Client, error) {
 	return &Client{
 		url:        BaseURL + "/v" + strconv.Itoa(conf.APIVersion),
 		reqHeader:  header,
-		httpClient: conf.HTTPClient,
+		httpClient: conf.HttpClient,
 		buckets:    conf.RESTBucketManager,
 	}, nil
 }
@@ -171,7 +173,7 @@ type Config struct {
 	APIVersion int
 	BotToken   string
 
-	HTTPClient *http.Client
+	HttpClient HttpClientDoer
 
 	CancelRequestWhenRateLimited bool
 

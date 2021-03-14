@@ -64,6 +64,7 @@ func (g gatewayQueryBuilder) Connect() (err error) {
 	}
 
 	shardMngrConf := gateway.ShardManagerConfig{
+		HTTPClient:   g.client.WebsocketHttpClient,
 		ShardConfig:  g.client.config.ShardConfig,
 		Logger:       g.client.config.Logger,
 		ShutdownChan: g.client.config.shutdownChan,
