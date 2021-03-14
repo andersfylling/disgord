@@ -2,35 +2,54 @@ package disgord
 
 import (
 	"errors"
+	"github.com/andersfylling/disgord/internal/crs"
 	"sort"
 	"sync"
-
-	"github.com/andersfylling/disgord/internal/crs"
-	"github.com/andersfylling/disgord/json"
 )
 
-func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
-	lfus := &CacheLFUImmutable{
+var ErrCacheMiss = errors.New("no matching entry found in cache")
+
+type idHolder struct {
+	ID      Snowflake `json:"id"`
+	Channel struct {
+		ID Snowflake `json:"id"`
+	} `json:"channel"`
+	Guild struct {
+		ID Snowflake `json:"id"`
+	} `json:"guild"`
+	User struct {
+		ID Snowflake `json:"id"`
+	} `json:"user"`
+	UserID    Snowflake `json:"user_id"`
+	GuildID   Snowflake `json:"guild_id"`
+	ChannelID Snowflake `json:"channel_id"`
+}
+
+type userHolder struct {
+	User *User `json:"user"`
+}
+
+func NewCache() Cache {
+	cache := &CacheImmutable{
 		CurrentUser: &User{},
 	}
-	crs.SetLimit(&lfus.Users, limitUsers)
-	crs.SetLimit(&lfus.VoiceStates, limitVoiceStates)
-	crs.SetLimit(&lfus.Channels, limitChannels)
-	crs.SetLimit(&lfus.Guilds, limitGuilds)
+	cache.shardedMutex.Guilds = make([]sync.Mutex, 3)
+	cache.shardedMutex.Users = make([]sync.Mutex, 3)
+	cache.shardedMutex.Channels = make([]sync.Mutex, 3)
+	cache.shardedMutex.VoiceStates = make([]sync.Mutex, 3)
 
 	return lfus
 }
 
-// CacheLFUImmutable cache with CRS support for Users and voice states
-// use NewCacheLFUImmutable to instantiate it!
-type CacheLFUImmutable struct {
+// CacheImmutable optimized for continuous growth.
+type CacheImmutable struct {
 	CacheNop
 
 	shardedMutex struct {
-		Guilds      [4]sync.Mutex
-		Users       [10]sync.Mutex
-		Channels    [5]sync.Mutex
-		VoiceStates [12]sync.Mutex
+		Guilds      []sync.Mutex
+		Users       []sync.Mutex
+		Channels    []sync.Mutex
+		VoiceStates []sync.Mutex
 	}
 
 	// set via disgord.createClient
@@ -40,28 +59,15 @@ type CacheLFUImmutable struct {
 	CurrentUserMu sync.Mutex
 	CurrentUser   *User
 
-	Users       crs.LFU
-	VoiceStates crs.LFU
-	Channels    crs.LFU
-	Guilds      crs.LFU
+	Users       sync.Map
+	VoiceStates sync.Map
+	Channels    sync.Map
+	Guilds      sync.Map
 }
 
-var _ Cache = (*CacheLFUImmutable)(nil)
+var _ Cache = (*CacheImmutable)(nil)
 
-func (c *CacheLFUImmutable) getGuild(id Snowflake) (*Guild, bool) {
-	c.Guilds.Lock()
-	defer c.Guilds.Unlock()
-	item, ok := c.Guilds.Get(id)
-	if !ok || item == nil {
-		return nil, false
-	}
-	if item.Val == nil {
-		return nil, false
-	}
-	return item.Val.(*Guild), true
-}
-
-func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
+func (c *CacheImmutable) createDMChannel(msg *Message) {
 	channelID := msg.ChannelID
 
 	c.Channels.Lock()
@@ -83,7 +89,8 @@ func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
 	}
 }
 
-func (c *CacheLFUImmutable) Mutex(repo *crs.LFU, id Snowflake) *sync.Mutex {
+// Mutex will fetch a partition mutex based of a given ID. Note this will panic if no partitions exists.
+func (c *CacheImmutable) Mutex(repo *crs.LFU, id Snowflake) *sync.Mutex {
 	switch repo {
 	case &c.Users:
 		return &c.shardedMutex.Users[int(id)%len(c.shardedMutex.Users)]
@@ -97,7 +104,7 @@ func (c *CacheLFUImmutable) Mutex(repo *crs.LFU, id Snowflake) *sync.Mutex {
 	panic("unknown cache repo")
 }
 
-func (c *CacheLFUImmutable) Ready(data []byte) (*Ready, error) {
+func (c *CacheImmutable) Ready(data []byte) (*Ready, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 
