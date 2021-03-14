@@ -35,11 +35,11 @@ func NewCache() Cache {
 		CurrentUser: &User{},
 	}
 	cache.shardedMutex.Guilds = make([]sync.Mutex, 3)
-	cache.shardedMutex.Users = make([]sync.Mutex, 3)
-	cache.shardedMutex.Channels = make([]sync.Mutex, 3)
-	cache.shardedMutex.VoiceStates = make([]sync.Mutex, 3)
+	cache.shardedMutex.Users = make([]sync.Mutex, 15)
+	cache.shardedMutex.Channels = make([]sync.Mutex, 5)
+	cache.shardedMutex.VoiceStates = make([]sync.Mutex, 15)
 
-	return lfus
+	return cache
 }
 
 // CacheImmutable optimized for continuous growth.
