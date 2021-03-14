@@ -70,10 +70,17 @@ type CacheLFUImmutable struct {
 
 var _ Cache = (*CacheLFUImmutable)(nil)
 
-func (c *CacheLFUImmutable) getGuild(id Snowflake) (*crs.LFUItem, bool) {
+func (c *CacheLFUImmutable) getGuild(id Snowflake) (*Guild, bool) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
-	return c.Guilds.Get(id)
+	item, ok := c.Guilds.Get(id)
+	if !ok || item == nil {
+		return nil, false
+	}
+	if item.Val == nil {
+		return nil, false
+	}
+	return item.Val.(*Guild), true
 }
 
 func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
@@ -441,13 +448,11 @@ func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpda
 	}
 	userwrap = nil
 
-	item, exists := c.getGuild(gid)
+	guild, exists := c.getGuild(gid)
 	if exists {
 		mutex := c.Mutex(&c.Guilds, gid)
 		mutex.Lock()
 		defer mutex.Unlock()
-
-		guild := item.Val.(*Guild)
 
 		var member *Member
 		for i := range guild.Members { // slow... map instead?
@@ -545,22 +550,18 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 	}
 	guildID := metadata.ID
 
-	item, exists := c.getGuild(guildID)
-	var guild *Guild
-	if exists && item.Val.(*Guild).Unavailable {
+	guild, exists := c.getGuild(guildID)
+	if exists && guild.Unavailable {
 		// pre-loaded from ready event
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		guild = item.Val.(*Guild)
 		if err := json.Unmarshal(data, guild); err != nil {
 			return nil, err
 		}
 		guild.Unavailable = false
 		c.Patch(guild)
-
-		guild = DeepCopy(guild).(*Guild)
 	} else if !exists {
 		// must create it
 		if err := json.Unmarshal(data, &guild); err != nil {
@@ -569,7 +570,6 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 		c.Patch(guild)
 
 		e := c.Guilds.CreateCacheableItem(guild)
-		guild = DeepCopy(guild).(*Guild)
 
 		c.Guilds.Lock()
 		if _, exists := c.Guilds.Get(guildID); !exists {
@@ -588,11 +588,11 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 	// cache channels
 	c.Channels.Lock()
 	for i := range guild.Channels {
-		channel := DeepCopy(guild.Channels[i]).(*Channel)
-		_ = c.saveChannel(channel)
+		_ = c.saveChannel(guild.Channels[i])
 	}
 	c.Channels.Unlock()
 
+	guild = DeepCopy(guild).(*Guild)
 	return &GuildCreate{Guild: guild}, nil
 }
 
