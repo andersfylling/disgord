@@ -3,7 +3,6 @@ package disgord
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -82,13 +81,7 @@ func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberB
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
-	}, func(resp *http.Response, body []byte, err error) error {
-		if resp.StatusCode != http.StatusNoContent {
-			msg := "could not change attributes of member. Does the member exist, and do you have permissions?"
-			return errors.New(msg)
-		}
-		return nil
-	})
+	}, nil)
 
 	// TODO: cache member changes
 	return builder
