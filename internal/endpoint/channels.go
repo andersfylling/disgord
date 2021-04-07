@@ -52,6 +52,10 @@ func ChannelPin(channelID, messageID fmt.Stringer) string {
 	return ChannelPins(channelID) + "/" + messageID.String()
 }
 
+func ChannelMessageCrossPost(channelID, messageID fmt.Stringer) string {
+	return ChannelMessage(channelID, messageID) + crosspost
+}
+
 // ChannelMessages ...
 func ChannelMessages(channelID fmt.Stringer) string {
 	return Channel(channelID) + messages

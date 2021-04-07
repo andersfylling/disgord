@@ -295,6 +295,8 @@ type MessageQueryBuilder interface {
 	SetContent(content string) (*Message, error)
 	SetEmbed(embed *Embed) (*Message, error)
 
+	CrossPost(flags ...Flag) (*Message, error)
+
 	// Deprecated: use UpdateBuilder instead
 	Update(flags ...Flag) *updateMessageBuilder
 
@@ -456,6 +458,37 @@ func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 
 	_, err = r.Execute()
 	return err
+}
+
+// CrossPost Crosspost a message in a News Channel to following channels.
+//  Method                  POST
+//  Endpoint                /channels/{channel.id}/messages/{message.id}/crosspost
+//  Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
+//  Reviewed                2021-04-07
+//  Comment                 -
+func (m messageQueryBuilder) CrossPost(flags ...Flag) (*Message, error) {
+	if m.cid.IsZero() {
+		return nil, errors.New("channelID must be set to target the correct channel")
+	}
+	if m.mid.IsZero() {
+		return nil, errors.New("messageID must be set to target the specific channel message")
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
+		Method:   httd.MethodPost,
+		Endpoint: endpoint.ChannelMessageCrossPost(m.cid, m.mid),
+		Ctx:      m.ctx,
+	}, flags)
+	r.pool = m.client.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
+
+	msg, err := r.Execute()
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*Message), nil
 }
 
 // DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'

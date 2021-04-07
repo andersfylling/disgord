@@ -7,6 +7,7 @@ const (
 	auditlogs    = "/audit-logs"
 	channels     = "/channels"
 	messages     = "/messages"
+	crosspost     = "/crosspost"
 	bulkDelete   = "/bulk-delete"
 	recipients   = "/recipients"
 	pins         = "/pins"
