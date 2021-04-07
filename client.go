@@ -209,8 +209,13 @@ type Config struct {
 	// ################################################
 	BotToken string
 
+	// HttpClient allows for different wrappers or alternative http logic as long as they have the same
+	// .Do(..).. method as the http.Client.
+	// Note that rate limiting is not done in the roundtripper layer at this point, so anything with re-tries, logic
+	// that triggers a new http request without going through Disgord interface, will not be rate limited and this
+	// can cause you to get banned in the long term. Be careful.
 	HttpClient          HttpClientDoer
-	WebsocketHttpClient *http.Client
+	WebsocketHttpClient *http.Client // no way around this, sadly. At least for now.
 
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	HTTPClient *http.Client
