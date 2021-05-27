@@ -917,12 +917,12 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 
 // CreateMessageParams JSON params for CreateChannelMessage
 type CreateMessageParams struct {
-	Content string `json:"content"`
-	Nonce   string `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
-	Tts     bool   `json:"tts,omitempty"`
-	Embed   *Embed `json:"embed,omitempty"` // embedded rich content
-
-	Files []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+	Content    string                    `json:"content"`
+	Nonce      string                    `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Tts        bool                      `json:"tts,omitempty"`
+	Embed      *Embed                    `json:"embed,omitempty"` // embedded rich content
+	Components []*MessageComponent       `json:"components"`
+	Files      []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`

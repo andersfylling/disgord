@@ -377,6 +377,7 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 			}
 
 			params.Content = m.Content
+			params.Components = m.Components
 			params.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
 			params.SpoilerTagContent = m.SpoilerTagContent
 			params.Tts = m.Tts
