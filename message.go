@@ -277,11 +277,9 @@ type MessageQueryBuilder interface {
 	WithContext(ctx context.Context) MessageQueryBuilder
 
 	// PinMessageID Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
-	// Returns a 204 empty response on success.
 	Pin(flags ...Flag) error
 
 	// UnpinMessageID Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-	// Returns a 204 empty response on success. Returns a 204 empty response on success.
 	Unpin(flags ...Flag) error
 
 	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
@@ -301,8 +299,7 @@ type MessageQueryBuilder interface {
 	Update(flags ...Flag) *updateMessageBuilder
 
 	// DeleteMessage Delete a message. If operating on a guild channel and trying to delete a message that was not
-	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
-	// on success. Fires a Message Delete Gateway event.
+	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
 	Delete(flags ...Flag) error
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
