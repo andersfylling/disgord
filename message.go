@@ -173,7 +173,7 @@ type Message struct {
 	Flags             MessageFlag         `json:"flags"`
 	Stickers          []*MessageSticker   `json:"stickers"`
 	Components        []*MessageComponent `json:"components"`
-
+	Interaction       *MessageInteraction `json:"interaction"`
 	// SpoilerTagContent is only true if the entire message text is tagged as a spoiler (aka completely wrapped in ||)
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
