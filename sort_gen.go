@@ -235,6 +235,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageApplication:
 		s = *t
+	case *[]*MessageComponent:
+		s = *t
 	case *[]*MessageReference:
 		s = *t
 	case *[]*MessageSticker:
@@ -564,6 +566,12 @@ func sortByGuildID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
 	case []*PresenceUpdate:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*TypingStart:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {

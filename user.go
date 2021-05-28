@@ -160,7 +160,7 @@ const (
 	_
 	UserFlagVerifiedBot
 	UserFlagVerifiedBotDeveloper
-        UserFlagDiscordCertifiedModerator
+	UserFlagDiscordCertifiedModerator
 )
 
 type PremiumType int
