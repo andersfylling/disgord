@@ -223,7 +223,7 @@ type MessageReactionAdd struct {
 type InteractionCreate struct {
 	ID            Snowflake                          `json:"id"`
 	ApplicationID Snowflake                          `json:"application_id"`
-	Type          *InteractionType                   `json:"type"`
+	Type          InteractionType                    `json:"type"`
 	Data          *ApplicationCommandInteractionData `json:"data"`
 	GuildID       Snowflake                          `json:"guild_id"`
 	ChannelID     Snowflake                          `json:"channel_id"`
