@@ -121,3 +121,6 @@ const WebhooksUpdate = "WEBHOOKS_UPDATE"
 
 // InviteCreate Sent when a guild's invite is created.
 const InviteCreate = "INVITE_CREATE"
+
+// InteractionCreate Sent when a user in a guild uses a Slash Command.
+const InteractionCreate = "INTERACTION_CREATE"

@@ -74,6 +74,7 @@ type CacheUpdater interface {
 	GuildRoleDelete(data []byte) (*GuildRoleDelete, error)
 	GuildRoleUpdate(data []byte) (*GuildRoleUpdate, error)
 	GuildUpdate(data []byte) (*GuildUpdate, error)
+	InteractionCreate(data []byte) (*InteractionCreate, error)
 	InviteCreate(data []byte) (*InviteCreate, error)
 	InviteDelete(data []byte) (*InviteDelete, error)
 	MessageCreate(data []byte) (*MessageCreate, error)
@@ -132,6 +133,8 @@ func cacheDispatcher(c Cache, event string, data []byte) (evt EventType, err err
 		evt, err = c.GuildRoleUpdate(data)
 	case EvtGuildUpdate:
 		evt, err = c.GuildUpdate(data)
+	case EvtInteractionCreate:
+		evt, err = c.InteractionCreate(data)
 	case EvtInviteCreate:
 		evt, err = c.InviteCreate(data)
 	case EvtInviteDelete:
@@ -311,6 +314,13 @@ func (c *CacheNop) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error
 	return evt, nil
 }
 func (c *CacheNop) GuildUpdate(data []byte) (evt *GuildUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) InteractionCreate(data []byte) (evt *InteractionCreate, err error) {
 	if err = json.Unmarshal(data, &evt); err != nil {
 		return nil, err
 	}
