@@ -112,6 +112,9 @@ type MessageComponent struct {
 	Components []*MessageComponent  `json:"components"`
 }
 
+var _ DeepCopier = &MessageComponent{}
+var _ Copier = &MessageComponent{}
+
 // MessageApplication https://discord.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {
 	ID          Snowflake `json:"id"`

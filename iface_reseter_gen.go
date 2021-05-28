@@ -2,27 +2,29 @@
 
 package disgord
 
-func (e *Emoji) reset() {
-	e.ID = 0
-	e.Name = ""
-	e.Roles = nil
-	if e.User != nil {
-		Reset(e.User)
+func (r *Reaction) reset() {
+	r.Count = 0
+	r.Me = false
+	if r.Emoji != nil {
+		Reset(r.Emoji)
 	}
-	e.RequireColons = false
-	e.Managed = false
-	e.Animated = false
 }
 
-func (v *VoiceRegion) reset() {
-	v.ID = ""
-	v.Name = ""
-	v.SampleHostname = ""
-	v.SamplePort = 0
-	v.VIP = false
-	v.Optimal = false
-	v.Deprecated = false
-	v.Custom = false
+func (a *Activity) reset() {
+	a.Name = ""
+	a.Type = 0
+	a.URL = ""
+	a.CreatedAt = 0
+	a.Timestamps = nil
+	a.ApplicationID = 0
+	a.Details = ""
+	a.State = ""
+	a.Emoji = nil
+	a.Party = nil
+	a.Assets = nil
+	a.Secrets = nil
+	a.Instance = false
+	a.Flags = 0
 }
 
 func (u *User) reset() {
@@ -44,6 +46,28 @@ func (u *User) reset() {
 	}
 }
 
+func (v *VoiceState) reset() {
+	v.GuildID = 0
+	v.ChannelID = 0
+	v.UserID = 0
+	if v.Member != nil {
+		Reset(v.Member)
+	}
+	v.SessionID = ""
+	v.Deaf = false
+	v.Mute = false
+	v.SelfDeaf = false
+	v.SelfMute = false
+	v.Suppress = false
+}
+
+func (m *MessageCreate) reset() {
+	if m.Message != nil {
+		Reset(m.Message)
+	}
+	m.ShardID = 0
+}
+
 func (r *Role) reset() {
 	r.ID = 0
 	r.Name = ""
@@ -56,12 +80,15 @@ func (r *Role) reset() {
 	r.guildID = 0
 }
 
-func (r *Reaction) reset() {
-	r.Count = 0
-	r.Me = false
-	if r.Emoji != nil {
-		Reset(r.Emoji)
-	}
+func (v *VoiceRegion) reset() {
+	v.ID = ""
+	v.Name = ""
+	v.SampleHostname = ""
+	v.SamplePort = 0
+	v.VIP = false
+	v.Optimal = false
+	v.Deprecated = false
+	v.Custom = false
 }
 
 func (g *Guild) reset() {
@@ -96,6 +123,18 @@ func (g *Guild) reset() {
 	g.Presences = nil
 }
 
+func (e *Emoji) reset() {
+	e.ID = 0
+	e.Name = ""
+	e.Roles = nil
+	if e.User != nil {
+		Reset(e.User)
+	}
+	e.RequireColons = false
+	e.Managed = false
+	e.Animated = false
+}
+
 func (c *Channel) reset() {
 	c.ID = 0
 	c.Type = 0
@@ -115,45 +154,6 @@ func (c *Channel) reset() {
 	c.ApplicationID = 0
 	c.ParentID = 0
 	c.LastPinTimestamp = Time{}
-}
-
-func (v *VoiceState) reset() {
-	v.GuildID = 0
-	v.ChannelID = 0
-	v.UserID = 0
-	if v.Member != nil {
-		Reset(v.Member)
-	}
-	v.SessionID = ""
-	v.Deaf = false
-	v.Mute = false
-	v.SelfDeaf = false
-	v.SelfMute = false
-	v.Suppress = false
-}
-
-func (a *Activity) reset() {
-	a.Name = ""
-	a.Type = 0
-	a.URL = ""
-	a.CreatedAt = 0
-	a.Timestamps = nil
-	a.ApplicationID = 0
-	a.Details = ""
-	a.State = ""
-	a.Emoji = nil
-	a.Party = nil
-	a.Assets = nil
-	a.Secrets = nil
-	a.Instance = false
-	a.Flags = 0
-}
-
-func (m *MessageCreate) reset() {
-	if m.Message != nil {
-		Reset(m.Message)
-	}
-	m.ShardID = 0
 }
 
 func (m *Message) reset() {
