@@ -2,69 +2,139 @@
 
 package disgord
 
-func (a *ActivityAssets) copyOverTo(other interface{}) error {
-	var dest *ActivityAssets
+func (e *Emoji) copyOverTo(other interface{}) error {
+	var dest *Emoji
 	var valid bool
-	if dest, valid = other.(*ActivityAssets); !valid {
-		return newErrorUnsupportedType("argument given is not a *ActivityAssets type")
+	if dest, valid = other.(*Emoji); !valid {
+		return newErrorUnsupportedType("argument given is not a *Emoji type")
 	}
-	dest.LargeImage = a.LargeImage
-	dest.LargeText = a.LargeText
-	dest.SmallImage = a.SmallImage
-	dest.SmallText = a.SmallText
+	dest.ID = e.ID
+	dest.Name = e.Name
+	dest.Roles = make([]Snowflake, len(e.Roles))
+	copy(dest.Roles, e.Roles)
+	dest.User = e.User
+	dest.RequireColons = e.RequireColons
+	dest.Managed = e.Managed
+	dest.Animated = e.Animated
 
 	return nil
 }
 
-func (e *EmbedFooter) copyOverTo(other interface{}) error {
-	var dest *EmbedFooter
+func (e *EmbedAuthor) copyOverTo(other interface{}) error {
+	var dest *EmbedAuthor
 	var valid bool
-	if dest, valid = other.(*EmbedFooter); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedFooter type")
+	if dest, valid = other.(*EmbedAuthor); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedAuthor type")
 	}
-	dest.Text = e.Text
+	dest.Name = e.Name
+	dest.URL = e.URL
 	dest.IconURL = e.IconURL
 	dest.ProxyIconURL = e.ProxyIconURL
 
 	return nil
 }
 
-func (e *EmbedImage) copyOverTo(other interface{}) error {
-	var dest *EmbedImage
+func (a *AuditLogOption) copyOverTo(other interface{}) error {
+	var dest *AuditLogOption
 	var valid bool
-	if dest, valid = other.(*EmbedImage); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedImage type")
+	if dest, valid = other.(*AuditLogOption); !valid {
+		return newErrorUnsupportedType("argument given is not a *AuditLogOption type")
 	}
-	dest.URL = e.URL
-	dest.ProxyURL = e.ProxyURL
-	dest.Height = e.Height
-	dest.Width = e.Width
+	dest.DeleteMemberDays = a.DeleteMemberDays
+	dest.MembersRemoved = a.MembersRemoved
+	dest.ChannelID = a.ChannelID
+	dest.Count = a.Count
+	dest.ID = a.ID
+	dest.Type = a.Type
+	dest.RoleName = a.RoleName
 
 	return nil
 }
 
-func (r *Reaction) copyOverTo(other interface{}) error {
-	var dest *Reaction
+func (v *VoiceRegion) copyOverTo(other interface{}) error {
+	var dest *VoiceRegion
 	var valid bool
-	if dest, valid = other.(*Reaction); !valid {
-		return newErrorUnsupportedType("argument given is not a *Reaction type")
+	if dest, valid = other.(*VoiceRegion); !valid {
+		return newErrorUnsupportedType("argument given is not a *VoiceRegion type")
 	}
-	dest.Count = r.Count
-	dest.Me = r.Me
-	dest.Emoji = r.Emoji
+	dest.ID = v.ID
+	dest.Name = v.Name
+	dest.SampleHostname = v.SampleHostname
+	dest.SamplePort = v.SamplePort
+	dest.VIP = v.VIP
+	dest.Optimal = v.Optimal
+	dest.Deprecated = v.Deprecated
+	dest.Custom = v.Custom
 
 	return nil
 }
 
-func (a *AuditLogChanges) copyOverTo(other interface{}) error {
-	var dest *AuditLogChanges
+func (m *Member) copyOverTo(other interface{}) error {
+	var dest *Member
 	var valid bool
-	if dest, valid = other.(*AuditLogChanges); !valid {
-		return newErrorUnsupportedType("argument given is not a *AuditLogChanges type")
+	if dest, valid = other.(*Member); !valid {
+		return newErrorUnsupportedType("argument given is not a *Member type")
 	}
-	dest.NewValue = a.NewValue
-	dest.OldValue = a.OldValue
-	dest.Key = a.Key
+	dest.GuildID = m.GuildID
+	dest.User = m.User
+	dest.Nick = m.Nick
+	dest.Roles = make([]Snowflake, len(m.Roles))
+	copy(dest.Roles, m.Roles)
+	dest.JoinedAt = m.JoinedAt
+	dest.PremiumSince = m.PremiumSince
+	dest.Deaf = m.Deaf
+	dest.Mute = m.Mute
+	dest.Pending = m.Pending
+	dest.UserID = m.UserID
+
+	return nil
+}
+
+func (r *Role) copyOverTo(other interface{}) error {
+	var dest *Role
+	var valid bool
+	if dest, valid = other.(*Role); !valid {
+		return newErrorUnsupportedType("argument given is not a *Role type")
+	}
+	dest.ID = r.ID
+	dest.Name = r.Name
+	dest.Color = r.Color
+	dest.Hoist = r.Hoist
+	dest.Position = r.Position
+	dest.Permissions = r.Permissions
+	dest.Managed = r.Managed
+	dest.Mentionable = r.Mentionable
+	dest.guildID = r.guildID
+
+	return nil
+}
+
+func (a *ActivityParty) copyOverTo(other interface{}) error {
+	var dest *ActivityParty
+	var valid bool
+	if dest, valid = other.(*ActivityParty); !valid {
+		return newErrorUnsupportedType("argument given is not a *ActivityParty type")
+	}
+	dest.ID = a.ID
+	dest.Size = make([]int, len(a.Size))
+	copy(dest.Size, a.Size)
+
+	return nil
+}
+
+func (u *UserPresence) copyOverTo(other interface{}) error {
+	var dest *UserPresence
+	var valid bool
+	if dest, valid = other.(*UserPresence); !valid {
+		return newErrorUnsupportedType("argument given is not a *UserPresence type")
+	}
+	dest.User = u.User
+	dest.Roles = make([]Snowflake, len(u.Roles))
+	copy(dest.Roles, u.Roles)
+	dest.Game = u.Game
+	dest.GuildID = u.GuildID
+	dest.Nick = u.Nick
+	dest.Status = u.Status
 
 	return nil
 }
@@ -95,42 +165,6 @@ func (e *Embed) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (a *Activity) copyOverTo(other interface{}) error {
-	var dest *Activity
-	var valid bool
-	if dest, valid = other.(*Activity); !valid {
-		return newErrorUnsupportedType("argument given is not a *Activity type")
-	}
-	dest.Name = a.Name
-	dest.Type = a.Type
-	dest.URL = a.URL
-	dest.CreatedAt = a.CreatedAt
-	dest.Timestamps = a.Timestamps
-	dest.ApplicationID = a.ApplicationID
-	dest.Details = a.Details
-	dest.State = a.State
-	dest.Emoji = a.Emoji
-	dest.Party = a.Party
-	dest.Assets = a.Assets
-	dest.Secrets = a.Secrets
-	dest.Instance = a.Instance
-	dest.Flags = a.Flags
-
-	return nil
-}
-
-func (a *ActivityTimestamp) copyOverTo(other interface{}) error {
-	var dest *ActivityTimestamp
-	var valid bool
-	if dest, valid = other.(*ActivityTimestamp); !valid {
-		return newErrorUnsupportedType("argument given is not a *ActivityTimestamp type")
-	}
-	dest.Start = a.Start
-	dest.End = a.End
-
-	return nil
-}
-
 func (u *User) copyOverTo(other interface{}) error {
 	var dest *User
 	var valid bool
@@ -155,42 +189,174 @@ func (u *User) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (e *EmbedProvider) copyOverTo(other interface{}) error {
-	var dest *EmbedProvider
+func (r *Reaction) copyOverTo(other interface{}) error {
+	var dest *Reaction
 	var valid bool
-	if dest, valid = other.(*EmbedProvider); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedProvider type")
+	if dest, valid = other.(*Reaction); !valid {
+		return newErrorUnsupportedType("argument given is not a *Reaction type")
+	}
+	dest.Count = r.Count
+	dest.Me = r.Me
+	dest.Emoji = r.Emoji
+
+	return nil
+}
+
+func (c *Channel) copyOverTo(other interface{}) error {
+	var dest *Channel
+	var valid bool
+	if dest, valid = other.(*Channel); !valid {
+		return newErrorUnsupportedType("argument given is not a *Channel type")
+	}
+	dest.ID = c.ID
+	dest.Type = c.Type
+	dest.GuildID = c.GuildID
+	dest.Position = c.Position
+	dest.PermissionOverwrites = make([]PermissionOverwrite, len(c.PermissionOverwrites))
+	copy(dest.PermissionOverwrites, c.PermissionOverwrites)
+	dest.Name = c.Name
+	dest.Topic = c.Topic
+	dest.NSFW = c.NSFW
+	dest.LastMessageID = c.LastMessageID
+	dest.Bitrate = c.Bitrate
+	dest.UserLimit = c.UserLimit
+	dest.RateLimitPerUser = c.RateLimitPerUser
+	dest.Recipients = make([]*User, len(c.Recipients))
+	for i := 0; i < len(c.Recipients); i++ {
+		dest.Recipients[i] = DeepCopy(c.Recipients[i]).(*User)
+	}
+	dest.Icon = c.Icon
+	dest.OwnerID = c.OwnerID
+	dest.ApplicationID = c.ApplicationID
+	dest.ParentID = c.ParentID
+	dest.LastPinTimestamp = c.LastPinTimestamp
+
+	return nil
+}
+
+func (e *EmbedField) copyOverTo(other interface{}) error {
+	var dest *EmbedField
+	var valid bool
+	if dest, valid = other.(*EmbedField); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedField type")
 	}
 	dest.Name = e.Name
-	dest.URL = e.URL
+	dest.Value = e.Value
+	dest.Inline = e.Inline
 
 	return nil
 }
 
-func (m *MentionChannel) copyOverTo(other interface{}) error {
-	var dest *MentionChannel
+func (i *Integration) copyOverTo(other interface{}) error {
+	var dest *Integration
 	var valid bool
-	if dest, valid = other.(*MentionChannel); !valid {
-		return newErrorUnsupportedType("argument given is not a *MentionChannel type")
+	if dest, valid = other.(*Integration); !valid {
+		return newErrorUnsupportedType("argument given is not a *Integration type")
+	}
+	dest.ID = i.ID
+	dest.Name = i.Name
+	dest.Type = i.Type
+	dest.Enabled = i.Enabled
+	dest.Syncing = i.Syncing
+	dest.RoleID = i.RoleID
+	dest.ExpireBehavior = i.ExpireBehavior
+	dest.ExpireGracePeriod = i.ExpireGracePeriod
+	dest.User = i.User
+	dest.Account = i.Account
+
+	return nil
+}
+
+func (i *IntegrationAccount) copyOverTo(other interface{}) error {
+	var dest *IntegrationAccount
+	var valid bool
+	if dest, valid = other.(*IntegrationAccount); !valid {
+		return newErrorUnsupportedType("argument given is not a *IntegrationAccount type")
+	}
+	dest.ID = i.ID
+	dest.Name = i.Name
+
+	return nil
+}
+
+func (a *ActivityTimestamp) copyOverTo(other interface{}) error {
+	var dest *ActivityTimestamp
+	var valid bool
+	if dest, valid = other.(*ActivityTimestamp); !valid {
+		return newErrorUnsupportedType("argument given is not a *ActivityTimestamp type")
+	}
+	dest.Start = a.Start
+	dest.End = a.End
+
+	return nil
+}
+
+func (e *EmbedFooter) copyOverTo(other interface{}) error {
+	var dest *EmbedFooter
+	var valid bool
+	if dest, valid = other.(*EmbedFooter); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedFooter type")
+	}
+	dest.Text = e.Text
+	dest.IconURL = e.IconURL
+	dest.ProxyIconURL = e.ProxyIconURL
+
+	return nil
+}
+
+func (m *MessageSticker) copyOverTo(other interface{}) error {
+	var dest *MessageSticker
+	var valid bool
+	if dest, valid = other.(*MessageSticker); !valid {
+		return newErrorUnsupportedType("argument given is not a *MessageSticker type")
 	}
 	dest.ID = m.ID
-	dest.GuildID = m.GuildID
-	dest.Type = m.Type
+	dest.PackID = m.PackID
 	dest.Name = m.Name
+	dest.Description = m.Description
+	dest.Tags = m.Tags
+	dest.Asset = m.Asset
+	dest.PreviewAsset = m.PreviewAsset
+	dest.FormatType = m.FormatType
 
 	return nil
 }
 
-func (e *EmbedThumbnail) copyOverTo(other interface{}) error {
-	var dest *EmbedThumbnail
+func (a *AuditLog) copyOverTo(other interface{}) error {
+	var dest *AuditLog
 	var valid bool
-	if dest, valid = other.(*EmbedThumbnail); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedThumbnail type")
+	if dest, valid = other.(*AuditLog); !valid {
+		return newErrorUnsupportedType("argument given is not a *AuditLog type")
 	}
-	dest.URL = e.URL
-	dest.ProxyURL = e.ProxyURL
-	dest.Height = e.Height
-	dest.Width = e.Width
+	dest.Webhooks = make([]*Webhook, len(a.Webhooks))
+	for i := 0; i < len(a.Webhooks); i++ {
+		dest.Webhooks[i] = DeepCopy(a.Webhooks[i]).(*Webhook)
+	}
+	dest.Users = make([]*User, len(a.Users))
+	for i := 0; i < len(a.Users); i++ {
+		dest.Users[i] = DeepCopy(a.Users[i]).(*User)
+	}
+	dest.AuditLogEntries = make([]*AuditLogEntry, len(a.AuditLogEntries))
+	for i := 0; i < len(a.AuditLogEntries); i++ {
+		dest.AuditLogEntries[i] = DeepCopy(a.AuditLogEntries[i]).(*AuditLogEntry)
+	}
+
+	return nil
+}
+
+func (w *Webhook) copyOverTo(other interface{}) error {
+	var dest *Webhook
+	var valid bool
+	if dest, valid = other.(*Webhook); !valid {
+		return newErrorUnsupportedType("argument given is not a *Webhook type")
+	}
+	dest.ID = w.ID
+	dest.GuildID = w.GuildID
+	dest.ChannelID = w.ChannelID
+	dest.User = w.User
+	dest.Name = w.Name
+	dest.Avatar = w.Avatar
+	dest.Token = w.Token
 
 	return nil
 }
@@ -208,14 +374,106 @@ func (e *EmbedVideo) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (i *IntegrationAccount) copyOverTo(other interface{}) error {
-	var dest *IntegrationAccount
+func (g *GuildEmbed) copyOverTo(other interface{}) error {
+	var dest *GuildEmbed
 	var valid bool
-	if dest, valid = other.(*IntegrationAccount); !valid {
-		return newErrorUnsupportedType("argument given is not a *IntegrationAccount type")
+	if dest, valid = other.(*GuildEmbed); !valid {
+		return newErrorUnsupportedType("argument given is not a *GuildEmbed type")
 	}
-	dest.ID = i.ID
-	dest.Name = i.Name
+	dest.Enabled = g.Enabled
+	dest.ChannelID = g.ChannelID
+
+	return nil
+}
+
+func (e *EmbedProvider) copyOverTo(other interface{}) error {
+	var dest *EmbedProvider
+	var valid bool
+	if dest, valid = other.(*EmbedProvider); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedProvider type")
+	}
+	dest.Name = e.Name
+	dest.URL = e.URL
+
+	return nil
+}
+
+func (u *UserConnection) copyOverTo(other interface{}) error {
+	var dest *UserConnection
+	var valid bool
+	if dest, valid = other.(*UserConnection); !valid {
+		return newErrorUnsupportedType("argument given is not a *UserConnection type")
+	}
+	dest.ID = u.ID
+	dest.Name = u.Name
+	dest.Type = u.Type
+	dest.Revoked = u.Revoked
+	dest.Integrations = make([]*IntegrationAccount, len(u.Integrations))
+	for i := 0; i < len(u.Integrations); i++ {
+		dest.Integrations[i] = DeepCopy(u.Integrations[i]).(*IntegrationAccount)
+	}
+
+	return nil
+}
+
+func (a *Activity) copyOverTo(other interface{}) error {
+	var dest *Activity
+	var valid bool
+	if dest, valid = other.(*Activity); !valid {
+		return newErrorUnsupportedType("argument given is not a *Activity type")
+	}
+	dest.Name = a.Name
+	dest.Type = a.Type
+	dest.URL = a.URL
+	dest.CreatedAt = a.CreatedAt
+	dest.Timestamps = a.Timestamps
+	dest.ApplicationID = a.ApplicationID
+	dest.Details = a.Details
+	dest.State = a.State
+	dest.Emoji = a.Emoji
+	dest.Party = a.Party
+	dest.Assets = a.Assets
+	dest.Secrets = a.Secrets
+	dest.Instance = a.Instance
+	dest.Flags = a.Flags
+
+	return nil
+}
+
+func (m *MessageComponent) copyOverTo(other interface{}) error {
+	var dest *MessageComponent
+	var valid bool
+	if dest, valid = other.(*MessageComponent); !valid {
+		return newErrorUnsupportedType("argument given is not a *MessageComponent type")
+	}
+	dest.Type = m.Type
+	dest.Style = m.Style
+	dest.Label = m.Label
+	dest.Emoji = m.Emoji
+	dest.CustomID = m.CustomID
+	dest.Url = m.Url
+	dest.Disabled = m.Disabled
+	dest.Components = make([]*MessageComponent, len(m.Components))
+	for i := 0; i < len(m.Components); i++ {
+		dest.Components[i] = DeepCopy(m.Components[i]).(*MessageComponent)
+	}
+
+	return nil
+}
+
+func (i *InviteMetadata) copyOverTo(other interface{}) error {
+	var dest *InviteMetadata
+	var valid bool
+	if dest, valid = other.(*InviteMetadata); !valid {
+		return newErrorUnsupportedType("argument given is not a *InviteMetadata type")
+	}
+	dest.Inviter = i.Inviter
+	dest.Uses = i.Uses
+	dest.MaxUses = i.MaxUses
+	dest.MaxAge = i.MaxAge
+	dest.Temporary = i.Temporary
+	dest.CreatedAt = i.CreatedAt
+	dest.Revoked = i.Revoked
 
 	return nil
 }
@@ -240,19 +498,16 @@ func (a *AuditLogEntry) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (w *Webhook) copyOverTo(other interface{}) error {
-	var dest *Webhook
+func (m *MentionChannel) copyOverTo(other interface{}) error {
+	var dest *MentionChannel
 	var valid bool
-	if dest, valid = other.(*Webhook); !valid {
-		return newErrorUnsupportedType("argument given is not a *Webhook type")
+	if dest, valid = other.(*MentionChannel); !valid {
+		return newErrorUnsupportedType("argument given is not a *MentionChannel type")
 	}
-	dest.ID = w.ID
-	dest.GuildID = w.GuildID
-	dest.ChannelID = w.ChannelID
-	dest.User = w.User
-	dest.Name = w.Name
-	dest.Avatar = w.Avatar
-	dest.Token = w.Token
+	dest.ID = m.ID
+	dest.GuildID = m.GuildID
+	dest.Type = m.Type
+	dest.Name = m.Name
 
 	return nil
 }
@@ -300,210 +555,16 @@ func (v *VoiceState) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (a *Attachment) copyOverTo(other interface{}) error {
-	var dest *Attachment
+func (a *ActivityAssets) copyOverTo(other interface{}) error {
+	var dest *ActivityAssets
 	var valid bool
-	if dest, valid = other.(*Attachment); !valid {
-		return newErrorUnsupportedType("argument given is not a *Attachment type")
+	if dest, valid = other.(*ActivityAssets); !valid {
+		return newErrorUnsupportedType("argument given is not a *ActivityAssets type")
 	}
-	dest.ID = a.ID
-	dest.Filename = a.Filename
-	dest.Size = a.Size
-	dest.URL = a.URL
-	dest.ProxyURL = a.ProxyURL
-	dest.Height = a.Height
-	dest.Width = a.Width
-	dest.SpoilerTag = a.SpoilerTag
-
-	return nil
-}
-
-func (m *MessageSticker) copyOverTo(other interface{}) error {
-	var dest *MessageSticker
-	var valid bool
-	if dest, valid = other.(*MessageSticker); !valid {
-		return newErrorUnsupportedType("argument given is not a *MessageSticker type")
-	}
-	dest.ID = m.ID
-	dest.PackID = m.PackID
-	dest.Name = m.Name
-	dest.Description = m.Description
-	dest.Tags = m.Tags
-	dest.Asset = m.Asset
-	dest.PreviewAsset = m.PreviewAsset
-	dest.FormatType = m.FormatType
-
-	return nil
-}
-
-func (e *EmbedField) copyOverTo(other interface{}) error {
-	var dest *EmbedField
-	var valid bool
-	if dest, valid = other.(*EmbedField); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedField type")
-	}
-	dest.Name = e.Name
-	dest.Value = e.Value
-	dest.Inline = e.Inline
-
-	return nil
-}
-
-func (r *Role) copyOverTo(other interface{}) error {
-	var dest *Role
-	var valid bool
-	if dest, valid = other.(*Role); !valid {
-		return newErrorUnsupportedType("argument given is not a *Role type")
-	}
-	dest.ID = r.ID
-	dest.Name = r.Name
-	dest.Color = r.Color
-	dest.Hoist = r.Hoist
-	dest.Position = r.Position
-	dest.Permissions = r.Permissions
-	dest.Managed = r.Managed
-	dest.Mentionable = r.Mentionable
-	dest.guildID = r.guildID
-
-	return nil
-}
-
-func (i *InviteMetadata) copyOverTo(other interface{}) error {
-	var dest *InviteMetadata
-	var valid bool
-	if dest, valid = other.(*InviteMetadata); !valid {
-		return newErrorUnsupportedType("argument given is not a *InviteMetadata type")
-	}
-	dest.Inviter = i.Inviter
-	dest.Uses = i.Uses
-	dest.MaxUses = i.MaxUses
-	dest.MaxAge = i.MaxAge
-	dest.Temporary = i.Temporary
-	dest.CreatedAt = i.CreatedAt
-	dest.Revoked = i.Revoked
-
-	return nil
-}
-
-func (u *UserPresence) copyOverTo(other interface{}) error {
-	var dest *UserPresence
-	var valid bool
-	if dest, valid = other.(*UserPresence); !valid {
-		return newErrorUnsupportedType("argument given is not a *UserPresence type")
-	}
-	dest.User = u.User
-	dest.Roles = make([]Snowflake, len(u.Roles))
-	copy(dest.Roles, u.Roles)
-	dest.Game = u.Game
-	dest.GuildID = u.GuildID
-	dest.Nick = u.Nick
-	dest.Status = u.Status
-
-	return nil
-}
-
-func (g *GuildEmbed) copyOverTo(other interface{}) error {
-	var dest *GuildEmbed
-	var valid bool
-	if dest, valid = other.(*GuildEmbed); !valid {
-		return newErrorUnsupportedType("argument given is not a *GuildEmbed type")
-	}
-	dest.Enabled = g.Enabled
-	dest.ChannelID = g.ChannelID
-
-	return nil
-}
-
-func (i *Integration) copyOverTo(other interface{}) error {
-	var dest *Integration
-	var valid bool
-	if dest, valid = other.(*Integration); !valid {
-		return newErrorUnsupportedType("argument given is not a *Integration type")
-	}
-	dest.ID = i.ID
-	dest.Name = i.Name
-	dest.Type = i.Type
-	dest.Enabled = i.Enabled
-	dest.Syncing = i.Syncing
-	dest.RoleID = i.RoleID
-	dest.ExpireBehavior = i.ExpireBehavior
-	dest.ExpireGracePeriod = i.ExpireGracePeriod
-	dest.User = i.User
-	dest.Account = i.Account
-
-	return nil
-}
-
-func (a *AuditLogOption) copyOverTo(other interface{}) error {
-	var dest *AuditLogOption
-	var valid bool
-	if dest, valid = other.(*AuditLogOption); !valid {
-		return newErrorUnsupportedType("argument given is not a *AuditLogOption type")
-	}
-	dest.DeleteMemberDays = a.DeleteMemberDays
-	dest.MembersRemoved = a.MembersRemoved
-	dest.ChannelID = a.ChannelID
-	dest.Count = a.Count
-	dest.ID = a.ID
-	dest.Type = a.Type
-	dest.RoleName = a.RoleName
-
-	return nil
-}
-
-func (b *Ban) copyOverTo(other interface{}) error {
-	var dest *Ban
-	var valid bool
-	if dest, valid = other.(*Ban); !valid {
-		return newErrorUnsupportedType("argument given is not a *Ban type")
-	}
-	dest.Reason = b.Reason
-	dest.User = b.User
-
-	return nil
-}
-
-func (e *EmbedAuthor) copyOverTo(other interface{}) error {
-	var dest *EmbedAuthor
-	var valid bool
-	if dest, valid = other.(*EmbedAuthor); !valid {
-		return newErrorUnsupportedType("argument given is not a *EmbedAuthor type")
-	}
-	dest.Name = e.Name
-	dest.URL = e.URL
-	dest.IconURL = e.IconURL
-	dest.ProxyIconURL = e.ProxyIconURL
-
-	return nil
-}
-
-func (v *VoiceRegion) copyOverTo(other interface{}) error {
-	var dest *VoiceRegion
-	var valid bool
-	if dest, valid = other.(*VoiceRegion); !valid {
-		return newErrorUnsupportedType("argument given is not a *VoiceRegion type")
-	}
-	dest.ID = v.ID
-	dest.Name = v.Name
-	dest.SampleHostname = v.SampleHostname
-	dest.SamplePort = v.SamplePort
-	dest.VIP = v.VIP
-	dest.Optimal = v.Optimal
-	dest.Deprecated = v.Deprecated
-	dest.Custom = v.Custom
-
-	return nil
-}
-
-func (a *ActivityParty) copyOverTo(other interface{}) error {
-	var dest *ActivityParty
-	var valid bool
-	if dest, valid = other.(*ActivityParty); !valid {
-		return newErrorUnsupportedType("argument given is not a *ActivityParty type")
-	}
-	dest.ID = a.ID
-	dest.Size = make([]int, len(a.Size))
-	copy(dest.Size, a.Size)
+	dest.LargeImage = a.LargeImage
+	dest.LargeText = a.LargeText
+	dest.SmallImage = a.SmallImage
+	dest.SmallText = a.SmallText
 
 	return nil
 }
@@ -566,74 +627,72 @@ func (g *Guild) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (e *Emoji) copyOverTo(other interface{}) error {
-	var dest *Emoji
+func (a *Attachment) copyOverTo(other interface{}) error {
+	var dest *Attachment
 	var valid bool
-	if dest, valid = other.(*Emoji); !valid {
-		return newErrorUnsupportedType("argument given is not a *Emoji type")
+	if dest, valid = other.(*Attachment); !valid {
+		return newErrorUnsupportedType("argument given is not a *Attachment type")
 	}
-	dest.ID = e.ID
-	dest.Name = e.Name
-	dest.Roles = make([]Snowflake, len(e.Roles))
-	copy(dest.Roles, e.Roles)
-	dest.User = e.User
-	dest.RequireColons = e.RequireColons
-	dest.Managed = e.Managed
-	dest.Animated = e.Animated
+	dest.ID = a.ID
+	dest.Filename = a.Filename
+	dest.Size = a.Size
+	dest.URL = a.URL
+	dest.ProxyURL = a.ProxyURL
+	dest.Height = a.Height
+	dest.Width = a.Width
+	dest.SpoilerTag = a.SpoilerTag
 
 	return nil
 }
 
-func (c *Channel) copyOverTo(other interface{}) error {
-	var dest *Channel
+func (e *EmbedImage) copyOverTo(other interface{}) error {
+	var dest *EmbedImage
 	var valid bool
-	if dest, valid = other.(*Channel); !valid {
-		return newErrorUnsupportedType("argument given is not a *Channel type")
+	if dest, valid = other.(*EmbedImage); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedImage type")
 	}
-	dest.ID = c.ID
-	dest.Type = c.Type
-	dest.GuildID = c.GuildID
-	dest.Position = c.Position
-	dest.PermissionOverwrites = make([]PermissionOverwrite, len(c.PermissionOverwrites))
-	copy(dest.PermissionOverwrites, c.PermissionOverwrites)
-	dest.Name = c.Name
-	dest.Topic = c.Topic
-	dest.NSFW = c.NSFW
-	dest.LastMessageID = c.LastMessageID
-	dest.Bitrate = c.Bitrate
-	dest.UserLimit = c.UserLimit
-	dest.RateLimitPerUser = c.RateLimitPerUser
-	dest.Recipients = make([]*User, len(c.Recipients))
-	for i := 0; i < len(c.Recipients); i++ {
-		dest.Recipients[i] = DeepCopy(c.Recipients[i]).(*User)
-	}
-	dest.Icon = c.Icon
-	dest.OwnerID = c.OwnerID
-	dest.ApplicationID = c.ApplicationID
-	dest.ParentID = c.ParentID
-	dest.LastPinTimestamp = c.LastPinTimestamp
+	dest.URL = e.URL
+	dest.ProxyURL = e.ProxyURL
+	dest.Height = e.Height
+	dest.Width = e.Width
 
 	return nil
 }
 
-func (a *AuditLog) copyOverTo(other interface{}) error {
-	var dest *AuditLog
+func (b *Ban) copyOverTo(other interface{}) error {
+	var dest *Ban
 	var valid bool
-	if dest, valid = other.(*AuditLog); !valid {
-		return newErrorUnsupportedType("argument given is not a *AuditLog type")
+	if dest, valid = other.(*Ban); !valid {
+		return newErrorUnsupportedType("argument given is not a *Ban type")
 	}
-	dest.Webhooks = make([]*Webhook, len(a.Webhooks))
-	for i := 0; i < len(a.Webhooks); i++ {
-		dest.Webhooks[i] = DeepCopy(a.Webhooks[i]).(*Webhook)
+	dest.Reason = b.Reason
+	dest.User = b.User
+
+	return nil
+}
+
+func (a *ActivityEmoji) copyOverTo(other interface{}) error {
+	var dest *ActivityEmoji
+	var valid bool
+	if dest, valid = other.(*ActivityEmoji); !valid {
+		return newErrorUnsupportedType("argument given is not a *ActivityEmoji type")
 	}
-	dest.Users = make([]*User, len(a.Users))
-	for i := 0; i < len(a.Users); i++ {
-		dest.Users[i] = DeepCopy(a.Users[i]).(*User)
+	dest.Name = a.Name
+	dest.ID = a.ID
+	dest.Animated = a.Animated
+
+	return nil
+}
+
+func (a *ActivitySecrets) copyOverTo(other interface{}) error {
+	var dest *ActivitySecrets
+	var valid bool
+	if dest, valid = other.(*ActivitySecrets); !valid {
+		return newErrorUnsupportedType("argument given is not a *ActivitySecrets type")
 	}
-	dest.AuditLogEntries = make([]*AuditLogEntry, len(a.AuditLogEntries))
-	for i := 0; i < len(a.AuditLogEntries); i++ {
-		dest.AuditLogEntries[i] = DeepCopy(a.AuditLogEntries[i]).(*AuditLogEntry)
-	}
+	dest.Join = a.Join
+	dest.Spectate = a.Spectate
+	dest.Match = a.Match
 
 	return nil
 }
@@ -700,67 +759,29 @@ func (m *Message) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (a *ActivityEmoji) copyOverTo(other interface{}) error {
-	var dest *ActivityEmoji
+func (a *AuditLogChanges) copyOverTo(other interface{}) error {
+	var dest *AuditLogChanges
 	var valid bool
-	if dest, valid = other.(*ActivityEmoji); !valid {
-		return newErrorUnsupportedType("argument given is not a *ActivityEmoji type")
+	if dest, valid = other.(*AuditLogChanges); !valid {
+		return newErrorUnsupportedType("argument given is not a *AuditLogChanges type")
 	}
-	dest.Name = a.Name
-	dest.ID = a.ID
-	dest.Animated = a.Animated
+	dest.NewValue = a.NewValue
+	dest.OldValue = a.OldValue
+	dest.Key = a.Key
 
 	return nil
 }
 
-func (a *ActivitySecrets) copyOverTo(other interface{}) error {
-	var dest *ActivitySecrets
+func (e *EmbedThumbnail) copyOverTo(other interface{}) error {
+	var dest *EmbedThumbnail
 	var valid bool
-	if dest, valid = other.(*ActivitySecrets); !valid {
-		return newErrorUnsupportedType("argument given is not a *ActivitySecrets type")
+	if dest, valid = other.(*EmbedThumbnail); !valid {
+		return newErrorUnsupportedType("argument given is not a *EmbedThumbnail type")
 	}
-	dest.Join = a.Join
-	dest.Spectate = a.Spectate
-	dest.Match = a.Match
-
-	return nil
-}
-
-func (m *Member) copyOverTo(other interface{}) error {
-	var dest *Member
-	var valid bool
-	if dest, valid = other.(*Member); !valid {
-		return newErrorUnsupportedType("argument given is not a *Member type")
-	}
-	dest.GuildID = m.GuildID
-	dest.User = m.User
-	dest.Nick = m.Nick
-	dest.Roles = make([]Snowflake, len(m.Roles))
-	copy(dest.Roles, m.Roles)
-	dest.JoinedAt = m.JoinedAt
-	dest.PremiumSince = m.PremiumSince
-	dest.Deaf = m.Deaf
-	dest.Mute = m.Mute
-	dest.Pending = m.Pending
-	dest.UserID = m.UserID
-
-	return nil
-}
-
-func (u *UserConnection) copyOverTo(other interface{}) error {
-	var dest *UserConnection
-	var valid bool
-	if dest, valid = other.(*UserConnection); !valid {
-		return newErrorUnsupportedType("argument given is not a *UserConnection type")
-	}
-	dest.ID = u.ID
-	dest.Name = u.Name
-	dest.Type = u.Type
-	dest.Revoked = u.Revoked
-	dest.Integrations = make([]*IntegrationAccount, len(u.Integrations))
-	for i := 0; i < len(u.Integrations); i++ {
-		dest.Integrations[i] = DeepCopy(u.Integrations[i]).(*IntegrationAccount)
-	}
+	dest.URL = e.URL
+	dest.ProxyURL = e.ProxyURL
+	dest.Height = e.Height
+	dest.Width = e.Width
 
 	return nil
 }
