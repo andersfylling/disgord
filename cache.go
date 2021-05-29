@@ -746,22 +746,19 @@ func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
 	return nil, CacheMissErr
 }
 func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
-	if guild, mu := c.get(&c.Guilds, id); guild != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		g := guild.(*Guild)
-		emojis := make([]*Emoji, 0, len(g.Emojis))
+	if guild, ok := c.Guilds.Store[id]; ok {
+		emojis := make([]*Emoji, 0, len(guild.Emojis))
 		for _, emoji := range emojis {
-			if emoji == nil { // shouldn't happen, but let's just be safe
+			if emoji == nil { // shouldn't happen, but let's just be certain
 				continue
 			}
 			emojis = append(emojis, DeepCopy(emoji).(*Emoji))
 		}
-
-		return emojis, nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
 func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
 	c.Guilds.Lock()
