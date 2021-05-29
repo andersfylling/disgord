@@ -817,23 +817,21 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 
 	return nil, CacheMissErr
 }
-func (c *BasicCache) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
-	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
-		mu.Lock()
-		defer mu.Unlock()
+func (c *BasicCache) GetGuildRoles(id Snowflake) ([]*Role, error) {
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		g := guild.(*Guild)
-		roles := make([]*Role, 0, len(g.Roles))
+	if guild, ok := c.Guilds.Store[id]; ok {
+		roles := make([]*Role, 0, len(guild.Channels))
 		for _, role := range roles {
-			if role == nil { // shouldn't happen, but let's just be safe
+			if role == nil { // shouldn't happen, but let's just be certain
 				continue
 			}
 			roles = append(roles, DeepCopy(role).(*Role))
 		}
-
 		return roles, nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
 func (c *BasicCache) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
