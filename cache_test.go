@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/andersfylling/disgord/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -452,28 +453,64 @@ func TestBasicCache_Guilds(t *testing.T) {
 			cache := NewBasicCache()
 			cache.Guilds.Store[1] = &guildCacheContainer{Guild: &Guild{ID: 1}}
 
-			channel, err := cache.GetGuild(1)
+			guild, err := cache.GetGuild(1)
 			if err != nil {
 				t.Error("cache has no such guild")
 			}
-			if channel == nil {
+			if guild == nil {
 				t.Error("guild is nil")
 			}
 		})
 		t.Run("get unknown", func(t *testing.T) {
 			cache := NewBasicCache()
 
-			channel, err := cache.GetChannel(1)
+			guild, err := cache.GetChannel(1)
 			if err == nil {
 				t.Error("should return error when guild is unknown")
 			}
-			if channel != nil {
+			if guild != nil {
 				t.Error("guild should be nil")
 			}
 			if !errors.Is(err, CacheMissErr) {
 				t.Error("expected error to be a cache miss err")
 			}
 		})
+	})
+
+	t.Run("get complex", func(t *testing.T) {
+		cache := NewBasicCache()
+		cache.Guilds.Store[1] = &guildCacheContainer{
+			Guild:      &Guild{ID: 1},
+			ChannelIDs: []Snowflake{1, 4},
+			Members: map[Snowflake]*Member{
+				3:  {UserID: 3, Nick: "andy"},
+				56: {UserID: 56},
+				34: {UserID: 34},
+			},
+		}
+		cache.Users.Store[3] = &User{ID: 3, Username: "anders"}
+		cache.Users.Store[56] = &User{ID: 56, Username: "test"}
+		cache.Users.Store[34] = &User{ID: 34, Username: "botlol"}
+		cache.Channels.Store[1] = &Channel{ID: 1, Name: "channel#1"}
+		cache.Channels.Store[4] = &Channel{ID: 4, Name: "fourth"}
+
+		guild, err := cache.GetGuild(1)
+		if err != nil {
+			t.Error("cache has no such guild")
+		}
+		if guild == nil {
+			t.Fatal("guild is nil")
+		}
+
+		if len(guild.Channels) != 2 {
+			t.Error("incorrect number of channels")
+		}
+		if len(guild.Members) != 3 {
+			t.Error("incorrect number of members")
+		}
+		if guild.Members[0].User == nil {
+			t.Error("member is missing user object")
+		}
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -624,6 +661,60 @@ func TestBasicCache_Guilds(t *testing.T) {
 	})
 
 	deadlockTest(t, cache, EvtGuildCreate, jsonbytes(`{"id":%d,"name":"%s"}`, id*2, "abdsa"))
+
+	t.Run("create-without-members-and-channels", func(t *testing.T) {
+		data := jsonbytes(`{"id":%d,"name":"%s","members":[],"channels":[]}`, id, name)
+
+		cache := NewBasicCache()
+		evt, err := cacheDispatcher(cache, EvtGuildCreate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		guild := evt.(*GuildCreate).Guild
+		if guild.ID != id {
+			t.Errorf("channel id should be %d, got %d", id, guild.ID)
+		}
+		if guild.Name != name {
+			t.Errorf("channel topic should be %s, got %s", name, guild.Name)
+		}
+
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if container.Members == nil {
+			t.Error("members map was not initialized")
+		}
+	})
+
+	t.Run("update-without-members-and-channels", func(t *testing.T) {
+		data := jsonbytes(`{"id":%d,"name":"%s","members":[],"channels":[]}`, id, name)
+
+		cache := NewBasicCache()
+		evt, err := cacheDispatcher(cache, EvtGuildUpdate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		guild := evt.(*GuildUpdate).Guild
+		if guild.ID != id {
+			t.Errorf("channel id should be %d, got %d", id, guild.ID)
+		}
+		if guild.Name != name {
+			t.Errorf("channel topic should be %s, got %s", name, guild.Name)
+		}
+
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if container.Members == nil {
+			t.Error("members map was not initialized")
+		}
+	})
 
 	t.Run("update-with-members-and-channels", func(t *testing.T) {
 		// these should not be stored as they will not be in a guild update
@@ -805,6 +896,103 @@ func TestBasicCache_Guilds(t *testing.T) {
 			}
 			if user.Username != username {
 				t.Error("incorrect username")
+			}
+		}
+	})
+
+	t.Run("members chunk", func(t *testing.T) {
+		cache := NewBasicCache()
+		cache.Guilds.Store[id] = &guildCacheContainer{
+			Guild:   &Guild{ID: id},
+			Members: map[Snowflake]*Member{},
+		}
+
+		memberJson := func(id Snowflake, nick, username string) []byte {
+			return jsonbytes(`{"user":{"id":%d,"username":"%s"},"nick":"%s"}`, id, username, nick)
+		}
+
+		type ref struct {
+			id       Snowflake
+			nick     string
+			username string
+		}
+
+		memberRefs := []ref{
+			{45, "test", "amazontester"},
+			{245436, "", "okay"},
+			{2345, "andy", "anders"},
+		}
+
+		memberJsons := []string{}
+		for i := range memberRefs {
+			m := memberRefs[i]
+			j := memberJson(m.id, m.nick, m.username)
+			memberJsons = append(memberJsons, string(j))
+		}
+
+		joinedMembers := strings.Join(memberJsons, ",")
+		data := jsonbytes(`{"guild_id":%d,"members":[%s]}`, id, joinedMembers)
+
+		evt, err := cacheDispatcher(cache, EvtGuildMembersChunk, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		holder, ok := evt.(*GuildMembersChunk)
+		if !ok {
+			t.Fatal("unable to cast event to GuildMembersChunk type")
+		}
+
+		if holder == nil {
+			t.Fatal("holder is nil")
+		}
+
+		guildID := holder.GuildID
+		if guildID != id {
+			t.Fatal("guild id is incorrect")
+		}
+		if len(holder.Members) != len(memberRefs) {
+			t.Fatal("incorrect number of members")
+		}
+
+		container, ok := cache.Guilds.Store[guildID]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		for i := range memberRefs {
+			m := memberRefs[i]
+			ref := fmt.Sprintf("member %s: ", m.id)
+			if member, ok := container.Members[m.id]; !ok {
+				t.Errorf(ref+"was not stored", m.id)
+			} else {
+				if member == nil {
+					t.Fatalf(ref+"is nil", m.id)
+				}
+				if member.UserID != m.id {
+					t.Errorf(ref + "is missing user id")
+				}
+				if member.Nick != m.nick {
+					t.Errorf(ref + "incorrect nickname")
+				}
+			}
+		}
+
+		for i := range memberRefs {
+			m := memberRefs[i]
+			ref := fmt.Sprintf("user %s: ", m.id)
+			if user, ok := cache.Users.Store[m.id]; !ok {
+				t.Errorf(ref+"was not stored", m.id)
+			} else {
+				if user == nil {
+					t.Fatalf(ref+"is nil", m.id)
+				}
+				if user.ID != m.id {
+					t.Errorf(ref + "is missing user id")
+				}
+				if user.Username != m.username {
+					t.Errorf(ref + "incorrect username")
+				}
 			}
 		}
 	})
