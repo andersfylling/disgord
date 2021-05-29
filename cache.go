@@ -800,23 +800,22 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 		wg.Done()
 	}()
 
-	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		g := guild.(*Guild)
-		if member, _ = g.Member(userID); member != nil {
+	if guild, ok := c.Guilds.Store[guildID]; ok {
+		if member, _ = guild.Member(userID); member != nil {
 			member = DeepCopy(member).(*Member)
 		}
 	}
-	wg.Wait()
 
+	wg.Wait()
 	if member != nil {
 		member.User = user
 		return member, nil
-	} else {
-		return nil, ErrCacheMiss
 	}
+
+	return nil, CacheMissErr
 }
 func (c *BasicCache) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
