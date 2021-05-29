@@ -757,6 +757,7 @@ func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 			}
 			emojis = append(emojis, DeepCopy(emoji).(*Emoji))
 		}
+		return emojis, nil
 	}
 	return nil, CacheMissErr
 }
@@ -770,22 +771,20 @@ func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
 	return nil, CacheMissErr
 }
 func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
-	if guild, mu := c.get(&c.Guilds, id); guild != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		g := guild.(*Guild)
-		channels := make([]*Channel, 0, len(g.Channels))
+	if guild, ok := c.Guilds.Store[id]; ok {
+		channels := make([]*Channel, 0, len(guild.Channels))
 		for _, channel := range channels {
-			if channel == nil { // shouldn't happen, but let's just be safe
+			if channel == nil { // shouldn't happen, but let's just be certain
 				continue
 			}
 			channels = append(channels, DeepCopy(channel).(*Channel))
 		}
-
 		return channels, nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
 
 // GetMember fetches member and related user data from cache. User is not guaranteed to be populated.
