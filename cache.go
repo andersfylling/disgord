@@ -9,7 +9,8 @@ import (
 	"github.com/andersfylling/disgord/json"
 )
 
-var ErrCacheMiss = errors.New("no matching entry found in cache")
+var CacheMissErr = errors.New("no matching entry found in cache")
+var CacheEntryAlreadyExistsErr = errors.New("cache entry already exists")
 
 type idHolder struct {
 	ID      Snowflake `json:"id"`
@@ -32,7 +33,7 @@ type userHolder struct {
 }
 
 func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
-	lfus := &CacheLFUImmutable{
+	lfus := &BasicCache{
 		CurrentUser: &User{},
 	}
 	crs.SetLimit(&lfus.Users, limitUsers)
@@ -43,17 +44,36 @@ func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuil
 	return lfus
 }
 
-// CacheLFUImmutable cache with CRS support for Users and voice states
-// use NewCacheLFUImmutable to instantiate it!
-type CacheLFUImmutable struct {
-	CacheNop
+type voiceStateCache struct {
+	sync.Mutex
+	Store map[Snowflake]*voiceStateCacheEntry
+}
 
-	shardedMutex struct {
-		Guilds      [4]sync.Mutex
-		Users       [10]sync.Mutex
-		Channels    [5]sync.Mutex
-		VoiceStates [12]sync.Mutex
-	}
+type voiceStateCacheEntry struct {
+	sync.Mutex
+	GuildID Snowflake
+	Store map[Snowflake]*VoiceState
+}
+
+type channelsCache struct {
+	sync.Mutex
+	Store map[Snowflake]*Channel
+}
+
+type guildsCache struct {
+	sync.Mutex
+	Store map[Snowflake]*Guild
+}
+
+type UsersCache struct {
+	sync.Mutex
+	Store map[Snowflake]*User
+}
+
+// BasicCache cache with CRS support for Users and voice states
+// use NewCacheLFUImmutable to instantiate it!
+type BasicCache struct {
+	CacheNop
 
 	// set via disgord.createClient
 	// must never be overwritten
@@ -62,26 +82,26 @@ type CacheLFUImmutable struct {
 	CurrentUserMu sync.Mutex
 	CurrentUser   *User
 
-	Users       crs.LFU
-	VoiceStates crs.LFU
-	Channels    crs.LFU
-	Guilds      crs.LFU
+	Users       UsersCache
+	VoiceStates voiceStateCache
+	Channels    channelsCache
+	Guilds      guildsCache
 }
 
-var _ Cache = (*CacheLFUImmutable)(nil)
+var _ Cache = (*BasicCache)(nil)
 
-func (c *CacheLFUImmutable) getGuild(id Snowflake) (*crs.LFUItem, bool) {
+func (c *BasicCache) getGuild(id Snowflake) (*crs.LFUItem, bool) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 	return c.Guilds.Get(id)
 }
 
-func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
+func (c *BasicCache) createDMChannel(msg *Message) {
 	channelID := msg.ChannelID
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
-	if _, exists := c.Channels.Get(channelID); !exists {
+	if _, exists := c.Channels.Store[channelID]; !exists {
 		channel := &Channel{
 			ID: channelID,
 			Recipients: []*User{
@@ -93,26 +113,11 @@ func (c *CacheLFUImmutable) createDMChannel(msg *Message) {
 		}
 		c.Patch(channel)
 
-		item := c.Channels.CreateCacheableItem(channel)
-		c.Channels.Set(channel.ID, item)
+		c.Channels.Store[channelID] = channel
 	}
 }
 
-func (c *CacheLFUImmutable) Mutex(repo *crs.LFU, id Snowflake) *sync.Mutex {
-	switch repo {
-	case &c.Users:
-		return &c.shardedMutex.Users[int(id)%len(c.shardedMutex.Users)]
-	case &c.Channels:
-		return &c.shardedMutex.Channels[int(id)%len(c.shardedMutex.Channels)]
-	case &c.Guilds:
-		return &c.shardedMutex.Guilds[int(id)%len(c.shardedMutex.Guilds)]
-	case &c.VoiceStates:
-		return &c.shardedMutex.VoiceStates[int(id)%len(c.shardedMutex.VoiceStates)]
-	}
-	panic("unknown cache repo")
-}
-
-func (c *CacheLFUImmutable) Ready(data []byte) (*Ready, error) {
+func (c *BasicCache) Ready(data []byte) (*Ready, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 
@@ -125,7 +130,7 @@ func (c *CacheLFUImmutable) Ready(data []byte) (*Ready, error) {
 	c.Patch(rdy)
 	return rdy, err
 }
-func (c *CacheLFUImmutable) MessageCreate(data []byte) (*MessageCreate, error) {
+func (c *BasicCache) MessageCreate(data []byte) (*MessageCreate, error) {
 	// assumption#1: Bots don't receive Channel Create Gateway Event for DMs
 
 	msg, err := c.CacheNop.MessageCreate(data)
@@ -140,7 +145,7 @@ func (c *CacheLFUImmutable) MessageCreate(data []byte) (*MessageCreate, error) {
 	return msg, nil
 }
 
-func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {
+func (c *BasicCache) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	// assumption#1: Create may take place after an update to the channel
 	// assumption#2: The set of fields in both ChannelCreate and ChannelUpdate are the same
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
@@ -156,27 +161,21 @@ func (c *CacheLFUImmutable) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	return &ChannelCreate{Channel: DeepCopy(channel).(*Channel)}, nil
 }
 
-func (c *CacheLFUImmutable) saveChannel(channel *Channel) error {
-	item := c.Channels.CreateCacheableItem(channel)
-	if _, exists := c.Channels.Get(channel.ID); exists {
-		return errors.New("already exists")
+func (c *BasicCache) saveChannel(channel *Channel) error {
+	if _, exists := c.Channels.Store[channel.ID]; exists {
+		return CacheEntryAlreadyExistsErr
 	}
 
-	c.Channels.Set(channel.ID, item)
+	c.Channels.Store[channel.ID] = channel
 	return nil
 }
 
-func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
+func (c *BasicCache) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	// assumption#1: Create may not take place before an update event
 	// assumption#2: The set of fields in both ChannelCreate and ChannelUpdate are the same
 	// assumption#3: a channel can not change from one type to another (text => news, text => voice)
 
-	updateChannel := func(channelID Snowflake, item interface{}) (*Channel, error) {
-		mutex := c.Mutex(&c.Channels, channelID)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		channel := item.(*Channel)
+	updateChannel := func(channelID Snowflake, channel *Channel) (*Channel, error) {
 		if err := json.Unmarshal(data, channel); err != nil {
 			return nil, err
 		}
@@ -191,6 +190,9 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		return nil, err
 	}
 	channelID := metadata.ID
+
+	c.Channels.Lock()
+	defer c.Channels.Unlock()
 
 	var channel *Channel
 	var err error
@@ -223,7 +225,7 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	return &ChannelUpdate{Channel: channel}, nil
 }
 
-func (c *CacheLFUImmutable) ChannelDelete(data []byte) (*ChannelDelete, error) {
+func (c *BasicCache) ChannelDelete(data []byte) (*ChannelDelete, error) {
 	cd := &ChannelDelete{}
 	if err := json.Unmarshal(data, cd); err != nil {
 		return nil, err
@@ -237,7 +239,7 @@ func (c *CacheLFUImmutable) ChannelDelete(data []byte) (*ChannelDelete, error) {
 	return cd, nil
 }
 
-func (c *CacheLFUImmutable) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) {
+func (c *BasicCache) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) {
 	// assumption#1: not sent on deleted pins
 
 	cpu := &ChannelPinsUpdate{}
@@ -260,7 +262,7 @@ func (c *CacheLFUImmutable) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, 
 	return cpu, nil
 }
 
-//func (c *CacheLFUImmutable) VoiceStateUpdate(data []byte) (*VoiceStateUpdate, error) {
+//func (c *BasicCache) VoiceStateUpdate(data []byte) (*VoiceStateUpdate, error) {
 //	// assumption#1: not sent on deleted pins
 //
 //	type voiceStateUpdateHolder struct {
@@ -282,7 +284,7 @@ func (c *CacheLFUImmutable) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, 
 //	return cpu, nil
 //}
 
-func (c *CacheLFUImmutable) UserUpdate(data []byte) (*UserUpdate, error) {
+func (c *BasicCache) UserUpdate(data []byte) (*UserUpdate, error) {
 	update := &UserUpdate{User: c.CurrentUser}
 
 	c.CurrentUserMu.Lock()
@@ -297,7 +299,7 @@ func (c *CacheLFUImmutable) UserUpdate(data []byte) (*UserUpdate, error) {
 	return update, nil
 }
 
-func (c *CacheLFUImmutable) saveUsers(users []*User) error {
+func (c *BasicCache) saveUsers(users []*User) error {
 	c.Users.Lock()
 	defer c.Users.Unlock()
 
@@ -312,7 +314,7 @@ func (c *CacheLFUImmutable) saveUsers(users []*User) error {
 	return nil
 }
 
-func (c *CacheLFUImmutable) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
+func (c *BasicCache) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
 	vsu := &VoiceServerUpdate{}
 	if err := json.Unmarshal(data, vsu); err != nil {
 		return nil, err
@@ -322,7 +324,7 @@ func (c *CacheLFUImmutable) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, 
 	return vsu, nil
 }
 
-func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err error) {
+func (c *BasicCache) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err error) {
 	if evt, err = c.CacheNop.GuildMembersChunk(data); err != nil {
 		return nil, err
 	}
@@ -379,7 +381,7 @@ func (c *CacheLFUImmutable) GuildMembersChunk(data []byte) (evt *GuildMembersChu
 	return c.CacheNop.GuildMembersChunk(data)
 }
 
-func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
+func (c *BasicCache) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
 	gmr := &GuildMemberRemove{}
 	if err := json.Unmarshal(data, gmr); err != nil {
 		return nil, err
@@ -404,7 +406,7 @@ func (c *CacheLFUImmutable) GuildMemberRemove(data []byte) (*GuildMemberRemove, 
 	return gmr, nil
 }
 
-func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err error) {
+func (c *BasicCache) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err error) {
 	if evt, err = c.CacheNop.GuildMemberUpdate(data); err != nil {
 		return nil, err
 	}
@@ -473,7 +475,7 @@ func (c *CacheLFUImmutable) GuildMemberUpdate(data []byte) (evt *GuildMemberUpda
 	return evt, nil
 }
 
-func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
+func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	gmr := &GuildMemberAdd{}
 	if err := json.Unmarshal(data, gmr); err != nil {
 		return nil, err
@@ -538,7 +540,7 @@ func (c *CacheLFUImmutable) GuildMemberAdd(data []byte) (*GuildMemberAdd, error)
 	return gmr, nil
 }
 
-func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
+func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 	var metadata *idHolder
 	if err := json.Unmarshal(data, &metadata); err != nil {
 		return nil, err
@@ -596,7 +598,7 @@ func (c *CacheLFUImmutable) GuildCreate(data []byte) (*GuildCreate, error) {
 	return &GuildCreate{Guild: guild}, nil
 }
 
-func (c *CacheLFUImmutable) GuildUpdate(data []byte) (*GuildUpdate, error) {
+func (c *BasicCache) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	updateGuild := func(guildID Snowflake, item *crs.LFUItem) (*Guild, error) {
 		mutex := c.Mutex(&c.Guilds, guildID)
 		mutex.Lock()
@@ -645,7 +647,7 @@ func (c *CacheLFUImmutable) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	return &GuildUpdate{Guild: guild}, err
 }
 
-func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
+func (c *BasicCache) GuildDelete(data []byte) (*GuildDelete, error) {
 	guildEvt := &GuildDelete{}
 	if err := json.Unmarshal(data, guildEvt); err != nil {
 		return nil, err
@@ -659,7 +661,7 @@ func (c *CacheLFUImmutable) GuildDelete(data []byte) (*GuildDelete, error) {
 	return guildEvt, nil
 }
 
-func (c *CacheLFUImmutable) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err error) {
+func (c *BasicCache) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err error) {
 	if evt, err = c.CacheNop.GuildRoleCreate(data); err != nil {
 		return nil, err
 	}
@@ -677,7 +679,7 @@ func (c *CacheLFUImmutable) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, 
 	return evt, nil
 }
 
-func (c *CacheLFUImmutable) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
+func (c *BasicCache) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
 	if evt, err = c.CacheNop.GuildRoleUpdate(data); err != nil {
 		return nil, err
 	}
@@ -705,7 +707,7 @@ func (c *CacheLFUImmutable) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, 
 	return evt, nil
 }
 
-func (c *CacheLFUImmutable) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error) {
+func (c *BasicCache) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error) {
 	if evt, err = c.CacheNop.GuildRoleDelete(data); err != nil {
 		return nil, err
 	}
@@ -724,34 +726,20 @@ func (c *CacheLFUImmutable) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, 
 }
 
 // REST lookup
-// func (c *CacheLFUImmutable) GetMessage(channelID, messageID Snowflake) (*Message, error) {
+// func (c *BasicCache) GetMessage(channelID, messageID Snowflake) (*Message, error) {
 // 	return nil, nil
 // }
-// func (c *CacheLFUImmutable) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
+// func (c *BasicCache) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
 // 	return nil, nil
 // }
-// func (c *CacheLFUImmutable) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+// func (c *BasicCache) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
 // 	return nil, nil
 // }
-// func (c *CacheLFUImmutable) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+// func (c *BasicCache) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
 // 	return nil, nil
 // }
-func (c *CacheLFUImmutable) get(set *crs.LFU, id Snowflake) (interface{}, *sync.Mutex) {
-	set.Lock()
-	cachedItem, exists := set.Get(id)
-	var val interface{}
-	if exists {
-		val = cachedItem.Val
-	}
-	set.Unlock()
 
-	if exists {
-		return val, c.Mutex(set, id)
-	}
-	return nil, nil
-}
-
-func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
+func (c *BasicCache) GetChannel(id Snowflake) (*Channel, error) {
 	if channel, mu := c.get(&c.Channels, id); channel != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -761,7 +749,7 @@ func (c *CacheLFUImmutable) GetChannel(id Snowflake) (*Channel, error) {
 	return nil, ErrCacheMiss
 }
 
-func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
+func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
 	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -776,7 +764,7 @@ func (c *CacheLFUImmutable) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, e
 	}
 	return nil, ErrCacheMiss
 }
-func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
+func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	if guild, mu := c.get(&c.Guilds, id); guild != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -794,7 +782,7 @@ func (c *CacheLFUImmutable) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	}
 	return nil, ErrCacheMiss
 }
-func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
+func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
 	if guild, mu := c.get(&c.Guilds, id); guild != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -803,7 +791,7 @@ func (c *CacheLFUImmutable) GetGuild(id Snowflake) (*Guild, error) {
 	}
 	return nil, ErrCacheMiss
 }
-func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
+func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	if guild, mu := c.get(&c.Guilds, id); guild != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -824,7 +812,7 @@ func (c *CacheLFUImmutable) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 
 // GetMember fetches member and related user data from cache. User is not guaranteed to be populated.
 // Tip: use Member.GetUser(..) instead of Member.User
-func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error) {
+func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 	var user *User
 	var member *Member
 
@@ -853,7 +841,7 @@ func (c *CacheLFUImmutable) GetMember(guildID, userID Snowflake) (*Member, error
 		return nil, ErrCacheMiss
 	}
 }
-func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
+func (c *BasicCache) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -871,7 +859,7 @@ func (c *CacheLFUImmutable) GetGuildRoles(guildID Snowflake) ([]*Role, error) {
 	}
 	return nil, ErrCacheMiss
 }
-func (c *CacheLFUImmutable) GetCurrentUser() (*User, error) {
+func (c *BasicCache) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 	if c.CurrentUser == nil {
@@ -880,7 +868,7 @@ func (c *CacheLFUImmutable) GetCurrentUser() (*User, error) {
 
 	return DeepCopy(c.CurrentUser).(*User), nil
 }
-func (c *CacheLFUImmutable) GetUser(id Snowflake) (*User, error) {
+func (c *BasicCache) GetUser(id Snowflake) (*User, error) {
 	if id == c.currentUserID {
 		return c.GetCurrentUser()
 	}

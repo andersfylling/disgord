@@ -86,10 +86,10 @@
 // logic:
 //
 //  type MyCoolCache struct {
-//    disgord.CacheLFUImmutable
+//    disgord.BasicCache
 //    msgCache map[Snowflake]*Message // channelID => Message
 //  }
-//  func (c *CacheLFUImmutable) MessageCreate(data []byte) (*MessageCreate, error) {
+//  func (c *BasicCache) MessageCreate(data []byte) (*MessageCreate, error) {
 //	  // some smart implementation here
 //  }
 //

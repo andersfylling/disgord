@@ -184,7 +184,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 	}
 
 	// TODO: this is just waiting to fail
-	if internalCache, ok := c.cache.(*CacheLFUImmutable); ok {
+	if internalCache, ok := c.cache.(*BasicCache); ok {
 		internalCache.currentUserID = c.botID
 	}
 
