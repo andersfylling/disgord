@@ -589,23 +589,6 @@ func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake) {
 	return guild, channelIDs
 }
 
-func (c *BasicCache) saveGuildCopy(guild *Guild, overwrite bool) (saved bool) {
-	_, channelIDs := c.deconstructGuild(guild)
-
-	c.Guilds.Lock()
-	defer c.Guilds.Unlock()
-
-	_, exists := c.Guilds.Store[guild.ID]
-	if overwrite || !exists {
-		c.Guilds.Store[guild.ID] = &guildCacheContainer{
-			Guild:      guild,
-			ChannelIDs: channelIDs,
-		} // discard any previous data
-		return true
-	}
-	return false
-}
-
 func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 	evt, err := c.CacheNop.GuildCreate(data)
 	if err != nil {
@@ -613,7 +596,15 @@ func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 	}
 
 	guild := DeepCopy(evt.Guild).(*Guild)
-	c.saveGuildCopy(guild, true)
+	_, channelIDs := c.deconstructGuild(guild)
+
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
+
+	c.Guilds.Store[guild.ID] = &guildCacheContainer{
+		Guild:      guild,
+		ChannelIDs: channelIDs,
+	} // discard any previous data
 
 	return evt, nil
 }
