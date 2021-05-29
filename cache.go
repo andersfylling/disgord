@@ -418,25 +418,17 @@ func (c *BasicCache) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err
 }
 
 func (c *BasicCache) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
-	gmr := &GuildMemberRemove{}
-	if err := json.Unmarshal(data, gmr); err != nil {
+	gmr, err := c.CacheNop.GuildMemberRemove(data)
+	if err != nil {
 		return nil, err
 	}
-	c.Patch(gmr)
 
-	if guildI, mu := c.get(&c.Guilds, gmr.GuildID); guildI != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		guild := guildI.(*Guild)
-		for i := range guild.Members {
-			if guild.Members[i].UserID == gmr.User.ID {
-				guild.MemberCount--
-				guild.Members[i] = guild.Members[len(guild.Members)-1]
-				guild.Members = guild.Members[:len(guild.Members)-1]
-				break
-			}
-		}
+	if container, ok := c.Guilds.Store[gmr.GuildID]; !ok {
+		container.Guild.MemberCount--
+		delete(container.Members, gmr.User.ID)
 	}
 
 	return gmr, nil
@@ -447,65 +439,19 @@ func (c *BasicCache) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err
 		return nil, err
 	}
 
-	uid := evt.User.ID
-	gid := evt.GuildID
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-	userwrap := &userHolder{}
-
-	c.Users.Lock()
-	cachedUser, userExists := c.Users.Get(uid)
-	c.Users.Unlock()
-
-	if userExists {
-		mutex := c.Mutex(&c.Users, uid)
-		mutex.Lock()
-		userwrap.User = cachedUser.Val.(*User)
-		if err := json.Unmarshal(data, userwrap); err == nil {
-			c.Patch(userwrap.User)
-		}
-		mutex.Unlock()
-	} else {
-		userwrap.User = &User{}
-		if err := json.Unmarshal(data, userwrap); err == nil {
-			c.Patch(userwrap.User)
-			usr := c.Users.CreateCacheableItem(userwrap.User)
-
-			c.Users.Lock()
-			if _, exists := c.Users.Get(uid); !exists {
-				c.Users.Set(uid, usr)
+	if container, ok := c.Guilds.Store[evt.GuildID]; !ok {
+		if member, ok := container.Members[evt.User.ID]; ok {
+			if err = json.Unmarshal(data, member); err != nil {
+				return nil, err
 			}
-			c.Users.Unlock()
+			c.Patch(evt)
+		} else {
+			container.Guild.MemberCount++
+			container.Members[evt.User.ID] = DeepCopy(evt.Member).(*Member)
 		}
-	}
-	userwrap = nil
-
-	item, exists := c.getGuild(gid)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, gid)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		guild := item.Val.(*Guild)
-
-		var member *Member
-		for i := range guild.Members { // slow... map instead?
-			if guild.Members[i].UserID == uid {
-				member = guild.Members[i]
-				break
-			}
-		}
-		if member == nil {
-			member = &Member{}
-
-			guild.Members = append(guild.Members, member)
-			guild.MemberCount++
-		}
-
-		if err := json.Unmarshal(data, member); err != nil {
-			return nil, err
-		}
-		c.Patch(member)
-		member.User = nil
 	}
 
 	return evt, nil
