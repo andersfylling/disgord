@@ -3,6 +3,7 @@ package disgord
 import (
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
 	"testing"
 	"time"
 )
@@ -314,3 +315,56 @@ func TestBasicCache_TypingStart(t *testing.T) {
 
 	deadlockTest(t, cache, EvtTypingStart, evtData)
 }
+
+func TestBasicCache_Ready(t *testing.T) {
+	cache := NewBasicCache()
+
+	guildIDsToGuilds := func(ids []Snowflake) (container []*GuildUnavailable) {
+		for _, id := range ids {
+			container = append(container, &GuildUnavailable{ID: id, Unavailable: true})
+		}
+		return
+	}
+
+	guilds := guildIDsToGuilds([]Snowflake{3,4,6,7,3})
+	guildsJson, err := json.Marshal(guilds)
+	if err != nil {
+		t.Fatal("unable to marshal unavail guilds")
+	}
+
+	evtData := jsonbytes(`{"v":8,"user":%s,"guilds":%s,"session_id":"gf7k4gfe78g"}`, `{"id":234}`, guildsJson)
+
+	t.Run("event", func(t *testing.T) {
+		evt, err := cacheDispatcher(cache, EvtReady, evtData)
+		if err != nil {
+			t.Fatal("failed to create event struct", err)
+		}
+
+		ready := evt.(*Ready)
+
+		if ready.User.ID != 234 {
+			t.Errorf("incorrect user id. Got %d, wants %d", ready.User.ID, 234)
+		}
+
+		if len(guilds) != len(ready.Guilds) {
+			t.Error("incorrect number of guilds")
+		}
+
+		if len(cache.Guilds.Store) != len(guilds) {
+			t.Errorf("cache has incorrect number of guilds pre-allocated. Got %d, wants %d", len(cache.Guilds.Store), len(guilds))
+		}
+
+		for _, sourceGuild := range guilds {
+			if _, ok := cache.Guilds.Store[sourceGuild.ID]; !ok {
+				t.Errorf("store is missing guild ID %d", sourceGuild.ID)
+			}
+		}
+
+		if cache.CurrentUser.ID != 234 {
+			t.Error("current user id was not updated")
+		}
+	})
+
+	deadlockTest(t, cache, EvtReady, evtData)
+}
+
