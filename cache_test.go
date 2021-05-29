@@ -456,7 +456,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 	t.Run("get", func(t *testing.T) {
 		t.Run("existing", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID: 1}
+			cache.Guilds.Store[1] = &guildCacheContainer{Guild: &Guild{ID: 1}}
 
 			channel, err := cache.GetGuild(1)
 			if err != nil {
@@ -485,7 +485,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		t.Run("kicked", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID: 1}
+			cache.Guilds.Store[1] = &guildCacheContainer{Guild: &Guild{ID: 1}}
 
 			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d}`, 1))
 			if err != nil {
@@ -507,7 +507,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 		})
 		t.Run("deleted", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID: 1}
+			cache.Guilds.Store[1] = &guildCacheContainer{Guild: &Guild{ID: 1}}
 
 			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d,"unavailable":true}`, 1))
 			if err != nil {
