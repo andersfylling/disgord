@@ -147,7 +147,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		}
 	} else if conf.Cache == nil {
 		// don't specify any limits, this should be done by the user instead
-		cache = NewCacheLFUImmutable(0, 0, 0, 0)
+		cache = NewBasicCache()
 	} else {
 		cache = conf.Cache
 	}
