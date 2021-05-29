@@ -395,7 +395,7 @@ type GuildMemberRemove struct {
 // GuildMemberUpdate guild member was updated
 type GuildMemberUpdate struct {
 	*Member
-	ShardID      uint        `json:"-"`
+	ShardID uint `json:"-"`
 }
 
 // ---------------------------

@@ -367,54 +367,36 @@ func (c *BasicCache) GuildMembersChunk(data []byte) (evt *GuildMembersChunk, err
 
 	users := make([]*User, 0, len(evt.Members))
 	for i := range evt.Members {
-		users = append(users, evt.Members[i].User)
-		evt.Members[i].User = nil
+		user := DeepCopy(evt.Members[i].User).(*User)
+		users = append(users, user)
 	}
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		_ = c.saveUsers(users)
+		c.saveUsers(users)
 		wg.Done()
 	}()
 
+	// stayed here for historical reasons, investigate if this can be removed
 	sort.Slice(evt.Members, func(i, j int) bool {
 		return evt.Members[i].UserID < evt.Members[j].UserID
 	})
 
 	c.Guilds.Lock()
-	cachedGuild, exists := c.Guilds.Get(evt.GuildID)
-	if !exists || cachedGuild == nil {
-		cachedGuild = c.Guilds.CreateCacheableItem(&Guild{
-			ID:          evt.GuildID,
-			Unavailable: true,
-		})
-		c.Guilds.Set(evt.GuildID, cachedGuild)
-	}
-	guild := cachedGuild.Val.(*Guild)
-	c.Guilds.Unlock()
+	defer c.Guilds.Unlock()
 
-	mutex := c.Mutex(&c.Guilds, evt.GuildID)
-	mutex.Lock()
-
-	// TODO: replace instead of re-allocating?
-	//  should be designed for large guilds
-	members := make([]*Member, 0, len(guild.Members)+len(evt.Members))
-	for i := range guild.Members {
-		pos := sort.Search(len(evt.Members), func(si int) bool {
-			return evt.Members[si].UserID >= guild.Members[i].UserID
-		})
-		if pos == len(evt.Members) {
-			members = append(members, guild.Members[i])
+	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
+		// this is fresh data so we just overwrite existing content
+		for i := range evt.Members {
+			member := DeepCopy(evt.Members[i]).(*Member)
+			member.User = nil
+			container.Members[member.UserID] = member
 		}
 	}
-	members = append(members, evt.Members...)
-	guild.Members = members
-
-	mutex.Unlock()
-
 	wg.Wait()
-	return c.CacheNop.GuildMembersChunk(data)
+
+	return evt, nil
 }
 
 func (c *BasicCache) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) {
