@@ -265,3 +265,29 @@ func TestBasicCache_Channels(t *testing.T) {
 		}
 	})
 }
+
+func TestBasicCache_TypingStart(t *testing.T) {
+	cache := NewBasicCache()
+
+	userID := Snowflake(123)
+	channelID := Snowflake(348765348)
+	evtData := jsonbytes(`{"user_id":%d,"channel_id":"%s"}`, userID, channelID)
+
+	t.Run("event", func(t *testing.T) {
+		evt, err := cacheDispatcher(cache, EvtTypingStart, evtData)
+		if err != nil {
+			t.Fatal("failed to create event struct", err)
+		}
+
+		typingStart := evt.(*TypingStart)
+
+		if typingStart.UserID != userID {
+			t.Errorf("incorrect user id. Got %d, wants %d", typingStart.UserID, userID)
+		}
+		if typingStart.ChannelID != channelID {
+			t.Errorf("incorrect channel id. Got %d, wants %d", typingStart.ChannelID, channelID)
+		}
+	})
+
+	deadlockTest(t, cache, EvtTypingStart, evtData)
+}
