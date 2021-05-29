@@ -38,6 +38,35 @@ func TestBasicCache_Channels(t *testing.T) {
 	topic := "test"
 	name := "anders"
 
+	t.Run("get", func(t *testing.T) {
+		t.Run("existing", func(t *testing.T) {
+			cache := NewBasicCache()
+			cache.Channels.Store[id] = &Channel{ID: id}
+
+			channel, err := cache.GetChannel(id)
+			if err != nil {
+				t.Error("cache has no channel")
+			}
+			if channel == nil {
+				t.Error("channel is nil")
+			}
+		})
+		t.Run("get unknown", func(t *testing.T) {
+			cache := NewBasicCache()
+
+			channel, err := cache.GetChannel(id)
+			if err == nil {
+				t.Error("should return error when channel is unknown")
+			}
+			if channel != nil {
+				t.Error("channel should be nil")
+			}
+			if !errors.Is(err, CacheMissErr) {
+				t.Error("expected error to be a cache miss err")
+			}
+		})
+	})
+
 	t.Run("create", func(t *testing.T) {
 		evt, err := cacheDispatcher(cache, EvtChannelCreate, jsonbytes(`{"id":%d,"topic":"%s"}`, id, topic))
 		if err != nil {
@@ -238,16 +267,6 @@ func TestBasicCache_Channels(t *testing.T) {
 
 	})
 
-	t.Run("get existing", func(t *testing.T) {
-		channel, err := cache.GetChannel(id)
-		if err != nil {
-			t.Error("cache has no channel")
-		}
-		if channel == nil {
-			t.Error("channel is nil")
-		}
-	})
-
 	t.Run("delete", func(t *testing.T) {
 		channel, err := cache.GetChannel(id)
 		if err != nil {
@@ -273,19 +292,6 @@ func TestBasicCache_Channels(t *testing.T) {
 		}
 		if channel != nil {
 			t.Fatal("returned object should be nil")
-		}
-	})
-
-	t.Run("get unknown", func(t *testing.T) {
-		channel, err := cache.GetChannel(id)
-		if err == nil {
-			t.Error("should return error when channel is unknown")
-		}
-		if channel != nil {
-			t.Error("channel should be nil")
-		}
-		if !errors.Is(err, CacheMissErr) {
-			t.Error("expected error to be a cache miss err")
 		}
 	})
 }
@@ -444,4 +450,85 @@ func TestBasicCache_UserUpdate(t *testing.T) {
 	if cache.CurrentUser.Username != "test" {
 		t.Error("current users username was not updated")
 	}
+}
+
+func TestBasicCache_Guilds(t *testing.T) {
+	t.Run("get", func(t *testing.T) {
+		t.Run("existing", func(t *testing.T) {
+			cache := NewBasicCache()
+			cache.Guilds.Store[1] = &Guild{ID:1}
+
+			channel, err := cache.GetGuild(1)
+			if err != nil {
+				t.Error("cache has no such guild")
+			}
+			if channel == nil {
+				t.Error("guild is nil")
+			}
+		})
+		t.Run("get unknown", func(t *testing.T) {
+			cache := NewBasicCache()
+
+			channel, err := cache.GetChannel(1)
+			if err == nil {
+				t.Error("should return error when guild is unknown")
+			}
+			if channel != nil {
+				t.Error("guild should be nil")
+			}
+			if !errors.Is(err, CacheMissErr) {
+				t.Error("expected error to be a cache miss err")
+			}
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		t.Run("kicked", func(t *testing.T) {
+			cache := NewBasicCache()
+			cache.Guilds.Store[1] = &Guild{ID:1}
+
+			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d}`, 1))
+			if err != nil {
+				t.Fatal("failed to create event struct", err)
+			}
+
+			guildEvt := evt.(*GuildDelete).UnavailableGuild
+			if guildEvt.ID != 1 {
+				t.Error("incorrect guild id")
+			}
+
+			guild, err := cache.GetGuild(1)
+			if !errors.Is(err, CacheMissErr) {
+				t.Error("expected cache miss err")
+			}
+			if guild != nil {
+				t.Error("guild should be nil")
+			}
+		})
+		t.Run("deleted", func(t *testing.T) {
+			cache := NewBasicCache()
+			cache.Guilds.Store[1] = &Guild{ID:1}
+
+			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d,"unavailable":true}`, 1))
+			if err != nil {
+				t.Fatal("failed to create event struct", err)
+			}
+
+			guildEvt := evt.(*GuildDelete).UnavailableGuild
+			if guildEvt.ID != 1 {
+				t.Error("incorrect guild id")
+			}
+			if !guildEvt.Unavailable {
+				t.Error("should have been unavail")
+			}
+
+			guild, err := cache.GetGuild(1)
+			if !errors.Is(err, CacheMissErr) {
+				t.Error("expected cache miss err")
+			}
+			if guild != nil {
+				t.Error("guild should be nil")
+			}
+		})
+	})
 }
