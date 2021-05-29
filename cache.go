@@ -563,13 +563,7 @@ func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	return gmr, nil
 }
 
-func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
-	evt, err := c.CacheNop.GuildCreate(data)
-	if err != nil {
-		return nil, err
-	}
-
-	guild := DeepCopy(evt.Guild).(*Guild)
+func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake) {
 	channelIDs := make([]Snowflake, 0, len(guild.Channels))
 	if !guild.Unavailable {
 		// cache channels
@@ -592,64 +586,73 @@ func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 		c.saveUsers(users)
 	}
 
+	return guild, channelIDs
+}
+
+func (c *BasicCache) saveGuildCopy(guild *Guild, overwrite bool) (saved bool) {
+	_, channelIDs := c.deconstructGuild(guild)
+
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	c.Guilds.Store[guild.ID] = &guildCacheContainer{
-		Guild:      guild,
-		ChannelIDs: channelIDs,
-	} // discard any previous data
+	_, exists := c.Guilds.Store[guild.ID]
+	if overwrite || !exists {
+		c.Guilds.Store[guild.ID] = &guildCacheContainer{
+			Guild:      guild,
+			ChannelIDs: channelIDs,
+		} // discard any previous data
+		return true
+	}
+	return false
+}
+
+func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
+	evt, err := c.CacheNop.GuildCreate(data)
+	if err != nil {
+		return nil, err
+	}
+
+	guild := DeepCopy(evt.Guild).(*Guild)
+	c.saveGuildCopy(guild, true)
 
 	return evt, nil
 }
 
 func (c *BasicCache) GuildUpdate(data []byte) (*GuildUpdate, error) {
-	updateGuild := func(guildID Snowflake, item *crs.LFUItem) (*Guild, error) {
-		mutex := c.Mutex(&c.Guilds, guildID)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		guild := item.Val.(*Guild)
-		if guild.Unavailable {
-			guild.Unavailable = false
-		}
-		if err := json.Unmarshal(data, guild); err != nil {
-			return nil, err
-		}
-		c.Patch(guild)
-
-		return DeepCopy(guild).(*Guild), nil
-	}
-
-	var metadata *idHolder
-	if err := json.Unmarshal(data, &metadata); err != nil {
+	evt, err := c.CacheNop.GuildUpdate(data)
+	if err != nil {
 		return nil, err
 	}
-	guildID := metadata.ID
 
-	item, exists := c.getGuild(guildID)
-	var guild *Guild
-	var err error
-	if exists {
-		guild, err = updateGuild(guildID, item)
-	} else {
-		if err := json.Unmarshal(data, &guild); err != nil {
-			return nil, err
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
+
+	container, ok := c.Guilds.Store[evt.Guild.ID]
+	if !ok {
+		// unlikely - slow case
+		guild := DeepCopy(evt.Guild).(*Guild)
+		_, channelIDs := c.deconstructGuild(container.Guild)
+
+		c.Guilds.Store[guild.ID] = &guildCacheContainer{
+			Guild:      guild,
+			ChannelIDs: channelIDs,
 		}
-		e := c.Guilds.CreateCacheableItem(guild)
-
-		c.Guilds.Lock()
-		defer c.Guilds.Unlock()
-
-		if oldItem, exists := c.Guilds.Get(guildID); exists {
-			guild, err = updateGuild(guildID, oldItem) // fallback
-		} else {
-			c.Guilds.Set(guildID, e)
-			guild = DeepCopy(guild).(*Guild)
-		}
+		return evt, nil
 	}
 
-	return &GuildUpdate{Guild: guild}, err
+	// channels and members should not have been affected by this, so that's a lot of garbage.
+	memberList := container.Guild.Members
+	container.Guild.Members = nil
+
+	if err = json.Unmarshal(data, container.Guild); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+
+	container.Guild.Members = memberList
+	container.Guild.Channels = nil
+
+	return evt, nil
 }
 
 func (c *BasicCache) GuildDelete(data []byte) (*GuildDelete, error) {
