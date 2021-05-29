@@ -458,68 +458,32 @@ func (c *BasicCache) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err
 }
 
 func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
-	gmr := &GuildMemberAdd{}
-	if err := json.Unmarshal(data, gmr); err != nil {
+	evt, err := c.CacheNop.GuildMemberAdd(data)
+	if err != nil {
 		return nil, err
 	}
-	c.Patch(gmr)
 
-	userID := gmr.Member.User.ID
-	guildID := gmr.Member.GuildID
-
-	// upsert user
+	// save user
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		if user, mu := c.get(&c.Users, userID); user != nil {
-			mu.Lock()
-			defer mu.Unlock()
-
-			gmr.Member.User = user.(*User)
-			_ = json.Unmarshal(data, gmr)
-			c.Patch(gmr)
-		} else {
-			usr := c.Users.CreateCacheableItem(DeepCopy(gmr.Member.User))
-
-			c.Users.Lock()
-			if _, exists := c.Users.Get(userID); !exists {
-				c.Users.Set(userID, usr)
-			}
-			c.Users.Unlock()
-		}
+		user := DeepCopy(evt.Member.User).(*User)
+		c.saveUsers([]*User{user})
 		wg.Done()
 	}()
 
-	// upsert member
-	if guildI, mu := c.get(&c.Guilds, guildID); guildI != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		guild := guildI.(*Guild)
-
-		var member *Member
-		for i := range guild.Members { // TODO-slow:
-			if guild.Members[i].UserID == gmr.Member.User.ID {
-				member = guild.Members[i]
-				if err := json.Unmarshal(data, member); err != nil {
-					return nil, err
-				}
-				c.Patch(member)
-				member.User = nil
-				break
-			}
-		}
-		if member == nil {
-			member = DeepCopy(gmr.Member).(*Member)
-			member.User = nil
-
-			guild.Members = append(guild.Members, member)
-			guild.MemberCount++
+	if container, ok := c.Guilds.Store[evt.Member.GuildID]; !ok {
+		if _, ok := container.Members[evt.Member.UserID]; !ok {
+			container.Members[evt.Member.UserID] = DeepCopy(evt.Member).(*Member)
+			container.Guild.MemberCount++
 		}
 	}
 
 	wg.Wait()
-	return gmr, nil
+	return evt, nil
 }
 
 func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake, map[Snowflake]*Member) {
