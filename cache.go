@@ -837,7 +837,7 @@ func (c *BasicCache) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 	if c.CurrentUser == nil {
-		return nil, ErrCacheMiss
+		return nil, CacheMissErr
 	}
 
 	return DeepCopy(c.CurrentUser).(*User), nil
