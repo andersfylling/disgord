@@ -371,7 +371,7 @@ func TestBasicCache_Ready(t *testing.T) {
 func TestBasicCache_Message(t *testing.T) {
 	cache := NewBasicCache()
 
-	evtData := jsonbytes(`{"id":1,"content":"testing","guild_id":2,"channel_id":3`)
+	evtData := jsonbytes(`{"id":1,"content":"testing","guild_id":2,"channel_id":3}`)
 
 	t.Run("create", func(t *testing.T) {
 		evt, err := cacheDispatcher(cache, EvtMessageCreate, evtData)
@@ -395,7 +395,7 @@ func TestBasicCache_Message(t *testing.T) {
 	t.Run("create DM", func(t *testing.T) {
 		// if guild id is not set, it's a DM message
 		// TODO: group DM
-		evt, err := cacheDispatcher(cache, EvtMessageCreate, jsonbytes(`{"id":1,"content":"testing","channel_id":3`))
+		evt, err := cacheDispatcher(cache, EvtMessageCreate, jsonbytes(`{"id":1,"content":"testing","channel_id":3}`))
 		if err != nil {
 			t.Fatal("failed to create event struct", err)
 		}
@@ -418,4 +418,30 @@ func TestBasicCache_Message(t *testing.T) {
 			t.Errorf("channel was created with incorrect type. Got %d, wants %d", channel.Type, ChannelTypeDM)
 		}
 	})
+}
+
+func TestBasicCache_UserUpdate(t *testing.T) {
+	cache := NewBasicCache()
+	cache.Users.Store[1] = &User{ID: 1, Username: "anders", Bot: true}
+
+	evt, err := cacheDispatcher(cache, EvtUserUpdate, jsonbytes(`{"id":1,"username":"test"}`))
+	if err != nil {
+		t.Fatal("failed to create event struct", err)
+	}
+
+	usr := evt.(*UserUpdate)
+	if usr.ID != 1 {
+		t.Fatal("incorrect user id")
+	}
+
+	if usr.Username != "test" {
+		t.Error("username was not updated")
+	}
+	if !usr.Bot {
+		t.Error("bot value was overwritten")
+	}
+
+	if cache.CurrentUser.Username != "test" {
+		t.Error("current users username was not updated")
+	}
 }
