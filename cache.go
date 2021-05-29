@@ -664,15 +664,29 @@ func (c *BasicCache) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err err
 	if evt, err = c.CacheNop.GuildRoleCreate(data); err != nil {
 		return nil, err
 	}
+	role := DeepCopy(evt.Role).(*Role)
 
-	item, exists := c.getGuild(evt.GuildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, evt.GuildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	// since guild create events have to destroy old data to make sure nothing is outdated
+	// we do a nop if the guild doesn't exist
 
-		guild := item.Val.(*Guild)
-		_ = guild.AddRole(evt.Role) // TODO: how do i handle this?
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
+
+	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
+		guild := container.Guild
+
+		var saved bool
+		for i := range guild.Roles {
+			if role.ID == guild.Roles[i].ID {
+				guild.Roles[i] = role
+				saved = true
+				break
+			}
+		}
+
+		if !saved {
+			guild.Roles = append(guild.Roles, role)
+		}
 	}
 
 	return evt, nil
