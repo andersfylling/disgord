@@ -735,19 +735,15 @@ func (c *BasicCache) GetChannel(id Snowflake) (*Channel, error) {
 }
 
 func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
-	if guild, mu := c.get(&c.Guilds, guildID); guild != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		g := guild.(*Guild)
-		emoji, err := g.Emoji(emojiID)
-		if err != nil || emoji == nil {
-			return nil, ErrCacheMiss
+	if guild, ok := c.Guilds.Store[guildID]; ok {
+		if emoji, err := guild.Emoji(emojiID); emoji != nil && err == nil {
+			return DeepCopy(emoji).(*Emoji), nil
 		}
-
-		return DeepCopy(emoji).(*Emoji), nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
 func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	if guild, mu := c.get(&c.Guilds, id); guild != nil {
