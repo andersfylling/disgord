@@ -24,7 +24,7 @@ func deadlockTest(t *testing.T, c Cache, evt string, data []byte) {
 		}()
 
 		select {
-		case <-time.After(1*time.Second):
+		case <-time.After(1 * time.Second):
 			t.Fatal("deadlock detected")
 		case <-done:
 		}
@@ -239,7 +239,7 @@ func TestBasicCache_Channels(t *testing.T) {
 		})
 
 		t.Run("outdated", func(t *testing.T) {
-			now.Add(-10*time.Second)
+			now.Add(-10 * time.Second)
 			data, err := now.MarshalJSON()
 			if err != nil {
 				t.Fatal("unable to marshal pin timestamp")
@@ -332,7 +332,7 @@ func TestBasicCache_Ready(t *testing.T) {
 		return
 	}
 
-	guilds := guildIDsToGuilds([]Snowflake{3,4,6,7,3})
+	guilds := guildIDsToGuilds([]Snowflake{3, 4, 6, 7, 3})
 	guildsJson, err := json.Marshal(guilds)
 	if err != nil {
 		t.Fatal("unable to marshal unavail guilds")
@@ -456,7 +456,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 	t.Run("get", func(t *testing.T) {
 		t.Run("existing", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID:1}
+			cache.Guilds.Store[1] = &Guild{ID: 1}
 
 			channel, err := cache.GetGuild(1)
 			if err != nil {
@@ -485,7 +485,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		t.Run("kicked", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID:1}
+			cache.Guilds.Store[1] = &Guild{ID: 1}
 
 			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d}`, 1))
 			if err != nil {
@@ -507,7 +507,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 		})
 		t.Run("deleted", func(t *testing.T) {
 			cache := NewBasicCache()
-			cache.Guilds.Store[1] = &Guild{ID:1}
+			cache.Guilds.Store[1] = &Guild{ID: 1}
 
 			evt, err := cacheDispatcher(cache, EvtGuildDelete, jsonbytes(`{"id":%d,"unavailable":true}`, 1))
 			if err != nil {

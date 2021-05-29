@@ -63,6 +63,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*BasicCache:
 		s = *t
+	case *[]*UsersCache:
+		s = *t
 	case *[]*AllowedMentions:
 		s = *t
 	case *[]*Attachment:

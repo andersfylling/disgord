@@ -4,7 +4,6 @@ import (
 	"errors"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -48,7 +47,7 @@ type voiceStateCache struct {
 type voiceStateCacheEntry struct {
 	sync.Mutex
 	GuildID Snowflake
-	Store map[Snowflake]*VoiceState
+	Store   map[Snowflake]*VoiceState
 }
 
 type channelsCache struct {
