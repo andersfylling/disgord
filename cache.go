@@ -661,13 +661,12 @@ func (c *BasicCache) GuildDelete(data []byte) (*GuildDelete, error) {
 }
 
 func (c *BasicCache) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err error) {
+	// since guild create events have to destroy old data to make sure nothing is outdated
+	// we do a nop if the guild doesn't exist
 	if evt, err = c.CacheNop.GuildRoleCreate(data); err != nil {
 		return nil, err
 	}
 	role := DeepCopy(evt.Role).(*Role)
-
-	// since guild create events have to destroy old data to make sure nothing is outdated
-	// we do a nop if the guild doesn't exist
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
@@ -693,27 +692,33 @@ func (c *BasicCache) GuildRoleCreate(data []byte) (evt *GuildRoleCreate, err err
 }
 
 func (c *BasicCache) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
+	// since guild create events have to destroy old data to make sure nothing is outdated
+	// we do a nop if the guild doesn't exist
 	if evt, err = c.CacheNop.GuildRoleUpdate(data); err != nil {
 		return nil, err
 	}
 
-	item, exists := c.getGuild(evt.GuildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, evt.GuildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		guild := item.Val.(*Guild)
-		role, err := guild.Role(evt.Role.ID)
-		if err != nil {
-			// role does not exist
-			_ = guild.AddRole(DeepCopy(evt.Role).(*Role)) // TODO: how do i handle this?
-		} else {
-			tmp := &GuildRoleUpdate{Role: role}
-			if err = json.Unmarshal(data, tmp); err != nil {
-				return nil, err
+	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
+		guild := container.Guild
+		var storedRole *Role
+
+		for i := range guild.Roles {
+			if evt.Role.ID == guild.Roles[i].ID {
+				storedRole = guild.Roles[i]
+				break
 			}
-			c.Patch(evt)
+		}
+
+		if storedRole == nil {
+			role := DeepCopy(evt.Role).(*Role)
+			guild.Roles = append(guild.Roles, role)
+		} else if err = json.Unmarshal(data, storedRole); err != nil {
+			return nil, err
+		} else {
+			c.Patch(storedRole)
 		}
 	}
 
