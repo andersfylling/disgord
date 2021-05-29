@@ -237,6 +237,16 @@ func TestBasicCache_Channels(t *testing.T) {
 
 	})
 
+	t.Run("get existing", func(t *testing.T) {
+		channel, err := cache.GetChannel(id)
+		if err != nil {
+			t.Error("cache has no channel")
+		}
+		if channel == nil {
+			t.Error("channel is nil")
+		}
+	})
+
 	t.Run("delete", func(t *testing.T) {
 		channel, err := cache.GetChannel(id)
 		if err != nil {
@@ -262,6 +272,19 @@ func TestBasicCache_Channels(t *testing.T) {
 		}
 		if channel != nil {
 			t.Fatal("returned object should be nil")
+		}
+	})
+
+	t.Run("get unknown", func(t *testing.T) {
+		channel, err := cache.GetChannel(id)
+		if err == nil {
+			t.Error("should return error when channel is unknown")
+		}
+		if channel != nil {
+			t.Error("channel should be nil")
+		}
+		if !errors.Is(err, CacheMissErr) {
+			t.Error("expected error to be a cache miss err")
 		}
 	})
 }
