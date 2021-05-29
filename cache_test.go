@@ -183,7 +183,7 @@ func TestBasicCache_Channels(t *testing.T) {
 			t.Fatal("returned object should be nil")
 		}
 
-		evt, err := cacheDispatcher(cache, EvtChannelUpdate, jsonbytes(`{"id":%d,"topic":%s,name":"%s"}`, unknownID, topic, name))
+		evt, err := cacheDispatcher(cache, EvtChannelUpdate, jsonbytes(`{"id":%d,"topic":"%s","name":"%s"}`, unknownID, topic, name))
 		if err != nil {
 			t.Fatal("failed to create channel from event data", err)
 		}
@@ -191,7 +191,7 @@ func TestBasicCache_Channels(t *testing.T) {
 		holder := evt.(*ChannelUpdate)
 		channel := holder.Channel
 
-		if channel.ID != id {
+		if channel.ID != unknownID {
 			t.Errorf("channel id should be %d, got %d", unknownID, channel.ID)
 		}
 		if channel.Topic != topic {
@@ -239,7 +239,7 @@ func TestBasicCache_Channels(t *testing.T) {
 		})
 
 		t.Run("outdated", func(t *testing.T) {
-			now.Add(-10 * time.Second)
+			now.Time = now.Add(-10 * time.Second)
 			data, err := now.MarshalJSON()
 			if err != nil {
 				t.Fatal("unable to marshal pin timestamp")
@@ -251,8 +251,8 @@ func TestBasicCache_Channels(t *testing.T) {
 			}
 
 			holder := evt.(*ChannelPinsUpdate)
-			if holder.LastPinTimestamp.Second() == now.Second() {
-				t.Error("timestamp was updated")
+			if holder.LastPinTimestamp.Second() != now.Second() {
+				t.Error("incorrect timestamp")
 			}
 
 			if !channel.LastPinTimestamp.IsZero() {
@@ -260,8 +260,8 @@ func TestBasicCache_Channels(t *testing.T) {
 			}
 
 			channelNow, _ := cache.GetChannel(id)
-			if channelNow.LastPinTimestamp.IsZero() {
-				t.Error("last ping timestamp was not updated")
+			if channelNow.LastPinTimestamp.Second() == now.Second() {
+				t.Error("last ping timestamp was updated")
 			}
 		})
 
@@ -356,14 +356,8 @@ func TestBasicCache_Ready(t *testing.T) {
 			t.Error("incorrect number of guilds")
 		}
 
-		if len(cache.Guilds.Store) != len(guilds) {
-			t.Errorf("cache has incorrect number of guilds pre-allocated. Got %d, wants %d", len(cache.Guilds.Store), len(guilds))
-		}
-
-		for _, sourceGuild := range guilds {
-			if _, ok := cache.Guilds.Store[sourceGuild.ID]; !ok {
-				t.Errorf("store is missing guild ID %d", sourceGuild.ID)
-			}
+		if len(cache.Guilds.Store) != 0 {
+			t.Errorf("cache pre-allocated the guilds, but is it really needed?")
 		}
 
 		if cache.CurrentUser.ID != 234 {
@@ -428,7 +422,7 @@ func TestBasicCache_Message(t *testing.T) {
 
 func TestBasicCache_UserUpdate(t *testing.T) {
 	cache := NewBasicCache()
-	cache.Users.Store[1] = &User{ID: 1, Username: "anders", Bot: true}
+	cache.CurrentUser = &User{ID: 1, Username: "anders", Bot: true}
 
 	evt, err := cacheDispatcher(cache, EvtUserUpdate, jsonbytes(`{"id":1,"username":"test"}`))
 	if err != nil {
@@ -437,7 +431,7 @@ func TestBasicCache_UserUpdate(t *testing.T) {
 
 	usr := evt.(*UserUpdate)
 	if usr.ID != 1 {
-		t.Fatal("incorrect user id")
+		t.Fatalf("incorrect user id. Got %d", usr.ID)
 	}
 
 	if usr.Username != "test" {

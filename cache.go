@@ -35,6 +35,10 @@ func NewBasicCache() *BasicCache {
 	cache := &BasicCache{
 		CurrentUser: &User{},
 	}
+	cache.Users.Store = make(map[Snowflake]*User)
+	cache.Channels.Store = make(map[Snowflake]*Channel)
+	cache.Guilds.Store = make(map[Snowflake]*guildCacheContainer)
+	cache.VoiceStates.Store = make(map[Snowflake]*voiceStateCacheEntry)
 
 	return cache
 }
@@ -145,14 +149,21 @@ func (c *BasicCache) createDMChannel(msg *Message) {
 	defer c.Channels.Unlock()
 	if _, exists := c.Channels.Store[channelID]; !exists {
 		channel := &Channel{
-			ID: channelID,
-			Recipients: []*User{
-				DeepCopy(c.CurrentUser).(*User),
-				DeepCopy(msg.Author).(*User),
-			},
+			ID:            channelID,
 			LastMessageID: msg.ID,
 			Type:          ChannelTypeDM,
 		}
+
+		c.CurrentUserMu.Lock()
+		if c.CurrentUser != nil {
+			channel.Recipients = append(channel.Recipients, DeepCopy(c.CurrentUser).(*User))
+		}
+		c.CurrentUserMu.Unlock()
+
+		if msg.Author != nil {
+			channel.Recipients = append(channel.Recipients, DeepCopy(msg.Author).(*User))
+		}
+
 		c.Patch(channel)
 
 		c.Channels.Store[channelID] = channel
@@ -322,18 +333,17 @@ func (c *BasicCache) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) 
 //}
 
 func (c *BasicCache) UserUpdate(data []byte) (*UserUpdate, error) {
-	update := &UserUpdate{User: c.CurrentUser}
+	// assumption#1: this user does not exist in users repo
 
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
-	if err := json.Unmarshal(data, update); err != nil {
+	if err := json.Unmarshal(data, c.CurrentUser); err != nil {
 		return nil, err
 	}
+	c.Patch(c.CurrentUser)
 
-	update.User = DeepCopy(c.CurrentUser).(*User)
-	c.Patch(update)
-
-	return update, nil
+	user := DeepCopy(c.CurrentUser).(*User)
+	return &UserUpdate{User: user}, nil
 }
 
 func (c *BasicCache) saveUsers(users []*User) {
