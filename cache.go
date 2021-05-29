@@ -68,6 +68,7 @@ type usersCache struct {
 type guildCacheContainer struct {
 	Guild      *Guild
 	ChannelIDs []Snowflake
+	Members    map[Snowflake]*Member
 }
 
 func retrieveChannels(ids []Snowflake, repo *channelsCache) []*Channel {
@@ -87,8 +88,20 @@ func retrieveChannels(ids []Snowflake, repo *channelsCache) []*Channel {
 	return channels
 }
 
-func buildGuildFromCacheContainer(guildCopy *Guild, ChannelIDs []Snowflake, users *usersCache, channels *channelsCache) *Guild {
+func constructMemberList(membersMap map[Snowflake]*Member) (members []*Member) {
+	for _, member := range membersMap {
+		if member == nil {
+			continue
+		}
+
+		members = append(members, DeepCopy(member).(*Member))
+	}
+	return members
+}
+
+func buildGuildFromCacheContainer(guildCopy *Guild, ChannelIDs []Snowflake, members []*Member, users *usersCache, channels *channelsCache) *Guild {
 	guildCopy.Channels = retrieveChannels(ChannelIDs, channels)
+	guildCopy.Members = members
 
 	users.Lock()
 	for i := range guildCopy.Members {
@@ -563,8 +576,9 @@ func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	return gmr, nil
 }
 
-func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake) {
+func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake, map[Snowflake]*Member) {
 	channelIDs := make([]Snowflake, 0, len(guild.Channels))
+	membersMap := make(map[Snowflake]*Member, len(guild.Members))
 	if !guild.Unavailable {
 		// cache channels
 		c.Channels.Lock()
@@ -584,9 +598,16 @@ func (c *BasicCache) deconstructGuild(guild *Guild) (*Guild, []Snowflake) {
 			member.User = nil
 		}
 		c.saveUsers(users)
+
+		// move members
+		for i := range guild.Members {
+			member := guild.Members[i]
+			membersMap[member.UserID] = member
+		}
+		guild.Members = nil
 	}
 
-	return guild, channelIDs
+	return guild, channelIDs, membersMap
 }
 
 func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
@@ -596,7 +617,7 @@ func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 	}
 
 	guild := DeepCopy(evt.Guild).(*Guild)
-	_, channelIDs := c.deconstructGuild(guild)
+	_, channelIDs, membersMap := c.deconstructGuild(guild)
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
@@ -604,6 +625,7 @@ func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
 	c.Guilds.Store[guild.ID] = &guildCacheContainer{
 		Guild:      guild,
 		ChannelIDs: channelIDs,
+		Members:    membersMap,
 	} // discard any previous data
 
 	return evt, nil
@@ -622,26 +644,23 @@ func (c *BasicCache) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	if !ok {
 		// unlikely - slow case
 		guild := DeepCopy(evt.Guild).(*Guild)
-		_, channelIDs := c.deconstructGuild(container.Guild)
+		_, channelIDs, membersMap := c.deconstructGuild(container.Guild)
 
 		c.Guilds.Store[guild.ID] = &guildCacheContainer{
 			Guild:      guild,
 			ChannelIDs: channelIDs,
+			Members:    membersMap,
 		}
 		return evt, nil
 	}
 
 	// channels and members should not have been affected by this, so that's a lot of garbage.
-	memberList := container.Guild.Members
-	container.Guild.Members = nil
-
 	if err = json.Unmarshal(data, container.Guild); err != nil {
 		return nil, err
 	}
-	c.Patch(evt)
-
-	container.Guild.Members = memberList
+	container.Guild.Members = nil
 	container.Guild.Channels = nil
+	c.Patch(evt)
 
 	return evt, nil
 }
@@ -796,20 +815,22 @@ func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
 	var guildCopy *Guild
 	var channelIDs []Snowflake
+	var members []*Member
 
 	c.Guilds.Lock()
 	if container, ok := c.Guilds.Store[id]; ok {
 		guildCopy = DeepCopy(container.Guild).(*Guild)
+		members = constructMemberList(container.Members)
 		channelIDs = make([]Snowflake, len(container.ChannelIDs))
 		copy(channelIDs, container.ChannelIDs)
 	}
-	defer c.Guilds.Unlock()
+	c.Guilds.Unlock()
 
 	if guildCopy == nil {
 		return nil, CacheMissErr
 	}
 
-	return buildGuildFromCacheContainer(guildCopy, channelIDs, &c.Users, &c.Channels), nil
+	return buildGuildFromCacheContainer(guildCopy, channelIDs, members, &c.Users, &c.Channels), nil
 }
 
 func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
@@ -847,7 +868,7 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 	defer c.Guilds.Unlock()
 
 	if container, ok := c.Guilds.Store[guildID]; ok {
-		if member, _ = container.Guild.Member(userID); member != nil {
+		if member, _ = container.Members[userID]; member != nil {
 			member = DeepCopy(member).(*Member)
 		}
 	}
