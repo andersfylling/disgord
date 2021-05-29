@@ -57,12 +57,52 @@ type channelsCache struct {
 
 type guildsCache struct {
 	sync.Mutex
-	Store map[Snowflake]*Guild
+	Store map[Snowflake]*guildCacheContainer
 }
 
-type UsersCache struct {
+type usersCache struct {
 	sync.Mutex
 	Store map[Snowflake]*User
+}
+
+type guildCacheContainer struct {
+	Guild      *Guild
+	ChannelIDs []Snowflake
+}
+
+func retrieveChannels(ids []Snowflake, repo *channelsCache) []*Channel {
+	channels := make([]*Channel, 0, len(ids))
+
+	repo.Lock()
+	for i := range ids {
+		channel, ok := repo.Store[ids[i]]
+		if !ok {
+			continue
+		}
+
+		channels = append(channels, DeepCopy(channel).(*Channel))
+	}
+	repo.Unlock()
+
+	return channels
+}
+
+func buildGuildFromCacheContainer(guildCopy *Guild, ChannelIDs []Snowflake, users *usersCache, channels *channelsCache) *Guild {
+	guildCopy.Channels = retrieveChannels(ChannelIDs, channels)
+
+	users.Lock()
+	for i := range guildCopy.Members {
+		member := guildCopy.Members[i]
+		user, ok := users.Store[member.UserID]
+		if !ok {
+			continue
+		}
+
+		member.User = DeepCopy(user).(*User)
+	}
+	users.Unlock()
+
+	return guildCopy
 }
 
 // BasicCache cache with CRS support for Users and voice states
@@ -77,7 +117,7 @@ type BasicCache struct {
 	CurrentUserMu sync.Mutex
 	CurrentUser   *User
 
-	Users       UsersCache
+	Users       usersCache
 	VoiceStates voiceStateCache
 	Channels    channelsCache
 	Guilds      guildsCache
@@ -283,7 +323,7 @@ func (c *BasicCache) UserUpdate(data []byte) (*UserUpdate, error) {
 	return update, nil
 }
 
-func (c *BasicCache) saveUsers(users []*User) error {
+func (c *BasicCache) saveUsers(users []*User) {
 	c.Users.Lock()
 	defer c.Users.Unlock()
 
@@ -295,7 +335,6 @@ func (c *BasicCache) saveUsers(users []*User) error {
 
 		c.Users.Store[id] = users[i]
 	}
-	return nil
 }
 
 func (c *BasicCache) VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error) {
@@ -525,61 +564,43 @@ func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 }
 
 func (c *BasicCache) GuildCreate(data []byte) (*GuildCreate, error) {
-	var metadata *idHolder
-	if err := json.Unmarshal(data, &metadata); err != nil {
+	evt, err := c.CacheNop.GuildCreate(data)
+	if err != nil {
 		return nil, err
 	}
-	guildID := metadata.ID
 
-	item, exists := c.getGuild(guildID)
-	var guild *Guild
-	if exists && item.Val.(*Guild).Unavailable {
-		// pre-loaded from ready event
-		mutex := c.Mutex(&c.Guilds, guildID)
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		guild = item.Val.(*Guild)
-		if err := json.Unmarshal(data, guild); err != nil {
-			return nil, err
+	guild := DeepCopy(evt.Guild).(*Guild)
+	channelIDs := make([]Snowflake, 0, len(guild.Channels))
+	if !guild.Unavailable {
+		// cache channels
+		c.Channels.Lock()
+		for i := range guild.Channels {
+			channel := DeepCopy(guild.Channels[i]).(*Channel)
+			_ = c.saveChannel(channel)
+			channelIDs = append(channelIDs, channel.ID)
 		}
-		guild.Unavailable = false
-		c.Patch(guild)
+		c.Channels.Unlock()
+		guild.Channels = nil
 
-		guild = DeepCopy(guild).(*Guild)
-	} else if !exists {
-		// must create it
-		if err := json.Unmarshal(data, &guild); err != nil {
-			return nil, err
+		// cache users
+		users := make([]*User, 0, len(guild.Members))
+		for i := range guild.Members {
+			member := guild.Members[i]
+			users = append(users, member.User)
+			member.User = nil
 		}
-		c.Patch(guild)
-
-		e := c.Guilds.CreateCacheableItem(guild)
-		guild = DeepCopy(guild).(*Guild)
-
-		c.Guilds.Lock()
-		if _, exists := c.Guilds.Get(guildID); !exists {
-			c.Guilds.Set(guildID, e)
-		}
-		c.Guilds.Unlock()
-	} else {
-		// derp - this is really.. not supposed to happen but just in case
-		evt, err := c.CacheNop.GuildCreate(data)
-		if err != nil {
-			return nil, err
-		}
-		guild = evt.Guild
+		c.saveUsers(users)
 	}
 
-	// cache channels
-	c.Channels.Lock()
-	for i := range guild.Channels {
-		channel := DeepCopy(guild.Channels[i]).(*Channel)
-		_ = c.saveChannel(channel)
-	}
-	c.Channels.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-	return &GuildCreate{Guild: guild}, nil
+	c.Guilds.Store[guild.ID] = &guildCacheContainer{
+		Guild:      guild,
+		ChannelIDs: channelIDs,
+	} // discard any previous data
+
+	return evt, nil
 }
 
 func (c *BasicCache) GuildUpdate(data []byte) (*GuildUpdate, error) {
@@ -737,19 +758,20 @@ func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[guildID]; ok {
-		if emoji, err := guild.Emoji(emojiID); emoji != nil && err == nil {
+	if container, ok := c.Guilds.Store[guildID]; ok {
+		if emoji, err := container.Guild.Emoji(emojiID); emoji != nil && err == nil {
 			return DeepCopy(emoji).(*Emoji), nil
 		}
 	}
 	return nil, CacheMissErr
 }
+
 func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[id]; ok {
-		emojis := make([]*Emoji, 0, len(guild.Emojis))
+	if container, ok := c.Guilds.Store[id]; ok {
+		emojis := make([]*Emoji, 0, len(container.Guild.Emojis))
 		for _, emoji := range emojis {
 			if emoji == nil { // shouldn't happen, but let's just be certain
 				continue
@@ -760,30 +782,42 @@ func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 	}
 	return nil, CacheMissErr
 }
+
 func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
+	var guildCopy *Guild
+	var channelIDs []Snowflake
+
 	c.Guilds.Lock()
+	if container, ok := c.Guilds.Store[id]; ok {
+		guildCopy = DeepCopy(container.Guild).(*Guild)
+		channelIDs = make([]Snowflake, len(container.ChannelIDs))
+		copy(channelIDs, container.ChannelIDs)
+	}
 	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[id]; ok {
-		return DeepCopy(guild).(*Guild), nil
+	if guildCopy == nil {
+		return nil, CacheMissErr
 	}
-	return nil, CacheMissErr
+
+	return buildGuildFromCacheContainer(guildCopy, channelIDs, &c.Users, &c.Channels), nil
 }
-func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
-	c.Guilds.Lock()
-	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[id]; ok {
-		channels := make([]*Channel, 0, len(guild.Channels))
-		for _, channel := range channels {
-			if channel == nil { // shouldn't happen, but let's just be certain
-				continue
-			}
-			channels = append(channels, DeepCopy(channel).(*Channel))
-		}
-		return channels, nil
+func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
+	var channelIDs []Snowflake
+	var guildFound bool
+
+	c.Guilds.Lock()
+	if container, ok := c.Guilds.Store[id]; ok {
+		channelIDs = make([]Snowflake, len(container.ChannelIDs))
+		copy(channelIDs, container.ChannelIDs)
+		guildFound = true
 	}
-	return nil, CacheMissErr
+	c.Guilds.Unlock()
+
+	if !guildFound {
+		return nil, CacheMissErr
+	}
+	return retrieveChannels(channelIDs, &c.Channels), nil
 }
 
 // GetMember fetches member and related user data from cache. User is not guaranteed to be populated.
@@ -802,8 +836,8 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[guildID]; ok {
-		if member, _ = guild.Member(userID); member != nil {
+	if container, ok := c.Guilds.Store[guildID]; ok {
+		if member, _ = container.Guild.Member(userID); member != nil {
 			member = DeepCopy(member).(*Member)
 		}
 	}
@@ -820,8 +854,8 @@ func (c *BasicCache) GetGuildRoles(id Snowflake) ([]*Role, error) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if guild, ok := c.Guilds.Store[id]; ok {
-		roles := make([]*Role, 0, len(guild.Channels))
+	if container, ok := c.Guilds.Store[id]; ok {
+		roles := make([]*Role, 0, len(container.Guild.Channels))
 		for _, role := range roles {
 			if role == nil { // shouldn't happen, but let's just be certain
 				continue
