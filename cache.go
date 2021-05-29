@@ -641,7 +641,7 @@ func (c *BasicCache) GuildDelete(data []byte) (*GuildDelete, error) {
 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
-	c.Guilds.Delete(guildEvt.UnavailableGuild.ID)
+	delete(c.Guilds.Store, guildEvt.UnavailableGuild.ID)
 
 	return guildEvt, nil
 }
