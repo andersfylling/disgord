@@ -186,10 +186,7 @@ func (c *BasicCache) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 
 	var channel *Channel
 	var err error
-	if channelI, mu := c.get(&c.Channels, channelID); channelI != nil {
-		mu.Lock()
-		defer mu.Unlock()
-
+	if channelI, ok := c.Channels.Store[channelID]; ok {
 		if channel, err = updateChannel(channelID, channelI); err != nil {
 			return nil, err
 		}
@@ -201,13 +198,10 @@ func (c *BasicCache) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		}
 		c.Patch(tmp)
 		channel = DeepCopy(tmp).(*Channel)
-		freshItem := c.Channels.CreateCacheableItem(tmp)
 
-		c.Channels.Lock()
-		defer c.Channels.Unlock()
-		if existingItem, exists := c.Channels.Get(channelID); !exists {
-			c.Channels.Set(channelID, freshItem)
-		} else if channel, err = updateChannel(channelID, existingItem.Val); err != nil { // double lock
+		if storedChannel, exists := c.Channels.Store[channelID]; !exists {
+			c.Channels.Store[channelID] = tmp
+		} else if channel, err = updateChannel(channelID, storedChannel); err != nil { // double lock
 			return nil, err
 		}
 	}
