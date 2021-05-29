@@ -546,7 +546,7 @@ func (c *BasicCache) GuildUpdate(data []byte) (*GuildUpdate, error) {
 	if !ok {
 		// unlikely - slow case
 		guild := DeepCopy(evt.Guild).(*Guild)
-		_, channelIDs, membersMap := c.deconstructGuild(container.Guild)
+		_, channelIDs, membersMap := c.deconstructGuild(guild)
 
 		c.Guilds.Store[guild.ID] = &guildCacheContainer{
 			Guild:      guild,

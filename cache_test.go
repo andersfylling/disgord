@@ -525,4 +525,287 @@ func TestBasicCache_Guilds(t *testing.T) {
 			}
 		})
 	})
+
+	cache := NewBasicCache()
+
+	id := Snowflake(10)
+	name := "test guild"
+
+	memberID := Snowflake(1)
+	nick := "andy"
+	username := "anders"
+
+	channelID := Snowflake(352)
+	channelName := "sidgfs asd"
+
+	t.Run("create-with-members-and-channels", func(t *testing.T) {
+		memberData := jsonbytes(`{"nick":"%s","user":{"id":%d,"username":"%s"}}`, nick, memberID, username)
+		channelData := jsonbytes(`{"id":%d,"name":"%s"}`, channelID, channelName)
+
+		data := jsonbytes(`{"id":%d,"name":"%s","members":[%s],"channels":[%s]}`, id, name, memberData, channelData)
+
+		evt, err := cacheDispatcher(cache, EvtGuildCreate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		holder, ok := evt.(*GuildCreate)
+		if !ok {
+			t.Fatal("unable to cast event to GuildCreate type")
+		}
+
+		if holder == nil {
+			t.Fatal("holder is nil")
+		}
+
+		guild := holder.Guild
+		if guild == nil {
+			t.Fatal("guild is nil")
+		}
+
+		if guild.ID != id {
+			t.Errorf("channel id should be %d, got %d", id, guild.ID)
+		}
+		if guild.Name != name {
+			t.Errorf("channel topic should be %s, got %s", name, guild.Name)
+		}
+
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if len(container.ChannelIDs) != 1 {
+			t.Fatal("missing channel id")
+		}
+		if cid := container.ChannelIDs[0]; cid.IsZero() {
+			t.Fatal("channel id was stored as 0")
+		} else {
+			channel, ok := cache.Channels.Store[cid]
+			if !ok {
+				t.Fatal("channel was not saved to cache")
+			}
+
+			if channel.ID != channelID {
+				t.Error("incorrect channel id")
+			}
+			if channel.Name != channelName {
+				t.Error("incorrect channel name")
+			}
+		}
+
+		if member, ok := container.Members[memberID]; !ok {
+			t.Error("member was not stored")
+		} else {
+			if member == nil {
+				t.Fatal("member is nil")
+			}
+			if member.UserID != memberID {
+				t.Error("member is missing user id")
+			}
+			if member.Nick != nick {
+				t.Error("incorrect nickname")
+			}
+		}
+
+		if user, ok := cache.Users.Store[memberID]; !ok {
+			t.Error("user was not stored")
+		} else {
+			if user == nil {
+				t.Fatal("user is nil")
+			}
+			if user.ID != memberID {
+				t.Error("user is missing user id")
+			}
+			if user.Username != username {
+				t.Error("incorrect username")
+			}
+		}
+	})
+
+	deadlockTest(t, cache, EvtGuildCreate, jsonbytes(`{"id":%d,"name":"%s"}`, id*2, "abdsa"))
+
+	t.Run("update-with-members-and-channels", func(t *testing.T) {
+		// these should not be stored as they will not be in a guild update
+		memberData := jsonbytes(`{"nick":"test","user":{"id":345,"username":"fdhhghgj"}}`)
+		channelData := jsonbytes(`{"id":345,"name":"fgdfhjlll"}`)
+
+		newGuildName := name + " v2"
+		data := jsonbytes(`{"id":%d,"name":"%s","members":[%s],"channels":[%s]}`, id, newGuildName, memberData, channelData)
+
+		evt, err := cacheDispatcher(cache, EvtGuildUpdate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		holder, ok := evt.(*GuildUpdate)
+		if !ok {
+			t.Fatal("unable to cast event to GuildCreate type")
+		}
+
+		if holder == nil {
+			t.Fatal("holder is nil")
+		}
+
+		guild := holder.Guild
+		if guild == nil {
+			t.Fatal("guild is nil")
+		}
+
+		if guild.ID != id {
+			t.Errorf("channel id should be %d, got %d", id, guild.ID)
+		}
+		if guild.Name != newGuildName {
+			t.Errorf("channel topic should be %s, got %s", newGuildName, guild.Name)
+		}
+
+		// check that nothing else changed!
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if len(container.ChannelIDs) != 1 {
+			t.Fatal("missing channel id")
+		}
+		if cid := container.ChannelIDs[0]; cid.IsZero() {
+			t.Fatal("channel id was stored as 0")
+		} else {
+			channel, ok := cache.Channels.Store[cid]
+			if !ok {
+				t.Fatal("channel was not saved to cache")
+			}
+
+			if channel.ID != channelID {
+				t.Error("incorrect channel id")
+			}
+			if channel.Name != channelName {
+				t.Error("incorrect channel name")
+			}
+		}
+
+		if len(container.Members) != 1 {
+			t.Error("incorrect number of members")
+		}
+
+		if member, ok := container.Members[memberID]; !ok {
+			t.Error("member was not stored")
+		} else {
+			if member == nil {
+				t.Fatal("member is nil")
+			}
+			if member.UserID != memberID {
+				t.Error("member is missing user id")
+			}
+			if member.Nick != nick {
+				t.Error("incorrect nickname")
+			}
+		}
+
+		if user, ok := cache.Users.Store[memberID]; !ok {
+			t.Error("user was not stored")
+		} else {
+			if user == nil {
+				t.Fatal("user is nil")
+			}
+			if user.ID != memberID {
+				t.Error("user is missing user id")
+			}
+			if user.Username != username {
+				t.Error("incorrect username")
+			}
+		}
+	})
+
+	t.Run("update-on-unknown-guild", func(t *testing.T) {
+		cache := NewBasicCache()
+
+		memberData := jsonbytes(`{"nick":"%s","user":{"id":%d,"username":"%s"}}`, nick, memberID, username)
+		channelData := jsonbytes(`{"id":%d,"name":"%s"}`, channelID, channelName)
+
+		data := jsonbytes(`{"id":%d,"name":"%s","members":[%s],"channels":[%s]}`, id, name, memberData, channelData)
+
+		evt, err := cacheDispatcher(cache, EvtGuildUpdate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		holder, ok := evt.(*GuildUpdate)
+		if !ok {
+			t.Fatal("unable to cast event to GuildCreate type")
+		}
+
+		if holder == nil {
+			t.Fatal("holder is nil")
+		}
+
+		guild := holder.Guild
+		if guild == nil {
+			t.Fatal("guild is nil")
+		}
+
+		if guild.ID != id {
+			t.Errorf("channel id should be %d, got %d", id, guild.ID)
+		}
+		if guild.Name != name {
+			t.Errorf("channel topic should be %s, got %s", name, guild.Name)
+		}
+
+		// check that nothing else changed!
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if len(container.ChannelIDs) != 1 {
+			t.Fatal("missing channel id")
+		}
+		if cid := container.ChannelIDs[0]; cid.IsZero() {
+			t.Fatal("channel id was stored as 0")
+		} else {
+			channel, ok := cache.Channels.Store[cid]
+			if !ok {
+				t.Fatal("channel was not saved to cache")
+			}
+
+			if channel.ID != channelID {
+				t.Error("incorrect channel id")
+			}
+			if channel.Name != channelName {
+				t.Error("incorrect channel name")
+			}
+		}
+
+		if len(container.Members) != 1 {
+			t.Error("incorrect number of members")
+		}
+
+		if member, ok := container.Members[memberID]; !ok {
+			t.Error("member was not stored")
+		} else {
+			if member == nil {
+				t.Fatal("member is nil")
+			}
+			if member.UserID != memberID {
+				t.Error("member is missing user id")
+			}
+			if member.Nick != nick {
+				t.Error("incorrect nickname")
+			}
+		}
+
+		if user, ok := cache.Users.Store[memberID]; !ok {
+			t.Error("user was not stored")
+		} else {
+			if user == nil {
+				t.Fatal("user is nil")
+			}
+			if user.ID != memberID {
+				t.Error("user is missing user id")
+			}
+			if user.Username != username {
+				t.Error("incorrect username")
+			}
+		}
+	})
 }
