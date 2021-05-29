@@ -229,7 +229,7 @@ func (c *BasicCache) ChannelDelete(data []byte) (*ChannelDelete, error) {
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
-	c.Channels.Delete(cd.Channel.ID)
+	delete(c.Channels.Store, cd.Channel.ID)
 
 	return cd, nil
 }

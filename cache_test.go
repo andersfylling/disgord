@@ -171,4 +171,32 @@ func TestBasicCache_Channels(t *testing.T) {
 			t.Errorf("channel name should be %s, got %s", name, channel.Name)
 		}
 	})
+
+	t.Run("delete", func(t *testing.T) {
+		channel, err := cache.GetChannel(id)
+		if err != nil {
+			t.Fatal("cache has no channel")
+		}
+		if channel == nil {
+			t.Fatal("returned channel should not be nil")
+		}
+
+		evt, err := cacheDispatcher(cache, EvtChannelDelete, jsonbytes(`{"id":%d}`, id))
+		if err != nil {
+			t.Fatal("failed to create event struct", err)
+		}
+
+		holder := evt.(*ChannelDelete)
+		if holder.Channel.ID != id {
+			t.Errorf("expected channel id to be %d, got %d", id, holder.Channel.ID)
+		}
+
+		channel, err = cache.GetChannel(id)
+		if !errors.Is(err, CacheMissErr) {
+			t.Fatal("should have been a cache miss error")
+		}
+		if channel != nil {
+			t.Fatal("returned object should be nil")
+		}
+	})
 }
