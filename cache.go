@@ -725,13 +725,13 @@ func (c *BasicCache) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err err
 // }
 
 func (c *BasicCache) GetChannel(id Snowflake) (*Channel, error) {
-	if channel, mu := c.get(&c.Channels, id); channel != nil {
-		mu.Lock()
-		defer mu.Unlock()
+	c.Channels.Lock()
+	defer c.Channels.Unlock()
 
-		return DeepCopy(channel.(*Channel)).(*Channel), nil
+	if channel, ok := c.Channels.Store[id]; ok {
+		return DeepCopy(channel).(*Channel), nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
 
 func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
