@@ -368,3 +368,54 @@ func TestBasicCache_Ready(t *testing.T) {
 	deadlockTest(t, cache, EvtReady, evtData)
 }
 
+func TestBasicCache_Message(t *testing.T) {
+	cache := NewBasicCache()
+
+	evtData := jsonbytes(`{"id":1,"content":"testing","guild_id":2,"channel_id":3`)
+
+	t.Run("create", func(t *testing.T) {
+		evt, err := cacheDispatcher(cache, EvtMessageCreate, evtData)
+		if err != nil {
+			t.Fatal("failed to create event struct", err)
+		}
+
+		msg := evt.(*MessageCreate).Message
+		if msg.ID != 1 {
+			t.Error("incorrect message id")
+		}
+
+		// should not create a DM channel
+		if len(cache.Channels.Store) > 0 {
+			t.Error("channel was created")
+		}
+	})
+
+	deadlockTest(t, cache, EvtMessageCreate, evtData)
+
+	t.Run("create DM", func(t *testing.T) {
+		// if guild id is not set, it's a DM message
+		// TODO: group DM
+		evt, err := cacheDispatcher(cache, EvtMessageCreate, jsonbytes(`{"id":1,"content":"testing","channel_id":3`))
+		if err != nil {
+			t.Fatal("failed to create event struct", err)
+		}
+
+		msg := evt.(*MessageCreate).Message
+		if msg.ID != 1 {
+			t.Error("incorrect message id")
+		}
+
+		if len(cache.Channels.Store) == 0 {
+			t.Error("missing DM channel")
+		}
+
+		channel, err := cache.GetChannel(3)
+		if errors.Is(err, CacheMissErr) {
+			t.Fatal("DM channel was not created for message")
+		}
+
+		if channel.Type != ChannelTypeDM {
+			t.Errorf("channel was created with incorrect type. Got %d, wants %d", channel.Type, ChannelTypeDM)
+		}
+	})
+}

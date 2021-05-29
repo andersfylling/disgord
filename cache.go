@@ -86,12 +86,6 @@ type BasicCache struct {
 
 var _ Cache = (*BasicCache)(nil)
 
-func (c *BasicCache) getGuild(id Snowflake) (*crs.LFUItem, bool) {
-	c.Guilds.Lock()
-	defer c.Guilds.Unlock()
-	return c.Guilds.Get(id)
-}
-
 func (c *BasicCache) createDMChannel(msg *Message) {
 	channelID := msg.ChannelID
 
