@@ -5,7 +5,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/andersfylling/disgord/internal/crs"
 	"github.com/andersfylling/disgord/json"
 )
 
@@ -32,16 +31,12 @@ type userHolder struct {
 	User *User `json:"user"`
 }
 
-func NewCacheLFUImmutable(limitUsers, limitVoiceStates, limitChannels, limitGuilds uint) Cache {
-	lfus := &BasicCache{
+func NewBasicCache() *BasicCache {
+	cache := &BasicCache{
 		CurrentUser: &User{},
 	}
-	crs.SetLimit(&lfus.Users, limitUsers)
-	crs.SetLimit(&lfus.VoiceStates, limitVoiceStates)
-	crs.SetLimit(&lfus.Channels, limitChannels)
-	crs.SetLimit(&lfus.Guilds, limitGuilds)
 
-	return lfus
+	return cache
 }
 
 type voiceStateCache struct {
