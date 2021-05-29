@@ -288,13 +288,13 @@ func (c *BasicCache) saveUsers(users []*User) error {
 	c.Users.Lock()
 	defer c.Users.Unlock()
 
-	// as slow as it gets
 	for i := range users {
-		if _, exists := c.Users.Get(users[i].ID); exists {
+		id := users[i].ID
+		if _, ok := c.Users.Store[id]; ok {
 			continue
 		}
 
-		c.Users.Set(users[i].ID, c.Users.CreateCacheableItem(users[i]))
+		c.Users.Store[id] = users[i]
 	}
 	return nil
 }
