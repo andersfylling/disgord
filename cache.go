@@ -730,14 +730,11 @@ func (c *BasicCache) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err err
 		return nil, err
 	}
 
-	item, exists := c.getGuild(evt.GuildID)
-	if exists {
-		mutex := c.Mutex(&c.Guilds, evt.GuildID)
-		mutex.Lock()
-		defer mutex.Unlock()
+	c.Guilds.Lock()
+	defer c.Guilds.Unlock()
 
-		guild := item.Val.(*Guild)
-		guild.DeleteRoleByID(evt.RoleID)
+	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
+		container.Guild.DeleteRoleByID(evt.RoleID)
 	}
 
 	return evt, nil
