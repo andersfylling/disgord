@@ -172,6 +172,71 @@ func TestBasicCache_Channels(t *testing.T) {
 		}
 	})
 
+	t.Run("pin update", func(t *testing.T) {
+		channel, err := cache.GetChannel(id)
+		if err != nil {
+			t.Fatal("cache has no channel")
+		}
+
+		now := Time{
+			Time: time.Now(),
+		}
+
+		t.Run("new", func(t *testing.T) {
+			data, err := now.MarshalJSON()
+			if err != nil {
+				t.Fatal("unable to marshal pin timestamp")
+			}
+
+			evt, err := cacheDispatcher(cache, EvtChannelPinsUpdate, jsonbytes(`{"channel_id":%d,"last_pin_timestamp":%s}`, id, data))
+			if err != nil {
+				t.Fatal("failed to create event struct", err)
+			}
+
+			holder := evt.(*ChannelPinsUpdate)
+			if holder.LastPinTimestamp.Second() != now.Second() {
+				t.Errorf("incorrect time. Got %d, wants %d", holder.LastPinTimestamp.Second(), now.Second())
+			}
+
+			if !channel.LastPinTimestamp.IsZero() {
+				t.Error("cache is not read-only")
+			}
+
+			channelNow, _ := cache.GetChannel(id)
+			if channelNow.LastPinTimestamp.IsZero() {
+				t.Error("last ping timestamp was not updated")
+			}
+		})
+
+		t.Run("outdated", func(t *testing.T) {
+			now.Add(-10*time.Second)
+			data, err := now.MarshalJSON()
+			if err != nil {
+				t.Fatal("unable to marshal pin timestamp")
+			}
+
+			evt, err := cacheDispatcher(cache, EvtChannelPinsUpdate, jsonbytes(`{"channel_id":%d,"last_pin_timestamp":%s}`, id, data))
+			if err != nil {
+				t.Fatal("failed to create event struct", err)
+			}
+
+			holder := evt.(*ChannelPinsUpdate)
+			if holder.LastPinTimestamp.Second() == now.Second() {
+				t.Error("timestamp was updated")
+			}
+
+			if !channel.LastPinTimestamp.IsZero() {
+				t.Error("cache is not read-only")
+			}
+
+			channelNow, _ := cache.GetChannel(id)
+			if channelNow.LastPinTimestamp.IsZero() {
+				t.Error("last ping timestamp was not updated")
+			}
+		})
+
+	})
+
 	t.Run("delete", func(t *testing.T) {
 		channel, err := cache.GetChannel(id)
 		if err != nil {

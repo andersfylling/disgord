@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/andersfylling/disgord/json"
 )
@@ -249,9 +250,10 @@ func (c *BasicCache) ChannelPinsUpdate(data []byte) (*ChannelPinsUpdate, error) 
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
-	if item, exists := c.Channels.Get(cpu.ChannelID); exists {
-		channel := item.Val.(*Channel)
-		channel.LastPinTimestamp = cpu.LastPinTimestamp
+	if channel, exists := c.Channels.Store[cpu.ChannelID]; exists {
+		if cpu.LastPinTimestamp.After(channel.LastPinTimestamp.Time) {
+			channel.LastPinTimestamp = cpu.LastPinTimestamp
+		}
 	}
 
 	return cpu, nil
