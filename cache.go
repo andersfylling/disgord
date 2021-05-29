@@ -847,11 +847,10 @@ func (c *BasicCache) GetUser(id Snowflake) (*User, error) {
 		return c.GetCurrentUser()
 	}
 
-	if user, mu := c.get(&c.Users, id); user != nil {
-		mu.Lock()
-		defer mu.Unlock()
-
-		return DeepCopy(user.(*User)).(*User), nil
+	c.Users.Lock()
+	defer c.Users.Unlock()
+	if user, ok := c.Users.Store[id]; ok {
+		return DeepCopy(user).(*User), nil
 	}
-	return nil, ErrCacheMiss
+	return nil, CacheMissErr
 }
