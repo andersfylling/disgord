@@ -212,12 +212,12 @@ func (c *CacheLFUImmutable) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 		freshItem := c.Channels.CreateCacheableItem(tmp)
 
 		c.Channels.Lock()
+		defer c.Channels.Unlock()
 		if existingItem, exists := c.Channels.Get(channelID); !exists {
 			c.Channels.Set(channelID, freshItem)
 		} else if channel, err = updateChannel(channelID, existingItem.Val); err != nil { // double lock
 			return nil, err
 		}
-		c.Channels.Unlock()
 	}
 
 	return &ChannelUpdate{Channel: channel}, nil
