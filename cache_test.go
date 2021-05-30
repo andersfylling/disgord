@@ -1109,3 +1109,123 @@ func TestBasicCache_GuildMembers(t *testing.T) {
 	})
 
 }
+
+func TestBasicCache_GuildRoles(t *testing.T) {
+	t.Run("create without guild", func(t *testing.T) {
+		cache := NewBasicCache()
+
+		guildID := Snowflake(3546)
+		roleID := Snowflake(5)
+		name := "test"
+		position := 3
+		data := jsonbytes(`{"guild_id":%d,"role":{"id":%d,"name":"%s","position":%d}}`, guildID, roleID, name, position)
+
+		evt, err := cacheDispatcher(cache, EvtGuildRoleCreate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		roleCreate := evt.(*GuildRoleCreate)
+		role := roleCreate.Role
+
+		if roleCreate.GuildID != guildID {
+			t.Fatal("incorrect guild id")
+		}
+		if role.ID != roleID {
+			t.Fatal("incorrect role id")
+		}
+
+		if len(cache.Guilds.Store) != 0 {
+			t.Error("a guild object was created, expected none to be created")
+		}
+
+		deadlockTest(t, cache, EvtGuildRoleCreate, data)
+	})
+	t.Run("create", func(t *testing.T) {
+		guildID := Snowflake(3546)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{ID: guildID},
+		}
+
+		roleID := Snowflake(5)
+		name := "test"
+		position := 3
+		data := jsonbytes(`{"guild_id":%d,"role":{"id":%d,"name":"%s","position":%d}}`, guildID, roleID, name, position)
+
+		if _, err := cacheDispatcher(cache, EvtGuildRoleCreate, data); err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if len(cache.Guilds.Store) != 1 {
+			t.Fatal("missing guild")
+		}
+
+		roles := cache.Guilds.Store[guildID].Guild.Roles
+		if len(roles) != 1 {
+			t.Fatal("role was not cached")
+		}
+
+		role := roles[0]
+		if role.ID != roleID {
+			t.Error("incorrect role id")
+		}
+		if role.Name != name {
+			t.Error("incorrect role name")
+		}
+		if role.Position != position {
+			t.Error("incorrect role position")
+		}
+
+		deadlockTest(t, cache, EvtGuildRoleCreate, data)
+	})
+	t.Run("delete", func(t *testing.T) {
+		guildID := Snowflake(3546)
+		roleID := Snowflake(5)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{
+				ID: guildID,
+				Roles: []*Role{
+					{ID: roleID, Name: "test"},
+				},
+			},
+		}
+
+		data := jsonbytes(`{"guild_id":%d,"role_id":%d}`, guildID, roleID)
+
+		if _, err := cacheDispatcher(cache, EvtGuildRoleDelete, data); err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if len(cache.Guilds.Store) != 1 {
+			t.Fatal("missing guild")
+		}
+
+		roles := cache.Guilds.Store[guildID].Guild.Roles
+		if len(roles) != 0 {
+			t.Fatal("role was not deleted")
+		}
+
+		deadlockTest(t, cache, EvtGuildRoleDelete, data)
+	})
+	t.Run("delete without guild", func(t *testing.T) {
+		cache := NewBasicCache()
+
+		guildID := Snowflake(3546)
+		roleID := Snowflake(5)
+		data := jsonbytes(`{"guild_id":%d,"role_id":%d}`, guildID, roleID)
+
+		if _, err := cacheDispatcher(cache, EvtGuildRoleDelete, data); err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if len(cache.Guilds.Store) != 0 {
+			t.Fatal("a guild was created")
+		}
+
+		deadlockTest(t, cache, EvtGuildRoleDelete, data)
+	})
+}
