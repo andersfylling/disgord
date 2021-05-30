@@ -436,7 +436,7 @@ func (c *BasicCache) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if container, ok := c.Guilds.Store[evt.GuildID]; !ok {
+	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
 		if member, ok := container.Members[evt.User.ID]; ok {
 			if err = json.Unmarshal(data, member); err != nil {
 				return nil, err
@@ -446,6 +446,7 @@ func (c *BasicCache) GuildMemberUpdate(data []byte) (evt *GuildMemberUpdate, err
 			container.Guild.MemberCount++
 			container.Members[evt.User.ID] = DeepCopy(evt.Member).(*Member)
 		}
+		container.Members[evt.User.ID].User = nil
 	}
 
 	return evt, nil
