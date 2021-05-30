@@ -522,6 +522,19 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *InteractionResponse) error {
+	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      "POST",
+		Body:        data,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	_, _, err := c.req.Do(ctx, req)
+	return err
+}
+
 /* status updates */
 
 // UpdateStatus updates the Client's game status
