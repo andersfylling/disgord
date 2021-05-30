@@ -61,7 +61,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*AuditLogOption:
 		s = *t
-	case *[]*CacheLFUImmutable:
+	case *[]*BasicCache:
 		s = *t
 	case *[]*AllowedMentions:
 		s = *t
@@ -506,12 +506,6 @@ func sortByGuildID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
 	case []*GuildMemberRemove:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
-	case []*GuildMemberUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {

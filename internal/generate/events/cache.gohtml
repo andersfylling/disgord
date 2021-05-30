@@ -107,22 +107,22 @@ func (c *CacheNop) {{.}}(data []byte) (evt *{{.}}, err error) {
 {{- end}}
 
 // REST lookup
-func (c *CacheNop) GetMessage(channelID, messageID Snowflake) (*Message, error) { return nil, ErrCacheMiss }
-func (c *CacheNop) GetChannel(id Snowflake) (*Channel, error)                   { return nil, ErrCacheMiss }
-func (c *CacheNop) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error)    { return nil, ErrCacheMiss }
-func (c *CacheNop) GetGuildEmojis(id Snowflake) ([]*Emoji, error)               { return nil, ErrCacheMiss }
-func (c *CacheNop) GetGuild(id Snowflake) (*Guild, error)                       { return nil, ErrCacheMiss }
-func (c *CacheNop) GetGuildChannels(id Snowflake) ([]*Channel, error)           { return nil, ErrCacheMiss }
-func (c *CacheNop) GetMember(guildID, userID Snowflake) (*Member, error)        { return nil, ErrCacheMiss }
-func (c *CacheNop) GetGuildRoles(guildID Snowflake) ([]*Role, error)            { return nil, ErrCacheMiss }
-func (c *CacheNop) GetCurrentUser() (*User, error)                              { return nil, ErrCacheMiss }
-func (c *CacheNop) GetUser(id Snowflake) (*User, error)                         { return nil, ErrCacheMiss }
+func (c *CacheNop) GetMessage(channelID, messageID Snowflake) (*Message, error) { return nil, CacheMissErr }
+func (c *CacheNop) GetChannel(id Snowflake) (*Channel, error)                   { return nil, CacheMissErr }
+func (c *CacheNop) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error)    { return nil, CacheMissErr }
+func (c *CacheNop) GetGuildEmojis(id Snowflake) ([]*Emoji, error)               { return nil, CacheMissErr }
+func (c *CacheNop) GetGuild(id Snowflake) (*Guild, error)                       { return nil, CacheMissErr }
+func (c *CacheNop) GetGuildChannels(id Snowflake) ([]*Channel, error)           { return nil, CacheMissErr }
+func (c *CacheNop) GetMember(guildID, userID Snowflake) (*Member, error)        { return nil, CacheMissErr }
+func (c *CacheNop) GetGuildRoles(guildID Snowflake) ([]*Role, error)            { return nil, CacheMissErr }
+func (c *CacheNop) GetCurrentUser() (*User, error)                              { return nil, CacheMissErr }
+func (c *CacheNop) GetUser(id Snowflake) (*User, error)                         { return nil, CacheMissErr }
 func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*Guild, error) {
-    return nil, ErrCacheMiss
+    return nil, CacheMissErr
 }
 func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
-    return nil, ErrCacheMiss
+    return nil, CacheMissErr
 }
 func (c *CacheNop) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
-    return nil, ErrCacheMiss
+    return nil, CacheMissErr
 }

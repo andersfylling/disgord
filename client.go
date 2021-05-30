@@ -147,7 +147,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		}
 	} else if conf.Cache == nil {
 		// don't specify any limits, this should be done by the user instead
-		cache = NewCacheLFUImmutable(0, 0, 0, 0)
+		cache = NewBasicCache()
 	} else {
 		cache = conf.Cache
 	}
@@ -184,7 +184,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 	}
 
 	// TODO: this is just waiting to fail
-	if internalCache, ok := c.cache.(*CacheLFUImmutable); ok {
+	if internalCache, ok := c.cache.(*BasicCache); ok {
 		internalCache.currentUserID = c.botID
 	}
 
