@@ -900,6 +900,11 @@ func TestBasicCache_Guilds(t *testing.T) {
 		}
 	})
 
+}
+
+func TestBasicCache_GuildMembers(t *testing.T) {
+	id := Snowflake(2523)
+
 	t.Run("members chunk", func(t *testing.T) {
 		cache := NewBasicCache()
 		cache.Guilds.Store[id] = &guildCacheContainer{
@@ -996,4 +1001,105 @@ func TestBasicCache_Guilds(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("member add", func(t *testing.T) {
+		cache := NewBasicCache()
+		cache.Guilds.Store[id] = &guildCacheContainer{
+			Guild:   &Guild{ID: id},
+			Members: map[Snowflake]*Member{},
+		}
+
+		memberJson := func(id Snowflake, nick, username string) []byte {
+			return jsonbytes(`"user":{"id":%d,"username":"%s"},"nick":"%s"`, id, username, nick)
+		}
+
+		memberID := Snowflake(345)
+		nick := "sjghsfg"
+		username := "dfs"
+
+		data := jsonbytes(`{"guild_id":%d,%s}`, id, memberJson(memberID, nick, username))
+
+		evt, err := cacheDispatcher(cache, EvtGuildMemberAdd, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if _, ok := evt.(*GuildMemberAdd); !ok {
+			t.Fatal("unable to cast event to GuildMemberAdd type")
+		}
+
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if member, ok := container.Members[memberID]; !ok {
+			t.Error("member was not stored")
+		} else {
+			if member == nil {
+				t.Fatal("member is nil")
+			}
+			if member.UserID != memberID {
+				t.Error("wrong user id")
+			}
+			if member.Nick != nick {
+				t.Error("incorrect nickname")
+			}
+		}
+
+		if user, ok := cache.Users.Store[memberID]; !ok {
+			t.Error("user was not stored")
+		} else {
+			if user == nil {
+				t.Fatal("user is nil")
+			}
+			if user.ID != memberID {
+				t.Error("wrong user id")
+			}
+			if user.Username != username {
+				t.Error("incorrect username")
+			}
+		}
+
+		if container.Guild.MemberCount != 1 {
+			t.Error("incorrect member count")
+		}
+	})
+
+	t.Run("member remove", func(t *testing.T) {
+		memberID := Snowflake(345)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[id] = &guildCacheContainer{
+			Guild: &Guild{ID: id, MemberCount: 1},
+			Members: map[Snowflake]*Member{
+				memberID: {UserID: memberID, Nick: "test"},
+			},
+		}
+
+		data := jsonbytes(`{"user":{"id":%d},"guild_id":%d}`, memberID, id)
+
+		evt, err := cacheDispatcher(cache, EvtGuildMemberRemove, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if _, ok := evt.(*GuildMemberRemove); !ok {
+			t.Fatal("unable to cast event to GuildMemberRemove type")
+		}
+
+		container, ok := cache.Guilds.Store[id]
+		if !ok || container.Guild == nil {
+			t.Error("guild was not cached")
+		}
+
+		if _, ok := container.Members[memberID]; ok {
+			t.Error("member was not deleted")
+		}
+
+		if container.Guild.MemberCount != 0 {
+			t.Error("incorrect member count")
+		}
+	})
+
 }

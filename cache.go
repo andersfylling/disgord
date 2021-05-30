@@ -418,8 +418,10 @@ func (c *BasicCache) GuildMemberRemove(data []byte) (*GuildMemberRemove, error) 
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if container, ok := c.Guilds.Store[gmr.GuildID]; !ok {
-		container.Guild.MemberCount--
+	if container, ok := c.Guilds.Store[gmr.GuildID]; ok {
+		if _, ok := container.Members[gmr.User.ID]; ok {
+			container.Guild.MemberCount--
+		}
 		delete(container.Members, gmr.User.ID)
 	}
 
@@ -467,11 +469,11 @@ func (c *BasicCache) GuildMemberAdd(data []byte) (*GuildMemberAdd, error) {
 	c.Guilds.Lock()
 	defer c.Guilds.Unlock()
 
-	if container, ok := c.Guilds.Store[evt.Member.GuildID]; !ok {
+	if container, ok := c.Guilds.Store[evt.Member.GuildID]; ok {
 		if _, ok := container.Members[evt.Member.UserID]; !ok {
-			container.Members[evt.Member.UserID] = DeepCopy(evt.Member).(*Member)
 			container.Guild.MemberCount++
 		}
+		container.Members[evt.Member.UserID] = DeepCopy(evt.Member).(*Member)
 	}
 
 	wg.Wait()
