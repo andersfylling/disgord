@@ -1,14 +1,5 @@
 package disgord
 
-import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-)
-
 type InteractionType = int
 
 const (
@@ -83,22 +74,4 @@ type InteractionApplicationCommandCallbackData struct {
 type InteractionResponse struct {
 	Type InteractionCallbackType                    `json:"type"`
 	Data *InteractionApplicationCommandCallbackData `json:"data"`
-}
-
-func SendInteractionResponse(interaction *InteractionCreate, data *InteractionResponse) error {
-	reqBody, _ := json.Marshal(data)
-	url := fmt.Sprintf("https://discord.com/api/v8/interactions/%d/%s/callback", interaction.ID, interaction.Token)
-	res, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode != 200 {
-		return errors.New(string(body))
-	}
-	return nil
 }
