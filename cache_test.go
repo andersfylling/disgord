@@ -1000,6 +1000,8 @@ func TestBasicCache_GuildMembers(t *testing.T) {
 				}
 			}
 		}
+
+		deadlockTest(t, cache, EvtGuildMembersChunk, data)
 	})
 
 	t.Run("member add", func(t *testing.T) {
@@ -1064,6 +1066,8 @@ func TestBasicCache_GuildMembers(t *testing.T) {
 		if container.Guild.MemberCount != 1 {
 			t.Error("incorrect member count")
 		}
+
+		deadlockTest(t, cache, EvtGuildMemberAdd, data)
 	})
 
 	t.Run("member remove", func(t *testing.T) {
@@ -1100,6 +1104,8 @@ func TestBasicCache_GuildMembers(t *testing.T) {
 		if container.Guild.MemberCount != 0 {
 			t.Error("incorrect member count")
 		}
+
+		deadlockTest(t, cache, EvtGuildMemberRemove, data)
 	})
 
 }
