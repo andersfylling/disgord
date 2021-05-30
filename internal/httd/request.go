@@ -66,7 +66,7 @@ func (r *Request) HashEndpoint() string {
 	matches := regexpURLSnowflakes.FindAllString(endpoint, -1)
 
 	var isMajor bool
-	for _, prefix := range []string{"/guilds", "/channels", "/webhooks"} {
+	for _, prefix := range []string{"/guilds", "/channels", "/webhooks", "/interactions"} {
 		if strings.HasPrefix(endpoint, prefix) {
 			isMajor = true
 			break

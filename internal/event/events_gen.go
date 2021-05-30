@@ -29,6 +29,7 @@ func AllExcept(except ...string) []string {
 		GuildRoleDelete:            0,
 		GuildRoleUpdate:            0,
 		GuildUpdate:                0,
+		InteractionCreate:          0,
 		InviteCreate:               0,
 		InviteDelete:               0,
 		MessageCreate:              0,

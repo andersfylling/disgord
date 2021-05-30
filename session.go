@@ -1,6 +1,7 @@
 package disgord
 
 import (
+	"context"
 	"time"
 
 	"github.com/andersfylling/disgord/internal/logger"
@@ -36,7 +37,8 @@ type Session interface {
 	Pool() *pools
 
 	ClientQueryBuilder
-
+	EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error
+	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *InteractionResponse) error
 	// Status update functions
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error

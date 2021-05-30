@@ -522,6 +522,32 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
+func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error {
+	endpoint := fmt.Sprintf("/webhooks/%d/%s/messages/@original", interaction.ApplicationID, interaction.Token)
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      "PATCH",
+		Body:        message,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	_, _, err := c.req.Do(ctx, req)
+	return err
+}
+
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *InteractionResponse) error {
+	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      "POST",
+		Body:        data,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	_, _, err := c.req.Do(ctx, req)
+	return err
+}
+
 /* status updates */
 
 // UpdateStatus updates the Client's game status

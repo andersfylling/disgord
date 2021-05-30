@@ -48,6 +48,8 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &GuildRoleUpdate{}
 	case EvtGuildUpdate:
 		resource = &GuildUpdate{}
+	case EvtInteractionCreate:
+		resource = &InteractionCreate{}
 	case EvtInviteCreate:
 		resource = &InviteCreate{}
 	case EvtInviteDelete:
@@ -169,6 +171,10 @@ func isHandler(h Handler) (ok bool) {
 		ok = true
 	case chan *GuildUpdate:
 		ok = true
+	case HandlerInteractionCreate:
+		ok = true
+	case chan *InteractionCreate:
+		ok = true
 	case HandlerInviteCreate:
 		ok = true
 	case chan *InviteCreate:
@@ -284,6 +290,8 @@ func closeChannel(channel interface{}) {
 	case chan *GuildRoleUpdate:
 		close(t)
 	case chan *GuildUpdate:
+		close(t)
+	case chan *InteractionCreate:
 		close(t)
 	case chan *InviteCreate:
 		close(t)
@@ -459,6 +467,12 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*GuildUpdate)
 	case chan<- *GuildUpdate:
 		t <- evt.(*GuildUpdate)
+	case HandlerInteractionCreate:
+		t(d.session, evt.(*InteractionCreate))
+	case chan *InteractionCreate:
+		t <- evt.(*InteractionCreate)
+	case chan<- *InteractionCreate:
+		t <- evt.(*InteractionCreate)
 	case HandlerInviteCreate:
 		t(d.session, evt.(*InviteCreate))
 	case chan *InviteCreate:
@@ -633,6 +647,9 @@ type HandlerGuildRoleUpdate = func(s Session, h *GuildRoleUpdate)
 
 // HandlerGuildUpdate is triggered by GuildUpdate events
 type HandlerGuildUpdate = func(s Session, h *GuildUpdate)
+
+// HandlerInteractionCreate is triggered by InteractionCreate events
+type HandlerInteractionCreate = func(s Session, h *InteractionCreate)
 
 // HandlerInviteCreate is triggered by InviteCreate events
 type HandlerInviteCreate = func(s Session, h *InviteCreate)

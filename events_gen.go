@@ -170,6 +170,14 @@ func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
+// EvtInteractionCreate Sent when a user in a guild uses a Slash Command.
+//
+const EvtInteractionCreate = event.InteractionCreate
+
+func (h *InteractionCreate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
 // EvtInviteCreate Sent when a guild's invite is created.
 //
 const EvtInviteCreate = event.InviteCreate
@@ -731,6 +739,26 @@ func (shr socketHandlerRegister) GuildUpdateChan(handler chan *GuildUpdate, more
 	shr.build()
 }
 
+// InteractionCreate Sent when a user in a guild uses a Slash Command.
+//
+func (shr socketHandlerRegister) InteractionCreate(handler HandlerInteractionCreate, moreHandlers ...HandlerInteractionCreate) {
+	shr.evtName = EvtInteractionCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) InteractionCreateChan(handler chan *InteractionCreate, moreHandlers ...chan *InteractionCreate) {
+	shr.evtName = EvtInteractionCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
 // InviteCreate Sent when a guild's invite is created.
 //
 func (shr socketHandlerRegister) InviteCreate(handler HandlerInviteCreate, moreHandlers ...HandlerInviteCreate) {
@@ -1134,6 +1162,8 @@ type SocketHandlerRegistrator interface {
 	GuildRoleUpdateChan(handler chan *GuildRoleUpdate, moreHandlers ...chan *GuildRoleUpdate)
 	GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate)
 	GuildUpdateChan(handler chan *GuildUpdate, moreHandlers ...chan *GuildUpdate)
+	InteractionCreate(handler HandlerInteractionCreate, moreHandlers ...HandlerInteractionCreate)
+	InteractionCreateChan(handler chan *InteractionCreate, moreHandlers ...chan *InteractionCreate)
 	InviteCreate(handler HandlerInviteCreate, moreHandlers ...HandlerInviteCreate)
 	InviteCreateChan(handler chan *InviteCreate, moreHandlers ...chan *InviteCreate)
 	InviteDelete(handler HandlerInviteDelete, moreHandlers ...HandlerInviteDelete)

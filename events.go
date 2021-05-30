@@ -220,6 +220,23 @@ type MessageReactionAdd struct {
 
 // ---------------------------
 
+type InteractionCreate struct {
+	ID            Snowflake                          `json:"id"`
+	ApplicationID Snowflake                          `json:"application_id"`
+	Type          InteractionType                    `json:"type"`
+	Data          *ApplicationCommandInteractionData `json:"data"`
+	GuildID       Snowflake                          `json:"guild_id"`
+	ChannelID     Snowflake                          `json:"channel_id"`
+	Member        *Member                            `json:"member"`
+	User          *User                              `json:"user"`
+	Token         string                             `json:"token"`
+	Version       int                                `json:"version"`
+	Message       *Message                           `json:"message"`
+	ShardID       uint                               `json:"-"`
+}
+
+// ---------------------------
+
 // MessageReactionRemove user removed a reaction from a message
 // Note! do not cache emoji, unless it's updated with guildID
 // TODO: find guildID when given UserID, ChannelID and MessageID
