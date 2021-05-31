@@ -63,15 +63,7 @@ type MessageInteraction struct {
 	User *User           `json:"user"`
 }
 
-type InteractionApplicationCommandCallbackData struct {
-	Tts             bool             `json:"tts"`
-	Content         string           `json:"content"`
-	Embeds          []*Embed         `json:"embeds"`
-	Flags           int              `json:"flags"`
-	AllowedMentions *AllowedMentions `json:"allowed_mentions"`
-}
-
 type InteractionResponse struct {
-	Type InteractionCallbackType                    `json:"type"`
-	Data *InteractionApplicationCommandCallbackData `json:"data"`
+	Type InteractionCallbackType `json:"type"`
+	Data *Message                `json:"data"`
 }
