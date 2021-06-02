@@ -1180,6 +1180,68 @@ func TestBasicCache_GuildRoles(t *testing.T) {
 
 		deadlockTest(t, cache, EvtGuildRoleCreate, data)
 	})
+	t.Run("update", func(t *testing.T) {
+		guildID := Snowflake(3546)
+
+		roleID := Snowflake(436345)
+		roleName := "testing"
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{
+				ID: guildID,
+				Roles: []*Role{
+					{ID: roleID, Name: roleName},
+				},
+			},
+		}
+
+		updatedRoleName := "test x2222"
+		data := jsonbytes(`{"guild_id":%d,"role":{"id":%d,"name":"%s"}}`, guildID, roleID, updatedRoleName)
+
+		if _, err := cacheDispatcher(cache, EvtGuildRoleUpdate, data); err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		if len(cache.Guilds.Store) != 1 {
+			t.Fatal("missing guild")
+		}
+
+		roles := cache.Guilds.Store[guildID].Guild.Roles
+		if len(roles) != 1 {
+			t.Fatal("missing role from cache")
+		}
+
+		role := roles[0]
+		if role.ID != roleID {
+			t.Error("incorrect role id")
+		}
+		if role.Name != updatedRoleName {
+			t.Error("incorrect role name")
+		}
+
+		deadlockTest(t, cache, EvtGuildRoleCreate, data)
+
+		// what happens when we only update the position?
+		// the name should still exist
+		position := 35
+		data = jsonbytes(`{"guild_id":%d,"role":{"id":%d,"position":%d}}`, guildID, roleID, position)
+		if _, err := cacheDispatcher(cache, EvtGuildRoleUpdate, data); err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		role = roles[0]
+		if role.ID != roleID {
+			t.Error("incorrect role id")
+		}
+		if role.Name != updatedRoleName {
+			t.Error("incorrect role name")
+		}
+		if role.Position != position {
+			t.Error("incorrect role position")
+		}
+
+	})
 	t.Run("delete", func(t *testing.T) {
 		guildID := Snowflake(3546)
 		roleID := Snowflake(5)

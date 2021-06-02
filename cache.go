@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 
@@ -627,22 +628,25 @@ func (c *BasicCache) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err err
 
 	if container, ok := c.Guilds.Store[evt.GuildID]; ok {
 		guild := container.Guild
-		var storedRole *Role
 
+		var updated bool
 		for i := range guild.Roles {
 			if evt.Role.ID == guild.Roles[i].ID {
-				storedRole = guild.Roles[i]
+				wrap := &GuildRoleUpdate{
+					Role: guild.Roles[i],
+				}
+				if err = json.Unmarshal(data, wrap); err != nil {
+					return nil, fmt.Errorf("unable to marshal event data into stored role: %w", err)
+				}
+				c.Patch(wrap.Role)
+				updated = true
 				break
 			}
 		}
 
-		if storedRole == nil {
+		if !updated {
 			role := DeepCopy(evt.Role).(*Role)
 			guild.Roles = append(guild.Roles, role)
-		} else if err = json.Unmarshal(data, storedRole); err != nil {
-			return nil, err
-		} else {
-			c.Patch(storedRole)
 		}
 	}
 
