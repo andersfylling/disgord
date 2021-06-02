@@ -206,9 +206,11 @@ func TestClient_Once(t *testing.T) {
 	}
 
 	base := dispatcher.nrOfAliveHandlers()
+	handlerTriggered := make(chan int, 2)
 	wg := sync.WaitGroup{}
 
 	c.Gateway().WithCtrl(&Ctrl{Runs: 1}).MessageCreate(func(_ Session, _ *MessageCreate) {
+		handlerTriggered <- 1
 		wg.Done()
 	})
 	got := dispatcher.nrOfAliveHandlers() - base
@@ -219,7 +221,11 @@ func TestClient_Once(t *testing.T) {
 
 	// make sure the handler is called
 	trigger()
-	<-time.After(100 * time.Millisecond)
+	select {
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("timed out")
+	case <-handlerTriggered:
+	}
 	got = dispatcher.nrOfAliveHandlers() - base
 	if got > 0 {
 		t.Errorf("expected dispatch to have 0 listeners. Got %d", got)
