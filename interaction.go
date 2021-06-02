@@ -65,5 +65,5 @@ type MessageInteraction struct {
 
 type InteractionResponse struct {
 	Type InteractionCallbackType `json:"type"`
-	Data *Message                `json:"data"`
+	Data *CreateMessageParams    `json:"data"`
 }
