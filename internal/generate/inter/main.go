@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"text/template"
@@ -165,6 +166,11 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 
 	// Open & parse our template
 	tpl := template.Must(template.New(path.Base(tplFile)).Funcs(fMap).ParseFiles(tplFile))
+
+	// sort the enforcers so that the generated output stays the same every time
+	sort.Slice(implementers, func(i, j int) bool {
+		return implementers[i].Type.Name.Name < implementers[i].Type.Name.Name
+	})
 
 	// Execute the template, inserting all the event information
 	var b bytes.Buffer

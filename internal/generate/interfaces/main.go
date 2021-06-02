@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -349,6 +350,11 @@ func makeFile(enforcers []Enforcer, tplFile, target string) {
 
 	// Open & parse our template
 	tpl := template.Must(template.New(path.Base(tplFile)).Funcs(fMap).ParseFiles(tplFile))
+
+	// sort the enforcers so that the generated output stays the same every time
+	sort.Slice(enforcers, func(i, j int) bool {
+		return enforcers[i].Name < enforcers[i].Name
+	})
 
 	// Execute the template, inserting all the event information
 	var b bytes.Buffer
