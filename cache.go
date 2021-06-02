@@ -795,8 +795,8 @@ func (c *BasicCache) GetGuildRoles(id Snowflake) ([]*Role, error) {
 	defer c.Guilds.Unlock()
 
 	if container, ok := c.Guilds.Store[id]; ok {
-		roles := make([]*Role, 0, len(container.Guild.Channels))
-		for _, role := range roles {
+		roles := make([]*Role, 0, len(container.Guild.Roles))
+		for _, role := range container.Guild.Roles {
 			if role == nil { // shouldn't happen, but let's just be certain
 				continue
 			}
