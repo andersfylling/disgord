@@ -1474,8 +1474,94 @@ func TestBasicCache_GetGuildEmoji(t *testing.T) {
 			t.Error("incorrect emoji id")
 		}
 
+		t.Run("read only", func(t *testing.T) {
+			cachedEmoji := cache.Guilds.Store[guildID].Guild.Emojis[0]
+			if emoji == cachedEmoji {
+				t.Error("emoji address is shared")
+			}
+		})
+
 		deadlockGetTest(t, func() {
 			_, _ = cache.GetGuildEmoji(guildID, emojiID)
+		})
+	})
+}
+
+func TestBasicCache_GetGuildEmojis(t *testing.T) {
+	t.Run("unknown guild", func(t *testing.T) {
+		cache := NewBasicCache()
+
+		emoji, err := cache.GetGuildEmojis(0)
+		if err == nil {
+			t.Fatal("there should be an error..")
+		}
+
+		if emoji != nil {
+			t.Error("emoji should be nil")
+		}
+		if !errors.Is(err, CacheMissErr) {
+			t.Error("errpr type should have been CacheMissErr")
+		}
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmojis(0)
+		})
+	})
+	t.Run("no emojis", func(t *testing.T) {
+		guildID := Snowflake(2)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{ID: guildID},
+		}
+
+		emojis, err := cache.GetGuildEmojis(guildID)
+		if err != nil {
+			t.Fatal("got err")
+		}
+
+		if len(emojis) != 0 {
+			t.Error("emojis should be nil")
+		}
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmojis(guildID)
+		})
+	})
+	t.Run("existing emojis", func(t *testing.T) {
+		guildID := Snowflake(2)
+		emojiID := Snowflake(34)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{
+				ID: guildID,
+				Emojis: []*Emoji{
+					{ID: emojiID},
+				},
+			},
+		}
+
+		emojis, err := cache.GetGuildEmojis(guildID)
+		if err != nil {
+			t.Fatal("this should succeed")
+		}
+		if len(emojis) == 0 {
+			t.Fatal("emojis should not be nil")
+		}
+		if emojis[0].ID != emojiID {
+			t.Error("incorrect emoji id")
+		}
+
+		t.Run("read only", func(t *testing.T) {
+			cachedEmoji := cache.Guilds.Store[guildID].Guild.Emojis[0]
+			if emojis[0] == cachedEmoji {
+				t.Error("emoji address is shared")
+			}
+		})
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmojis(guildID)
 		})
 	})
 }

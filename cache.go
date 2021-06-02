@@ -710,7 +710,7 @@ func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 
 	if container, ok := c.Guilds.Store[id]; ok {
 		emojis := make([]*Emoji, 0, len(container.Guild.Emojis))
-		for _, emoji := range emojis {
+		for _, emoji := range container.Guild.Emojis {
 			if emoji == nil { // shouldn't happen, but let's just be certain
 				continue
 			}
