@@ -24,7 +24,7 @@ func NewGuild() *Guild {
 
 func TestGuild_ChannelSorting(t *testing.T) {
 	g := &Guild{}
-	total := 1000
+	total := 103
 	for i := total; i > 0; i-- {
 		s := Snowflake(i)
 		c := &Channel{ID: s}
