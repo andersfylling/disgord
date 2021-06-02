@@ -2,6 +2,9 @@
 
 package disgord
 
+func executeInternalClientUpdater(client *Client, x interface{}) {
+}
+
 func executeInternalUpdater(x interface{}) {
 	update := func(u internalUpdater) {
 		u.updateInternals()
@@ -151,7 +154,4 @@ func executeInternalUpdater(x interface{}) {
 			update(slice[i])
 		}
 	}
-}
-
-func executeInternalClientUpdater(client *Client, x interface{}) {
 }

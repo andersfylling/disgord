@@ -169,7 +169,10 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 
 	// sort the enforcers so that the generated output stays the same every time
 	sort.Slice(implementers, func(i, j int) bool {
-		return implementers[i].Type.Name.Name < implementers[i].Type.Name.Name
+		name := func(tw *TypeWrapper) string {
+			return strings.ToLower(tw.Type.Name.Name)
+		}
+		return name(implementers[i]) < name(implementers[j])
 	})
 
 	// Execute the template, inserting all the event information
@@ -213,6 +216,9 @@ func (t *TypeWrapper) Fields() []*FieldWrapper {
 	for _, m := range t.Members {
 		fields = append(fields, &FieldWrapper{&TypeWrapper{m.Type, t.typeImplementations}, m.Name})
 	}
+	sort.Slice(fields, func(i, j int) bool {
+		return strings.ToLower(fields[i].Name) < strings.ToLower(fields[j].Name)
+	})
 	return fields
 }
 

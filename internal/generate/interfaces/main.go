@@ -353,7 +353,7 @@ func makeFile(enforcers []Enforcer, tplFile, target string) {
 
 	// sort the enforcers so that the generated output stays the same every time
 	sort.Slice(enforcers, func(i, j int) bool {
-		return enforcers[i].Name < enforcers[i].Name
+		return strings.ToLower(enforcers[i].Name) < strings.ToLower(enforcers[j].Name)
 	})
 
 	// Execute the template, inserting all the event information
