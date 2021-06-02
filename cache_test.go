@@ -32,6 +32,23 @@ func deadlockTest(t *testing.T, c Cache, evt string, data []byte) {
 	})
 }
 
+func deadlockGetTest(t *testing.T, cb func()) {
+	// all locks should have been released
+	t.Run("deadlock", func(t *testing.T) {
+		done := make(chan struct{})
+		go func() {
+			cb()
+			close(done)
+		}()
+
+		select {
+		case <-time.After(1 * time.Second):
+			t.Fatal("deadlock detected")
+		case <-done:
+		}
+	})
+}
+
 func TestBasicCache_Channels(t *testing.T) {
 	cache := NewBasicCache()
 
@@ -1385,5 +1402,80 @@ func TestBasicCache_GuildRoles(t *testing.T) {
 		}
 
 		deadlockTest(t, cache, EvtGuildRoleDelete, data)
+	})
+}
+
+func TestBasicCache_GetGuildEmoji(t *testing.T) {
+	t.Run("unknown guild", func(t *testing.T) {
+		cache := NewBasicCache()
+
+		emoji, err := cache.GetGuildEmoji(0, 0)
+		if err == nil {
+			t.Fatal("there should be an error..")
+		}
+
+		if emoji != nil {
+			t.Error("emoji should be nil")
+		}
+		if !errors.Is(err, CacheMissErr) {
+			t.Error("errpr type should have been CacheMissErr")
+		}
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmoji(0, 0)
+		})
+	})
+	t.Run("unknown emoji", func(t *testing.T) {
+		guildID := Snowflake(2)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{ID: guildID},
+		}
+
+		emoji, err := cache.GetGuildEmoji(guildID, 0)
+		if err == nil {
+			t.Fatal("there should be an error..")
+		}
+
+		if emoji != nil {
+			t.Error("emoji should be nil")
+		}
+		if !errors.Is(err, CacheMissErr) {
+			t.Error("errpr type should have been CacheMissErr")
+		}
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmoji(guildID, 0)
+		})
+	})
+	t.Run("existing emoji", func(t *testing.T) {
+		guildID := Snowflake(2)
+		emojiID := Snowflake(34)
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild: &Guild{
+				ID: guildID,
+				Emojis: []*Emoji{
+					{ID: emojiID},
+				},
+			},
+		}
+
+		emoji, err := cache.GetGuildEmoji(guildID, emojiID)
+		if err != nil {
+			t.Fatal("this should succeed")
+		}
+		if emoji == nil {
+			t.Fatal("emoji should not be nil")
+		}
+		if emoji.ID != emojiID {
+			t.Error("incorrect emoji id")
+		}
+
+		deadlockGetTest(t, func() {
+			_, _ = cache.GetGuildEmoji(guildID, emojiID)
+		})
 	})
 }
