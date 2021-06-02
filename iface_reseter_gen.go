@@ -2,44 +2,19 @@
 
 package disgord
 
-func (m *Message) reset() {
-	m.ID = 0
-	m.ChannelID = 0
+func (m *Member) reset() {
 	m.GuildID = 0
-	if m.Author != nil {
-		Reset(m.Author)
+	if m.User != nil {
+		Reset(m.User)
 	}
-	if m.Member != nil {
-		Reset(m.Member)
-	}
-	m.Content = ""
-	m.Timestamp = Time{}
-	m.EditedTimestamp = Time{}
-	m.Tts = false
-	m.MentionEveryone = false
-	m.Mentions = nil
-	m.MentionRoles = nil
-	m.MentionChannels = nil
-	m.Attachments = nil
-	m.Embeds = nil
-	m.Reactions = nil
-	m.Nonce = nil
-	m.Pinned = false
-	m.WebhookID = 0
-	m.Type = 0
-	m.Activity = MessageActivity{}
-	m.Application = MessageApplication{}
-	m.MessageReference = nil
-	if m.ReferencedMessage != nil {
-		Reset(m.ReferencedMessage)
-	}
-	m.Flags = 0
-	m.Stickers = nil
-	m.Components = nil
-	m.Interaction = nil
-	m.SpoilerTagContent = false
-	m.SpoilerTagAllAttachments = false
-	m.HasSpoilerImage = false
+	m.Nick = ""
+	m.Roles = nil
+	m.JoinedAt = Time{}
+	m.PremiumSince = Time{}
+	m.Deaf = false
+	m.Mute = false
+	m.Pending = false
+	m.UserID = 0
 }
 
 func (u *User) reset() {
@@ -61,59 +36,6 @@ func (u *User) reset() {
 	}
 }
 
-func (m *Member) reset() {
-	m.GuildID = 0
-	if m.User != nil {
-		Reset(m.User)
-	}
-	m.Nick = ""
-	m.Roles = nil
-	m.JoinedAt = Time{}
-	m.PremiumSince = Time{}
-	m.Deaf = false
-	m.Mute = false
-	m.Pending = false
-	m.UserID = 0
-}
-
-func (r *Reaction) reset() {
-	r.Count = 0
-	r.Me = false
-	if r.Emoji != nil {
-		Reset(r.Emoji)
-	}
-}
-
-func (r *Role) reset() {
-	r.ID = 0
-	r.Name = ""
-	r.Color = 0
-	r.Hoist = false
-	r.Position = 0
-	r.Permissions = 0
-	r.Managed = false
-	r.Mentionable = false
-	r.guildID = 0
-}
-
-func (m *MessageCreate) reset() {
-	if m.Message != nil {
-		Reset(m.Message)
-	}
-	m.ShardID = 0
-}
-
-func (v *VoiceRegion) reset() {
-	v.ID = ""
-	v.Name = ""
-	v.SampleHostname = ""
-	v.SamplePort = 0
-	v.VIP = false
-	v.Optimal = false
-	v.Deprecated = false
-	v.Custom = false
-}
-
 func (c *Channel) reset() {
 	c.ID = 0
 	c.Type = 0
@@ -133,6 +55,30 @@ func (c *Channel) reset() {
 	c.ApplicationID = 0
 	c.ParentID = 0
 	c.LastPinTimestamp = Time{}
+}
+
+func (r *Role) reset() {
+	r.ID = 0
+	r.Name = ""
+	r.Color = 0
+	r.Hoist = false
+	r.Position = 0
+	r.Permissions = 0
+	r.Managed = false
+	r.Mentionable = false
+	r.guildID = 0
+}
+
+func (e *Emoji) reset() {
+	e.ID = 0
+	e.Name = ""
+	e.Roles = nil
+	if e.User != nil {
+		Reset(e.User)
+	}
+	e.RequireColons = false
+	e.Managed = false
+	e.Animated = false
 }
 
 func (g *Guild) reset() {
@@ -182,16 +128,23 @@ func (v *VoiceState) reset() {
 	v.Suppress = false
 }
 
-func (e *Emoji) reset() {
-	e.ID = 0
-	e.Name = ""
-	e.Roles = nil
-	if e.User != nil {
-		Reset(e.User)
+func (v *VoiceRegion) reset() {
+	v.ID = ""
+	v.Name = ""
+	v.SampleHostname = ""
+	v.SamplePort = 0
+	v.VIP = false
+	v.Optimal = false
+	v.Deprecated = false
+	v.Custom = false
+}
+
+func (r *Reaction) reset() {
+	r.Count = 0
+	r.Me = false
+	if r.Emoji != nil {
+		Reset(r.Emoji)
 	}
-	e.RequireColons = false
-	e.Managed = false
-	e.Animated = false
 }
 
 func (a *Activity) reset() {
@@ -209,4 +162,51 @@ func (a *Activity) reset() {
 	a.Secrets = nil
 	a.Instance = false
 	a.Flags = 0
+}
+
+func (m *MessageCreate) reset() {
+	if m.Message != nil {
+		Reset(m.Message)
+	}
+	m.ShardID = 0
+}
+
+func (m *Message) reset() {
+	m.ID = 0
+	m.ChannelID = 0
+	m.GuildID = 0
+	if m.Author != nil {
+		Reset(m.Author)
+	}
+	if m.Member != nil {
+		Reset(m.Member)
+	}
+	m.Content = ""
+	m.Timestamp = Time{}
+	m.EditedTimestamp = Time{}
+	m.Tts = false
+	m.MentionEveryone = false
+	m.Mentions = nil
+	m.MentionRoles = nil
+	m.MentionChannels = nil
+	m.Attachments = nil
+	m.Embeds = nil
+	m.Reactions = nil
+	m.Nonce = nil
+	m.Pinned = false
+	m.WebhookID = 0
+	m.Type = 0
+	m.Activity = MessageActivity{}
+	m.Application = MessageApplication{}
+	m.MessageReference = nil
+	if m.ReferencedMessage != nil {
+		Reset(m.ReferencedMessage)
+	}
+	m.Flags = 0
+	m.Stickers = nil
+	m.Components = nil
+	m.Interaction = nil
+	m.SpoilerTagContent = false
+	m.SpoilerTagAllAttachments = false
+	m.HasSpoilerImage = false
 }

@@ -1070,6 +1070,102 @@ func TestBasicCache_GuildMembers(t *testing.T) {
 		deadlockTest(t, cache, EvtGuildMemberAdd, data)
 	})
 
+	t.Run("member update", func(t *testing.T) {
+		// I'm uncertain if this event contains decent user data, so I'm not caching the user field
+		cache := NewBasicCache()
+		cache.Guilds.Store[id] = &guildCacheContainer{
+			Guild:   &Guild{ID: id},
+			Members: map[Snowflake]*Member{},
+		}
+
+		memberJson := func(id Snowflake, nick string) []byte {
+			return jsonbytes(`"user":{"id":%d},"nick":"%s"`, id, nick)
+		}
+		payloadJson := func(guildID, memberID Snowflake, nick string) []byte {
+			return jsonbytes(`{"guild_id":%d,%s}`, guildID, memberJson(memberID, nick))
+		}
+
+		memberID := Snowflake(23425)
+		nick := "sjghsfg"
+		data := payloadJson(id, memberID, nick)
+
+		t.Run("unknown member", func(t *testing.T) {
+			// when the member does not exist we should create it
+			// the create event could have been missed..
+			evt, err := cacheDispatcher(cache, EvtGuildMemberUpdate, data)
+			if err != nil {
+				t.Fatal("failed to create event", err)
+			}
+
+			if _, ok := evt.(*GuildMemberUpdate); !ok {
+				t.Fatal("unable to cast event to GuildMemberAdd type")
+			}
+
+			container, ok := cache.Guilds.Store[id]
+			if !ok || container.Guild == nil {
+				t.Error("guild was not cached")
+			}
+
+			if member, ok := container.Members[memberID]; !ok {
+				t.Error("member was not stored")
+			} else {
+				if member == nil {
+					t.Fatal("member is nil")
+				}
+				if member.UserID != memberID {
+					t.Error("wrong user id")
+				}
+				if member.Nick != nick {
+					t.Error("incorrect nickname")
+				}
+			}
+
+			if container.Guild.MemberCount != 1 {
+				t.Error("incorrect member count")
+			}
+		})
+
+		t.Run("existing member", func(t *testing.T) {
+			// when the member does not exist we should create it
+			// the create event could have been missed..
+			updatedNick := "andy bandy"
+			data = payloadJson(id, memberID, updatedNick)
+			evt, err := cacheDispatcher(cache, EvtGuildMemberUpdate, data)
+			if err != nil {
+				t.Fatal("failed to create event", err)
+			}
+
+			if _, ok := evt.(*GuildMemberUpdate); !ok {
+				t.Fatal("unable to cast event to GuildMemberAdd type")
+			}
+
+			container, ok := cache.Guilds.Store[id]
+			if !ok || container.Guild == nil {
+				t.Error("guild was not in cached")
+			}
+
+			if member, ok := container.Members[memberID]; !ok {
+				t.Error("member was not stored")
+			} else {
+				if member == nil {
+					t.Fatal("member is nil")
+				}
+				if member.UserID != memberID {
+					t.Error("wrong user id")
+				}
+				if member.Nick != updatedNick {
+					t.Error("incorrect nickname")
+				}
+			}
+
+			if container.Guild.MemberCount != 1 {
+				t.Error("incorrect member count")
+			}
+		})
+
+		deadlockTest(t, cache, EvtGuildMemberAdd, data)
+	})
+
 	t.Run("member remove", func(t *testing.T) {
 		memberID := Snowflake(345)
 
