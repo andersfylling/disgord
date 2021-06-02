@@ -149,6 +149,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GuildUpdate:
 		s = *t
+	case *[]*InteractionCreate:
+		s = *t
 	case *[]*InviteCreate:
 		s = *t
 	case *[]*InviteDelete:
@@ -222,6 +224,18 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*UpdateGuildIntegrationParams:
 		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
+		s = *t
+	case *[]*ApplicationCommandInteractionData:
+		s = *t
+	case *[]*ApplicationCommandInteractionDataOption:
+		s = *t
+	case *[]*ApplicationCommandInteractionDataResolved:
+		s = *t
+	case *[]*InteractionApplicationCommandCallbackData:
+		s = *t
+	case *[]*InteractionResponse:
+		s = *t
+	case *[]*MessageInteraction:
 		s = *t
 	case *[]*Invite:
 		s = *t
@@ -345,6 +359,12 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
+	case []*InteractionCreate:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*CreateGuildIntegrationParams:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -382,6 +402,18 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*UpdateGuildRolePositionsParams:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ApplicationCommandInteractionData:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*MessageInteraction:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -535,6 +567,12 @@ func sortByGuildID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
+	case []*InteractionCreate:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*InviteCreate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -648,6 +686,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
 	case []*ChannelPinsUpdate:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
+	case []*InteractionCreate:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
@@ -838,6 +882,24 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*IntegrationAccount:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ApplicationCommandInteractionData:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ApplicationCommandInteractionDataOption:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*MessageInteraction:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
