@@ -253,7 +253,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	return fmt.Sprintf("[ws-%s,s:%d,shard:%s]", t, nr, c.ShardID)
+	return fmt.Sprintf("[ws-%s,s:%d,shard:%d]", t, nr, c.ShardID)
 }
 
 //////////////////////////////////////////////////////
