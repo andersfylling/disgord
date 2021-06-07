@@ -254,7 +254,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	s := "s:" + strconv.FormatUint(uint64(nr), 10)
+	s := fmt.Sprintf("s:%d", nr)
 	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
 
 	// [ws-?, s:0, shard:0]
