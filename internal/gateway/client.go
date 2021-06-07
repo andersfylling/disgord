@@ -244,7 +244,7 @@ func (c *client) inactivityDetector() {
 //////////////////////////////////////////////////////
 
 func (c *client) getLogPrefix() string {
-	t := "ws-"
+	var t string
 	if c.clientType == clientTypeVoice {
 		t += "v"
 	} else if c.clientType == clientTypeEvent {
@@ -254,12 +254,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	s := fmt.Sprintf("s:%d", nr)
-	
-	shardID := fmt.Sprintf("shard:%d", c.ShardID)
-
-	// [ws-?, s:0, shard:0]
-	return fmt.Sprintf("[%s,%s,%s]", t, s , shardID)
+	return fmt.Sprintf("[ws-%s,s:%d,shard:%s]", t, nr, c.ShardID)
 }
 
 //////////////////////////////////////////////////////
