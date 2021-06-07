@@ -255,10 +255,11 @@ func (c *client) getLogPrefix() string {
 
 	nr := c.logSequence.Add(1)
 	s := fmt.Sprintf("s:%d", nr)
-	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
+	
+	shardID := fmt.Sprintf("shard:%d", c.ShardID)
 
 	// [ws-?, s:0, shard:0]
-	return "[" + t + "," + s + "," + shardID + "]"
+	return fmt.Sprintf("[%s,%s,%s]", t, s , shardID)
 }
 
 //////////////////////////////////////////////////////
