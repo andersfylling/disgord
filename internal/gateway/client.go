@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -244,7 +243,7 @@ func (c *client) inactivityDetector() {
 //////////////////////////////////////////////////////
 
 func (c *client) getLogPrefix() string {
-	t := "ws-"
+	var t string
 	if c.clientType == clientTypeVoice {
 		t += "v"
 	} else if c.clientType == clientTypeEvent {
@@ -254,11 +253,7 @@ func (c *client) getLogPrefix() string {
 	}
 
 	nr := c.logSequence.Add(1)
-	s := "s:" + strconv.FormatUint(uint64(nr), 10)
-	shardID := "shard:" + strconv.FormatUint(uint64(c.ShardID), 10)
-
-	// [ws-?, s:0, shard:0]
-	return "[" + t + "," + s + "," + shardID + "]"
+	return fmt.Sprintf("[ws-%s,s:%d,shard:%d]", t, nr, c.ShardID)
 }
 
 //////////////////////////////////////////////////////
