@@ -351,6 +351,7 @@ func (e *Emoji) copyOverTo(other interface{}) error {
 		return newErrorUnsupportedType("argument given is not a *Emoji type")
 	}
 	dest.Animated = e.Animated
+	dest.Available = e.Available
 	dest.ID = e.ID
 	dest.Managed = e.Managed
 	dest.Name = e.Name

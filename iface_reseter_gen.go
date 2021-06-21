@@ -42,6 +42,7 @@ func (c *Channel) reset() {
 
 func (e *Emoji) reset() {
 	e.Animated = false
+	e.Available = false
 	e.ID = 0
 	e.Managed = false
 	e.Name = ""
