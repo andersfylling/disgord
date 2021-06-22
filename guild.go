@@ -161,6 +161,12 @@ type Guild struct {
 	WidgetEnabled               bool                          `json:"widget_enabled,omit_empty"`    //   |
 	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |?
 	SystemChannelID             Snowflake                     `json:"system_channel_id,omitempty"`  //   |?
+	DiscoverySplash             string                        `json:"discovery_splash,omitempty"`
+	VanityUrl                   string                        `json:"vanity_url_code,omitempty"`
+	Description                 string                        `json:"description,omitempty"`
+	Banner                      string                        `json:"banner,omitempty"`
+	PremiumTier                 PremiumTier                   `json:"premium_tier"`
+	PremiumSubscriptionCount    uint                          `json:"premium_subscription_count,omitempty"`
 
 	// JoinedAt must be a pointer, as we can't hide non-nil structs
 	JoinedAt    *Time           `json:"joined_at,omitempty"`    // ?*|

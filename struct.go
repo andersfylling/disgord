@@ -200,6 +200,18 @@ func (vl *VerificationLvl) VeryHigh() bool {
 	return *vl == VerificationLvlVeryHigh
 }
 
+// PremiumTier ...
+// https://discord.com/developers/docs/resources/guild#guild-object-premium-tier
+type PremiumTier uint
+
+// the different premium tier levels
+const (
+	PremiumTierNone PremiumTier = iota
+	PremiumTier1
+	PremiumTier2
+	PremiumTier3
+)
+
 // DefaultMessageNotificationLvl ...
 // https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level
 type DefaultMessageNotificationLvl uint

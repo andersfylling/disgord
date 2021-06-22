@@ -57,8 +57,11 @@ func (g *Guild) reset() {
 	g.AfkChannelID = 0
 	g.AfkTimeout = 0
 	g.ApplicationID = 0
+	g.Banner = ""
 	g.Channels = nil
 	g.DefaultMessageNotifications = 0
+	g.Description = ""
+	g.DiscoverySplash = ""
 	g.Emojis = nil
 	g.ExplicitContentFilter = 0
 	g.Features = nil
@@ -73,12 +76,15 @@ func (g *Guild) reset() {
 	g.Owner = false
 	g.OwnerID = 0
 	g.Permissions = 0
+	g.PremiumSubscriptionCount = 0
+	g.PremiumTier = 0
 	g.Presences = nil
 	g.Region = ""
 	g.Roles = nil
 	g.Splash = ""
 	g.SystemChannelID = 0
 	g.Unavailable = false
+	g.VanityUrl = ""
 	g.VerificationLevel = 0
 	g.VoiceStates = nil
 	g.WidgetChannelID = 0
