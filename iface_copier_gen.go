@@ -372,11 +372,14 @@ func (g *Guild) copyOverTo(other interface{}) error {
 	dest.AfkChannelID = g.AfkChannelID
 	dest.AfkTimeout = g.AfkTimeout
 	dest.ApplicationID = g.ApplicationID
+	dest.Banner = g.Banner
 	dest.Channels = make([]*Channel, len(g.Channels))
 	for i := 0; i < len(g.Channels); i++ {
 		dest.Channels[i] = DeepCopy(g.Channels[i]).(*Channel)
 	}
 	dest.DefaultMessageNotifications = g.DefaultMessageNotifications
+	dest.Description = g.Description
+	dest.DiscoverySplash = g.DiscoverySplash
 	dest.Emojis = make([]*Emoji, len(g.Emojis))
 	for i := 0; i < len(g.Emojis); i++ {
 		dest.Emojis[i] = DeepCopy(g.Emojis[i]).(*Emoji)
@@ -398,6 +401,8 @@ func (g *Guild) copyOverTo(other interface{}) error {
 	dest.Owner = g.Owner
 	dest.OwnerID = g.OwnerID
 	dest.Permissions = g.Permissions
+	dest.PremiumSubscriptionCount = g.PremiumSubscriptionCount
+	dest.PremiumTier = g.PremiumTier
 	dest.Presences = make([]*UserPresence, len(g.Presences))
 	for i := 0; i < len(g.Presences); i++ {
 		dest.Presences[i] = DeepCopy(g.Presences[i]).(*UserPresence)
@@ -410,6 +415,7 @@ func (g *Guild) copyOverTo(other interface{}) error {
 	dest.Splash = g.Splash
 	dest.SystemChannelID = g.SystemChannelID
 	dest.Unavailable = g.Unavailable
+	dest.VanityUrl = g.VanityUrl
 	dest.VerificationLevel = g.VerificationLevel
 	dest.VoiceStates = make([]*VoiceState, len(g.VoiceStates))
 	for i := 0; i < len(g.VoiceStates); i++ {
