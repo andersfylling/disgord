@@ -36,4 +36,4 @@ jobs:
       - name: go generate
         run: go generate
       - name: validate generated code
-        run: git diff --exit-code
+        run: git diff --exit-code -- . ':(exclude)go.sum' ':(exclude)go.mod'
