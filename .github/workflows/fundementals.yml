@@ -1,35 +1,11 @@
-name: PR Quality
-on: [pull_request]
+name: Code Quality
+on: [push, pull_request]
 jobs:
-  none:
-    name: No build tags
+  formatting:
+    name: validate formatting
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: true
-      matrix:
-        go: ['1.14', '1.15', '1.16']
     steps:
-      - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v1
-        with:
-          go-version: ${{ matrix.go }}
-        id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Get dependencies
-        run: go mod download
-      - name: test
-        run: go test -v -race -short ./...
-  buildtags:
-    name: Build tags
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        buildtag: [disgord_diagnosews, disgordperf]
-    steps:
-      - name: Set up Go 1.16
+      - name: Set up Go
         uses: actions/setup-go@v1
         with:
           go-version: 1.16
@@ -40,5 +16,24 @@ jobs:
           fetch-depth: 0
       - name: Get dependencies
         run: go mod download
-      - name: test
-        run: go test -tags=${{ matrix.buildtag }} -v -race -short ./...
+      - name: Formatting
+        run: diff <(gofmt -d ./...) <(echo -n)
+  generate:
+    name: validate code generated
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get dependencies
+        run: go mod download
+      - name: go generate
+        run: go generate
+      - name: validate generated code
+        run: sh .github/go-generate-test.sh

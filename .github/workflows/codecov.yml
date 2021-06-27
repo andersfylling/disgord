@@ -18,7 +18,9 @@ jobs:
           go-version: ${{ matrix.go }}
         id: go
       - name: Check out code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
       - name: Get dependencies
         run: go mod download
       - name: Format Test
@@ -49,7 +51,9 @@ jobs:
           go-version: ${{ matrix.go }}
         id: go
       - name: Check out code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Get dependencies
         run: go mod download
       - name: Format Test
