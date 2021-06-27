@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ['1.13', '1.14', '1.15']
+        go: ['1.14', '1.15', '1.16']
     steps:
       - name: Setup Go
         uses: actions/setup-go@v1
@@ -57,7 +57,7 @@ jobs:
       - name: unit tests
         env:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+        run: go test -short -v -race -coverprofile=coverage.txt -covermode=atomic ./...
       - name: Codecov
         run: bash <(curl -s https://codecov.io/bash) -t ${{secrets.CODECOV_TOKEN}} -B develop -c -F unit -f "./coverage.txt" -Z
 
