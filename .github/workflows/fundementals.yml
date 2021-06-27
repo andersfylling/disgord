@@ -36,4 +36,4 @@ jobs:
       - name: go generate
         run: go generate
       - name: validate generated code
-        run: sh .github/go-generate-test.sh
+        run: git diff --exit-code
