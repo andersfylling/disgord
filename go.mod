@@ -1,6 +1,6 @@
 module github.com/andersfylling/disgord
 
-go 1.16
+go 1.13
 
 require (
 	github.com/andersfylling/snowflake/v5 v5.0.1
