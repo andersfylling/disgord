@@ -98,6 +98,9 @@ To notify about bugs or suggesting enhancements, simply create a issue. The more
 
 To contribute with code, always create an issue before you open a pull request. This allows automating change logs and releases.
 
+Remember to have stringer installed to run go generate:
+`go get -u golang.org/x/tools/cmd/stringer`
+
 ## Sponsors
 > [JetBrains](https://www.jetbrains.com/?from=github.com/andersfylling/disgord)
 

@@ -13,10 +13,9 @@ jobs:
         go: ['1.16']
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-        id: go
       - name: Check out code
         uses: actions/checkout@v2
         with:
@@ -46,7 +45,7 @@ jobs:
         go: ['1.14', '1.15', '1.16']
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
         id: go
