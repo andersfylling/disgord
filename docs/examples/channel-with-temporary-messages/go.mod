@@ -1,6 +1,6 @@
 module channel-with-temporary-messages
 
-go 1.15
+go 1.16
 
 require (
 	github.com/andersfylling/disgord v0.16.5

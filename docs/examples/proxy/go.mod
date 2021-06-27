@@ -1,11 +1,15 @@
 module logging
 
-go 1.15
+go 1.16
 
 require (
-	github.com/andersfylling/disgord v0.16.5
-	github.com/sirupsen/logrus v1.6.0
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974
+	github.com/andersfylling/disgord v0.27.0
+	github.com/klauspost/compress v1.13.1 // indirect
+	go.uber.org/atomic v1.8.0 // indirect
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 replace github.com/andersfylling/disgord => ../../../

@@ -16,7 +16,7 @@ import (
 // this example we will be using SOCKS5, but any custom
 // implementation can be used. You just configure your own http client.
 //
-// For REST methods the only Do method is required. So any configuration, libraries, whatever that 
+// For REST methods the only Do method is required. So any configuration, libraries, whatever that
 // implements the Do method is good enough.
 //
 // For websocket connection you must specify the WebsocketHttpClient config option. Currently there is a issue
@@ -27,7 +27,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
@@ -37,8 +37,8 @@ func main() {
 	}
 
 	client := disgord.New(disgord.Config{
-		BotToken:   os.Getenv("DISCORD_TOKEN"),
-		HttpClient: httpClient, // REST requests with proxy support
+		BotToken:            os.Getenv("DISCORD_TOKEN"),
+		HttpClient:          httpClient, // REST requests with proxy support
 		WebsocketHttpClient: httpClient, // Websocket setup with proxy support
 	})
 	defer client.Gateway().StayConnectedUntilInterrupted()
