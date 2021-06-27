@@ -32,7 +32,7 @@ jobs:
       - name: Get dependencies
         run: go mod download
       - name: stringer
-        run: go get -u golang.org/x/tools/cmd/stringer
+        run: go get golang.org/x/tools/cmd/stringer
       - name: go generate
         run: go generate
       - name: validate generated code
