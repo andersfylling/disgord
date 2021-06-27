@@ -19,7 +19,7 @@ jobs:
       - name: Formatting
         run: diff <(gofmt -d ./...) <(echo -n)
   generate:
-    name: validate code generated
+    name: validate generated code
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Go
@@ -33,6 +33,8 @@ jobs:
           fetch-depth: 0
       - name: Get dependencies
         run: go mod download
+      - name: stringer
+        run: go get -u golang.org/x/tools/cmd/stringer
       - name: go generate
         run: go generate
       - name: validate generated code
