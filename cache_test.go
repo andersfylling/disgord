@@ -917,6 +917,71 @@ func TestBasicCache_Guilds(t *testing.T) {
 		}
 	})
 
+	t.Run("channel-create", func(t *testing.T) {
+		const guildID = 1
+		const channelID = 20
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{Guild: &Guild{ID: guildID}}
+
+		data := []byte(fmt.Sprintf(`{"id":%d,"guild_id":%d}`, channelID, guildID))
+		_, err := cacheDispatcher(cache, EvtChannelCreate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		channelIDs := cache.Guilds.Store[guildID].ChannelIDs
+		if len(channelIDs) != 1 {
+			t.Fatal("channel was not linked to guild")
+		}
+		if channelIDs[0] != Snowflake(channelID) {
+			t.Error("wrong channel id")
+		}
+	})
+
+	t.Run("channel-update", func(t *testing.T) {
+		const guildID = 1
+		const channelID = 20
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{Guild: &Guild{ID: guildID}}
+
+		data := []byte(fmt.Sprintf(`{"id":%d,"guild_id":%d}`, channelID, guildID))
+		_, err := cacheDispatcher(cache, EvtChannelUpdate, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		channelIDs := cache.Guilds.Store[guildID].ChannelIDs
+		if len(channelIDs) != 1 {
+			t.Fatal("channel was not linked to guild")
+		}
+		if channelIDs[0] != Snowflake(channelID) {
+			t.Error("wrong channel id")
+		}
+	})
+
+	t.Run("channel-delete", func(t *testing.T) {
+		const guildID = 1
+		const channelID = 20
+
+		cache := NewBasicCache()
+		cache.Guilds.Store[guildID] = &guildCacheContainer{
+			Guild:      &Guild{ID: guildID},
+			ChannelIDs: []Snowflake{channelID},
+		}
+
+		data := []byte(fmt.Sprintf(`{"id":%d,"guild_id":%d}`, channelID, guildID))
+		_, err := cacheDispatcher(cache, EvtChannelDelete, data)
+		if err != nil {
+			t.Fatal("failed to create event", err)
+		}
+
+		channelIDs := cache.Guilds.Store[guildID].ChannelIDs
+		if len(channelIDs) != 0 {
+			t.Error("there should be no channels")
+		}
+	})
 }
 
 func TestBasicCache_GuildMembers(t *testing.T) {
