@@ -65,6 +65,32 @@ type guildsCache struct {
 	Store map[Snowflake]*guildCacheContainer
 }
 
+func (g *guildsCache) AddChannelID(guildID, channelID Snowflake) {
+	if guildID.IsZero() {
+		return
+	}
+
+	g.Lock()
+	defer g.Unlock()
+
+	if container, ok := g.Store[guildID]; ok {
+		container.addChannelID(channelID)
+	}
+}
+
+func (g *guildsCache) RemoveChannelID(guildID, channelID Snowflake) {
+	if guildID.IsZero() {
+		return
+	}
+
+	g.Lock()
+	defer g.Unlock()
+
+	if container, ok := g.Store[guildID]; ok {
+		container.removeChannelID(channelID)
+	}
+}
+
 type usersCache struct {
 	sync.Mutex
 	Store map[Snowflake]*User
@@ -248,14 +274,8 @@ func (c *BasicCache) ChannelCreate(data []byte) (*ChannelCreate, error) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if channel2.GuildID.IsZero() {
-			return
-		}
-
-		c.Guilds.Lock()
-		c.Guilds.Store[channel2.GuildID].addChannelID(channel2.ID)
-		c.Guilds.Unlock()
+		c.Guilds.AddChannelID(channel2.GuildID, channel2.ID)
+		wg.Done()
 	}()
 
 	c.Channels.Lock()
@@ -296,11 +316,7 @@ func (c *BasicCache) ChannelUpdate(data []byte) (*ChannelUpdate, error) {
 	}
 	channelID := metadata.ID
 
-	if !metadata.GuildID.IsZero() {
-		c.Guilds.Lock()
-		c.Guilds.Store[metadata.GuildID].addChannelID(channelID)
-		c.Guilds.Unlock()
-	}
+	c.Guilds.AddChannelID(metadata.GuildID, channelID)
 
 	c.Channels.Lock()
 	defer c.Channels.Unlock()
@@ -340,14 +356,8 @@ func (c *BasicCache) ChannelDelete(data []byte) (*ChannelDelete, error) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if cd.Channel.GuildID.IsZero() {
-			return
-		}
-
-		c.Guilds.Lock()
-		c.Guilds.Store[cd.Channel.GuildID].removeChannelID(cd.Channel.ID)
-		c.Guilds.Unlock()
+		c.Guilds.RemoveChannelID(cd.Channel.GuildID, cd.Channel.ID)
+		wg.Done()
 	}()
 
 	c.Channels.Lock()
