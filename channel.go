@@ -211,9 +211,10 @@ func (c *Channel) SendMsg(ctx context.Context, s Session, message *Message) (msg
 	}
 
 	params := &CreateMessageParams{
-		Content: message.Content,
-		Nonce:   nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
-		Tts:     message.Tts,
+		Content:          message.Content,
+		Nonce:            nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+		Tts:              message.Tts,
+		MessageReference: message.MessageReference,
 		// File: ...
 		// Embed: ...
 	}

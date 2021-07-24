@@ -254,9 +254,10 @@ func (m *Message) Send(ctx context.Context, s Session, flags ...Flag) (msg *Mess
 
 	// TODO: attachments
 	params := &CreateMessageParams{
-		Content: m.Content,
-		Tts:     m.Tts,
-		Nonce:   nonce,
+		Content:          m.Content,
+		Tts:              m.Tts,
+		MessageReference: m.MessageReference,
+		Nonce:            nonce,
 		// File: ...
 		// Embed: ...
 	}
