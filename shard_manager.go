@@ -1,14 +1,41 @@
 package disgord
 
 import (
+	"fmt"
 	"github.com/andersfylling/discordgateway"
+	"github.com/andersfylling/discordgateway/opcode"
+	"github.com/andersfylling/disgord/json"
 )
 
 type ShardManager interface {
 	Start(Session) error
 	Stop()
-	WriteMessage(message interface{}) error
+	SendCMD(GatewayCommand) error
 }
+
+type GatewayCommand interface {
+	GuildID() Snowflake
+	OperationCode() uint
+}
+
+type ErrorShardManager struct {
+	Errors []error
+}
+
+func (e *ErrorShardManager) ErrorCount() (counter int) {
+	for i := range e.Errors {
+		if e.Errors[i] != nil {
+			counter++
+		}
+	}
+	return counter
+}
+
+func (e *ErrorShardManager) Error() string {
+	return fmt.Sprintf("%d shard interactions failed: %+v", e.ErrorCount(), e.Errors)
+}
+
+var _ error = &ErrorShardManager{}
 
 var DefaultShardManager ShardManager = &SimpleShardManager{}
 
@@ -47,6 +74,37 @@ func (s *SimpleShardManager) Stop() {
 	panic("implement me")
 }
 
-func (s *SimpleShardManager) WriteMessage(message interface{}) error {
-	panic("implement me")
+func (s *SimpleShardManager) SendCMD(cmd GatewayCommand) error {
+	if cmd.GuildID().IsZero() {
+		return s.sendCMDToAllShards(cmd)
+	}
+	return s.sendCMDToShard(cmd)
+}
+
+func (s *SimpleShardManager) sendCMDToAllShards(cmd GatewayCommand) error {
+	code := opcode.Type(cmd.OperationCode())
+	message, err := json.Marshal(cmd)
+	if err != nil {
+		return err
+	}
+
+	shardErr := &ErrorShardManager{
+		Errors: make([]error, len(s.shards)),
+	}
+	for i := range s.shards {
+		shardErr.Errors[i] = s.shards[i].Write(code, message)
+	}
+	return shardErr
+}
+
+func (s *SimpleShardManager) sendCMDToShard(cmd GatewayCommand) error {
+	code := opcode.Type(cmd.OperationCode())
+	guildID := cmd.GuildID()
+	message, err := json.Marshal(cmd)
+	if err != nil {
+		return err
+	}
+
+	shardID := discordgateway.DeriveShardID(uint64(guildID), uint(len(s.shards)))
+	return s.shards[shardID].Write(code, message)
 }
