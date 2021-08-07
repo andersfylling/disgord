@@ -261,6 +261,17 @@ Make them readable. Tests that is for the public interface of Disgord, should be
 ### Pull Requests
 If your PR is not ready yet, make it a Draft.
 
+Your PR title must start with one of the following:
+ - fix: patches / fixes
+ - feat: features, this also includes breaking changes
+ - test: adding tests
+ - doc: changing docs
+ - revert: reverting a commit/pr
+ - perf: performance adjustment / improvement
+ - refactor: code refactoring
+ - style: changes to code design, that is not a refactor
+ - chore: misc changes that doesn't fit with any of the above
+
 Deadlines:
  - If you do not fix the required changes within 30 days your PR will be closed. 
  - If you have created a PR before that was closed due to rule #1, the deadline is reduced from 30 days to 20 days (this only applies when you have 2 or more PR in a row that are a victim to rule #1).
