@@ -1,0 +1,18 @@
+name: PR naming scheme
+on: 
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate_prefix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: deepakputhraya/action-pr-title@master
+        with:
+          allowed_prefixes: 'feat:,fix:,doc:,docs:,chore:,refactor:,test:,style:,revert:,perf:'
+          disallowed_prefixes: 'hotfix'
+          min_length: 5
