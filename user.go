@@ -389,9 +389,6 @@ type CurrentUserQueryBuilder interface {
 	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
 	UpdateBuilder(flags ...Flag) UpdateCurrentUserBuilder
 
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) UpdateCurrentUserBuilder
-
 	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
 	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error)

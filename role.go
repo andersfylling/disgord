@@ -79,9 +79,6 @@ type GuildRoleQueryBuilder interface {
 
 	UpdateBuilder(flags ...Flag) (builder UpdateGuildRoleBuilder)
 	Delete(flags ...Flag) error
-
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) UpdateGuildRoleBuilder
 }
 
 func (g guildQueryBuilder) Role(id Snowflake) GuildRoleQueryBuilder {
