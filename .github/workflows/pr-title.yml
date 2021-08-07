@@ -1,4 +1,4 @@
-name: PR title naming scheme
+name: PR Title
 on: 
   pull_request:
     branches:
@@ -8,7 +8,7 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 jobs:
-  validate_prefix:
+  valid_prefix:
     runs-on: ubuntu-latest
     steps:
       - uses: deepakputhraya/action-pr-title@master
