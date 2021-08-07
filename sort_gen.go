@@ -257,6 +257,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*StickerItem:
 		s = *t
+	case *[]*UpdateMessageParams:
+		s = *t
 	case *[]*GetReactionURLParams:
 		s = *t
 	case *[]*Reaction:

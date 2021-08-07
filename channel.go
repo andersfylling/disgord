@@ -236,6 +236,8 @@ func (c clientQueryBuilder) Channel(id Snowflake) ChannelQueryBuilder {
 	return &channelQueryBuilder{client: c.client, cid: id}
 }
 
+var MissingChannelIDErr = errors.New("missing channel id")
+
 // ChannelQueryBuilder REST interface for all Channel endpoints
 type ChannelQueryBuilder interface {
 	WithContext(ctx context.Context) ChannelQueryBuilder

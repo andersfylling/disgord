@@ -241,6 +241,62 @@ func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// UpdateMessageBuilder is the interface for the builder.
+type UpdateMessageBuilder interface {
+	Execute() (message *Message, err error)
+	IgnoreCache() UpdateMessageBuilder
+	CancelOnRatelimit() UpdateMessageBuilder
+	URLParam(name string, v interface{}) UpdateMessageBuilder
+	Set(name string, v interface{}) UpdateMessageBuilder
+	SetContent(content string) UpdateMessageBuilder
+	SetEmbed(embed *Embed) UpdateMessageBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateMessageBuilder) IgnoreCache() UpdateMessageBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateMessageBuilder) CancelOnRatelimit() UpdateMessageBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateMessageBuilder) URLParam(name string, v interface{}) UpdateMessageBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateMessageBuilder) Set(name string, v interface{}) UpdateMessageBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateMessageBuilder) SetContent(content string) UpdateMessageBuilder {
+	b.r.param("content", content)
+	return b
+}
+
+func (b *updateMessageBuilder) SetEmbed(embed *Embed) UpdateMessageBuilder {
+	b.r.param("embed", embed)
+	return b
+}
+
+func (b *updateMessageBuilder) Execute() (message *Message, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Message), nil
+}
+
 // CreateGuildEmojiBuilder is the interface for the builder.
 type CreateGuildEmojiBuilder interface {
 	Execute() (emoji *Emoji, err error)
@@ -590,62 +646,6 @@ func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) UpdateGuild
 func (b *updateGuildMemberBuilder) Execute() (err error) {
 	_, err = b.r.execute()
 	return
-}
-
-// UpdateMessageBuilder is the interface for the builder.
-type UpdateMessageBuilder interface {
-	Execute() (message *Message, err error)
-	IgnoreCache() UpdateMessageBuilder
-	CancelOnRatelimit() UpdateMessageBuilder
-	URLParam(name string, v interface{}) UpdateMessageBuilder
-	Set(name string, v interface{}) UpdateMessageBuilder
-	SetContent(content string) UpdateMessageBuilder
-	SetEmbed(embed *Embed) UpdateMessageBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateMessageBuilder) IgnoreCache() UpdateMessageBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateMessageBuilder) CancelOnRatelimit() UpdateMessageBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateMessageBuilder) URLParam(name string, v interface{}) UpdateMessageBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateMessageBuilder) Set(name string, v interface{}) UpdateMessageBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateMessageBuilder) SetContent(content string) UpdateMessageBuilder {
-	b.r.param("content", content)
-	return b
-}
-
-func (b *updateMessageBuilder) SetEmbed(embed *Embed) UpdateMessageBuilder {
-	b.r.param("embed", embed)
-	return b
-}
-
-func (b *updateMessageBuilder) Execute() (message *Message, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Message), nil
 }
 
 // BasicBuilder is the interface for the builder.

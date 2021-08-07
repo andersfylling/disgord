@@ -1,9 +1,13 @@
 package disgord
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
+	"mime/multipart"
+	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -320,32 +324,34 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, fla
 //
 //////////////////////////////////////////////////////
 
+var MissingMessageIDErr = errors.New("missing message id")
+
 type MessageQueryBuilder interface {
 	WithContext(ctx context.Context) MessageQueryBuilder
 
-	// PinMessageID Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
+	// Pin Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
 	Pin(flags ...Flag) error
 
-	// UnpinMessageID Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+	// Unpin Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 	Unpin(flags ...Flag) error
 
-	// GetMessage Returns a specific message in the channel. If operating on a guild channel, this endpoints
+	// Get Returns a specific message in the channel. If operating on a guild channel, this endpoints
 	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 	// Returns a message object on success.
 	Get(flags ...Flag) (*Message, error)
 
-	// UpdateMessage Edit a previously sent message. You can only edit messages that have been sent by the
+	// Update Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	UpdateBuilder(flags ...Flag) *updateMessageBuilder
+	Update(params *UpdateMessageParams, flags ...Flag) (*Message, error)
 	SetContent(content string) (*Message, error)
 	SetEmbed(embed *Embed) (*Message, error)
 
 	CrossPost(flags ...Flag) (*Message, error)
 
-	// Deprecated: use UpdateBuilder instead
-	Update(flags ...Flag) *updateMessageBuilder
+	// Deprecated: use Update instead
+	UpdateBuilder(flags ...Flag) *updateMessageBuilder
 
-	// DeleteMessage Delete a message. If operating on a guild channel and trying to delete a message that was not
+	// Delete deletes a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
 	Delete(flags ...Flag) error
 
@@ -415,22 +421,88 @@ func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateMessageBuilder) {
-	builder = &updateMessageBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Message{}
+func (m messageQueryBuilder) Update(params *UpdateMessageParams, flags ...Flag) (*Message, error) {
+	if params == nil {
+		return nil, errors.New("missing update parameters")
 	}
-	builder.r.flags = flags
-	builder.r.addPrereq(m.cid.IsZero(), "channelID must be set to get channel messages")
-	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
-	builder.r.setup(m.client.req, &httd.Request{
+	if m.cid.IsZero() {
+		return nil, MissingChannelIDErr
+	}
+	if m.mid.IsZero() {
+		return nil, MissingMessageIDErr
+	}
+
+	postBody, contentType, err := params.prepare()
+	if err != nil {
+		return nil, err
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        postBody,
+		ContentType: contentType,
+	}, flags)
+	r.pool = m.client.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
 
-	return builder
+	return getMessage(r.Execute)
+}
+
+type UpdateMessageParams struct {
+	Content *string                  `json:"content,omitempty"`
+	Embeds  *[]*Embed                `json:"embeds,omitempty"`
+	Flags   *MessageFlag             `json:"flags,omitempty"`
+	File    *CreateMessageFileParams `json:"-"`
+	// PayloadJSON *string `json:"payload_json,omitempty"`
+	AllowedMentions *AllowedMentions     `json:"allowed_mentions,omitempty"`
+	Components      *[]*MessageComponent `json:"components,omitempty"`
+}
+
+func (p *UpdateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+	if p.File == nil {
+		return p, httd.ContentTypeJSON, nil
+	}
+
+	if p.Embeds != nil {
+		for _, embed := range *p.Embeds {
+			// check for spoilers
+			if p.File.SpoilerTag && strings.Contains(embed.Image.URL, p.File.FileName) {
+				s := strings.Split(embed.Image.URL, p.File.FileName)
+				if len(s) > 0 {
+					s[0] += AttachmentSpoilerPrefix + p.File.FileName
+					embed.Image.URL = strings.Join(s, "")
+				}
+			}
+		}
+	}
+
+	// Set up a new multipart writer, as we'll be using this for the POST body instead
+	buf := new(bytes.Buffer)
+	mp := multipart.NewWriter(buf)
+
+	// Write the existing JSON payload
+	var payload []byte
+	payload, err = json.Marshal(p)
+	if err != nil {
+		return nil, "", err
+	}
+	if err = mp.WriteField("payload_json", string(payload)); err != nil {
+		return
+	}
+
+	if err = p.File.write(0, mp); err != nil {
+		return nil, "", err
+	}
+
+	if err = mp.Close(); err != nil {
+		return nil, "", err
+	}
+
+	return buf, mp.FormDataContentType(), nil
 }
 
 // Delete If operating on a guild channel and trying to delete a message that was not
@@ -479,7 +551,7 @@ func (m messageQueryBuilder) Pin(flags ...Flag) (err error) {
 	return err
 }
 
-// UnpinMessageID [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// Unpin deletes a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
@@ -504,7 +576,7 @@ func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 	return err
 }
 
-// CrossPost Crosspost a message in a News Channel to following channels.
+// CrossPost crosspost a message in a News Channel to following channels.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/crosspost
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
@@ -557,44 +629,4 @@ func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
 
 	_, err := r.Execute()
 	return err
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Wrappers
-//
-//////////////////////////////////////////////////////
-
-func (m messageQueryBuilder) SetContent(content string) (*Message, error) {
-	builder := m.WithContext(m.ctx).UpdateBuilder()
-	return builder.
-		SetContent(content).
-		Execute()
-}
-
-func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
-	builder := m.WithContext(m.ctx).UpdateBuilder()
-	return builder.
-		SetEmbed(embed).
-		Execute()
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// updateMessageBuilder, params here
-//  https://discord.com/developers/docs/resources/channel#edit-message-json-params
-//generate-rest-params: content:string, embed:*Embed,
-//generate-rest-basic-execute: message:*Message,
-type updateMessageBuilder struct {
-	r RESTBuilder
-}
-
-// SetAllowedMentions sets the allowed mentions for the updateMessageBuilder then returns the builder to allow chaining.
-func (b *updateMessageBuilder) SetAllowedMentions(mentions *AllowedMentions) *updateMessageBuilder {
-	b.r.param("allowed_mentions", mentions)
-	return b
 }
