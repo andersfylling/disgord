@@ -261,6 +261,23 @@ Make them readable. Tests that is for the public interface of Disgord, should be
 ### Pull Requests
 If your PR is not ready yet, make it a Draft.
 
+#### Workflow
+PR your changes against the master branch. It is recommended that you branch of your forks master to avoid making merge commits when you synchronize later. A suggested workflow:
+```
+git checkout -b fix/some-api-typo
+git commit -am "fixed typo in json tag"
+git push
+```
+
+After your PR has been merged:
+```
+git checkout master
+git pull --ff-only
+```
+
+Now your master is up-to-date, and no merging was required.
+
+#### PR title
 Your PR title must start with one of the following:
  - fix: patches / fixes
  - feat: features, this also includes breaking changes
@@ -272,6 +289,7 @@ Your PR title must start with one of the following:
  - style: changes to code design, that is not a refactor
  - chore: misc changes that doesn't fit with any of the above
 
+#### Stale PRs
 Deadlines:
  - If you do not fix the required changes within 30 days your PR will be closed. 
  - If you have created a PR before that was closed due to rule #1, the deadline is reduced from 30 days to 20 days (this only applies when you have 2 or more PR in a row that are a victim to rule #1).

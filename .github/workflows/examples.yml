@@ -1,5 +1,5 @@
-name: examples
-on: [push, pull_request]
+name: Examples
+on: [pull_request]
 jobs:
   docs-examples:
     name: Build examples

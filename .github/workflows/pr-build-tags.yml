@@ -1,0 +1,22 @@
+name: Build tags
+on: [pull_request]
+jobs:
+  buildtags:
+    name: tag
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        buildtag: [disgord_diagnosews, disgordperf]
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get dependencies
+        run: go mod download
+      - name: test
+        run: go test -tags=${{ matrix.buildtag }} -v -race -short ./...

@@ -1,8 +1,8 @@
 name: Code Quality
-on: [push, pull_request]
+on: [pull_request]
 jobs:
   formatting:
-    name: validate formatting
+    name: go fmt
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Go
@@ -18,7 +18,7 @@ jobs:
       - name: Formatting
         run: diff <(gofmt -d ./...) <(echo -n)
   generate:
-    name: validate generated code
+    name: go generate
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Go
