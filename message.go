@@ -139,6 +139,9 @@ type StickerItem struct {
 	FormatType MessageStickerFormatType `json:"format_type"`
 }
 
+var _ Copier = (*StickerItem)(nil)
+var _ DeepCopier = (*StickerItem)(nil)
+
 type MessageSticker struct {
 	ID           Snowflake                `json:"id"`
 	PackID       Snowflake                `json:"pack_id"`

@@ -684,6 +684,19 @@ func (r *Role) copyOverTo(other interface{}) error {
 	return nil
 }
 
+func (s *StickerItem) copyOverTo(other interface{}) error {
+	var dest *StickerItem
+	var valid bool
+	if dest, valid = other.(*StickerItem); !valid {
+		return newErrorUnsupportedType("argument given is not a *StickerItem type")
+	}
+	dest.FormatType = s.FormatType
+	dest.ID = s.ID
+	dest.Name = s.Name
+
+	return nil
+}
+
 func (u *User) copyOverTo(other interface{}) error {
 	var dest *User
 	var valid bool
