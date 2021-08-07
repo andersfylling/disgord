@@ -133,6 +133,12 @@ const (
 	MessageStickerFormatLOTTIE
 )
 
+type StickerItem struct {
+	ID         Snowflake                `json:"id"`
+	Name       string                   `json:"name"`
+	FormatType MessageStickerFormatType `json:"format_type"`
+}
+
 type MessageSticker struct {
 	ID           Snowflake                `json:"id"`
 	PackID       Snowflake                `json:"pack_id"`
@@ -174,6 +180,7 @@ type Message struct {
 	MessageReference  *MessageReference   `json:"message_reference"`
 	ReferencedMessage *Message            `json:"referenced_message"`
 	Flags             MessageFlag         `json:"flags"`
+	StickerItems      []*StickerItem      `json:"sticker_items"`
 	Stickers          []*MessageSticker   `json:"stickers"`
 	Components        []*MessageComponent `json:"components"`
 	Interaction       *MessageInteraction `json:"interaction"`
