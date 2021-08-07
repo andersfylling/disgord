@@ -37,7 +37,8 @@ const (
 	UpdateMessage
 )
 
-//TODO ApplicationCommandInteractionDataResolved https://discord.com/developers/docs/interactions/slash-commands#interaction-applicationcommandinteractiondataresolved
+// ApplicationCommandInteractionDataResolved ..
+//TODO implement https://discord.com/developers/docs/interactions/slash-commands#interaction-applicationcommandinteractiondataresolved
 type ApplicationCommandInteractionDataResolved struct {
 }
 
