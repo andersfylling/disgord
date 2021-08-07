@@ -663,11 +663,16 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildPar
 type GuildQueryBuilder interface {
 	WithContext(ctx context.Context) GuildQueryBuilder
 
+	// Get
 	// TODO: Add more guild attribute things. Waiting for caching changes before then.
 	Get(flags ...Flag) (guild *Guild, err error)
+
+	// GetChannels
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
 	GetChannels(flags ...Flag) ([]*Channel, error)
+
+	// GetMembers
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error)
@@ -687,6 +692,8 @@ type GuildQueryBuilder interface {
 	GetBans(flags ...Flag) ([]*Ban, error)
 	GetBan(userID Snowflake, flags ...Flag) (*Ban, error)
 	UnbanUser(userID Snowflake, reason string, flags ...Flag) error
+
+	// GetRoles
 	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	// TODO-3: Add GetRole.
@@ -713,6 +720,7 @@ type GuildQueryBuilder interface {
 
 	VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder
 
+	// GetEmojis
 	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
 	GetEmojis(flags ...Flag) ([]*Emoji, error)
@@ -759,7 +767,7 @@ func (g guildQueryBuilder) Get(flags ...Flag) (guild *Guild, err error) {
 	return getGuild(r.Execute)
 }
 
-// Update is used to create a guild update builder.
+// UpdateBuilder is used to create a guild update builder.
 func (g guildQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildBuilder {
 	builder := &updateGuildBuilder{}
 	builder.r.itemFactory = func() interface{} {
@@ -1029,7 +1037,7 @@ func (g guildQueryBuilder) GetBan(userID Snowflake, flags ...Flag) (*Ban, error)
 	return getBan(r.Execute)
 }
 
-// UnbanMember Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
+// UnbanUser Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 func (g guildQueryBuilder) UnbanUser(userID Snowflake, reason string, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
@@ -1285,7 +1293,7 @@ func (g guildQueryBuilder) GetEmbed(flags ...Flag) (*GuildEmbed, error) {
 	return getGuildEmbed(r.Execute)
 }
 
-// UpdateEmbed Modify a guild embed object for the guild. All attributes may be passed in with JSON and
+// UpdateEmbedBuilder Modify a guild embed object for the guild. All attributes may be passed in with JSON and
 // modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
 func (g guildQueryBuilder) UpdateEmbedBuilder(flags ...Flag) UpdateGuildEmbedBuilder {
 	builder := &updateGuildEmbedBuilder{}
