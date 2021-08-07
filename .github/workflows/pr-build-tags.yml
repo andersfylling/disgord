@@ -22,7 +22,6 @@ jobs:
       - name: test
         run: go test -v -race -short ./...
   buildtags:
-    name: All
     runs-on: ubuntu-latest
     strategy:
       matrix:
