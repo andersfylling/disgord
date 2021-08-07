@@ -597,6 +597,10 @@ func (m *Message) copyOverTo(other interface{}) error {
 	dest.ReferencedMessage = m.ReferencedMessage
 	dest.SpoilerTagAllAttachments = m.SpoilerTagAllAttachments
 	dest.SpoilerTagContent = m.SpoilerTagContent
+	dest.StickerItems = make([]*StickerItem, len(m.StickerItems))
+	for i := 0; i < len(m.StickerItems); i++ {
+		dest.StickerItems[i] = DeepCopy(m.StickerItems[i]).(*StickerItem)
+	}
 	dest.Stickers = make([]*MessageSticker, len(m.Stickers))
 	for i := 0; i < len(m.Stickers); i++ {
 		dest.Stickers[i] = DeepCopy(m.Stickers[i]).(*MessageSticker)
