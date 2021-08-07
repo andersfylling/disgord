@@ -113,7 +113,7 @@ func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
 	return getEmoji(r.Execute)
 }
 
-// UpdateEmoji Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
+// UpdateBuilder Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildEmojiBuilder {
 	builder := &updateGuildEmojiBuilder{}
@@ -131,7 +131,7 @@ func (g guildEmojiQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildEmojiBui
 	return builder
 }
 
-// DeleteEmoji Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
+// Delete deletes the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
 // success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) Delete(flags ...Flag) (err error) {
 	r := g.client.newRESTRequest(&httd.Request{
