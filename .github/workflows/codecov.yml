@@ -1,10 +1,10 @@
+name: code coverage
 on:
   push:
-    branches:
-      - develop
-      - master
-      - main
-name: code coverage
+  branches:
+  - develop
+  - master
+  - main
 jobs:
   integration-tests:
     name: Integration tests & code coverage

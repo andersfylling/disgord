@@ -1,4 +1,4 @@
-name: PR naming scheme
+name: PR title naming scheme
 on: 
   pull_request:
     branches:

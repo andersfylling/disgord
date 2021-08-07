@@ -1,4 +1,4 @@
-name: examples
+name: Examples
 on: [pull_request]
 jobs:
   docs-examples:

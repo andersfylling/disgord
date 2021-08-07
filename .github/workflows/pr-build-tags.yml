@@ -1,8 +1,8 @@
-name: PR Quality
+name: Build tags
 on: [pull_request]
 jobs:
   none:
-    name: No build tags
+    name: None
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
@@ -22,7 +22,7 @@ jobs:
       - name: test
         run: go test -v -race -short ./...
   buildtags:
-    name: Build tags
+    name: All
     runs-on: ubuntu-latest
     strategy:
       matrix:
