@@ -5,11 +5,11 @@ Please include a summary of the PR. Do not create a PR into branch:develop unles
 eg. If the current release is v0.10, then you should create a PR for branch:release/v0.11. If the next release branch is not out/created yet, create an issue or make a draft PR that goes into develop and change it to the release branch later on. Don't worry, I'll try my best to make this easy for everyone.
 -->
 
-## Type of change
-
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+## Breaking Change?
+<!--
+if this is a breaking change please write "yes" or "no".
+-->
+no
 
 ## Benchmarks
 <!--
