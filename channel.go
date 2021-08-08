@@ -29,13 +29,6 @@ const (
 	ChannelTypeGuildStore
 )
 
-// Deprecated: use PermissionOverwrite* instead (note the Type keyword is removed)
-// PermissionOverwriteTypeMember => PermissionOverwriteMember
-const (
-	PermissionOverwriteTypeRole uint8 = iota
-	PermissionOverwriteTypeMember
-)
-
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -253,9 +246,6 @@ type ChannelQueryBuilder interface {
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
 	UpdateBuilder(flags ...Flag) *updateChannelBuilder
-
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) *updateChannelBuilder
 
 	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a

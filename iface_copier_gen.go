@@ -601,10 +601,6 @@ func (m *Message) copyOverTo(other interface{}) error {
 	for i := 0; i < len(m.StickerItems); i++ {
 		dest.StickerItems[i] = DeepCopy(m.StickerItems[i]).(*StickerItem)
 	}
-	dest.Stickers = make([]*MessageSticker, len(m.Stickers))
-	for i := 0; i < len(m.Stickers); i++ {
-		dest.Stickers[i] = DeepCopy(m.Stickers[i]).(*MessageSticker)
-	}
 	dest.Timestamp = m.Timestamp
 	dest.Tts = m.Tts
 	dest.Type = m.Type

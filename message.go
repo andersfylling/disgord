@@ -161,37 +161,34 @@ var _ DeepCopier = (*MessageSticker)(nil)
 
 // Message https://discord.com/developers/docs/resources/channel#message-object-message-structure
 type Message struct {
-	ID                Snowflake          `json:"id"`
-	ChannelID         Snowflake          `json:"channel_id"`
-	GuildID           Snowflake          `json:"guild_id"`
-	Author            *User              `json:"author"`
-	Member            *Member            `json:"member"`
-	Content           string             `json:"content"`
-	Timestamp         Time               `json:"timestamp"`
-	EditedTimestamp   Time               `json:"edited_timestamp"` // ?
-	Tts               bool               `json:"tts"`
-	MentionEveryone   bool               `json:"mention_everyone"`
-	Mentions          []*User            `json:"mentions"`
-	MentionRoles      []Snowflake        `json:"mention_roles"`
-	MentionChannels   []*MentionChannel  `json:"mention_channels"`
-	Attachments       []*Attachment      `json:"attachments"`
-	Embeds            []*Embed           `json:"embeds"`
-	Reactions         []*Reaction        `json:"reactions"` // ?
-	Nonce             interface{}        `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
-	Pinned            bool               `json:"pinned"`
-	WebhookID         Snowflake          `json:"webhook_id"` // ?
-	Type              MessageType        `json:"type"`
-	Activity          MessageActivity    `json:"activity"`
-	Application       MessageApplication `json:"application"`
-	MessageReference  *MessageReference  `json:"message_reference"`
-	ReferencedMessage *Message           `json:"referenced_message"`
-	Flags             MessageFlag        `json:"flags"`
-	StickerItems      []*StickerItem     `json:"sticker_items"`
-
-	// Deprecated
-	Stickers    []*MessageSticker   `json:"stickers"`
-	Components  []*MessageComponent `json:"components"`
-	Interaction *MessageInteraction `json:"interaction"`
+	ID                Snowflake           `json:"id"`
+	ChannelID         Snowflake           `json:"channel_id"`
+	GuildID           Snowflake           `json:"guild_id"`
+	Author            *User               `json:"author"`
+	Member            *Member             `json:"member"`
+	Content           string              `json:"content"`
+	Timestamp         Time                `json:"timestamp"`
+	EditedTimestamp   Time                `json:"edited_timestamp"` // ?
+	Tts               bool                `json:"tts"`
+	MentionEveryone   bool                `json:"mention_everyone"`
+	Mentions          []*User             `json:"mentions"`
+	MentionRoles      []Snowflake         `json:"mention_roles"`
+	MentionChannels   []*MentionChannel   `json:"mention_channels"`
+	Attachments       []*Attachment       `json:"attachments"`
+	Embeds            []*Embed            `json:"embeds"`
+	Reactions         []*Reaction         `json:"reactions"` // ?
+	Nonce             interface{}         `json:"nonce"`     // NOT A SNOWFLAKE! DONT TOUCH!
+	Pinned            bool                `json:"pinned"`
+	WebhookID         Snowflake           `json:"webhook_id"` // ?
+	Type              MessageType         `json:"type"`
+	Activity          MessageActivity     `json:"activity"`
+	Application       MessageApplication  `json:"application"`
+	MessageReference  *MessageReference   `json:"message_reference"`
+	ReferencedMessage *Message            `json:"referenced_message"`
+	Flags             MessageFlag         `json:"flags"`
+	StickerItems      []*StickerItem      `json:"sticker_items"`
+	Components        []*MessageComponent `json:"components"`
+	Interaction       *MessageInteraction `json:"interaction"`
 	// SpoilerTagContent is only true if the entire message text is tagged as a spoiler (aka completely wrapped in ||)
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
@@ -344,9 +341,6 @@ type MessageQueryBuilder interface {
 	SetEmbed(embed *Embed) (*Message, error)
 
 	CrossPost(flags ...Flag) (*Message, error)
-
-	// Deprecated: use UpdateBuilder instead
-	Update(flags ...Flag) *updateMessageBuilder
 
 	// Delete Delete a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.

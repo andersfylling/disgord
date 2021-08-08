@@ -83,19 +83,10 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		conf.WebsocketHttpClient = DefaultHttpClient
 	}
 
-	if conf.Intents > 0 {
-		conf.DMIntents |= conf.Intents
-	}
-
 	const DMIntents = IntentDirectMessageReactions | IntentDirectMessages | IntentDirectMessageTyping
 	if validRange := conf.DMIntents & DMIntents; (conf.DMIntents ^ validRange) > 0 {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
 	}
-
-	if conf.IgnoreEvents != nil {
-		conf.Logger.Info("Config.IgnoreEvents has been deprecated. Use Config.RejectEvents instead")
-	}
-	conf.RejectEvents = append(conf.RejectEvents, conf.IgnoreEvents...)
 
 	// remove extra/duplicates events
 	uniqueEventNames := make(map[string]bool)
@@ -223,10 +214,6 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// Deprecated: use DMIntents (values here are copied to DMIntents for now)
-	// For direct communication with you bot you must specify intents
-	Intents Intent
-
 	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
 	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
 	// such optimizations can be handled in the background).
@@ -273,15 +260,6 @@ type Config struct {
 	DisableCache bool
 	Cache        Cache
 	ShardConfig  ShardConfig
-
-	// IgnoreEvents will skip events that matches the given event names.
-	// WARNING! This can break your caching, so be careful about what you want to ignore.
-	//
-	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
-	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
-	// them at all due to how the identify command was defined. eg. guildS_subscriptions
-	// Deprecated: use RejectEvents instead (nothing changed, just better naming)
-	IgnoreEvents []string
 
 	RejectEvents []string
 }
