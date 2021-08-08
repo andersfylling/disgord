@@ -100,7 +100,7 @@ func (g guildRoleQueryBuilder) WithContext(ctx context.Context) GuildRoleQueryBu
 	return &g
 }
 
-// UpdateRole Modify a guild role. Requires the 'MANAGE_ROLES' permission.
+// UpdateBuilder Modify a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns the updated role on success. Fires a Guild Role Update Gateway event.
 func (g guildRoleQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildRoleBuilder {
 	builder := &updateGuildRoleBuilder{}
@@ -118,7 +118,7 @@ func (g guildRoleQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildRoleBuild
 	return builder
 }
 
-// DeleteRole Delete a guild role. Requires the 'MANAGE_ROLES' permission.
+// Delete Deletes a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 func (g guildRoleQueryBuilder) Delete(flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
