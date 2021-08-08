@@ -494,7 +494,7 @@ func ensureDiscordGatewayURLHasQueryParams(urlString string) (string, error) {
 	return u.String(), nil
 }
 
-func exec(f func() (interface{}, error), flags ...Flag) (v interface{}, err error) {
+func exec(f func() (interface{}, error)) (v interface{}, err error) {
 	if v, err = f(); err != nil {
 		return nil, err
 	}
@@ -507,18 +507,18 @@ func exec(f func() (interface{}, error), flags ...Flag) (v interface{}, err erro
 }
 
 // TODO: auto generate
-func getChannel(f func() (interface{}, error), flags ...Flag) (channel *Channel, err error) {
+func getChannel(f func() (interface{}, error)) (channel *Channel, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Channel), nil
 }
 
 // TODO: auto generate
-func getChannels(f func() (interface{}, error), flags ...Flag) (channels []*Channel, err error) {
+func getChannels(f func() (interface{}, error)) (channels []*Channel, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Channel); ok {
@@ -530,18 +530,18 @@ func getChannels(f func() (interface{}, error), flags ...Flag) (channels []*Chan
 }
 
 // TODO: auto generate
-func getRole(f func() (interface{}, error), flags ...Flag) (role *Role, err error) {
+func getRole(f func() (interface{}, error)) (role *Role, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Role), nil
 }
 
 // TODO: auto generate
-func getRoles(f func() (interface{}, error), flags ...Flag) (roles []*Role, err error) {
+func getRoles(f func() (interface{}, error)) (roles []*Role, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Role); ok {
@@ -553,18 +553,18 @@ func getRoles(f func() (interface{}, error), flags ...Flag) (roles []*Role, err 
 }
 
 // TODO: auto generate
-func getMember(f func() (interface{}, error), flags ...Flag) (member *Member, err error) {
+func getMember(f func() (interface{}, error)) (member *Member, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Member), nil
 }
 
 // TODO: auto generate
-func getMembers(f func() (interface{}, error), flags ...Flag) (members []*Member, err error) {
+func getMembers(f func() (interface{}, error)) (members []*Member, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Member); ok {
@@ -576,18 +576,18 @@ func getMembers(f func() (interface{}, error), flags ...Flag) (members []*Member
 }
 
 // TODO: auto generate
-func getWebhook(f func() (interface{}, error), flags ...Flag) (wh *Webhook, err error) {
+func getWebhook(f func() (interface{}, error)) (wh *Webhook, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Webhook), nil
 }
 
 // TODO: auto generate
-func getWebhooks(f func() (interface{}, error), flags ...Flag) (whs []*Webhook, err error) {
+func getWebhooks(f func() (interface{}, error)) (whs []*Webhook, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Webhook); ok {
@@ -599,18 +599,18 @@ func getWebhooks(f func() (interface{}, error), flags ...Flag) (whs []*Webhook, 
 }
 
 // TODO: auto generate
-func getMessage(f func() (interface{}, error), flags ...Flag) (msg *Message, err error) {
+func getMessage(f func() (interface{}, error)) (msg *Message, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Message), nil
 }
 
 // TODO: auto generate
-func getMessages(f func() (interface{}, error), flags ...Flag) (msgs []*Message, err error) {
+func getMessages(f func() (interface{}, error)) (msgs []*Message, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Message); ok {
@@ -622,18 +622,18 @@ func getMessages(f func() (interface{}, error), flags ...Flag) (msgs []*Message,
 }
 
 // TODO: auto generate
-func getUser(f func() (interface{}, error), flags ...Flag) (user *User, err error) {
+func getUser(f func() (interface{}, error)) (user *User, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*User), nil
 }
 
 // TODO: auto generate
-func getUsers(f func() (interface{}, error), flags ...Flag) (users []*User, err error) {
+func getUsers(f func() (interface{}, error)) (users []*User, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*User); ok {
@@ -645,45 +645,45 @@ func getUsers(f func() (interface{}, error), flags ...Flag) (users []*User, err 
 }
 
 // TODO: auto generate
-func getNickName(f func() (interface{}, error), flags ...Flag) (nick string, err error) {
+func getNickName(f func() (interface{}, error)) (nick string, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return "", err
 	}
 	return v.(*nickNameResponse).Nickname, nil
 }
 
 // TODO: auto generate
-func getBan(f func() (interface{}, error), flags ...Flag) (ban *Ban, err error) {
+func getBan(f func() (interface{}, error)) (ban *Ban, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Ban), nil
 }
 
 // TODO: auto generate
-func getEmoji(f func() (interface{}, error), flags ...Flag) (emoji *Emoji, err error) {
+func getEmoji(f func() (interface{}, error)) (emoji *Emoji, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Emoji), nil
 }
 
 // TODO: auto generate
-func getInvite(f func() (interface{}, error), flags ...Flag) (invite *Invite, err error) {
+func getInvite(f func() (interface{}, error)) (invite *Invite, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Invite), nil
 }
 
 // TODO: auto generate
-func getInvites(f func() (interface{}, error), flags ...Flag) (invite []*Invite, err error) {
+func getInvites(f func() (interface{}, error)) (invite []*Invite, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Invite); ok {
@@ -695,18 +695,18 @@ func getInvites(f func() (interface{}, error), flags ...Flag) (invite []*Invite,
 }
 
 // TODO: auto generate
-func getGuild(f func() (interface{}, error), flags ...Flag) (guild *Guild, err error) {
+func getGuild(f func() (interface{}, error)) (guild *Guild, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*Guild), nil
 }
 
 // TODO: auto generate
-func getIntegrations(f func() (interface{}, error), flags ...Flag) (integrations []*Integration, err error) {
+func getIntegrations(f func() (interface{}, error)) (integrations []*Integration, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*Integration); ok {
@@ -718,9 +718,9 @@ func getIntegrations(f func() (interface{}, error), flags ...Flag) (integrations
 }
 
 // TODO: auto generate
-func getVoiceRegions(f func() (interface{}, error), flags ...Flag) (regions []*VoiceRegion, err error) {
+func getVoiceRegions(f func() (interface{}, error)) (regions []*VoiceRegion, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	if list, ok := v.(*[]*VoiceRegion); ok {
@@ -732,27 +732,27 @@ func getVoiceRegions(f func() (interface{}, error), flags ...Flag) (regions []*V
 }
 
 // TODO: auto generate
-func getVoiceRegion(f func() (interface{}, error), flags ...Flag) (region *VoiceRegion, err error) {
+func getVoiceRegion(f func() (interface{}, error)) (region *VoiceRegion, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*VoiceRegion), nil
 }
 
 // TODO: auto generate
-func getPartialInvite(f func() (interface{}, error), flags ...Flag) (invite *PartialInvite, err error) {
+func getPartialInvite(f func() (interface{}, error)) (invite *PartialInvite, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*PartialInvite), nil
 }
 
 // TODO: auto generate
-func getGuildEmbed(f func() (interface{}, error), flags ...Flag) (embed *GuildEmbed, err error) {
+func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error) {
 	var v interface{}
-	if v, err = exec(f, flags...); err != nil {
+	if v, err = exec(f); err != nil {
 		return nil, err
 	}
 	return v.(*GuildEmbed), nil
