@@ -31,25 +31,26 @@ var _ DeepCopier = (*Webhook)(nil)
 
 type WebhookQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookQueryBuilder
+	WithFlags(flags ...Flag) WebhookQueryBuilder
 
-	// GetWebhook Returns the new webhook object for the given id.
-	Get(flags ...Flag) (*Webhook, error)
+	// Get Returns the new webhook object for the given id.
+	Get() (*Webhook, error)
 
 	// UpdateBuilder Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns the updated webhook object on success.
-	UpdateBuilder(flags ...Flag) *updateWebhookBuilder
+	UpdateBuilder() *updateWebhookBuilder
 
 	// Delete Deletes a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
-	Delete(flags ...Flag) error
+	Delete() error
 
 	// Execute Trigger a webhook in Discord.
-	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
+	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (*Message, error)
 
 	// ExecuteSlackWebhook Trigger a webhook in Discord from the Slack app.
-	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
+	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (*Message, error)
 
 	// ExecuteGitHubWebhook Trigger a webhook in Discord from the GitHub app.
-	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (*Message, error)
+	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (*Message, error)
 
 	WithToken(token string) WebhookWithTokenQueryBuilder
 }
@@ -60,6 +61,7 @@ func (c clientQueryBuilder) Webhook(id Snowflake) WebhookQueryBuilder {
 
 type webhookQueryBuilder struct {
 	ctx       context.Context
+	flags     Flag
 	client    *Client
 	cid       Snowflake
 	webhookID Snowflake
@@ -70,17 +72,22 @@ func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilde
 	return &w
 }
 
-// GetWebhook [REST] Returns the new webhook object for the given id.
+func (w webhookQueryBuilder) WithFlags(flags ...Flag) WebhookQueryBuilder {
+	w.flags = mergeFlags(flags)
+	return &w
+}
+
+// Get [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (w webhookQueryBuilder) Get(flags ...Flag) (ret *Webhook, err error) {
+func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 	r := w.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Webhook(w.webhookID),
 		Ctx:      w.ctx,
-	}, flags)
+	}, w.flags)
 	r.factory = func() interface{} {
 		return &Webhook{}
 	}
@@ -88,19 +95,19 @@ func (w webhookQueryBuilder) Get(flags ...Flag) (ret *Webhook, err error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// UpdateBuilder [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (w webhookQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateWebhookBuilder) {
+func (w webhookQueryBuilder) UpdateBuilder() (builder *updateWebhookBuilder) {
 	builder = &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
 	}
-	builder.r.flags = flags
+	builder.r.flags = w.flags
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.setup(w.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
@@ -112,14 +119,14 @@ func (w webhookQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateWebhoo
 	return builder
 }
 
-// DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
+// Delete [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (w webhookQueryBuilder) Delete(flags ...Flag) (err error) {
-	return w.WithToken("").WithContext(w.ctx).Delete(flags...)
+func (w webhookQueryBuilder) Delete() (err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Delete()
 }
 
 // ExecuteWebhookParams JSON params for func ExecuteWebhook
@@ -139,8 +146,8 @@ type execWebhookParams struct {
 var _ URLQueryStringer = (*execWebhookParams)(nil)
 
 // Execute Trigger a webhook in Discord.
-func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
-	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, URLSuffix, flags...)
+func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, URLSuffix)
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
@@ -150,8 +157,8 @@ func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, UR
 //  Reviewed                2020-05-21
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
-	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, endpoint.Slack(), flags...)
+func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, endpoint.Slack())
 }
 
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
@@ -163,25 +170,26 @@ func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, w
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, flags ...Flag) (message *Message, err error) {
-	return w.WithToken("").WithContext(w.ctx).Execute(params, wait, endpoint.GitHub(), flags...)
+func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, endpoint.GitHub())
 }
 
 type WebhookWithTokenQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookWithTokenQueryBuilder
+	WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder
 
 	// Get Same as GetWebhook, except this call does not require authentication and
 	// returns no user in the webhook object.
-	Get(flags ...Flag) (*Webhook, error)
+	Get() (*Webhook, error)
 
 	// UpdateBuilder Same as UpdateWebhook, except this call does not require authentication,
 	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-	UpdateBuilder(flags ...Flag) *updateWebhookBuilder
+	UpdateBuilder() *updateWebhookBuilder
 
 	// Delete Same as DeleteWebhook, except this call does not require authentication.
-	Delete(flags ...Flag) error
+	Delete() error
 
-	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (*Message, error)
+	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (*Message, error)
 }
 
 func (w webhookQueryBuilder) WithToken(token string) WebhookWithTokenQueryBuilder {
@@ -190,6 +198,7 @@ func (w webhookQueryBuilder) WithToken(token string) WebhookWithTokenQueryBuilde
 
 type webhookWithTokenQueryBuilder struct {
 	ctx       context.Context
+	flags     Flag
 	client    *Client
 	cid       Snowflake
 	webhookID Snowflake
@@ -201,18 +210,23 @@ func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWi
 	return &w
 }
 
-// GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
+func (w webhookWithTokenQueryBuilder) WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder {
+	w.flags = mergeFlags(flags)
+	return &w
+}
+
+// Get [REST] Same as GetWebhook, except this call does not require authentication and
 // returns no user in the webhook object.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (w webhookWithTokenQueryBuilder) Get(flags ...Flag) (*Webhook, error) {
+func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 	r := w.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.WebhookToken(w.webhookID, w.token),
 		Ctx:      w.ctx,
-	}, flags)
+	}, w.flags)
 	r.factory = func() interface{} {
 		return &Webhook{}
 	}
@@ -220,19 +234,19 @@ func (w webhookWithTokenQueryBuilder) Get(flags ...Flag) (*Webhook, error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateWebhookWithToken [REST] Same as UpdateWebhook, except this call does not require authentication,
+// UpdateBuilder [REST] Same as UpdateWebhook, except this call does not require authentication,
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
-func (w webhookWithTokenQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateWebhookBuilder) {
+func (w webhookWithTokenQueryBuilder) UpdateBuilder() (builder *updateWebhookBuilder) {
 	builder = &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
 	}
-	builder.r.flags = flags
+	builder.r.flags = w.flags
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(w.token == "", "given webhook token was not set")
 	builder.r.setup(w.client.req, &httd.Request{
@@ -245,13 +259,13 @@ func (w webhookWithTokenQueryBuilder) UpdateBuilder(flags ...Flag) (builder *upd
 	return builder
 }
 
-// DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
+// Delete [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
+func (w webhookWithTokenQueryBuilder) Delete() error {
 	var e string
 	if w.token != "" {
 		e = endpoint.WebhookToken(w.webhookID, w.token)
@@ -263,13 +277,13 @@ func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
 		Method:   httd.MethodDelete,
 		Endpoint: e,
 		Ctx:      w.ctx,
-	}, flags)
+	}, w.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// ExecuteWebhook [REST] Trigger a webhook in Discord.
+// Execute [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
@@ -282,7 +296,7 @@ func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string, flags ...Flag) (message *Message, err error) {
+func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (message *Message, err error) {
 	if params == nil {
 		return nil, errors.New("params can not be nil")
 	}
@@ -308,7 +322,7 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait
 		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token) + URLSuffix + urlparams.URLQueryString(),
 		Body:        params,
 		ContentType: contentType,
-	}, flags)
+	}, w.flags)
 	// Discord only returns the message when wait=true.
 	if wait {
 		r.pool = w.client.pool.message

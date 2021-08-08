@@ -482,7 +482,7 @@ func TestClient(t *testing.T) {
 		}
 
 		// Test getting a member
-		member, err := c.Guild(guildTypical.ID).Member(c.botID).WithContext(deadline).Get(IgnoreCache)
+		member, err := c.Guild(guildTypical.ID).Member(c.botID).WithContext(deadline).WithFlags(IgnoreCache).Get()
 		if err != nil {
 			panic(err)
 		}
@@ -642,7 +642,7 @@ func TestREST(t *testing.T) {
 	// Current User
 	// -------------------
 	t.Run("current-user", func(t *testing.T) {
-		if _, err := c.CurrentUser().Get(IgnoreCache); err != nil {
+		if _, err := c.CurrentUser().WithFlags(IgnoreCache).Get(); err != nil {
 			t.Error(fmt.Errorf("unable to fetch current user. %w", err))
 		}
 	})
@@ -652,7 +652,7 @@ func TestREST(t *testing.T) {
 	// -------------------
 	t.Run("user", func(t *testing.T) {
 		const userID = andersfylling
-		user, err := c.User(userID).WithContext(deadline).Get(IgnoreCache)
+		user, err := c.User(userID).WithContext(deadline).WithFlags(IgnoreCache).Get()
 		if err != nil {
 			t.Error(fmt.Errorf("unable to fetch user. %w", err))
 		} else if user == nil {
@@ -666,7 +666,7 @@ func TestREST(t *testing.T) {
 	// Voice Region
 	// -------------------
 	t.Run("voice-region", func(t *testing.T) {
-		regions, err := c.WithContext(deadline).GetVoiceRegions(IgnoreCache)
+		regions, err := c.WithContextAndFlags(deadline, IgnoreCache).GetVoiceRegions()
 		if err != nil {
 			t.Error(fmt.Errorf("unable to fetch voice regions. %w", err))
 		}
@@ -679,7 +679,7 @@ func TestREST(t *testing.T) {
 	// Members
 	// -------------------
 	t.Run("members", func(t *testing.T) {
-		members, err := c.Guild(guildTypical.ID).GetMembers(nil, IgnoreCache)
+		members, err := c.Guild(guildTypical.ID).WithFlags(IgnoreCache).GetMembers(nil)
 		if err != nil {
 			t.Error("failed to fetched members over REST, ", err)
 		}

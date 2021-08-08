@@ -10,14 +10,15 @@ import (
 
 type GuildMemberQueryBuilder interface {
 	WithContext(ctx context.Context) GuildMemberQueryBuilder
+	WithFlags(flags ...Flag) GuildMemberQueryBuilder
 
-	Get(flags ...Flag) (*Member, error)
-	UpdateBuilder(flags ...Flag) UpdateGuildMemberBuilder
-	AddRole(roleID Snowflake, flags ...Flag) error
-	RemoveRole(roleID Snowflake, flags ...Flag) error
-	Kick(reason string, flags ...Flag) error
-	Ban(params *BanMemberParams, flags ...Flag) error
-	GetPermissions(flags ...Flag) (PermissionBit, error)
+	Get() (*Member, error)
+	UpdateBuilder() UpdateGuildMemberBuilder
+	AddRole(roleID Snowflake) error
+	RemoveRole(roleID Snowflake) error
+	Kick(reason string) error
+	Ban(params *BanMemberParams) error
+	GetPermissions() (PermissionBit, error)
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -25,10 +26,11 @@ func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
 }
 
 type guildMemberQueryBuilder struct {
+	ctx    context.Context
+	flags  Flag
 	client *Client
 	gid    Snowflake
 	uid    Snowflake
-	ctx    context.Context
 }
 
 func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQueryBuilder {
@@ -36,9 +38,14 @@ func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQue
 	return &g
 }
 
-// GetMember Returns a guild member object for the specified user.
-func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
-	if !ignoreCache(flags...) {
+func (g guildMemberQueryBuilder) WithFlags(flags ...Flag) GuildMemberQueryBuilder {
+	g.flags = mergeFlags(flags)
+	return &g
+}
+
+// Get Returns a guild member object for the specified user.
+func (g guildMemberQueryBuilder) Get() (*Member, error) {
+	if !ignoreCache(g.flags) {
 		if member, _ := g.client.cache.GetMember(g.gid, g.uid); member != nil {
 			return member, nil
 		}
@@ -47,7 +54,7 @@ func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildMember(g.gid, g.uid),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 	r.factory = func() interface{} {
 		return &Member{
 			GuildID: g.gid,
@@ -63,8 +70,8 @@ func (g guildMemberQueryBuilder) Get(flags ...Flag) (*Member, error) {
 	return member, nil
 }
 
-// UpdateMember is used to create a builder to update a guild member.
-func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberBuilder {
+// UpdateBuilder is used to create a builder to update a guild member.
+func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
 	builder := &updateGuildMemberBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Member{
@@ -72,7 +79,7 @@ func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberB
 			UserID:  g.uid,
 		}
 	}
-	builder.r.flags = flags
+	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
@@ -84,49 +91,49 @@ func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberB
 	return builder
 }
 
-// AddGuildMemberRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
+// AddRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-func (g guildMemberQueryBuilder) AddRole(roleID Snowflake, flags ...Flag) error {
+func (g guildMemberQueryBuilder) AddRole(roleID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPut,
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// RemoveMemberRole removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
+// RemoveRole removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
-func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake, flags ...Flag) error {
+func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// KickMember kicks a member from a guild. Requires 'KICK_MEMBERS' permission.
+// Kick kicks a member from a guild. Requires 'KICK_MEMBERS' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
-func (g guildMemberQueryBuilder) Kick(reason string, flags ...Flag) error {
+func (g guildMemberQueryBuilder) Kick(reason string) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.GuildMember(g.gid, g.uid),
 		Reason:   reason,
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+// Ban Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
-func (g guildMemberQueryBuilder) Ban(params *BanMemberParams, flags ...Flag) (err error) {
+func (g guildMemberQueryBuilder) Ban(params *BanMemberParams) (err error) {
 	if params == nil {
 		return errors.New("params was nil")
 	}
@@ -139,17 +146,17 @@ func (g guildMemberQueryBuilder) Ban(params *BanMemberParams, flags ...Flag) (er
 		Endpoint: endpoint.GuildBan(g.gid, g.uid) + params.URLQueryString(),
 		Ctx:      g.ctx,
 		Reason:   params.Reason,
-	}, flags)
+	}, g.flags)
 
 	_, err = r.Execute()
 	return
 }
 
 // GetPermissions is used to return the members permissions.
-func (g guildMemberQueryBuilder) GetPermissions(flags ...Flag) (PermissionBit, error) {
-	member, err := g.Get(flags...)
+func (g guildMemberQueryBuilder) GetPermissions() (PermissionBit, error) {
+	member, err := g.Get()
 	if err != nil {
 		return 0, err
 	}
-	return member.GetPermissions(g.ctx, g.client, flags...)
+	return member.GetPermissions(g.ctx, g.client)
 }

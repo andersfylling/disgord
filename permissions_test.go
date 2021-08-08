@@ -26,7 +26,7 @@ func (p permissionTestingSession) Guild(_ Snowflake) GuildQueryBuilder {
 	return &permissionTestingGuildBuilder{p: &p}
 }
 
-func (p permissionTestingGuildBuilder) GetRoles(_ ...Flag) ([]*Role, error) {
+func (p permissionTestingGuildBuilder) GetRoles() ([]*Role, error) {
 	if p.p.getFakeRole {
 		return []*Role{fakePermissionsRole}, nil
 	}
