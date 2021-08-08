@@ -20,8 +20,6 @@ If no benchmarks are needed, feel free to delete til paragraph.
 
 # Checklist:
 
-- [ ] I ran `go generate`
-- [ ] I ran `go fmt ./...`
 - [ ] I have performed a self-review of my own code
 - [ ] Commented complex situations or referenced the discord documentation
 - [ ] Updated documentation
