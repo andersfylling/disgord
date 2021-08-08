@@ -20,7 +20,7 @@ const (
 
 var (
 	validTypes = map[types.Kind]bool{
-		types.Interface:     true,
+		types.Interface: true,
 	}
 )
 
@@ -44,7 +44,7 @@ func DisgordTypes() (typesList []*types.Type, p *types.Package, err error) {
 		typesList = append(typesList, typeData)
 	}
 
-	return typesList, disgord,nil
+	return typesList, disgord, nil
 }
 
 func Exported(name string) bool {
@@ -106,6 +106,10 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 		panic(err)
 	}
 
+	//fmt.Println("#####################################")
+	//fmt.Println(string(formatted))
+	//fmt.Println("#####################################")
+
 	// And write it.
 	if err = ioutil.WriteFile(target, formatted, 0644); err != nil {
 		panic(err)
@@ -113,9 +117,9 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 }
 
 type TypeWrapper struct {
-	hasFlags bool
-	withFlagsReturnType string
-	hasContext bool
+	hasFlags              bool
+	withFlagsReturnType   string
+	hasContext            bool
 	withContextReturnType string
 	*types.Type
 }
@@ -204,6 +208,9 @@ func (f *FieldWrapper) Parameters() string {
 }
 
 func (f *FieldWrapper) ReturnTypes() string {
+	if f.Name == "BotAuthorizeURL" {
+		fmt.Println(234)
+	}
 	s := ""
 	for _, result := range f.Type.Signature.Results {
 		if s != "" {
@@ -216,16 +223,44 @@ func (f *FieldWrapper) ReturnTypes() string {
 		//	s += "disgord."
 		//}
 
+		isDisgordType := strings.Contains(result.Name.Name, "disgord") || strings.Contains(result.Name.Package, "disgord")
+
 		name := result.Name.Name
 		name = strings.Replace(name, "github.com/andersfylling/", "", 1)
+		if isDisgordType && !strings.Contains(name, "disgord.") {
+			if name[0] == '*' {
+				name = name[1:]
+			}
+			name = "disgord." + name
+			if result.Kind == types.Pointer {
+				name = "*" + name
+			}
+		}
+		if strings.Contains(name, "/") {
+			joints := strings.Split(name, "/")
+			name = joints[len(joints)-1]
+			if result.Kind == types.Pointer {
+				name = "*" + name
+			}
+		}
 		s += name
 	}
 
+	if strings.Contains(s, ",") {
+		return fmt.Sprintf("(%s)", s)
+	}
 	return s
 }
 
 func (f *FieldWrapper) ReturnValues() string {
-	return "nil"
+	nils := ""
+	for _, result := range f.Type.Signature.Results {
+		if nils != "" {
+			nils += ", "
+		}
+		nils += ZeroValue(&TypeWrapper{Type: result})
+	}
+	return nils
 }
 
 func (f *FieldWrapper) IsSlice() bool {
@@ -302,4 +337,33 @@ func (f *FieldWrapper) SliceType() string {
 
 	e := f.Type.Type.Elem
 	return typeData(e)
+}
+
+func ZeroValue(t *TypeWrapper) (v string) {
+	switch t.Type.Kind {
+	case types.Slice:
+		v = "nil"
+	case types.Pointer, types.Interface:
+		v = "nil"
+	case types.Struct:
+		v = t.TypeName() + "{}"
+	case types.Alias:
+		v = ZeroValue(&TypeWrapper{Type: t.Type.Underlying})
+	case types.Builtin:
+		switch t.Type.Name.Name {
+		case "bool":
+			v = "false"
+		case "int", "uint", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64":
+			v = "0"
+		case "float64", "float32":
+			v = "0.0"
+		case "string":
+			v = `""`
+		default:
+			v = "0 // ++"
+		}
+	default:
+		v = "0  // -"
+	}
+	return v
 }

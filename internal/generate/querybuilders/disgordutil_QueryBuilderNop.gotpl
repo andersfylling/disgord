@@ -5,6 +5,8 @@ package disgordutil
 import (
     "context"
     "github.com/andersfylling/disgord"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"net/url"
 )
 
 func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
