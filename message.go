@@ -258,7 +258,7 @@ func (m *Message) IsDirectMessage() bool {
 }
 
 // Send sends this message to discord.
-func (m *Message) Send(ctx context.Context, s Session, flags ...Flag) (msg *Message, err error) {
+func (m *Message) Send(ctx context.Context, s Session) (msg *Message, err error) {
 	nonce := fmt.Sprint(m.Nonce)
 	if len(nonce) > 25 {
 		return nil, errors.New("nonce can not be more than 25 characters")
@@ -279,7 +279,7 @@ func (m *Message) Send(ctx context.Context, s Session, flags ...Flag) (msg *Mess
 	}
 	channelID := m.ChannelID
 
-	msg, err = s.Channel(channelID).WithContext(ctx).CreateMessage(params, flags...)
+	msg, err = s.Channel(channelID).WithContext(ctx).CreateMessage(params)
 	return
 }
 
@@ -288,24 +288,24 @@ func (m *Message) Reply(ctx context.Context, s Session, data ...interface{}) (*M
 	return s.WithContext(ctx).SendMsg(m.ChannelID, data...)
 }
 
-func (m *Message) React(ctx context.Context, s Session, emoji interface{}, flags ...Flag) error {
+func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
 		return errors.New("missing message ID")
 	} else if m.ChannelID.IsZero() {
 		return errors.New("missing channel ID")
 	}
 
-	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create(flags...)
+	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create()
 }
 
-func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, flags ...Flag) error {
+func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
 		return errors.New("missing message ID")
 	} else if m.ChannelID.IsZero() {
 		return errors.New("missing channel ID")
 	}
 
-	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn(flags...)
+	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn()
 }
 
 // AddReaction adds a reaction to the message
@@ -322,33 +322,34 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}, fla
 
 type MessageQueryBuilder interface {
 	WithContext(ctx context.Context) MessageQueryBuilder
+	WithFlags(flags ...Flag) MessageQueryBuilder
 
 	// Pin Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
-	Pin(flags ...Flag) error
+	Pin() error
 
 	// Unpin Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
-	Unpin(flags ...Flag) error
+	Unpin() error
 
 	// Get Returns a specific message in the channel. If operating on a guild channel, this endpoints
 	// requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 	// Returns a message object on success.
-	Get(flags ...Flag) (*Message, error)
+	Get() (*Message, error)
 
 	// UpdateBuilder Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	UpdateBuilder(flags ...Flag) *updateMessageBuilder
+	UpdateBuilder() *updateMessageBuilder
 	SetContent(content string) (*Message, error)
 	SetEmbed(embed *Embed) (*Message, error)
 
-	CrossPost(flags ...Flag) (*Message, error)
+	CrossPost() (*Message, error)
 
 	// Delete Delete a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
-	Delete(flags ...Flag) error
+	Delete() error
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 	// permission to be present on the current user.
-	DeleteAllReactions(flags ...Flag) error
+	DeleteAllReactions() error
 
 	Reaction(emoji interface{}) ReactionQueryBuilder
 }
@@ -359,6 +360,7 @@ func (c channelQueryBuilder) Message(id Snowflake) MessageQueryBuilder {
 
 type messageQueryBuilder struct {
 	ctx    context.Context
+	flags  Flag
 	client *Client
 	cid    Snowflake
 	mid    Snowflake
@@ -366,6 +368,11 @@ type messageQueryBuilder struct {
 
 func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilder {
 	m.ctx = ctx
+	return &m
+}
+
+func (m messageQueryBuilder) WithFlags(flags ...Flag) MessageQueryBuilder {
+	m.flags = mergeFlags(flags)
 	return &m
 }
 
@@ -377,7 +384,7 @@ func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilde
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
+func (m messageQueryBuilder) Get() (*Message, error) {
 	if m.cid.IsZero() {
 		err := errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -387,7 +394,7 @@ func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 		return nil, err
 	}
 
-	if !ignoreCache(flags...) {
+	if !ignoreCache(m.flags) {
 		if msg, _ := m.client.cache.GetMessage(m.cid, m.mid); msg != nil {
 			return msg, nil
 		}
@@ -396,7 +403,7 @@ func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 	r := m.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 	r.pool = m.client.pool.message
 	r.factory = func() interface{} {
 		return &Message{}
@@ -412,12 +419,12 @@ func (m messageQueryBuilder) Get(flags ...Flag) (*Message, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateMessageBuilder) {
+func (m messageQueryBuilder) UpdateBuilder() (builder *updateMessageBuilder) {
 	builder = &updateMessageBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Message{}
 	}
-	builder.r.flags = flags
+	builder.r.flags = m.flags
 	builder.r.addPrereq(m.cid.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(m.client.req, &httd.Request{
@@ -438,7 +445,7 @@ func (m messageQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateMessag
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Delete(flags ...Flag) (err error) {
+func (m messageQueryBuilder) Delete() (err error) {
 	if m.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return
@@ -452,7 +459,7 @@ func (m messageQueryBuilder) Delete(flags ...Flag) (err error) {
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 
 	_, err = r.Execute()
 	return err
@@ -465,12 +472,12 @@ func (m messageQueryBuilder) Delete(flags ...Flag) (err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Pin(flags ...Flag) (err error) {
+func (m messageQueryBuilder) Pin() (err error) {
 	r := m.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodPut,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 
 	_, err = r.Execute()
 	return err
@@ -483,7 +490,7 @@ func (m messageQueryBuilder) Pin(flags ...Flag) (err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
+func (m messageQueryBuilder) Unpin() (err error) {
 	if m.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -495,7 +502,7 @@ func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 
 	_, err = r.Execute()
 	return err
@@ -507,7 +514,7 @@ func (m messageQueryBuilder) Unpin(flags ...Flag) (err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
 //  Reviewed                2021-04-07
 //  Comment                 -
-func (m messageQueryBuilder) CrossPost(flags ...Flag) (*Message, error) {
+func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	if m.cid.IsZero() {
 		return nil, errors.New("channelID must be set to target the correct channel")
 	}
@@ -519,7 +526,7 @@ func (m messageQueryBuilder) CrossPost(flags ...Flag) (*Message, error) {
 		Method:   httd.MethodPost,
 		Endpoint: endpoint.ChannelMessageCrossPost(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 	r.pool = m.client.pool.message
 	r.factory = func() interface{} {
 		return &Message{}
@@ -538,7 +545,7 @@ func (m messageQueryBuilder) CrossPost(flags ...Flag) (*Message, error) {
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
 //  Reviewed                2019-01-28
-func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
+func (m messageQueryBuilder) DeleteAllReactions() error {
 	if m.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}
@@ -550,7 +557,7 @@ func (m messageQueryBuilder) DeleteAllReactions(flags ...Flag) error {
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactions(m.cid, m.mid),
 		Ctx:      m.ctx,
-	}, flags)
+	}, m.flags)
 
 	_, err := r.Execute()
 	return err

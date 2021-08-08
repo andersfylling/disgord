@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, conf Config) (*Client, error) {
 }
 
 func verifyClientProduction(ctx context.Context, client *Client) (Snowflake, error) {
-	usr, err := client.CurrentUser().WithContext(ctx).Get(IgnoreCache)
+	usr, err := client.CurrentUser().WithContext(ctx).WithFlags(IgnoreCache).Get()
 	if err != nil {
 		return 0, err
 	}
@@ -553,13 +553,13 @@ func (c *Client) UpdateStatusString(s string) error {
 	return c.UpdateStatus(updateData)
 }
 
-func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
+func (c *Client) newRESTRequest(conf *httd.Request, flags Flag) *rest {
 	r := &rest{
 		c:    c,
 		conf: conf,
 	}
 	r.init()
-	r.flags = mergeFlags(flags)
+	r.flags = flags
 
 	return r
 }
