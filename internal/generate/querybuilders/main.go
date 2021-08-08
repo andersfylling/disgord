@@ -209,7 +209,24 @@ func (f *FieldWrapper) MethodName() string {
 }
 
 func (f *FieldWrapper) Parameters() string {
-	return ""
+	s := ""
+	params := f.Type.Signature.Parameters
+	if len(params) == 0 {
+		return ""
+	}
+
+	for _, p := range params[0] {
+		if s != "" {
+			s += ", "
+		}
+
+		name := MakeTypeNameCompilable(p)
+		if strings.Contains(name, "disgord.ChannelDelete") {
+			fmt.Println(2342)
+		}
+		s += "_ " + name
+	}
+	return s
 }
 
 func (f *FieldWrapper) ReturnTypes() string {
@@ -219,41 +236,10 @@ func (f *FieldWrapper) ReturnTypes() string {
 			s += ", "
 		}
 
-		isDisgordType := strings.Contains(result.Name.Name, "disgord") || strings.Contains(result.Name.Package, "disgord")
-
-		name := result.Name.Name
-		name = strings.Replace(name, "github.com/andersfylling/", "", 1)
-		if isDisgordType && !strings.Contains(name, disgordTypePrefix) {
-			if name[0] == '*' {
-				name = name[1:]
-			}
-			name = disgordTypePrefix + name
-			if result.Kind == types.Pointer {
-				name = "*" + name
-			}
-		}
-		if strings.Contains(name, "/") {
-			joints := strings.Split(name, "/")
-			name = joints[len(joints)-1]
-			if result.Kind == types.Pointer {
-				name = "*" + name
-			}
-		}
-
-		// edge case
-		if disgordTypePrefix == "" && strings.Contains(name, "disgord.") {
-			name = strings.Replace(name, "disgord.", "", 1)
-		}
-
-		// TODO: improve snowflake..
-		if strings.HasSuffix(name, "Snowflake") {
-			name = disgordTypePrefix + "Snowflake"
-		}
-
-		s += name
+		s += MakeTypeNameCompilable(result)
 	}
 
-	if len(f.Type.Signature.Results) > 0 {
+	if len(f.Type.Signature.Results) > 1 {
 		return fmt.Sprintf("(%s)", s)
 	}
 	return s
@@ -377,4 +363,39 @@ func ZeroValue(t *TypeWrapper) (v string) {
 		v = "0  // -"
 	}
 	return v
+}
+
+func MakeTypeNameCompilable(t *types.Type) string {
+	isDisgordType := strings.Contains(t.Name.Name, "disgord") || strings.Contains(t.Name.Package, "disgord")
+
+	name := t.Name.Name
+	name = strings.Replace(name, "github.com/andersfylling/", "", 1)
+	if isDisgordType && !strings.Contains(name, disgordTypePrefix) {
+		if name[0] == '*' {
+			name = name[1:]
+		}
+		name = disgordTypePrefix + name
+		if t.Kind == types.Pointer {
+			name = "*" + name
+		}
+	}
+	if strings.Contains(name, "/") {
+		joints := strings.Split(name, "/")
+		name = joints[len(joints)-1]
+		if t.Kind == types.Pointer {
+			name = "*" + name
+		}
+	}
+
+	// edge case
+	if disgordTypePrefix == "" && strings.Contains(name, "disgord.") {
+		name = strings.Replace(name, "disgord.", "", 1)
+	}
+
+	// TODO: improve snowflake..
+	if strings.HasSuffix(name, "Snowflake") {
+		name = disgordTypePrefix + "Snowflake"
+	}
+
+	return name
 }
