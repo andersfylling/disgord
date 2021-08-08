@@ -231,7 +231,7 @@ func (c clientQueryBuilder) Channel(id Snowflake) ChannelQueryBuilder {
 // ChannelQueryBuilder REST interface for all Channel endpoints
 type ChannelQueryBuilder interface {
 	WithContext(ctx context.Context) ChannelQueryBuilder
-	WidthFlags(flags ...Flag) ChannelQueryBuilder
+	WithFlags(flags ...Flag) ChannelQueryBuilder
 
 	// TriggerTypingIndicator Post a typing indicator for the specified channel. Generally bots should not implement
 	// this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
@@ -329,7 +329,7 @@ func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilde
 	return &c
 }
 
-func (c channelQueryBuilder) WidthFlags(flags ...Flag) ChannelQueryBuilder {
+func (c channelQueryBuilder) WithFlags(flags ...Flag) ChannelQueryBuilder {
 	c.flags = mergeFlags(flags)
 	return &c
 }

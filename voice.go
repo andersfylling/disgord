@@ -132,6 +132,7 @@ func (g guildQueryBuilder) VoiceChannel(channelID Snowflake) VoiceChannelQueryBu
 
 type VoiceChannelQueryBuilder interface {
 	WithContext(ctx context.Context) ChannelQueryBuilder
+	WithFlags(flags ...Flag) ChannelQueryBuilder
 
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
