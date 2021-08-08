@@ -347,6 +347,7 @@ type MessageQueryBuilder interface {
 
 	// Deprecated: use Update(..) instead
 	UpdateBuilder() UpdateMessageBuilder
+	SetEmbed(embed *Embed) (*Message, error)
 
 	CrossPost() (*Message, error)
 
@@ -419,7 +420,7 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 	return getMessage(r.Execute)
 }
 
-// UpdateBuilder Edit a previously sent message. You can only edit messages that have been sent by the
+// Update Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
