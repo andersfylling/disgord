@@ -87,7 +87,7 @@ func (g guildMemberQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildMemberB
 	return builder
 }
 
-// AddGuildMemberRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
+// AddRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 func (g guildMemberQueryBuilder) AddRole(roleID Snowflake, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
@@ -100,7 +100,7 @@ func (g guildMemberQueryBuilder) AddRole(roleID Snowflake, flags ...Flag) error 
 	return err
 }
 
-// RemoveMemberRole removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
+// RemoveRole removes a role from a guild member. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
@@ -113,7 +113,7 @@ func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake, flags ...Flag) err
 	return err
 }
 
-// KickMember kicks a member from a guild. Requires 'KICK_MEMBERS' permission.
+// Kick kicks a member from a guild. Requires 'KICK_MEMBERS' permission.
 // Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 func (g guildMemberQueryBuilder) Kick(reason string, flags ...Flag) error {
 	r := g.client.newRESTRequest(&httd.Request{
@@ -127,7 +127,7 @@ func (g guildMemberQueryBuilder) Kick(reason string, flags ...Flag) error {
 	return err
 }
 
-// BanMember Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
+// Ban Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
 func (g guildMemberQueryBuilder) Ban(params *BanMemberParams, flags ...Flag) (err error) {
 	if params == nil {

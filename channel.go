@@ -16,8 +16,7 @@ import (
 	"github.com/andersfylling/disgord/json"
 )
 
-// Channel types
-// https://discord.com/developers/docs/resources/channel#channel-object-channel-types
+// ChannelType https://discord.com/developers/docs/resources/channel#channel-object-channel-types
 type ChannelType uint
 
 const (
@@ -246,10 +245,10 @@ type ChannelQueryBuilder interface {
 	// on success. Fires a Typing Start Gateway event.
 	TriggerTypingIndicator(flags ...Flag) error
 
-	// GetChannel Get a channel by Snowflake. Returns a channel object.
+	// Get Get a channel by Snowflake. Returns a channel object.
 	Get(flags ...Flag) (*Channel, error)
 
-	// UpdateChannel Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// UpdateBuilder Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
@@ -258,28 +257,28 @@ type ChannelQueryBuilder interface {
 	// Deprecated: use UpdateBuilder
 	Update(flags ...Flag) *updateChannelBuilder
 
-	// DeleteChannel Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
+	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 	// Fires a Channel Delete Gateway event.
 	Delete(flags ...Flag) (*Channel, error)
 
-	// EditChannelPermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
+	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
 	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams, flags ...Flag) error
 
-	// GetChannelInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
+	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 	GetInvites(flags ...Flag) ([]*Invite, error)
 
-	// CreateChannelInvite Create a new invite object for the channel. Only usable for guild Channels. Requires
+	// CreateInvite Create a new invite object for the channel. Only usable for guild Channels. Requires
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
 	CreateInvite(flags ...Flag) *createChannelInviteBuilder
 
-	// DeleteChannelPermission Delete a channel permission overwrite for a user or role in a channel. Only usable
+	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 	// information about permissions,
 	// see permissions: https://discord.com/developers/docs/topics/permissions#permissions
@@ -319,7 +318,7 @@ type ChannelQueryBuilder interface {
 	// Returns a webhook object on success.
 	CreateWebhook(params *CreateWebhookParams, flags ...Flag) (ret *Webhook, err error)
 
-	// GetChannelWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+	// GetWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 	GetWebhooks(flags ...Flag) (ret []*Webhook, err error)
 
 	Message(id Snowflake) MessageQueryBuilder
@@ -338,7 +337,7 @@ func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilde
 	return &c
 }
 
-// GetChannel [REST] Get a channel by Snowflake. Returns a channel object.
+// Get [REST] Get a channel by Snowflake. Returns a channel object.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
@@ -367,7 +366,7 @@ func (c channelQueryBuilder) Get(flags ...Flag) (*Channel, error) {
 	return getChannel(r.Execute)
 }
 
-// UpdateChannel [REST] Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+// UpdateBuilder [REST] Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 // a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 // modifying a category, individual Channel Update events will fire for each child channel that also changes.
 // For the PATCH method, all the JSON Params are optional.
@@ -392,7 +391,7 @@ func (c channelQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateChanne
 	return builder
 }
 
-// DeleteChannel [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
+// Delete [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 // the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 // Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 // Fires a Channel Delete Gateway event.
@@ -449,7 +448,7 @@ type UpdateChannelPermissionsParams struct {
 	Type  uint          `json:"type"`  // 0=role, 1=member
 }
 
-// EditChannelPermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
+// UpdatePermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.
 //  Method                  PUT
@@ -477,7 +476,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 	return err
 }
 
-// GetChannelInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
+// GetInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 // guild Channels. Requires the 'MANAGE_CHANNELS' permission.
 //  Method                  GET
 //  Endpoint                /channels/{channel.id}/invites
@@ -502,7 +501,7 @@ func (c channelQueryBuilder) GetInvites(flags ...Flag) (invites []*Invite, err e
 	return getInvites(r.Execute)
 }
 
-// CreateChannelInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
+// CreateInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
 // the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
 // not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
 //  Method                  POST
@@ -526,7 +525,7 @@ func (c channelQueryBuilder) CreateInvite(flags ...Flag) (builder *createChannel
 	return builder
 }
 
-// DeleteChannelPermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
+// DeletePermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 // information about permissions, see permissions: https://discord.com/developers/docs/topics/permissions#permissions
 //  Method                  DELETE
@@ -627,7 +626,7 @@ func (c channelQueryBuilder) KickParticipant(userID Snowflake, flags ...Flag) (e
 	return err
 }
 
-// GetChannelMessagesParams https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// GetMessagesParams https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
 type GetMessagesParams struct {
 	Around Snowflake `urlparam:"around,omitempty"`
@@ -1105,7 +1104,7 @@ func (c channelQueryBuilder) CreateWebhook(params *CreateWebhookParams, flags ..
 	return getWebhook(r.Execute)
 }
 
-// GetChannelWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
+// GetWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/webhooks
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks

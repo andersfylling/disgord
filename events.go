@@ -67,9 +67,9 @@ type ChannelCreate struct {
 }
 
 // UnmarshalJSON ...
-func (obj *ChannelCreate) UnmarshalJSON(data []byte) error {
-	obj.Channel = &Channel{}
-	return json.Unmarshal(data, obj.Channel)
+func (c *ChannelCreate) UnmarshalJSON(data []byte) error {
+	c.Channel = &Channel{}
+	return json.Unmarshal(data, c.Channel)
 }
 
 // ---------------------------

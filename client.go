@@ -350,6 +350,7 @@ var _ Session = (*Client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
+
 func (c *Client) Pool() *pools {
 	return c.pool
 }
@@ -418,7 +419,7 @@ func (c *Client) String() string {
 	return LibraryInfo()
 }
 
-// RESTBucketGrouping shows which hashed endpoints belong to which bucket hash for the REST API.
+// RESTRatelimitBuckets shows which hashed endpoints belong to which bucket hash for the REST API.
 // Note that these bucket hashes are eventual consistent.
 func (c *Client) RESTRatelimitBuckets() (group map[string][]string) {
 	return c.req.BucketGrouping()

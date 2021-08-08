@@ -141,7 +141,7 @@ func (i inviteQueryBuilder) Get(withMemberCount bool, flags ...Flag) (invite *In
 	return getInvite(r.Execute)
 }
 
-// DeleteInvite [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
+// Delete [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
 //  Method                  DELETE
 //  Endpoint                /invites/{invite.code}
 //  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite

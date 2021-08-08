@@ -32,7 +32,7 @@ var _ DeepCopier = (*Webhook)(nil)
 type WebhookQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookQueryBuilder
 
-	// GetWebhook Returns the new webhook object for the given id.
+	// Get Returns the new webhook object for the given id.
 	Get(flags ...Flag) (*Webhook, error)
 
 	// UpdateBuilder Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -73,7 +73,7 @@ func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilde
 	return &w
 }
 
-// GetWebhook [REST] Returns the new webhook object for the given id.
+// Get [REST] Returns the new webhook object for the given id.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
@@ -91,7 +91,7 @@ func (w webhookQueryBuilder) Get(flags ...Flag) (ret *Webhook, err error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateWebhook [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// UpdateBuilder [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
@@ -115,7 +115,7 @@ func (w webhookQueryBuilder) UpdateBuilder(flags ...Flag) (builder *updateWebhoo
 	return builder
 }
 
-// DeleteWebhook [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
+// Delete [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
@@ -207,7 +207,7 @@ func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWi
 	return &w
 }
 
-// GetWebhookWithToken [REST] Same as GetWebhook, except this call does not require authentication and
+// Get [REST] Same as GetWebhook, except this call does not require authentication and
 // returns no user in the webhook object.
 //  Method                  GET
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
@@ -226,7 +226,7 @@ func (w webhookWithTokenQueryBuilder) Get(flags ...Flag) (*Webhook, error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateWebhookWithToken [REST] Same as UpdateWebhook, except this call does not require authentication,
+// UpdateBuilder [REST] Same as UpdateWebhook, except this call does not require authentication,
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
@@ -251,7 +251,7 @@ func (w webhookWithTokenQueryBuilder) UpdateBuilder(flags ...Flag) (builder *upd
 	return builder
 }
 
-// DeleteWebhookWithToken [REST] Same as DeleteWebhook, except this call does not require authentication.
+// Delete [REST] Same as DeleteWebhook, except this call does not require authentication.
 //  Method                  DELETE
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
@@ -275,7 +275,7 @@ func (w webhookWithTokenQueryBuilder) Delete(flags ...Flag) error {
 	return err
 }
 
-// ExecuteWebhook [REST] Trigger a webhook in Discord.
+// Execute [REST] Trigger a webhook in Discord.
 //  Method                  POST
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook

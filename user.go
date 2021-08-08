@@ -304,18 +304,18 @@ var _ DeepCopier = (*UserConnection)(nil)
 //
 //////////////////////////////////////////////////////
 
-// RESTUser REST interface for all user endpoints
+// UserQueryBuilder REST interface for all user endpoints
 type UserQueryBuilder interface {
 	WithContext(ctx context.Context) UserQueryBuilder
 
-	// GetUser Returns a user object for a given user Snowflake.
+	// Get Returns a user object for a given user Snowflake.
 	Get(flags ...Flag) (*User, error)
 
 	// CreateDM Create a new DM channel with a user. Returns a DM channel object.
 	CreateDM(flags ...Flag) (ret *Channel, err error)
 }
 
-// Guild is used to create a guild query builder.
+// User is used to create a guild query builder.
 func (c clientQueryBuilder) User(id Snowflake) UserQueryBuilder {
 	return &userQueryBuilder{client: c.client, uid: id}
 }
@@ -332,7 +332,7 @@ func (c userQueryBuilder) WithContext(ctx context.Context) UserQueryBuilder {
 	return c
 }
 
-// GetUser [REST] Returns a user object for a given user Snowflake.
+// Get [REST] Returns a user object for a given user Snowflake.
 //  Method                  GET
 //  Endpoint                /users/{user.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
@@ -381,18 +381,18 @@ func (c userQueryBuilder) CreateDM(flags ...Flag) (ret *Channel, err error) {
 type CurrentUserQueryBuilder interface {
 	WithContext(ctx context.Context) CurrentUserQueryBuilder
 
-	// GetCurrentUser Returns the user object of the requester's account. For OAuth2, this requires the identify
+	// Get Returns the user object of the requester's account. For OAuth2, this requires the identify
 	// scope, which will return the object without an email, and optionally the email scope, which returns the object
 	// with an email.
 	Get(flags ...Flag) (*User, error)
 
-	// UpdateCurrentUser Modify the requester's user account settings. Returns a user object on success.
+	// UpdateBuilder Modify the requester's user account settings. Returns a user object on success.
 	UpdateBuilder(flags ...Flag) UpdateCurrentUserBuilder
 
 	// Deprecated: use UpdateBuilder
 	Update(flags ...Flag) UpdateCurrentUserBuilder
 
-	// GetCurrentUserGuilds Returns a list of partial guild objects the current user is a member of.
+	// GetGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
 	GetGuilds(params *GetCurrentUserGuildsParams, flags ...Flag) (ret []*Guild, err error)
 
@@ -408,7 +408,7 @@ type CurrentUserQueryBuilder interface {
 	GetUserConnections(flags ...Flag) (ret []*UserConnection, err error)
 }
 
-// Guild is used to create a guild query builder.
+// CurrentUser is used to create a guild query builder.
 func (c clientQueryBuilder) CurrentUser() CurrentUserQueryBuilder {
 	return &currentUserQueryBuilder{client: c.client}
 }
@@ -426,7 +426,7 @@ func (c currentUserQueryBuilder) WithContext(ctx context.Context) CurrentUserQue
 	return &c
 }
 
-// GetCurrentUser [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
+// Get [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
 // scope, which will return the object without an email, and optionally the email scope, which returns the object
 // with an email.
 //  Method                  GET
@@ -451,7 +451,7 @@ func (c currentUserQueryBuilder) Get(flags ...Flag) (user *User, err error) {
 	return getUser(r.Execute)
 }
 
-// UpdateCurrentUser [REST] Modify the requester's user account settings. Returns a user object on success.
+// UpdateBuilder [REST] Modify the requester's user account settings. Returns a user object on success.
 //  Method                  PATCH
 //  Endpoint                /users/@me
 //  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
@@ -481,7 +481,7 @@ type GetCurrentUserGuildsParams struct {
 
 var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 
-// GetCurrentUserGuilds [REST] Returns a list of partial guild objects the current user is a member of.
+// GetGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the Guilds OAuth2 scope.
 //  Method                  GET
 //  Endpoint                /users/@me/guilds

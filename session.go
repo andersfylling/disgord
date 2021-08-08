@@ -15,7 +15,7 @@ type Session interface {
 	// to avoid nil panics.
 	Logger() logger.Logger
 
-	// HeartbeatLatency returns the avg. ish time used to send and receive a heartbeat signal.
+	// AvgHeartbeatLatency returns the avg. ish time used to send and receive a heartbeat signal.
 	// The latency is calculated as such:
 	// 0. start timer (start)
 	// 1. send heartbeat signal
@@ -25,7 +25,8 @@ type Session interface {
 	//
 	// This feature was requested. But should never be used as a proof for delay between client and Discord.
 	AvgHeartbeatLatency() (duration time.Duration, err error)
-	// returns the latency for each given shard id. shardID => latency
+
+	// HeartbeatLatencies returns the latency for each given shard id. shardID => latency
 	HeartbeatLatencies() (latencies map[uint]time.Duration, err error)
 
 	RESTRatelimitBuckets() (group map[string][]string)
@@ -39,7 +40,7 @@ type Session interface {
 	ClientQueryBuilder
 	EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error
 	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *InteractionResponse) error
-	// Status update functions
+
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
 
