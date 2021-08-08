@@ -345,9 +345,6 @@ type MessageQueryBuilder interface {
 
 	CrossPost(flags ...Flag) (*Message, error)
 
-	// Deprecated: use UpdateBuilder instead
-	Update(flags ...Flag) *updateMessageBuilder
-
 	// Delete Delete a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
 	Delete(flags ...Flag) error

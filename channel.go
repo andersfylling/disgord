@@ -254,9 +254,6 @@ type ChannelQueryBuilder interface {
 	// For the PATCH method, all the JSON Params are optional.
 	UpdateBuilder(flags ...Flag) *updateChannelBuilder
 
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) *updateChannelBuilder
-
 	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.

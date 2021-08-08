@@ -39,9 +39,6 @@ type WebhookQueryBuilder interface {
 	// Returns the updated webhook object on success.
 	UpdateBuilder(flags ...Flag) *updateWebhookBuilder
 
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) *updateWebhookBuilder
-
 	// Delete Deletes a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 	Delete(flags ...Flag) error
 
@@ -180,9 +177,6 @@ type WebhookWithTokenQueryBuilder interface {
 	// UpdateBuilder Same as UpdateWebhook, except this call does not require authentication,
 	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 	UpdateBuilder(flags ...Flag) *updateWebhookBuilder
-
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) *updateWebhookBuilder
 
 	// Delete Same as DeleteWebhook, except this call does not require authentication.
 	Delete(flags ...Flag) error

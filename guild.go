@@ -679,9 +679,6 @@ type GuildQueryBuilder interface {
 	UpdateBuilder(flags ...Flag) UpdateGuildBuilder
 	Delete(flags ...Flag) error
 
-	// Deprecated: Use UpdateBuilder
-	Update(flags ...Flag) UpdateGuildBuilder
-
 	CreateChannel(name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error)
 	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams, flags ...Flag) error
 	CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error)

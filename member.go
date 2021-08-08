@@ -18,9 +18,6 @@ type GuildMemberQueryBuilder interface {
 	Kick(reason string, flags ...Flag) error
 	Ban(params *BanMemberParams, flags ...Flag) error
 	GetPermissions(flags ...Flag) (PermissionBit, error)
-
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) UpdateGuildMemberBuilder
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
