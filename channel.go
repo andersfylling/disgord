@@ -29,13 +29,6 @@ const (
 	ChannelTypeGuildStore
 )
 
-// Deprecated: use PermissionOverwrite* instead (note the Type keyword is removed)
-// PermissionOverwriteTypeMember => PermissionOverwriteMember
-const (
-	PermissionOverwriteTypeRole uint8 = iota
-	PermissionOverwriteTypeMember
-)
-
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
