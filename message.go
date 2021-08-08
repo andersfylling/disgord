@@ -337,7 +337,7 @@ type MessageQueryBuilder interface {
 
 	// UpdateBuilder Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	UpdateBuilder() *updateMessageBuilder
+	UpdateBuilder() UpdateMessageBuilder
 	SetContent(content string) (*Message, error)
 	SetEmbed(embed *Embed) (*Message, error)
 
@@ -419,8 +419,8 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) UpdateBuilder() (builder *updateMessageBuilder) {
-	builder = &updateMessageBuilder{}
+func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
+	builder := &updateMessageBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Message{}
 	}
