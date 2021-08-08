@@ -347,6 +347,9 @@ type MessageQueryBuilder interface {
 
 	// Deprecated: use Update(..) instead
 	UpdateBuilder() UpdateMessageBuilder
+	// Deprecated: use Update(..) instead
+	SetContent(content string) (*Message, error)
+	// Deprecated: use Update(..) instead
 	SetEmbed(embed *Embed) (*Message, error)
 
 	CrossPost() (*Message, error)
