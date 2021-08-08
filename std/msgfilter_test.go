@@ -29,7 +29,7 @@ func (c clientRESTMock_currentUser) WithContext(_ context.Context) disgord.Curre
 	return &c
 }
 
-func (c clientRESTMock_currentUser) Get(_ ...disgord.Flag) (*disgord.User, error) {
+func (c clientRESTMock_currentUser) Get() (*disgord.User, error) {
 	return &disgord.User{ID: c.id}, nil
 }
 
