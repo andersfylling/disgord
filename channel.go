@@ -267,7 +267,7 @@ type ChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() *createChannelInviteBuilder
+	CreateInvite() CreateChannelInviteBuilder
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
@@ -506,8 +506,8 @@ func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) CreateInvite() (builder *createChannelInviteBuilder) {
-	builder = &createChannelInviteBuilder{}
+func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
+	builder := &createChannelInviteBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Invite{}
 	}
