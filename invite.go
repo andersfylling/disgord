@@ -93,12 +93,13 @@ func inviteFactory() interface{} {
 
 type InviteQueryBuilder interface {
 	WithContext(ctx context.Context) InviteQueryBuilder
+	WithFlags(flags ...Flag) InviteQueryBuilder
 
 	// Get Returns an invite object for the given code.
-	Get(withMemberCount bool, flags ...Flag) (*Invite, error)
+	Get(withMemberCount bool) (*Invite, error)
 
 	// Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
-	Delete(flags ...Flag) (deleted *Invite, err error)
+	Delete() (deleted *Invite, err error)
 }
 
 func (c clientQueryBuilder) Invite(code string) InviteQueryBuilder {
@@ -107,12 +108,18 @@ func (c clientQueryBuilder) Invite(code string) InviteQueryBuilder {
 
 type inviteQueryBuilder struct {
 	ctx        context.Context
+	flags      Flag
 	client     *Client
 	inviteCode string
 }
 
 func (i inviteQueryBuilder) WithContext(ctx context.Context) InviteQueryBuilder {
 	i.ctx = ctx
+	return &i
+}
+
+func (i inviteQueryBuilder) WithFlags(flags ...Flag) InviteQueryBuilder {
+	i.flags = mergeFlags(flags)
 	return &i
 }
 
@@ -129,13 +136,13 @@ var _ URLQueryStringer = (*getInviteParams)(nil)
 //  Reviewed                2018-06-10
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
-func (i inviteQueryBuilder) Get(withMemberCount bool, flags ...Flag) (invite *Invite, err error) {
+func (i inviteQueryBuilder) Get(withMemberCount bool) (invite *Invite, err error) {
 	params := &getInviteParams{withMemberCount}
 
 	r := i.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Invite(i.inviteCode) + params.URLQueryString(),
 		Ctx:      i.ctx,
-	}, flags)
+	}, i.flags)
 	r.factory = inviteFactory
 
 	return getInvite(r.Execute)
@@ -147,12 +154,12 @@ func (i inviteQueryBuilder) Get(withMemberCount bool, flags ...Flag) (invite *In
 //  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
 //  Reviewed                2018-06-10
 //  Comment                 -
-func (i inviteQueryBuilder) Delete(flags ...Flag) (deleted *Invite, err error) {
+func (i inviteQueryBuilder) Delete() (deleted *Invite, err error) {
 	r := i.client.newRESTRequest(&httd.Request{
 		Method:   httd.MethodDelete,
 		Endpoint: endpoint.Invite(i.inviteCode),
 		Ctx:      i.ctx,
-	}, flags)
+	}, i.flags)
 	r.factory = inviteFactory
 
 	return getInvite(r.Execute)
