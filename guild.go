@@ -629,7 +629,7 @@ type CreateGuildParams struct {
 //  Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
 //                          categories from this endpoint. is not supported.
 //							The params argument is optional.
-func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (ret *Guild, err error) {
+func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildParams) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 Guilds?
 
@@ -651,7 +651,7 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildPar
 		Endpoint:    endpoint.Guilds(),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-	}, flags)
+	}, c.flags)
 	r.factory = func() interface{} {
 		return &Guild{}
 	}
@@ -662,6 +662,7 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildPar
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
 type GuildQueryBuilder interface {
 	WithContext(ctx context.Context) GuildQueryBuilder
+	WithFlags(flags ...Flag) GuildQueryBuilder
 
 	// Get
 	// TODO: Add more guild attribute things. Waiting for caching changes before then.
@@ -735,12 +736,18 @@ func (c clientQueryBuilder) Guild(id Snowflake) GuildQueryBuilder {
 // The default guild query builder.
 type guildQueryBuilder struct {
 	ctx    context.Context
+	flags  Flag
 	client *Client
 	gid    Snowflake
 }
 
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
 	g.ctx = ctx
+	return &g
+}
+
+func (g guildQueryBuilder) WithFlags(flags ...Flag) GuildQueryBuilder {
+	g.flags = mergeFlags(flags)
 	return &g
 }
 
@@ -756,7 +763,7 @@ func (g guildQueryBuilder) Get(flags ...Flag) (guild *Guild, err error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Guild(g.gid),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 	r.factory = func() interface{} {
 		return &Guild{}
 	}
@@ -776,7 +783,7 @@ func (g guildQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildBuilder {
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
 	}, nil)
-	builder.r.flags = flags
+	builder.r.flags = g.flags
 
 	return builder
 }

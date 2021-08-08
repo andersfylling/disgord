@@ -221,8 +221,7 @@ func (b *RESTBuilder) prepare() {
 	}
 	b.config.Endpoint += b.urlParams.URLQueryString()
 
-	flags := mergeFlags(b.flags)
-	if flags.Ignorecache() {
+	if b.flags.Ignorecache() {
 		b.IgnoreCache()
 	}
 	if b.config.Ctx == nil {
@@ -261,8 +260,8 @@ func (b *RESTBuilder) execute() (v interface{}, err error) {
 		}
 		executeInternalUpdater(v)
 	}
-	if mergeFlags(b.flags).Sort() {
-		Sort(v, b.flags...)
+	if b.flags.Sort() {
+		Sort(v, b.flags)
 	}
 	return v, nil
 }
@@ -318,10 +317,10 @@ type basicBuilder struct {
 
 type ClientQueryBuilderExecutables interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(guildName string, params *CreateGuildParams, flags ...Flag) (*Guild, error)
+	CreateGuild(guildName string, params *CreateGuildParams) (*Guild, error)
 
-	// GetVoiceRegionsBuilder Returns an array of voice region objects that can be used when creating servers.
-	GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error)
+	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
+	GetVoiceRegions() ([]*VoiceRegion, error)
 
 	BotAuthorizeURL() (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
@@ -329,6 +328,7 @@ type ClientQueryBuilderExecutables interface {
 
 type ClientQueryBuilder interface {
 	WithContext(ctx context.Context) ClientQueryBuilderExecutables
+	WithFlags(flags ...Flag) ClientQueryBuilderExecutables
 
 	ClientQueryBuilderExecutables
 
@@ -342,11 +342,17 @@ type ClientQueryBuilder interface {
 
 type clientQueryBuilder struct {
 	ctx    context.Context
+	flags  Flag
 	client *Client
 }
 
 func (c clientQueryBuilder) WithContext(ctx context.Context) ClientQueryBuilderExecutables {
 	c.ctx = ctx
+	return &c
+}
+
+func (c clientQueryBuilder) WithFlags(flags ...Flag) ClientQueryBuilderExecutables {
+	c.flags = mergeFlags(flags)
 	return &c
 }
 
@@ -357,7 +363,6 @@ func (c clientQueryBuilder) WithContext(ctx context.Context) ClientQueryBuilderE
 // If you want to affect the actual message data besides .Content; provide a
 // MessageCreateParams. The reply message will be updated by the last one provided.
 func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
-	var flags []Flag
 	params := &CreateMessageParams{}
 	addEmbed := func(e *Embed) error {
 		if params.Embed != nil {
@@ -413,10 +418,6 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 			return nil, errors.New("can not handle *os.File, use a CreateMessageFileParams instead")
 		case string:
 			s = t
-		case *Flag:
-			flags = append(flags, *t)
-		case Flag:
-			flags = append(flags, t)
 		case Message:
 			if s, err = msgToParams(&t); err != nil {
 				return nil, err
@@ -453,14 +454,14 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 
 	// wtf?
 	if data == nil {
-		if mergeFlags(flags).IgnoreEmptyParams() {
+		if c.flags.IgnoreEmptyParams() {
 			params.Content = ""
 		} else {
 			return nil, errors.New("params were nil")
 		}
 	}
 
-	return c.Channel(channelID).WithContext(c.ctx).CreateMessage(params, flags...)
+	return c.Channel(channelID).WithContext(c.ctx).CreateMessage(params)
 }
 
 // BotAuthorizeURL creates a URL that can be used to invite this bot to a guild/server.
