@@ -356,6 +356,12 @@ func (c clientQueryBuilder) WithFlags(flags ...Flag) ClientQueryBuilderExecutabl
 	return &c
 }
 
+func (c clientQueryBuilder) WithContextAndFlags(ctx context.Context, flags ...Flag) ClientQueryBuilderExecutables {
+	c.ctx = ctx
+	c.flags = mergeFlags(flags)
+	return &c
+}
+
 // SendMsg should convert all inputs into a single message. If you supply a object with an ID
 // such as a channel, message, role, etc. It will become a reference.  If say the Message provided
 // does not have an ID, the Message will populate a CreateMessage with it's fields.
