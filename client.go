@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, conf Config) (*Client, error) {
 }
 
 func verifyClientProduction(ctx context.Context, client *Client) (Snowflake, error) {
-	usr, err := client.CurrentUser().WithContext(ctx).Get(IgnoreCache)
+	usr, err := client.CurrentUser().WithContext(ctx).WithFlags(IgnoreCache).Get()
 	if err != nil {
 		return 0, err
 	}

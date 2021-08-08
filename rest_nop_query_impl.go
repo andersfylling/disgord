@@ -14,106 +14,109 @@ var _ GuildQueryBuilder = (*guildQueryBuilderNop)(nil)
 func (g guildQueryBuilderNop) WithContext(_ context.Context) GuildQueryBuilder {
 	return g
 }
+func (g guildQueryBuilderNop) WithFlags(_ ...Flag) GuildQueryBuilder {
+	return g
+}
 func (guildQueryBuilderNop) VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder {
 	return nil
 }
-func (guildQueryBuilderNop) Get(flags ...Flag) (guild *Guild, err error) {
+func (guildQueryBuilderNop) Get() (guild *Guild, err error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetChannels(flags ...Flag) ([]*Channel, error) {
+func (guildQueryBuilderNop) GetChannels() ([]*Channel, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetMembers(params *GetMembersParams, flags ...Flag) ([]*Member, error) {
+func (guildQueryBuilderNop) GetMembers(params *GetMembersParams) ([]*Member, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UpdateBuilder(flags ...Flag) UpdateGuildBuilder {
+func (guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
-func (guildQueryBuilderNop) Delete(flags ...Flag) error {
+func (guildQueryBuilderNop) Delete() error {
 	return nil
 }
-func (guildQueryBuilderNop) CreateChannel(name string, params *CreateGuildChannelParams, flags ...Flag) (*Channel, error) {
+func (guildQueryBuilderNop) CreateChannel(name string, params *CreateGuildChannelParams) (*Channel, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UpdateChannelPositions(params []UpdateGuildChannelPositionsParams, flags ...Flag) error {
+func (guildQueryBuilderNop) UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error {
 	return nil
 }
-func (guildQueryBuilderNop) CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams, flags ...Flag) (*Member, error) {
+func (guildQueryBuilderNop) CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams) (*Member, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) SetCurrentUserNick(nick string, flags ...Flag) (newNick string, err error) {
+func (guildQueryBuilderNop) SetCurrentUserNick(nick string) (newNick string, err error) {
 	return "", nil
 }
 func (guildQueryBuilderNop) KickVoiceParticipant(userID Snowflake) error {
 	return nil
 }
-func (guildQueryBuilderNop) GetBans(flags ...Flag) ([]*Ban, error) {
+func (guildQueryBuilderNop) GetBans() ([]*Ban, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetBan(userID Snowflake, flags ...Flag) (*Ban, error) {
+func (guildQueryBuilderNop) GetBan(userID Snowflake) (*Ban, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UnbanUser(userID Snowflake, reason string, flags ...Flag) error {
+func (guildQueryBuilderNop) UnbanUser(userID Snowflake, reason string) error {
 	return nil
 }
-func (guildQueryBuilderNop) GetRoles(flags ...Flag) ([]*Role, error) {
+func (guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) CreateRole(params *CreateGuildRoleParams, flags ...Flag) (*Role, error) {
+func (guildQueryBuilderNop) CreateRole(params *CreateGuildRoleParams) (*Role, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UpdateRolePositions(params []UpdateGuildRolePositionsParams, flags ...Flag) ([]*Role, error) {
+func (guildQueryBuilderNop) UpdateRolePositions(params []UpdateGuildRolePositionsParams) ([]*Role, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) EstimatePruneMembersCount(days int, flags ...Flag) (estimate int, err error) {
+func (guildQueryBuilderNop) EstimatePruneMembersCount(days int) (estimate int, err error) {
 	return 0, nil
 }
-func (guildQueryBuilderNop) PruneMembers(days int, reason string, flags ...Flag) error {
+func (guildQueryBuilderNop) PruneMembers(days int, reason string) error {
 	return nil
 }
-func (guildQueryBuilderNop) GetVoiceRegions(flags ...Flag) ([]*VoiceRegion, error) {
+func (guildQueryBuilderNop) GetVoiceRegions() ([]*VoiceRegion, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetInvites(flags ...Flag) ([]*Invite, error) {
+func (guildQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetIntegrations(flags ...Flag) ([]*Integration, error) {
+func (guildQueryBuilderNop) GetIntegrations() ([]*Integration, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) CreateIntegration(params *CreateGuildIntegrationParams, flags ...Flag) error {
+func (guildQueryBuilderNop) CreateIntegration(params *CreateGuildIntegrationParams) error {
 	return nil
 }
-func (guildQueryBuilderNop) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams, flags ...Flag) error {
+func (guildQueryBuilderNop) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error {
 	return nil
 }
-func (guildQueryBuilderNop) DeleteIntegration(integrationID Snowflake, flags ...Flag) error {
+func (guildQueryBuilderNop) DeleteIntegration(integrationID Snowflake) error {
 	return nil
 }
-func (guildQueryBuilderNop) SyncIntegration(integrationID Snowflake, flags ...Flag) error {
+func (guildQueryBuilderNop) SyncIntegration(integrationID Snowflake) error {
 	return nil
 }
-func (guildQueryBuilderNop) GetEmbed(flags ...Flag) (*GuildEmbed, error) {
+func (guildQueryBuilderNop) GetEmbed() (*GuildEmbed, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) UpdateEmbedBuilder(flags ...Flag) UpdateGuildEmbedBuilder {
+func (guildQueryBuilderNop) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	return nil
 }
-func (guildQueryBuilderNop) GetVanityURL(flags ...Flag) (*PartialInvite, error) {
+func (guildQueryBuilderNop) GetVanityURL() (*PartialInvite, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetAuditLogs(flags ...Flag) GuildAuditLogsBuilder {
+func (guildQueryBuilderNop) GetAuditLogs() GuildAuditLogsBuilder {
 	return nil
 }
 func (guildQueryBuilderNop) VoiceConnect(channelID Snowflake) (ret VoiceConnection, err error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetEmojis(flags ...Flag) ([]*Emoji, error) {
+func (guildQueryBuilderNop) GetEmojis() ([]*Emoji, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) CreateEmoji(params *CreateGuildEmojiParams, flags ...Flag) (*Emoji, error) {
+func (guildQueryBuilderNop) CreateEmoji(params *CreateGuildEmojiParams) (*Emoji, error) {
 	return nil, nil
 }
-func (guildQueryBuilderNop) GetWebhooks(flags ...Flag) (ret []*Webhook, err error) {
+func (guildQueryBuilderNop) GetWebhooks() (ret []*Webhook, err error) {
 	return nil, nil
 }
 func (guildQueryBuilderNop) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -134,22 +137,25 @@ var _ CurrentUserQueryBuilder = (*currentUserQueryBuilderNop)(nil)
 func (c currentUserQueryBuilderNop) WithContext(_ context.Context) CurrentUserQueryBuilder {
 	return &c
 }
-func (currentUserQueryBuilderNop) Get(_ ...Flag) (*User, error) {
+func (g currentUserQueryBuilderNop) WithFlags(_ ...Flag) CurrentUserQueryBuilder {
+	return g
+}
+func (currentUserQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
-func (currentUserQueryBuilderNop) UpdateBuilder(_ ...Flag) UpdateCurrentUserBuilder {
+func (currentUserQueryBuilderNop) UpdateBuilder() UpdateCurrentUserBuilder {
 	return nil
 }
-func (currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams, _ ...Flag) ([]*Guild, error) {
+func (currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams) ([]*Guild, error) {
 	return nil, nil
 }
-func (currentUserQueryBuilderNop) LeaveGuild(_ Snowflake, _ ...Flag) error {
+func (currentUserQueryBuilderNop) LeaveGuild(_ Snowflake) error {
 	return nil
 }
-func (currentUserQueryBuilderNop) CreateGroupDM(_ *CreateGroupDMParams, _ ...Flag) (*Channel, error) {
+func (currentUserQueryBuilderNop) CreateGroupDM(_ *CreateGroupDMParams) (*Channel, error) {
 	return nil, nil
 }
-func (currentUserQueryBuilderNop) GetUserConnections(_ ...Flag) ([]*UserConnection, error) {
+func (currentUserQueryBuilderNop) GetUserConnections() ([]*UserConnection, error) {
 	return nil, nil
 }
 
@@ -161,9 +167,12 @@ var _ UserQueryBuilder = (*userQueryBuilderNop)(nil)
 func (u userQueryBuilderNop) WithContext(_ context.Context) UserQueryBuilder {
 	return u
 }
-func (userQueryBuilderNop) Get(_ ...Flag) (*User, error) {
+func (g userQueryBuilderNop) WithFlags(_ ...Flag) UserQueryBuilder {
+	return g
+}
+func (userQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
-func (userQueryBuilderNop) CreateDM(_ ...Flag) (*Channel, error) {
+func (userQueryBuilderNop) CreateDM() (*Channel, error) {
 	return nil, nil
 }

@@ -132,9 +132,9 @@ func (c *Channel) valid() bool {
 }
 
 // GetPermissions is used to get a members permissions in a channel.
-func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller, member *Member, flags ...Flag) (permissions PermissionBit, err error) {
+func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller, member *Member) (permissions PermissionBit, err error) {
 	// Get the guild permissions.
-	permissions, err = member.GetPermissions(ctx, s, flags...)
+	permissions, err = member.GetPermissions(ctx, s)
 	if err != nil {
 		return 0, err
 	}
