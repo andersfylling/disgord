@@ -345,6 +345,9 @@ type MessageQueryBuilder interface {
 	// current user. Returns a message object. Fires a Message Update Gateway event.
 	Update(params *UpdateMessageParams) (*Message, error)
 
+	// Deprecated: use Update(..) instead
+	UpdateBuilder() UpdateMessageBuilder
+
 	CrossPost() (*Message, error)
 
 	// Delete deletes a message. If operating on a guild channel and trying to delete a message that was not
