@@ -85,6 +85,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*PermissionOverwrite:
 		s = *t
+	case *[]*UpdateChannel:
+		s = *t
 	case *[]*UpdateChannelPermissionsParams:
 		s = *t
 	case *[]*Client:

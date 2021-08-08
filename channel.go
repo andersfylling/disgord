@@ -29,6 +29,14 @@ const (
 	ChannelTypeGuildStore
 )
 
+// VideoQualityMode https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes
+type VideoQualityMode uint
+
+const (
+	VideoQualityModeAuto VideoQualityMode = 1
+	VideoQualityModeFull VideoQualityMode = 2
+)
+
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -244,10 +252,13 @@ type ChannelQueryBuilder interface {
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
 
-	// UpdateBuilder Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// Update Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
+	Update(params *UpdateChannel, reason string) (*Channel, error)
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
 
 	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -365,29 +376,46 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 	return getChannel(r.Execute)
 }
 
-// UpdateBuilder [REST] Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
-// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
-// modifying a category, individual Channel Update events will fire for each child channel that also changes.
-// For the PATCH method, all the JSON Params are optional.
-//  Method                  PUT/PATCH
+// Update [REST] Update a channel's settings. Returns a channel on success, and a 400 BAD REQUEST
+// on invalid parameters. All JSON parameters are optional.
+//  Method                  PATCH
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
-//  Reviewed                2018-06-07
-//  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
-	builder := &updateChannelBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return c.client.pool.channel.Get()
+//  Reviewed                2021-08-08
+func (c channelQueryBuilder) Update(params *UpdateChannel, reason string) (*Channel, error) {
+	if params == nil {
+		return nil, errors.New("missing update parameters")
 	}
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+	if c.cid.IsZero() {
+		return nil, MissingChannelIDErr
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      reason,
+	}, c.flags)
 
-	return builder
+	return getChannel(r.Execute)
+}
+
+type UpdateChannel struct {
+	Name                       *string                    `json:"name,omitempty"`
+	Type                       *ChannelType               `json:"type,omitempty"`
+	Position                   *uint                      `json:"position,omitempty"`
+	Topic                      *string                    `json:"topic,omitempty"`
+	NSFW                       *bool                      `json:"nsfw,omitempty"`
+	RateLimitPerUser           *uint                      `json:"rate_limit_per_user,omitempty"`
+	Bitrate                    *uint                      `json:"bitrate,omitempty"`
+	UserLimit                  *uint                      `json:"user_limit,omitempty"`
+	PermissionOverwrites       *[]PermissionOverwriteType `json:"permission_overwrites,omitempty"`
+	ParentID                   *Snowflake                 `json:"parent_id,omitempty"`
+	RTCRegion                  *string                    `json:"rtc_region,omitempty"`
+	VideoQualityMode           *VideoQualityMode          `json:"video_quality_mode,omitempty"`
+	DefaultAutoArchiveDuration *uint                      `json:"default_auto_archive_duration,omitempty"`
 }
 
 // Delete [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -1136,34 +1164,5 @@ type createChannelInviteBuilder struct {
 
 func (b *createChannelInviteBuilder) WithReason(reason string) *createChannelInviteBuilder {
 	b.r.headerReason = reason
-	return b
-}
-
-// updateChannelBuilder https://discord.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
-//generate-rest-basic-execute: channel:*Channel,
-type updateChannelBuilder struct {
-	r RESTBuilder
-}
-
-func (b *updateChannelBuilder) AddPermissionOverwrite(permission PermissionOverwrite) *updateChannelBuilder {
-	if _, exists := b.r.body["permission_overwrites"]; !exists {
-		b.SetPermissionOverwrites([]PermissionOverwrite{permission})
-	} else {
-		s := b.r.body["permission_overwrites"].([]PermissionOverwrite)
-		s = append(s, permission)
-		b.SetPermissionOverwrites(s)
-	}
-	return b
-}
-func (b *updateChannelBuilder) AddPermissionOverwrites(permissions []PermissionOverwrite) *updateChannelBuilder {
-	for i := range permissions {
-		b.AddPermissionOverwrite(permissions[i])
-	}
-	return b
-}
-
-func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
-	b.r.param("parent_id", nil)
 	return b
 }
