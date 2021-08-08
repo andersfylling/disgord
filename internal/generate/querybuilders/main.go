@@ -52,6 +52,8 @@ func Exported(name string) bool {
 	return firstChar == strings.ToUpper(firstChar)
 }
 
+var disgordTypePrefix = "disgord."
+
 func main() {
 	disgordTypes, pkg, err := DisgordTypes()
 	if err != nil {
@@ -74,6 +76,8 @@ func main() {
 	}
 
 	makeFile(queryBuilders, pkg.SourcePath+"/internal/generate/querybuilders/disgordutil_QueryBuilderNop.gotpl", pkg.SourcePath+"/disgordutil/query_builders_nop_gen.go")
+	disgordTypePrefix = ""
+	makeFile(queryBuilders, pkg.SourcePath+"/internal/generate/querybuilders/disgord_QueryBuilderNop.gotpl", pkg.SourcePath+"/query_builders_nop_gen.go")
 }
 
 func makeFile(implementers []*TypeWrapper, tplFile, target string) {
@@ -130,7 +134,7 @@ func (t *TypeWrapper) init() {
 			continue
 		}
 
-		returnType := "disgord." + m.Signature.Results[0].Name.Name
+		returnType := m.Signature.Results[0].Name.Name
 		if name == "WithContext" {
 			t.hasContext = true
 			t.withContextReturnType = returnType
@@ -141,6 +145,10 @@ func (t *TypeWrapper) init() {
 			t.withFlagsReturnType = returnType
 		}
 	}
+}
+
+func (t *TypeWrapper) DiscordTypePrefix() string {
+	return disgordTypePrefix
 }
 
 func (t *TypeWrapper) ShortName() string {
@@ -157,11 +165,11 @@ func (t *TypeWrapper) TypeName() string {
 }
 
 func (t *TypeWrapper) WithContextReturnType() string {
-	return t.withContextReturnType
+	return disgordTypePrefix + t.withContextReturnType
 }
 
 func (t *TypeWrapper) WithFlagsReturnType() string {
-	return t.withFlagsReturnType
+	return disgordTypePrefix + t.withFlagsReturnType
 }
 
 func (t *TypeWrapper) HasWithContext() bool {
@@ -179,9 +187,6 @@ func (t *TypeWrapper) Fields() []*FieldWrapper {
 			continue
 		}
 
-		if name == "CreateInvite" {
-			fmt.Sprintln("asdasd")
-		}
 		fields = append(fields, &FieldWrapper{&TypeWrapper{Type: m}, name})
 	}
 	sort.Slice(fields, func(i, j int) bool {
@@ -208,30 +213,21 @@ func (f *FieldWrapper) Parameters() string {
 }
 
 func (f *FieldWrapper) ReturnTypes() string {
-	if f.Name == "BotAuthorizeURL" {
-		fmt.Println(234)
-	}
 	s := ""
 	for _, result := range f.Type.Signature.Results {
 		if s != "" {
 			s += ", "
 		}
-		//if result.Kind == types.Pointer {
-		//	s += "*"
-		//}
-		//if result.Kind != types.Builtin {
-		//	s += "disgord."
-		//}
 
 		isDisgordType := strings.Contains(result.Name.Name, "disgord") || strings.Contains(result.Name.Package, "disgord")
 
 		name := result.Name.Name
 		name = strings.Replace(name, "github.com/andersfylling/", "", 1)
-		if isDisgordType && !strings.Contains(name, "disgord.") {
+		if isDisgordType && !strings.Contains(name, disgordTypePrefix) {
 			if name[0] == '*' {
 				name = name[1:]
 			}
-			name = "disgord." + name
+			name = disgordTypePrefix + name
 			if result.Kind == types.Pointer {
 				name = "*" + name
 			}
@@ -243,10 +239,21 @@ func (f *FieldWrapper) ReturnTypes() string {
 				name = "*" + name
 			}
 		}
+
+		// edge case
+		if disgordTypePrefix == "" && strings.Contains(name, "disgord.") {
+			name = strings.Replace(name, "disgord.", "", 1)
+		}
+
+		// TODO: improve snowflake..
+		if strings.HasSuffix(name, "Snowflake") {
+			name = disgordTypePrefix + "Snowflake"
+		}
+
 		s += name
 	}
 
-	if strings.Contains(s, ",") {
+	if len(f.Type.Signature.Results) > 0 {
 		return fmt.Sprintf("(%s)", s)
 	}
 	return s
@@ -340,6 +347,10 @@ func (f *FieldWrapper) SliceType() string {
 }
 
 func ZeroValue(t *TypeWrapper) (v string) {
+	if strings.HasSuffix(t.Name.Name, "Snowflake") {
+		return "0"
+	}
+
 	switch t.Type.Kind {
 	case types.Slice:
 		v = "nil"

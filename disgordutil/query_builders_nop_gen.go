@@ -276,8 +276,8 @@ func (g *GatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) Dispatch() (v5.Snowflake, error) {
-	return nil, nil
+func (g *GatewayQueryBuilderNop) Dispatch() (disgord.Snowflake, error) {
+	return 0, nil
 }
 
 func (g *GatewayQueryBuilderNop) Get() (*gateway.Gateway, error) {
