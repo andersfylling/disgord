@@ -553,13 +553,13 @@ func (c *Client) UpdateStatusString(s string) error {
 	return c.UpdateStatus(updateData)
 }
 
-func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
+func (c *Client) newRESTRequest(conf *httd.Request, flags Flag) *rest {
 	r := &rest{
 		c:    c,
 		conf: conf,
 	}
 	r.init()
-	r.flags = mergeFlags(flags)
+	r.flags = flags
 
 	return r
 }

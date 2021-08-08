@@ -176,7 +176,7 @@ type RESTBuilder struct {
 	config     *httd.Request
 	client     httd.Requester
 
-	flags []Flag // TODO: checking
+	flags Flag // TODO: checking
 
 	prerequisites []string // error msg
 
