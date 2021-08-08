@@ -38,7 +38,7 @@ type WebhookQueryBuilder interface {
 
 	// UpdateBuilder Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns the updated webhook object on success.
-	UpdateBuilder() *updateWebhookBuilder
+	UpdateBuilder() UpdateWebhookBuilder
 
 	// Delete Deletes a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
 	Delete() error
@@ -102,8 +102,8 @@ func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (w webhookQueryBuilder) UpdateBuilder() (builder *updateWebhookBuilder) {
-	builder = &updateWebhookBuilder{}
+func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
+	builder := &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
 	}
@@ -184,7 +184,7 @@ type WebhookWithTokenQueryBuilder interface {
 
 	// UpdateBuilder Same as UpdateWebhook, except this call does not require authentication,
 	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-	UpdateBuilder() *updateWebhookBuilder
+	UpdateBuilder() UpdateWebhookBuilder
 
 	// Delete Same as DeleteWebhook, except this call does not require authentication.
 	Delete() error
@@ -241,8 +241,8 @@ func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
-func (w webhookWithTokenQueryBuilder) UpdateBuilder() (builder *updateWebhookBuilder) {
-	builder = &updateWebhookBuilder{}
+func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
+	builder := &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Webhook{}
 	}
