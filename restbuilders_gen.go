@@ -241,6 +241,62 @@ func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// UpdateGuildEmojiBuilder is the interface for the builder.
+type UpdateGuildEmojiBuilder interface {
+	Execute() (emoji *Emoji, err error)
+	IgnoreCache() UpdateGuildEmojiBuilder
+	CancelOnRatelimit() UpdateGuildEmojiBuilder
+	URLParam(name string, v interface{}) UpdateGuildEmojiBuilder
+	Set(name string, v interface{}) UpdateGuildEmojiBuilder
+	SetName(name string) UpdateGuildEmojiBuilder
+	SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildEmojiBuilder) IgnoreCache() UpdateGuildEmojiBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildEmojiBuilder) CancelOnRatelimit() UpdateGuildEmojiBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildEmojiBuilder) URLParam(name string, v interface{}) UpdateGuildEmojiBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildEmojiBuilder) Set(name string, v interface{}) UpdateGuildEmojiBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildEmojiBuilder) SetName(name string) UpdateGuildEmojiBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildEmojiBuilder) SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder {
+	b.r.param("roles", roles)
+	return b
+}
+
+func (b *updateGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Emoji), nil
+}
+
 // UpdateMessageBuilder is the interface for the builder.
 type UpdateMessageBuilder interface {
 	Execute() (message *Message, err error)
@@ -340,62 +396,6 @@ func (b *createGuildEmojiBuilder) SetRoles(roles []Snowflake) CreateGuildEmojiBu
 }
 
 func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Emoji), nil
-}
-
-// UpdateGuildEmojiBuilder is the interface for the builder.
-type UpdateGuildEmojiBuilder interface {
-	Execute() (emoji *Emoji, err error)
-	IgnoreCache() UpdateGuildEmojiBuilder
-	CancelOnRatelimit() UpdateGuildEmojiBuilder
-	URLParam(name string, v interface{}) UpdateGuildEmojiBuilder
-	Set(name string, v interface{}) UpdateGuildEmojiBuilder
-	SetName(name string) UpdateGuildEmojiBuilder
-	SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildEmojiBuilder) IgnoreCache() UpdateGuildEmojiBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildEmojiBuilder) CancelOnRatelimit() UpdateGuildEmojiBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildEmojiBuilder) URLParam(name string, v interface{}) UpdateGuildEmojiBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildEmojiBuilder) Set(name string, v interface{}) UpdateGuildEmojiBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateGuildEmojiBuilder) SetName(name string) UpdateGuildEmojiBuilder {
-	b.r.param("name", name)
-	return b
-}
-
-func (b *updateGuildEmojiBuilder) SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder {
-	b.r.param("roles", roles)
-	return b
-}
-
-func (b *updateGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	var v interface{}
 	if v, err = b.r.execute(); err != nil {
 		return nil, err

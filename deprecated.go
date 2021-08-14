@@ -49,6 +49,24 @@ func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
 	return builder
 }
 
+// UpdateBuilder Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
+// Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
+func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
+	builder := &updateGuildEmojiBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Emoji{}
+	}
+	builder.r.flags = g.flags
+	builder.r.setup(g.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
@@ -96,6 +114,12 @@ func (b *updateChannelBuilder) AddPermissionOverwrites(permissions []PermissionO
 func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
 	b.r.param("parent_id", nil)
 	return b
+}
+
+//generate-rest-params: name:string, roles:[]Snowflake,
+//generate-rest-basic-execute: emoji:*Emoji,
+type updateGuildEmojiBuilder struct {
+	r RESTBuilder
 }
 
 //////////////////////////////////////////////////////

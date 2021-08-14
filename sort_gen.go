@@ -115,6 +115,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Emoji:
 		s = *t
+	case *[]*UpdateEmoji:
+		s = *t
 	case *[]*ChannelCreate:
 		s = *t
 	case *[]*ChannelDelete:
