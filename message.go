@@ -377,6 +377,19 @@ type messageQueryBuilder struct {
 	mid    Snowflake
 }
 
+func (m *messageQueryBuilder) validate() error {
+	if m.client == nil {
+		return MissingClientInstanceErr
+	}
+	if m.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	if m.mid.IsZero() {
+		return MissingMessageIDErr
+	}
+	return nil
+}
+
 func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilder {
 	m.ctx = ctx
 	return &m
@@ -432,13 +445,10 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 //  Comment                 All parameters to this endpoint are optional.
 func (m messageQueryBuilder) Update(params *UpdateMessageParams) (*Message, error) {
 	if params == nil {
-		return nil, errors.New("missing update parameters")
+		return nil, MissingRESTParamsErr
 	}
-	if m.cid.IsZero() {
-		return nil, MissingChannelIDErr
-	}
-	if m.mid.IsZero() {
-		return nil, MissingMessageIDErr
+	if err := m.validate(); err != nil {
+		return nil, err
 	}
 
 	postBody, contentType, err := params.prepare()
