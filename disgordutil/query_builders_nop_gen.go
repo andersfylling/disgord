@@ -37,7 +37,7 @@ func (c *ChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.Channe
 	return &c
 }
 
-func (c *ChannelQueryBuilderNop) AddDMParticipant() error {
+func (c *ChannelQueryBuilderNop) AddDMParticipant(_ *disgord.GroupDMParticipant) error {
 	return nil
 }
 
@@ -45,11 +45,11 @@ func (c *ChannelQueryBuilderNop) CreateInvite() disgord.CreateChannelInviteBuild
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateMessage() (*disgord.Message, error) {
+func (c *ChannelQueryBuilderNop) CreateMessage(_ *disgord.CreateMessageParams) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateWebhook() (*disgord.Webhook, error) {
+func (c *ChannelQueryBuilderNop) CreateWebhook(_ *disgord.CreateWebhookParams) (*disgord.Webhook, error) {
 	return nil, nil
 }
 
@@ -57,11 +57,11 @@ func (c *ChannelQueryBuilderNop) Delete() (*disgord.Channel, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) DeleteMessages() error {
+func (c *ChannelQueryBuilderNop) DeleteMessages(_ *disgord.DeleteMessagesParams) error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) DeletePermission() error {
+func (c *ChannelQueryBuilderNop) DeletePermission(_ disgord.Snowflake) error {
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (c *ChannelQueryBuilderNop) GetInvites() ([]*disgord.Invite, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) GetMessages() ([]*disgord.Message, error) {
+func (c *ChannelQueryBuilderNop) GetMessages(_ *disgord.GetMessagesParams) ([]*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -85,11 +85,11 @@ func (c *ChannelQueryBuilderNop) GetWebhooks() ([]*disgord.Webhook, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) KickParticipant() error {
+func (c *ChannelQueryBuilderNop) KickParticipant(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) Message() disgord.MessageQueryBuilder {
+func (c *ChannelQueryBuilderNop) Message(_ disgord.Snowflake) disgord.MessageQueryBuilder {
 	return nil
 }
 
@@ -101,7 +101,7 @@ func (c *ChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuilder {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) UpdatePermissions() error {
+func (c *ChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissionsParams) error {
 	return nil
 }
 
@@ -129,11 +129,11 @@ func (c *ClientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
 	return nil, nil
 }
 
-func (c *ClientQueryBuilderNop) Channel() disgord.ChannelQueryBuilder {
+func (c *ClientQueryBuilderNop) Channel(_ disgord.Snowflake) disgord.ChannelQueryBuilder {
 	return nil
 }
 
-func (c *ClientQueryBuilderNop) CreateGuild() (*disgord.Guild, error) {
+func (c *ClientQueryBuilderNop) CreateGuild(_ string, _ *disgord.CreateGuildParams) (*disgord.Guild, error) {
 	return nil, nil
 }
 
@@ -149,19 +149,19 @@ func (c *ClientQueryBuilderNop) GetVoiceRegions() ([]*disgord.VoiceRegion, error
 	return nil, nil
 }
 
-func (c *ClientQueryBuilderNop) Guild() disgord.GuildQueryBuilder {
+func (c *ClientQueryBuilderNop) Guild(_ disgord.Snowflake) disgord.GuildQueryBuilder {
 	return nil
 }
 
-func (c *ClientQueryBuilderNop) Invite() disgord.InviteQueryBuilder {
+func (c *ClientQueryBuilderNop) Invite(_ string) disgord.InviteQueryBuilder {
 	return nil
 }
 
-func (c *ClientQueryBuilderNop) SendMsg() (*disgord.Message, error) {
+func (c *ClientQueryBuilderNop) SendMsg(_ disgord.Snowflake, _ []interface{}) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (c *ClientQueryBuilderNop) User() disgord.UserQueryBuilder {
+func (c *ClientQueryBuilderNop) User(_ disgord.Snowflake) disgord.UserQueryBuilder {
 	return nil
 }
 
@@ -185,7 +185,7 @@ func (c *CurrentUserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.Cu
 	return &c
 }
 
-func (c *CurrentUserQueryBuilderNop) CreateGroupDM() (*disgord.Channel, error) {
+func (c *CurrentUserQueryBuilderNop) CreateGroupDM(_ *disgord.CreateGroupDMParams) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -193,7 +193,7 @@ func (c *CurrentUserQueryBuilderNop) Get() (*disgord.User, error) {
 	return nil, nil
 }
 
-func (c *CurrentUserQueryBuilderNop) GetGuilds() ([]*disgord.Guild, error) {
+func (c *CurrentUserQueryBuilderNop) GetGuilds(_ *disgord.GetCurrentUserGuildsParams) ([]*disgord.Guild, error) {
 	return nil, nil
 }
 
@@ -201,7 +201,7 @@ func (c *CurrentUserQueryBuilderNop) GetUserConnections() ([]*disgord.UserConnec
 	return nil, nil
 }
 
-func (c *CurrentUserQueryBuilderNop) LeaveGuild() error {
+func (c *CurrentUserQueryBuilderNop) LeaveGuild(_ disgord.Snowflake) error {
 	return nil
 }
 
@@ -224,43 +224,43 @@ func (g *GatewayQueryBuilderNop) WithContext(ctx context.Context) disgord.Gatewa
 	return &g
 }
 
-func (g *GatewayQueryBuilderNop) BotGuildsReady() {
+func (g *GatewayQueryBuilderNop) BotGuildsReady(_ func()) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) BotReady() {
+func (g *GatewayQueryBuilderNop) BotReady(_ func()) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelCreate() {
+func (g *GatewayQueryBuilderNop) ChannelCreate(_ disgord.ChannelCreate, _ disgord.ChannelCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelCreateChan() {
+func (g *GatewayQueryBuilderNop) ChannelCreateChan(_ chan *disgord.ChannelCreate, _ []chan *disgord.ChannelCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelDelete() {
+func (g *GatewayQueryBuilderNop) ChannelDelete(_ disgord.ChannelDelete, _ disgord.ChannelDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelDeleteChan() {
+func (g *GatewayQueryBuilderNop) ChannelDeleteChan(_ chan *disgord.ChannelDelete, _ []chan *disgord.ChannelDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelPinsUpdate() {
+func (g *GatewayQueryBuilderNop) ChannelPinsUpdate(_ disgord.ChannelPinsUpdate, _ disgord.ChannelPinsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelPinsUpdateChan() {
+func (g *GatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *disgord.ChannelPinsUpdate, _ []chan *disgord.ChannelPinsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelUpdate() {
+func (g *GatewayQueryBuilderNop) ChannelUpdate(_ disgord.ChannelUpdate, _ disgord.ChannelUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelUpdateChan() {
+func (g *GatewayQueryBuilderNop) ChannelUpdateChan(_ chan *disgord.ChannelUpdate, _ []chan *disgord.ChannelUpdate) {
 	return
 }
 
@@ -276,7 +276,7 @@ func (g *GatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) Dispatch() (disgord.Snowflake, error) {
+func (g *GatewayQueryBuilderNop) Dispatch(_ disgord.gatewayCmdName, _ disgord.CmdPayload) (disgord.Snowflake, error) {
 	return 0, nil
 }
 
@@ -288,227 +288,227 @@ func (g *GatewayQueryBuilderNop) GetBot() (*gateway.GatewayBot, error) {
 	return nil, nil
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanAdd() {
+func (g *GatewayQueryBuilderNop) GuildBanAdd(_ disgord.GuildBanAdd, _ disgord.GuildBanAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanAddChan() {
+func (g *GatewayQueryBuilderNop) GuildBanAddChan(_ chan *disgord.GuildBanAdd, _ []chan *disgord.GuildBanAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanRemove() {
+func (g *GatewayQueryBuilderNop) GuildBanRemove(_ disgord.GuildBanRemove, _ disgord.GuildBanRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanRemoveChan() {
+func (g *GatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *disgord.GuildBanRemove, _ []chan *disgord.GuildBanRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildCreate() {
+func (g *GatewayQueryBuilderNop) GuildCreate(_ disgord.GuildCreate, _ disgord.GuildCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildCreateChan() {
+func (g *GatewayQueryBuilderNop) GuildCreateChan(_ chan *disgord.GuildCreate, _ []chan *disgord.GuildCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildDelete() {
+func (g *GatewayQueryBuilderNop) GuildDelete(_ disgord.GuildDelete, _ disgord.GuildDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildDeleteChan() {
+func (g *GatewayQueryBuilderNop) GuildDeleteChan(_ chan *disgord.GuildDelete, _ []chan *disgord.GuildDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildEmojisUpdate() {
+func (g *GatewayQueryBuilderNop) GuildEmojisUpdate(_ disgord.GuildEmojisUpdate, _ disgord.GuildEmojisUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildEmojisUpdateChan() {
+func (g *GatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *disgord.GuildEmojisUpdate, _ []chan *disgord.GuildEmojisUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdate() {
+func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdate(_ disgord.GuildIntegrationsUpdate, _ disgord.GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdateChan() {
+func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *disgord.GuildIntegrationsUpdate, _ []chan *disgord.GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberAdd() {
+func (g *GatewayQueryBuilderNop) GuildMemberAdd(_ disgord.GuildMemberAdd, _ disgord.GuildMemberAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberAddChan() {
+func (g *GatewayQueryBuilderNop) GuildMemberAddChan(_ chan *disgord.GuildMemberAdd, _ []chan *disgord.GuildMemberAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberRemove() {
+func (g *GatewayQueryBuilderNop) GuildMemberRemove(_ disgord.GuildMemberRemove, _ disgord.GuildMemberRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberRemoveChan() {
+func (g *GatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *disgord.GuildMemberRemove, _ []chan *disgord.GuildMemberRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMembersChunk() {
+func (g *GatewayQueryBuilderNop) GuildMembersChunk(_ disgord.GuildMembersChunk, _ disgord.GuildMembersChunk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMembersChunkChan() {
+func (g *GatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *disgord.GuildMembersChunk, _ []chan *disgord.GuildMembersChunk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberUpdate() {
+func (g *GatewayQueryBuilderNop) GuildMemberUpdate(_ disgord.GuildMemberUpdate, _ disgord.GuildMemberUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberUpdateChan() {
+func (g *GatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *disgord.GuildMemberUpdate, _ []chan *disgord.GuildMemberUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleCreate() {
+func (g *GatewayQueryBuilderNop) GuildRoleCreate(_ disgord.GuildRoleCreate, _ disgord.GuildRoleCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleCreateChan() {
+func (g *GatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *disgord.GuildRoleCreate, _ []chan *disgord.GuildRoleCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleDelete() {
+func (g *GatewayQueryBuilderNop) GuildRoleDelete(_ disgord.GuildRoleDelete, _ disgord.GuildRoleDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleDeleteChan() {
+func (g *GatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *disgord.GuildRoleDelete, _ []chan *disgord.GuildRoleDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleUpdate() {
+func (g *GatewayQueryBuilderNop) GuildRoleUpdate(_ disgord.GuildRoleUpdate, _ disgord.GuildRoleUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleUpdateChan() {
+func (g *GatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *disgord.GuildRoleUpdate, _ []chan *disgord.GuildRoleUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildUpdate() {
+func (g *GatewayQueryBuilderNop) GuildUpdate(_ disgord.GuildUpdate, _ disgord.GuildUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildUpdateChan() {
+func (g *GatewayQueryBuilderNop) GuildUpdateChan(_ chan *disgord.GuildUpdate, _ []chan *disgord.GuildUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InteractionCreate() {
+func (g *GatewayQueryBuilderNop) InteractionCreate(_ disgord.InteractionCreate, _ disgord.InteractionCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InteractionCreateChan() {
+func (g *GatewayQueryBuilderNop) InteractionCreateChan(_ chan *disgord.InteractionCreate, _ []chan *disgord.InteractionCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteCreate() {
+func (g *GatewayQueryBuilderNop) InviteCreate(_ disgord.InviteCreate, _ disgord.InviteCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteCreateChan() {
+func (g *GatewayQueryBuilderNop) InviteCreateChan(_ chan *disgord.InviteCreate, _ []chan *disgord.InviteCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteDelete() {
+func (g *GatewayQueryBuilderNop) InviteDelete(_ disgord.InviteDelete, _ disgord.InviteDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteDeleteChan() {
+func (g *GatewayQueryBuilderNop) InviteDeleteChan(_ chan *disgord.InviteDelete, _ []chan *disgord.InviteDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageCreate() {
+func (g *GatewayQueryBuilderNop) MessageCreate(_ disgord.MessageCreate, _ disgord.MessageCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageCreateChan() {
+func (g *GatewayQueryBuilderNop) MessageCreateChan(_ chan *disgord.MessageCreate, _ []chan *disgord.MessageCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDelete() {
+func (g *GatewayQueryBuilderNop) MessageDelete(_ disgord.MessageDelete, _ disgord.MessageDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteBulk() {
+func (g *GatewayQueryBuilderNop) MessageDeleteBulk(_ disgord.MessageDeleteBulk, _ disgord.MessageDeleteBulk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteBulkChan() {
+func (g *GatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *disgord.MessageDeleteBulk, _ []chan *disgord.MessageDeleteBulk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteChan() {
+func (g *GatewayQueryBuilderNop) MessageDeleteChan(_ chan *disgord.MessageDelete, _ []chan *disgord.MessageDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionAdd() {
+func (g *GatewayQueryBuilderNop) MessageReactionAdd(_ disgord.MessageReactionAdd, _ disgord.MessageReactionAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionAddChan() {
+func (g *GatewayQueryBuilderNop) MessageReactionAddChan(_ chan *disgord.MessageReactionAdd, _ []chan *disgord.MessageReactionAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemove() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemove(_ disgord.MessageReactionRemove, _ disgord.MessageReactionRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveAll() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveAll(_ disgord.MessageReactionRemoveAll, _ disgord.MessageReactionRemoveAll) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveAllChan() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *disgord.MessageReactionRemoveAll, _ []chan *disgord.MessageReactionRemoveAll) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveChan() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *disgord.MessageReactionRemove, _ []chan *disgord.MessageReactionRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmoji() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ disgord.MessageReactionRemoveEmoji, _ disgord.MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmojiChan() {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *disgord.MessageReactionRemoveEmoji, _ []chan *disgord.MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageUpdate() {
+func (g *GatewayQueryBuilderNop) MessageUpdate(_ disgord.MessageUpdate, _ disgord.MessageUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageUpdateChan() {
+func (g *GatewayQueryBuilderNop) MessageUpdateChan(_ chan *disgord.MessageUpdate, _ []chan *disgord.MessageUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) PresenceUpdate() {
+func (g *GatewayQueryBuilderNop) PresenceUpdate(_ disgord.PresenceUpdate, _ disgord.PresenceUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) PresenceUpdateChan() {
+func (g *GatewayQueryBuilderNop) PresenceUpdateChan(_ chan *disgord.PresenceUpdate, _ []chan *disgord.PresenceUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) Ready() {
+func (g *GatewayQueryBuilderNop) Ready(_ disgord.Ready, _ disgord.Ready) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ReadyChan() {
+func (g *GatewayQueryBuilderNop) ReadyChan(_ chan *disgord.Ready, _ []chan *disgord.Ready) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) Resumed() {
+func (g *GatewayQueryBuilderNop) Resumed(_ disgord.Resumed, _ disgord.Resumed) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ResumedChan() {
+func (g *GatewayQueryBuilderNop) ResumedChan(_ chan *disgord.Resumed, _ []chan *disgord.Resumed) {
 	return
 }
 
@@ -516,51 +516,51 @@ func (g *GatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) TypingStart() {
+func (g *GatewayQueryBuilderNop) TypingStart(_ disgord.TypingStart, _ disgord.TypingStart) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) TypingStartChan() {
+func (g *GatewayQueryBuilderNop) TypingStartChan(_ chan *disgord.TypingStart, _ []chan *disgord.TypingStart) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) UserUpdate() {
+func (g *GatewayQueryBuilderNop) UserUpdate(_ disgord.UserUpdate, _ disgord.UserUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) UserUpdateChan() {
+func (g *GatewayQueryBuilderNop) UserUpdateChan(_ chan *disgord.UserUpdate, _ []chan *disgord.UserUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceServerUpdate() {
+func (g *GatewayQueryBuilderNop) VoiceServerUpdate(_ disgord.VoiceServerUpdate, _ disgord.VoiceServerUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceServerUpdateChan() {
+func (g *GatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *disgord.VoiceServerUpdate, _ []chan *disgord.VoiceServerUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceStateUpdate() {
+func (g *GatewayQueryBuilderNop) VoiceStateUpdate(_ disgord.VoiceStateUpdate, _ disgord.VoiceStateUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceStateUpdateChan() {
+func (g *GatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *disgord.VoiceStateUpdate, _ []chan *disgord.VoiceStateUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) WebhooksUpdate() {
+func (g *GatewayQueryBuilderNop) WebhooksUpdate(_ disgord.WebhooksUpdate, _ disgord.WebhooksUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) WebhooksUpdateChan() {
+func (g *GatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *disgord.WebhooksUpdate, _ []chan *disgord.WebhooksUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) WithCtrl() disgord.SocketHandlerRegistrator {
+func (g *GatewayQueryBuilderNop) WithCtrl(_ disgord.HandlerCtrl) disgord.SocketHandlerRegistrator {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) WithMiddleware() disgord.SocketHandlerRegistrator {
+func (g *GatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ []func(interface{}) interface{}) disgord.SocketHandlerRegistrator {
 	return nil
 }
 
@@ -616,11 +616,11 @@ func (g *GuildMemberQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.Gu
 	return &g
 }
 
-func (g *GuildMemberQueryBuilderNop) AddRole() error {
+func (g *GuildMemberQueryBuilderNop) AddRole(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (g *GuildMemberQueryBuilderNop) Ban() error {
+func (g *GuildMemberQueryBuilderNop) Ban(_ *disgord.BanMemberParams) error {
 	return nil
 }
 
@@ -632,11 +632,11 @@ func (g *GuildMemberQueryBuilderNop) GetPermissions() (disgord.PermissionBit, er
 	return 0, nil
 }
 
-func (g *GuildMemberQueryBuilderNop) Kick() error {
+func (g *GuildMemberQueryBuilderNop) Kick(_ string) error {
 	return nil
 }
 
-func (g *GuildMemberQueryBuilderNop) RemoveRole() error {
+func (g *GuildMemberQueryBuilderNop) RemoveRole(_ disgord.Snowflake) error {
 	return nil
 }
 
@@ -664,23 +664,23 @@ func (g *GuildQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildQue
 	return &g
 }
 
-func (g *GuildQueryBuilderNop) CreateChannel() (*disgord.Channel, error) {
+func (g *GuildQueryBuilderNop) CreateChannel(_ string, _ *disgord.CreateGuildChannelParams) (*disgord.Channel, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) CreateEmoji() (*disgord.Emoji, error) {
+func (g *GuildQueryBuilderNop) CreateEmoji(_ *disgord.CreateGuildEmojiParams) (*disgord.Emoji, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) CreateIntegration() error {
+func (g *GuildQueryBuilderNop) CreateIntegration(_ *disgord.CreateGuildIntegrationParams) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) CreateMember() (*disgord.Member, error) {
+func (g *GuildQueryBuilderNop) CreateMember(_ disgord.Snowflake, _ string, _ *disgord.AddGuildMemberParams) (*disgord.Member, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) CreateRole() (*disgord.Role, error) {
+func (g *GuildQueryBuilderNop) CreateRole(_ *disgord.CreateGuildRoleParams) (*disgord.Role, error) {
 	return nil, nil
 }
 
@@ -688,15 +688,15 @@ func (g *GuildQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) DeleteIntegration() error {
+func (g *GuildQueryBuilderNop) DeleteIntegration(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) Emoji() disgord.GuildEmojiQueryBuilder {
+func (g *GuildQueryBuilderNop) Emoji(_ disgord.Snowflake) disgord.GuildEmojiQueryBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) EstimatePruneMembersCount() (int, error) {
+func (g *GuildQueryBuilderNop) EstimatePruneMembersCount(_ int) (int, error) {
 	return 0, nil
 }
 
@@ -708,7 +708,7 @@ func (g *GuildQueryBuilderNop) GetAuditLogs() disgord.GuildAuditLogsBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) GetBan() (*disgord.Ban, error) {
+func (g *GuildQueryBuilderNop) GetBan(_ disgord.Snowflake) (*disgord.Ban, error) {
 	return nil, nil
 }
 
@@ -736,7 +736,7 @@ func (g *GuildQueryBuilderNop) GetInvites() ([]*disgord.Invite, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) GetMembers() ([]*disgord.Member, error) {
+func (g *GuildQueryBuilderNop) GetMembers(_ *disgord.GetMembersParams) ([]*disgord.Member, error) {
 	return nil, nil
 }
 
@@ -756,31 +756,31 @@ func (g *GuildQueryBuilderNop) GetWebhooks() ([]*disgord.Webhook, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) KickVoiceParticipant() error {
+func (g *GuildQueryBuilderNop) KickVoiceParticipant(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) Member() disgord.GuildMemberQueryBuilder {
+func (g *GuildQueryBuilderNop) Member(_ disgord.Snowflake) disgord.GuildMemberQueryBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) PruneMembers() error {
+func (g *GuildQueryBuilderNop) PruneMembers(_ int, _ string) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) Role() disgord.GuildRoleQueryBuilder {
+func (g *GuildQueryBuilderNop) Role(_ disgord.Snowflake) disgord.GuildRoleQueryBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) SetCurrentUserNick() (string, error) {
+func (g *GuildQueryBuilderNop) SetCurrentUserNick(_ string) (string, error) {
 	return "", nil
 }
 
-func (g *GuildQueryBuilderNop) SyncIntegration() error {
+func (g *GuildQueryBuilderNop) SyncIntegration(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UnbanUser() error {
+func (g *GuildQueryBuilderNop) UnbanUser(_ disgord.Snowflake, _ string) error {
 	return nil
 }
 
@@ -788,7 +788,7 @@ func (g *GuildQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateChannelPositions() error {
+func (g *GuildQueryBuilderNop) UpdateChannelPositions(_ []disgord.UpdateGuildChannelPositionsParams) error {
 	return nil
 }
 
@@ -796,15 +796,15 @@ func (g *GuildQueryBuilderNop) UpdateEmbedBuilder() disgord.UpdateGuildEmbedBuil
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateIntegration() error {
+func (g *GuildQueryBuilderNop) UpdateIntegration(_ disgord.Snowflake, _ *disgord.UpdateGuildIntegrationParams) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateRolePositions() ([]*disgord.Role, error) {
+func (g *GuildQueryBuilderNop) UpdateRolePositions(_ []disgord.UpdateGuildRolePositionsParams) ([]*disgord.Role, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) VoiceChannel() disgord.VoiceChannelQueryBuilder {
+func (g *GuildQueryBuilderNop) VoiceChannel(_ disgord.Snowflake) disgord.VoiceChannelQueryBuilder {
 	return nil
 }
 
@@ -860,7 +860,7 @@ func (i *InviteQueryBuilderNop) Delete() (*disgord.Invite, error) {
 	return nil, nil
 }
 
-func (i *InviteQueryBuilderNop) Get() (*disgord.Invite, error) {
+func (i *InviteQueryBuilderNop) Get(_ bool) (*disgord.Invite, error) {
 	return nil, nil
 }
 
@@ -904,15 +904,15 @@ func (m *MessageQueryBuilderNop) Pin() error {
 	return nil
 }
 
-func (m *MessageQueryBuilderNop) Reaction() disgord.ReactionQueryBuilder {
+func (m *MessageQueryBuilderNop) Reaction(_ interface{}) disgord.ReactionQueryBuilder {
 	return nil
 }
 
-func (m *MessageQueryBuilderNop) SetContent() (*disgord.Message, error) {
+func (m *MessageQueryBuilderNop) SetContent(_ string) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (m *MessageQueryBuilderNop) SetEmbed() (*disgord.Message, error) {
+func (m *MessageQueryBuilderNop) SetEmbed(_ *disgord.Embed) (*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -952,11 +952,11 @@ func (r *ReactionQueryBuilderNop) DeleteOwn() error {
 	return nil
 }
 
-func (r *ReactionQueryBuilderNop) DeleteUser() error {
+func (r *ReactionQueryBuilderNop) DeleteUser(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (r *ReactionQueryBuilderNop) Get() ([]*disgord.User, error) {
+func (r *ReactionQueryBuilderNop) Get(_ disgord.URLQueryStringer) ([]*disgord.User, error) {
 	return nil, nil
 }
 
@@ -1008,7 +1008,7 @@ func (v *VoiceChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.C
 	return &v
 }
 
-func (v *VoiceChannelQueryBuilderNop) Connect() (disgord.VoiceConnection, error) {
+func (v *VoiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (disgord.VoiceConnection, error) {
 	return nil, nil
 }
 
@@ -1020,7 +1020,7 @@ func (v *VoiceChannelQueryBuilderNop) Delete() (*disgord.Channel, error) {
 	return nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) DeletePermission() error {
+func (v *VoiceChannelQueryBuilderNop) DeletePermission(_ disgord.Snowflake) error {
 	return nil
 }
 
@@ -1032,7 +1032,7 @@ func (v *VoiceChannelQueryBuilderNop) GetInvites() ([]*disgord.Invite, error) {
 	return nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) JoinManual() (*disgord.VoiceStateUpdate, *disgord.VoiceServerUpdate, error) {
+func (v *VoiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*disgord.VoiceStateUpdate, *disgord.VoiceServerUpdate, error) {
 	return nil, nil, nil
 }
 
@@ -1040,7 +1040,7 @@ func (v *VoiceChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuild
 	return nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) UpdatePermissions() error {
+func (v *VoiceChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissionsParams) error {
 	return nil
 }
 
@@ -1068,15 +1068,15 @@ func (w *WebhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookQueryBuilderNop) Execute() (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ string) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook() (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhookParams, _ bool) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook() (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhookParams, _ bool) (*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -1088,7 +1088,7 @@ func (w *WebhookQueryBuilderNop) UpdateBuilder() disgord.UpdateWebhookBuilder {
 	return nil
 }
 
-func (w *WebhookQueryBuilderNop) WithToken() disgord.WebhookWithTokenQueryBuilder {
+func (w *WebhookQueryBuilderNop) WithToken(_ string) disgord.WebhookWithTokenQueryBuilder {
 	return nil
 }
 
@@ -1116,7 +1116,7 @@ func (w *WebhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) Execute() (*disgord.Message, error) {
+func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ string) (*disgord.Message, error) {
 	return nil, nil
 }
 

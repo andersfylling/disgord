@@ -28,7 +28,7 @@ func (c *channelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
 	return &c
 }
 
-func (c *channelQueryBuilderNop) AddDMParticipant() error {
+func (c *channelQueryBuilderNop) AddDMParticipant(_ *GroupDMParticipant) error {
 	return nil
 }
 
@@ -36,11 +36,11 @@ func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) CreateMessage() (*Message, error) {
+func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessageParams) (*Message, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateWebhook() (*Webhook, error) {
+func (c *channelQueryBuilderNop) CreateWebhook(_ *CreateWebhookParams) (*Webhook, error) {
 	return nil, nil
 }
 
@@ -48,11 +48,11 @@ func (c *channelQueryBuilderNop) Delete() (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) DeleteMessages() error {
+func (c *channelQueryBuilderNop) DeleteMessages(_ *DeleteMessagesParams) error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) DeletePermission() error {
+func (c *channelQueryBuilderNop) DeletePermission(_ Snowflake) error {
 	return nil
 }
 
@@ -64,7 +64,7 @@ func (c *channelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetMessages() ([]*Message, error) {
+func (c *channelQueryBuilderNop) GetMessages(_ *GetMessagesParams) ([]*Message, error) {
 	return nil, nil
 }
 
@@ -76,11 +76,11 @@ func (c *channelQueryBuilderNop) GetWebhooks() ([]*Webhook, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) KickParticipant() error {
+func (c *channelQueryBuilderNop) KickParticipant(_ Snowflake) error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) Message() MessageQueryBuilder {
+func (c *channelQueryBuilderNop) Message(_ Snowflake) MessageQueryBuilder {
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (c *channelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) UpdatePermissions() error {
+func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
 	return nil
 }
 
@@ -120,11 +120,11 @@ func (c *clientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
 	return nil, nil
 }
 
-func (c *clientQueryBuilderNop) Channel() ChannelQueryBuilder {
+func (c *clientQueryBuilderNop) Channel(_ Snowflake) ChannelQueryBuilder {
 	return nil
 }
 
-func (c *clientQueryBuilderNop) CreateGuild() (*Guild, error) {
+func (c *clientQueryBuilderNop) CreateGuild(_ string, _ *CreateGuildParams) (*Guild, error) {
 	return nil, nil
 }
 
@@ -140,19 +140,19 @@ func (c *clientQueryBuilderNop) GetVoiceRegions() ([]*VoiceRegion, error) {
 	return nil, nil
 }
 
-func (c *clientQueryBuilderNop) Guild() GuildQueryBuilder {
+func (c *clientQueryBuilderNop) Guild(_ Snowflake) GuildQueryBuilder {
 	return nil
 }
 
-func (c *clientQueryBuilderNop) Invite() InviteQueryBuilder {
+func (c *clientQueryBuilderNop) Invite(_ string) InviteQueryBuilder {
 	return nil
 }
 
-func (c *clientQueryBuilderNop) SendMsg() (*Message, error) {
+func (c *clientQueryBuilderNop) SendMsg(_ Snowflake, _ []interface{}) (*Message, error) {
 	return nil, nil
 }
 
-func (c *clientQueryBuilderNop) User() UserQueryBuilder {
+func (c *clientQueryBuilderNop) User(_ Snowflake) UserQueryBuilder {
 	return nil
 }
 
@@ -176,7 +176,7 @@ func (c *currentUserQueryBuilderNop) WithFlags(flags ...Flag) CurrentUserQueryBu
 	return &c
 }
 
-func (c *currentUserQueryBuilderNop) CreateGroupDM() (*Channel, error) {
+func (c *currentUserQueryBuilderNop) CreateGroupDM(_ *CreateGroupDMParams) (*Channel, error) {
 	return nil, nil
 }
 
@@ -184,7 +184,7 @@ func (c *currentUserQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
 
-func (c *currentUserQueryBuilderNop) GetGuilds() ([]*Guild, error) {
+func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams) ([]*Guild, error) {
 	return nil, nil
 }
 
@@ -192,7 +192,7 @@ func (c *currentUserQueryBuilderNop) GetUserConnections() ([]*UserConnection, er
 	return nil, nil
 }
 
-func (c *currentUserQueryBuilderNop) LeaveGuild() error {
+func (c *currentUserQueryBuilderNop) LeaveGuild(_ Snowflake) error {
 	return nil
 }
 
@@ -215,43 +215,43 @@ func (g *gatewayQueryBuilderNop) WithContext(ctx context.Context) GatewayQueryBu
 	return &g
 }
 
-func (g *gatewayQueryBuilderNop) BotGuildsReady() {
+func (g *gatewayQueryBuilderNop) BotGuildsReady(_ func()) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) BotReady() {
+func (g *gatewayQueryBuilderNop) BotReady(_ func()) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelCreate() {
+func (g *gatewayQueryBuilderNop) ChannelCreate(_ ChannelCreate, _ ChannelCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelCreateChan() {
+func (g *gatewayQueryBuilderNop) ChannelCreateChan(_ chan *ChannelCreate, _ []chan *ChannelCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelDelete() {
+func (g *gatewayQueryBuilderNop) ChannelDelete(_ ChannelDelete, _ ChannelDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelDeleteChan() {
+func (g *gatewayQueryBuilderNop) ChannelDeleteChan(_ chan *ChannelDelete, _ []chan *ChannelDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelPinsUpdate() {
+func (g *gatewayQueryBuilderNop) ChannelPinsUpdate(_ ChannelPinsUpdate, _ ChannelPinsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelPinsUpdateChan() {
+func (g *gatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *ChannelPinsUpdate, _ []chan *ChannelPinsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelUpdate() {
+func (g *gatewayQueryBuilderNop) ChannelUpdate(_ ChannelUpdate, _ ChannelUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelUpdateChan() {
+func (g *gatewayQueryBuilderNop) ChannelUpdateChan(_ chan *ChannelUpdate, _ []chan *ChannelUpdate) {
 	return
 }
 
@@ -267,7 +267,7 @@ func (g *gatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) Dispatch() (Snowflake, error) {
+func (g *gatewayQueryBuilderNop) Dispatch(_ gatewayCmdName, _ CmdPayload) (Snowflake, error) {
 	return 0, nil
 }
 
@@ -279,227 +279,227 @@ func (g *gatewayQueryBuilderNop) GetBot() (*gateway.GatewayBot, error) {
 	return nil, nil
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanAdd() {
+func (g *gatewayQueryBuilderNop) GuildBanAdd(_ GuildBanAdd, _ GuildBanAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanAddChan() {
+func (g *gatewayQueryBuilderNop) GuildBanAddChan(_ chan *GuildBanAdd, _ []chan *GuildBanAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanRemove() {
+func (g *gatewayQueryBuilderNop) GuildBanRemove(_ GuildBanRemove, _ GuildBanRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanRemoveChan() {
+func (g *gatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *GuildBanRemove, _ []chan *GuildBanRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildCreate() {
+func (g *gatewayQueryBuilderNop) GuildCreate(_ GuildCreate, _ GuildCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildCreateChan() {
+func (g *gatewayQueryBuilderNop) GuildCreateChan(_ chan *GuildCreate, _ []chan *GuildCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildDelete() {
+func (g *gatewayQueryBuilderNop) GuildDelete(_ GuildDelete, _ GuildDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildDeleteChan() {
+func (g *gatewayQueryBuilderNop) GuildDeleteChan(_ chan *GuildDelete, _ []chan *GuildDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildEmojisUpdate() {
+func (g *gatewayQueryBuilderNop) GuildEmojisUpdate(_ GuildEmojisUpdate, _ GuildEmojisUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildEmojisUpdateChan() {
+func (g *gatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *GuildEmojisUpdate, _ []chan *GuildEmojisUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdate() {
+func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdate(_ GuildIntegrationsUpdate, _ GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdateChan() {
+func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *GuildIntegrationsUpdate, _ []chan *GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberAdd() {
+func (g *gatewayQueryBuilderNop) GuildMemberAdd(_ GuildMemberAdd, _ GuildMemberAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberAddChan() {
+func (g *gatewayQueryBuilderNop) GuildMemberAddChan(_ chan *GuildMemberAdd, _ []chan *GuildMemberAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberRemove() {
+func (g *gatewayQueryBuilderNop) GuildMemberRemove(_ GuildMemberRemove, _ GuildMemberRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberRemoveChan() {
+func (g *gatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *GuildMemberRemove, _ []chan *GuildMemberRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMembersChunk() {
+func (g *gatewayQueryBuilderNop) GuildMembersChunk(_ GuildMembersChunk, _ GuildMembersChunk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMembersChunkChan() {
+func (g *gatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *GuildMembersChunk, _ []chan *GuildMembersChunk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberUpdate() {
+func (g *gatewayQueryBuilderNop) GuildMemberUpdate(_ GuildMemberUpdate, _ GuildMemberUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberUpdateChan() {
+func (g *gatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *GuildMemberUpdate, _ []chan *GuildMemberUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleCreate() {
+func (g *gatewayQueryBuilderNop) GuildRoleCreate(_ GuildRoleCreate, _ GuildRoleCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleCreateChan() {
+func (g *gatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *GuildRoleCreate, _ []chan *GuildRoleCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleDelete() {
+func (g *gatewayQueryBuilderNop) GuildRoleDelete(_ GuildRoleDelete, _ GuildRoleDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleDeleteChan() {
+func (g *gatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *GuildRoleDelete, _ []chan *GuildRoleDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleUpdate() {
+func (g *gatewayQueryBuilderNop) GuildRoleUpdate(_ GuildRoleUpdate, _ GuildRoleUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleUpdateChan() {
+func (g *gatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *GuildRoleUpdate, _ []chan *GuildRoleUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildUpdate() {
+func (g *gatewayQueryBuilderNop) GuildUpdate(_ GuildUpdate, _ GuildUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildUpdateChan() {
+func (g *gatewayQueryBuilderNop) GuildUpdateChan(_ chan *GuildUpdate, _ []chan *GuildUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InteractionCreate() {
+func (g *gatewayQueryBuilderNop) InteractionCreate(_ InteractionCreate, _ InteractionCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InteractionCreateChan() {
+func (g *gatewayQueryBuilderNop) InteractionCreateChan(_ chan *InteractionCreate, _ []chan *InteractionCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteCreate() {
+func (g *gatewayQueryBuilderNop) InviteCreate(_ InviteCreate, _ InviteCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteCreateChan() {
+func (g *gatewayQueryBuilderNop) InviteCreateChan(_ chan *InviteCreate, _ []chan *InviteCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteDelete() {
+func (g *gatewayQueryBuilderNop) InviteDelete(_ InviteDelete, _ InviteDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteDeleteChan() {
+func (g *gatewayQueryBuilderNop) InviteDeleteChan(_ chan *InviteDelete, _ []chan *InviteDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageCreate() {
+func (g *gatewayQueryBuilderNop) MessageCreate(_ MessageCreate, _ MessageCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageCreateChan() {
+func (g *gatewayQueryBuilderNop) MessageCreateChan(_ chan *MessageCreate, _ []chan *MessageCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDelete() {
+func (g *gatewayQueryBuilderNop) MessageDelete(_ MessageDelete, _ MessageDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteBulk() {
+func (g *gatewayQueryBuilderNop) MessageDeleteBulk(_ MessageDeleteBulk, _ MessageDeleteBulk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteBulkChan() {
+func (g *gatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *MessageDeleteBulk, _ []chan *MessageDeleteBulk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteChan() {
+func (g *gatewayQueryBuilderNop) MessageDeleteChan(_ chan *MessageDelete, _ []chan *MessageDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionAdd() {
+func (g *gatewayQueryBuilderNop) MessageReactionAdd(_ MessageReactionAdd, _ MessageReactionAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionAddChan() {
+func (g *gatewayQueryBuilderNop) MessageReactionAddChan(_ chan *MessageReactionAdd, _ []chan *MessageReactionAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemove() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemove(_ MessageReactionRemove, _ MessageReactionRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveAll() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveAll(_ MessageReactionRemoveAll, _ MessageReactionRemoveAll) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveAllChan() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *MessageReactionRemoveAll, _ []chan *MessageReactionRemoveAll) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveChan() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *MessageReactionRemove, _ []chan *MessageReactionRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmoji() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ MessageReactionRemoveEmoji, _ MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmojiChan() {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *MessageReactionRemoveEmoji, _ []chan *MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageUpdate() {
+func (g *gatewayQueryBuilderNop) MessageUpdate(_ MessageUpdate, _ MessageUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageUpdateChan() {
+func (g *gatewayQueryBuilderNop) MessageUpdateChan(_ chan *MessageUpdate, _ []chan *MessageUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) PresenceUpdate() {
+func (g *gatewayQueryBuilderNop) PresenceUpdate(_ PresenceUpdate, _ PresenceUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) PresenceUpdateChan() {
+func (g *gatewayQueryBuilderNop) PresenceUpdateChan(_ chan *PresenceUpdate, _ []chan *PresenceUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) Ready() {
+func (g *gatewayQueryBuilderNop) Ready(_ Ready, _ Ready) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ReadyChan() {
+func (g *gatewayQueryBuilderNop) ReadyChan(_ chan *Ready, _ []chan *Ready) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) Resumed() {
+func (g *gatewayQueryBuilderNop) Resumed(_ Resumed, _ Resumed) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ResumedChan() {
+func (g *gatewayQueryBuilderNop) ResumedChan(_ chan *Resumed, _ []chan *Resumed) {
 	return
 }
 
@@ -507,51 +507,51 @@ func (g *gatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) TypingStart() {
+func (g *gatewayQueryBuilderNop) TypingStart(_ TypingStart, _ TypingStart) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) TypingStartChan() {
+func (g *gatewayQueryBuilderNop) TypingStartChan(_ chan *TypingStart, _ []chan *TypingStart) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) UserUpdate() {
+func (g *gatewayQueryBuilderNop) UserUpdate(_ UserUpdate, _ UserUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) UserUpdateChan() {
+func (g *gatewayQueryBuilderNop) UserUpdateChan(_ chan *UserUpdate, _ []chan *UserUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceServerUpdate() {
+func (g *gatewayQueryBuilderNop) VoiceServerUpdate(_ VoiceServerUpdate, _ VoiceServerUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceServerUpdateChan() {
+func (g *gatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *VoiceServerUpdate, _ []chan *VoiceServerUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceStateUpdate() {
+func (g *gatewayQueryBuilderNop) VoiceStateUpdate(_ VoiceStateUpdate, _ VoiceStateUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceStateUpdateChan() {
+func (g *gatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *VoiceStateUpdate, _ []chan *VoiceStateUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) WebhooksUpdate() {
+func (g *gatewayQueryBuilderNop) WebhooksUpdate(_ WebhooksUpdate, _ WebhooksUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) WebhooksUpdateChan() {
+func (g *gatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *WebhooksUpdate, _ []chan *WebhooksUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) WithCtrl() SocketHandlerRegistrator {
+func (g *gatewayQueryBuilderNop) WithCtrl(_ HandlerCtrl) SocketHandlerRegistrator {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) WithMiddleware() SocketHandlerRegistrator {
+func (g *gatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ []func(interface{}) interface{}) SocketHandlerRegistrator {
 	return nil
 }
 
@@ -607,11 +607,11 @@ func (g *guildMemberQueryBuilderNop) WithFlags(flags ...Flag) GuildMemberQueryBu
 	return &g
 }
 
-func (g *guildMemberQueryBuilderNop) AddRole() error {
+func (g *guildMemberQueryBuilderNop) AddRole(_ Snowflake) error {
 	return nil
 }
 
-func (g *guildMemberQueryBuilderNop) Ban() error {
+func (g *guildMemberQueryBuilderNop) Ban(_ *BanMemberParams) error {
 	return nil
 }
 
@@ -623,11 +623,11 @@ func (g *guildMemberQueryBuilderNop) GetPermissions() (PermissionBit, error) {
 	return 0, nil
 }
 
-func (g *guildMemberQueryBuilderNop) Kick() error {
+func (g *guildMemberQueryBuilderNop) Kick(_ string) error {
 	return nil
 }
 
-func (g *guildMemberQueryBuilderNop) RemoveRole() error {
+func (g *guildMemberQueryBuilderNop) RemoveRole(_ Snowflake) error {
 	return nil
 }
 
@@ -655,23 +655,23 @@ func (g *guildQueryBuilderNop) WithFlags(flags ...Flag) GuildQueryBuilder {
 	return &g
 }
 
-func (g *guildQueryBuilderNop) CreateChannel() (*Channel, error) {
+func (g *guildQueryBuilderNop) CreateChannel(_ string, _ *CreateGuildChannelParams) (*Channel, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateEmoji() (*Emoji, error) {
+func (g *guildQueryBuilderNop) CreateEmoji(_ *CreateGuildEmojiParams) (*Emoji, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateIntegration() error {
+func (g *guildQueryBuilderNop) CreateIntegration(_ *CreateGuildIntegrationParams) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) CreateMember() (*Member, error) {
+func (g *guildQueryBuilderNop) CreateMember(_ Snowflake, _ string, _ *AddGuildMemberParams) (*Member, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateRole() (*Role, error) {
+func (g *guildQueryBuilderNop) CreateRole(_ *CreateGuildRoleParams) (*Role, error) {
 	return nil, nil
 }
 
@@ -679,15 +679,15 @@ func (g *guildQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) DeleteIntegration() error {
+func (g *guildQueryBuilderNop) DeleteIntegration(_ Snowflake) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) Emoji() GuildEmojiQueryBuilder {
+func (g *guildQueryBuilderNop) Emoji(_ Snowflake) GuildEmojiQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) EstimatePruneMembersCount() (int, error) {
+func (g *guildQueryBuilderNop) EstimatePruneMembersCount(_ int) (int, error) {
 	return 0, nil
 }
 
@@ -699,7 +699,7 @@ func (g *guildQueryBuilderNop) GetAuditLogs() GuildAuditLogsBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) GetBan() (*Ban, error) {
+func (g *guildQueryBuilderNop) GetBan(_ Snowflake) (*Ban, error) {
 	return nil, nil
 }
 
@@ -727,7 +727,7 @@ func (g *guildQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetMembers() ([]*Member, error) {
+func (g *guildQueryBuilderNop) GetMembers(_ *GetMembersParams) ([]*Member, error) {
 	return nil, nil
 }
 
@@ -747,31 +747,31 @@ func (g *guildQueryBuilderNop) GetWebhooks() ([]*Webhook, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) KickVoiceParticipant() error {
+func (g *guildQueryBuilderNop) KickVoiceParticipant(_ Snowflake) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) Member() GuildMemberQueryBuilder {
+func (g *guildQueryBuilderNop) Member(_ Snowflake) GuildMemberQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) PruneMembers() error {
+func (g *guildQueryBuilderNop) PruneMembers(_ int, _ string) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) Role() GuildRoleQueryBuilder {
+func (g *guildQueryBuilderNop) Role(_ Snowflake) GuildRoleQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) SetCurrentUserNick() (string, error) {
+func (g *guildQueryBuilderNop) SetCurrentUserNick(_ string) (string, error) {
 	return "", nil
 }
 
-func (g *guildQueryBuilderNop) SyncIntegration() error {
+func (g *guildQueryBuilderNop) SyncIntegration(_ Snowflake) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UnbanUser() error {
+func (g *guildQueryBuilderNop) UnbanUser(_ Snowflake, _ string) error {
 	return nil
 }
 
@@ -779,7 +779,7 @@ func (g *guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateChannelPositions() error {
+func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositionsParams) error {
 	return nil
 }
 
@@ -787,15 +787,15 @@ func (g *guildQueryBuilderNop) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateIntegration() error {
+func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildIntegrationParams) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateRolePositions() ([]*Role, error) {
+func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositionsParams) ([]*Role, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) VoiceChannel() VoiceChannelQueryBuilder {
+func (g *guildQueryBuilderNop) VoiceChannel(_ Snowflake) VoiceChannelQueryBuilder {
 	return nil
 }
 
@@ -851,7 +851,7 @@ func (i *inviteQueryBuilderNop) Delete() (*Invite, error) {
 	return nil, nil
 }
 
-func (i *inviteQueryBuilderNop) Get() (*Invite, error) {
+func (i *inviteQueryBuilderNop) Get(_ bool) (*Invite, error) {
 	return nil, nil
 }
 
@@ -895,15 +895,15 @@ func (m *messageQueryBuilderNop) Pin() error {
 	return nil
 }
 
-func (m *messageQueryBuilderNop) Reaction() ReactionQueryBuilder {
+func (m *messageQueryBuilderNop) Reaction(_ interface{}) ReactionQueryBuilder {
 	return nil
 }
 
-func (m *messageQueryBuilderNop) SetContent() (*Message, error) {
+func (m *messageQueryBuilderNop) SetContent(_ string) (*Message, error) {
 	return nil, nil
 }
 
-func (m *messageQueryBuilderNop) SetEmbed() (*Message, error) {
+func (m *messageQueryBuilderNop) SetEmbed(_ *Embed) (*Message, error) {
 	return nil, nil
 }
 
@@ -943,11 +943,11 @@ func (r *reactionQueryBuilderNop) DeleteOwn() error {
 	return nil
 }
 
-func (r *reactionQueryBuilderNop) DeleteUser() error {
+func (r *reactionQueryBuilderNop) DeleteUser(_ Snowflake) error {
 	return nil
 }
 
-func (r *reactionQueryBuilderNop) Get() ([]*User, error) {
+func (r *reactionQueryBuilderNop) Get(_ URLQueryStringer) ([]*User, error) {
 	return nil, nil
 }
 
@@ -999,7 +999,7 @@ func (v *voiceChannelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuild
 	return &v
 }
 
-func (v *voiceChannelQueryBuilderNop) Connect() (VoiceConnection, error) {
+func (v *voiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (VoiceConnection, error) {
 	return nil, nil
 }
 
@@ -1011,7 +1011,7 @@ func (v *voiceChannelQueryBuilderNop) Delete() (*Channel, error) {
 	return nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) DeletePermission() error {
+func (v *voiceChannelQueryBuilderNop) DeletePermission(_ Snowflake) error {
 	return nil
 }
 
@@ -1023,7 +1023,7 @@ func (v *voiceChannelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) JoinManual() (*VoiceStateUpdate, *VoiceServerUpdate, error) {
+func (v *voiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*VoiceStateUpdate, *VoiceServerUpdate, error) {
 	return nil, nil, nil
 }
 
@@ -1031,7 +1031,7 @@ func (v *voiceChannelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (v *voiceChannelQueryBuilderNop) UpdatePermissions() error {
+func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
 	return nil
 }
 
@@ -1059,15 +1059,15 @@ func (w *webhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) Execute() (*Message, error) {
+func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ string) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook() (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhookParams, _ bool) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteSlackWebhook() (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhookParams, _ bool) (*Message, error) {
 	return nil, nil
 }
 
@@ -1079,7 +1079,7 @@ func (w *webhookQueryBuilderNop) UpdateBuilder() UpdateWebhookBuilder {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) WithToken() WebhookWithTokenQueryBuilder {
+func (w *webhookQueryBuilderNop) WithToken(_ string) WebhookWithTokenQueryBuilder {
 	return nil
 }
 
@@ -1107,7 +1107,7 @@ func (w *webhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Execute() (*Message, error) {
+func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ string) (*Message, error) {
 	return nil, nil
 }
 

@@ -187,6 +187,10 @@ func (t *TypeWrapper) Fields() []*FieldWrapper {
 			continue
 		}
 
+		if name == "GuildBanAdd" {
+			fmt.Println(24234)
+		}
+
 		fields = append(fields, &FieldWrapper{&TypeWrapper{Type: m}, name})
 	}
 	sort.Slice(fields, func(i, j int) bool {
@@ -215,7 +219,7 @@ func (f *FieldWrapper) Parameters() string {
 		return ""
 	}
 
-	for _, p := range params[0] {
+	for _, p := range params {
 		if s != "" {
 			s += ", "
 		}
@@ -365,6 +369,21 @@ func ZeroValue(t *TypeWrapper) (v string) {
 	return v
 }
 
+func CleanName(name string) string {
+	replace := func (chars []string) string {
+		for _, char := range chars {
+			name = strings.Replace(name, char, "", -1)
+		}
+		return name
+	}
+
+	if strings.Contains(name, "func") {
+		return name
+	}
+
+	return replace([]string{")", "(", "/"})
+}
+
 func MakeTypeNameCompilable(t *types.Type) string {
 	isDisgordType := strings.Contains(t.Name.Name, "disgord") || strings.Contains(t.Name.Package, "disgord")
 
@@ -397,5 +416,5 @@ func MakeTypeNameCompilable(t *types.Type) string {
 		name = disgordTypePrefix + "Snowflake"
 	}
 
-	return name
+	return CleanName(name)
 }
