@@ -746,6 +746,16 @@ type guildQueryBuilder struct {
 	gid    Snowflake
 }
 
+func (g *guildQueryBuilder) validate() error {
+	if g.client == nil {
+		return MissingClientInstanceErr
+	}
+	if g.gid.IsZero() {
+		return MissingGuildIDErr
+	}
+	return nil
+}
+
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
 	g.ctx = ctx
 	return &g
@@ -778,6 +788,13 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 
 // Update update a guild
 func (g guildQueryBuilder) Update(params *UpdateGuildParams, auditLogReason string) (*Guild, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
+	}
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
