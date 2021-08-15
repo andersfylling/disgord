@@ -277,6 +277,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Role:
 		s = *t
+	case *[]*UpdateRoleParams:
+		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
 	case *[]*Time:

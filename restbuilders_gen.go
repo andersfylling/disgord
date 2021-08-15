@@ -410,6 +410,80 @@ func (b *updateGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 	return v.(*Emoji), nil
 }
 
+// UpdateGuildRoleBuilder is the interface for the builder.
+type UpdateGuildRoleBuilder interface {
+	Execute() (role *Role, err error)
+	IgnoreCache() UpdateGuildRoleBuilder
+	CancelOnRatelimit() UpdateGuildRoleBuilder
+	URLParam(name string, v interface{}) UpdateGuildRoleBuilder
+	Set(name string, v interface{}) UpdateGuildRoleBuilder
+	SetName(name string) UpdateGuildRoleBuilder
+	SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder
+	SetColor(color uint) UpdateGuildRoleBuilder
+	SetHoist(hoist bool) UpdateGuildRoleBuilder
+	SetMentionable(mentionable bool) UpdateGuildRoleBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildRoleBuilder) IgnoreCache() UpdateGuildRoleBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildRoleBuilder) CancelOnRatelimit() UpdateGuildRoleBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildRoleBuilder) URLParam(name string, v interface{}) UpdateGuildRoleBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildRoleBuilder) Set(name string, v interface{}) UpdateGuildRoleBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetName(name string) UpdateGuildRoleBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder {
+	b.r.param("permissions", permissions)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetColor(color uint) UpdateGuildRoleBuilder {
+	b.r.param("color", color)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetHoist(hoist bool) UpdateGuildRoleBuilder {
+	b.r.param("hoist", hoist)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) UpdateGuildRoleBuilder {
+	b.r.param("mentionable", mentionable)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) Execute() (role *Role, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Role), nil
+}
+
 // UpdateMessageBuilder is the interface for the builder.
 type UpdateMessageBuilder interface {
 	Execute() (message *Message, err error)
@@ -687,80 +761,6 @@ func (b *basicBuilder) Set(name string, v interface{}) BasicBuilder {
 func (b *basicBuilder) Execute() (err error) {
 	_, err = b.r.execute()
 	return
-}
-
-// UpdateGuildRoleBuilder is the interface for the builder.
-type UpdateGuildRoleBuilder interface {
-	Execute() (role *Role, err error)
-	IgnoreCache() UpdateGuildRoleBuilder
-	CancelOnRatelimit() UpdateGuildRoleBuilder
-	URLParam(name string, v interface{}) UpdateGuildRoleBuilder
-	Set(name string, v interface{}) UpdateGuildRoleBuilder
-	SetName(name string) UpdateGuildRoleBuilder
-	SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder
-	SetColor(color uint) UpdateGuildRoleBuilder
-	SetHoist(hoist bool) UpdateGuildRoleBuilder
-	SetMentionable(mentionable bool) UpdateGuildRoleBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildRoleBuilder) IgnoreCache() UpdateGuildRoleBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildRoleBuilder) CancelOnRatelimit() UpdateGuildRoleBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildRoleBuilder) URLParam(name string, v interface{}) UpdateGuildRoleBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildRoleBuilder) Set(name string, v interface{}) UpdateGuildRoleBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateGuildRoleBuilder) SetName(name string) UpdateGuildRoleBuilder {
-	b.r.param("name", name)
-	return b
-}
-
-func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder {
-	b.r.param("permissions", permissions)
-	return b
-}
-
-func (b *updateGuildRoleBuilder) SetColor(color uint) UpdateGuildRoleBuilder {
-	b.r.param("color", color)
-	return b
-}
-
-func (b *updateGuildRoleBuilder) SetHoist(hoist bool) UpdateGuildRoleBuilder {
-	b.r.param("hoist", hoist)
-	return b
-}
-
-func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) UpdateGuildRoleBuilder {
-	b.r.param("mentionable", mentionable)
-	return b
-}
-
-func (b *updateGuildRoleBuilder) Execute() (role *Role, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Role), nil
 }
 
 // CreateDMBuilder is the interface for the builder.

@@ -105,6 +105,24 @@ func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
 	return builder
 }
 
+// UpdateBuilder Modify a guild role. Requires the 'MANAGE_ROLES' permission.
+// Returns the updated role on success. Fires a Guild Role Update Gateway event.
+func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
+	builder := &updateGuildRoleBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Role{}
+	}
+	builder.r.flags = g.flags
+	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
@@ -164,6 +182,13 @@ type updateGuildEmojiBuilder struct {
 //generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
 //generate-rest-basic-execute: guild:*Guild,
 type updateGuildBuilder struct {
+	r RESTBuilder
+}
+
+// updateGuildRoleBuilder ...
+//generate-rest-basic-execute: role:*Role,
+//generate-rest-params: name:string, permissions:PermissionBit, color:uint, hoist:bool, mentionable:bool,
+type updateGuildRoleBuilder struct {
 	r RESTBuilder
 }
 
