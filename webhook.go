@@ -29,6 +29,8 @@ var _ DeepCopier = (*Webhook)(nil)
 //
 //////////////////////////////////////////////////////
 
+var MissingWebhookIDErr = errors.New("webhook id was not set")
+
 type WebhookQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookQueryBuilder
 	WithFlags(flags ...Flag) WebhookQueryBuilder
@@ -38,6 +40,8 @@ type WebhookQueryBuilder interface {
 
 	// UpdateBuilder Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns the updated webhook object on success.
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateWebhookBuilder
 
 	// Delete Deletes a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
@@ -65,6 +69,19 @@ type webhookQueryBuilder struct {
 	client    *Client
 	cid       Snowflake
 	webhookID Snowflake
+}
+
+func (w *webhookQueryBuilder) validate() error {
+	if w.client == nil {
+		return MissingClientInstanceErr
+	}
+	if w.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	if w.webhookID.IsZero() {
+		return MissingWebhookIDErr
+	}
+	return nil
 }
 
 func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilder {
@@ -174,6 +191,8 @@ func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, 
 	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, endpoint.GitHub())
 }
 
+var MissingWebhookTokenErr = errors.New("webhook token was not set")
+
 type WebhookWithTokenQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookWithTokenQueryBuilder
 	WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder
@@ -203,6 +222,22 @@ type webhookWithTokenQueryBuilder struct {
 	cid       Snowflake
 	webhookID Snowflake
 	token     string
+}
+
+func (w *webhookWithTokenQueryBuilder) validate() error {
+	if w.client == nil {
+		return MissingClientInstanceErr
+	}
+	if w.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	if w.webhookID.IsZero() {
+		return MissingWebhookIDErr
+	}
+	if w.token == "" {
+		return MissingWebhookTokenErr
+	}
+	return nil
 }
 
 func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
