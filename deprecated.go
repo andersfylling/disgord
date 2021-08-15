@@ -144,6 +144,55 @@ func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
 	return builder
 }
 
+// UpdateBuilder [REST] Same as UpdateWebhook, except this call does not require authentication,
+// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
+//  Method                  PATCH
+//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
+//  Reviewed                2018-08-14
+//  Comment                 All parameters to this endpoint. are optional.
+func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
+	builder := &updateWebhookBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Webhook{}
+	}
+	builder.r.flags = w.flags
+	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.addPrereq(w.token == "", "given webhook token was not set")
+	builder.r.setup(w.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         w.ctx,
+		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
+// UpdateBuilder [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// Returns the updated webhook object on success.
+//  Method                  PATCH
+//  Endpoint                /webhooks/{webhook.id}
+//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
+//  Reviewed                2018-08-14
+//  Comment                 All parameters to this endpoint.
+func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
+	builder := &updateWebhookBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Webhook{}
+	}
+	builder.r.flags = w.flags
+	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
+	builder.r.setup(w.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         w.ctx,
+		Endpoint:    endpoint.Webhook(w.webhookID),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
@@ -218,6 +267,22 @@ type updateGuildRoleBuilder struct {
 //generate-rest-basic-execute: user:*User,
 type updateCurrentUserBuilder struct {
 	r RESTBuilder
+}
+
+// UpdateWebhookParams https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params
+// Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
+// avatar by providing a nil to SetAvatar.
+//
+//generate-rest-params: name:string, avatar:string, channel_id:Snowflake,
+//generate-rest-basic-execute: webhook:*Webhook,
+type updateWebhookBuilder struct {
+	r RESTBuilder
+}
+
+// SetDefaultAvatar will reset the webhook image
+func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
+	u.r.param("avatar", nil)
+	return u
 }
 
 //////////////////////////////////////////////////////

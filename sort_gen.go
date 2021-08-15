@@ -315,6 +315,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ExecuteWebhookParams:
 		s = *t
+	case *[]*UpdateWebhookParams:
+		s = *t
 	case *[]*Webhook:
 		s = *t
 	default:

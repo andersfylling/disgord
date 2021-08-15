@@ -596,6 +596,69 @@ func (b *updateMessageBuilder) Execute() (message *Message, err error) {
 	return v.(*Message), nil
 }
 
+// UpdateWebhookBuilder is the interface for the builder.
+type UpdateWebhookBuilder interface {
+	Execute() (webhook *Webhook, err error)
+	IgnoreCache() UpdateWebhookBuilder
+	CancelOnRatelimit() UpdateWebhookBuilder
+	URLParam(name string, v interface{}) UpdateWebhookBuilder
+	Set(name string, v interface{}) UpdateWebhookBuilder
+	SetName(name string) UpdateWebhookBuilder
+	SetAvatar(avatar string) UpdateWebhookBuilder
+	SetChannelID(channelID Snowflake) UpdateWebhookBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateWebhookBuilder) IgnoreCache() UpdateWebhookBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateWebhookBuilder) CancelOnRatelimit() UpdateWebhookBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateWebhookBuilder) URLParam(name string, v interface{}) UpdateWebhookBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateWebhookBuilder) Set(name string, v interface{}) UpdateWebhookBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateWebhookBuilder) SetName(name string) UpdateWebhookBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateWebhookBuilder) SetAvatar(avatar string) UpdateWebhookBuilder {
+	b.r.param("avatar", avatar)
+	return b
+}
+
+func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) UpdateWebhookBuilder {
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateWebhookBuilder) Execute() (webhook *Webhook, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Webhook), nil
+}
+
 // CreateGuildEmojiBuilder is the interface for the builder.
 type CreateGuildEmojiBuilder interface {
 	Execute() (emoji *Emoji, err error)
@@ -1095,67 +1158,4 @@ func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
 	}
 	tmp := v.(*[]*Channel)
 	return *tmp, nil
-}
-
-// UpdateWebhookBuilder is the interface for the builder.
-type UpdateWebhookBuilder interface {
-	Execute() (webhook *Webhook, err error)
-	IgnoreCache() UpdateWebhookBuilder
-	CancelOnRatelimit() UpdateWebhookBuilder
-	URLParam(name string, v interface{}) UpdateWebhookBuilder
-	Set(name string, v interface{}) UpdateWebhookBuilder
-	SetName(name string) UpdateWebhookBuilder
-	SetAvatar(avatar string) UpdateWebhookBuilder
-	SetChannelID(channelID Snowflake) UpdateWebhookBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateWebhookBuilder) IgnoreCache() UpdateWebhookBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateWebhookBuilder) CancelOnRatelimit() UpdateWebhookBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateWebhookBuilder) URLParam(name string, v interface{}) UpdateWebhookBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateWebhookBuilder) Set(name string, v interface{}) UpdateWebhookBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateWebhookBuilder) SetName(name string) UpdateWebhookBuilder {
-	b.r.param("name", name)
-	return b
-}
-
-func (b *updateWebhookBuilder) SetAvatar(avatar string) UpdateWebhookBuilder {
-	b.r.param("avatar", avatar)
-	return b
-}
-
-func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) UpdateWebhookBuilder {
-	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
-	b.r.param("channel_id", channelID)
-	return b
-}
-
-func (b *updateWebhookBuilder) Execute() (webhook *Webhook, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Webhook), nil
 }
