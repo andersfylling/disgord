@@ -227,6 +227,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildIntegrationParams:
 		s = *t
+	case *[]*UpdateGuildParams:
+		s = *t
 	case *[]*UpdateGuildRolePositionsParams:
 		s = *t
 	case *[]*ApplicationCommandInteractionData:

@@ -677,8 +677,11 @@ type GuildQueryBuilder interface {
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembersParams) ([]*Member, error)
-	UpdateBuilder() UpdateGuildBuilder
+	Update(params *UpdateGuildParams, auditLogReason string) (*Guild, error)
 	Delete() error
+
+	// Deprecated: use Update
+	UpdateBuilder() UpdateGuildBuilder
 
 	CreateChannel(name string, params *CreateGuildChannelParams) (*Channel, error)
 	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error
@@ -771,21 +774,42 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 	return getGuild(r.Execute)
 }
 
-// UpdateBuilder is used to create a guild update builder.
-func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
-	builder := &updateGuildBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Guild{}
-	}
-	builder.r.setup(g.client.req, &httd.Request{
+// Update update a guild
+func (g guildQueryBuilder) Update(params *UpdateGuildParams, auditLogReason string) (*Guild, error) {
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
-	builder.r.flags = g.flags
+		Body:        params,
+		Reason:      auditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Guild{}
+	}
 
-	return builder
+	return getGuild(r.Execute)
+}
+
+type UpdateGuildParams struct {
+	Name                        *string                        `json:"name,omitempty"`
+	Region                      *string                        `json:"region,omitempty"`
+	VerificationLvl             *VerificationLvl               `json:"verification_lvl,omitempty"`
+	DefaultMessageNotifications *DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
+	ExplicitContentFilter       *ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
+	AFKChannelID                *Snowflake                     `json:"afk_channel_id,omitempty"`
+	Icon                        *string                        `json:"icon,omitempty"`
+	OwnerID                     *Snowflake                     `json:"owner_id,omitempty"`
+	Splash                      *string                        `json:"splash,omitempty"`
+	DiscoverySplash             *string                        `json:"discovery_splash,omitempty"`
+	Banner                      *string                        `json:"banner,omitempty"`
+	SystemChannelID             *Snowflake                     `json:"system_channel_id,omitempty"`
+	SystemChannelFlags          *uint                          `json:"system_channel_flags,omitempty"`
+	RulesChannelID              *Snowflake                     `json:"rules_channel_id,omitempty"`
+	PublicUpdatesChannelID      *Snowflake                     `json:"public_updates_channel_id,omitempty"`
+	PreferredLocale             *string                        `json:"preferred_locale,omitempty"`
+	Features                    *[]string                      `json:"features,omitempty"`
+	Description                 *string                        `json:"description,omitempty"`
 }
 
 // Delete is used to delete a guild.
@@ -1630,13 +1654,6 @@ type nickNameResponse struct {
 // REST Builders
 //
 //////////////////////////////////////////////////////
-
-// updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
-//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
-//generate-rest-basic-execute: guild:*Guild,
-type updateGuildBuilder struct {
-	r RESTBuilder
-}
 
 //generate-rest-params: enabled:bool, channel_id:Snowflake,
 //generate-rest-basic-execute: embed:*GuildEmbed,

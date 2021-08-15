@@ -67,6 +67,23 @@ func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
 	return builder
 }
 
+// UpdateBuilder is used to create a guild update builder.
+func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
+	builder := &updateGuildBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Guild{}
+	}
+	builder.r.setup(g.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.Guild(g.gid),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+	builder.r.flags = g.flags
+
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
@@ -119,6 +136,13 @@ func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
 //generate-rest-params: name:string, roles:[]Snowflake,
 //generate-rest-basic-execute: emoji:*Emoji,
 type updateGuildEmojiBuilder struct {
+	r RESTBuilder
+}
+
+// updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
+//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
+//generate-rest-basic-execute: guild:*Guild,
+type updateGuildBuilder struct {
 	r RESTBuilder
 }
 

@@ -32,6 +32,9 @@ func (guildQueryBuilderNop) GetMembers(params *GetMembersParams) ([]*Member, err
 func (guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
+func (guildQueryBuilderNop) Update(*UpdateGuildParams, string) (*Guild, error) {
+	return nil, nil
+}
 func (guildQueryBuilderNop) Delete() error {
 	return nil
 }

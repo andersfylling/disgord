@@ -241,6 +241,119 @@ func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// UpdateGuildBuilder is the interface for the builder.
+type UpdateGuildBuilder interface {
+	Execute() (guild *Guild, err error)
+	IgnoreCache() UpdateGuildBuilder
+	CancelOnRatelimit() UpdateGuildBuilder
+	URLParam(name string, v interface{}) UpdateGuildBuilder
+	Set(name string, v interface{}) UpdateGuildBuilder
+	SetName(name string) UpdateGuildBuilder
+	SetRegion(region string) UpdateGuildBuilder
+	SetVerificationLevel(verificationLevel int) UpdateGuildBuilder
+	SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder
+	SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder
+	SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder
+	SetAfkTimeout(afkTimeout int) UpdateGuildBuilder
+	SetIcon(icon string) UpdateGuildBuilder
+	SetOwnerID(ownerID Snowflake) UpdateGuildBuilder
+	SetSplash(splash string) UpdateGuildBuilder
+	SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildBuilder) IgnoreCache() UpdateGuildBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildBuilder) CancelOnRatelimit() UpdateGuildBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildBuilder) URLParam(name string, v interface{}) UpdateGuildBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildBuilder) Set(name string, v interface{}) UpdateGuildBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildBuilder) SetName(name string) UpdateGuildBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildBuilder) SetRegion(region string) UpdateGuildBuilder {
+	b.r.param("region", region)
+	return b
+}
+
+func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) UpdateGuildBuilder {
+	b.r.param("verification_level", verificationLevel)
+	return b
+}
+
+func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder {
+	b.r.param("default_message_notifications", defaultMessageNotifications)
+	return b
+}
+
+func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder {
+	b.r.param("explicit_content_filter", explicitContentFilter)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(afkChannelID.IsZero(), "afkChannelID can not be 0")
+	b.r.param("afk_channel_id", afkChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) UpdateGuildBuilder {
+	b.r.param("afk_timeout", afkTimeout)
+	return b
+}
+
+func (b *updateGuildBuilder) SetIcon(icon string) UpdateGuildBuilder {
+	b.r.param("icon", icon)
+	return b
+}
+
+func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(ownerID.IsZero(), "ownerID can not be 0")
+	b.r.param("owner_id", ownerID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSplash(splash string) UpdateGuildBuilder {
+	b.r.param("splash", splash)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(systemChannelID.IsZero(), "systemChannelID can not be 0")
+	b.r.param("system_channel_id", systemChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Guild), nil
+}
+
 // UpdateGuildEmojiBuilder is the interface for the builder.
 type UpdateGuildEmojiBuilder interface {
 	Execute() (emoji *Emoji, err error)
@@ -401,119 +514,6 @@ func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 		return nil, err
 	}
 	return v.(*Emoji), nil
-}
-
-// UpdateGuildBuilder is the interface for the builder.
-type UpdateGuildBuilder interface {
-	Execute() (guild *Guild, err error)
-	IgnoreCache() UpdateGuildBuilder
-	CancelOnRatelimit() UpdateGuildBuilder
-	URLParam(name string, v interface{}) UpdateGuildBuilder
-	Set(name string, v interface{}) UpdateGuildBuilder
-	SetName(name string) UpdateGuildBuilder
-	SetRegion(region string) UpdateGuildBuilder
-	SetVerificationLevel(verificationLevel int) UpdateGuildBuilder
-	SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder
-	SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder
-	SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder
-	SetAfkTimeout(afkTimeout int) UpdateGuildBuilder
-	SetIcon(icon string) UpdateGuildBuilder
-	SetOwnerID(ownerID Snowflake) UpdateGuildBuilder
-	SetSplash(splash string) UpdateGuildBuilder
-	SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildBuilder) IgnoreCache() UpdateGuildBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildBuilder) CancelOnRatelimit() UpdateGuildBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildBuilder) URLParam(name string, v interface{}) UpdateGuildBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildBuilder) Set(name string, v interface{}) UpdateGuildBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateGuildBuilder) SetName(name string) UpdateGuildBuilder {
-	b.r.param("name", name)
-	return b
-}
-
-func (b *updateGuildBuilder) SetRegion(region string) UpdateGuildBuilder {
-	b.r.param("region", region)
-	return b
-}
-
-func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) UpdateGuildBuilder {
-	b.r.param("verification_level", verificationLevel)
-	return b
-}
-
-func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder {
-	b.r.param("default_message_notifications", defaultMessageNotifications)
-	return b
-}
-
-func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder {
-	b.r.param("explicit_content_filter", explicitContentFilter)
-	return b
-}
-
-func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder {
-	b.r.addPrereq(afkChannelID.IsZero(), "afkChannelID can not be 0")
-	b.r.param("afk_channel_id", afkChannelID)
-	return b
-}
-
-func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) UpdateGuildBuilder {
-	b.r.param("afk_timeout", afkTimeout)
-	return b
-}
-
-func (b *updateGuildBuilder) SetIcon(icon string) UpdateGuildBuilder {
-	b.r.param("icon", icon)
-	return b
-}
-
-func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) UpdateGuildBuilder {
-	b.r.addPrereq(ownerID.IsZero(), "ownerID can not be 0")
-	b.r.param("owner_id", ownerID)
-	return b
-}
-
-func (b *updateGuildBuilder) SetSplash(splash string) UpdateGuildBuilder {
-	b.r.param("splash", splash)
-	return b
-}
-
-func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder {
-	b.r.addPrereq(systemChannelID.IsZero(), "systemChannelID can not be 0")
-	b.r.param("system_channel_id", systemChannelID)
-	return b
-}
-
-func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*Guild), nil
 }
 
 // UpdateGuildEmbedBuilder is the interface for the builder.
