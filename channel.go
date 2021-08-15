@@ -337,6 +337,16 @@ type channelQueryBuilder struct {
 
 var _ ChannelQueryBuilder = (*channelQueryBuilder)(nil)
 
+func (c *channelQueryBuilder) validate() error {
+	if c.client == nil {
+		return MissingClientInstanceErr
+	}
+	if c.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	return nil
+}
+
 func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilder {
 	c.ctx = ctx
 	return &c
@@ -382,12 +392,12 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2021-08-08
-func (c channelQueryBuilder) Update(params *UpdateChannelParams, reason string) (*Channel, error) {
+func (c channelQueryBuilder) Update(params *UpdateChannelParams, auditLogReason string) (*Channel, error) {
 	if params == nil {
-		return nil, errors.New("missing update parameters")
+		return nil, MissingRESTParamsErr
 	}
-	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+	if err := c.validate(); err != nil {
+		return nil, err
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -396,7 +406,7 @@ func (c channelQueryBuilder) Update(params *UpdateChannelParams, reason string) 
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      reason,
+		Reason:      auditLogReason,
 	}, c.flags)
 
 	return getChannel(r.Execute)
