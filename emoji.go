@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -67,6 +68,8 @@ func (e *Emoji) Mention() string {
 //
 //////////////////////////////////////////////////////
 
+var MissingEmojiIDErr = errors.New("emoji id was not set")
+
 type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder
 	WithFlags(flags ...Flag) GuildEmojiQueryBuilder
@@ -89,6 +92,19 @@ type guildEmojiQueryBuilder struct {
 	client  *Client
 	gid     Snowflake
 	emojiID Snowflake
+}
+
+func (g *guildEmojiQueryBuilder) validate() error {
+	if g.client == nil {
+		return MissingClientInstanceErr
+	}
+	if g.gid.IsZero() {
+		return MissingGuildIDErr
+	}
+	if g.emojiID.IsZero() {
+		return MissingEmojiIDErr
+	}
+	return nil
 }
 
 func (g guildEmojiQueryBuilder) WithContext(ctx context.Context) GuildEmojiQueryBuilder {
@@ -123,6 +139,13 @@ func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
 // Update Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) Update(params *UpdateEmojiParams, auditLogReason string) (*Emoji, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
+	}
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
