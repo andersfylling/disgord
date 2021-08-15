@@ -256,7 +256,7 @@ type ChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannel, reason string) (*Channel, error)
+	Update(params *UpdateChannelParams, reason string) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
@@ -382,7 +382,7 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2021-08-08
-func (c channelQueryBuilder) Update(params *UpdateChannel, reason string) (*Channel, error) {
+func (c channelQueryBuilder) Update(params *UpdateChannelParams, reason string) (*Channel, error) {
 	if params == nil {
 		return nil, errors.New("missing update parameters")
 	}
@@ -402,7 +402,7 @@ func (c channelQueryBuilder) Update(params *UpdateChannel, reason string) (*Chan
 	return getChannel(r.Execute)
 }
 
-type UpdateChannel struct {
+type UpdateChannelParams struct {
 	Name                       *string                    `json:"name,omitempty"`
 	Type                       *ChannelType               `json:"type,omitempty"`
 	Position                   *uint                      `json:"position,omitempty"`

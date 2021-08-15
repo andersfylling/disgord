@@ -72,7 +72,7 @@ type GuildEmojiQueryBuilder interface {
 	WithFlags(flags ...Flag) GuildEmojiQueryBuilder
 
 	Get() (*Emoji, error)
-	Update(*UpdateEmoji, string) (*Emoji, error)
+	Update(*UpdateEmojiParams, string) (*Emoji, error)
 	Delete() error
 
 	// Deprecated: use Update
@@ -122,7 +122,7 @@ func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
 
 // Update Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason string) (*Emoji, error) {
+func (g guildEmojiQueryBuilder) Update(params *UpdateEmojiParams, auditLogReason string) (*Emoji, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
@@ -139,7 +139,7 @@ func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason strin
 	return getEmoji(r.Execute)
 }
 
-type UpdateEmoji struct {
+type UpdateEmojiParams struct {
 	Name  *string      `json:"name,omitempty"`
 	Roles *[]Snowflake `json:"roles,omitempty"`
 }
