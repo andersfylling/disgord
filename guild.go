@@ -659,6 +659,8 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildPar
 	return getGuild(r.Execute)
 }
 
+var MissingGuildIDErr = errors.New("guild id was not set")
+
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
 type GuildQueryBuilder interface {
 	WithContext(ctx context.Context) GuildQueryBuilder

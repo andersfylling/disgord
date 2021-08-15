@@ -33,6 +33,19 @@ type guildMemberQueryBuilder struct {
 	uid    Snowflake
 }
 
+func (g *guildMemberQueryBuilder) validate() error {
+	if g.client == nil {
+		return MissingClientInstanceErr
+	}
+	if g.gid.IsZero() {
+		return MissingGuildIDErr
+	}
+	if g.uid.IsZero() {
+		return MissingUserIDErr
+	}
+	return nil
+}
+
 func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQueryBuilder {
 	g.ctx = ctx
 	return &g
@@ -70,25 +83,42 @@ func (g guildMemberQueryBuilder) Get() (*Member, error) {
 	return member, nil
 }
 
-// UpdateBuilder is used to create a builder to update a guild member.
-func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
-	builder := &updateGuildMemberBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Member{
-			GuildID: g.gid,
-			UserID:  g.uid,
-		}
+// Update update a guild member
+func (g guildMemberQueryBuilder) Update(params *UpdateMemberParams, auditLogReason string) (*Member, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = g.flags
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      auditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Member{}
+	}
 
-	// TODO: cache member changes
-	return builder
+	member, err := getMember(r.Execute)
+	if err != nil {
+		return nil, err
+	}
+	member.GuildID = g.gid
+	member.UserID = g.uid
+	return member, nil
+}
+
+type UpdateMemberParams struct {
+	Nick      *string      `json:"nick,omitempty"`
+	Roles     *[]Snowflake `json:"roles,omitempty"`
+	Mute      *bool        `json:"mute,omitempty"`
+	Deaf      *bool        `json:"deaf,omitempty"`
+	ChannelID *Snowflake   `json:"channel_id,omitempty"`
 }
 
 // AddRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.

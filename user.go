@@ -385,6 +385,8 @@ func (c userQueryBuilder) CreateDM() (ret *Channel, err error) {
 	return getChannel(r.Execute)
 }
 
+var MissingUserIDErr = errors.New("user id was not set")
+
 type CurrentUserQueryBuilder interface {
 	WithContext(ctx context.Context) CurrentUserQueryBuilder
 	WithFlags(flags ...Flag) CurrentUserQueryBuilder

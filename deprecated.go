@@ -84,6 +84,27 @@ func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
 	return builder
 }
 
+// UpdateBuilder is used to create a builder to update a guild member.
+func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
+	builder := &updateGuildMemberBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &Member{
+			GuildID: g.gid,
+			UserID:  g.uid,
+		}
+	}
+	builder.r.flags = g.flags
+	builder.r.setup(g.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	// TODO: cache member changes
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
