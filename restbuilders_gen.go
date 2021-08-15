@@ -241,6 +241,62 @@ func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
 	return v.(*Channel), nil
 }
 
+// UpdateCurrentUserBuilder is the interface for the builder.
+type UpdateCurrentUserBuilder interface {
+	Execute() (user *User, err error)
+	IgnoreCache() UpdateCurrentUserBuilder
+	CancelOnRatelimit() UpdateCurrentUserBuilder
+	URLParam(name string, v interface{}) UpdateCurrentUserBuilder
+	Set(name string, v interface{}) UpdateCurrentUserBuilder
+	SetUsername(username string) UpdateCurrentUserBuilder
+	SetAvatar(avatar string) UpdateCurrentUserBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateCurrentUserBuilder) IgnoreCache() UpdateCurrentUserBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateCurrentUserBuilder) CancelOnRatelimit() UpdateCurrentUserBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateCurrentUserBuilder) URLParam(name string, v interface{}) UpdateCurrentUserBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateCurrentUserBuilder) Set(name string, v interface{}) UpdateCurrentUserBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateCurrentUserBuilder) SetUsername(username string) UpdateCurrentUserBuilder {
+	b.r.param("username", username)
+	return b
+}
+
+func (b *updateCurrentUserBuilder) SetAvatar(avatar string) UpdateCurrentUserBuilder {
+	b.r.param("avatar", avatar)
+	return b
+}
+
+func (b *updateCurrentUserBuilder) Execute() (user *User, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*User), nil
+}
+
 // UpdateGuildBuilder is the interface for the builder.
 type UpdateGuildBuilder interface {
 	Execute() (guild *Guild, err error)
@@ -1039,62 +1095,6 @@ func (b *getUserDMsBuilder) Execute() (channels []*Channel, err error) {
 	}
 	tmp := v.(*[]*Channel)
 	return *tmp, nil
-}
-
-// UpdateCurrentUserBuilder is the interface for the builder.
-type UpdateCurrentUserBuilder interface {
-	Execute() (user *User, err error)
-	IgnoreCache() UpdateCurrentUserBuilder
-	CancelOnRatelimit() UpdateCurrentUserBuilder
-	URLParam(name string, v interface{}) UpdateCurrentUserBuilder
-	Set(name string, v interface{}) UpdateCurrentUserBuilder
-	SetUsername(username string) UpdateCurrentUserBuilder
-	SetAvatar(avatar string) UpdateCurrentUserBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateCurrentUserBuilder) IgnoreCache() UpdateCurrentUserBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateCurrentUserBuilder) CancelOnRatelimit() UpdateCurrentUserBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateCurrentUserBuilder) URLParam(name string, v interface{}) UpdateCurrentUserBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateCurrentUserBuilder) Set(name string, v interface{}) UpdateCurrentUserBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateCurrentUserBuilder) SetUsername(username string) UpdateCurrentUserBuilder {
-	b.r.param("username", username)
-	return b
-}
-
-func (b *updateCurrentUserBuilder) SetAvatar(avatar string) UpdateCurrentUserBuilder {
-	b.r.param("avatar", avatar)
-	return b
-}
-
-func (b *updateCurrentUserBuilder) Execute() (user *User, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*User), nil
 }
 
 // UpdateWebhookBuilder is the interface for the builder.

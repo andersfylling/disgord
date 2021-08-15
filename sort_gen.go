@@ -301,6 +301,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetCurrentUserGuildsParams:
 		s = *t
+	case *[]*UpdateUserParams:
+		s = *t
 	case *[]*User:
 		s = *t
 	case *[]*UserConnection:

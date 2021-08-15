@@ -396,9 +396,6 @@ type CurrentUserQueryBuilder interface {
 	// with an email.
 	Get() (*User, error)
 
-	// UpdateBuilder Modify the requester's user account settings. Returns a user object on success.
-	UpdateBuilder() UpdateCurrentUserBuilder
-
 	// GetGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
 	GetGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
@@ -413,6 +410,9 @@ type CurrentUserQueryBuilder interface {
 
 	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
 	GetUserConnections() (ret []*UserConnection, err error)
+
+	// Deprecated: use Update instead
+	UpdateBuilder() UpdateCurrentUserBuilder
 }
 
 // CurrentUser is used to create a guild query builder.
@@ -425,6 +425,13 @@ type currentUserQueryBuilder struct {
 	ctx    context.Context
 	flags  Flag
 	client *Client
+}
+
+func (c *currentUserQueryBuilder) validate() error {
+	if c.client == nil {
+		return MissingClientInstanceErr
+	}
+	return nil
 }
 
 var _ CurrentUserQueryBuilder = (*currentUserQueryBuilder)(nil)
@@ -464,25 +471,31 @@ func (c currentUserQueryBuilder) Get() (user *User, err error) {
 	return getUser(r.Execute)
 }
 
-// UpdateBuilder [REST] Modify the requester's user account settings. Returns a user object on success.
-//  Method                  PATCH
-//  Endpoint                /users/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
-//  Reviewed                2019-02-18
-//  Comment                 -
-func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
-	builder := &updateCurrentUserBuilder{}
-	builder.r.itemFactory = userFactory // TODO: peak cached user
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+// Update update current user
+func (c currentUserQueryBuilder) Update(params *UpdateUserParams) (*User, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
+	}
+	if err := c.validate(); err != nil {
+		return nil, err
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      httd.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+	}, c.flags)
+	r.pool = c.client.pool.user
+	r.factory = userFactory
 
-	// TODO: cache changes?
-	return builder
+	return getUser(r.Execute)
+}
+
+type UpdateUserParams struct {
+	Username *string `json:"username,omitempty"`
+	Avatar   *string `json:"avatar,omitempty"`
 }
 
 // GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
@@ -625,13 +638,6 @@ func (b *getUserBuilder) Execute() (user *User, err error) {
 	}
 
 	return v.(*User), nil
-}
-
-// updateCurrentUserBuilder ...
-//generate-rest-params: username:string, avatar:string,
-//generate-rest-basic-execute: user:*User,
-type updateCurrentUserBuilder struct {
-	r RESTBuilder
 }
 
 // TODO: params should be url-params. But it works since we're using GET.

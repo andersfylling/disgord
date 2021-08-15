@@ -123,6 +123,27 @@ func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
 	return builder
 }
 
+// UpdateBuilder [REST] Modify the requester's user account settings. Returns a user object on success.
+//  Method                  PATCH
+//  Endpoint                /users/@me
+//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
+//  Reviewed                2019-02-18
+//  Comment                 -
+func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
+	builder := &updateCurrentUserBuilder{}
+	builder.r.itemFactory = userFactory // TODO: peak cached user
+	builder.r.flags = c.flags
+	builder.r.setup(c.client.req, &httd.Request{
+		Method:      httd.MethodPatch,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.UserMe(),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	// TODO: cache changes?
+	return builder
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Builders
@@ -189,6 +210,13 @@ type updateGuildBuilder struct {
 //generate-rest-basic-execute: role:*Role,
 //generate-rest-params: name:string, permissions:PermissionBit, color:uint, hoist:bool, mentionable:bool,
 type updateGuildRoleBuilder struct {
+	r RESTBuilder
+}
+
+// updateCurrentUserBuilder ...
+//generate-rest-params: username:string, avatar:string,
+//generate-rest-basic-execute: user:*User,
+type updateCurrentUserBuilder struct {
 	r RESTBuilder
 }
 
