@@ -19,20 +19,20 @@ func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
 
 type ChannelQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordChannelQueryBuilder = &ChannelQueryBuilderNop{}
+var _ disgord.ChannelQueryBuilder = &ChannelQueryBuilderNop{}
 
 func (c ChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c ChannelQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ChannelQueryBuilder {
+func (c ChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -107,20 +107,20 @@ func (c *ChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgo
 
 type ClientQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordClientQueryBuilder = &ClientQueryBuilderNop{}
+var _ disgord.ClientQueryBuilder = &ClientQueryBuilderNop{}
 
 func (c ClientQueryBuilderNop) WithContext(ctx context.Context) disgord.ClientQueryBuilderExecutables {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c ClientQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ClientQueryBuilderExecutables {
+func (c ClientQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -167,20 +167,20 @@ func (c *ClientQueryBuilderNop) User(_ disgord.Snowflake) disgord.UserQueryBuild
 
 type CurrentUserQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordCurrentUserQueryBuilder = &CurrentUserQueryBuilderNop{}
+var _ disgord.CurrentUserQueryBuilder = &CurrentUserQueryBuilderNop{}
 
 func (c CurrentUserQueryBuilderNop) WithContext(ctx context.Context) disgord.CurrentUserQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c CurrentUserQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.CurrentUserQueryBuilder {
+func (c CurrentUserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.CurrentUserQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -211,13 +211,13 @@ func (c *CurrentUserQueryBuilderNop) UpdateBuilder() disgord.UpdateCurrentUserBu
 
 type GatewayQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordGatewayQueryBuilder = &GatewayQueryBuilderNop{}
+var _ disgord.GatewayQueryBuilder = &GatewayQueryBuilderNop{}
 
 func (g GatewayQueryBuilderNop) WithContext(ctx context.Context) disgord.GatewayQueryBuilder {
 	g.Ctx = ctx
@@ -276,7 +276,7 @@ func (g *GatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) Dispatch(_ disgord.gatewayCmdName, _ gateway.CmdPayload) ([]disgord.Snowflake, error) {
+func (g *GatewayQueryBuilderNop) Dispatch(_ disgord.GatewayCmdName, _ gateway.CmdPayload) ([]disgord.Snowflake, error) {
 	return nil, nil
 }
 
@@ -560,26 +560,26 @@ func (g *GatewayQueryBuilderNop) WithCtrl(_ disgord.HandlerCtrl) disgord.SocketH
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) WithMiddleware(_ func(interface{}, interface{}), _ ...func(interface{}, interface{})) disgord.SocketHandlerRegistrator {
+func (g *GatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ ...func(interface{}) interface{}) disgord.SocketHandlerRegistrator {
 	return nil
 }
 
 type GuildEmojiQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordGuildEmojiQueryBuilder = &GuildEmojiQueryBuilderNop{}
+var _ disgord.GuildEmojiQueryBuilder = &GuildEmojiQueryBuilderNop{}
 
 func (g GuildEmojiQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildEmojiQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildEmojiQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildEmojiQueryBuilder {
+func (g GuildEmojiQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildEmojiQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -598,20 +598,20 @@ func (g *GuildEmojiQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildEmojiBuil
 
 type GuildMemberQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordGuildMemberQueryBuilder = &GuildMemberQueryBuilderNop{}
+var _ disgord.GuildMemberQueryBuilder = &GuildMemberQueryBuilderNop{}
 
 func (g GuildMemberQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildMemberQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildMemberQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildMemberQueryBuilder {
+func (g GuildMemberQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildMemberQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -646,20 +646,20 @@ func (g *GuildMemberQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildMemberBu
 
 type GuildQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordGuildQueryBuilder = &GuildQueryBuilderNop{}
+var _ disgord.GuildQueryBuilder = &GuildQueryBuilderNop{}
 
 func (g GuildQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildQueryBuilder {
+func (g GuildQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -810,20 +810,20 @@ func (g *GuildQueryBuilderNop) VoiceChannel(_ disgord.Snowflake) disgord.VoiceCh
 
 type GuildRoleQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordGuildRoleQueryBuilder = &GuildRoleQueryBuilderNop{}
+var _ disgord.GuildRoleQueryBuilder = &GuildRoleQueryBuilderNop{}
 
 func (g GuildRoleQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildRoleQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildRoleQueryBuilder {
+func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildRoleQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -838,20 +838,20 @@ func (g *GuildRoleQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildRoleBuilde
 
 type InviteQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordInviteQueryBuilder = &InviteQueryBuilderNop{}
+var _ disgord.InviteQueryBuilder = &InviteQueryBuilderNop{}
 
 func (i InviteQueryBuilderNop) WithContext(ctx context.Context) disgord.InviteQueryBuilder {
 	i.Ctx = ctx
 	return &i
 }
 
-func (i InviteQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.InviteQueryBuilder {
+func (i InviteQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.InviteQueryBuilder {
 	i.Flags = mergeFlags(flags)
 	return &i
 }
@@ -866,20 +866,20 @@ func (i *InviteQueryBuilderNop) Get(_ bool) (*disgord.Invite, error) {
 
 type MessageQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordMessageQueryBuilder = &MessageQueryBuilderNop{}
+var _ disgord.MessageQueryBuilder = &MessageQueryBuilderNop{}
 
 func (m MessageQueryBuilderNop) WithContext(ctx context.Context) disgord.MessageQueryBuilder {
 	m.Ctx = ctx
 	return &m
 }
 
-func (m MessageQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.MessageQueryBuilder {
+func (m MessageQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
 }
@@ -926,20 +926,20 @@ func (m *MessageQueryBuilderNop) UpdateBuilder() disgord.UpdateMessageBuilder {
 
 type ReactionQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordReactionQueryBuilder = &ReactionQueryBuilderNop{}
+var _ disgord.ReactionQueryBuilder = &ReactionQueryBuilderNop{}
 
 func (r ReactionQueryBuilderNop) WithContext(ctx context.Context) disgord.ReactionQueryBuilder {
 	r.Ctx = ctx
 	return &r
 }
 
-func (r ReactionQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ReactionQueryBuilder {
+func (r ReactionQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ReactionQueryBuilder {
 	r.Flags = mergeFlags(flags)
 	return &r
 }
@@ -962,20 +962,20 @@ func (r *ReactionQueryBuilderNop) Get(_ disgord.URLQueryStringer) ([]*disgord.Us
 
 type UserQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordUserQueryBuilder = &UserQueryBuilderNop{}
+var _ disgord.UserQueryBuilder = &UserQueryBuilderNop{}
 
 func (u UserQueryBuilderNop) WithContext(ctx context.Context) disgord.UserQueryBuilder {
 	u.Ctx = ctx
 	return &u
 }
 
-func (u UserQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.UserQueryBuilder {
+func (u UserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.UserQueryBuilder {
 	u.Flags = mergeFlags(flags)
 	return &u
 }
@@ -990,20 +990,20 @@ func (u *UserQueryBuilderNop) Get() (*disgord.User, error) {
 
 type VoiceChannelQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordVoiceChannelQueryBuilder = &VoiceChannelQueryBuilderNop{}
+var _ disgord.VoiceChannelQueryBuilder = &VoiceChannelQueryBuilderNop{}
 
 func (v VoiceChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.VoiceChannelQueryBuilder {
 	v.Ctx = ctx
 	return &v
 }
 
-func (v VoiceChannelQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.VoiceChannelQueryBuilder {
+func (v VoiceChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.VoiceChannelQueryBuilder {
 	v.Flags = mergeFlags(flags)
 	return &v
 }
@@ -1046,20 +1046,20 @@ func (v *VoiceChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *
 
 type WebhookQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordWebhookQueryBuilder = &WebhookQueryBuilderNop{}
+var _ disgord.WebhookQueryBuilder = &WebhookQueryBuilderNop{}
 
 func (w WebhookQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w WebhookQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.WebhookQueryBuilder {
+func (w WebhookQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }
@@ -1094,20 +1094,20 @@ func (w *WebhookQueryBuilderNop) WithToken(_ string) disgord.WebhookWithTokenQue
 
 type WebhookWithTokenQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgordFlag
-	ChannelID disgordSnowflake
-	GuildID   disgordSnowflake
-	UserID    disgordSnowflake
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
 }
 
-var _ disgordWebhookWithTokenQueryBuilder = &WebhookWithTokenQueryBuilderNop{}
+var _ disgord.WebhookWithTokenQueryBuilder = &WebhookWithTokenQueryBuilderNop{}
 
 func (w WebhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookWithTokenQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.WebhookWithTokenQueryBuilder {
+func (w WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookWithTokenQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }

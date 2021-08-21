@@ -267,7 +267,7 @@ func (g *gatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) Dispatch(_ gatewayCmdName, _ gateway.CmdPayload) ([]Snowflake, error) {
+func (g *gatewayQueryBuilderNop) Dispatch(_ GatewayCmdName, _ gateway.CmdPayload) ([]Snowflake, error) {
 	return nil, nil
 }
 
@@ -551,7 +551,7 @@ func (g *gatewayQueryBuilderNop) WithCtrl(_ HandlerCtrl) SocketHandlerRegistrato
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) WithMiddleware(_ func(interface{}, interface{}), _ ...func(interface{}, interface{})) SocketHandlerRegistrator {
+func (g *gatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ ...func(interface{}) interface{}) SocketHandlerRegistrator {
 	return nil
 }
 

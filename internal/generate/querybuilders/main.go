@@ -154,10 +154,6 @@ func makeFile(entries *Entries, tplFile, target string) {
 		panic(err)
 	}
 
-	//fmt.Println("#####################################")
-	//fmt.Println(string(formatted))
-	//fmt.Println("#####################################")
-
 	// And write it.
 	if err = ioutil.WriteFile(target, formatted, 0644); err != nil {
 		panic(err)
@@ -511,7 +507,7 @@ func FuncToLiteral(ctx *Context, t *types.Signature) string {
 
 	var returnVals []string
 	for _, r := range t.Results {
-		parameters = append(parameters, TypeToLiteral(ctx, &Type{r, false}))
+		returnVals = append(returnVals, TypeToLiteral(ctx, &Type{r, false}))
 	}
 
 	var returnStmt string

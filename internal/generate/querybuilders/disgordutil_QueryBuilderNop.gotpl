@@ -5,8 +5,8 @@ package disgordutil
 import (
     "context"
     "github.com/andersfylling/disgord"
-	"github.com/andersfylling/disgord/internal/gateway"
-	"net/url"
+    "github.com/andersfylling/disgord/internal/gateway"
+    "net/url"
 )
 
 func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
@@ -21,13 +21,13 @@ func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
 
 type {{ $type.Name.Name }}Nop struct {
     Ctx context.Context
-    Flags {{ $type.DiscordTypePrefix }}Flag
-    ChannelID {{ $type.DiscordTypePrefix }}Snowflake
-    GuildID {{ $type.DiscordTypePrefix }}Snowflake
-    UserID {{ $type.DiscordTypePrefix }}Snowflake
+    Flags {{ $type.DiscordTypePrefix }}.Flag
+    ChannelID {{ $type.DiscordTypePrefix }}.Snowflake
+    GuildID {{ $type.DiscordTypePrefix }}.Snowflake
+    UserID {{ $type.DiscordTypePrefix }}.Snowflake
 }
 
-var _ {{ $type.DiscordTypePrefix }}{{ $type.Name.Name }} = &{{ $type.Name.Name }}Nop{}
+var _ {{ $type.DiscordTypePrefix }}.{{ $type.Name.Name }} = &{{ $type.Name.Name }}Nop{}
 
 {{ if $type.HasWithContext }}
 func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithContext(ctx context.Context) {{ $type.WithContextReturnType }} {
@@ -37,7 +37,7 @@ func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithContex
 {{ end }}
 
 {{ if $type.HasWithFlags }}
-func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}Flag) {{ $type.WithFlagsReturnType }} {
+func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}.Flag) {{ $type.WithFlagsReturnType }} {
     {{ $type.ShortName }}.Flags = mergeFlags(flags)
     return &{{ $type.ShortName }}
 }
