@@ -14,7 +14,7 @@ import (
 //go:generate go run internal/generate/inter/main.go
 //go:generate go run internal/generate/sorters/main.go
 //go:generate go run internal/generate/json/main.go
-//go:generate go run internal/generate/querybuilder/main.go
+//go:generate go run internal/generate/querybuilders/main.go
 
 func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
 	return &ErrorUnsupportedType{
