@@ -267,8 +267,8 @@ func (g *gatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) Dispatch(_ string, _ gateway.CmdPayload) ([]Snowflake, error) {
-	return 0, nil
+func (g *gatewayQueryBuilderNop) Dispatch(_ gatewayCmdName, _ gateway.CmdPayload) ([]Snowflake, error) {
+	return nil, nil
 }
 
 func (g *gatewayQueryBuilderNop) Get() (*gateway.Gateway, error) {
@@ -619,7 +619,7 @@ func (g *guildMemberQueryBuilderNop) Get() (*Member, error) {
 	return nil, nil
 }
 
-func (g *guildMemberQueryBuilderNop) GetPermissions() (uint64, error) {
+func (g *guildMemberQueryBuilderNop) GetPermissions() (PermissionBit, error) {
 	return 0, nil
 }
 

@@ -18,13 +18,9 @@ const (
 	PKGName = "github.com/andersfylling/disgord"
 )
 
-var (
-	validTypes = map[types.Kind]bool{
-		types.Interface: true,
-	}
-)
+var noStruct struct{}
 
-func DisgordTypes() (typesList []*types.Type, p *types.Package, err error) {
+func DisgordTypes(whitelist ...types.Kind) (typesList []*types.Type, p *types.Package, err error) {
 	builder := parser.New()
 	if err := builder.AddDir(PKGName); err != nil {
 		return nil, nil, fmt.Errorf("unable to add disgord package to gengo-parser builder. %w", err)
@@ -35,9 +31,14 @@ func DisgordTypes() (typesList []*types.Type, p *types.Package, err error) {
 		return nil, nil, fmt.Errorf("unable to find types for disgord package. %w", err)
 	}
 
+
+	validTypes := map[types.Kind]struct{}{}
+	for i := range whitelist {
+		validTypes[whitelist[i]] = noStruct
+	}
 	disgord := universe.Package(PKGName)
 	for _, typeData := range disgord.Types {
-		if accepted, ok := validTypes[typeData.Kind]; !ok || !accepted {
+		if _, ok := validTypes[typeData.Kind]; !ok {
 			continue
 		}
 
@@ -51,8 +52,6 @@ func Exported(name string) bool {
 	firstChar := string(name[0])
 	return firstChar == strings.ToUpper(firstChar)
 }
-
-var disgordTypePrefix = "disgord."
 
 type Entries struct {
 	Entries []*TypeWrapper
@@ -79,10 +78,22 @@ func (e *Entries) SetPackageName(pkg string) {
 	e.LinkCtx()
 }
 
+var disgordAlias map[string]struct{}
+
 func main() {
-	disgordTypes, pkg, err := DisgordTypes()
+	disgordTypes, pkg, err := DisgordTypes(types.Interface)
 	if err != nil {
 		panic(err)
+	}
+
+	disgordAlias = make(map[string]struct{})
+	aliases, pkg, err := DisgordTypes(types.Alias)
+	if err != nil {
+		panic(err)
+	}
+	for i := range aliases {
+		name := aliases[i].Name.Name
+		disgordAlias[name] = noStruct
 	}
 
 	var queryBuilders []*TypeWrapper
@@ -377,6 +388,9 @@ func (f *FieldWrapper) SliceType() string {
 }
 
 func ZeroValue(t *TypeWrapper) (v string) {
+	if strings.HasSuffix(t.Name.Name, "Snowflake") && t.Type.Kind == types.Slice {
+		return "nil"
+	}
 	if strings.HasSuffix(t.Name.Name, "Snowflake") {
 		return "0"
 	}
@@ -462,8 +476,8 @@ func TypeToLiteral(ctx *Context, t *Type) string {
 	case types.Builtin:
 		return t.Name.Name
 	case types.Alias:
-		// edge case
-		if t.Name.Name == "Snowflake" {
+		// weird edge case
+		if _, ok := disgordAlias[t.Name.Name]; ok || t.Name.Name == "Snowflake" {
 			return ctx.TypeNameWithPackage(t.Name.Name, "disgord")
 		} else {
 			return TypeToLiteral(ctx, t.Underlying())
