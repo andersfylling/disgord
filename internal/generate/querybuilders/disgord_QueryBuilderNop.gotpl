@@ -21,14 +21,14 @@ type {{ $type.Name.Name | Decapitalize }}Nop struct {
 var _ {{ $type.DiscordTypePrefix }}{{ $type.Name.Name }} = &{{ $type.Name.Name | Decapitalize }}Nop{}
 
 {{ if $type.HasWithContext }}
-func ({{ $type.ShortName }} *{{ $type.Name.Name | Decapitalize }}Nop) WithContext(ctx context.Context) {{ $type.WithContextReturnType }} {
+func ({{ $type.ShortName }} {{ $type.Name.Name | Decapitalize }}Nop) WithContext(ctx context.Context) {{ $type.WithContextReturnType }} {
     {{ $type.ShortName }}.Ctx = ctx
     return &{{ $type.ShortName }}
 }
 {{ end }}
 
 {{ if $type.HasWithFlags }}
-func ({{ $type.ShortName }} *{{ $type.Name.Name | Decapitalize }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}Flag) {{ $type.WithFlagsReturnType }} {
+func ({{ $type.ShortName }} {{ $type.Name.Name | Decapitalize }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}Flag) {{ $type.WithFlagsReturnType }} {
     {{ $type.ShortName }}.Flags = mergeFlags(flags)
     return &{{ $type.ShortName }}
 }
