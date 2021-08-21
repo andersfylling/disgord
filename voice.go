@@ -131,8 +131,8 @@ func (g guildQueryBuilder) VoiceChannel(channelID Snowflake) VoiceChannelQueryBu
 }
 
 type VoiceChannelQueryBuilder interface {
-	WithContext(ctx context.Context) ChannelQueryBuilder
-	WithFlags(flags ...Flag) ChannelQueryBuilder
+	WithContext(ctx context.Context) VoiceChannelQueryBuilder
+	WithFlags(flags ...Flag) VoiceChannelQueryBuilder
 
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
@@ -179,6 +179,16 @@ type VoiceChannelQueryBuilder interface {
 type voiceChannelQueryBuilder struct {
 	channelQueryBuilder
 	gid Snowflake
+}
+
+func (v voiceChannelQueryBuilder) WithContext(ctx context.Context) VoiceChannelQueryBuilder {
+	v.ctx = ctx
+	return &v
+}
+
+func (v voiceChannelQueryBuilder) WithFlags(flags ...Flag) VoiceChannelQueryBuilder {
+	v.flags = mergeFlags(flags)
+	return &v
 }
 
 // Connect is used to handle making a voice connection.
