@@ -47,12 +47,12 @@ type PartialEmoji = Emoji
 
 // Mention mentions an emoji. Adds the animation prefix, if animated
 func (e *Emoji) Mention() string {
-	prefix := ""
+	prefix := ":"
 	if e.Animated {
 		prefix = "a:"
 	}
 
-	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 //////////////////////////////////////////////////////
