@@ -118,7 +118,7 @@ func main() {
 	entries.SetPackageName("disgord")
 	makeFile(entries, pkg.SourcePath+"/internal/generate/querybuilders/disgord_QueryBuilderNop.gotpl", pkg.SourcePath+"/query_builders_nop_gen.go")
 
-	for _, pkgName := range []string{"disgordutil"} {
+	for _, pkgName := range []string{"disgordtest"} {
 		templateFile := fmt.Sprintf("%s/internal/generate/querybuilders/%s_QueryBuilderNop.gotpl", pkg.SourcePath, pkgName)
 		destinationFile := fmt.Sprintf("%s/%s/query_builders_nop_gen.go", pkg.SourcePath, pkgName)
 		entries.SetPackageName(pkgName)
