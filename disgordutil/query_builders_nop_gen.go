@@ -27,12 +27,12 @@ type ChannelQueryBuilderNop struct {
 
 var _ disgord.ChannelQueryBuilder = &ChannelQueryBuilderNop{}
 
-func (c *ChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
+func (c ChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *ChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
+func (c ChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -115,12 +115,12 @@ type ClientQueryBuilderNop struct {
 
 var _ disgord.ClientQueryBuilder = &ClientQueryBuilderNop{}
 
-func (c *ClientQueryBuilderNop) WithContext(ctx context.Context) disgord.ClientQueryBuilderExecutables {
+func (c ClientQueryBuilderNop) WithContext(ctx context.Context) disgord.ClientQueryBuilderExecutables {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *ClientQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ClientQueryBuilderExecutables {
+func (c ClientQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -175,12 +175,12 @@ type CurrentUserQueryBuilderNop struct {
 
 var _ disgord.CurrentUserQueryBuilder = &CurrentUserQueryBuilderNop{}
 
-func (c *CurrentUserQueryBuilderNop) WithContext(ctx context.Context) disgord.CurrentUserQueryBuilder {
+func (c CurrentUserQueryBuilderNop) WithContext(ctx context.Context) disgord.CurrentUserQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *CurrentUserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.CurrentUserQueryBuilder {
+func (c CurrentUserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.CurrentUserQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -219,7 +219,7 @@ type GatewayQueryBuilderNop struct {
 
 var _ disgord.GatewayQueryBuilder = &GatewayQueryBuilderNop{}
 
-func (g *GatewayQueryBuilderNop) WithContext(ctx context.Context) disgord.GatewayQueryBuilder {
+func (g GatewayQueryBuilderNop) WithContext(ctx context.Context) disgord.GatewayQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
@@ -574,12 +574,12 @@ type GuildEmojiQueryBuilderNop struct {
 
 var _ disgord.GuildEmojiQueryBuilder = &GuildEmojiQueryBuilderNop{}
 
-func (g *GuildEmojiQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildEmojiQueryBuilder {
+func (g GuildEmojiQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildEmojiQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *GuildEmojiQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildEmojiQueryBuilder {
+func (g GuildEmojiQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildEmojiQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -606,12 +606,12 @@ type GuildMemberQueryBuilderNop struct {
 
 var _ disgord.GuildMemberQueryBuilder = &GuildMemberQueryBuilderNop{}
 
-func (g *GuildMemberQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildMemberQueryBuilder {
+func (g GuildMemberQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildMemberQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *GuildMemberQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildMemberQueryBuilder {
+func (g GuildMemberQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildMemberQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -654,12 +654,12 @@ type GuildQueryBuilderNop struct {
 
 var _ disgord.GuildQueryBuilder = &GuildQueryBuilderNop{}
 
-func (g *GuildQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildQueryBuilder {
+func (g GuildQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *GuildQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildQueryBuilder {
+func (g GuildQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -818,12 +818,12 @@ type GuildRoleQueryBuilderNop struct {
 
 var _ disgord.GuildRoleQueryBuilder = &GuildRoleQueryBuilderNop{}
 
-func (g *GuildRoleQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildRoleQueryBuilder {
+func (g GuildRoleQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildRoleQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *GuildRoleQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildRoleQueryBuilder {
+func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildRoleQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -846,12 +846,12 @@ type InviteQueryBuilderNop struct {
 
 var _ disgord.InviteQueryBuilder = &InviteQueryBuilderNop{}
 
-func (i *InviteQueryBuilderNop) WithContext(ctx context.Context) disgord.InviteQueryBuilder {
+func (i InviteQueryBuilderNop) WithContext(ctx context.Context) disgord.InviteQueryBuilder {
 	i.Ctx = ctx
 	return &i
 }
 
-func (i *InviteQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.InviteQueryBuilder {
+func (i InviteQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.InviteQueryBuilder {
 	i.Flags = mergeFlags(flags)
 	return &i
 }
@@ -874,12 +874,12 @@ type MessageQueryBuilderNop struct {
 
 var _ disgord.MessageQueryBuilder = &MessageQueryBuilderNop{}
 
-func (m *MessageQueryBuilderNop) WithContext(ctx context.Context) disgord.MessageQueryBuilder {
+func (m MessageQueryBuilderNop) WithContext(ctx context.Context) disgord.MessageQueryBuilder {
 	m.Ctx = ctx
 	return &m
 }
 
-func (m *MessageQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.MessageQueryBuilder {
+func (m MessageQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
 }
@@ -934,12 +934,12 @@ type ReactionQueryBuilderNop struct {
 
 var _ disgord.ReactionQueryBuilder = &ReactionQueryBuilderNop{}
 
-func (r *ReactionQueryBuilderNop) WithContext(ctx context.Context) disgord.ReactionQueryBuilder {
+func (r ReactionQueryBuilderNop) WithContext(ctx context.Context) disgord.ReactionQueryBuilder {
 	r.Ctx = ctx
 	return &r
 }
 
-func (r *ReactionQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ReactionQueryBuilder {
+func (r ReactionQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ReactionQueryBuilder {
 	r.Flags = mergeFlags(flags)
 	return &r
 }
@@ -970,12 +970,12 @@ type UserQueryBuilderNop struct {
 
 var _ disgord.UserQueryBuilder = &UserQueryBuilderNop{}
 
-func (u *UserQueryBuilderNop) WithContext(ctx context.Context) disgord.UserQueryBuilder {
+func (u UserQueryBuilderNop) WithContext(ctx context.Context) disgord.UserQueryBuilder {
 	u.Ctx = ctx
 	return &u
 }
 
-func (u *UserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.UserQueryBuilder {
+func (u UserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.UserQueryBuilder {
 	u.Flags = mergeFlags(flags)
 	return &u
 }
@@ -998,12 +998,12 @@ type VoiceChannelQueryBuilderNop struct {
 
 var _ disgord.VoiceChannelQueryBuilder = &VoiceChannelQueryBuilderNop{}
 
-func (v *VoiceChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
+func (v VoiceChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
 	v.Ctx = ctx
 	return &v
 }
 
-func (v *VoiceChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
+func (v VoiceChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
 	v.Flags = mergeFlags(flags)
 	return &v
 }
@@ -1054,12 +1054,12 @@ type WebhookQueryBuilderNop struct {
 
 var _ disgord.WebhookQueryBuilder = &WebhookQueryBuilderNop{}
 
-func (w *WebhookQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookQueryBuilder {
+func (w WebhookQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w *WebhookQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookQueryBuilder {
+func (w WebhookQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }
@@ -1102,12 +1102,12 @@ type WebhookWithTokenQueryBuilderNop struct {
 
 var _ disgord.WebhookWithTokenQueryBuilder = &WebhookWithTokenQueryBuilderNop{}
 
-func (w *WebhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookWithTokenQueryBuilder {
+func (w WebhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookWithTokenQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookWithTokenQueryBuilder {
+func (w WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookWithTokenQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }

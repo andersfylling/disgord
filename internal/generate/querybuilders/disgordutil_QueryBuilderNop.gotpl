@@ -30,14 +30,14 @@ type {{ $type.Name.Name }}Nop struct {
 var _ {{ $type.DiscordTypePrefix }}{{ $type.Name.Name }} = &{{ $type.Name.Name }}Nop{}
 
 {{ if $type.HasWithContext }}
-func ({{ $type.ShortName }} {{ $type.Name.Name }}Nop) WithContext(ctx context.Context) {{ $type.WithContextReturnType }} {
+func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithContext(ctx context.Context) {{ $type.WithContextReturnType }} {
     {{ $type.ShortName }}.Ctx = ctx
     return &{{ $type.ShortName }}
 }
 {{ end }}
 
 {{ if $type.HasWithFlags }}
-func ({{ $type.ShortName }} {{ $type.Name.Name }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}Flag) {{ $type.WithFlagsReturnType }} {
+func ({{ $type.ShortName }} {{ $type.Name.Name | RemovePointer }}Nop) WithFlags(flags ...{{ $type.DiscordTypePrefix }}Flag) {{ $type.WithFlagsReturnType }} {
     {{ $type.ShortName }}.Flags = mergeFlags(flags)
     return &{{ $type.ShortName }}
 }

@@ -18,12 +18,12 @@ type channelQueryBuilderNop struct {
 
 var _ ChannelQueryBuilder = &channelQueryBuilderNop{}
 
-func (c *channelQueryBuilderNop) WithContext(ctx context.Context) ChannelQueryBuilder {
+func (c channelQueryBuilderNop) WithContext(ctx context.Context) ChannelQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *channelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
+func (c channelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -106,12 +106,12 @@ type clientQueryBuilderNop struct {
 
 var _ ClientQueryBuilder = &clientQueryBuilderNop{}
 
-func (c *clientQueryBuilderNop) WithContext(ctx context.Context) ClientQueryBuilderExecutables {
+func (c clientQueryBuilderNop) WithContext(ctx context.Context) ClientQueryBuilderExecutables {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *clientQueryBuilderNop) WithFlags(flags ...Flag) ClientQueryBuilderExecutables {
+func (c clientQueryBuilderNop) WithFlags(flags ...Flag) ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -166,12 +166,12 @@ type currentUserQueryBuilderNop struct {
 
 var _ CurrentUserQueryBuilder = &currentUserQueryBuilderNop{}
 
-func (c *currentUserQueryBuilderNop) WithContext(ctx context.Context) CurrentUserQueryBuilder {
+func (c currentUserQueryBuilderNop) WithContext(ctx context.Context) CurrentUserQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c *currentUserQueryBuilderNop) WithFlags(flags ...Flag) CurrentUserQueryBuilder {
+func (c currentUserQueryBuilderNop) WithFlags(flags ...Flag) CurrentUserQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -210,7 +210,7 @@ type gatewayQueryBuilderNop struct {
 
 var _ GatewayQueryBuilder = &gatewayQueryBuilderNop{}
 
-func (g *gatewayQueryBuilderNop) WithContext(ctx context.Context) GatewayQueryBuilder {
+func (g gatewayQueryBuilderNop) WithContext(ctx context.Context) GatewayQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
@@ -565,12 +565,12 @@ type guildEmojiQueryBuilderNop struct {
 
 var _ GuildEmojiQueryBuilder = &guildEmojiQueryBuilderNop{}
 
-func (g *guildEmojiQueryBuilderNop) WithContext(ctx context.Context) GuildEmojiQueryBuilder {
+func (g guildEmojiQueryBuilderNop) WithContext(ctx context.Context) GuildEmojiQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *guildEmojiQueryBuilderNop) WithFlags(flags ...Flag) GuildEmojiQueryBuilder {
+func (g guildEmojiQueryBuilderNop) WithFlags(flags ...Flag) GuildEmojiQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -597,12 +597,12 @@ type guildMemberQueryBuilderNop struct {
 
 var _ GuildMemberQueryBuilder = &guildMemberQueryBuilderNop{}
 
-func (g *guildMemberQueryBuilderNop) WithContext(ctx context.Context) GuildMemberQueryBuilder {
+func (g guildMemberQueryBuilderNop) WithContext(ctx context.Context) GuildMemberQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *guildMemberQueryBuilderNop) WithFlags(flags ...Flag) GuildMemberQueryBuilder {
+func (g guildMemberQueryBuilderNop) WithFlags(flags ...Flag) GuildMemberQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -645,12 +645,12 @@ type guildQueryBuilderNop struct {
 
 var _ GuildQueryBuilder = &guildQueryBuilderNop{}
 
-func (g *guildQueryBuilderNop) WithContext(ctx context.Context) GuildQueryBuilder {
+func (g guildQueryBuilderNop) WithContext(ctx context.Context) GuildQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *guildQueryBuilderNop) WithFlags(flags ...Flag) GuildQueryBuilder {
+func (g guildQueryBuilderNop) WithFlags(flags ...Flag) GuildQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -809,12 +809,12 @@ type guildRoleQueryBuilderNop struct {
 
 var _ GuildRoleQueryBuilder = &guildRoleQueryBuilderNop{}
 
-func (g *guildRoleQueryBuilderNop) WithContext(ctx context.Context) GuildRoleQueryBuilder {
+func (g guildRoleQueryBuilderNop) WithContext(ctx context.Context) GuildRoleQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g *guildRoleQueryBuilderNop) WithFlags(flags ...Flag) GuildRoleQueryBuilder {
+func (g guildRoleQueryBuilderNop) WithFlags(flags ...Flag) GuildRoleQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -837,12 +837,12 @@ type inviteQueryBuilderNop struct {
 
 var _ InviteQueryBuilder = &inviteQueryBuilderNop{}
 
-func (i *inviteQueryBuilderNop) WithContext(ctx context.Context) InviteQueryBuilder {
+func (i inviteQueryBuilderNop) WithContext(ctx context.Context) InviteQueryBuilder {
 	i.Ctx = ctx
 	return &i
 }
 
-func (i *inviteQueryBuilderNop) WithFlags(flags ...Flag) InviteQueryBuilder {
+func (i inviteQueryBuilderNop) WithFlags(flags ...Flag) InviteQueryBuilder {
 	i.Flags = mergeFlags(flags)
 	return &i
 }
@@ -865,12 +865,12 @@ type messageQueryBuilderNop struct {
 
 var _ MessageQueryBuilder = &messageQueryBuilderNop{}
 
-func (m *messageQueryBuilderNop) WithContext(ctx context.Context) MessageQueryBuilder {
+func (m messageQueryBuilderNop) WithContext(ctx context.Context) MessageQueryBuilder {
 	m.Ctx = ctx
 	return &m
 }
 
-func (m *messageQueryBuilderNop) WithFlags(flags ...Flag) MessageQueryBuilder {
+func (m messageQueryBuilderNop) WithFlags(flags ...Flag) MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
 }
@@ -925,12 +925,12 @@ type reactionQueryBuilderNop struct {
 
 var _ ReactionQueryBuilder = &reactionQueryBuilderNop{}
 
-func (r *reactionQueryBuilderNop) WithContext(ctx context.Context) ReactionQueryBuilder {
+func (r reactionQueryBuilderNop) WithContext(ctx context.Context) ReactionQueryBuilder {
 	r.Ctx = ctx
 	return &r
 }
 
-func (r *reactionQueryBuilderNop) WithFlags(flags ...Flag) ReactionQueryBuilder {
+func (r reactionQueryBuilderNop) WithFlags(flags ...Flag) ReactionQueryBuilder {
 	r.Flags = mergeFlags(flags)
 	return &r
 }
@@ -961,12 +961,12 @@ type userQueryBuilderNop struct {
 
 var _ UserQueryBuilder = &userQueryBuilderNop{}
 
-func (u *userQueryBuilderNop) WithContext(ctx context.Context) UserQueryBuilder {
+func (u userQueryBuilderNop) WithContext(ctx context.Context) UserQueryBuilder {
 	u.Ctx = ctx
 	return &u
 }
 
-func (u *userQueryBuilderNop) WithFlags(flags ...Flag) UserQueryBuilder {
+func (u userQueryBuilderNop) WithFlags(flags ...Flag) UserQueryBuilder {
 	u.Flags = mergeFlags(flags)
 	return &u
 }
@@ -989,12 +989,12 @@ type voiceChannelQueryBuilderNop struct {
 
 var _ VoiceChannelQueryBuilder = &voiceChannelQueryBuilderNop{}
 
-func (v *voiceChannelQueryBuilderNop) WithContext(ctx context.Context) ChannelQueryBuilder {
+func (v voiceChannelQueryBuilderNop) WithContext(ctx context.Context) ChannelQueryBuilder {
 	v.Ctx = ctx
 	return &v
 }
 
-func (v *voiceChannelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
+func (v voiceChannelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
 	v.Flags = mergeFlags(flags)
 	return &v
 }
@@ -1045,12 +1045,12 @@ type webhookQueryBuilderNop struct {
 
 var _ WebhookQueryBuilder = &webhookQueryBuilderNop{}
 
-func (w *webhookQueryBuilderNop) WithContext(ctx context.Context) WebhookQueryBuilder {
+func (w webhookQueryBuilderNop) WithContext(ctx context.Context) WebhookQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w *webhookQueryBuilderNop) WithFlags(flags ...Flag) WebhookQueryBuilder {
+func (w webhookQueryBuilderNop) WithFlags(flags ...Flag) WebhookQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }
@@ -1093,12 +1093,12 @@ type webhookWithTokenQueryBuilderNop struct {
 
 var _ WebhookWithTokenQueryBuilder = &webhookWithTokenQueryBuilderNop{}
 
-func (w *webhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
+func (w webhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w *webhookWithTokenQueryBuilderNop) WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder {
+func (w webhookWithTokenQueryBuilderNop) WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }

@@ -85,6 +85,13 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 		"ToUpper":      strings.ToUpper,
 		"ToLower":      strings.ToLower,
 		"Decapitalize": func(s string) string { return strings.ToLower(s[0:1]) + s[1:] },
+		"RemovePointer": func(s string) string {
+			fmt.Println(s)
+			if s != "" && s[0] == '*' {
+				return s[1:]
+			}
+			return s
+		},
 	}
 
 	// Open & parse our template
