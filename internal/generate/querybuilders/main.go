@@ -31,7 +31,6 @@ func DisgordTypes(whitelist ...types.Kind) (typesList []*types.Type, p *types.Pa
 		return nil, nil, fmt.Errorf("unable to find types for disgord package. %w", err)
 	}
 
-
 	validTypes := map[types.Kind]struct{}{}
 	for i := range whitelist {
 		validTypes[whitelist[i]] = noStruct

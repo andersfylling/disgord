@@ -989,12 +989,12 @@ type voiceChannelQueryBuilderNop struct {
 
 var _ VoiceChannelQueryBuilder = &voiceChannelQueryBuilderNop{}
 
-func (v voiceChannelQueryBuilderNop) WithContext(ctx context.Context) ChannelQueryBuilder {
+func (v voiceChannelQueryBuilderNop) WithContext(ctx context.Context) VoiceChannelQueryBuilder {
 	v.Ctx = ctx
 	return &v
 }
 
-func (v voiceChannelQueryBuilderNop) WithFlags(flags ...Flag) ChannelQueryBuilder {
+func (v voiceChannelQueryBuilderNop) WithFlags(flags ...Flag) VoiceChannelQueryBuilder {
 	v.Flags = mergeFlags(flags)
 	return &v
 }
