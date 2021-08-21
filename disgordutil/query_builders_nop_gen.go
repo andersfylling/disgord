@@ -19,20 +19,20 @@ func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
 
 type ChannelQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.ChannelQueryBuilder = &ChannelQueryBuilderNop{}
+var _ disgordChannelQueryBuilder = &ChannelQueryBuilderNop{}
 
 func (c ChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c ChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
+func (c ChannelQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ChannelQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -107,20 +107,20 @@ func (c *ChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgo
 
 type ClientQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.ClientQueryBuilder = &ClientQueryBuilderNop{}
+var _ disgordClientQueryBuilder = &ClientQueryBuilderNop{}
 
 func (c ClientQueryBuilderNop) WithContext(ctx context.Context) disgord.ClientQueryBuilderExecutables {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c ClientQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ClientQueryBuilderExecutables {
+func (c ClientQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -157,7 +157,7 @@ func (c *ClientQueryBuilderNop) Invite(_ string) disgord.InviteQueryBuilder {
 	return nil
 }
 
-func (c *ClientQueryBuilderNop) SendMsg(_ disgord.Snowflake, _ []interface{}) (*disgord.Message, error) {
+func (c *ClientQueryBuilderNop) SendMsg(_ disgord.Snowflake, _ ...interface{}) (*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -167,20 +167,20 @@ func (c *ClientQueryBuilderNop) User(_ disgord.Snowflake) disgord.UserQueryBuild
 
 type CurrentUserQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.CurrentUserQueryBuilder = &CurrentUserQueryBuilderNop{}
+var _ disgordCurrentUserQueryBuilder = &CurrentUserQueryBuilderNop{}
 
 func (c CurrentUserQueryBuilderNop) WithContext(ctx context.Context) disgord.CurrentUserQueryBuilder {
 	c.Ctx = ctx
 	return &c
 }
 
-func (c CurrentUserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.CurrentUserQueryBuilder {
+func (c CurrentUserQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.CurrentUserQueryBuilder {
 	c.Flags = mergeFlags(flags)
 	return &c
 }
@@ -211,13 +211,13 @@ func (c *CurrentUserQueryBuilderNop) UpdateBuilder() disgord.UpdateCurrentUserBu
 
 type GatewayQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.GatewayQueryBuilder = &GatewayQueryBuilderNop{}
+var _ disgordGatewayQueryBuilder = &GatewayQueryBuilderNop{}
 
 func (g GatewayQueryBuilderNop) WithContext(ctx context.Context) disgord.GatewayQueryBuilder {
 	g.Ctx = ctx
@@ -232,35 +232,35 @@ func (g *GatewayQueryBuilderNop) BotReady(_ func()) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelCreate(_ disgord.ChannelCreate, _ disgord.ChannelCreate) {
+func (g *GatewayQueryBuilderNop) ChannelCreate(_ func(disgord.Session, *disgord.ChannelCreate), _ ...func(disgord.Session, *disgord.ChannelCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelCreateChan(_ chan *disgord.ChannelCreate, _ []chan *disgord.ChannelCreate) {
+func (g *GatewayQueryBuilderNop) ChannelCreateChan(_ chan *disgord.ChannelCreate, _ ...chan *disgord.ChannelCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelDelete(_ disgord.ChannelDelete, _ disgord.ChannelDelete) {
+func (g *GatewayQueryBuilderNop) ChannelDelete(_ func(disgord.Session, *disgord.ChannelDelete), _ ...func(disgord.Session, *disgord.ChannelDelete)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelDeleteChan(_ chan *disgord.ChannelDelete, _ []chan *disgord.ChannelDelete) {
+func (g *GatewayQueryBuilderNop) ChannelDeleteChan(_ chan *disgord.ChannelDelete, _ ...chan *disgord.ChannelDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelPinsUpdate(_ disgord.ChannelPinsUpdate, _ disgord.ChannelPinsUpdate) {
+func (g *GatewayQueryBuilderNop) ChannelPinsUpdate(_ func(disgord.Session, *disgord.ChannelPinsUpdate), _ ...func(disgord.Session, *disgord.ChannelPinsUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *disgord.ChannelPinsUpdate, _ []chan *disgord.ChannelPinsUpdate) {
+func (g *GatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *disgord.ChannelPinsUpdate, _ ...chan *disgord.ChannelPinsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelUpdate(_ disgord.ChannelUpdate, _ disgord.ChannelUpdate) {
+func (g *GatewayQueryBuilderNop) ChannelUpdate(_ func(disgord.Session, *disgord.ChannelUpdate), _ ...func(disgord.Session, *disgord.ChannelUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ChannelUpdateChan(_ chan *disgord.ChannelUpdate, _ []chan *disgord.ChannelUpdate) {
+func (g *GatewayQueryBuilderNop) ChannelUpdateChan(_ chan *disgord.ChannelUpdate, _ ...chan *disgord.ChannelUpdate) {
 	return
 }
 
@@ -276,7 +276,7 @@ func (g *GatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) Dispatch(_ disgord.gatewayCmdName, _ disgord.CmdPayload) (disgord.Snowflake, error) {
+func (g *GatewayQueryBuilderNop) Dispatch(_ string, _ gateway.CmdPayload) ([]disgord.Snowflake, error) {
 	return 0, nil
 }
 
@@ -288,227 +288,227 @@ func (g *GatewayQueryBuilderNop) GetBot() (*gateway.GatewayBot, error) {
 	return nil, nil
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanAdd(_ disgord.GuildBanAdd, _ disgord.GuildBanAdd) {
+func (g *GatewayQueryBuilderNop) GuildBanAdd(_ func(disgord.Session, *disgord.GuildBanAdd), _ ...func(disgord.Session, *disgord.GuildBanAdd)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanAddChan(_ chan *disgord.GuildBanAdd, _ []chan *disgord.GuildBanAdd) {
+func (g *GatewayQueryBuilderNop) GuildBanAddChan(_ chan *disgord.GuildBanAdd, _ ...chan *disgord.GuildBanAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanRemove(_ disgord.GuildBanRemove, _ disgord.GuildBanRemove) {
+func (g *GatewayQueryBuilderNop) GuildBanRemove(_ func(disgord.Session, *disgord.GuildBanRemove), _ ...func(disgord.Session, *disgord.GuildBanRemove)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *disgord.GuildBanRemove, _ []chan *disgord.GuildBanRemove) {
+func (g *GatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *disgord.GuildBanRemove, _ ...chan *disgord.GuildBanRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildCreate(_ disgord.GuildCreate, _ disgord.GuildCreate) {
+func (g *GatewayQueryBuilderNop) GuildCreate(_ func(disgord.Session, *disgord.GuildCreate), _ ...func(disgord.Session, *disgord.GuildCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildCreateChan(_ chan *disgord.GuildCreate, _ []chan *disgord.GuildCreate) {
+func (g *GatewayQueryBuilderNop) GuildCreateChan(_ chan *disgord.GuildCreate, _ ...chan *disgord.GuildCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildDelete(_ disgord.GuildDelete, _ disgord.GuildDelete) {
+func (g *GatewayQueryBuilderNop) GuildDelete(_ func(disgord.Session, *disgord.GuildDelete), _ ...func(disgord.Session, *disgord.GuildDelete)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildDeleteChan(_ chan *disgord.GuildDelete, _ []chan *disgord.GuildDelete) {
+func (g *GatewayQueryBuilderNop) GuildDeleteChan(_ chan *disgord.GuildDelete, _ ...chan *disgord.GuildDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildEmojisUpdate(_ disgord.GuildEmojisUpdate, _ disgord.GuildEmojisUpdate) {
+func (g *GatewayQueryBuilderNop) GuildEmojisUpdate(_ func(disgord.Session, *disgord.GuildEmojisUpdate), _ ...func(disgord.Session, *disgord.GuildEmojisUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *disgord.GuildEmojisUpdate, _ []chan *disgord.GuildEmojisUpdate) {
+func (g *GatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *disgord.GuildEmojisUpdate, _ ...chan *disgord.GuildEmojisUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdate(_ disgord.GuildIntegrationsUpdate, _ disgord.GuildIntegrationsUpdate) {
+func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdate(_ func(disgord.Session, *disgord.GuildIntegrationsUpdate), _ ...func(disgord.Session, *disgord.GuildIntegrationsUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *disgord.GuildIntegrationsUpdate, _ []chan *disgord.GuildIntegrationsUpdate) {
+func (g *GatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *disgord.GuildIntegrationsUpdate, _ ...chan *disgord.GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberAdd(_ disgord.GuildMemberAdd, _ disgord.GuildMemberAdd) {
+func (g *GatewayQueryBuilderNop) GuildMemberAdd(_ func(disgord.Session, *disgord.GuildMemberAdd), _ ...func(disgord.Session, *disgord.GuildMemberAdd)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberAddChan(_ chan *disgord.GuildMemberAdd, _ []chan *disgord.GuildMemberAdd) {
+func (g *GatewayQueryBuilderNop) GuildMemberAddChan(_ chan *disgord.GuildMemberAdd, _ ...chan *disgord.GuildMemberAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberRemove(_ disgord.GuildMemberRemove, _ disgord.GuildMemberRemove) {
+func (g *GatewayQueryBuilderNop) GuildMemberRemove(_ func(disgord.Session, *disgord.GuildMemberRemove), _ ...func(disgord.Session, *disgord.GuildMemberRemove)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *disgord.GuildMemberRemove, _ []chan *disgord.GuildMemberRemove) {
+func (g *GatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *disgord.GuildMemberRemove, _ ...chan *disgord.GuildMemberRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMembersChunk(_ disgord.GuildMembersChunk, _ disgord.GuildMembersChunk) {
+func (g *GatewayQueryBuilderNop) GuildMembersChunk(_ func(disgord.Session, *disgord.GuildMembersChunk), _ ...func(disgord.Session, *disgord.GuildMembersChunk)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *disgord.GuildMembersChunk, _ []chan *disgord.GuildMembersChunk) {
+func (g *GatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *disgord.GuildMembersChunk, _ ...chan *disgord.GuildMembersChunk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberUpdate(_ disgord.GuildMemberUpdate, _ disgord.GuildMemberUpdate) {
+func (g *GatewayQueryBuilderNop) GuildMemberUpdate(_ func(disgord.Session, *disgord.GuildMemberUpdate), _ ...func(disgord.Session, *disgord.GuildMemberUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *disgord.GuildMemberUpdate, _ []chan *disgord.GuildMemberUpdate) {
+func (g *GatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *disgord.GuildMemberUpdate, _ ...chan *disgord.GuildMemberUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleCreate(_ disgord.GuildRoleCreate, _ disgord.GuildRoleCreate) {
+func (g *GatewayQueryBuilderNop) GuildRoleCreate(_ func(disgord.Session, *disgord.GuildRoleCreate), _ ...func(disgord.Session, *disgord.GuildRoleCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *disgord.GuildRoleCreate, _ []chan *disgord.GuildRoleCreate) {
+func (g *GatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *disgord.GuildRoleCreate, _ ...chan *disgord.GuildRoleCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleDelete(_ disgord.GuildRoleDelete, _ disgord.GuildRoleDelete) {
+func (g *GatewayQueryBuilderNop) GuildRoleDelete(_ func(disgord.Session, *disgord.GuildRoleDelete), _ ...func(disgord.Session, *disgord.GuildRoleDelete)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *disgord.GuildRoleDelete, _ []chan *disgord.GuildRoleDelete) {
+func (g *GatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *disgord.GuildRoleDelete, _ ...chan *disgord.GuildRoleDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleUpdate(_ disgord.GuildRoleUpdate, _ disgord.GuildRoleUpdate) {
+func (g *GatewayQueryBuilderNop) GuildRoleUpdate(_ func(disgord.Session, *disgord.GuildRoleUpdate), _ ...func(disgord.Session, *disgord.GuildRoleUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *disgord.GuildRoleUpdate, _ []chan *disgord.GuildRoleUpdate) {
+func (g *GatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *disgord.GuildRoleUpdate, _ ...chan *disgord.GuildRoleUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildUpdate(_ disgord.GuildUpdate, _ disgord.GuildUpdate) {
+func (g *GatewayQueryBuilderNop) GuildUpdate(_ func(disgord.Session, *disgord.GuildUpdate), _ ...func(disgord.Session, *disgord.GuildUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) GuildUpdateChan(_ chan *disgord.GuildUpdate, _ []chan *disgord.GuildUpdate) {
+func (g *GatewayQueryBuilderNop) GuildUpdateChan(_ chan *disgord.GuildUpdate, _ ...chan *disgord.GuildUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InteractionCreate(_ disgord.InteractionCreate, _ disgord.InteractionCreate) {
+func (g *GatewayQueryBuilderNop) InteractionCreate(_ func(disgord.Session, *disgord.InteractionCreate), _ ...func(disgord.Session, *disgord.InteractionCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InteractionCreateChan(_ chan *disgord.InteractionCreate, _ []chan *disgord.InteractionCreate) {
+func (g *GatewayQueryBuilderNop) InteractionCreateChan(_ chan *disgord.InteractionCreate, _ ...chan *disgord.InteractionCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteCreate(_ disgord.InviteCreate, _ disgord.InviteCreate) {
+func (g *GatewayQueryBuilderNop) InviteCreate(_ func(disgord.Session, *disgord.InviteCreate), _ ...func(disgord.Session, *disgord.InviteCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteCreateChan(_ chan *disgord.InviteCreate, _ []chan *disgord.InviteCreate) {
+func (g *GatewayQueryBuilderNop) InviteCreateChan(_ chan *disgord.InviteCreate, _ ...chan *disgord.InviteCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteDelete(_ disgord.InviteDelete, _ disgord.InviteDelete) {
+func (g *GatewayQueryBuilderNop) InviteDelete(_ func(disgord.Session, *disgord.InviteDelete), _ ...func(disgord.Session, *disgord.InviteDelete)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) InviteDeleteChan(_ chan *disgord.InviteDelete, _ []chan *disgord.InviteDelete) {
+func (g *GatewayQueryBuilderNop) InviteDeleteChan(_ chan *disgord.InviteDelete, _ ...chan *disgord.InviteDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageCreate(_ disgord.MessageCreate, _ disgord.MessageCreate) {
+func (g *GatewayQueryBuilderNop) MessageCreate(_ func(disgord.Session, *disgord.MessageCreate), _ ...func(disgord.Session, *disgord.MessageCreate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageCreateChan(_ chan *disgord.MessageCreate, _ []chan *disgord.MessageCreate) {
+func (g *GatewayQueryBuilderNop) MessageCreateChan(_ chan *disgord.MessageCreate, _ ...chan *disgord.MessageCreate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDelete(_ disgord.MessageDelete, _ disgord.MessageDelete) {
+func (g *GatewayQueryBuilderNop) MessageDelete(_ func(disgord.Session, *disgord.MessageDelete), _ ...func(disgord.Session, *disgord.MessageDelete)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteBulk(_ disgord.MessageDeleteBulk, _ disgord.MessageDeleteBulk) {
+func (g *GatewayQueryBuilderNop) MessageDeleteBulk(_ func(disgord.Session, *disgord.MessageDeleteBulk), _ ...func(disgord.Session, *disgord.MessageDeleteBulk)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *disgord.MessageDeleteBulk, _ []chan *disgord.MessageDeleteBulk) {
+func (g *GatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *disgord.MessageDeleteBulk, _ ...chan *disgord.MessageDeleteBulk) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageDeleteChan(_ chan *disgord.MessageDelete, _ []chan *disgord.MessageDelete) {
+func (g *GatewayQueryBuilderNop) MessageDeleteChan(_ chan *disgord.MessageDelete, _ ...chan *disgord.MessageDelete) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionAdd(_ disgord.MessageReactionAdd, _ disgord.MessageReactionAdd) {
+func (g *GatewayQueryBuilderNop) MessageReactionAdd(_ func(disgord.Session, *disgord.MessageReactionAdd), _ ...func(disgord.Session, *disgord.MessageReactionAdd)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionAddChan(_ chan *disgord.MessageReactionAdd, _ []chan *disgord.MessageReactionAdd) {
+func (g *GatewayQueryBuilderNop) MessageReactionAddChan(_ chan *disgord.MessageReactionAdd, _ ...chan *disgord.MessageReactionAdd) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemove(_ disgord.MessageReactionRemove, _ disgord.MessageReactionRemove) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemove(_ func(disgord.Session, *disgord.MessageReactionRemove), _ ...func(disgord.Session, *disgord.MessageReactionRemove)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveAll(_ disgord.MessageReactionRemoveAll, _ disgord.MessageReactionRemoveAll) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveAll(_ func(disgord.Session, *disgord.MessageReactionRemoveAll), _ ...func(disgord.Session, *disgord.MessageReactionRemoveAll)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *disgord.MessageReactionRemoveAll, _ []chan *disgord.MessageReactionRemoveAll) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *disgord.MessageReactionRemoveAll, _ ...chan *disgord.MessageReactionRemoveAll) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *disgord.MessageReactionRemove, _ []chan *disgord.MessageReactionRemove) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *disgord.MessageReactionRemove, _ ...chan *disgord.MessageReactionRemove) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ disgord.MessageReactionRemoveEmoji, _ disgord.MessageReactionRemoveEmoji) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ func(disgord.Session, *disgord.MessageReactionRemoveEmoji), _ ...func(disgord.Session, *disgord.MessageReactionRemoveEmoji)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *disgord.MessageReactionRemoveEmoji, _ []chan *disgord.MessageReactionRemoveEmoji) {
+func (g *GatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *disgord.MessageReactionRemoveEmoji, _ ...chan *disgord.MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageUpdate(_ disgord.MessageUpdate, _ disgord.MessageUpdate) {
+func (g *GatewayQueryBuilderNop) MessageUpdate(_ func(disgord.Session, *disgord.MessageUpdate), _ ...func(disgord.Session, *disgord.MessageUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) MessageUpdateChan(_ chan *disgord.MessageUpdate, _ []chan *disgord.MessageUpdate) {
+func (g *GatewayQueryBuilderNop) MessageUpdateChan(_ chan *disgord.MessageUpdate, _ ...chan *disgord.MessageUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) PresenceUpdate(_ disgord.PresenceUpdate, _ disgord.PresenceUpdate) {
+func (g *GatewayQueryBuilderNop) PresenceUpdate(_ func(disgord.Session, *disgord.PresenceUpdate), _ ...func(disgord.Session, *disgord.PresenceUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) PresenceUpdateChan(_ chan *disgord.PresenceUpdate, _ []chan *disgord.PresenceUpdate) {
+func (g *GatewayQueryBuilderNop) PresenceUpdateChan(_ chan *disgord.PresenceUpdate, _ ...chan *disgord.PresenceUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) Ready(_ disgord.Ready, _ disgord.Ready) {
+func (g *GatewayQueryBuilderNop) Ready(_ func(disgord.Session, *disgord.Ready), _ ...func(disgord.Session, *disgord.Ready)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ReadyChan(_ chan *disgord.Ready, _ []chan *disgord.Ready) {
+func (g *GatewayQueryBuilderNop) ReadyChan(_ chan *disgord.Ready, _ ...chan *disgord.Ready) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) Resumed(_ disgord.Resumed, _ disgord.Resumed) {
+func (g *GatewayQueryBuilderNop) Resumed(_ func(disgord.Session, *disgord.Resumed), _ ...func(disgord.Session, *disgord.Resumed)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) ResumedChan(_ chan *disgord.Resumed, _ []chan *disgord.Resumed) {
+func (g *GatewayQueryBuilderNop) ResumedChan(_ chan *disgord.Resumed, _ ...chan *disgord.Resumed) {
 	return
 }
 
@@ -516,43 +516,43 @@ func (g *GatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) TypingStart(_ disgord.TypingStart, _ disgord.TypingStart) {
+func (g *GatewayQueryBuilderNop) TypingStart(_ func(disgord.Session, *disgord.TypingStart), _ ...func(disgord.Session, *disgord.TypingStart)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) TypingStartChan(_ chan *disgord.TypingStart, _ []chan *disgord.TypingStart) {
+func (g *GatewayQueryBuilderNop) TypingStartChan(_ chan *disgord.TypingStart, _ ...chan *disgord.TypingStart) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) UserUpdate(_ disgord.UserUpdate, _ disgord.UserUpdate) {
+func (g *GatewayQueryBuilderNop) UserUpdate(_ func(disgord.Session, *disgord.UserUpdate), _ ...func(disgord.Session, *disgord.UserUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) UserUpdateChan(_ chan *disgord.UserUpdate, _ []chan *disgord.UserUpdate) {
+func (g *GatewayQueryBuilderNop) UserUpdateChan(_ chan *disgord.UserUpdate, _ ...chan *disgord.UserUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceServerUpdate(_ disgord.VoiceServerUpdate, _ disgord.VoiceServerUpdate) {
+func (g *GatewayQueryBuilderNop) VoiceServerUpdate(_ func(disgord.Session, *disgord.VoiceServerUpdate), _ ...func(disgord.Session, *disgord.VoiceServerUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *disgord.VoiceServerUpdate, _ []chan *disgord.VoiceServerUpdate) {
+func (g *GatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *disgord.VoiceServerUpdate, _ ...chan *disgord.VoiceServerUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceStateUpdate(_ disgord.VoiceStateUpdate, _ disgord.VoiceStateUpdate) {
+func (g *GatewayQueryBuilderNop) VoiceStateUpdate(_ func(disgord.Session, *disgord.VoiceStateUpdate), _ ...func(disgord.Session, *disgord.VoiceStateUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *disgord.VoiceStateUpdate, _ []chan *disgord.VoiceStateUpdate) {
+func (g *GatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *disgord.VoiceStateUpdate, _ ...chan *disgord.VoiceStateUpdate) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) WebhooksUpdate(_ disgord.WebhooksUpdate, _ disgord.WebhooksUpdate) {
+func (g *GatewayQueryBuilderNop) WebhooksUpdate(_ func(disgord.Session, *disgord.WebhooksUpdate), _ ...func(disgord.Session, *disgord.WebhooksUpdate)) {
 	return
 }
 
-func (g *GatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *disgord.WebhooksUpdate, _ []chan *disgord.WebhooksUpdate) {
+func (g *GatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *disgord.WebhooksUpdate, _ ...chan *disgord.WebhooksUpdate) {
 	return
 }
 
@@ -560,26 +560,26 @@ func (g *GatewayQueryBuilderNop) WithCtrl(_ disgord.HandlerCtrl) disgord.SocketH
 	return nil
 }
 
-func (g *GatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ []func(interface{}) interface{}) disgord.SocketHandlerRegistrator {
+func (g *GatewayQueryBuilderNop) WithMiddleware(_ func(interface{}, interface{}), _ ...func(interface{}, interface{})) disgord.SocketHandlerRegistrator {
 	return nil
 }
 
 type GuildEmojiQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.GuildEmojiQueryBuilder = &GuildEmojiQueryBuilderNop{}
+var _ disgordGuildEmojiQueryBuilder = &GuildEmojiQueryBuilderNop{}
 
 func (g GuildEmojiQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildEmojiQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildEmojiQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildEmojiQueryBuilder {
+func (g GuildEmojiQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildEmojiQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -598,20 +598,20 @@ func (g *GuildEmojiQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildEmojiBuil
 
 type GuildMemberQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.GuildMemberQueryBuilder = &GuildMemberQueryBuilderNop{}
+var _ disgordGuildMemberQueryBuilder = &GuildMemberQueryBuilderNop{}
 
 func (g GuildMemberQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildMemberQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildMemberQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildMemberQueryBuilder {
+func (g GuildMemberQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildMemberQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -628,7 +628,7 @@ func (g *GuildMemberQueryBuilderNop) Get() (*disgord.Member, error) {
 	return nil, nil
 }
 
-func (g *GuildMemberQueryBuilderNop) GetPermissions() (disgord.PermissionBit, error) {
+func (g *GuildMemberQueryBuilderNop) GetPermissions() (uint64, error) {
 	return 0, nil
 }
 
@@ -646,20 +646,20 @@ func (g *GuildMemberQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildMemberBu
 
 type GuildQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.GuildQueryBuilder = &GuildQueryBuilderNop{}
+var _ disgordGuildQueryBuilder = &GuildQueryBuilderNop{}
 
 func (g GuildQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildQueryBuilder {
+func (g GuildQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -810,20 +810,20 @@ func (g *GuildQueryBuilderNop) VoiceChannel(_ disgord.Snowflake) disgord.VoiceCh
 
 type GuildRoleQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.GuildRoleQueryBuilder = &GuildRoleQueryBuilderNop{}
+var _ disgordGuildRoleQueryBuilder = &GuildRoleQueryBuilderNop{}
 
 func (g GuildRoleQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildRoleQueryBuilder {
 	g.Ctx = ctx
 	return &g
 }
 
-func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildRoleQueryBuilder {
+func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.GuildRoleQueryBuilder {
 	g.Flags = mergeFlags(flags)
 	return &g
 }
@@ -838,20 +838,20 @@ func (g *GuildRoleQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildRoleBuilde
 
 type InviteQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.InviteQueryBuilder = &InviteQueryBuilderNop{}
+var _ disgordInviteQueryBuilder = &InviteQueryBuilderNop{}
 
 func (i InviteQueryBuilderNop) WithContext(ctx context.Context) disgord.InviteQueryBuilder {
 	i.Ctx = ctx
 	return &i
 }
 
-func (i InviteQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.InviteQueryBuilder {
+func (i InviteQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.InviteQueryBuilder {
 	i.Flags = mergeFlags(flags)
 	return &i
 }
@@ -866,20 +866,20 @@ func (i *InviteQueryBuilderNop) Get(_ bool) (*disgord.Invite, error) {
 
 type MessageQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.MessageQueryBuilder = &MessageQueryBuilderNop{}
+var _ disgordMessageQueryBuilder = &MessageQueryBuilderNop{}
 
 func (m MessageQueryBuilderNop) WithContext(ctx context.Context) disgord.MessageQueryBuilder {
 	m.Ctx = ctx
 	return &m
 }
 
-func (m MessageQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.MessageQueryBuilder {
+func (m MessageQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
 }
@@ -926,20 +926,20 @@ func (m *MessageQueryBuilderNop) UpdateBuilder() disgord.UpdateMessageBuilder {
 
 type ReactionQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.ReactionQueryBuilder = &ReactionQueryBuilderNop{}
+var _ disgordReactionQueryBuilder = &ReactionQueryBuilderNop{}
 
 func (r ReactionQueryBuilderNop) WithContext(ctx context.Context) disgord.ReactionQueryBuilder {
 	r.Ctx = ctx
 	return &r
 }
 
-func (r ReactionQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ReactionQueryBuilder {
+func (r ReactionQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ReactionQueryBuilder {
 	r.Flags = mergeFlags(flags)
 	return &r
 }
@@ -962,20 +962,20 @@ func (r *ReactionQueryBuilderNop) Get(_ disgord.URLQueryStringer) ([]*disgord.Us
 
 type UserQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.UserQueryBuilder = &UserQueryBuilderNop{}
+var _ disgordUserQueryBuilder = &UserQueryBuilderNop{}
 
 func (u UserQueryBuilderNop) WithContext(ctx context.Context) disgord.UserQueryBuilder {
 	u.Ctx = ctx
 	return &u
 }
 
-func (u UserQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.UserQueryBuilder {
+func (u UserQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.UserQueryBuilder {
 	u.Flags = mergeFlags(flags)
 	return &u
 }
@@ -990,20 +990,20 @@ func (u *UserQueryBuilderNop) Get() (*disgord.User, error) {
 
 type VoiceChannelQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.VoiceChannelQueryBuilder = &VoiceChannelQueryBuilderNop{}
+var _ disgordVoiceChannelQueryBuilder = &VoiceChannelQueryBuilderNop{}
 
 func (v VoiceChannelQueryBuilderNop) WithContext(ctx context.Context) disgord.ChannelQueryBuilder {
 	v.Ctx = ctx
 	return &v
 }
 
-func (v VoiceChannelQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ChannelQueryBuilder {
+func (v VoiceChannelQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.ChannelQueryBuilder {
 	v.Flags = mergeFlags(flags)
 	return &v
 }
@@ -1046,20 +1046,20 @@ func (v *VoiceChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *
 
 type WebhookQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.WebhookQueryBuilder = &WebhookQueryBuilderNop{}
+var _ disgordWebhookQueryBuilder = &WebhookQueryBuilderNop{}
 
 func (w WebhookQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w WebhookQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookQueryBuilder {
+func (w WebhookQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.WebhookQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }
@@ -1094,20 +1094,20 @@ func (w *WebhookQueryBuilderNop) WithToken(_ string) disgord.WebhookWithTokenQue
 
 type WebhookWithTokenQueryBuilderNop struct {
 	Ctx       context.Context
-	Flags     disgord.Flag
-	ChannelID disgord.Snowflake
-	GuildID   disgord.Snowflake
-	UserID    disgord.Snowflake
+	Flags     disgordFlag
+	ChannelID disgordSnowflake
+	GuildID   disgordSnowflake
+	UserID    disgordSnowflake
 }
 
-var _ disgord.WebhookWithTokenQueryBuilder = &WebhookWithTokenQueryBuilderNop{}
+var _ disgordWebhookWithTokenQueryBuilder = &WebhookWithTokenQueryBuilderNop{}
 
 func (w WebhookWithTokenQueryBuilderNop) WithContext(ctx context.Context) disgord.WebhookWithTokenQueryBuilder {
 	w.Ctx = ctx
 	return &w
 }
 
-func (w WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.WebhookWithTokenQueryBuilder {
+func (w WebhookWithTokenQueryBuilderNop) WithFlags(flags ...disgordFlag) disgord.WebhookWithTokenQueryBuilder {
 	w.Flags = mergeFlags(flags)
 	return &w
 }

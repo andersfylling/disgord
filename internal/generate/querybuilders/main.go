@@ -54,6 +54,31 @@ func Exported(name string) bool {
 
 var disgordTypePrefix = "disgord."
 
+type Entries struct {
+	Entries []*TypeWrapper
+	Ctx     *Context
+}
+
+func (e *Entries) Sort() {
+	sort.Slice(e.Entries, func(i, j int) bool {
+		name := func(tw *TypeWrapper) string {
+			return strings.ToLower(tw.Type.Name.Name)
+		}
+		return name(e.Entries[i]) < name(e.Entries[j])
+	})
+}
+
+func (e *Entries) LinkCtx() {
+	for i := range e.Entries {
+		e.Entries[i].ctx = e.Ctx
+	}
+}
+
+func (e *Entries) SetPackageName(pkg string) {
+	e.Ctx = NewContext(pkg)
+	e.LinkCtx()
+}
+
 func main() {
 	disgordTypes, pkg, err := DisgordTypes()
 	if err != nil {
@@ -75,18 +100,28 @@ func main() {
 		queryBuilders = append(queryBuilders, wrap)
 	}
 
-	makeFile(queryBuilders, pkg.SourcePath+"/internal/generate/querybuilders/disgordutil_QueryBuilderNop.gotpl", pkg.SourcePath+"/disgordutil/query_builders_nop_gen.go")
-	disgordTypePrefix = ""
-	makeFile(queryBuilders, pkg.SourcePath+"/internal/generate/querybuilders/disgord_QueryBuilderNop.gotpl", pkg.SourcePath+"/query_builders_nop_gen.go")
+	entries := &Entries{
+		Entries: queryBuilders,
+	}
+	entries.Sort()
+
+	entries.SetPackageName("disgord")
+	makeFile(entries, pkg.SourcePath+"/internal/generate/querybuilders/disgord_QueryBuilderNop.gotpl", pkg.SourcePath+"/query_builders_nop_gen.go")
+
+	for _, pkgName := range []string{"disgordutil"} {
+		templateFile := fmt.Sprintf("%s/internal/generate/querybuilders/%s_QueryBuilderNop.gotpl", pkg.SourcePath, pkgName)
+		destinationFile := fmt.Sprintf("%s/%s/query_builders_nop_gen.go", pkg.SourcePath, pkgName)
+		entries.SetPackageName(pkgName)
+		makeFile(entries, templateFile, destinationFile)
+	}
 }
 
-func makeFile(implementers []*TypeWrapper, tplFile, target string) {
+func makeFile(entries *Entries, tplFile, target string) {
 	fMap := template.FuncMap{
 		"ToUpper":      strings.ToUpper,
 		"ToLower":      strings.ToLower,
 		"Decapitalize": func(s string) string { return strings.ToLower(s[0:1]) + s[1:] },
 		"RemovePointer": func(s string) string {
-			fmt.Println(s)
 			if s != "" && s[0] == '*' {
 				return s[1:]
 			}
@@ -97,17 +132,9 @@ func makeFile(implementers []*TypeWrapper, tplFile, target string) {
 	// Open & parse our template
 	tpl := template.Must(template.New(path.Base(tplFile)).Funcs(fMap).ParseFiles(tplFile))
 
-	// sort the enforcers so that the generated output stays the same every time
-	sort.Slice(implementers, func(i, j int) bool {
-		name := func(tw *TypeWrapper) string {
-			return strings.ToLower(tw.Type.Name.Name)
-		}
-		return name(implementers[i]) < name(implementers[j])
-	})
-
 	// Execute the template, inserting all the event information
 	var b bytes.Buffer
-	if err := tpl.Execute(&b, implementers); err != nil {
+	if err := tpl.Execute(&b, entries.Entries); err != nil {
 		panic(err)
 	}
 
@@ -133,6 +160,7 @@ type TypeWrapper struct {
 	hasContext            bool
 	withContextReturnType string
 	*types.Type
+	ctx *Context
 }
 
 func (t *TypeWrapper) init() {
@@ -155,7 +183,10 @@ func (t *TypeWrapper) init() {
 }
 
 func (t *TypeWrapper) DiscordTypePrefix() string {
-	return disgordTypePrefix
+	if t.ctx.Package == "disgord" {
+		return ""
+	}
+	return "disgord"
 }
 
 func (t *TypeWrapper) ShortName() string {
@@ -172,11 +203,11 @@ func (t *TypeWrapper) TypeName() string {
 }
 
 func (t *TypeWrapper) WithContextReturnType() string {
-	return disgordTypePrefix + t.withContextReturnType
+	return t.ctx.TypeNameWithPackage(t.withContextReturnType, "disgord")
 }
 
 func (t *TypeWrapper) WithFlagsReturnType() string {
-	return disgordTypePrefix + t.withFlagsReturnType
+	return t.ctx.TypeNameWithPackage(t.withContextReturnType, "disgord")
 }
 
 func (t *TypeWrapper) HasWithContext() bool {
@@ -194,11 +225,7 @@ func (t *TypeWrapper) Fields() []*FieldWrapper {
 			continue
 		}
 
-		if name == "GuildBanAdd" {
-			fmt.Println(24234)
-		}
-
-		fields = append(fields, &FieldWrapper{&TypeWrapper{Type: m}, name})
+		fields = append(fields, &FieldWrapper{&TypeWrapper{Type: m}, name, t.ctx})
 	}
 	sort.Slice(fields, func(i, j int) bool {
 		return strings.ToLower(fields[i].Name) < strings.ToLower(fields[j].Name)
@@ -209,6 +236,7 @@ func (t *TypeWrapper) Fields() []*FieldWrapper {
 type FieldWrapper struct {
 	Type *TypeWrapper
 	Name string
+	ctx  *Context
 }
 
 func (f *FieldWrapper) TypeName() string {
@@ -220,34 +248,39 @@ func (f *FieldWrapper) MethodName() string {
 }
 
 func (f *FieldWrapper) Parameters() string {
-	s := ""
-	params := f.Type.Signature.Parameters
+	var params []*Type
+	for _, p := range f.Type.Signature.Parameters {
+		params = append(params, &Type{p, false})
+	}
 	if len(params) == 0 {
 		return ""
 	}
 
+	params[len(params)-1].variadic = f.Type.Signature.Variadic
+	s := ""
 	for _, p := range params {
 		if s != "" {
 			s += ", "
 		}
 
-		name := MakeTypeNameCompilable(p)
-		if strings.Contains(name, "disgord.ChannelDelete") {
-			fmt.Println(2342)
-		}
+		name := TypeToLiteral(f.ctx, p)
 		s += "_ " + name
 	}
 	return s
 }
 
 func (f *FieldWrapper) ReturnTypes() string {
+	var results []*Type
+	for _, p := range f.Type.Signature.Results {
+		results = append(results, &Type{p, false})
+	}
 	s := ""
-	for _, result := range f.Type.Signature.Results {
+	for _, result := range results {
 		if s != "" {
 			s += ", "
 		}
 
-		s += MakeTypeNameCompilable(result)
+		s += TypeToLiteral(f.ctx, result)
 	}
 
 	if len(f.Type.Signature.Results) > 1 {
@@ -377,7 +410,7 @@ func ZeroValue(t *TypeWrapper) (v string) {
 }
 
 func CleanName(name string) string {
-	replace := func (chars []string) string {
+	replace := func(chars []string) string {
 		for _, char := range chars {
 			name = strings.Replace(name, char, "", -1)
 		}
@@ -391,37 +424,194 @@ func CleanName(name string) string {
 	return replace([]string{")", "(", "/"})
 }
 
-func MakeTypeNameCompilable(t *types.Type) string {
-	isDisgordType := strings.Contains(t.Name.Name, "disgord") || strings.Contains(t.Name.Package, "disgord")
+//func MakeTypeNameCompilable(ctx *Context, t *types.Type) string {
+//
+//	//isDisgordType := false
+//	//isDisgordType = isDisgordType || strings.Contains(t.Name.Name, "disgord")
+//	//isDisgordType = isDisgordType || strings.Contains(t.Name.Package, "disgord")
+//	//isDisgordType = isDisgordType && !strings.Contains(t.Name.Package, "disgord/")
+//	//
+//	//name := t.Name.Name
+//	//name = strings.Replace(name, "github.com/andersfylling/", "", 1)
+//	//name = StripTypePrefix(t.Kind, name)
+//	//
+//	//if t.Kind == types.Slice && strings.Contains(name, "ChannelCreate") {
+//	//	fmt.Println(234)
+//	//}
+//	//
+//	//// for reactor handlers we need to identify the func definition
+//	//// weird edge case
+//	//
+//	//if isDisgordType && !strings.Contains(name, disgordTypePrefix) {
+//	//	name = disgordTypePrefix + name
+//	//}
+//	//if strings.Contains(name, "/") {
+//	//	joints := strings.Split(name, "/")
+//	//	name = joints[len(joints)-1]
+//	//} else if !isDisgordType && strings.Contains(t.Name.Package, "/"){
+//	//	joints := strings.Split(t.Name.Package, "/")
+//	//	name = joints[len(joints)-1] + "." + name
+//	//}
+//	//
+//	//// edge case
+//	//if disgordTypePrefix == "" && strings.Contains(name, "disgord.") {
+//	//	name = strings.Replace(name, "disgord.", "", 1)
+//	//}
+//	//
+//	//// TODO: improve snowflake..
+//	//if strings.HasSuffix(name, "Snowflake") {
+//	//	name = disgordTypePrefix + "Snowflake"
+//	//}
+//	//
+//	//name = TypePrefix(t) + name
+//	//return CleanName(name)
+//
+//	return TypeToLiteral(ctx, t)
+//}
 
-	name := t.Name.Name
-	name = strings.Replace(name, "github.com/andersfylling/", "", 1)
-	if isDisgordType && !strings.Contains(name, disgordTypePrefix) {
-		if name[0] == '*' {
-			name = name[1:]
+func TypePrefix(t *types.Type) string {
+	switch t.Kind {
+	case types.Pointer:
+		return "*"
+	case types.Slice:
+		return "[]"
+	case types.Chan:
+		return "chan "
+	default:
+		return ""
+	}
+}
+
+func StripTypePrefix(kind types.Kind, name string) string {
+	switch kind {
+	case types.Pointer:
+		return strings.Replace(name, "*", "", -1)
+	case types.Slice:
+		return strings.Replace(name, "[]", "", -1)
+	case types.Chan:
+		// TODO: support direction
+		return strings.Replace(name, "chan", "", -1)
+	default:
+		return name
+	}
+}
+
+func IsReactorHandler(t *types.Type) bool {
+	if t.Kind == types.Slice || t.Kind == types.Array {
+		return IsReactorHandler(t.Elem)
+	}
+
+	if t.Kind == types.Func {
+
+	}
+	return false
+}
+
+func NewContext(Package string) *Context {
+	return &Context{
+		Imports: map[string]struct{}{},
+		Package: Package,
+	}
+}
+
+type Context struct {
+	Imports map[string]struct{}
+	Package string
+}
+
+func (ctx *Context) TypeName(n types.Name) string {
+	segments := strings.Split(n.Package, "/")
+	if len(segments) == 0 {
+		return n.Name
+	}
+
+	packageName := segments[len(segments)-1]
+	return ctx.TypeNameWithPackage(n.Name, packageName)
+}
+
+func (ctx *Context) TypeNameWithPackage(name string, packageName string) string {
+	if packageName == ctx.Package {
+		return name
+	}
+	if packageName == "" {
+		return name
+	}
+	return fmt.Sprintf("%s.%s", packageName, name)
+}
+
+type Type struct {
+	*types.Type
+	variadic bool
+}
+
+func (t *Type) Elem() *Type {
+	return &Type{t.Type.Elem, false}
+}
+
+// TODO: support func as return types (variadic)
+
+func (t *Type) Underlying() *Type {
+	return &Type{t.Type.Underlying, false}
+}
+
+// TypeToLiteral limited to function declarations. Not entire struct definitions. Simply parameters or return values
+func TypeToLiteral(ctx *Context, t *Type) string {
+	switch t.Kind {
+	case types.Builtin:
+		return t.Name.Name
+	case types.Alias:
+		// edge case
+		if t.Name.Name == "Snowflake" {
+			return ctx.TypeNameWithPackage(t.Name.Name, "disgord")
+		} else {
+			return TypeToLiteral(ctx, t.Underlying())
 		}
-		name = disgordTypePrefix + name
-		if t.Kind == types.Pointer {
-			name = "*" + name
+	case types.Struct:
+		return ctx.TypeName(t.Name)
+	case types.Interface:
+		return ctx.TypeName(t.Name)
+	case types.Slice:
+		var form string
+		if t.variadic {
+			form = "..."
+		} else {
+			form = "[]"
 		}
+		return fmt.Sprintf("%s%s", form, TypeToLiteral(ctx, t.Elem()))
+	case types.Pointer:
+		return fmt.Sprintf("*%s", TypeToLiteral(ctx, t.Elem()))
+	case types.Func:
+		return FuncToLiteral(ctx, t.Signature)
+	case types.Chan:
+		return fmt.Sprintf("chan %s", TypeToLiteral(ctx, t.Elem()))
 	}
-	if strings.Contains(name, "/") {
-		joints := strings.Split(name, "/")
-		name = joints[len(joints)-1]
-		if t.Kind == types.Pointer {
-			name = "*" + name
-		}
+	panic("type kind is not supported: " + t.Kind)
+}
+
+func FuncToLiteral(ctx *Context, t *types.Signature) string {
+	var parameters []string
+	for _, p := range t.Parameters {
+		parameters = append(parameters, TypeToLiteral(ctx, &Type{p, false}))
 	}
 
-	// edge case
-	if disgordTypePrefix == "" && strings.Contains(name, "disgord.") {
-		name = strings.Replace(name, "disgord.", "", 1)
+	var returnVals []string
+	for _, r := range t.Results {
+		parameters = append(parameters, TypeToLiteral(ctx, &Type{r, false}))
 	}
 
-	// TODO: improve snowflake..
-	if strings.HasSuffix(name, "Snowflake") {
-		name = disgordTypePrefix + "Snowflake"
+	var returnStmt string
+	switch len(returnVals) {
+	case 0:
+		returnStmt = ""
+	case 1:
+		returnStmt = returnVals[0]
+	default:
+		returnStmt = fmt.Sprintf("(%s)", strings.Join(returnVals, ", "))
 	}
 
-	return CleanName(name)
+	var paramStmt string
+	paramStmt = strings.Join(parameters, ", ")
+
+	decl := fmt.Sprintf("func(%s) %s", paramStmt, returnStmt)
+	return strings.TrimSpace(decl)
 }

@@ -148,7 +148,7 @@ func (c *clientQueryBuilderNop) Invite(_ string) InviteQueryBuilder {
 	return nil
 }
 
-func (c *clientQueryBuilderNop) SendMsg(_ Snowflake, _ []interface{}) (*Message, error) {
+func (c *clientQueryBuilderNop) SendMsg(_ Snowflake, _ ...interface{}) (*Message, error) {
 	return nil, nil
 }
 
@@ -223,35 +223,35 @@ func (g *gatewayQueryBuilderNop) BotReady(_ func()) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelCreate(_ ChannelCreate, _ ChannelCreate) {
+func (g *gatewayQueryBuilderNop) ChannelCreate(_ func(Session, *ChannelCreate), _ ...func(Session, *ChannelCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelCreateChan(_ chan *ChannelCreate, _ []chan *ChannelCreate) {
+func (g *gatewayQueryBuilderNop) ChannelCreateChan(_ chan *ChannelCreate, _ ...chan *ChannelCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelDelete(_ ChannelDelete, _ ChannelDelete) {
+func (g *gatewayQueryBuilderNop) ChannelDelete(_ func(Session, *ChannelDelete), _ ...func(Session, *ChannelDelete)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelDeleteChan(_ chan *ChannelDelete, _ []chan *ChannelDelete) {
+func (g *gatewayQueryBuilderNop) ChannelDeleteChan(_ chan *ChannelDelete, _ ...chan *ChannelDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelPinsUpdate(_ ChannelPinsUpdate, _ ChannelPinsUpdate) {
+func (g *gatewayQueryBuilderNop) ChannelPinsUpdate(_ func(Session, *ChannelPinsUpdate), _ ...func(Session, *ChannelPinsUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *ChannelPinsUpdate, _ []chan *ChannelPinsUpdate) {
+func (g *gatewayQueryBuilderNop) ChannelPinsUpdateChan(_ chan *ChannelPinsUpdate, _ ...chan *ChannelPinsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelUpdate(_ ChannelUpdate, _ ChannelUpdate) {
+func (g *gatewayQueryBuilderNop) ChannelUpdate(_ func(Session, *ChannelUpdate), _ ...func(Session, *ChannelUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ChannelUpdateChan(_ chan *ChannelUpdate, _ []chan *ChannelUpdate) {
+func (g *gatewayQueryBuilderNop) ChannelUpdateChan(_ chan *ChannelUpdate, _ ...chan *ChannelUpdate) {
 	return
 }
 
@@ -267,7 +267,7 @@ func (g *gatewayQueryBuilderNop) DisconnectOnInterrupt() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) Dispatch(_ gatewayCmdName, _ CmdPayload) (Snowflake, error) {
+func (g *gatewayQueryBuilderNop) Dispatch(_ string, _ gateway.CmdPayload) ([]Snowflake, error) {
 	return 0, nil
 }
 
@@ -279,227 +279,227 @@ func (g *gatewayQueryBuilderNop) GetBot() (*gateway.GatewayBot, error) {
 	return nil, nil
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanAdd(_ GuildBanAdd, _ GuildBanAdd) {
+func (g *gatewayQueryBuilderNop) GuildBanAdd(_ func(Session, *GuildBanAdd), _ ...func(Session, *GuildBanAdd)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanAddChan(_ chan *GuildBanAdd, _ []chan *GuildBanAdd) {
+func (g *gatewayQueryBuilderNop) GuildBanAddChan(_ chan *GuildBanAdd, _ ...chan *GuildBanAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanRemove(_ GuildBanRemove, _ GuildBanRemove) {
+func (g *gatewayQueryBuilderNop) GuildBanRemove(_ func(Session, *GuildBanRemove), _ ...func(Session, *GuildBanRemove)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *GuildBanRemove, _ []chan *GuildBanRemove) {
+func (g *gatewayQueryBuilderNop) GuildBanRemoveChan(_ chan *GuildBanRemove, _ ...chan *GuildBanRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildCreate(_ GuildCreate, _ GuildCreate) {
+func (g *gatewayQueryBuilderNop) GuildCreate(_ func(Session, *GuildCreate), _ ...func(Session, *GuildCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildCreateChan(_ chan *GuildCreate, _ []chan *GuildCreate) {
+func (g *gatewayQueryBuilderNop) GuildCreateChan(_ chan *GuildCreate, _ ...chan *GuildCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildDelete(_ GuildDelete, _ GuildDelete) {
+func (g *gatewayQueryBuilderNop) GuildDelete(_ func(Session, *GuildDelete), _ ...func(Session, *GuildDelete)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildDeleteChan(_ chan *GuildDelete, _ []chan *GuildDelete) {
+func (g *gatewayQueryBuilderNop) GuildDeleteChan(_ chan *GuildDelete, _ ...chan *GuildDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildEmojisUpdate(_ GuildEmojisUpdate, _ GuildEmojisUpdate) {
+func (g *gatewayQueryBuilderNop) GuildEmojisUpdate(_ func(Session, *GuildEmojisUpdate), _ ...func(Session, *GuildEmojisUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *GuildEmojisUpdate, _ []chan *GuildEmojisUpdate) {
+func (g *gatewayQueryBuilderNop) GuildEmojisUpdateChan(_ chan *GuildEmojisUpdate, _ ...chan *GuildEmojisUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdate(_ GuildIntegrationsUpdate, _ GuildIntegrationsUpdate) {
+func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdate(_ func(Session, *GuildIntegrationsUpdate), _ ...func(Session, *GuildIntegrationsUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *GuildIntegrationsUpdate, _ []chan *GuildIntegrationsUpdate) {
+func (g *gatewayQueryBuilderNop) GuildIntegrationsUpdateChan(_ chan *GuildIntegrationsUpdate, _ ...chan *GuildIntegrationsUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberAdd(_ GuildMemberAdd, _ GuildMemberAdd) {
+func (g *gatewayQueryBuilderNop) GuildMemberAdd(_ func(Session, *GuildMemberAdd), _ ...func(Session, *GuildMemberAdd)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberAddChan(_ chan *GuildMemberAdd, _ []chan *GuildMemberAdd) {
+func (g *gatewayQueryBuilderNop) GuildMemberAddChan(_ chan *GuildMemberAdd, _ ...chan *GuildMemberAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberRemove(_ GuildMemberRemove, _ GuildMemberRemove) {
+func (g *gatewayQueryBuilderNop) GuildMemberRemove(_ func(Session, *GuildMemberRemove), _ ...func(Session, *GuildMemberRemove)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *GuildMemberRemove, _ []chan *GuildMemberRemove) {
+func (g *gatewayQueryBuilderNop) GuildMemberRemoveChan(_ chan *GuildMemberRemove, _ ...chan *GuildMemberRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMembersChunk(_ GuildMembersChunk, _ GuildMembersChunk) {
+func (g *gatewayQueryBuilderNop) GuildMembersChunk(_ func(Session, *GuildMembersChunk), _ ...func(Session, *GuildMembersChunk)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *GuildMembersChunk, _ []chan *GuildMembersChunk) {
+func (g *gatewayQueryBuilderNop) GuildMembersChunkChan(_ chan *GuildMembersChunk, _ ...chan *GuildMembersChunk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberUpdate(_ GuildMemberUpdate, _ GuildMemberUpdate) {
+func (g *gatewayQueryBuilderNop) GuildMemberUpdate(_ func(Session, *GuildMemberUpdate), _ ...func(Session, *GuildMemberUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *GuildMemberUpdate, _ []chan *GuildMemberUpdate) {
+func (g *gatewayQueryBuilderNop) GuildMemberUpdateChan(_ chan *GuildMemberUpdate, _ ...chan *GuildMemberUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleCreate(_ GuildRoleCreate, _ GuildRoleCreate) {
+func (g *gatewayQueryBuilderNop) GuildRoleCreate(_ func(Session, *GuildRoleCreate), _ ...func(Session, *GuildRoleCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *GuildRoleCreate, _ []chan *GuildRoleCreate) {
+func (g *gatewayQueryBuilderNop) GuildRoleCreateChan(_ chan *GuildRoleCreate, _ ...chan *GuildRoleCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleDelete(_ GuildRoleDelete, _ GuildRoleDelete) {
+func (g *gatewayQueryBuilderNop) GuildRoleDelete(_ func(Session, *GuildRoleDelete), _ ...func(Session, *GuildRoleDelete)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *GuildRoleDelete, _ []chan *GuildRoleDelete) {
+func (g *gatewayQueryBuilderNop) GuildRoleDeleteChan(_ chan *GuildRoleDelete, _ ...chan *GuildRoleDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleUpdate(_ GuildRoleUpdate, _ GuildRoleUpdate) {
+func (g *gatewayQueryBuilderNop) GuildRoleUpdate(_ func(Session, *GuildRoleUpdate), _ ...func(Session, *GuildRoleUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *GuildRoleUpdate, _ []chan *GuildRoleUpdate) {
+func (g *gatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *GuildRoleUpdate, _ ...chan *GuildRoleUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildUpdate(_ GuildUpdate, _ GuildUpdate) {
+func (g *gatewayQueryBuilderNop) GuildUpdate(_ func(Session, *GuildUpdate), _ ...func(Session, *GuildUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) GuildUpdateChan(_ chan *GuildUpdate, _ []chan *GuildUpdate) {
+func (g *gatewayQueryBuilderNop) GuildUpdateChan(_ chan *GuildUpdate, _ ...chan *GuildUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InteractionCreate(_ InteractionCreate, _ InteractionCreate) {
+func (g *gatewayQueryBuilderNop) InteractionCreate(_ func(Session, *InteractionCreate), _ ...func(Session, *InteractionCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InteractionCreateChan(_ chan *InteractionCreate, _ []chan *InteractionCreate) {
+func (g *gatewayQueryBuilderNop) InteractionCreateChan(_ chan *InteractionCreate, _ ...chan *InteractionCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteCreate(_ InviteCreate, _ InviteCreate) {
+func (g *gatewayQueryBuilderNop) InviteCreate(_ func(Session, *InviteCreate), _ ...func(Session, *InviteCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteCreateChan(_ chan *InviteCreate, _ []chan *InviteCreate) {
+func (g *gatewayQueryBuilderNop) InviteCreateChan(_ chan *InviteCreate, _ ...chan *InviteCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteDelete(_ InviteDelete, _ InviteDelete) {
+func (g *gatewayQueryBuilderNop) InviteDelete(_ func(Session, *InviteDelete), _ ...func(Session, *InviteDelete)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) InviteDeleteChan(_ chan *InviteDelete, _ []chan *InviteDelete) {
+func (g *gatewayQueryBuilderNop) InviteDeleteChan(_ chan *InviteDelete, _ ...chan *InviteDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageCreate(_ MessageCreate, _ MessageCreate) {
+func (g *gatewayQueryBuilderNop) MessageCreate(_ func(Session, *MessageCreate), _ ...func(Session, *MessageCreate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageCreateChan(_ chan *MessageCreate, _ []chan *MessageCreate) {
+func (g *gatewayQueryBuilderNop) MessageCreateChan(_ chan *MessageCreate, _ ...chan *MessageCreate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDelete(_ MessageDelete, _ MessageDelete) {
+func (g *gatewayQueryBuilderNop) MessageDelete(_ func(Session, *MessageDelete), _ ...func(Session, *MessageDelete)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteBulk(_ MessageDeleteBulk, _ MessageDeleteBulk) {
+func (g *gatewayQueryBuilderNop) MessageDeleteBulk(_ func(Session, *MessageDeleteBulk), _ ...func(Session, *MessageDeleteBulk)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *MessageDeleteBulk, _ []chan *MessageDeleteBulk) {
+func (g *gatewayQueryBuilderNop) MessageDeleteBulkChan(_ chan *MessageDeleteBulk, _ ...chan *MessageDeleteBulk) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageDeleteChan(_ chan *MessageDelete, _ []chan *MessageDelete) {
+func (g *gatewayQueryBuilderNop) MessageDeleteChan(_ chan *MessageDelete, _ ...chan *MessageDelete) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionAdd(_ MessageReactionAdd, _ MessageReactionAdd) {
+func (g *gatewayQueryBuilderNop) MessageReactionAdd(_ func(Session, *MessageReactionAdd), _ ...func(Session, *MessageReactionAdd)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionAddChan(_ chan *MessageReactionAdd, _ []chan *MessageReactionAdd) {
+func (g *gatewayQueryBuilderNop) MessageReactionAddChan(_ chan *MessageReactionAdd, _ ...chan *MessageReactionAdd) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemove(_ MessageReactionRemove, _ MessageReactionRemove) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemove(_ func(Session, *MessageReactionRemove), _ ...func(Session, *MessageReactionRemove)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveAll(_ MessageReactionRemoveAll, _ MessageReactionRemoveAll) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveAll(_ func(Session, *MessageReactionRemoveAll), _ ...func(Session, *MessageReactionRemoveAll)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *MessageReactionRemoveAll, _ []chan *MessageReactionRemoveAll) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveAllChan(_ chan *MessageReactionRemoveAll, _ ...chan *MessageReactionRemoveAll) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *MessageReactionRemove, _ []chan *MessageReactionRemove) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveChan(_ chan *MessageReactionRemove, _ ...chan *MessageReactionRemove) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ MessageReactionRemoveEmoji, _ MessageReactionRemoveEmoji) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmoji(_ func(Session, *MessageReactionRemoveEmoji), _ ...func(Session, *MessageReactionRemoveEmoji)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *MessageReactionRemoveEmoji, _ []chan *MessageReactionRemoveEmoji) {
+func (g *gatewayQueryBuilderNop) MessageReactionRemoveEmojiChan(_ chan *MessageReactionRemoveEmoji, _ ...chan *MessageReactionRemoveEmoji) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageUpdate(_ MessageUpdate, _ MessageUpdate) {
+func (g *gatewayQueryBuilderNop) MessageUpdate(_ func(Session, *MessageUpdate), _ ...func(Session, *MessageUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) MessageUpdateChan(_ chan *MessageUpdate, _ []chan *MessageUpdate) {
+func (g *gatewayQueryBuilderNop) MessageUpdateChan(_ chan *MessageUpdate, _ ...chan *MessageUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) PresenceUpdate(_ PresenceUpdate, _ PresenceUpdate) {
+func (g *gatewayQueryBuilderNop) PresenceUpdate(_ func(Session, *PresenceUpdate), _ ...func(Session, *PresenceUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) PresenceUpdateChan(_ chan *PresenceUpdate, _ []chan *PresenceUpdate) {
+func (g *gatewayQueryBuilderNop) PresenceUpdateChan(_ chan *PresenceUpdate, _ ...chan *PresenceUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) Ready(_ Ready, _ Ready) {
+func (g *gatewayQueryBuilderNop) Ready(_ func(Session, *Ready), _ ...func(Session, *Ready)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ReadyChan(_ chan *Ready, _ []chan *Ready) {
+func (g *gatewayQueryBuilderNop) ReadyChan(_ chan *Ready, _ ...chan *Ready) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) Resumed(_ Resumed, _ Resumed) {
+func (g *gatewayQueryBuilderNop) Resumed(_ func(Session, *Resumed), _ ...func(Session, *Resumed)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) ResumedChan(_ chan *Resumed, _ []chan *Resumed) {
+func (g *gatewayQueryBuilderNop) ResumedChan(_ chan *Resumed, _ ...chan *Resumed) {
 	return
 }
 
@@ -507,43 +507,43 @@ func (g *gatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) TypingStart(_ TypingStart, _ TypingStart) {
+func (g *gatewayQueryBuilderNop) TypingStart(_ func(Session, *TypingStart), _ ...func(Session, *TypingStart)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) TypingStartChan(_ chan *TypingStart, _ []chan *TypingStart) {
+func (g *gatewayQueryBuilderNop) TypingStartChan(_ chan *TypingStart, _ ...chan *TypingStart) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) UserUpdate(_ UserUpdate, _ UserUpdate) {
+func (g *gatewayQueryBuilderNop) UserUpdate(_ func(Session, *UserUpdate), _ ...func(Session, *UserUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) UserUpdateChan(_ chan *UserUpdate, _ []chan *UserUpdate) {
+func (g *gatewayQueryBuilderNop) UserUpdateChan(_ chan *UserUpdate, _ ...chan *UserUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceServerUpdate(_ VoiceServerUpdate, _ VoiceServerUpdate) {
+func (g *gatewayQueryBuilderNop) VoiceServerUpdate(_ func(Session, *VoiceServerUpdate), _ ...func(Session, *VoiceServerUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *VoiceServerUpdate, _ []chan *VoiceServerUpdate) {
+func (g *gatewayQueryBuilderNop) VoiceServerUpdateChan(_ chan *VoiceServerUpdate, _ ...chan *VoiceServerUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceStateUpdate(_ VoiceStateUpdate, _ VoiceStateUpdate) {
+func (g *gatewayQueryBuilderNop) VoiceStateUpdate(_ func(Session, *VoiceStateUpdate), _ ...func(Session, *VoiceStateUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *VoiceStateUpdate, _ []chan *VoiceStateUpdate) {
+func (g *gatewayQueryBuilderNop) VoiceStateUpdateChan(_ chan *VoiceStateUpdate, _ ...chan *VoiceStateUpdate) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) WebhooksUpdate(_ WebhooksUpdate, _ WebhooksUpdate) {
+func (g *gatewayQueryBuilderNop) WebhooksUpdate(_ func(Session, *WebhooksUpdate), _ ...func(Session, *WebhooksUpdate)) {
 	return
 }
 
-func (g *gatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *WebhooksUpdate, _ []chan *WebhooksUpdate) {
+func (g *gatewayQueryBuilderNop) WebhooksUpdateChan(_ chan *WebhooksUpdate, _ ...chan *WebhooksUpdate) {
 	return
 }
 
@@ -551,7 +551,7 @@ func (g *gatewayQueryBuilderNop) WithCtrl(_ HandlerCtrl) SocketHandlerRegistrato
 	return nil
 }
 
-func (g *gatewayQueryBuilderNop) WithMiddleware(_ func(interface{}) interface{}, _ []func(interface{}) interface{}) SocketHandlerRegistrator {
+func (g *gatewayQueryBuilderNop) WithMiddleware(_ func(interface{}, interface{}), _ ...func(interface{}, interface{})) SocketHandlerRegistrator {
 	return nil
 }
 
@@ -619,7 +619,7 @@ func (g *guildMemberQueryBuilderNop) Get() (*Member, error) {
 	return nil, nil
 }
 
-func (g *guildMemberQueryBuilderNop) GetPermissions() (PermissionBit, error) {
+func (g *guildMemberQueryBuilderNop) GetPermissions() (uint64, error) {
 	return 0, nil
 }
 
