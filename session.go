@@ -40,13 +40,6 @@ type Session interface {
 	EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error
 	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *InteractionResponse) error
 
-	CreateGlobalCommand(ctx context.Context, applicationID Snowflake, command *ApplicationCommand) error
-	CreateGuildCommand(ctx context.Context, applicationID Snowflake, guildID Snowflake, command *ApplicationCommand) error
-	UpdateCommandGlobal(ctx context.Context, applicationID, commandID Snowflake, command *ApplicationCommand) error
-	UpdateCommandGuild(ctx context.Context, applicationID, guildID, commandID Snowflake, command *ApplicationCommand) error
-	DeleteCommandGlobal(ctx context.Context, applicationID, commandID Snowflake) error
-	DeleteCommandGuild(ctx context.Context, applicationID, guildID, commandID Snowflake) error
-
 	// Status update functions
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
