@@ -53,6 +53,18 @@ func Sort(v interface{}, fs ...Flag) {
 
 func derefSliceP(v interface{}) (s interface{}) {
 	switch t := v.(type) {
+	case *[]*ApplicationCommand:
+		s = *t
+	case *[]*ApplicationCommandDataOption:
+		s = *t
+	case *[]*ApplicationCommandOption:
+		s = *t
+	case *[]*ApplicationCommandOptionChoice:
+		s = *t
+	case *[]*ApplicationCommandPermissions:
+		s = *t
+	case *[]*GuildApplicationCommandPermissions:
+		s = *t
 	case *[]*AuditLog:
 		s = *t
 	case *[]*AuditLogChanges:
@@ -227,8 +239,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ApplicationCommandInteractionData:
 		s = *t
-	case *[]*ApplicationCommandInteractionDataOption:
-		s = *t
 	case *[]*ApplicationCommandInteractionDataResolved:
 		s = *t
 	case *[]*InteractionApplicationCommandCallbackData:
@@ -319,6 +329,24 @@ func sortByID(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*ApplicationCommand:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ApplicationCommandPermissions:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*GuildApplicationCommandPermissions:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*AuditLogEntry:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -509,6 +537,18 @@ func sortByGuildID(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*ApplicationCommand:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*GuildApplicationCommandPermissions:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
 	case []*Channel:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
@@ -811,6 +851,30 @@ func sortByName(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*ApplicationCommand:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ApplicationCommandDataOption:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ApplicationCommandOption:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*ApplicationCommandOptionChoice:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*Channel:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -896,12 +960,6 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*ApplicationCommandInteractionData:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*ApplicationCommandInteractionDataOption:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
