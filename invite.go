@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -156,7 +157,7 @@ func (i inviteQueryBuilder) Get(withMemberCount bool) (invite *Invite, err error
 //  Comment                 -
 func (i inviteQueryBuilder) Delete() (deleted *Invite, err error) {
 	r := i.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.Invite(i.inviteCode),
 		Ctx:      i.ctx,
 	}, i.flags)

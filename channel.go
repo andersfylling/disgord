@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -379,7 +380,7 @@ func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
 	}
 	builder.r.flags = c.flags
 	builder.r.setup(c.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
@@ -407,7 +408,7 @@ func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.Channel(c.cid),
 		Ctx:      context.Background(),
 	}, c.flags)
@@ -429,7 +430,7 @@ func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 //  Comment                 -
 func (c channelQueryBuilder) TriggerTypingIndicator() (err error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Endpoint: endpoint.ChannelTyping(c.cid),
 		Ctx:      c.ctx,
 	}, c.flags)
@@ -462,7 +463,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPut,
+		Method:      http.MethodPut,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelPermission(c.cid, overwriteID),
 		ContentType: httd.ContentTypeJSON,
@@ -513,7 +514,7 @@ func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
 	}
 	builder.r.flags = c.flags
 	builder.r.setup(c.client.req, &httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelInvites(c.cid),
 		ContentType: httd.ContentTypeJSON,
@@ -539,7 +540,7 @@ func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake) (err error)
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelPermission(c.cid, overwriteID),
 		Ctx:      c.ctx,
 	}, c.flags)
@@ -588,7 +589,7 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) e
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPut,
+		Method:      http.MethodPut,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelRecipient(c.cid, participant.UserID),
 		Body:        participant,
@@ -614,7 +615,7 @@ func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelRecipient(c.cid, userID),
 		Ctx:      c.ctx,
 	}, c.flags)
@@ -859,7 +860,7 @@ func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams) (err e
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelMessagesBulkDelete(c.cid),
 		ContentType: httd.ContentTypeJSON,
@@ -1018,7 +1019,7 @@ func (c channelQueryBuilder) CreateMessage(params *CreateMessageParams) (ret *Me
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    "/channels/" + c.cid.String() + "/messages",
 		Body:        postBody,
@@ -1087,7 +1088,7 @@ func (c channelQueryBuilder) CreateWebhook(params *CreateWebhookParams) (ret *We
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelWebhooks(c.cid),
 		Body:        params,

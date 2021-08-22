@@ -2,27 +2,10 @@ package httd
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 	"strings"
-)
-
-type httpMethod string
-
-var _ fmt.Stringer = (*httpMethod)(nil)
-
-func (method httpMethod) String() string {
-	return string(method)
-}
-
-const (
-	MethodGet    httpMethod = http.MethodGet
-	MethodDelete httpMethod = http.MethodDelete
-	MethodPost   httpMethod = http.MethodPost
-	MethodPatch  httpMethod = http.MethodPatch
-	MethodPut    httpMethod = http.MethodPut
 )
 
 var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
@@ -34,7 +17,7 @@ var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpE
 type Request struct {
 	Ctx context.Context
 
-	Method      httpMethod
+	Method      string
 	Endpoint    string
 	Body        interface{} // will automatically marshal to JSON if the ContentType is httd.ContentTypeJSON
 	ContentType string
@@ -48,7 +31,7 @@ type Request struct {
 
 func (r *Request) PopulateMissing() {
 	if r.Method == "" {
-		r.Method = MethodGet
+		r.Method = http.MethodGet
 	}
 	if r.Ctx == nil {
 		r.Ctx = context.Background()
@@ -94,8 +77,8 @@ func (r *Request) HashEndpoint() string {
 			// corner case for urls with emojis
 			suffix := buffer[len(reactionPrefixMatch[0]):]
 			until := len(suffix)
-			for i, rune := range suffix {
-				if rune == '/' {
+			for i, runeVal := range suffix {
+				if runeVal == '/' {
 					until = i
 					break
 				}
@@ -108,5 +91,5 @@ func (r *Request) HashEndpoint() string {
 	if strings.HasSuffix(buffer, "/") {
 		buffer = buffer[:len(buffer)-1]
 	}
-	return r.Method.String() + ":" + buffer
+	return r.Method + ":" + buffer
 }

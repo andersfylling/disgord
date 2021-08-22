@@ -94,7 +94,7 @@ func (r *rest) init() {
 	if r.conf != nil {
 		r.conf.PopulateMissing()
 	}
-	r.httpMethod = r.conf.Method.String()
+	r.httpMethod = r.conf.Method
 	r.doRequest = r.stepDoRequest
 }
 

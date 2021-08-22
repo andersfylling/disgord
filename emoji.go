@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -126,7 +127,7 @@ func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
@@ -139,7 +140,7 @@ func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
 // success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) Delete() (err error) {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildEmoji(g.gid, g.emojiID),
 		Ctx:      g.ctx,
 	}, g.flags)

@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -117,7 +118,7 @@ func (r reactionQueryBuilder) Create() error {
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
+		Method:   http.MethodPut,
 		Endpoint: endpoint.ChannelMessageReactionMe(r.cid, r.mid, emojiCode),
 		Ctx:      r.ctx,
 	}, r.flags)
@@ -150,7 +151,7 @@ func (r reactionQueryBuilder) DeleteOwn() error {
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactionMe(r.cid, r.mid, emojiCode),
 		Ctx:      r.ctx,
 	}, r.flags)
@@ -186,7 +187,7 @@ func (r reactionQueryBuilder) DeleteUser(userID Snowflake) error {
 	}
 
 	req := r.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactionUser(r.cid, r.mid, emojiCode, userID),
 		Ctx:      r.ctx,
 	}, r.flags)

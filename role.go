@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -113,7 +114,7 @@ func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
 		ContentType: httd.ContentTypeJSON,
@@ -126,7 +127,7 @@ func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 func (g guildRoleQueryBuilder) Delete() error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildRole(g.gid, g.roleID),
 		Ctx:      g.ctx,
 	}, g.flags)
