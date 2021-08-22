@@ -22,6 +22,7 @@ const (
 	CHANNEL
 	ROLE
 	MENTIONABLE
+	NUMBER
 )
 
 type InteractionCallbackType = int
@@ -37,21 +38,16 @@ const (
 	UpdateMessage
 )
 
-//TODO ApplicationCommandInteractionDataResolved https://discord.com/developers/docs/interactions/slash-commands#interaction-applicationcommandinteractiondataresolved
+// ApplicationCommandInteractionDataResolved ..
+//TODO implement https://discord.com/developers/docs/interactions/slash-commands#interaction-applicationcommandinteractiondataresolved
 type ApplicationCommandInteractionDataResolved struct {
-}
-
-type ApplicationCommandInteractionDataOption struct {
-	Name    string                                     `json:"name"`
-	Type    OptionType                                 `json:"type"`
-	Options []*ApplicationCommandInteractionDataOption `json:"options"`
 }
 
 type ApplicationCommandInteractionData struct {
 	ID       Snowflake                                    `json:"id"`
 	Name     string                                       `json:"name"`
 	Resolved []*ApplicationCommandInteractionDataResolved `json:"resolved"`
-	Options  []*ApplicationCommandInteractionDataOption   `json:"options"`
+	Options  []*ApplicationCommandDataOption              `json:"options"`
 	CustomID string                                       `json:"custom_id"`
 	Type     MessageComponentType                         `json:"component_type"`
 }
