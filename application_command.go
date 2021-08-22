@@ -1,8 +1,14 @@
 package disgord
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"net/http"
 
-type ApplicationCommandType = int
+	"github.com/andersfylling/disgord/internal/httd"
+)
+
+type ApplicationCommandType int
 
 const (
 	_ ApplicationCommandType = iota
@@ -12,24 +18,8 @@ const (
 )
 
 type ApplicationCommandOptionChoice struct {
-	Name        string
-	StringValue string
-	NumberValue int
-	DoubleValue float64
-}
-
-func (w *ApplicationCommandOptionChoice) MarshalJSON() ([]byte, error) {
-	var data string
-	if w.StringValue != "" {
-		data = fmt.Sprintf(`{"name": "%s", "value": "%s"}`, w.Name, w.StringValue)
-	}
-	if w.NumberValue != 0 {
-		data = fmt.Sprintf(`{"name": "%s", "value": "%d"}`, w.Name, w.NumberValue)
-	}
-	if w.DoubleValue != 0 {
-		data = fmt.Sprintf(`{"name": "%s", "value": "%f"}`, w.Name, w.DoubleValue)
-	}
-	return []byte(data), nil
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
 }
 
 type ApplicationCommandOption struct {
@@ -48,7 +38,7 @@ type ApplicationCommandDataOption struct {
 	Options []*ApplicationCommandDataOption `json:"options"`
 }
 
-type ApplicationCommandPermissionType = int
+type ApplicationCommandPermissionType int
 
 const (
 	_ ApplicationCommandPermissionType = iota
@@ -77,4 +67,120 @@ type ApplicationCommand struct {
 	Description       string                      `json:"description"`
 	Options           []*ApplicationCommandOption `json:"options"`
 	DefaultPermission bool                        `json:"default_permission,omitempty"`
+}
+
+type UpdateApplicationCommand struct {
+	Name              string                      `json:"name,omitempty"`
+	DefaultPermission bool                        `json:"default_permission,omitempty"`
+	Description       string                      `json:"description,omitempty"`
+	Options           []*ApplicationCommandOption `json:"options,omitempty"`
+}
+
+type ApplicationCommandQueryBuilder interface {
+	WithContext(ctx context.Context) ApplicationCommandQueryBuilder
+	Global() ApplicationCommandFunctions
+	Guild(guildID Snowflake) ApplicationCommandFunctions
+}
+
+type ApplicationCommandFunctions interface {
+	Delete(commandId Snowflake, flags ...Flag) error
+	Create(command *ApplicationCommand, flags ...Flag) error
+	Update(commandId Snowflake, command *UpdateApplicationCommand, flags ...Flag) error
+}
+
+type applicationCommandFunctions struct {
+	appID   Snowflake
+	client  *Client
+	guildID Snowflake
+	ctx     context.Context
+}
+
+func applicationCommandFactory() interface{} {
+	return &ApplicationCommand{}
+}
+
+func (c *applicationCommandFunctions) Create(command *ApplicationCommand, flags ...Flag) error {
+	var endpoint string
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("/applications/%d/commands", c.appID)
+	} else {
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.appID, c.guildID)
+	}
+	ctx := c.ctx
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodPost,
+		Body:        command,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	r := c.client.newRESTRequest(req, flags)
+	r.factory = applicationCommandFactory
+	_, err := r.Execute()
+	return err
+}
+
+func (c *applicationCommandFunctions) Update(commandID Snowflake, command *UpdateApplicationCommand, flags ...Flag) error {
+	var endpoint string
+	ctx := c.ctx
+
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.appID, commandID)
+	} else {
+		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.appID, c.guildID, commandID)
+	}
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodPatch,
+		Body:        command,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	r := c.client.newRESTRequest(req, flags)
+	r.factory = applicationCommandFactory
+	_, err := r.Execute()
+	return err
+}
+
+func (c *applicationCommandFunctions) Delete(commandID Snowflake, flags ...Flag) error {
+	var endpoint string
+	ctx := c.ctx
+
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.appID, commandID)
+	} else {
+		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.appID, c.guildID, commandID)
+	}
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodDelete,
+		Ctx:         ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+	r := c.client.newRESTRequest(req, flags)
+	r.factory = applicationCommandFactory
+	_, err := r.Execute()
+	return err
+}
+
+type applicationCommandQueryBuilder struct {
+	ctx    context.Context
+	client *Client
+	appID  Snowflake
+}
+
+func (q applicationCommandQueryBuilder) Guild(guildId Snowflake) ApplicationCommandFunctions {
+	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, guildID: guildId, client: q.client}
+}
+func (q applicationCommandQueryBuilder) Global() ApplicationCommandFunctions {
+	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, client: q.client}
+}
+
+func (q applicationCommandQueryBuilder) WithContext(ctx context.Context) ApplicationCommandQueryBuilder {
+	q.ctx = ctx
+	return &q
+}
+
+func (c clientQueryBuilder) ApplicationCommand(id Snowflake) ApplicationCommandQueryBuilder {
+	return &applicationCommandQueryBuilder{client: c.client, appID: id}
 }

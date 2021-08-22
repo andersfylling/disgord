@@ -338,6 +338,7 @@ type ClientQueryBuilder interface {
 	CurrentUser() CurrentUserQueryBuilder
 	Guild(id Snowflake) GuildQueryBuilder
 	Gateway() GatewayQueryBuilder
+	ApplicationCommand(appID Snowflake) ApplicationCommandQueryBuilder
 }
 
 type clientQueryBuilder struct {
