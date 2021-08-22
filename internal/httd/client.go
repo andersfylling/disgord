@@ -242,7 +242,7 @@ func (c *Client) Do(ctx context.Context, r *Request) (resp *http.Response, body 
 	}
 
 	// create http request
-	req, err := http.NewRequestWithContext(ctx, r.Method.String(), c.url+r.Endpoint, r.bodyReader)
+	req, err := http.NewRequestWithContext(ctx, r.Method, c.url+r.Endpoint, r.bodyReader)
 	if err != nil {
 		return nil, nil, err
 	}

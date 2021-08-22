@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -428,7 +429,7 @@ func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder.r.addPrereq(m.cid.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(m.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
 		ContentType: httd.ContentTypeJSON,
@@ -456,7 +457,7 @@ func (m messageQueryBuilder) Delete() (err error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -474,7 +475,7 @@ func (m messageQueryBuilder) Delete() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) Pin() (err error) {
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
+		Method:   http.MethodPut,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -499,7 +500,7 @@ func (m messageQueryBuilder) Unpin() (err error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -523,7 +524,7 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Endpoint: endpoint.ChannelMessageCrossPost(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -554,7 +555,7 @@ func (m messageQueryBuilder) DeleteAllReactions() error {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactions(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)

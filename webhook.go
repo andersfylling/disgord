@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -110,7 +111,7 @@ func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder.r.flags = w.flags
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.setup(w.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.Webhook(w.webhookID),
 		ContentType: httd.ContentTypeJSON,
@@ -250,7 +251,7 @@ func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(w.token == "", "given webhook token was not set")
 	builder.r.setup(w.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token),
 		ContentType: httd.ContentTypeJSON,
@@ -274,7 +275,7 @@ func (w webhookWithTokenQueryBuilder) Delete() error {
 	}
 
 	r := w.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: e,
 		Ctx:      w.ctx,
 	}, w.flags)
@@ -317,7 +318,7 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait
 
 	urlparams := &execWebhookParams{wait}
 	r := w.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token) + URLSuffix + urlparams.URLQueryString(),
 		Body:        params,

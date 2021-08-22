@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -370,7 +371,7 @@ func (c userQueryBuilder) Get() (*User, error) {
 //  Comment                 -
 func (c userQueryBuilder) CreateDM() (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Ctx:      c.ctx,
 		Endpoint: endpoint.UserMeChannels(),
 		Body: &struct {
@@ -473,7 +474,7 @@ func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = c.flags
 	builder.r.setup(c.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
@@ -540,7 +541,7 @@ type CreateGroupDMParams struct {
 //  Comment                 -
 func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.UserMeGuild(id),
 		Ctx:      c.ctx,
 	}, c.flags)
@@ -559,7 +560,7 @@ func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
 //  Comment                 -
 func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMeChannels(),
 		Body:        params,
