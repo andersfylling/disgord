@@ -83,13 +83,14 @@ type ApplicationCommandQueryBuilder interface {
 }
 
 type ApplicationCommandFunctions interface {
-	Delete(commandId Snowflake, flags ...Flag) error
-	Create(command *ApplicationCommand, flags ...Flag) error
-	Update(commandId Snowflake, command *UpdateApplicationCommand, flags ...Flag) error
+	Delete(commandId Snowflake) error
+	Create(command *ApplicationCommand) error
+	Update(commandId Snowflake, command *UpdateApplicationCommand) error
 }
 
 type applicationCommandFunctions struct {
 	appID   Snowflake
+	flags   []Flag
 	client  *Client
 	guildID Snowflake
 	ctx     context.Context
@@ -99,7 +100,7 @@ func applicationCommandFactory() interface{} {
 	return &ApplicationCommand{}
 }
 
-func (c *applicationCommandFunctions) Create(command *ApplicationCommand, flags ...Flag) error {
+func (c *applicationCommandFunctions) Create(command *ApplicationCommand) error {
 	var endpoint string
 	if c.guildID == 0 {
 		endpoint = fmt.Sprintf("/applications/%d/commands", c.appID)
@@ -114,13 +115,13 @@ func (c *applicationCommandFunctions) Create(command *ApplicationCommand, flags 
 		Ctx:         ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
-	r := c.client.newRESTRequest(req, flags)
+	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
 	_, err := r.Execute()
 	return err
 }
 
-func (c *applicationCommandFunctions) Update(commandID Snowflake, command *UpdateApplicationCommand, flags ...Flag) error {
+func (c *applicationCommandFunctions) Update(commandID Snowflake, command *UpdateApplicationCommand) error {
 	var endpoint string
 	ctx := c.ctx
 
@@ -136,13 +137,13 @@ func (c *applicationCommandFunctions) Update(commandID Snowflake, command *Updat
 		Ctx:         ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
-	r := c.client.newRESTRequest(req, flags)
+	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
 	_, err := r.Execute()
 	return err
 }
 
-func (c *applicationCommandFunctions) Delete(commandID Snowflake, flags ...Flag) error {
+func (c *applicationCommandFunctions) Delete(commandID Snowflake) error {
 	var endpoint string
 	ctx := c.ctx
 
@@ -157,7 +158,7 @@ func (c *applicationCommandFunctions) Delete(commandID Snowflake, flags ...Flag)
 		Ctx:         ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
-	r := c.client.newRESTRequest(req, flags)
+	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
 	_, err := r.Execute()
 	return err
@@ -167,13 +168,19 @@ type applicationCommandQueryBuilder struct {
 	ctx    context.Context
 	client *Client
 	appID  Snowflake
+	flags  []Flag
 }
 
 func (q applicationCommandQueryBuilder) Guild(guildId Snowflake) ApplicationCommandFunctions {
-	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, guildID: guildId, client: q.client}
+	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, guildID: guildId, client: q.client, flags: q.flags}
 }
 func (q applicationCommandQueryBuilder) Global() ApplicationCommandFunctions {
-	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, client: q.client}
+	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, client: q.client, flags: q.flags}
+}
+
+func (q applicationCommandQueryBuilder) WithFlags(flags ...Flag) ApplicationCommandQueryBuilder {
+	q.flags = flags
+	return &q
 }
 
 func (q applicationCommandQueryBuilder) WithContext(ctx context.Context) ApplicationCommandQueryBuilder {
