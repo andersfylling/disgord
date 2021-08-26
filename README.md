@@ -28,8 +28,9 @@ This package is intented to be used with the gateway to keep the cache up to dat
 
 If you want a more lightweight experience you can disable/reject events that you do not need or want to keep track of. Be careful as this might break certain things.
 
-## Warning
-Remember to read the docs/code for whatever version of disgord you are using. This README file tries reflects the latest state in the develop branch.
+## Tips
+ - Use disgord.Snowflake, not snowflake.Snowflake.
+ - Use disgord.Time, not time.Time when dealing with Discord timestamps.
 
 By default DM capabilities are disabled. If you want to activate these, or some, specify their related intent.
 ```go
@@ -37,10 +38,6 @@ client := disgord.New(disgord.Config{
     DMIntents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
 })
 ```
-
-## Data types & tips
- - Use disgord.Snowflake, not snowflake.Snowflake.
- - Use disgord.Time, not time.Time when dealing with Discord timestamps.
 
 ## Starter guide
 > This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dealing with dependencies, remember to activate module support in your IDE

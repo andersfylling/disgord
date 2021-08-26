@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, conf Config) (*Client, error) {
 }
 
 func verifyClientProduction(ctx context.Context, client *Client) (Snowflake, error) {
-	usr, err := client.CurrentUser().WithContext(ctx).Get(IgnoreCache)
+	usr, err := client.CurrentUser().WithContext(ctx).WithFlags(IgnoreCache).Get()
 	if err != nil {
 		return 0, err
 	}
@@ -83,19 +83,10 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		conf.WebsocketHttpClient = DefaultHttpClient
 	}
 
-	if conf.Intents > 0 {
-		conf.DMIntents |= conf.Intents
-	}
-
 	const DMIntents = IntentDirectMessageReactions | IntentDirectMessages | IntentDirectMessageTyping
 	if validRange := conf.DMIntents & DMIntents; (conf.DMIntents ^ validRange) > 0 {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
 	}
-
-	if conf.IgnoreEvents != nil {
-		conf.Logger.Info("Config.IgnoreEvents has been deprecated. Use Config.RejectEvents instead")
-	}
-	conf.RejectEvents = append(conf.RejectEvents, conf.IgnoreEvents...)
 
 	// remove extra/duplicates events
 	uniqueEventNames := make(map[string]bool)
@@ -223,10 +214,6 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// Deprecated: use DMIntents (values here are copied to DMIntents for now)
-	// For direct communication with you bot you must specify intents
-	Intents Intent
-
 	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
 	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
 	// such optimizations can be handled in the background).
@@ -273,15 +260,6 @@ type Config struct {
 	DisableCache bool
 	Cache        Cache
 	ShardConfig  ShardConfig
-
-	// IgnoreEvents will skip events that matches the given event names.
-	// WARNING! This can break your caching, so be careful about what you want to ignore.
-	//
-	// Note this also triggers discord optimizations behind the scenes, such that disgord_diagnosews might
-	// seem to be missing some events. But actually the lack of certain events will mean Discord aren't sending
-	// them at all due to how the identify command was defined. eg. guildS_subscriptions
-	// Deprecated: use RejectEvents instead (nothing changed, just better naming)
-	IgnoreEvents []string
 
 	RejectEvents []string
 }
@@ -350,6 +328,7 @@ var _ Session = (*Client)(nil)
 // METHODS
 //
 //////////////////////////////////////////////////////
+
 func (c *Client) Pool() *pools {
 	return c.pool
 }
@@ -418,7 +397,7 @@ func (c *Client) String() string {
 	return LibraryInfo()
 }
 
-// RESTBucketGrouping shows which hashed endpoints belong to which bucket hash for the REST API.
+// RESTRatelimitBuckets shows which hashed endpoints belong to which bucket hash for the REST API.
 // Note that these bucket hashes are eventual consistent.
 func (c *Client) RESTRatelimitBuckets() (group map[string][]string) {
 	return c.req.BucketGrouping()
@@ -574,13 +553,13 @@ func (c *Client) UpdateStatusString(s string) error {
 	return c.UpdateStatus(updateData)
 }
 
-func (c *Client) newRESTRequest(conf *httd.Request, flags []Flag) *rest {
+func (c *Client) newRESTRequest(conf *httd.Request, flags Flag) *rest {
 	r := &rest{
 		c:    c,
 		conf: conf,
 	}
 	r.init()
-	r.flags = mergeFlags(flags)
+	r.flags = flags
 
 	return r
 }
