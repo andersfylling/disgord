@@ -90,7 +90,7 @@ type ApplicationCommandFunctions interface {
 
 type applicationCommandFunctions struct {
 	appID   Snowflake
-	flags   []Flag
+	flags   Flag
 	client  *Client
 	guildID Snowflake
 	ctx     context.Context
@@ -168,7 +168,7 @@ type applicationCommandQueryBuilder struct {
 	ctx    context.Context
 	client *Client
 	appID  Snowflake
-	flags  []Flag
+	flags  Flag
 }
 
 func (q applicationCommandQueryBuilder) Guild(guildId Snowflake) ApplicationCommandFunctions {
@@ -179,7 +179,7 @@ func (q applicationCommandQueryBuilder) Global() ApplicationCommandFunctions {
 }
 
 func (q applicationCommandQueryBuilder) WithFlags(flags ...Flag) ApplicationCommandQueryBuilder {
-	q.flags = flags
+	q.flags = mergeFlags(flags)
 	return &q
 }
 
