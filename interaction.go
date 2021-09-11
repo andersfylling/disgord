@@ -34,7 +34,7 @@ const (
 	ChannelMessageWithSource
 	DeferredChannelMessageWithSource
 	DeferredUpdateMessage
-	UpdateMessage
+	UpdateMessageInteractionCallback
 )
 
 // ApplicationCommandInteractionDataResolved ..

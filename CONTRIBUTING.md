@@ -133,6 +133,12 @@ You can think of Disgord as layered, in which case it will look something like:
 ### Design Decisions
 Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. Caching should be done behind the scenes. 
 
+For incoming events and outgoing commands/request, the parameters/structs are named to respect the direction between client and server.
+A type named **ACTION**_*OBJECT* has the intent of introducing a change to the discord state, by the client. Imagine UpdateMessage, CreateChannel, etc. The opposite name pattern, *OBJECT*_**ACTION**, dictates a read only change sent by discord, such as MESSAGE_CREATE.
+Common actions are GET, UPDATE, DELETE, CREATE.
+
+This naming convention is preserved for request / response / event types, and can not be used by constants.
+
 #### Code flow / design
 Prefer procedural when possible. Note that disgord.Snowflake and disgord.Time, should be treated as OOP. Especially their .IsZero() implementation to avoid any potential zero checking.
 
