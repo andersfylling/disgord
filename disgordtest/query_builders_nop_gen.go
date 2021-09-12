@@ -17,6 +17,29 @@ func mergeFlags(flags []disgord.Flag) (f disgord.Flag) {
 	return f
 }
 
+type ApplicationCommandQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
+}
+
+var _ disgord.ApplicationCommandQueryBuilder = &ApplicationCommandQueryBuilderNop{}
+
+func (a ApplicationCommandQueryBuilderNop) WithContext(ctx context.Context) disgord.ApplicationCommandQueryBuilder {
+	a.Ctx = ctx
+	return &a
+}
+
+func (a *ApplicationCommandQueryBuilderNop) Global() disgord.ApplicationCommandFunctions {
+	return nil
+}
+
+func (a *ApplicationCommandQueryBuilderNop) Guild(_ disgord.Snowflake) disgord.ApplicationCommandFunctions {
+	return nil
+}
+
 type ChannelQueryBuilderNop struct {
 	Ctx       context.Context
 	Flags     disgord.Flag
@@ -123,6 +146,10 @@ func (c ClientQueryBuilderNop) WithContext(ctx context.Context) disgord.ClientQu
 func (c ClientQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
+}
+
+func (c *ClientQueryBuilderNop) ApplicationCommand(_ disgord.Snowflake) disgord.ApplicationCommandQueryBuilder {
+	return nil
 }
 
 func (c *ClientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {

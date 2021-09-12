@@ -8,6 +8,29 @@ import (
 	"net/url"
 )
 
+type applicationCommandQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     Flag
+	ChannelID Snowflake
+	GuildID   Snowflake
+	UserID    Snowflake
+}
+
+var _ ApplicationCommandQueryBuilder = &applicationCommandQueryBuilderNop{}
+
+func (a applicationCommandQueryBuilderNop) WithContext(ctx context.Context) ApplicationCommandQueryBuilder {
+	a.Ctx = ctx
+	return &a
+}
+
+func (a *applicationCommandQueryBuilderNop) Global() ApplicationCommandFunctions {
+	return nil
+}
+
+func (a *applicationCommandQueryBuilderNop) Guild(_ Snowflake) ApplicationCommandFunctions {
+	return nil
+}
+
 type channelQueryBuilderNop struct {
 	Ctx       context.Context
 	Flags     Flag
@@ -114,6 +137,10 @@ func (c clientQueryBuilderNop) WithContext(ctx context.Context) ClientQueryBuild
 func (c clientQueryBuilderNop) WithFlags(flags ...Flag) ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
+}
+
+func (c *clientQueryBuilderNop) ApplicationCommand(_ Snowflake) ApplicationCommandQueryBuilder {
+	return nil
 }
 
 func (c *clientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
