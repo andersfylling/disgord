@@ -65,6 +65,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GuildApplicationCommandPermissions:
 		s = *t
+	case *[]*UpdateApplicationCommand:
+		s = *t
 	case *[]*AuditLog:
 		s = *t
 	case *[]*AuditLogChanges:
@@ -870,6 +872,12 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*ApplicationCommandOptionChoice:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*UpdateApplicationCommand:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
