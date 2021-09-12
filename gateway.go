@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
@@ -24,7 +25,7 @@ type GatewayQueryBuilder interface {
 	BotReady(func())
 	BotGuildsReady(func())
 
-	Dispatch(name gatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error)
+	Dispatch(name GatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error)
 
 	// Connect establishes a websocket connection to the discord API
 	Connect() error
@@ -200,7 +201,7 @@ func (g gatewayQueryBuilder) BotGuildsReady(cb func()) {
 }
 
 // Emit sends a socket command directly to Discord.
-func (g gatewayQueryBuilder) Dispatch(name gatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error) {
+func (g gatewayQueryBuilder) Dispatch(name GatewayCmdName, payload gateway.CmdPayload) (unchandledGuildIDs []Snowflake, err error) {
 	g.client.mu.RLock()
 	defer g.client.mu.RUnlock()
 	if g.client.shardManager == nil {
@@ -221,7 +222,7 @@ func (g gatewayQueryBuilder) Dispatch(name gatewayCmdName, payload gateway.CmdPa
 func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{
-		Method:   httd.MethodGet,
+		Method:   http.MethodGet,
 		Endpoint: "/gateway",
 	})
 	if err != nil {
@@ -249,7 +250,7 @@ func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 func (g gatewayQueryBuilder) GetBot() (gateway *gateway.GatewayBot, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{
-		Method:   httd.MethodGet,
+		Method:   http.MethodGet,
 		Endpoint: "/gateway/bot",
 	})
 	if err != nil {
@@ -269,8 +270,8 @@ func (g gatewayQueryBuilder) GetBot() (gateway *gateway.GatewayBot, err error) {
 
 // ##############################################################################################################
 
-// gatewayCmdName is the gateway command name for the payload to be sent to Discord over a websocket connection.
-type gatewayCmdName string
+// GatewayCmdName is the gateway command name for the payload to be sent to Discord over a websocket connection.
+type GatewayCmdName string
 
 const (
 	// GatewayCmdRequestGuildMembers Used to request offline members for a guild or
@@ -280,15 +281,15 @@ const (
 	// members, they need to explicitly request them via this operation. The
 	// server will send Guild Members Chunk events in response with up to 1000
 	// members per chunk until all members that match the request have been sent.
-	RequestGuildMembers gatewayCmdName = cmd.RequestGuildMembers
+	RequestGuildMembers GatewayCmdName = cmd.RequestGuildMembers
 
 	// UpdateVoiceState Sent when a Client wants to join, move, or
 	// disconnect from a voice channel.
-	UpdateVoiceState gatewayCmdName = cmd.UpdateVoiceState
+	UpdateVoiceState GatewayCmdName = cmd.UpdateVoiceState
 
 	// UpdateStatus Sent by the Client to indicate a presence or status
 	// update.
-	UpdateStatus gatewayCmdName = cmd.UpdateStatus
+	UpdateStatus GatewayCmdName = cmd.UpdateStatus
 )
 
 // #################################################################

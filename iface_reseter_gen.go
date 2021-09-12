@@ -140,7 +140,6 @@ func (m *Message) reset() {
 	m.SpoilerTagAllAttachments = false
 	m.SpoilerTagContent = false
 	m.StickerItems = nil
-	m.Stickers = nil
 	m.Timestamp = Time{}
 	m.Tts = false
 	m.Type = 0

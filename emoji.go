@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -47,12 +48,12 @@ type PartialEmoji = Emoji
 
 // Mention mentions an emoji. Adds the animation prefix, if animated
 func (e *Emoji) Mention() string {
-	prefix := ""
+	prefix := ":"
 	if e.Animated {
 		prefix = "a:"
 	}
 
-	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 //////////////////////////////////////////////////////
@@ -69,13 +70,11 @@ func (e *Emoji) Mention() string {
 
 type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder
+	WithFlags(flags ...Flag) GuildEmojiQueryBuilder
 
-	Get(flags ...Flag) (*Emoji, error)
-	UpdateBuilder(flags ...Flag) UpdateGuildEmojiBuilder
-	Delete(flags ...Flag) error
-
-	// Deprecated: use UpdateBuilder
-	Update(flags ...Flag) UpdateGuildEmojiBuilder
+	Get() (*Emoji, error)
+	UpdateBuilder() UpdateGuildEmojiBuilder
+	Delete() error
 }
 
 func (g guildQueryBuilder) Emoji(emojiID Snowflake) GuildEmojiQueryBuilder {
@@ -84,6 +83,7 @@ func (g guildQueryBuilder) Emoji(emojiID Snowflake) GuildEmojiQueryBuilder {
 
 type guildEmojiQueryBuilder struct {
 	ctx     context.Context
+	flags   Flag
 	client  *Client
 	gid     Snowflake
 	emojiID Snowflake
@@ -94,8 +94,13 @@ func (g guildEmojiQueryBuilder) WithContext(ctx context.Context) GuildEmojiQuery
 	return &g
 }
 
-func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
-	if !ignoreCache(flags...) {
+func (g guildEmojiQueryBuilder) WithFlags(flags ...Flag) GuildEmojiQueryBuilder {
+	g.flags = mergeFlags(flags)
+	return &g
+}
+
+func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
+	if !ignoreCache(g.flags) {
 		if emoji, _ := g.client.cache.GetGuildEmoji(g.gid, g.emojiID); emoji != nil {
 			return emoji, nil
 		}
@@ -104,7 +109,7 @@ func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmoji(g.gid, g.emojiID),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 	r.pool = g.client.pool.emoji
 	r.factory = func() interface{} {
 		return &Emoji{}
@@ -113,16 +118,16 @@ func (g guildEmojiQueryBuilder) Get(flags ...Flag) (*Emoji, error) {
 	return getEmoji(r.Execute)
 }
 
-// UpdateEmoji Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
+// UpdateBuilder Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildEmojiBuilder {
+func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
 	builder := &updateGuildEmojiBuilder{}
 	builder.r.itemFactory = func() interface{} {
 		return &Emoji{}
 	}
-	builder.r.flags = flags
+	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
@@ -131,14 +136,14 @@ func (g guildEmojiQueryBuilder) UpdateBuilder(flags ...Flag) UpdateGuildEmojiBui
 	return builder
 }
 
-// DeleteEmoji Delete the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
+// Delete deletes the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
 // success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) Delete(flags ...Flag) (err error) {
+func (g guildEmojiQueryBuilder) Delete() (err error) {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildEmoji(g.gid, g.emojiID),
 		Ctx:      g.ctx,
-	}, flags)
+	}, g.flags)
 
 	_, err = r.Execute()
 	return
