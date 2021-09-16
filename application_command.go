@@ -73,7 +73,7 @@ type UpdateApplicationCommand struct {
 	Name              *string                     `json:"name,omitempty"`
 	DefaultPermission *bool                       `json:"default_permission,omitempty"`
 	Description       *string                     `json:"description,omitempty"`
-	Options           []*ApplicationCommandOption `json:"options,omitempty"`
+	Options           *[]*ApplicationCommandOption `json:"options,omitempty"`
 }
 
 type ApplicationCommandQueryBuilder interface {
