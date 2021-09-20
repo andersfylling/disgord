@@ -1,6 +1,5 @@
 package disgord
 
-//go:generate stringer -type=Flag
 type Flag uint32
 
 func (f Flag) Ignorecache() bool {
@@ -11,6 +10,7 @@ func (f Flag) IgnoreEmptyParams() bool {
 	return (f & IgnoreEmptyParams) > 0
 }
 
+// Deprecated
 func (f Flag) Sort() bool {
 	flags := SortByID | SortByName
 	flags |= OrderAscending | OrderDescending
@@ -22,15 +22,26 @@ const (
 	IgnoreCache Flag = 1 << iota
 	IgnoreEmptyParams
 
-	// sort options
+	// Deprecated: use disgordutil.SortByID instead
 	SortByID
+
+	// Deprecated: use disgordutil.SortByName instead
 	SortByName
+
+	// Deprecated: use disgordutil.SortByHoist instead
 	SortByHoist
+
+	// Deprecated: use disgordutil.SortByGuildID instead
 	SortByGuildID
+
+	// Deprecated: use disgordutil.SortByChannelID instead
 	SortByChannelID
 
-	// ordering
+
+	// Deprecated: use disgordutil.OrderAscending instead
 	OrderAscending // default when sorting
+
+	// Deprecated: use disgordutil.OrderDescending instead
 	OrderDescending
 )
 

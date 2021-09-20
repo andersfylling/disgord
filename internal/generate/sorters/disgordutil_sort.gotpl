@@ -1,0 +1,93 @@
+package disgordutil
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+    "github.com/andersfylling/disgord"
+    "reflect"
+)
+
+func Sort(v interface{}, sortByField SortFieldType, sortOrder SortOrderType) {
+    if v == nil {
+        return
+    }
+
+    {{- range $sorter := $.Sorters }}
+    if sortByField == SortBy{{ $sorter.Field }} {
+        sortBy{{ $sorter.Field }}(v, sortOrder)
+    } else {{- end }} if list, ok := v.(sort.Interface); ok {
+		if sortOrder == OrderDescending {
+			sort.Sort(sort.Reverse(list))
+		} else {
+			sort.Sort(list)
+		}
+    } else {
+        panic("type is missing sort.Interface implementation")
+    }
+}
+
+func derefSliceP(v interface{}) (s interface{}) {
+    switch t := v.(type) {
+    {{- range $t := $.Types }}
+    case *[]*disgord.{{ $t.Name }}:
+        s = *t
+    {{- end }}
+    default:
+        s = t
+    }
+
+    return s
+}
+
+
+{{- range $sorter := $.Sorters }}
+func sortBy{{ $sorter.Field }}(v interface{}, sortOrder SortOrderType) {
+    v = derefSliceP(v)
+    if !reflectIsSlice(v) {
+        return
+    }
+
+    var less func(i, j int) bool
+    switch s := v.(type) {
+    {{- range $t := $sorter.Types }}
+    case []*disgord.{{ $t.Name }}:
+        if sortOrder == OrderDescending {
+            less = func(i, j int) bool { return {{ Descending $sorter.Field "s" }} }
+        } else {
+            less = func(i, j int) bool { return {{ Ascending $sorter.Field "s" }} }
+        }
+    {{- end }}
+    default:
+        panic(fmt.Sprintf("type %+v does not support sorting", s))
+    }
+
+    sort.Slice(v, less)
+}
+{{- end }}
+
+func reflectIsSlice(v interface{}) bool {
+    ValueIface := reflect.ValueOf(v)
+    kind := ValueIface.Type().Kind()
+    return kind == reflect.Slice
+}
+
+// Reflect if an interface is either a struct or a pointer to a struct
+// and has the defined member field, if error is nil, the given
+// FieldName exists and is accessible with reflect.
+func reflectStructField(Iface interface{}, FieldName string) error {
+    ValueIface := reflect.ValueOf(Iface)
+
+    // Check if the passed interface is a pointer
+    if ValueIface.Type().Kind() != reflect.Ptr {
+        // Create a new type of Iface's Type, so we have a pointer to work with
+        ValueIface = reflect.New(reflect.TypeOf(Iface))
+    }
+
+    // 'dereference' with Elem() and get the field by name
+    Field := ValueIface.Elem().FieldByName(FieldName)
+    if !Field.IsValid() {
+        return fmt.Errorf("Interface `%s` does not have the field `%s`", ValueIface.Type(), FieldName)
+    }
+    return nil
+}

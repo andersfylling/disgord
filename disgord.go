@@ -106,9 +106,9 @@
 //  // bypass the cache checking. Same as before, but we insert a disgord.Flag type.
 //  user, err := client.User(userID).Get(disgord.IgnoreCache)
 //
-// Disgord Flags
+// Disgord utilities
 //
-// In addition to disgord.IgnoreCache, as shown above, you can pass in other flags such as: disgord.SortByID, disgord.OrderAscending, etc. You can find these flags in the flag.go file.
+// disgordutil provides convenient gunctionality such as sorting, etc.
 //
 //
 // Build tags
