@@ -46,7 +46,7 @@ func TestSort(t *testing.T) {
 			data := make([]*disgord.Role, len(roles))
 			copy(data, roles)
 
-			Sort(data, SortByName, OrderNone)
+			Sort(data, SortByName, OrderAscending)
 			if !sameOrder(data, rolesAsc) {
 				t.Error("roles were not sorted into ascending order")
 			}
