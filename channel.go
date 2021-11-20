@@ -28,6 +28,12 @@ const (
 	ChannelTypeGuildCategory
 	ChannelTypeGuildNews
 	ChannelTypeGuildStore
+	_
+	_
+	_
+	ChannelTypeGuildNewsThread
+	ChannelTypeGuildPublicThread
+	ChannelTypeGuildPrivateThread
 )
 
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
