@@ -92,28 +92,29 @@ type PartialChannel struct {
 
 // Channel ...
 type Channel struct {
-	ID                   Snowflake             `json:"id"`
-	Type                 ChannelType           `json:"type"`
-	GuildID              Snowflake             `json:"guild_id,omitempty"`
-	Position             int                   `json:"position,omitempty"` // can be less than 0
-	PermissionOverwrites []PermissionOverwrite `json:"permission_overwrites,omitempty"`
-	Name                 string                `json:"name,omitempty"`
-	Topic                string                `json:"topic,omitempty"`
-	NSFW                 bool                  `json:"nsfw,omitempty"`
-	LastMessageID        Snowflake             `json:"last_message_id,omitempty"`
-	Bitrate              uint                  `json:"bitrate,omitempty"`
-	UserLimit            uint                  `json:"user_limit,omitempty"`
-	RateLimitPerUser     uint                  `json:"rate_limit_per_user,omitempty"`
-	Recipients           []*User               `json:"recipients,omitempty"` // empty if not DM/GroupDM
-	Icon                 string                `json:"icon,omitempty"`
-	OwnerID              Snowflake             `json:"owner_id,omitempty"`
-	ApplicationID        Snowflake             `json:"application_id,omitempty"`
-	ParentID             Snowflake             `json:"parent_id,omitempty"`
-	LastPinTimestamp     Time                  `json:"last_pin_timestamp,omitempty"`
-	MessageCount         int                   `json:"message_count,omitempty"`   //threads only. stops counting at 50
-	MemberCount          int                   `json:"member_count,omitempty"`    //threads only. stops counting at 50
-	ThreadMetadata       ThreadMetadata        `json:"thread_metadata,omitempty"` //threads only
-	Member               ThreadMember          `json:"member,omitempty"`          //threads only
+	ID                         Snowflake             `json:"id"`
+	Type                       ChannelType           `json:"type"`
+	GuildID                    Snowflake             `json:"guild_id,omitempty"`
+	Position                   int                   `json:"position,omitempty"` // can be less than 0
+	PermissionOverwrites       []PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	Name                       string                `json:"name,omitempty"`
+	Topic                      string                `json:"topic,omitempty"`
+	NSFW                       bool                  `json:"nsfw,omitempty"`
+	LastMessageID              Snowflake             `json:"last_message_id,omitempty"`
+	Bitrate                    uint                  `json:"bitrate,omitempty"`
+	UserLimit                  uint                  `json:"user_limit,omitempty"`
+	RateLimitPerUser           uint                  `json:"rate_limit_per_user,omitempty"`
+	Recipients                 []*User               `json:"recipients,omitempty"` // empty if not DM/GroupDM
+	Icon                       string                `json:"icon,omitempty"`
+	OwnerID                    Snowflake             `json:"owner_id,omitempty"`
+	ApplicationID              Snowflake             `json:"application_id,omitempty"`
+	ParentID                   Snowflake             `json:"parent_id,omitempty"`
+	LastPinTimestamp           Time                  `json:"last_pin_timestamp,omitempty"`
+	MessageCount               int                   `json:"message_count,omitempty"`   //threads only. stops counting at 50
+	MemberCount                int                   `json:"member_count,omitempty"`    //threads only. stops counting at 50
+	ThreadMetadata             ThreadMetadata        `json:"thread_metadata,omitempty"` //threads only
+	Member                     ThreadMember          `json:"member,omitempty"`          //threads only
+	DefaultAutoArchiveDuration int                   `json:"default_auto_archive_duration,omitempty"`
 }
 
 var _ Reseter = (*Channel)(nil)
