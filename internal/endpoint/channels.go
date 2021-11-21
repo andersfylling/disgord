@@ -90,3 +90,48 @@ func ChannelMessageReactionMe(channelID, messageID fmt.Stringer, emoji string) s
 func ChannelMessageReactionUser(channelID, messageID fmt.Stringer, emoji string, userID fmt.Stringer) string {
 	return ChannelMessage(channelID, messageID) + reactions + "/" + emoji + "/" + userID.String()
 }
+
+// ChannelThreadWithMessage ...
+func ChannelThreadWithMessage(channelID, messageID fmt.Stringer) string {
+	return ChannelMessage(channelID, messageID) + threads
+}
+
+// ChannelThreads ...
+func ChannelThreads(channelID fmt.Stringer) string {
+	return Channels(channelID) + threads
+}
+
+// ChannelThreadMembers ...
+func ChannelThreadMembers(channelID fmt.Stringer) string {
+	return Channels(channelID) + threadMembers
+}
+
+// ChannelThreadMemberCurrentUser ...
+func ChannelThreadMemberCurrentUser(channelID fmt.Stringer) string {
+	return Channels(channelID) + threadMembers + me
+}
+
+// ChannelThreadMember ...
+func ChannelThreadMemberUser(channelID, userID fmt.Stringer) string {
+	return Channels(channelID) + threadMembers + userID
+}
+
+// ChannelThreadsActive ...
+func ChannelThreadsActive(channelID fmt.Stringer) string {
+	return ChannelThreads(channelID) + active
+}
+
+// ChannelThreadsArchivedPublic ...
+func ChannelThreadsArchivedPublic(channelID fmt.Stringer) string {
+	return ChannelThreads(channelID) + archived + public
+}
+
+// ChannelThreadsArchivedPrivate ...
+func ChannelThreadsArchivedPrivate(channelID fmt.Stringer) string {
+	return ChannelThreads(channelID) + archived + private
+}
+
+// ChannelThreadsCurrentUserArchivedPrivate ...
+func ChannelThreadsCurrentUserArchivedPrivate(channelID fmt.Stringer) string {
+	return Channels(channelID) + users + me + threads + archived + private
+}
