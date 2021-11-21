@@ -283,6 +283,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Time:
 		s = *t
+	case *[]*ThreadMember:
+		s = *t
+	case *[]*ThreadMetadata:
+		s = *t
 	case *[]*Activity:
 		s = *t
 	case *[]*ActivityAssets:
@@ -482,6 +486,12 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*Role:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ThreadMember:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {

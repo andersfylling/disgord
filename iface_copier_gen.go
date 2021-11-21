@@ -201,11 +201,15 @@ func (c *Channel) copyOverTo(other interface{}) error {
 	}
 	dest.ApplicationID = c.ApplicationID
 	dest.Bitrate = c.Bitrate
+	dest.DefaultAutoArchiveDuration = c.DefaultAutoArchiveDuration
 	dest.GuildID = c.GuildID
 	dest.Icon = c.Icon
 	dest.ID = c.ID
 	dest.LastMessageID = c.LastMessageID
 	dest.LastPinTimestamp = c.LastPinTimestamp
+	dest.Member = c.Member
+	dest.MemberCount = c.MemberCount
+	dest.MessageCount = c.MessageCount
 	dest.Name = c.Name
 	dest.NSFW = c.NSFW
 	dest.OwnerID = c.OwnerID
@@ -218,6 +222,7 @@ func (c *Channel) copyOverTo(other interface{}) error {
 	for i := 0; i < len(c.Recipients); i++ {
 		dest.Recipients[i] = DeepCopy(c.Recipients[i]).(*User)
 	}
+	dest.ThreadMetadata = c.ThreadMetadata
 	dest.Topic = c.Topic
 	dest.Type = c.Type
 	dest.UserLimit = c.UserLimit
