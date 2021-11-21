@@ -110,11 +110,11 @@ type Channel struct {
 	ApplicationID              Snowflake             `json:"application_id,omitempty"`
 	ParentID                   Snowflake             `json:"parent_id,omitempty"`
 	LastPinTimestamp           Time                  `json:"last_pin_timestamp,omitempty"`
-	MessageCount               int                   `json:"message_count,omitempty"`   //threads only. stops counting at 50
-	MemberCount                int                   `json:"member_count,omitempty"`    //threads only. stops counting at 50
-	ThreadMetadata             ThreadMetadata        `json:"thread_metadata,omitempty"` //threads only
-	Member                     ThreadMember          `json:"member,omitempty"`          //threads only
-	DefaultAutoArchiveDuration int                   `json:"default_auto_archive_duration,omitempty"`
+	MessageCount               int                   `json:"message_count,omitempty"`                 //threads only. stops counting at 50
+	MemberCount                int                   `json:"member_count,omitempty"`                  //threads only. stops counting at 50
+	ThreadMetadata             ThreadMetadata        `json:"thread_metadata,omitempty"`               //threads only
+	Member                     ThreadMember          `json:"member,omitempty"`                        //threads only
+	DefaultAutoArchiveDuration int                   `json:"default_auto_archive_duration,omitempty"` //threads only
 }
 
 var _ Reseter = (*Channel)(nil)

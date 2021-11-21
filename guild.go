@@ -87,6 +87,14 @@ const (
 	PermissionManageRoles
 	PermissionManageWebhooks
 	PermissionManageEmojis
+	_
+	_
+	_
+	PermissionManageThreads
+	PermissionCreatePublicThreads
+	PermissionCreatePrivateThreads
+	_
+	PermissionSendMessagesInThreads
 )
 
 // Constants for the different bit offsets of general permissions
