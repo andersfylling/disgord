@@ -534,6 +534,54 @@ func (g *gatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
+func (g *gatewayQueryBuilderNop) ThreadCreate(_ func(Session, *ThreadCreate), _ ...func(Session, *ThreadCreate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadCreateChan(_ chan *ThreadCreate, _ ...chan *ThreadCreate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadDelete(_ func(Session, *ThreadDelete), _ ...func(Session, *ThreadDelete)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadDeleteChan(_ chan *ThreadDelete, _ ...chan *ThreadDelete) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadListSync(_ func(Session, *ThreadListSync), _ ...func(Session, *ThreadListSync)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadListSyncChan(_ chan *ThreadListSync, _ ...chan *ThreadListSync) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMembersUpdate(_ func(Session, *ThreadMembersUpdate), _ ...func(Session, *ThreadMembersUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMembersUpdateChan(_ chan *ThreadMembersUpdate, _ ...chan *ThreadMembersUpdate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMemberUpdate(_ func(Session, *ThreadMemberUpdate), _ ...func(Session, *ThreadMemberUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMemberUpdateChan(_ chan *ThreadMemberUpdate, _ ...chan *ThreadMemberUpdate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadUpdate(_ func(Session, *ThreadUpdate), _ ...func(Session, *ThreadUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadUpdateChan(_ chan *ThreadUpdate, _ ...chan *ThreadUpdate) {
+	return
+}
+
 func (g *gatewayQueryBuilderNop) TypingStart(_ func(Session, *TypingStart), _ ...func(Session, *TypingStart)) {
 	return
 }

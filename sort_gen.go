@@ -191,6 +191,18 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Resumed:
 		s = *t
+	case *[]*ThreadCreate:
+		s = *t
+	case *[]*ThreadDelete:
+		s = *t
+	case *[]*ThreadListSync:
+		s = *t
+	case *[]*ThreadMemberUpdate:
+		s = *t
+	case *[]*ThreadMembersUpdate:
+		s = *t
+	case *[]*ThreadUpdate:
+		s = *t
 	case *[]*TypingStart:
 		s = *t
 	case *[]*UserUpdate:
@@ -396,6 +408,12 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*InteractionCreate:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
+	case []*ThreadMembersUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -658,6 +676,18 @@ func sortByGuildID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
 	case []*PresenceUpdate:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*ThreadListSync:
+		if descending {
+			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
+		} else {
+			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
+		}
+	case []*ThreadMembersUpdate:
 		if descending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {

@@ -543,6 +543,54 @@ func (g *GatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
+func (g *GatewayQueryBuilderNop) ThreadCreate(_ func(disgord.Session, *disgord.ThreadCreate), _ ...func(disgord.Session, *disgord.ThreadCreate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadCreateChan(_ chan *disgord.ThreadCreate, _ ...chan *disgord.ThreadCreate) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadDelete(_ func(disgord.Session, *disgord.ThreadDelete), _ ...func(disgord.Session, *disgord.ThreadDelete)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadDeleteChan(_ chan *disgord.ThreadDelete, _ ...chan *disgord.ThreadDelete) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadListSync(_ func(disgord.Session, *disgord.ThreadListSync), _ ...func(disgord.Session, *disgord.ThreadListSync)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadListSyncChan(_ chan *disgord.ThreadListSync, _ ...chan *disgord.ThreadListSync) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadMembersUpdate(_ func(disgord.Session, *disgord.ThreadMembersUpdate), _ ...func(disgord.Session, *disgord.ThreadMembersUpdate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadMembersUpdateChan(_ chan *disgord.ThreadMembersUpdate, _ ...chan *disgord.ThreadMembersUpdate) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadMemberUpdate(_ func(disgord.Session, *disgord.ThreadMemberUpdate), _ ...func(disgord.Session, *disgord.ThreadMemberUpdate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadMemberUpdateChan(_ chan *disgord.ThreadMemberUpdate, _ ...chan *disgord.ThreadMemberUpdate) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadUpdate(_ func(disgord.Session, *disgord.ThreadUpdate), _ ...func(disgord.Session, *disgord.ThreadUpdate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) ThreadUpdateChan(_ chan *disgord.ThreadUpdate, _ ...chan *disgord.ThreadUpdate) {
+	return
+}
+
 func (g *GatewayQueryBuilderNop) TypingStart(_ func(disgord.Session, *disgord.TypingStart), _ ...func(disgord.Session, *disgord.TypingStart)) {
 	return
 }
