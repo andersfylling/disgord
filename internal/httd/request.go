@@ -12,12 +12,6 @@ var regexpURLSnowflakes = regexp.MustCompile(RegexpURLSnowflakes)
 var regexpURLReactionPrefix = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/messages\/\{id\}\/reactions\/`)
 var regexpURLReactionEmoji = regexp.MustCompile(`\/channels\/[0-9]+\/messages\/\{id\}\/reactions\/` + RegexpEmoji + `\/?`)
 var regexpURLReactionEmojiSegment = regexp.MustCompile(`\/reactions\/` + RegexpEmoji)
-// https://discord.com/developers/docs/topics/threads#enumerating-threads
-var regexpURLGuildThreadsActive = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/threads\/active`)
-var regexpURLCurrentUserThreadsArchivedPrivate = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/users\/@me\/threads\/archived\/private`)
-var regexpURLChannelThreadsArchivedPublic = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/threads\/archived\/public`)
-var regexpURLChannelThreadsArchivedPrivate = regexp.MustCompile(`\/channels\/` + RegexpSnowflakes + `\/threads\/archived\/private`)
-
 
 // Request is populated before executing a Discord request to correctly generate a http request
 type Request struct {
@@ -71,11 +65,6 @@ func (r *Request) HashEndpoint() string {
 		buffer = strings.ReplaceAll(buffer, matches[i], "/{id}/")
 	}
 
-	// check for any thread endpoints
-	guildThreadMatch := regexpURLGuildThreadsActive.FindAllString(buffer, -1)
-	currentUserThreadsMatch := regexpURLCurrentUserThreadsArchivedPrivate.FindAllString(buffer, -1)
-	chanThreadsPublicMatch := regexpURLChannelThreadsArchivedPublic.FindAllString(buffer, -1)
-	chanThreadsPrivateMatch := regexpURLChannelThreadsArchivedPrivate.FindAllString(buffer, -1)
 	// check for reaction endpoints, convert emoji identifier to {emoji}
 	reactionPrefixMatch := regexpURLReactionPrefix.FindAllString(buffer, -1)
 	if reactionPrefixMatch != nil {
@@ -97,14 +86,6 @@ func (r *Request) HashEndpoint() string {
 			newSuffix := "{emoji}" + suffix[until:]
 			buffer = buffer[:len(buffer)-len(suffix)] + newSuffix
 		}
-	} else if guildThreadMatch != nil {
-		buffer += "threads/active"
-	} else if currentUserThreadsMatch != nil {
-		buffer += "users/@me/threads/archived/private"
-	} else if chanThreadsPublicMatch != nil {
-		buffer += "threads/archived/public"
-	} else if chanThreadsPrivateMatch != nil {
-		buffer += "threads/archived/private"
 	}
 
 	if strings.HasSuffix(buffer, "/") {
