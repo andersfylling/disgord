@@ -325,6 +325,33 @@ type ChannelQueryBuilder interface {
 	GetWebhooks() (ret []*Webhook, err error)
 
 	Message(id Snowflake) MessageQueryBuilder
+
+	// CreateThread Create a thread in a channel from a message.
+	CreateThread(name string, messageID Snowflake, params *CreateThreadParams) (*Channel, error)
+	// CreateThreadNoMessage Create a thread that is not connected to an existing message.
+	CreateThreadNoMessage(name string, params *CreateThreadParams) (*Channel, error)
+	// Adds the current user to a thread. Also requires the thread is not archived.
+	// Returns a 204 empty response on success.
+	JoinThread() (error)
+	// Adds another member to a thread. Requires the ability to send messages in the thread.
+	// Also requires the thread is not archived. Returns a 204 empty response if the member
+	// is successfully added or was already a member of the thread.
+	AddThreadMember(userID Snowflake) (error)
+	// Removes the current user from a thread. Also requires the thread is not archived.
+	// Returns a 204 empty response on success.
+	LeaveThread() (error)
+	// Removes another member from a thread. Requires the MANAGE_THREADS permission, or the
+	// creator of the thread if it is a GUILD_PRIVATE_THREAD. Also requires the thread is not archived.
+	// Returns a 204 empty response on success.
+	RemoveThreadMember(userID Snowflake) (error)
+	// Returns a thread member object for the specified user if
+	// they are a member of the thread, returns a 404 response otherwise.
+	GetThreadMember(userID Snowflake) (*ThreadMember, error)
+	// Returns array of thread members objects that are members of the thread.
+	// This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent is enabled for your application.
+	GetThreadMembers() ([]*ThreadMember, error)
+	//
+	GetActiveThreads() 
 }
 
 type channelQueryBuilder struct {
@@ -1130,6 +1157,199 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 	}
 
 	return getWebhooks(r.Execute)
+}
+
+// CreateThread [POST]      Creates a new thread from an existing message.
+// Endpoint                 /channels/{channel.id}/messages/{message.id}/threads
+// Discord documentation    https://discord.com/developers/docs/resources/channel#start-thread-with-message
+// Reviewed                 2021-11-21 (self)
+// Comment                  This endpoint supports the X-Audit-Log-Reason header.
+
+func (c channelQueryBuilder) CreateThread(name string, messageID Snowflake, params *CreateThreadParams) (*Channel, error) {
+	if name == "" && (params == nil || params.Name == "") {
+		return nil, errors.New("thread name is required")
+	}
+	if l := len(name); !(2 <= l && l <= 100) {
+		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+	}
+
+	if params == nil {
+		params = &CreateThreadParams{}
+	}
+	if name != "" && params.Name == "" {
+		params.Name = name
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadWithMessage(c.cid, messageID),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
+
+	return getChannel(r.Execute)
+}
+
+// CreateThreadNoMessage [POST]    Creates a new thread that is not connected to an existing message.
+// Endpoint                        /channels/{channel.id}/threads
+// Discord documentation           https://discord.com/developers/docs/resources/channel#start-thread-without-message
+// Reviewed                        2021-11-22 (self)
+// Comment                         This endpoint supports the X-Audit-Log-Reason header.
+
+func (c channelQueryBuilder) CreateThreadNoMessage(name string, params *CreateThreadParamsNoMessage) (*Channel, error) {
+	if name == "" && (params == nil || params.Name == "") {
+		return nil, errors.New("thread name is required")
+	}
+	if l := len(name); !(2 <= l && l <= 100) {
+		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+	}
+
+	if params == nil {
+		params = &CreateThreadParamsNoMessage{}
+	}
+	if name != "" && params.Name == "" {
+		params.Name = name
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreads(c.cid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.Reason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
+
+	return getChannel(r.Execute)
+}
+
+// JoinThread [PUT]         Adds the current user to a thread. Also requires the thread is not archived.
+//                          Returns a 204 empty response on success.
+// Endpoint                 /channels/{channel.id}/thread-members/@me
+// Discord documentation    https://discord.com/developers/docs/resources/channel#join-thread
+// Reviewed                 2021-11-22 (self)
+// Comment                  
+
+func (c channelQueryBuilder) JoinThread() (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberCurrentUser(c.cid),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// AddThreadMember [PUT]    Adds another member to a thread. Requires the ability to send messages in the thread.
+//                          Also requires the thread is not archived. Returns a 204 empty response if the member
+//                          is successfully added or was already a member of the thread.
+// Endpoint                 /channels/{channel.id}/thread-members/{user.id}
+// Discord documentation    https://discord.com/developers/docs/resources/channel#add-thread-member
+// Reviewed                 2021-11-22 (self)
+// Comment                  
+
+func (c channelQueryBuilder) AddThreadMember(userID Snowflake) (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPut,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// LeaveThread [DELETE]     Removes the current user from a thread. Also requires the thread is not archived.
+//                          Returns a 204 empty response on success.
+// Endpoint                 /channels/{channel.id}/thread-members/@me
+// Discord documentation    https://discord.com/developers/docs/resources/channel#leave-thread
+// Reviewed                 2021-11-22 (self)
+// Comment                  
+
+func (c channelQueryBuilder) LeaveThread() (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberCurrentUser(c.cid),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// RemoveThreadMember [DELETE]    Removes another member from a thread. Requires the MANAGE_THREADS permission, or
+//                                the creator of the thread if it is a GUILD_PRIVATE_THREAD. Also requires the thread
+//                                is not archived. Returns a 204 empty response on success.
+// Endpoint                       /channels/{channel.id}/thread-members/{user.id}
+// Discord documentation          https://discord.com/developers/docs/resources/channel#remove-thread-member
+// Reviewed                       2021-11-22 (self)
+// Comment                        
+
+func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodDelete,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// GetThreadMember [GET]    Returns a thread member object for the specified user if they are a
+//                          member of the thread, returns a 404 response otherwise.
+// Endpoint                 /channels/{channel.id}/thread-members/{user.id}
+// Discord documentation    https://discord.com/developers/docs/resources/channel#get-thread-member
+// Reviewed                 2021-11-22 (self)
+// Comment                        
+
+func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &ThreadMember{}
+	}
+
+	return getThreadMember(r.Execute)
+}
+
+// GetThreadMembers [GET]    Returns array of thread members objects that are members of the thread.
+//                           This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent
+//                           is enabled for your application.
+// Endpoint                  /channels/{channel.id}/thread-members
+// Discord documentation     https://discord.com/developers/docs/resources/channel#list-thread-members
+// Reviewed                  2021-11-22 (self)
+// Comment                        
+
+func (c channelQueryBuilder) GetThreadMembers(userID Snowflake) (error) {
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &ThreadMember{}
+	}
+
+	return getThreadMember(r.Execute)
 }
 
 //////////////////////////////////////////////////////

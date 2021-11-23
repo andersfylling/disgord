@@ -764,3 +764,26 @@ func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error)
 	}
 	return v.(*GuildEmbed), nil
 }
+
+// TODO: auto generate
+func getThreadMember(f func() (interface{}, error)) (threadMember *ThreadMember, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	return v.(*ThreadMember), nil
+}
+
+// TODO: auto generate
+func getThreadMembers(f func() (interface{}, error)) (threadMembers []*ThreadMember, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	if list, ok := v.(*[]*ThreadMember); ok {
+		return *list, nil
+	} else if list, ok := v.([]*ThreadMember); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
+}

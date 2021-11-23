@@ -108,12 +108,12 @@ func ChannelThreadMembers(channelID fmt.Stringer) string {
 
 // ChannelThreadMemberCurrentUser ...
 func ChannelThreadMemberCurrentUser(channelID fmt.Stringer) string {
-	return Channels(channelID) + threadMembers + me
+	return ChannelThreadMembers(channelID) + me
 }
 
 // ChannelThreadMember ...
 func ChannelThreadMemberUser(channelID, userID fmt.Stringer) string {
-	return Channels(channelID) + threadMembers + userID
+	return ChannelThreadMembers(channelID) + userID
 }
 
 // ChannelThreadsActive ...
