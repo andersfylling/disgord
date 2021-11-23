@@ -55,11 +55,23 @@ func (c *channelQueryBuilderNop) AddDMParticipant(_ *GroupDMParticipant) error {
 	return nil
 }
 
+func (c *channelQueryBuilderNop) AddThreadMember(_ Snowflake) error {
+	return nil
+}
+
 func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
 	return nil
 }
 
 func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessageParams) (*Message, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) CreateThread(_ string, _ Snowflake, _ *CreateThreadParams) (*Channel, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ string, _ *CreateThreadParamsNoMessage) (*Channel, error) {
 	return nil, nil
 }
 
@@ -95,15 +107,35 @@ func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
 	return nil, nil
 }
 
+func (c *channelQueryBuilderNop) GetThreadMember(_ Snowflake) (*ThreadMember, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) GetThreadMembers() ([]*ThreadMember, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) GetWebhooks() ([]*Webhook, error) {
 	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) JoinThread() error {
+	return nil
 }
 
 func (c *channelQueryBuilderNop) KickParticipant(_ Snowflake) error {
 	return nil
 }
 
+func (c *channelQueryBuilderNop) LeaveThread() error {
+	return nil
+}
+
 func (c *channelQueryBuilderNop) Message(_ Snowflake) MessageQueryBuilder {
+	return nil
+}
+
+func (c *channelQueryBuilderNop) RemoveThreadMember(_ Snowflake) error {
 	return nil
 }
 

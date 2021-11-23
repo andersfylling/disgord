@@ -329,7 +329,7 @@ type ChannelQueryBuilder interface {
 	// CreateThread Create a thread in a channel from a message.
 	CreateThread(name string, messageID Snowflake, params *CreateThreadParams) (*Channel, error)
 	// CreateThreadNoMessage Create a thread that is not connected to an existing message.
-	CreateThreadNoMessage(name string, params *CreateThreadParams) (*Channel, error)
+	CreateThreadNoMessage(name string, params *CreateThreadParamsNoMessage) (*Channel, error)
 	// Adds the current user to a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	JoinThread() (error)
@@ -350,8 +350,6 @@ type ChannelQueryBuilder interface {
 	// Returns array of thread members objects that are members of the thread.
 	// This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent is enabled for your application.
 	GetThreadMembers() ([]*ThreadMember, error)
-	//
-	GetActiveThreads() 
 }
 
 type channelQueryBuilder struct {
@@ -1316,7 +1314,7 @@ func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) (error) {
 // Reviewed                 2021-11-22 (self)
 // Comment                        
 
-func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (error) {
+func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodGet,
 		Ctx:         c.ctx,
@@ -1338,18 +1336,18 @@ func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (error) {
 // Reviewed                  2021-11-22 (self)
 // Comment                        
 
-func (c channelQueryBuilder) GetThreadMembers(userID Snowflake) (error) {
+func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodGet,
 		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
+		Endpoint:    endpoint.ChannelThreadMembers(c.cid),
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {
 		return &ThreadMember{}
 	}
 
-	return getThreadMember(r.Execute)
+	return getThreadMembers(r.Execute)
 }
 
 //////////////////////////////////////////////////////

@@ -295,6 +295,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Time:
 		s = *t
+	case *[]*CreateThreadParams:
+		s = *t
+	case *[]*CreateThreadParamsNoMessage:
+		s = *t
 	case *[]*ThreadMember:
 		s = *t
 	case *[]*ThreadMetadata:
@@ -1038,6 +1042,18 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*Role:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*CreateThreadParams:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*CreateThreadParamsNoMessage:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

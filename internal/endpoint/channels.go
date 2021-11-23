@@ -98,12 +98,12 @@ func ChannelThreadWithMessage(channelID, messageID fmt.Stringer) string {
 
 // ChannelThreads ...
 func ChannelThreads(channelID fmt.Stringer) string {
-	return Channels(channelID) + threads
+	return Channel(channelID) + threads
 }
 
 // ChannelThreadMembers ...
 func ChannelThreadMembers(channelID fmt.Stringer) string {
-	return Channels(channelID) + threadMembers
+	return Channel(channelID) + threadMembers
 }
 
 // ChannelThreadMemberCurrentUser ...
@@ -113,7 +113,7 @@ func ChannelThreadMemberCurrentUser(channelID fmt.Stringer) string {
 
 // ChannelThreadMember ...
 func ChannelThreadMemberUser(channelID, userID fmt.Stringer) string {
-	return ChannelThreadMembers(channelID) + userID
+	return ChannelThreadMembers(channelID) + userID.String()
 }
 
 // ChannelThreadsActive ...
@@ -133,5 +133,5 @@ func ChannelThreadsArchivedPrivate(channelID fmt.Stringer) string {
 
 // ChannelThreadsCurrentUserArchivedPrivate ...
 func ChannelThreadsCurrentUserArchivedPrivate(channelID fmt.Stringer) string {
-	return Channels(channelID) + users + me + threads + archived + private
+	return Channel(channelID) + users + me + threads + archived + private
 }
