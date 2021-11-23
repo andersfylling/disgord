@@ -404,7 +404,6 @@ func makeFile(enforcers []Enforcer, tplFile, target string) {
 	// Format it according to gofmt standards
 	formatted, err := format.Source(b.Bytes())
 	if err != nil {
-		fmt.Println(string(b.Bytes()))
 		panic(err)
 	}
 
