@@ -17,6 +17,10 @@ import (
 	"strings"
 )
 
+type importInfo struct {
+	Name string
+}
+
 type tagInfo struct {
 	Name         string
 	Omitempty    bool
@@ -56,6 +60,7 @@ type structInfo struct {
 	Name      string
 	ShortName string
 	Fields    []fieldInfo
+	NeededImports []importInfo
 }
 
 type Enforcer struct {
@@ -139,6 +144,7 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 			}
 		}
 
+		addedImportNames := make([]importInfo, 0)
 		specs := item.(*ast.GenDecl).Specs
 		for i := range specs {
 			ts := specs[i].(*ast.TypeSpec)
@@ -156,6 +162,7 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 					typ := fmt.Sprint(field.Type)
 
 					var tag *tagInfo
+					impInfo := importInfo{Name: ""}
 					if field.Tag != nil && len(field.Tag.Value) > 2 {
 						tagStruct := reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]) // rm ` wraps
 						detailsStr := tagStruct.Get("urlparam")
@@ -170,6 +177,10 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 								tag.ZeroValCheck = " == " + zVal
 							} else {
 								tag.ZeroValCheck = " OMFG"
+							}
+
+							if imp, ok := getImportInfo(typ); ok && tag.Omitempty {
+								impInfo = importInfo{Name: imp}
 							}
 						}
 
@@ -190,6 +201,17 @@ func addStructs(enforcers []Enforcer, file *ast.File) {
 							if enforcers[a].Structs[b].Name == ts.Name.Name {
 								info := fieldInfo{Name: name, ZeroVal: zeroInit, Tag: tag, typ: typ, resetableStructs: resetables}
 								enforcers[a].Structs[b].Fields = append(enforcers[a].Structs[b].Fields, info)
+								importIsIn := false
+								for c := range addedImportNames {
+									if addedImportNames[c].Name == impInfo.Name && impInfo.Name != "" {
+										importIsIn = true
+										break
+									}
+								}
+								if !importIsIn {
+									enforcers[a].Structs[b].NeededImports = append(enforcers[a].Structs[b].NeededImports, impInfo)
+									addedImportNames = append(addedImportNames, impInfo)
+								}
 								break
 							}
 						}
@@ -271,6 +293,21 @@ func strSliceContains(s []string, needle string) bool {
 	return false
 }
 
+func getImportInfo(s string) (result string, success bool) {
+	result = ""
+	success = false
+	switch s {
+	case "Time":
+		result = "time"
+		success = true
+	}
+
+	if !success && result != "" {
+		success = true
+	}
+	return result, success
+}
+
 func getZeroVal(s string) (result string, success bool) {
 	switch s {
 	case "int", "int8", "int16", "int32", "int64":
@@ -291,6 +328,8 @@ func getZeroVal(s string) (result string, success bool) {
 		// TODO: find out what the original data type is
 	case "VerificationLvl", "DefaultMessageNotificationLvl", "ExplicitContentFilterLvl", "MFALvl", "Discriminator", "PremiumType", "PermissionBit", "activityFlag", "acitivityType":
 		result = "0"
+	case "Time":
+		result = "Time{time.Unix(0, 0)}"
 	}
 
 	if !success && result != "" {
@@ -365,6 +404,7 @@ func makeFile(enforcers []Enforcer, tplFile, target string) {
 	// Format it according to gofmt standards
 	formatted, err := format.Source(b.Bytes())
 	if err != nil {
+		fmt.Println(string(b.Bytes()))
 		panic(err)
 	}
 

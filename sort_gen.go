@@ -93,11 +93,15 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetMessagesParams:
 		s = *t
+	case *[]*GetThreadsParams:
+		s = *t
 	case *[]*GroupDMParticipant:
 		s = *t
 	case *[]*PartialChannel:
 		s = *t
 	case *[]*PermissionOverwrite:
+		s = *t
+	case *[]*ResponseBodyThreads:
 		s = *t
 	case *[]*UpdateChannelPermissionsParams:
 		s = *t

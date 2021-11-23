@@ -116,6 +116,10 @@ func (c *ChannelQueryBuilderNop) GetPinnedMessages() ([]*disgord.Message, error)
 	return nil, nil
 }
 
+func (c *ChannelQueryBuilderNop) GetPublicArchivedThreads(_ *disgord.GetThreadsParams) (*disgord.ResponseBodyThreads, error) {
+	return nil, nil
+}
+
 func (c *ChannelQueryBuilderNop) GetThreadMember(_ disgord.Snowflake) (*disgord.ThreadMember, error) {
 	return nil, nil
 }

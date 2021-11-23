@@ -332,24 +332,29 @@ type ChannelQueryBuilder interface {
 	CreateThreadNoMessage(name string, params *CreateThreadParamsNoMessage) (*Channel, error)
 	// Adds the current user to a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
-	JoinThread() (error)
+	JoinThread() error
 	// Adds another member to a thread. Requires the ability to send messages in the thread.
 	// Also requires the thread is not archived. Returns a 204 empty response if the member
 	// is successfully added or was already a member of the thread.
-	AddThreadMember(userID Snowflake) (error)
+	AddThreadMember(userID Snowflake) error
 	// Removes the current user from a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
-	LeaveThread() (error)
+	LeaveThread() error
 	// Removes another member from a thread. Requires the MANAGE_THREADS permission, or the
 	// creator of the thread if it is a GUILD_PRIVATE_THREAD. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
-	RemoveThreadMember(userID Snowflake) (error)
+	RemoveThreadMember(userID Snowflake) error
 	// Returns a thread member object for the specified user if
 	// they are a member of the thread, returns a 404 response otherwise.
 	GetThreadMember(userID Snowflake) (*ThreadMember, error)
 	// Returns array of thread members objects that are members of the thread.
 	// This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent is enabled for your application.
 	GetThreadMembers() ([]*ThreadMember, error)
+	// Returns archived threads in the channel that are public. When called on a GUILD_TEXT channel, returns
+	// threads of type GUILD_PUBLIC_THREAD. When called on a GUILD_NEWS channel returns threads of type
+	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
+	// permission.
+	GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
 }
 
 type channelQueryBuilder struct {
@@ -1234,9 +1239,9 @@ func (c channelQueryBuilder) CreateThreadNoMessage(name string, params *CreateTh
 // Endpoint                 /channels/{channel.id}/thread-members/@me
 // Discord documentation    https://discord.com/developers/docs/resources/channel#join-thread
 // Reviewed                 2021-11-22 (self)
-// Comment                  
+// Comment
 
-func (c channelQueryBuilder) JoinThread() (error) {
+func (c channelQueryBuilder) JoinThread() error {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPut,
 		Ctx:         c.ctx,
@@ -1254,9 +1259,9 @@ func (c channelQueryBuilder) JoinThread() (error) {
 // Endpoint                 /channels/{channel.id}/thread-members/{user.id}
 // Discord documentation    https://discord.com/developers/docs/resources/channel#add-thread-member
 // Reviewed                 2021-11-22 (self)
-// Comment                  
+// Comment
 
-func (c channelQueryBuilder) AddThreadMember(userID Snowflake) (error) {
+func (c channelQueryBuilder) AddThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPut,
 		Ctx:         c.ctx,
@@ -1273,9 +1278,9 @@ func (c channelQueryBuilder) AddThreadMember(userID Snowflake) (error) {
 // Endpoint                 /channels/{channel.id}/thread-members/@me
 // Discord documentation    https://discord.com/developers/docs/resources/channel#leave-thread
 // Reviewed                 2021-11-22 (self)
-// Comment                  
+// Comment
 
-func (c channelQueryBuilder) LeaveThread() (error) {
+func (c channelQueryBuilder) LeaveThread() error {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ctx:         c.ctx,
@@ -1293,9 +1298,9 @@ func (c channelQueryBuilder) LeaveThread() (error) {
 // Endpoint                       /channels/{channel.id}/thread-members/{user.id}
 // Discord documentation          https://discord.com/developers/docs/resources/channel#remove-thread-member
 // Reviewed                       2021-11-22 (self)
-// Comment                        
+// Comment
 
-func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) (error) {
+func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodDelete,
 		Ctx:         c.ctx,
@@ -1312,7 +1317,7 @@ func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) (error) {
 // Endpoint                 /channels/{channel.id}/thread-members/{user.id}
 // Discord documentation    https://discord.com/developers/docs/resources/channel#get-thread-member
 // Reviewed                 2021-11-22 (self)
-// Comment                        
+// Comment
 
 func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
@@ -1334,7 +1339,7 @@ func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, e
 // Endpoint                  /channels/{channel.id}/thread-members
 // Discord documentation     https://discord.com/developers/docs/resources/channel#list-thread-members
 // Reviewed                  2021-11-22 (self)
-// Comment                        
+// Comment
 
 func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
@@ -1348,6 +1353,53 @@ func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 	}
 
 	return getThreadMembers(r.Execute)
+}
+
+// https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body
+type ResponseBodyThreads struct {
+	Threads []*Channel      `json:"threads"`
+	Members []*ThreadMember `json:"members"`
+	HasMore bool            `json:"has_more"`
+}
+
+// https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params
+type GetThreadsParams struct {
+	Before Time `urlparam:"before,omitempty"`
+	Limit  int  `urlparam:"limit,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetThreadsParams)(nil)
+
+// GetPublicArchivedThreads [GET]    Returns archived threads in the channel that are public. When called
+//                                   on a GUILD_TEXT channel, returns threads of type GUILD_PUBLIC_THREAD.
+//                                   When called on a GUILD_NEWS channel returns threads of type GUILD_NEWS_THREAD.
+//                                   Threads are ordered by archive_timestamp, in descending order. Requires the
+//                                   READ_MESSAGE_HISTORY permission.
+// Endpoint                          /channels/{channel.id}/threads/archived/public
+// Discord documentation             https://discord.com/developers/docs/resources/channel#list-public-archived-threads
+// Reviewed                          2021-11-22 (self)
+// Comment
+
+func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+	var query string
+	if params != nil {
+		query += params.URLQueryString()
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadsArchivedPublic(c.cid) + query,
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &ResponseBodyThreads{
+			Threads: make([]*Channel, 0),
+			Members: make([]*ThreadMember, 0),
+		}
+	}
+
+	return getResponseBodyThreads(r.Execute)
 }
 
 //////////////////////////////////////////////////////

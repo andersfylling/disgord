@@ -107,6 +107,10 @@ func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
 	return nil, nil
 }
 
+func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) GetThreadMember(_ Snowflake) (*ThreadMember, error) {
 	return nil, nil
 }
