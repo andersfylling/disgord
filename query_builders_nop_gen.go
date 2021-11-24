@@ -99,11 +99,19 @@ func (c *channelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
+func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) GetMessages(_ *GetMessagesParams) ([]*Message, error) {
 	return nil, nil
 }
 
 func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
 	return nil, nil
 }
 
@@ -803,6 +811,10 @@ func (g *guildQueryBuilderNop) EstimatePruneMembersCount(_ int) (int, error) {
 }
 
 func (g *guildQueryBuilderNop) Get() (*Guild, error) {
+	return nil, nil
+}
+
+func (g *guildQueryBuilderNop) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
 	return nil, nil
 }
 

@@ -355,6 +355,12 @@ type ChannelQueryBuilder interface {
 	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
 	// permission.
 	GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
+	// archive_timestamp, in descending order. Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
+	GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
+	// Threads are ordered by their id, in descending order. Requires the READ_MESSAGE_HISTORY permission.
+	GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
 }
 
 type channelQueryBuilder struct {
@@ -1390,6 +1396,65 @@ func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) 
 		Method:      http.MethodGet,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelThreadsArchivedPublic(c.cid) + query,
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &ResponseBodyThreads{
+			Threads: make([]*Channel, 0),
+			Members: make([]*ThreadMember, 0),
+		}
+	}
+
+	return getResponseBodyThreads(r.Execute)
+}
+
+// GetPrivateArchivedThreads [GET]    Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD.
+//                                    Threads are ordered by archive_timestamp, in descending order. Requires both
+//                                    the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
+// Endpoint                           /channels/{channel.id}/threads/archived/private
+// Discord documentation              https://discord.com/developers/docs/resources/channel#list-private-archived-threads
+// Reviewed                           2021-11-24 (self)
+// Comment
+
+func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+	var query string
+	if params != nil {
+		query += params.URLQueryString()
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadsArchivedPrivate(c.cid) + query,
+		ContentType: httd.ContentTypeJSON,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &ResponseBodyThreads{
+			Threads: make([]*Channel, 0),
+			Members: make([]*ThreadMember, 0),
+		}
+	}
+
+	return getResponseBodyThreads(r.Execute)
+}
+
+// GetJoinedPrivateArchivedThreads [GET]    Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD,
+//                                          and the user has joined. Threads are ordered by their id, in descending order.
+//                                          Requires the READ_MESSAGE_HISTORY permission.
+// Discord documentation                    https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads
+// Reviewed                                 2021-11-24 (self)
+// Comment
+
+func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+	var query string
+	if params != nil {
+		query += params.URLQueryString()
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		Endpoint:    endpoint.ChannelThreadsCurrentUserArchivedPrivate(c.cid) + query,
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {

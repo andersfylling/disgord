@@ -249,6 +249,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*PartialBan:
 		s = *t
+	case *[]*ResponseBodyGuildThreads:
+		s = *t
 	case *[]*UpdateGuildChannelPositionsParams:
 		s = *t
 	case *[]*UpdateGuildIntegrationParams:
