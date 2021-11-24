@@ -131,5 +131,7 @@ func (e *execWebhookParams) URLQueryString() string {
 
 	params["wait"] = e.Wait
 
+	params["thread_id"] = e.ThreadID
+
 	return params.URLQueryString()
 }

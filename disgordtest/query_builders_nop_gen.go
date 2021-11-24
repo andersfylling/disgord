@@ -1191,15 +1191,15 @@ func (w *WebhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ string) (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhookParams, _ bool) (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhookParams, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 
-func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhookParams, _ bool) (*disgord.Message, error) {
+func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhookParams, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -1239,7 +1239,7 @@ func (w *WebhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ string) (*disgord.Message, error) {
+func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhookParams, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
 	return nil, nil
 }
 
