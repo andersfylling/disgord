@@ -1,7 +1,7 @@
 name: pull request command
 on: 
   pull_request:
-    types: [opened]
+    types: [opened]  # discoverability
   issue_comment:
     types: [created]
 
@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 1
       - name: Get dependencies
         run: go mod download
-      - name: Integration tests
+      - name: test
         env:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
           TEST_GUILD_ADMIN_ID: ${{ secrets.TEST_GUILD_ADMIN_ID }}
@@ -37,8 +37,27 @@ jobs:
           TEST_GUILD_TYPICAL_VOICE_2: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_2 }}
           TEST_GUILD_TYPICAL_VOICE_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_GENERAL }}
         run: go test -v -race -tags=integration -coverprofile=coverage-integration.txt -covermode=atomic ./...
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: coverage-integration.txt
+      - name: Check for success
+        if: ${{ steps.test.outputs.status == 'success' }}
+        env:
+          URL: ${{ github.event.issue.comments_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl \
+            -X POST \
+            $URL \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            --data '{ "body": ":heavy_check_mark: integration tests succeeded" }'
+      - name: Check for failure
+        if: ${{ steps.test.outputs.status == 'failure' }}
+        env:
+          URL: ${{ github.event.issue.comments_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl \
+            -X POST \
+            $URL \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            --data '{ "body": ":x: integration tests failed" }'
