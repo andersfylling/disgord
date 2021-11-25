@@ -22,7 +22,7 @@ jobs:
 
   job:
     if: ${{
-     github.event_name == 'pull_request' &&
+     github.event.issue.pull_request &&
      github.event.comment.body == '/run integration-tests' &&
      github.event.comment.user.id == 7851860 }}
     runs-on: ubuntu-latest
