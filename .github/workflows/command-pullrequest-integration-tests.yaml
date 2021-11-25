@@ -1,7 +1,5 @@
 name: pull request comment
-on:
-  issue_comment:                                     
-    types: [created, edited, deleted]
+on: pull_request
 
 jobs:
   comment:
@@ -22,7 +20,7 @@ jobs:
 
  job:
    if: ${{
-    github.event.issue.pull_request && 
+    github.event_name == 'pull_request' &&
     github.event.comment.body == '/run integration-tests' &&
     github.event.comment.user.id == 7851860}}
    runs-on: ubuntu-latest
