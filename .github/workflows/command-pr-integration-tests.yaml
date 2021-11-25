@@ -37,3 +37,8 @@ jobs:
           TEST_GUILD_TYPICAL_VOICE_2: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_2 }}
           TEST_GUILD_TYPICAL_VOICE_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_GENERAL }}
         run: go test -v -race -tags=integration -coverprofile=coverage-integration.txt -covermode=atomic ./...
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: coverage-integration.txt
