@@ -2,13 +2,28 @@ name: pull request comment
 on: pull_request
 
 jobs:
- job:
-   if: ${{
-    github.event_name == 'pull_request' &&
-    github.event.comment.body == '/run integration-tests' &&
-    github.event.comment.user.id == 7851860}}
-   runs-on: ubuntu-latest
-   steps:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add comment to PR
+        if: ${{ github.event.issue.pull_request }}
+        env:
+          URL: ${{ github.event.issue.comments_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl \
+            -X POST \
+            $URL \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            --data '{ "body": "blah blah" }'
+
+  job:
+    if: ${{
+     github.event_name == 'pull_request' &&
+     github.event.comment.body == '/run integration-tests' &&
+     github.event.comment.user.id == 7851860 }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
