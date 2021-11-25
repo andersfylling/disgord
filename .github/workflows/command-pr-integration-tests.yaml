@@ -1,0 +1,36 @@
+name: pull request comment
+on: pull_request
+
+jobs:
+ job:
+   if: ${{
+    github.event_name == 'pull_request' &&
+    github.event.comment.body == '/run integration-tests' &&
+    github.event.comment.user.id == 7851860}}
+   runs-on: ubuntu-latest
+   steps:
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.17']
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Get dependencies
+        run: go mod download
+      - name: Integration tests
+        env:
+          DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
+          TEST_GUILD_ADMIN_ID: ${{ secrets.TEST_GUILD_ADMIN_ID }}
+          TEST_GUILD_TYPICAL_ID: ${{ secrets.TEST_GUILD_TYPICAL_ID }}
+          TEST_GUILD_TYPICAL_TEXT_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_TEXT_GENERAL }}
+          TEST_GUILD_TYPICAL_VOICE_1: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_1 }}
+          TEST_GUILD_TYPICAL_VOICE_2: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_2 }}
+          TEST_GUILD_TYPICAL_VOICE_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_GENERAL }}
+        run: go test -v -race -tags=integration -coverprofile=coverage-integration.txt -covermode=atomic ./...
