@@ -1,4 +1,4 @@
-name: pull request comment
+name: pull request command
 on: 
   pull_request:
     types: [opened]
@@ -6,23 +6,7 @@ on:
     types: [created]
 
 jobs:
-  comment:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add comment to PR
-        if: ${{ github.event.issue.pull_request }}
-        env:
-          URL: ${{ github.event.issue.comments_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl \
-            -X POST \
-            $URL \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            --data '{ "body": "blah blah" }'
-
-  job:
+  integration-tests:
     if: ${{
      github.event.issue.pull_request &&
      github.event.comment.body == '/run integration-tests' &&
