@@ -38,7 +38,7 @@ jobs:
           TEST_GUILD_TYPICAL_VOICE_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_GENERAL }}
         run: go test -v -race -tags=integration -coverprofile=coverage-integration.txt -covermode=atomic ./...
       - name: Check for success
-        if: ${{ steps.test.outputs.status == 'success' }}
+        if: ${{ success() }}
         env:
           URL: ${{ github.event.issue.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
             -H "Authorization: token $GITHUB_TOKEN" \
             --data '{ "body": ":heavy_check_mark: integration tests succeeded" }'
       - name: Check for failure
-        if: ${{ steps.test.outputs.status == 'failure' }}
+        if: ${{ failure() }}
         env:
           URL: ${{ github.event.issue.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
