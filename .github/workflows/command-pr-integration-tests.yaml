@@ -1,5 +1,7 @@
 name: pull request comment
-on: pull_request
+on: 
+  issue_comment:
+    types: [created]
 
 jobs:
   comment:
