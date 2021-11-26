@@ -1183,7 +1183,9 @@ func (c channelQueryBuilder) CreateThread(name string, messageID Snowflake, para
 	}
 
 	if params == nil {
-		params = &CreateThreadParams{}
+		params = &CreateThreadParams{
+			AutoArchiveDuration: AutoArchiveThreadDay,
+		}
 	}
 	if name != "" && params.Name == "" {
 		params.Name = name
@@ -1219,7 +1221,10 @@ func (c channelQueryBuilder) CreateThreadNoMessage(name string, params *CreateTh
 	}
 
 	if params == nil {
-		params = &CreateThreadParamsNoMessage{}
+		params = &CreateThreadParamsNoMessage{
+			AutoArchiveDuration: AutoArchiveThreadDay,
+			Type:                ChannelTypeGuildPublicThread,
+		}
 	}
 	if name != "" && params.Name == "" {
 		params.Name = name

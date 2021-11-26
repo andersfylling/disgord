@@ -113,7 +113,7 @@ func ChannelThreadMemberCurrentUser(channelID fmt.Stringer) string {
 
 // ChannelThreadMember ...
 func ChannelThreadMemberUser(channelID, userID fmt.Stringer) string {
-	return ChannelThreadMembers(channelID) + userID.String()
+	return ChannelThreadMembers(channelID) + "/" + userID.String()
 }
 
 // ChannelThreadsActive ...
