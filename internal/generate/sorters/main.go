@@ -77,6 +77,7 @@ func main() {
 	}
 
 	makeFile(e, "internal/generate/sorters/sorters.gotpl", "sort_gen.go")
+	makeFile(e, "internal/generate/sorters/disgordutil_sort.gotpl", "disgordutil/sort_gen.go")
 }
 
 type Field struct {

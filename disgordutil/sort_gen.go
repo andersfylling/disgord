@@ -1,77 +1,32 @@
-package disgord
+package disgordutil
 
 import (
 	"fmt"
+	"github.com/andersfylling/disgord"
+	"reflect"
 	"sort"
 	"strings"
 )
 
-type roles []*Role
-
-var _ sort.Interface = (roles)(nil)
-
-func (r roles) Len() int {
-	return len(r)
-}
-
-// Less is reversed due to the visual ordering in Discord.
-func (r roles) Less(i, j int) bool {
-	a := r[i]
-	b := r[j]
-
-	if a.Position == b.Position {
-		return a.ID < b.ID
-	}
-
-	return a.Position > b.Position
-}
-
-func (r roles) Swap(i, j int) {
-	tmp := r[i]
-	r[i] = r[j]
-	r[j] = tmp
-}
-
-//////////////////////////////////////////////////////
-//
-// demultiplexer
-//
-//////////////////////////////////////////////////////
-
-// Deprecated: use disgordutil.Sort instead
-func Sort(v interface{}, fs ...Flag) {
+func Sort(v interface{}, sortByField SortFieldType, sortOrder SortOrderType) {
 	if v == nil {
 		return
 	}
-
-	flags := mergeFlags(fs)
-	if (flags & SortByID) > 0 {
-		sortByID(v, flags)
-	} else if (flags & SortByGuildID) > 0 {
-		sortByGuildID(v, flags)
-	} else if (flags & SortByChannelID) > 0 {
-		sortByChannelID(v, flags)
-	} else if (flags & SortByName) > 0 {
-		sortByName(v, flags)
-	} else if (flags & SortByHoist) > 0 {
-		sortByHoist(v, flags)
+	if sortByField == SortByID {
+		sortByID(v, sortOrder)
+	} else if sortByField == SortByGuildID {
+		sortByGuildID(v, sortOrder)
+	} else if sortByField == SortByChannelID {
+		sortByChannelID(v, sortOrder)
+	} else if sortByField == SortByName {
+		sortByName(v, sortOrder)
+	} else if sortByField == SortByHoist {
+		sortByHoist(v, sortOrder)
 	} else if list, ok := v.(sort.Interface); ok {
-		if (flags & OrderDescending) > 0 {
+		if sortOrder == OrderDescending {
 			sort.Sort(sort.Reverse(list))
 		} else {
 			sort.Sort(list)
-		}
-	} else if list, ok := v.([]*Role); ok {
-		if (flags & OrderDescending) > 0 {
-			sort.Sort(sort.Reverse(roles(list)))
-		} else {
-			sort.Sort(roles(list))
-		}
-	} else if list, ok := v.(*[]*Role); ok {
-		if (flags & OrderDescending) > 0 {
-			sort.Sort(sort.Reverse(roles(*list)))
-		} else {
-			sort.Sort(roles(*list))
 		}
 	} else {
 		panic("type is missing sort.Interface implementation")
@@ -80,267 +35,255 @@ func Sort(v interface{}, fs ...Flag) {
 
 func derefSliceP(v interface{}) (s interface{}) {
 	switch t := v.(type) {
-	case *[]*ApplicationCommand:
+	case *[]*disgord.AuditLog:
 		s = *t
-	case *[]*ApplicationCommandDataOption:
+	case *[]*disgord.AuditLogChanges:
 		s = *t
-	case *[]*ApplicationCommandOption:
+	case *[]*disgord.AuditLogEntry:
 		s = *t
-	case *[]*ApplicationCommandOptionChoice:
+	case *[]*disgord.AuditLogOption:
 		s = *t
-	case *[]*ApplicationCommandPermissions:
+	case *[]*disgord.BasicCache:
 		s = *t
-	case *[]*GuildApplicationCommandPermissions:
+	case *[]*disgord.AllowedMentions:
 		s = *t
-	case *[]*UpdateApplicationCommand:
+	case *[]*disgord.Attachment:
 		s = *t
-	case *[]*AuditLog:
+	case *[]*disgord.Channel:
 		s = *t
-	case *[]*AuditLogChanges:
+	case *[]*disgord.CreateMessageFileParams:
 		s = *t
-	case *[]*AuditLogEntry:
+	case *[]*disgord.CreateMessageParams:
 		s = *t
-	case *[]*AuditLogOption:
+	case *[]*disgord.CreateWebhookParams:
 		s = *t
-	case *[]*BasicCache:
+	case *[]*disgord.DeleteMessagesParams:
 		s = *t
-	case *[]*AllowedMentions:
+	case *[]*disgord.GetMessagesParams:
 		s = *t
-	case *[]*Attachment:
+	case *[]*disgord.GroupDMParticipant:
 		s = *t
-	case *[]*Channel:
+	case *[]*disgord.PartialChannel:
 		s = *t
-	case *[]*CreateMessageFileParams:
+	case *[]*disgord.PermissionOverwrite:
 		s = *t
-	case *[]*CreateMessageParams:
+	case *[]*disgord.UpdateChannelPermissionsParams:
 		s = *t
-	case *[]*CreateWebhookParams:
+	case *[]*disgord.Client:
 		s = *t
-	case *[]*DeleteMessagesParams:
+	case *[]*disgord.Config:
 		s = *t
-	case *[]*GetMessagesParams:
+	case *[]*disgord.ErrorEmptyValue:
 		s = *t
-	case *[]*GroupDMParticipant:
+	case *[]*disgord.ErrorMissingSnowflake:
 		s = *t
-	case *[]*PartialChannel:
+	case *[]*disgord.Embed:
 		s = *t
-	case *[]*PermissionOverwrite:
+	case *[]*disgord.EmbedAuthor:
 		s = *t
-	case *[]*UpdateChannelPermissionsParams:
+	case *[]*disgord.EmbedField:
 		s = *t
-	case *[]*Client:
+	case *[]*disgord.EmbedFooter:
 		s = *t
-	case *[]*Config:
+	case *[]*disgord.EmbedImage:
 		s = *t
-	case *[]*ErrorEmptyValue:
+	case *[]*disgord.EmbedProvider:
 		s = *t
-	case *[]*ErrorMissingSnowflake:
+	case *[]*disgord.EmbedThumbnail:
 		s = *t
-	case *[]*Embed:
+	case *[]*disgord.EmbedVideo:
 		s = *t
-	case *[]*EmbedAuthor:
+	case *[]*disgord.Emoji:
 		s = *t
-	case *[]*EmbedField:
+	case *[]*disgord.ChannelCreate:
 		s = *t
-	case *[]*EmbedFooter:
+	case *[]*disgord.ChannelDelete:
 		s = *t
-	case *[]*EmbedImage:
+	case *[]*disgord.ChannelPinsUpdate:
 		s = *t
-	case *[]*EmbedProvider:
+	case *[]*disgord.ChannelUpdate:
 		s = *t
-	case *[]*EmbedThumbnail:
+	case *[]*disgord.GuildBanAdd:
 		s = *t
-	case *[]*EmbedVideo:
+	case *[]*disgord.GuildBanRemove:
 		s = *t
-	case *[]*Emoji:
+	case *[]*disgord.GuildCreate:
 		s = *t
-	case *[]*ChannelCreate:
+	case *[]*disgord.GuildDelete:
 		s = *t
-	case *[]*ChannelDelete:
+	case *[]*disgord.GuildEmojisUpdate:
 		s = *t
-	case *[]*ChannelPinsUpdate:
+	case *[]*disgord.GuildIntegrationsUpdate:
 		s = *t
-	case *[]*ChannelUpdate:
+	case *[]*disgord.GuildMemberAdd:
 		s = *t
-	case *[]*GuildBanAdd:
+	case *[]*disgord.GuildMemberRemove:
 		s = *t
-	case *[]*GuildBanRemove:
+	case *[]*disgord.GuildMemberUpdate:
 		s = *t
-	case *[]*GuildCreate:
+	case *[]*disgord.GuildMembersChunk:
 		s = *t
-	case *[]*GuildDelete:
+	case *[]*disgord.GuildRoleCreate:
 		s = *t
-	case *[]*GuildEmojisUpdate:
+	case *[]*disgord.GuildRoleDelete:
 		s = *t
-	case *[]*GuildIntegrationsUpdate:
+	case *[]*disgord.GuildRoleUpdate:
 		s = *t
-	case *[]*GuildMemberAdd:
+	case *[]*disgord.GuildUpdate:
 		s = *t
-	case *[]*GuildMemberRemove:
+	case *[]*disgord.InteractionCreate:
 		s = *t
-	case *[]*GuildMemberUpdate:
+	case *[]*disgord.InviteCreate:
 		s = *t
-	case *[]*GuildMembersChunk:
+	case *[]*disgord.InviteDelete:
 		s = *t
-	case *[]*GuildRoleCreate:
+	case *[]*disgord.MessageCreate:
 		s = *t
-	case *[]*GuildRoleDelete:
+	case *[]*disgord.MessageDelete:
 		s = *t
-	case *[]*GuildRoleUpdate:
+	case *[]*disgord.MessageDeleteBulk:
 		s = *t
-	case *[]*GuildUpdate:
+	case *[]*disgord.MessageReactionAdd:
 		s = *t
-	case *[]*InteractionCreate:
+	case *[]*disgord.MessageReactionRemove:
 		s = *t
-	case *[]*InviteCreate:
+	case *[]*disgord.MessageReactionRemoveAll:
 		s = *t
-	case *[]*InviteDelete:
+	case *[]*disgord.MessageReactionRemoveEmoji:
 		s = *t
-	case *[]*MessageCreate:
+	case *[]*disgord.MessageUpdate:
 		s = *t
-	case *[]*MessageDelete:
+	case *[]*disgord.PresenceUpdate:
 		s = *t
-	case *[]*MessageDeleteBulk:
+	case *[]*disgord.Ready:
 		s = *t
-	case *[]*MessageReactionAdd:
+	case *[]*disgord.Resumed:
 		s = *t
-	case *[]*MessageReactionRemove:
+	case *[]*disgord.TypingStart:
 		s = *t
-	case *[]*MessageReactionRemoveAll:
+	case *[]*disgord.UserUpdate:
 		s = *t
-	case *[]*MessageReactionRemoveEmoji:
+	case *[]*disgord.VoiceServerUpdate:
 		s = *t
-	case *[]*MessageUpdate:
+	case *[]*disgord.VoiceStateUpdate:
 		s = *t
-	case *[]*PresenceUpdate:
+	case *[]*disgord.WebhooksUpdate:
 		s = *t
-	case *[]*Ready:
+	case *[]*disgord.AddGuildMemberParams:
 		s = *t
-	case *[]*Resumed:
+	case *[]*disgord.Ban:
 		s = *t
-	case *[]*TypingStart:
+	case *[]*disgord.BanMemberParams:
 		s = *t
-	case *[]*UserUpdate:
+	case *[]*disgord.CreateGuildChannelParams:
 		s = *t
-	case *[]*VoiceServerUpdate:
+	case *[]*disgord.CreateGuildEmojiParams:
 		s = *t
-	case *[]*VoiceStateUpdate:
+	case *[]*disgord.CreateGuildIntegrationParams:
 		s = *t
-	case *[]*WebhooksUpdate:
+	case *[]*disgord.CreateGuildParams:
 		s = *t
-	case *[]*AddGuildMemberParams:
+	case *[]*disgord.CreateGuildRoleParams:
 		s = *t
-	case *[]*Ban:
+	case *[]*disgord.GetMembersParams:
 		s = *t
-	case *[]*BanMemberParams:
+	case *[]*disgord.Guild:
 		s = *t
-	case *[]*CreateGuildChannelParams:
+	case *[]*disgord.GuildEmbed:
 		s = *t
-	case *[]*CreateGuildEmojiParams:
+	case *[]*disgord.GuildUnavailable:
 		s = *t
-	case *[]*CreateGuildIntegrationParams:
+	case *[]*disgord.Integration:
 		s = *t
-	case *[]*CreateGuildParams:
+	case *[]*disgord.IntegrationAccount:
 		s = *t
-	case *[]*CreateGuildRoleParams:
+	case *[]*disgord.Member:
 		s = *t
-	case *[]*GetMembersParams:
+	case *[]*disgord.PartialBan:
 		s = *t
-	case *[]*Guild:
+	case *[]*disgord.UpdateGuildChannelPositionsParams:
 		s = *t
-	case *[]*GuildEmbed:
+	case *[]*disgord.UpdateGuildIntegrationParams:
 		s = *t
-	case *[]*GuildUnavailable:
+	case *[]*disgord.UpdateGuildRolePositionsParams:
 		s = *t
-	case *[]*Integration:
+	case *[]*disgord.ApplicationCommandInteractionData:
 		s = *t
-	case *[]*IntegrationAccount:
+	case *[]*disgord.ApplicationCommandInteractionDataOption:
 		s = *t
-	case *[]*Member:
+	case *[]*disgord.ApplicationCommandInteractionDataResolved:
 		s = *t
-	case *[]*PartialBan:
+	case *[]*disgord.InteractionApplicationCommandCallbackData:
 		s = *t
-	case *[]*UpdateGuildChannelPositionsParams:
+	case *[]*disgord.InteractionResponse:
 		s = *t
-	case *[]*UpdateGuildIntegrationParams:
+	case *[]*disgord.MessageInteraction:
 		s = *t
-	case *[]*UpdateGuildRolePositionsParams:
+	case *[]*disgord.Invite:
 		s = *t
-	case *[]*ApplicationCommandInteractionData:
+	case *[]*disgord.InviteMetadata:
 		s = *t
-	case *[]*ApplicationCommandInteractionDataResolved:
+	case *[]*disgord.MentionChannel:
 		s = *t
-	case *[]*InteractionApplicationCommandCallbackData:
+	case *[]*disgord.Message:
 		s = *t
-	case *[]*InteractionResponse:
+	case *[]*disgord.MessageActivity:
 		s = *t
-	case *[]*MessageInteraction:
+	case *[]*disgord.MessageApplication:
 		s = *t
-	case *[]*Invite:
+	case *[]*disgord.MessageComponent:
 		s = *t
-	case *[]*InviteMetadata:
+	case *[]*disgord.MessageReference:
 		s = *t
-	case *[]*MentionChannel:
+	case *[]*disgord.MessageSticker:
 		s = *t
-	case *[]*Message:
+	case *[]*disgord.StickerItem:
 		s = *t
-	case *[]*MessageActivity:
+	case *[]*disgord.GetReactionURLParams:
 		s = *t
-	case *[]*MessageApplication:
+	case *[]*disgord.Reaction:
 		s = *t
-	case *[]*MessageComponent:
+	case *[]*disgord.Ctrl:
 		s = *t
-	case *[]*MessageReference:
+	case *[]*disgord.RESTBuilder:
 		s = *t
-	case *[]*MessageSticker:
+	case *[]*disgord.Role:
 		s = *t
-	case *[]*StickerItem:
+	case *[]*disgord.ErrorUnsupportedType:
 		s = *t
-	case *[]*GetReactionURLParams:
+	case *[]*disgord.Time:
 		s = *t
-	case *[]*Reaction:
+	case *[]*disgord.Activity:
 		s = *t
-	case *[]*Ctrl:
+	case *[]*disgord.ActivityAssets:
 		s = *t
-	case *[]*RESTBuilder:
+	case *[]*disgord.ActivityEmoji:
 		s = *t
-	case *[]*Role:
+	case *[]*disgord.ActivityParty:
 		s = *t
-	case *[]*ErrorUnsupportedType:
+	case *[]*disgord.ActivitySecrets:
 		s = *t
-	case *[]*Time:
+	case *[]*disgord.ActivityTimestamp:
 		s = *t
-	case *[]*Activity:
+	case *[]*disgord.ClientStatus:
 		s = *t
-	case *[]*ActivityAssets:
+	case *[]*disgord.CreateGroupDMParams:
 		s = *t
-	case *[]*ActivityEmoji:
+	case *[]*disgord.GetCurrentUserGuildsParams:
 		s = *t
-	case *[]*ActivityParty:
+	case *[]*disgord.User:
 		s = *t
-	case *[]*ActivitySecrets:
+	case *[]*disgord.UserConnection:
 		s = *t
-	case *[]*ActivityTimestamp:
+	case *[]*disgord.UserPresence:
 		s = *t
-	case *[]*ClientStatus:
+	case *[]*disgord.VoiceRegion:
 		s = *t
-	case *[]*CreateGroupDMParams:
+	case *[]*disgord.VoiceState:
 		s = *t
-	case *[]*GetCurrentUserGuildsParams:
+	case *[]*disgord.ExecuteWebhookParams:
 		s = *t
-	case *[]*User:
-		s = *t
-	case *[]*UserConnection:
-		s = *t
-	case *[]*UserPresence:
-		s = *t
-	case *[]*VoiceRegion:
-		s = *t
-	case *[]*VoiceState:
-		s = *t
-	case *[]*ExecuteWebhookParams:
-		s = *t
-	case *[]*Webhook:
+	case *[]*disgord.Webhook:
 		s = *t
 	default:
 		s = t
@@ -348,204 +291,184 @@ func derefSliceP(v interface{}) (s interface{}) {
 
 	return s
 }
-func sortByID(v interface{}, flags Flag) {
-	var descending bool
-	if (flags & OrderDescending) > 0 {
-		descending = true
-	}
-
+func sortByID(v interface{}, sortOrder SortOrderType) {
 	v = derefSliceP(v)
+	if !reflectIsSlice(v) {
+		return
+	}
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*ApplicationCommand:
-		if descending {
+	case []*disgord.AuditLogEntry:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*ApplicationCommandPermissions:
-		if descending {
+	case []*disgord.AuditLogOption:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*GuildApplicationCommandPermissions:
-		if descending {
+	case []*disgord.Attachment:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*AuditLogEntry:
-		if descending {
+	case []*disgord.Channel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*AuditLogOption:
-		if descending {
+	case []*disgord.PartialChannel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Attachment:
-		if descending {
+	case []*disgord.PermissionOverwrite:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Channel:
-		if descending {
+	case []*disgord.Emoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*PartialChannel:
-		if descending {
+	case []*disgord.InteractionCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*PermissionOverwrite:
-		if descending {
+	case []*disgord.CreateGuildIntegrationParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Emoji:
-		if descending {
+	case []*disgord.Guild:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*InteractionCreate:
-		if descending {
+	case []*disgord.GuildUnavailable:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*CreateGuildIntegrationParams:
-		if descending {
+	case []*disgord.Integration:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Guild:
-		if descending {
+	case []*disgord.IntegrationAccount:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*GuildUnavailable:
-		if descending {
+	case []*disgord.UpdateGuildChannelPositionsParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Integration:
-		if descending {
+	case []*disgord.UpdateGuildRolePositionsParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*IntegrationAccount:
-		if descending {
+	case []*disgord.ApplicationCommandInteractionData:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*UpdateGuildChannelPositionsParams:
-		if descending {
+	case []*disgord.MessageInteraction:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*UpdateGuildRolePositionsParams:
-		if descending {
+	case []*disgord.MentionChannel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*ApplicationCommandInteractionData:
-		if descending {
+	case []*disgord.Message:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*MessageInteraction:
-		if descending {
+	case []*disgord.MessageApplication:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*MentionChannel:
-		if descending {
+	case []*disgord.MessageSticker:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Message:
-		if descending {
+	case []*disgord.StickerItem:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*MessageApplication:
-		if descending {
+	case []*disgord.Role:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*MessageSticker:
-		if descending {
+	case []*disgord.ActivityEmoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*StickerItem:
-		if descending {
+	case []*disgord.ActivityParty:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*Role:
-		if descending {
+	case []*disgord.User:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*ActivityEmoji:
-		if descending {
+	case []*disgord.UserConnection:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*ActivityParty:
-		if descending {
+	case []*disgord.VoiceRegion:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*User:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*UserConnection:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*VoiceRegion:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*Webhook:
-		if descending {
+	case []*disgord.Webhook:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
@@ -556,186 +479,172 @@ func sortByID(v interface{}, flags Flag) {
 
 	sort.Slice(v, less)
 }
-func sortByGuildID(v interface{}, flags Flag) {
-	var descending bool
-	if (flags & OrderDescending) > 0 {
-		descending = true
-	}
-
+func sortByGuildID(v interface{}, sortOrder SortOrderType) {
 	v = derefSliceP(v)
+	if !reflectIsSlice(v) {
+		return
+	}
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*ApplicationCommand:
-		if descending {
+	case []*disgord.Channel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildApplicationCommandPermissions:
-		if descending {
+	case []*disgord.ChannelPinsUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*Channel:
-		if descending {
+	case []*disgord.GuildBanAdd:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*ChannelPinsUpdate:
-		if descending {
+	case []*disgord.GuildBanRemove:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildBanAdd:
-		if descending {
+	case []*disgord.GuildEmojisUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildBanRemove:
-		if descending {
+	case []*disgord.GuildIntegrationsUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildEmojisUpdate:
-		if descending {
+	case []*disgord.GuildMemberRemove:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildIntegrationsUpdate:
-		if descending {
+	case []*disgord.GuildMembersChunk:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildMemberRemove:
-		if descending {
+	case []*disgord.GuildRoleCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildMembersChunk:
-		if descending {
+	case []*disgord.GuildRoleDelete:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildRoleCreate:
-		if descending {
+	case []*disgord.GuildRoleUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildRoleDelete:
-		if descending {
+	case []*disgord.InteractionCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*GuildRoleUpdate:
-		if descending {
+	case []*disgord.InviteCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*InteractionCreate:
-		if descending {
+	case []*disgord.InviteDelete:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*InviteCreate:
-		if descending {
+	case []*disgord.MessageDelete:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*InviteDelete:
-		if descending {
+	case []*disgord.MessageReactionRemoveEmoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*MessageDelete:
-		if descending {
+	case []*disgord.PresenceUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*MessageReactionRemoveEmoji:
-		if descending {
+	case []*disgord.TypingStart:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*PresenceUpdate:
-		if descending {
+	case []*disgord.VoiceServerUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*TypingStart:
-		if descending {
+	case []*disgord.WebhooksUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*VoiceServerUpdate:
-		if descending {
+	case []*disgord.Member:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*WebhooksUpdate:
-		if descending {
+	case []*disgord.MentionChannel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*Member:
-		if descending {
+	case []*disgord.Message:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*MentionChannel:
-		if descending {
+	case []*disgord.MessageReference:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*Message:
-		if descending {
+	case []*disgord.UserPresence:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*MessageReference:
-		if descending {
+	case []*disgord.VoiceState:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
 		}
-	case []*UserPresence:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
-	case []*VoiceState:
-		if descending {
-			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
-		} else {
-			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
-		}
-	case []*Webhook:
-		if descending {
+	case []*disgord.Webhook:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].GuildID > s[j].GuildID }
 		} else {
 			less = func(i, j int) bool { return s[i].GuildID < s[j].GuildID }
@@ -746,120 +655,118 @@ func sortByGuildID(v interface{}, flags Flag) {
 
 	sort.Slice(v, less)
 }
-func sortByChannelID(v interface{}, flags Flag) {
-	var descending bool
-	if (flags & OrderDescending) > 0 {
-		descending = true
-	}
-
+func sortByChannelID(v interface{}, sortOrder SortOrderType) {
 	v = derefSliceP(v)
+	if !reflectIsSlice(v) {
+		return
+	}
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*AuditLogOption:
-		if descending {
+	case []*disgord.AuditLogOption:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*ChannelPinsUpdate:
-		if descending {
+	case []*disgord.ChannelPinsUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*InteractionCreate:
-		if descending {
+	case []*disgord.InteractionCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*InviteCreate:
-		if descending {
+	case []*disgord.InviteCreate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*InviteDelete:
-		if descending {
+	case []*disgord.InviteDelete:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageDelete:
-		if descending {
+	case []*disgord.MessageDelete:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageDeleteBulk:
-		if descending {
+	case []*disgord.MessageDeleteBulk:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageReactionAdd:
-		if descending {
+	case []*disgord.MessageReactionAdd:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageReactionRemove:
-		if descending {
+	case []*disgord.MessageReactionRemove:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageReactionRemoveAll:
-		if descending {
+	case []*disgord.MessageReactionRemoveAll:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageReactionRemoveEmoji:
-		if descending {
+	case []*disgord.MessageReactionRemoveEmoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*TypingStart:
-		if descending {
+	case []*disgord.TypingStart:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*WebhooksUpdate:
-		if descending {
+	case []*disgord.WebhooksUpdate:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*GuildEmbed:
-		if descending {
+	case []*disgord.GuildEmbed:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*Message:
-		if descending {
+	case []*disgord.Message:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*MessageReference:
-		if descending {
+	case []*disgord.MessageReference:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*VoiceState:
-		if descending {
+	case []*disgord.VoiceState:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*Webhook:
-		if descending {
+	case []*disgord.Webhook:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
@@ -870,192 +777,172 @@ func sortByChannelID(v interface{}, flags Flag) {
 
 	sort.Slice(v, less)
 }
-func sortByName(v interface{}, flags Flag) {
-	var descending bool
-	if (flags & OrderDescending) > 0 {
-		descending = true
-	}
-
+func sortByName(v interface{}, sortOrder SortOrderType) {
 	v = derefSliceP(v)
+	if !reflectIsSlice(v) {
+		return
+	}
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*ApplicationCommand:
-		if descending {
+	case []*disgord.Channel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*ApplicationCommandDataOption:
-		if descending {
+	case []*disgord.CreateWebhookParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*ApplicationCommandOption:
-		if descending {
+	case []*disgord.PartialChannel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*ApplicationCommandOptionChoice:
-		if descending {
+	case []*disgord.EmbedAuthor:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Channel:
-		if descending {
+	case []*disgord.EmbedField:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateWebhookParams:
-		if descending {
+	case []*disgord.EmbedProvider:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*PartialChannel:
-		if descending {
+	case []*disgord.Emoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*EmbedAuthor:
-		if descending {
+	case []*disgord.CreateGuildChannelParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*EmbedField:
-		if descending {
+	case []*disgord.CreateGuildEmojiParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*EmbedProvider:
-		if descending {
+	case []*disgord.CreateGuildParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Emoji:
-		if descending {
+	case []*disgord.CreateGuildRoleParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildChannelParams:
-		if descending {
+	case []*disgord.Guild:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildEmojiParams:
-		if descending {
+	case []*disgord.Integration:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildParams:
-		if descending {
+	case []*disgord.IntegrationAccount:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*CreateGuildRoleParams:
-		if descending {
+	case []*disgord.ApplicationCommandInteractionData:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Guild:
-		if descending {
+	case []*disgord.ApplicationCommandInteractionDataOption:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Integration:
-		if descending {
+	case []*disgord.MessageInteraction:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*IntegrationAccount:
-		if descending {
+	case []*disgord.MentionChannel:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*ApplicationCommandInteractionData:
-		if descending {
+	case []*disgord.MessageApplication:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*MessageInteraction:
-		if descending {
+	case []*disgord.MessageSticker:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*MentionChannel:
-		if descending {
+	case []*disgord.StickerItem:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*MessageApplication:
-		if descending {
+	case []*disgord.Role:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*MessageSticker:
-		if descending {
+	case []*disgord.Activity:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*StickerItem:
-		if descending {
+	case []*disgord.ActivityEmoji:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Role:
-		if descending {
+	case []*disgord.UserConnection:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*Activity:
-		if descending {
+	case []*disgord.VoiceRegion:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
-	case []*ActivityEmoji:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*UserConnection:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*VoiceRegion:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*Webhook:
-		if descending {
+	case []*disgord.Webhook:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
@@ -1066,24 +953,22 @@ func sortByName(v interface{}, flags Flag) {
 
 	sort.Slice(v, less)
 }
-func sortByHoist(v interface{}, flags Flag) {
-	var descending bool
-	if (flags & OrderDescending) > 0 {
-		descending = true
-	}
-
+func sortByHoist(v interface{}, sortOrder SortOrderType) {
 	v = derefSliceP(v)
+	if !reflectIsSlice(v) {
+		return
+	}
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
-	case []*CreateGuildRoleParams:
-		if descending {
+	case []*disgord.CreateGuildRoleParams:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].Hoist && !s[j].Hoist }
 		} else {
 			less = func(i, j int) bool { return !s[i].Hoist && s[j].Hoist }
 		}
-	case []*Role:
-		if descending {
+	case []*disgord.Role:
+		if sortOrder == OrderDescending {
 			less = func(i, j int) bool { return s[i].Hoist && !s[j].Hoist }
 		} else {
 			less = func(i, j int) bool { return !s[i].Hoist && s[j].Hoist }
@@ -1093,4 +978,10 @@ func sortByHoist(v interface{}, flags Flag) {
 	}
 
 	sort.Slice(v, less)
+}
+
+func reflectIsSlice(v interface{}) bool {
+	ValueIface := reflect.ValueOf(v)
+	kind := ValueIface.Type().Kind()
+	return kind == reflect.Slice
 }

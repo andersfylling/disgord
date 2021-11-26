@@ -3,38 +3,11 @@ package disgord
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"sort"
-
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
+	"net/http"
 )
 
-type roles []*Role
-
-var _ sort.Interface = (roles)(nil)
-
-func (r roles) Len() int {
-	return len(r)
-}
-
-// Less is reversed due to the visual ordering in Discord.
-func (r roles) Less(i, j int) bool {
-	a := r[i]
-	b := r[j]
-
-	if a.Position == b.Position {
-		return a.ID < b.ID
-	}
-
-	return a.Position > b.Position
-}
-
-func (r roles) Swap(i, j int) {
-	tmp := r[i]
-	r[i] = r[j]
-	r[j] = tmp
-}
 
 // Role https://discord.com/developers/docs/topics/permissions#role-object
 type Role struct {
