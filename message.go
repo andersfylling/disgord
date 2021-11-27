@@ -55,9 +55,10 @@ const (
 	MessageTypeGuildDiscoveryRequalified
 	_
 	_
-	_
+	MessageTypeThreadCreated
 	MessageTypeReply
 	MessageTypeApplicationCommand
+	MessageTypeThreadStarterMessage
 )
 
 const (

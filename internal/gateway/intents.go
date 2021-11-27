@@ -38,12 +38,20 @@ const (
 	// - CHANNEL_UPDATE
 	// - CHANNEL_DELETE
 	// - CHANNEL_PINS_UPDATE
+	// - THREAD_CREATE
+	// - THREAD_UPDATE
+	// - THREAD_DELETE
+	// - THREAD_LIST_SYNC
+	// - THREAD_MEMBER_UPDATE
 	IntentGuilds Intent = 1 << iota
 
 	// IntentGuildMembers
 	// - GUILD_MEMBER_ADD
 	// - GUILD_MEMBER_UPDATE
 	// - GUILD_MEMBER_REMOVE
+	// assumption#1: put thread member update event intent into here for now.
+	//				 ref - https://discord.com/developers/docs/topics/gateway#thread-members-update
+	// - THREAD_MEMBERS_UPDATE
 	IntentGuildMembers
 
 	// IntentGuildBans
@@ -154,11 +162,23 @@ func EventToIntent(evt string, direct bool) Intent {
 			intent = IntentGuilds
 		case event.ChannelPinsUpdate:
 			intent = IntentGuilds
+		case event.ThreadCreate:
+			intent = IntentGuilds
+		case event.ThreadUpdate:
+			intent = IntentGuilds
+		case event.ThreadDelete:
+			intent = IntentGuilds
+		case event.ThreadListSync:
+			intent = IntentGuilds
+		case event.ThreadMemberUpdate:
+			intent = IntentGuilds
 		case event.GuildMemberAdd:
 			intent = IntentGuildMembers
 		case event.GuildMemberUpdate:
 			intent = IntentGuildMembers
 		case event.GuildMemberRemove:
+			intent = IntentGuildMembers
+		case event.ThreadMembersUpdate:
 			intent = IntentGuildMembers
 		case event.GuildBanAdd:
 			intent = IntentGuildBans

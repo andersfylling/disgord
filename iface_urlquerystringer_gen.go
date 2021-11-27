@@ -2,6 +2,10 @@
 
 package disgord
 
+import (
+	"time"
+)
+
 func (g *GetMessagesParams) URLQueryString() string {
 	params := make(urlQuery)
 
@@ -15,6 +19,20 @@ func (g *GetMessagesParams) URLQueryString() string {
 
 	if !(g.After == 0) {
 		params["after"] = g.After
+	}
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	return params.URLQueryString()
+}
+
+func (g *GetThreadsParams) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.Before == Time{time.Unix(0, 0)}) {
+		params["before"] = g.Before
 	}
 
 	if !(g.Limit == 0) {
@@ -112,6 +130,8 @@ func (e *execWebhookParams) URLQueryString() string {
 	params := make(urlQuery)
 
 	params["wait"] = e.Wait
+
+	params["thread_id"] = e.ThreadID
 
 	return params.URLQueryString()
 }

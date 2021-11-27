@@ -101,3 +101,8 @@ func GuildEmbed(id fmt.Stringer) string {
 func GuildVanityURL(id fmt.Stringer) string {
 	return Guild(id) + vanityURL
 }
+
+// GuildThreadsActive ...
+func GuildThreadsActive(id fmt.Stringer) string {
+	return Guild(id) + threads + active
+}

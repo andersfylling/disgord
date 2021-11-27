@@ -287,6 +287,54 @@ func (h *Resumed) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
+// EvtThreadCreate Sent when a thread is created, relevant to the current user, or when the current user is added to a thread.
+//
+const EvtThreadCreate = event.ThreadCreate
+
+func (h *ThreadCreate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtThreadDelete Sent when a thread relevant to the current user is deleted.
+//
+const EvtThreadDelete = event.ThreadDelete
+
+func (h *ThreadDelete) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtThreadListSync Sent when the current user gains access to a channel.
+//
+const EvtThreadListSync = event.ThreadListSync
+
+func (h *ThreadListSync) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtThreadMemberUpdate Sent when the thread member object for the current user is updated.
+//
+const EvtThreadMemberUpdate = event.ThreadMemberUpdate
+
+func (h *ThreadMemberUpdate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtThreadMembersUpdate Sent when anyone is added to or removed from a thread.
+//
+const EvtThreadMembersUpdate = event.ThreadMembersUpdate
+
+func (h *ThreadMembersUpdate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtThreadUpdate Sent when a thread is updated.
+//
+const EvtThreadUpdate = event.ThreadUpdate
+
+func (h *ThreadUpdate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
 // EvtTypingStart Sent when a user starts typing in a channel.
 //
 const EvtTypingStart = event.TypingStart
@@ -1024,6 +1072,126 @@ func (shr socketHandlerRegister) ResumedChan(handler chan *Resumed, moreHandlers
 	shr.build()
 }
 
+// ThreadCreate Sent when a thread is created, relevant to the current user, or when the current user is added to a thread.
+//
+func (shr socketHandlerRegister) ThreadCreate(handler HandlerThreadCreate, moreHandlers ...HandlerThreadCreate) {
+	shr.evtName = EvtThreadCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadCreateChan(handler chan *ThreadCreate, moreHandlers ...chan *ThreadCreate) {
+	shr.evtName = EvtThreadCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// ThreadDelete Sent when a thread relevant to the current user is deleted.
+//
+func (shr socketHandlerRegister) ThreadDelete(handler HandlerThreadDelete, moreHandlers ...HandlerThreadDelete) {
+	shr.evtName = EvtThreadDelete
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadDeleteChan(handler chan *ThreadDelete, moreHandlers ...chan *ThreadDelete) {
+	shr.evtName = EvtThreadDelete
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// ThreadListSync Sent when the current user gains access to a channel.
+//
+func (shr socketHandlerRegister) ThreadListSync(handler HandlerThreadListSync, moreHandlers ...HandlerThreadListSync) {
+	shr.evtName = EvtThreadListSync
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadListSyncChan(handler chan *ThreadListSync, moreHandlers ...chan *ThreadListSync) {
+	shr.evtName = EvtThreadListSync
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// ThreadMemberUpdate Sent when the thread member object for the current user is updated.
+//
+func (shr socketHandlerRegister) ThreadMemberUpdate(handler HandlerThreadMemberUpdate, moreHandlers ...HandlerThreadMemberUpdate) {
+	shr.evtName = EvtThreadMemberUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadMemberUpdateChan(handler chan *ThreadMemberUpdate, moreHandlers ...chan *ThreadMemberUpdate) {
+	shr.evtName = EvtThreadMemberUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// ThreadMembersUpdate Sent when anyone is added to or removed from a thread.
+//
+func (shr socketHandlerRegister) ThreadMembersUpdate(handler HandlerThreadMembersUpdate, moreHandlers ...HandlerThreadMembersUpdate) {
+	shr.evtName = EvtThreadMembersUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadMembersUpdateChan(handler chan *ThreadMembersUpdate, moreHandlers ...chan *ThreadMembersUpdate) {
+	shr.evtName = EvtThreadMembersUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// ThreadUpdate Sent when a thread is updated.
+//
+func (shr socketHandlerRegister) ThreadUpdate(handler HandlerThreadUpdate, moreHandlers ...HandlerThreadUpdate) {
+	shr.evtName = EvtThreadUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) ThreadUpdateChan(handler chan *ThreadUpdate, moreHandlers ...chan *ThreadUpdate) {
+	shr.evtName = EvtThreadUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
 // TypingStart Sent when a user starts typing in a channel.
 //
 func (shr socketHandlerRegister) TypingStart(handler HandlerTypingStart, moreHandlers ...HandlerTypingStart) {
@@ -1190,6 +1358,18 @@ type SocketHandlerRegistrator interface {
 	ReadyChan(handler chan *Ready, moreHandlers ...chan *Ready)
 	Resumed(handler HandlerResumed, moreHandlers ...HandlerResumed)
 	ResumedChan(handler chan *Resumed, moreHandlers ...chan *Resumed)
+	ThreadCreate(handler HandlerThreadCreate, moreHandlers ...HandlerThreadCreate)
+	ThreadCreateChan(handler chan *ThreadCreate, moreHandlers ...chan *ThreadCreate)
+	ThreadDelete(handler HandlerThreadDelete, moreHandlers ...HandlerThreadDelete)
+	ThreadDeleteChan(handler chan *ThreadDelete, moreHandlers ...chan *ThreadDelete)
+	ThreadListSync(handler HandlerThreadListSync, moreHandlers ...HandlerThreadListSync)
+	ThreadListSyncChan(handler chan *ThreadListSync, moreHandlers ...chan *ThreadListSync)
+	ThreadMemberUpdate(handler HandlerThreadMemberUpdate, moreHandlers ...HandlerThreadMemberUpdate)
+	ThreadMemberUpdateChan(handler chan *ThreadMemberUpdate, moreHandlers ...chan *ThreadMemberUpdate)
+	ThreadMembersUpdate(handler HandlerThreadMembersUpdate, moreHandlers ...HandlerThreadMembersUpdate)
+	ThreadMembersUpdateChan(handler chan *ThreadMembersUpdate, moreHandlers ...chan *ThreadMembersUpdate)
+	ThreadUpdate(handler HandlerThreadUpdate, moreHandlers ...HandlerThreadUpdate)
+	ThreadUpdateChan(handler chan *ThreadUpdate, moreHandlers ...chan *ThreadUpdate)
 	TypingStart(handler HandlerTypingStart, moreHandlers ...HandlerTypingStart)
 	TypingStartChan(handler chan *TypingStart, moreHandlers ...chan *TypingStart)
 	UserUpdate(handler HandlerUserUpdate, moreHandlers ...HandlerUserUpdate)

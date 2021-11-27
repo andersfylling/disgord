@@ -45,13 +45,13 @@ type WebhookQueryBuilder interface {
 	Delete() error
 
 	// Execute Trigger a webhook in Discord.
-	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (*Message, error)
+	Execute(params *ExecuteWebhookParams, wait bool, threadID Snowflake, URLSuffix string) (*Message, error)
 
 	// ExecuteSlackWebhook Trigger a webhook in Discord from the Slack app.
-	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (*Message, error)
+	ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, threadID Snowflake) (*Message, error)
 
 	// ExecuteGitHubWebhook Trigger a webhook in Discord from the GitHub app.
-	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (*Message, error)
+	ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, threadID Snowflake) (*Message, error)
 
 	WithToken(token string) WebhookWithTokenQueryBuilder
 }
@@ -141,14 +141,15 @@ type ExecuteWebhookParams struct {
 }
 
 type execWebhookParams struct {
-	Wait bool `urlparam:"wait"`
+	Wait     bool      `urlparam:"wait"`
+	ThreadID Snowflake `urlparam:"thread_id"`
 }
 
 var _ URLQueryStringer = (*execWebhookParams)(nil)
 
 // Execute Trigger a webhook in Discord.
-func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (message *Message, err error) {
-	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, URLSuffix)
+func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, threadID Snowflake, URLSuffix string) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, threadID, URLSuffix)
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
@@ -158,8 +159,8 @@ func (w webhookQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, UR
 //  Reviewed                2020-05-21
 //  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
 //                          icon_emoji, mrkdwn, or mrkdwn_in properties.
-func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool) (message *Message, err error) {
-	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, endpoint.Slack())
+func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, wait bool, threadID Snowflake) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, threadID, endpoint.Slack())
 }
 
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
@@ -171,8 +172,8 @@ func (w webhookQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhookParams, w
 //                          as the "Payload URL." You can choose what events your Discord channel receives by
 //                          choosing the "Let me select individual events" option and selecting individual
 //                          events for the new webhook you're configuring.
-func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool) (message *Message, err error) {
-	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, endpoint.GitHub())
+func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhookParams, wait bool, threadID Snowflake) (message *Message, err error) {
+	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, threadID, endpoint.GitHub())
 }
 
 type WebhookWithTokenQueryBuilder interface {
@@ -190,7 +191,7 @@ type WebhookWithTokenQueryBuilder interface {
 	// Delete Same as DeleteWebhook, except this call does not require authentication.
 	Delete() error
 
-	Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (*Message, error)
+	Execute(params *ExecuteWebhookParams, wait bool, threadID Snowflake, URLSuffix string) (*Message, error)
 }
 
 func (w webhookQueryBuilder) WithToken(token string) WebhookWithTokenQueryBuilder {
@@ -297,7 +298,7 @@ func (w webhookWithTokenQueryBuilder) Delete() error {
 //  Comment#2               For the webhook embed objects, you can set every field except type (it will be
 //                          rich regardless of if you try to set it), provider, video, and any height, width,
 //                          or proxy_url values for images.
-func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, URLSuffix string) (message *Message, err error) {
+func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait bool, threadID Snowflake, URLSuffix string) (message *Message, err error) {
 	if params == nil {
 		return nil, errors.New("params can not be nil")
 	}
@@ -316,7 +317,10 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhookParams, wait
 		contentType = "multipart/form-data"
 	}
 
-	urlparams := &execWebhookParams{wait}
+	urlparams := &execWebhookParams{
+		Wait:     wait,
+		ThreadID: threadID,
+	}
 	r := w.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         w.ctx,
