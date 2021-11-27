@@ -20,10 +20,12 @@ type ThreadMetadata struct {
 type AutoArchiveDurationTime int
 
 const (
-	AutoArchiveThreadMinute    = 60
-	AutoArchiveThreadDay       = 1440
-	AutoArchiveThreadThreeDays = 4320
-	AutoArchiveThreadWeek      = 10080
+	AutoArchiveThreadMinute AutoArchiveDurationTime = 60
+	AutoArchiveThreadDay    AutoArchiveDurationTime = 1440
+	// guild must be boosted to use the below auto archive durations.
+	// ref: https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params
+	AutoArchiveThreadThreeDays AutoArchiveDurationTime = 4320
+	AutoArchiveThreadWeek      AutoArchiveDurationTime = 10080
 )
 
 // ref https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params

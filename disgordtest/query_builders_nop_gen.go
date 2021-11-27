@@ -76,11 +76,11 @@ func (c *ChannelQueryBuilderNop) CreateMessage(_ *disgord.CreateMessageParams) (
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateThread(_ string, _ disgord.Snowflake, _ *disgord.CreateThreadParams) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) CreateThread(_ disgord.Snowflake, _ *disgord.CreateThreadParams) (*disgord.Channel, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateThreadNoMessage(_ string, _ *disgord.CreateThreadParamsNoMessage) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) CreateThreadNoMessage(_ *disgord.CreateThreadParamsNoMessage) (*disgord.Channel, error) {
 	return nil, nil
 }
 

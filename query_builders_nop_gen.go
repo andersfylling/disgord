@@ -67,11 +67,11 @@ func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessageParams) (*Message
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateThread(_ string, _ Snowflake, _ *CreateThreadParams) (*Channel, error) {
+func (c *channelQueryBuilderNop) CreateThread(_ Snowflake, _ *CreateThreadParams) (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ string, _ *CreateThreadParamsNoMessage) (*Channel, error) {
+func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ *CreateThreadParamsNoMessage) (*Channel, error) {
 	return nil, nil
 }
 

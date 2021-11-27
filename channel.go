@@ -33,6 +33,8 @@ const (
 	_
 	ChannelTypeGuildNewsThread
 	ChannelTypeGuildPublicThread
+	// a temporary sub-channel within a GUILD_TEXT channel that is only viewable by those
+	// invited and those with the MANAGE_THREADS permission
 	ChannelTypeGuildPrivateThread
 )
 
@@ -327,9 +329,9 @@ type ChannelQueryBuilder interface {
 	Message(id Snowflake) MessageQueryBuilder
 
 	// CreateThread Create a thread in a channel from a message.
-	CreateThread(name string, messageID Snowflake, params *CreateThreadParams) (*Channel, error)
+	CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error)
 	// CreateThreadNoMessage Create a thread that is not connected to an existing message.
-	CreateThreadNoMessage(name string, params *CreateThreadParamsNoMessage) (*Channel, error)
+	CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error)
 	// Adds the current user to a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	JoinThread() error
@@ -1174,21 +1176,13 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 // Reviewed                 2021-11-21 (self)
 // Comment                  This endpoint supports the X-Audit-Log-Reason header.
 
-func (c channelQueryBuilder) CreateThread(name string, messageID Snowflake, params *CreateThreadParams) (*Channel, error) {
-	if name == "" && (params == nil || params.Name == "") {
+func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error) {
+	if params == nil || params.Name == "" {
 		return nil, errors.New("thread name is required")
 	}
-	if l := len(name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
-	}
 
-	if params == nil {
-		params = &CreateThreadParams{
-			AutoArchiveDuration: AutoArchiveThreadDay,
-		}
-	}
-	if name != "" && params.Name == "" {
-		params.Name = name
+	if l := len(params.Name); !(2 <= l && l <= 100) {
+		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -1212,22 +1206,13 @@ func (c channelQueryBuilder) CreateThread(name string, messageID Snowflake, para
 // Reviewed                        2021-11-22 (self)
 // Comment                         This endpoint supports the X-Audit-Log-Reason header.
 
-func (c channelQueryBuilder) CreateThreadNoMessage(name string, params *CreateThreadParamsNoMessage) (*Channel, error) {
-	if name == "" && (params == nil || params.Name == "") {
+func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error) {
+	if params == nil || params.Name == "" {
 		return nil, errors.New("thread name is required")
 	}
-	if l := len(name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
-	}
 
-	if params == nil {
-		params = &CreateThreadParamsNoMessage{
-			AutoArchiveDuration: AutoArchiveThreadDay,
-			Type:                ChannelTypeGuildPublicThread,
-		}
-	}
-	if name != "" && params.Name == "" {
-		params.Name = name
+	if l := len(params.Name); !(2 <= l && l <= 100) {
+		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
