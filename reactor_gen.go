@@ -76,6 +76,18 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &Ready{}
 	case EvtResumed:
 		resource = &Resumed{}
+	case EvtThreadCreate:
+		resource = &ThreadCreate{}
+	case EvtThreadDelete:
+		resource = &ThreadDelete{}
+	case EvtThreadListSync:
+		resource = &ThreadListSync{}
+	case EvtThreadMemberUpdate:
+		resource = &ThreadMemberUpdate{}
+	case EvtThreadMembersUpdate:
+		resource = &ThreadMembersUpdate{}
+	case EvtThreadUpdate:
+		resource = &ThreadUpdate{}
 	case EvtTypingStart:
 		resource = &TypingStart{}
 	case EvtUserUpdate:
@@ -227,6 +239,30 @@ func isHandler(h Handler) (ok bool) {
 		ok = true
 	case chan *Resumed:
 		ok = true
+	case HandlerThreadCreate:
+		ok = true
+	case chan *ThreadCreate:
+		ok = true
+	case HandlerThreadDelete:
+		ok = true
+	case chan *ThreadDelete:
+		ok = true
+	case HandlerThreadListSync:
+		ok = true
+	case chan *ThreadListSync:
+		ok = true
+	case HandlerThreadMemberUpdate:
+		ok = true
+	case chan *ThreadMemberUpdate:
+		ok = true
+	case HandlerThreadMembersUpdate:
+		ok = true
+	case chan *ThreadMembersUpdate:
+		ok = true
+	case HandlerThreadUpdate:
+		ok = true
+	case chan *ThreadUpdate:
+		ok = true
 	case HandlerTypingStart:
 		ok = true
 	case chan *TypingStart:
@@ -318,6 +354,18 @@ func closeChannel(channel interface{}) {
 	case chan *Ready:
 		close(t)
 	case chan *Resumed:
+		close(t)
+	case chan *ThreadCreate:
+		close(t)
+	case chan *ThreadDelete:
+		close(t)
+	case chan *ThreadListSync:
+		close(t)
+	case chan *ThreadMemberUpdate:
+		close(t)
+	case chan *ThreadMembersUpdate:
+		close(t)
+	case chan *ThreadUpdate:
 		close(t)
 	case chan *TypingStart:
 		close(t)
@@ -551,6 +599,42 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*Resumed)
 	case chan<- *Resumed:
 		t <- evt.(*Resumed)
+	case HandlerThreadCreate:
+		t(d.session, evt.(*ThreadCreate))
+	case chan *ThreadCreate:
+		t <- evt.(*ThreadCreate)
+	case chan<- *ThreadCreate:
+		t <- evt.(*ThreadCreate)
+	case HandlerThreadDelete:
+		t(d.session, evt.(*ThreadDelete))
+	case chan *ThreadDelete:
+		t <- evt.(*ThreadDelete)
+	case chan<- *ThreadDelete:
+		t <- evt.(*ThreadDelete)
+	case HandlerThreadListSync:
+		t(d.session, evt.(*ThreadListSync))
+	case chan *ThreadListSync:
+		t <- evt.(*ThreadListSync)
+	case chan<- *ThreadListSync:
+		t <- evt.(*ThreadListSync)
+	case HandlerThreadMemberUpdate:
+		t(d.session, evt.(*ThreadMemberUpdate))
+	case chan *ThreadMemberUpdate:
+		t <- evt.(*ThreadMemberUpdate)
+	case chan<- *ThreadMemberUpdate:
+		t <- evt.(*ThreadMemberUpdate)
+	case HandlerThreadMembersUpdate:
+		t(d.session, evt.(*ThreadMembersUpdate))
+	case chan *ThreadMembersUpdate:
+		t <- evt.(*ThreadMembersUpdate)
+	case chan<- *ThreadMembersUpdate:
+		t <- evt.(*ThreadMembersUpdate)
+	case HandlerThreadUpdate:
+		t(d.session, evt.(*ThreadUpdate))
+	case chan *ThreadUpdate:
+		t <- evt.(*ThreadUpdate)
+	case chan<- *ThreadUpdate:
+		t <- evt.(*ThreadUpdate)
 	case HandlerTypingStart:
 		t(d.session, evt.(*TypingStart))
 	case chan *TypingStart:
@@ -689,6 +773,24 @@ type HandlerReady = func(s Session, h *Ready)
 
 // HandlerResumed is triggered by Resumed events
 type HandlerResumed = func(s Session, h *Resumed)
+
+// HandlerThreadCreate is triggered by ThreadCreate events
+type HandlerThreadCreate = func(s Session, h *ThreadCreate)
+
+// HandlerThreadDelete is triggered by ThreadDelete events
+type HandlerThreadDelete = func(s Session, h *ThreadDelete)
+
+// HandlerThreadListSync is triggered by ThreadListSync events
+type HandlerThreadListSync = func(s Session, h *ThreadListSync)
+
+// HandlerThreadMemberUpdate is triggered by ThreadMemberUpdate events
+type HandlerThreadMemberUpdate = func(s Session, h *ThreadMemberUpdate)
+
+// HandlerThreadMembersUpdate is triggered by ThreadMembersUpdate events
+type HandlerThreadMembersUpdate = func(s Session, h *ThreadMembersUpdate)
+
+// HandlerThreadUpdate is triggered by ThreadUpdate events
+type HandlerThreadUpdate = func(s Session, h *ThreadUpdate)
 
 // HandlerTypingStart is triggered by TypingStart events
 type HandlerTypingStart = func(s Session, h *TypingStart)

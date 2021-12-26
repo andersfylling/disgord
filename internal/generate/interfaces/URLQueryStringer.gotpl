@@ -5,6 +5,14 @@ package disgord
 {{ range $enf := . }}
 {{ if eq $enf.Name "URLQueryStringer" }}
 
+import (
+{{ range $struct := $enf.Structs }}
+{{ range $imp := $struct.NeededImports }}
+{{ if ne $imp.Name "" }}"{{ $imp.Name }}"{{ end }}
+{{ end }}
+{{ end }}
+)
+
 {{ range $struct := $enf.Structs }}
 func ({{ $struct.ShortName }} *{{ $struct.Name }}) URLQueryString() string {
 	params := make(urlQuery)

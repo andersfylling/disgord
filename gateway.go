@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/gateway"
 	"github.com/andersfylling/disgord/internal/gateway/cmd"
@@ -221,7 +222,7 @@ func (g gatewayQueryBuilder) Dispatch(name GatewayCmdName, payload gateway.CmdPa
 func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{
-		Method:   httd.MethodGet,
+		Method:   http.MethodGet,
 		Endpoint: "/gateway",
 	})
 	if err != nil {
@@ -249,7 +250,7 @@ func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 func (g gatewayQueryBuilder) GetBot() (gateway *gateway.GatewayBot, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{
-		Method:   httd.MethodGet,
+		Method:   http.MethodGet,
 		Endpoint: "/gateway/bot",
 	})
 	if err != nil {

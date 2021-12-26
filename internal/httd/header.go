@@ -105,8 +105,8 @@ func NormalizeDiscordHeader(statusCode int, header http.Header, body []byte) (h 
 			timestamp = now
 		}
 
-		reset := timestamp.Add(time.Duration(delay) * time.Millisecond)
-		ms := reset.UnixNano() / int64(time.Millisecond)
+		resetTime := timestamp.Add(time.Duration(delay) * time.Millisecond)
+		ms := resetTime.UnixNano() / int64(time.Millisecond)
 		header.Set(XRateLimitReset, strconv.FormatInt(ms, 10))
 	}
 

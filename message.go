@@ -8,6 +8,7 @@ import (
 	"github.com/andersfylling/disgord/json"
 	"mime/multipart"
 	"strings"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -58,9 +59,10 @@ const (
 	MessageTypeGuildDiscoveryRequalified
 	_
 	_
-	_
+	MessageTypeThreadCreated
 	MessageTypeReply
 	MessageTypeApplicationCommand
+	MessageTypeThreadStarterMessage
 )
 
 const (
@@ -457,7 +459,7 @@ func (m messageQueryBuilder) Update(params *UpdateMessageParams) (*Message, erro
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
 		Body:        postBody,
@@ -543,7 +545,7 @@ func (m messageQueryBuilder) Delete() (err error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessage(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -561,7 +563,7 @@ func (m messageQueryBuilder) Delete() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) Pin() (err error) {
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
+		Method:   http.MethodPut,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -586,7 +588,7 @@ func (m messageQueryBuilder) Unpin() (err error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelPin(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -610,7 +612,7 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Endpoint: endpoint.ChannelMessageCrossPost(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)
@@ -641,7 +643,7 @@ func (m messageQueryBuilder) DeleteAllReactions() error {
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.ChannelMessageReactions(m.cid, m.mid),
 		Ctx:      m.ctx,
 	}, m.flags)

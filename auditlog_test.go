@@ -1,3 +1,4 @@
+//go:build !integration
 // +build !integration
 
 package disgord
@@ -115,7 +116,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(client, &httd.Request{
-			Method:   httd.MethodGet,
+			Method:   http.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
 		}, nil)
@@ -141,7 +142,7 @@ func TestGuildAuditLogs(t *testing.T) {
 
 		builder := &guildAuditLogsBuilder{}
 		builder.r.IgnoreCache().setup(client, &httd.Request{
-			Method:   httd.MethodGet,
+			Method:   http.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
 		}, nil)
@@ -167,7 +168,7 @@ func TestGuildAuditLogs(t *testing.T) {
 		builder := &guildAuditLogsBuilder{}
 		builder.r.itemFactory = auditLogFactory
 		builder.r.IgnoreCache().setup(client, &httd.Request{
-			Method:   httd.MethodGet,
+			Method:   http.MethodGet,
 			Endpoint: endpoint.GuildAuditLogs(Snowflake(7)),
 			Ctx:      context.Background(),
 		}, nil)

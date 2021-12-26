@@ -87,6 +87,14 @@ const (
 	PermissionManageRoles
 	PermissionManageWebhooks
 	PermissionManageEmojis
+	_
+	_
+	_
+	PermissionManageThreads
+	PermissionCreatePublicThreads
+	PermissionCreatePrivateThreads
+	_
+	PermissionSendMessagesInThreads
 )
 
 // Constants for the different bit offsets of general permissions
@@ -646,7 +654,7 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildPar
 	params.Name = guildName
 
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.Guilds(),
 		Body:        params,
@@ -731,6 +739,10 @@ type GuildQueryBuilder interface {
 	Emoji(emojiID Snowflake) GuildEmojiQueryBuilder
 
 	GetWebhooks() (ret []*Webhook, err error)
+
+	// Returns all active threads in the guild, including public and private threads. Threads are ordered
+	// by their id, in descending order.
+	GetActiveThreads() (*ResponseBodyGuildThreads, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -796,7 +808,7 @@ func (g guildQueryBuilder) Update(params *UpdateGuildParams, auditLogReason stri
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
@@ -834,7 +846,7 @@ type UpdateGuildParams struct {
 // Delete is used to delete a guild.
 func (g guildQueryBuilder) Delete() error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.Guild(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
@@ -879,7 +891,7 @@ func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildChannels(g.gid),
 		Body:        params,
@@ -905,7 +917,7 @@ func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPos
 		}
 	}
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildChannels(g.gid),
 		Body:        params,
@@ -997,7 +1009,7 @@ func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, pa
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPut,
+		Method:      http.MethodPut,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, userID),
 		Body:        params,
@@ -1034,7 +1046,7 @@ func (g guildQueryBuilder) SetCurrentUserNick(nick string) (newNick string, err 
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMembersMeNick(g.gid),
 		Body:        params,
@@ -1088,7 +1100,7 @@ func (g guildQueryBuilder) GetBan(userID Snowflake) (*Ban, error) {
 // Returns a 204 empty response on success. Fires a Guild Ban Remove Gateway event.
 func (g guildQueryBuilder) UnbanUser(userID Snowflake, reason string) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildBan(g.gid, userID),
 		Reason:   reason,
 		Ctx:      g.ctx,
@@ -1129,7 +1141,7 @@ type CreateGuildRoleParams struct {
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
 func (g guildQueryBuilder) CreateRole(params *CreateGuildRoleParams) (*Role, error) {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRoles(g.gid),
 		Body:        params,
@@ -1156,7 +1168,7 @@ func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRoles(g.gid),
 		Body:        params,
@@ -1212,7 +1224,7 @@ func (g guildQueryBuilder) PruneMembers(days int, reason string) (err error) {
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
 		Ctx:      g.ctx,
 		Reason:   reason,
@@ -1272,7 +1284,7 @@ func (g guildQueryBuilder) GetIntegrations() ([]*Integration, error) {
 // Fires a Guild Integrations Update Gateway event.
 func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParams) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegrations(g.gid),
 		Body:        params,
@@ -1288,7 +1300,7 @@ func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParam
 // Fires a Guild Integrations Update Gateway event.
 func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegration(g.gid, integrationID),
 		Body:        params,
@@ -1304,7 +1316,7 @@ func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *Up
 // Fires a Guild Integrations Update Gateway event.
 func (g guildQueryBuilder) DeleteIntegration(integrationID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodDelete,
+		Method:      http.MethodDelete,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildIntegration(g.gid, integrationID),
 		ContentType: httd.ContentTypeJSON,
@@ -1318,7 +1330,7 @@ func (g guildQueryBuilder) DeleteIntegration(integrationID Snowflake) error {
 // Returns a 204 empty response on success.
 func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPost,
+		Method:   http.MethodPost,
 		Endpoint: endpoint.GuildIntegrationSync(g.gid, integrationID),
 		Ctx:      g.ctx,
 	}, g.flags)
@@ -1349,7 +1361,7 @@ func (g guildQueryBuilder) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmbed(g.gid),
 		ContentType: httd.ContentTypeJSON,
@@ -1380,7 +1392,7 @@ func (g guildQueryBuilder) GetAuditLogs() GuildAuditLogsBuilder {
 	builder.r.flags = g.flags
 	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
 		Ctx:      g.ctx,
-		Method:   httd.MethodGet,
+		Method:   http.MethodGet,
 		Endpoint: endpoint.GuildAuditLogs(g.gid),
 	}, nil)
 
@@ -1442,7 +1454,7 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmojiParams) (*Emoji, 
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPost,
+		Method:      http.MethodPost,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmojis(g.gid),
 		ContentType: httd.ContentTypeJSON,
@@ -1666,6 +1678,35 @@ type updateCurrentUserNickParams struct {
 
 type nickNameResponse struct {
 	Nickname string `json:"nickname"`
+}
+
+// https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
+type ResponseBodyGuildThreads struct {
+	Threads []*Channel      `json:"threads"`
+	Members []*ThreadMember `json:"members"`
+}
+
+// GetActiveThreads [GET]    Returns all active threads in the guild, including public and private threads.
+//                           Threads are ordered by their id, in descending order.
+// Discord documentation     https://discord.com/developers/docs/resources/guild#list-active-threads
+// Reviewed                  2021-11-24 (self)
+// Comment
+
+func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildThreadsActive(g.gid),
+		ContentType: httd.ContentTypeJSON,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &ResponseBodyGuildThreads{
+			Threads: make([]*Channel, 0),
+			Members: make([]*ThreadMember, 0),
+		}
+	}
+
+	return getResponseBodyGuildThreads(r.Execute)
 }
 
 //////////////////////////////////////////////////////

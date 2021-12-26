@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -48,12 +49,12 @@ type PartialEmoji = Emoji
 
 // Mention mentions an emoji. Adds the animation prefix, if animated
 func (e *Emoji) Mention() string {
-	prefix := ""
+	prefix := ":"
 	if e.Animated {
 		prefix = "a:"
 	}
 
-	return "<:" + prefix + e.Name + ":" + e.ID.String() + ">"
+	return "<" + prefix + e.Name + ":" + e.ID.String() + ">"
 }
 
 //////////////////////////////////////////////////////
@@ -147,7 +148,7 @@ func (g guildEmojiQueryBuilder) Update(params *UpdateEmojiParams, auditLogReason
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
@@ -171,7 +172,7 @@ type UpdateEmojiParams struct {
 // success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) Delete() (err error) {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildEmoji(g.gid, g.emojiID),
 		Ctx:      g.ctx,
 	}, g.flags)

@@ -8,6 +8,29 @@ import (
 	"net/url"
 )
 
+type applicationCommandQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     Flag
+	ChannelID Snowflake
+	GuildID   Snowflake
+	UserID    Snowflake
+}
+
+var _ ApplicationCommandQueryBuilder = &applicationCommandQueryBuilderNop{}
+
+func (a applicationCommandQueryBuilderNop) WithContext(ctx context.Context) ApplicationCommandQueryBuilder {
+	a.Ctx = ctx
+	return &a
+}
+
+func (a *applicationCommandQueryBuilderNop) Global() ApplicationCommandFunctions {
+	return nil
+}
+
+func (a *applicationCommandQueryBuilderNop) Guild(_ Snowflake) ApplicationCommandFunctions {
+	return nil
+}
+
 type channelQueryBuilderNop struct {
 	Ctx       context.Context
 	Flags     Flag
@@ -32,11 +55,23 @@ func (c *channelQueryBuilderNop) AddDMParticipant(_ *GroupDMParticipant) error {
 	return nil
 }
 
+func (c *channelQueryBuilderNop) AddThreadMember(_ Snowflake) error {
+	return nil
+}
+
 func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
 	return nil
 }
 
 func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessageParams) (*Message, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) CreateThread(_ Snowflake, _ *CreateThreadParams) (*Channel, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ *CreateThreadParamsNoMessage) (*Channel, error) {
 	return nil, nil
 }
 
@@ -64,6 +99,10 @@ func (c *channelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
+func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) GetMessages(_ *GetMessagesParams) ([]*Message, error) {
 	return nil, nil
 }
@@ -72,15 +111,43 @@ func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
 	return nil, nil
 }
 
+func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) GetThreadMember(_ Snowflake) (*ThreadMember, error) {
+	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) GetThreadMembers() ([]*ThreadMember, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) GetWebhooks() ([]*Webhook, error) {
 	return nil, nil
+}
+
+func (c *channelQueryBuilderNop) JoinThread() error {
+	return nil
 }
 
 func (c *channelQueryBuilderNop) KickParticipant(_ Snowflake) error {
 	return nil
 }
 
+func (c *channelQueryBuilderNop) LeaveThread() error {
+	return nil
+}
+
 func (c *channelQueryBuilderNop) Message(_ Snowflake) MessageQueryBuilder {
+	return nil
+}
+
+func (c *channelQueryBuilderNop) RemoveThreadMember(_ Snowflake) error {
 	return nil
 }
 
@@ -118,6 +185,10 @@ func (c clientQueryBuilderNop) WithContext(ctx context.Context) ClientQueryBuild
 func (c clientQueryBuilderNop) WithFlags(flags ...Flag) ClientQueryBuilderExecutables {
 	c.Flags = mergeFlags(flags)
 	return &c
+}
+
+func (c *clientQueryBuilderNop) ApplicationCommand(_ Snowflake) ApplicationCommandQueryBuilder {
+	return nil
 }
 
 func (c *clientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
@@ -511,6 +582,54 @@ func (g *gatewayQueryBuilderNop) StayConnectedUntilInterrupted() error {
 	return nil
 }
 
+func (g *gatewayQueryBuilderNop) ThreadCreate(_ func(Session, *ThreadCreate), _ ...func(Session, *ThreadCreate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadCreateChan(_ chan *ThreadCreate, _ ...chan *ThreadCreate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadDelete(_ func(Session, *ThreadDelete), _ ...func(Session, *ThreadDelete)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadDeleteChan(_ chan *ThreadDelete, _ ...chan *ThreadDelete) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadListSync(_ func(Session, *ThreadListSync), _ ...func(Session, *ThreadListSync)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadListSyncChan(_ chan *ThreadListSync, _ ...chan *ThreadListSync) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMembersUpdate(_ func(Session, *ThreadMembersUpdate), _ ...func(Session, *ThreadMembersUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMembersUpdateChan(_ chan *ThreadMembersUpdate, _ ...chan *ThreadMembersUpdate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMemberUpdate(_ func(Session, *ThreadMemberUpdate), _ ...func(Session, *ThreadMemberUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadMemberUpdateChan(_ chan *ThreadMemberUpdate, _ ...chan *ThreadMemberUpdate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadUpdate(_ func(Session, *ThreadUpdate), _ ...func(Session, *ThreadUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) ThreadUpdateChan(_ chan *ThreadUpdate, _ ...chan *ThreadUpdate) {
+	return
+}
+
 func (g *gatewayQueryBuilderNop) TypingStart(_ func(Session, *TypingStart), _ ...func(Session, *TypingStart)) {
 	return
 }
@@ -700,6 +819,10 @@ func (g *guildQueryBuilderNop) EstimatePruneMembersCount(_ int) (int, error) {
 }
 
 func (g *guildQueryBuilderNop) Get() (*Guild, error) {
+	return nil, nil
+}
+
+func (g *guildQueryBuilderNop) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
 	return nil, nil
 }
 
@@ -1083,15 +1206,15 @@ func (w *webhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ string) (*Message, error) {
+func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ Snowflake, _ string) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhookParams, _ bool) (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhookParams, _ bool, _ Snowflake) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhookParams, _ bool) (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhookParams, _ bool, _ Snowflake) (*Message, error) {
 	return nil, nil
 }
 
@@ -1135,7 +1258,7 @@ func (w *webhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ string) (*Message, error) {
+func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ Snowflake, _ string) (*Message, error) {
 	return nil, nil
 }
 

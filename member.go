@@ -3,6 +3,7 @@ package disgord
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -93,7 +94,7 @@ func (g guildMemberQueryBuilder) Update(params *UpdateMemberParams, auditLogReas
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
@@ -125,7 +126,7 @@ type UpdateMemberParams struct {
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 func (g guildMemberQueryBuilder) AddRole(roleID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
+		Method:   http.MethodPut,
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
 	}, g.flags)
@@ -138,7 +139,7 @@ func (g guildMemberQueryBuilder) AddRole(roleID Snowflake) error {
 // Returns a 204 empty response on success. Fires a Guild Member Update Gateway event.
 func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildMemberRole(g.gid, g.uid, roleID),
 		Ctx:      g.ctx,
 	}, g.flags)
@@ -151,7 +152,7 @@ func (g guildMemberQueryBuilder) RemoveRole(roleID Snowflake) error {
 // Returns a 204 empty response on success. Fires a Guild Member Remove Gateway event.
 func (g guildMemberQueryBuilder) Kick(reason string) error {
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildMember(g.gid, g.uid),
 		Reason:   reason,
 		Ctx:      g.ctx,
@@ -172,7 +173,7 @@ func (g guildMemberQueryBuilder) Ban(params *BanMemberParams) (err error) {
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodPut,
+		Method:   http.MethodPut,
 		Endpoint: endpoint.GuildBan(g.gid, g.uid) + params.URLQueryString(),
 		Ctx:      g.ctx,
 		Reason:   params.Reason,

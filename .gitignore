@@ -2,3 +2,4 @@
 *.test
 cprof
 *_ignore
+*.code-workspace

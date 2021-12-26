@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
@@ -131,7 +132,7 @@ func (g guildRoleQueryBuilder) Delete() error {
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:   httd.MethodDelete,
+		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildRole(g.gid, g.roleID),
 		Ctx:      g.ctx,
 	}, g.flags)
@@ -150,7 +151,7 @@ func (g guildRoleQueryBuilder) Update(params *UpdateRoleParams, auditLogReason s
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
 		ContentType: httd.ContentTypeJSON,
