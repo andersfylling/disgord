@@ -214,12 +214,20 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
-	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
-	// such optimizations can be handled in the background).
+	// Events slice of discord events that this bot requires in order to work
+	// Note that the cache is only populated by the discord gateway events.
+	// As an example, if you want to cache guild members, you must specify member related events:
+	//  - GuildMemberCreate
+	//  - GuildMemberUpdate
+	//  - GuildMemberRemove
 	//
-	// You can see sent intents by enabling debug logging. Remember that derived from RejectIntents are appended.
-	DMIntents Intent
+	// Whenever privileged events/intents are specified, you must also enable this in your bot application
+	// on the Discord website.
+	Events []string
+
+	// Intents manually specify which intents to add. Note that intents are derived from specified events.
+	// Any intents specified here will simply be added to derived intents.
+	Intents []Intent
 
 	// your project name, name of bot, or application
 	ProjectName string
