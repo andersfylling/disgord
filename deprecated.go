@@ -3,6 +3,7 @@ package disgord
 import (
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
+	"net/http"
 )
 
 // Deprecated: use Update instead
@@ -15,7 +16,7 @@ func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder.r.addPrereq(m.cid.IsZero(), "channelID must be set to get channel messages")
 	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
 	builder.r.setup(m.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
 		ContentType: httd.ContentTypeJSON,
@@ -40,7 +41,7 @@ func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
 	}
 	builder.r.flags = c.flags
 	builder.r.setup(c.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
@@ -58,7 +59,7 @@ func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
@@ -74,7 +75,7 @@ func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
 		return &Guild{}
 	}
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
@@ -95,7 +96,7 @@ func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
@@ -114,7 +115,7 @@ func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
 	}
 	builder.r.flags = g.flags
 	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
 		ContentType: httd.ContentTypeJSON,
@@ -134,7 +135,7 @@ func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
 	builder.r.itemFactory = userFactory // TODO: peak cached user
 	builder.r.flags = c.flags
 	builder.r.setup(c.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
@@ -160,7 +161,7 @@ func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.addPrereq(w.token == "", "given webhook token was not set")
 	builder.r.setup(w.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token),
 		ContentType: httd.ContentTypeJSON,
@@ -184,7 +185,7 @@ func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder.r.flags = w.flags
 	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
 	builder.r.setup(w.client.req, &httd.Request{
-		Method:      httd.MethodPatch,
+		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.Webhook(w.webhookID),
 		ContentType: httd.ContentTypeJSON,
