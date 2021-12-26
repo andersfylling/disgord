@@ -83,6 +83,19 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		conf.WebsocketHttpClient = DefaultHttpClient
 	}
 
+	if conf.DMIntents > 0 {
+		conf.Logger.Error("deprecated: Config.DMIntents use Config.Intents instead")
+	}
+	if len(conf.RejectEvents) != 0 {
+		conf.Logger.Error("deprecated: Config.RejectEvents use Config.Events instead")
+	}
+	if conf.DMIntents > 0 && conf.Intents > 0 {
+		return nil, errors.New("can not use Config.DMIntents and Config.Intents at the same time, use Config.Intents only")
+	}
+	if len(conf.RejectEvents) > 0 && len(conf.Events) > 0 {
+		return nil, errors.New("can not use Config.RejectEvents and Config.Events at the same time, use Config.Events only")
+	}
+
 	const DMIntents = IntentDirectMessageReactions | IntentDirectMessages | IntentDirectMessageTyping
 	if validRange := conf.DMIntents & DMIntents; (conf.DMIntents ^ validRange) > 0 {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
@@ -227,7 +240,7 @@ type Config struct {
 
 	// Intents manually specify which intents to add. Note that intents are derived from specified events.
 	// Any intents specified here will simply be added to derived intents.
-	Intents []Intent
+	Intents Intent
 
 	// your project name, name of bot, or application
 	ProjectName string
