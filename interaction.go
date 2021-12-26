@@ -29,13 +29,13 @@ type InteractionCallbackType = int
 
 const (
 	_ InteractionCallbackType = iota
-	Pong
+	InteractionCallbackPong
 	_
 	_
-	ChannelMessageWithSource
-	DeferredChannelMessageWithSource
-	DeferredUpdateMessage
-	UpdateMessage
+	InteractionCallbackChannelMessageWithSource
+	InteractionCallbackDeferredChannelMessageWithSource
+	InteractionCallbackDeferredUpdateMessage
+	InteractionCallbackUpdateMessage
 )
 
 // ApplicationCommandInteractionDataResolved ..
