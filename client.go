@@ -261,7 +261,11 @@ type Config struct {
 	Cache        Cache
 	ShardConfig  ShardConfig
 
+	// Deprecated: use Events and Intents
 	RejectEvents []string
+
+	// Deprecated: use events and intents
+	DMIntents Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
