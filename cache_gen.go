@@ -88,6 +88,12 @@ type CacheUpdater interface {
 	PresenceUpdate(data []byte) (*PresenceUpdate, error)
 	Ready(data []byte) (*Ready, error)
 	Resumed(data []byte) (*Resumed, error)
+	ThreadCreate(data []byte) (*ThreadCreate, error)
+	ThreadDelete(data []byte) (*ThreadDelete, error)
+	ThreadListSync(data []byte) (*ThreadListSync, error)
+	ThreadMemberUpdate(data []byte) (*ThreadMemberUpdate, error)
+	ThreadMembersUpdate(data []byte) (*ThreadMembersUpdate, error)
+	ThreadUpdate(data []byte) (*ThreadUpdate, error)
 	TypingStart(data []byte) (*TypingStart, error)
 	UserUpdate(data []byte) (*UserUpdate, error)
 	VoiceServerUpdate(data []byte) (*VoiceServerUpdate, error)
@@ -161,6 +167,18 @@ func cacheDispatcher(c Cache, event string, data []byte) (evt EventType, err err
 		evt, err = c.Ready(data)
 	case EvtResumed:
 		evt, err = c.Resumed(data)
+	case EvtThreadCreate:
+		evt, err = c.ThreadCreate(data)
+	case EvtThreadDelete:
+		evt, err = c.ThreadDelete(data)
+	case EvtThreadListSync:
+		evt, err = c.ThreadListSync(data)
+	case EvtThreadMemberUpdate:
+		evt, err = c.ThreadMemberUpdate(data)
+	case EvtThreadMembersUpdate:
+		evt, err = c.ThreadMembersUpdate(data)
+	case EvtThreadUpdate:
+		evt, err = c.ThreadUpdate(data)
 	case EvtTypingStart:
 		evt, err = c.TypingStart(data)
 	case EvtUserUpdate:
@@ -412,6 +430,48 @@ func (c *CacheNop) Ready(data []byte) (evt *Ready, err error) {
 	return evt, nil
 }
 func (c *CacheNop) Resumed(data []byte) (evt *Resumed, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadCreate(data []byte) (evt *ThreadCreate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadDelete(data []byte) (evt *ThreadDelete, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadListSync(data []byte) (evt *ThreadListSync, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadMemberUpdate(data []byte) (evt *ThreadMemberUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadMembersUpdate(data []byte) (evt *ThreadMembersUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) ThreadUpdate(data []byte) (evt *ThreadUpdate, err error) {
 	if err = json.Unmarshal(data, &evt); err != nil {
 		return nil, err
 	}

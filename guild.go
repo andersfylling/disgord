@@ -87,6 +87,14 @@ const (
 	PermissionManageRoles
 	PermissionManageWebhooks
 	PermissionManageEmojis
+	_
+	_
+	_
+	PermissionManageThreads
+	PermissionCreatePublicThreads
+	PermissionCreatePrivateThreads
+	_
+	PermissionSendMessagesInThreads
 )
 
 // Constants for the different bit offsets of general permissions
@@ -726,6 +734,10 @@ type GuildQueryBuilder interface {
 	Emoji(emojiID Snowflake) GuildEmojiQueryBuilder
 
 	GetWebhooks() (ret []*Webhook, err error)
+
+	// Returns all active threads in the guild, including public and private threads. Threads are ordered
+	// by their id, in descending order.
+	GetActiveThreads() (*ResponseBodyGuildThreads, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -1623,6 +1635,35 @@ type updateCurrentUserNickParams struct {
 
 type nickNameResponse struct {
 	Nickname string `json:"nickname"`
+}
+
+// https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
+type ResponseBodyGuildThreads struct {
+	Threads []*Channel      `json:"threads"`
+	Members []*ThreadMember `json:"members"`
+}
+
+// GetActiveThreads [GET]    Returns all active threads in the guild, including public and private threads.
+//                           Threads are ordered by their id, in descending order.
+// Discord documentation     https://discord.com/developers/docs/resources/guild#list-active-threads
+// Reviewed                  2021-11-24 (self)
+// Comment
+
+func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodGet,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildThreadsActive(g.gid),
+		ContentType: httd.ContentTypeJSON,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &ResponseBodyGuildThreads{
+			Threads: make([]*Channel, 0),
+			Members: make([]*ThreadMember, 0),
+		}
+	}
+
+	return getResponseBodyGuildThreads(r.Execute)
 }
 
 //////////////////////////////////////////////////////

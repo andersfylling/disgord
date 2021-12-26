@@ -338,6 +338,7 @@ type ClientQueryBuilder interface {
 	CurrentUser() CurrentUserQueryBuilder
 	Guild(id Snowflake) GuildQueryBuilder
 	Gateway() GatewayQueryBuilder
+	ApplicationCommand(appID Snowflake) ApplicationCommandQueryBuilder
 }
 
 type clientQueryBuilder struct {
@@ -762,4 +763,43 @@ func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error)
 		return nil, err
 	}
 	return v.(*GuildEmbed), nil
+}
+
+// TODO: auto generate
+func getThreadMember(f func() (interface{}, error)) (threadMember *ThreadMember, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	return v.(*ThreadMember), nil
+}
+
+// TODO: auto generate
+func getThreadMembers(f func() (interface{}, error)) (threadMembers []*ThreadMember, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	if list, ok := v.(*[]*ThreadMember); ok {
+		return *list, nil
+	} else if list, ok := v.([]*ThreadMember); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
+}
+
+func getResponseBodyThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyThreads, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	return v.(*ResponseBodyThreads), nil
+}
+
+func getResponseBodyGuildThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyGuildThreads, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	return v.(*ResponseBodyGuildThreads), nil
 }

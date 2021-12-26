@@ -22,11 +22,15 @@ func (a *Activity) reset() {
 func (c *Channel) reset() {
 	c.ApplicationID = 0
 	c.Bitrate = 0
+	c.DefaultAutoArchiveDuration = 0
 	c.GuildID = 0
 	c.Icon = ""
 	c.ID = 0
 	c.LastMessageID = 0
 	c.LastPinTimestamp = Time{}
+	c.Member = ThreadMember{}
+	c.MemberCount = 0
+	c.MessageCount = 0
 	c.Name = ""
 	c.NSFW = false
 	c.OwnerID = 0
@@ -35,6 +39,7 @@ func (c *Channel) reset() {
 	c.Position = 0
 	c.RateLimitPerUser = 0
 	c.Recipients = nil
+	c.ThreadMetadata = ThreadMetadata{}
 	c.Topic = ""
 	c.Type = 0
 	c.UserLimit = 0

@@ -7,9 +7,10 @@ require (
 	github.com/klauspost/compress v1.13.1 // indirect
 	go.uber.org/atomic v1.8.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
-	golang.org/x/tools v0.1.2 // indirect
+	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+	golang.org/x/tools v0.1.7 // indirect
 	k8s.io/gengo v0.0.0-20201113003025-83324d819ded
 	nhooyr.io/websocket v1.8.7
 )

@@ -112,6 +112,67 @@ type ChannelPinsUpdate struct {
 
 // ---------------------------
 
+// ThreadCreate thread was created
+// https://discord.com/developers/docs/topics/gateway#thread-create
+type ThreadCreate struct {
+	Thread  *Channel `json:"thread"`
+	ShardID uint     `json:"-"`
+}
+
+// ---------------------------
+
+// ThreadUpdate thread was updated
+// https://discord.com/developers/docs/topics/gateway#thread-update
+type ThreadUpdate struct {
+	Thread  *Channel `json:"thread"`
+	ShardID uint     `json:"-"`
+}
+
+// ---------------------------
+
+// ThreadDelete thread was deleted
+// https://discord.com/developers/docs/topics/gateway#thread-delete
+type ThreadDelete struct {
+	Thread  *Channel `json:"thread"`
+	ShardID uint     `json:"-"`
+}
+
+// ---------------------------
+
+// ThreadListSync current user gains access to a thread
+// https://discord.com/developers/docs/topics/gateway#thread-list-sync
+type ThreadListSync struct {
+	GuildID    Snowflake       `json:"guild_id"`
+	ChannelIDs []Snowflake     `json:"channel_ids,omitempty"`
+	Threads    []*Channel      `json:"threads"`
+	Members    []*ThreadMember `json:"members"`
+	ShardID    uint            `json:"-"`
+}
+
+// ---------------------------
+
+// ThreadMemberUpdate current user gains access to a thread
+// https://discord.com/developers/docs/topics/gateway#thread-member-update
+type ThreadMemberUpdate struct {
+	Member  *ThreadMember `json:"member"`
+	ShardID uint          `json:"-"`
+}
+
+// ---------------------------
+
+// ThreadMembersUpdate current user gains access to a thread
+// https://discord.com/developers/docs/topics/gateway#thread-members-update
+type ThreadMembersUpdate struct {
+	ID               Snowflake       `json:"id"`
+	GuildID          Snowflake       `json:"guild_id"`
+	MemberCount      int             `json:"member_count"`
+	AddedMembers     []*ThreadMember `json:"added_members,omitempty"`
+	RemovedMemberIDs []Snowflake     `json:"removed_member_ids,omitempty"`
+	ShardID          uint            `json:"-"`
+}
+
+// ---------------------------
+
 // TypingStart user started typing in a channel
 type TypingStart struct {
 	ChannelID     Snowflake `json:"channel_id"`
@@ -291,8 +352,9 @@ func (g *GuildEmojisUpdate) updateInternals() {
 //	2. When a Guild becomes available again to the Client.
 // 	3. When the current user joins a new Guild.
 type GuildCreate struct {
-	Guild   *Guild `json:"guild"`
-	ShardID uint   `json:"-"`
+	Guild   *Guild     `json:"guild"`
+	Threads []*Channel `json:"threads"` //https://discord.com/developers/docs/topics/threads#gateway-events
+	ShardID uint       `json:"-"`
 }
 
 var _ internalUpdater = (*GuildCreate)(nil)

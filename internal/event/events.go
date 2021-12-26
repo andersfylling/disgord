@@ -23,6 +23,24 @@ const ChannelDelete = "CHANNEL_DELETE"
 // ChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
 const ChannelPinsUpdate = "CHANNEL_PINS_UPDATE"
 
+//ThreadCreate Sent when a thread is created, relevant to the current user, or when the current user is added to a thread.
+const ThreadCreate = "THREAD_CREATE"
+
+//ThreadUpdate Sent when a thread is updated.
+const ThreadUpdate = "THREAD_UPDATE"
+
+//ThreadDelete Sent when a thread relevant to the current user is deleted.
+const ThreadDelete = "THREAD_DELETE"
+
+//ThreadListSync Sent when the current user gains access to a channel.
+const ThreadListSync = "THREAD_LIST_SYNC"
+
+//ThreadMemberUpdate Sent when the thread member object for the current user is updated.
+const ThreadMemberUpdate = "THREAD_MEMBER_UPDATE"
+
+//ThreadMembersUpdate Sent when anyone is added to or removed from a thread.
+const ThreadMembersUpdate = "THREAD_MEMBERS_UPDATE"
+
 // TypingStart Sent when a user starts typing in a channel.
 const TypingStart = "TYPING_START"
 
