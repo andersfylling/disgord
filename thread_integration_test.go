@@ -87,7 +87,7 @@ func TestThreadEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("get-thread-member", func(t *testing.T) {
+	t.Run("get-member", func(t *testing.T) {
 		member, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMember(andersfylling)
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
@@ -95,7 +95,7 @@ func TestThreadEndpoints(t *testing.T) {
 			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", member.ID, andersfylling))
 		}
 	})
-	t.Run("get-thread-members", func(t *testing.T) {
+	t.Run("get-members", func(t *testing.T) {
 		members, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMembers()
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
@@ -106,7 +106,7 @@ func TestThreadEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("remove-thread-member", func(t *testing.T) {
+	t.Run("remove-member", func(t *testing.T) {
 		if err := c.Channel(thread.ID).WithContext(deadline).RemoveThreadMember(andersfylling); err != nil {
 			t.Error(fmt.Errorf("unable to remove thread member. %w", err))
 		}
