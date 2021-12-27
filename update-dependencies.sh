@@ -9,7 +9,7 @@ echo "$DIR"
 go get -u
 go mod tidy
 
-for d in docs/examples/*/; do
+for d in examples/*/; do
   cd "./$d"
   go get -u
   go mod tidy
