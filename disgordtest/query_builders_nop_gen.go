@@ -164,6 +164,10 @@ func (c *ChannelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
+func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+	return nil, nil
+}
+
 func (c *ChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuilder {
 	return nil
 }
@@ -711,6 +715,10 @@ func (g *GuildEmojiQueryBuilderNop) Get() (*disgord.Emoji, error) {
 	return nil, nil
 }
 
+func (g *GuildEmojiQueryBuilderNop) Update(_ *disgord.UpdateEmoji, _ string) (*disgord.Emoji, error) {
+	return nil, nil
+}
+
 func (g *GuildEmojiQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildEmojiBuilder {
 	return nil
 }
@@ -827,8 +835,8 @@ func (g *GuildQueryBuilderNop) GetActiveThreads() (*disgord.ResponseBodyGuildThr
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) GetAuditLogs() disgord.GuildAuditLogsBuilder {
-	return nil
+func (g *GuildQueryBuilderNop) GetAuditLogs(_ *disgord.GetAuditLogs) (*disgord.AuditLog, error) {
+	return nil, nil
 }
 
 func (g *GuildQueryBuilderNop) GetBan(_ disgord.Snowflake) (*disgord.Ban, error) {
@@ -955,6 +963,10 @@ func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
+func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole, _ string) (*disgord.Role, error) {
+	return nil, nil
+}
+
 func (g *GuildRoleQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildRoleBuilder {
 	return nil
 }
@@ -1041,6 +1053,10 @@ func (m *MessageQueryBuilderNop) SetEmbed(_ *disgord.Embed) (*disgord.Message, e
 
 func (m *MessageQueryBuilderNop) Unpin() error {
 	return nil
+}
+
+func (m *MessageQueryBuilderNop) Update(_ *disgord.UpdateMessage) (*disgord.Message, error) {
+	return nil, nil
 }
 
 func (m *MessageQueryBuilderNop) UpdateBuilder() disgord.UpdateMessageBuilder {
@@ -1159,6 +1175,10 @@ func (v *VoiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*disgord.Voice
 	return nil, nil, nil
 }
 
+func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+	return nil, nil
+}
+
 func (v *VoiceChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuilder {
 	return nil
 }
@@ -1207,6 +1227,10 @@ func (w *WebhookQueryBuilderNop) Get() (*disgord.Webhook, error) {
 	return nil, nil
 }
 
+func (w *WebhookQueryBuilderNop) Update(_ *disgord.UpdateWebhook) (*disgord.Webhook, error) {
+	return nil, nil
+}
+
 func (w *WebhookQueryBuilderNop) UpdateBuilder() disgord.UpdateWebhookBuilder {
 	return nil
 }
@@ -1244,6 +1268,10 @@ func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ b
 }
 
 func (w *WebhookWithTokenQueryBuilderNop) Get() (*disgord.Webhook, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) Update(_ *disgord.UpdateWebhook) (*disgord.Webhook, error) {
 	return nil, nil
 }
 

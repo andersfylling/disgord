@@ -155,6 +155,10 @@ func (c *channelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
+func (c *channelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+	return nil, nil
+}
+
 func (c *channelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
@@ -702,6 +706,10 @@ func (g *guildEmojiQueryBuilderNop) Get() (*Emoji, error) {
 	return nil, nil
 }
 
+func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmoji, _ string) (*Emoji, error) {
+	return nil, nil
+}
+
 func (g *guildEmojiQueryBuilderNop) UpdateBuilder() UpdateGuildEmojiBuilder {
 	return nil
 }
@@ -818,8 +826,8 @@ func (g *guildQueryBuilderNop) GetActiveThreads() (*ResponseBodyGuildThreads, er
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetAuditLogs() GuildAuditLogsBuilder {
-	return nil
+func (g *guildQueryBuilderNop) GetAuditLogs(_ *GetAuditLogs) (*AuditLog, error) {
+	return nil, nil
 }
 
 func (g *guildQueryBuilderNop) GetBan(_ Snowflake) (*Ban, error) {
@@ -946,6 +954,10 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
+func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole, _ string) (*Role, error) {
+	return nil, nil
+}
+
 func (g *guildRoleQueryBuilderNop) UpdateBuilder() UpdateGuildRoleBuilder {
 	return nil
 }
@@ -1032,6 +1044,10 @@ func (m *messageQueryBuilderNop) SetEmbed(_ *Embed) (*Message, error) {
 
 func (m *messageQueryBuilderNop) Unpin() error {
 	return nil
+}
+
+func (m *messageQueryBuilderNop) Update(_ *UpdateMessage) (*Message, error) {
+	return nil, nil
 }
 
 func (m *messageQueryBuilderNop) UpdateBuilder() UpdateMessageBuilder {
@@ -1150,6 +1166,10 @@ func (v *voiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*VoiceStateUpd
 	return nil, nil, nil
 }
 
+func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+	return nil, nil
+}
+
 func (v *voiceChannelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
@@ -1198,6 +1218,10 @@ func (w *webhookQueryBuilderNop) Get() (*Webhook, error) {
 	return nil, nil
 }
 
+func (w *webhookQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
+	return nil, nil
+}
+
 func (w *webhookQueryBuilderNop) UpdateBuilder() UpdateWebhookBuilder {
 	return nil
 }
@@ -1235,6 +1259,10 @@ func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ S
 }
 
 func (w *webhookWithTokenQueryBuilderNop) Get() (*Webhook, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
 	return nil, nil
 }
 

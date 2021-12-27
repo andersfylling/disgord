@@ -535,15 +535,15 @@ func (m *Member) updateInternals() {
 }
 
 func (m *Member) String() string {
-	usrname := m.Nick
+	username := m.Nick
 	if m.User != nil {
-		usrname = m.User.Username
+		username = m.User.Username
 	}
 	id := m.UserID
 	if m.UserID.IsZero() && m.User != nil {
 		id = m.User.ID
 	}
-	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
+	return "member{user:" + username + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
 }
 
 type GuildQueryBuilderCaller interface {
@@ -667,6 +667,8 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (
 	return getGuild(r.Execute)
 }
 
+var MissingGuildIDErr = errors.New("guild id was not set")
+
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
 type GuildQueryBuilder interface {
 	WithContext(ctx context.Context) GuildQueryBuilder
@@ -722,7 +724,7 @@ type GuildQueryBuilder interface {
 	GetEmbed() (*GuildEmbed, error)
 	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
 	GetVanityURL() (*PartialInvite, error)
-	GetAuditLogs() GuildAuditLogsBuilder
+	GetAuditLogs(logs *GetAuditLogs) (*AuditLog, error)
 
 	VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder
 
@@ -751,6 +753,16 @@ type guildQueryBuilder struct {
 	flags  Flag
 	client *Client
 	gid    Snowflake
+}
+
+func (g *guildQueryBuilder) validate() error {
+	if g.client == nil {
+		return MissingClientInstanceErr
+	}
+	if g.gid.IsZero() {
+		return MissingGuildIDErr
+	}
+	return nil
 }
 
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
@@ -783,21 +795,49 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 	return getGuild(r.Execute)
 }
 
-// UpdateBuilder is used to create a guild update builder.
-func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
-	builder := &updateGuildBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Guild{}
+// Update update a guild
+func (g guildQueryBuilder) Update(params *UpdateGuild, auditLogReason string) (*Guild, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
-	builder.r.flags = g.flags
+		Body:        params,
+		Reason:      auditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Guild{}
+	}
 
-	return builder
+	return getGuild(r.Execute)
+}
+
+type UpdateGuild struct {
+	Name                        *string                        `json:"name,omitempty"`
+	Region                      *string                        `json:"region,omitempty"`
+	VerificationLvl             *VerificationLvl               `json:"verification_lvl,omitempty"`
+	DefaultMessageNotifications *DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
+	ExplicitContentFilter       *ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
+	AFKChannelID                *Snowflake                     `json:"afk_channel_id,omitempty"`
+	Icon                        *string                        `json:"icon,omitempty"`
+	OwnerID                     *Snowflake                     `json:"owner_id,omitempty"`
+	Splash                      *string                        `json:"splash,omitempty"`
+	DiscoverySplash             *string                        `json:"discovery_splash,omitempty"`
+	Banner                      *string                        `json:"banner,omitempty"`
+	SystemChannelID             *Snowflake                     `json:"system_channel_id,omitempty"`
+	SystemChannelFlags          *uint                          `json:"system_channel_flags,omitempty"`
+	RulesChannelID              *Snowflake                     `json:"rules_channel_id,omitempty"`
+	PublicUpdatesChannelID      *Snowflake                     `json:"public_updates_channel_id,omitempty"`
+	PreferredLocale             *string                        `json:"preferred_locale,omitempty"`
+	Features                    *[]string                      `json:"features,omitempty"`
+	Description                 *string                        `json:"description,omitempty"`
 }
 
 // Delete is used to delete a guild.
@@ -1343,18 +1383,30 @@ func (g guildQueryBuilder) GetVanityURL() (*PartialInvite, error) {
 
 // GetAuditLogs Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-func (g guildQueryBuilder) GetAuditLogs() GuildAuditLogsBuilder {
-	builder := &guildAuditLogsBuilder{}
-	builder.r.itemFactory = auditLogFactory
-	builder.r.flags = g.flags
-	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Ctx:      g.ctx,
+func (g guildQueryBuilder) GetAuditLogs(params *GetAuditLogs) (*AuditLog, error) {
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.GuildAuditLogs(g.gid) + params.URLQueryString(),
 		Method:   http.MethodGet,
-		Endpoint: endpoint.GuildAuditLogs(g.gid),
-	}, nil)
+		Ctx:      g.ctx,
+	}, g.flags)
+	r.factory = auditLogFactory
 
-	return builder
+	logs, err := r.Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	return logs.(*AuditLog), nil
 }
+
+type GetAuditLogs struct {
+	UserID     Snowflake `urlparam:"user_id"`
+	ActionType int       `urlparam:"action_type"`
+	Before     Snowflake `urlparam:"before,omitempty"`
+	Limit      int       `urlparam:"limit,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetAuditLogs)(nil)
 
 // GetEmojis Returns a list of emoji objects for the given guild.
 func (g guildQueryBuilder) GetEmojis() ([]*Emoji, error) {
@@ -1671,13 +1723,6 @@ func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error)
 // REST Builders
 //
 //////////////////////////////////////////////////////
-
-// updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
-//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
-//generate-rest-basic-execute: guild:*Guild,
-type updateGuildBuilder struct {
-	r RESTBuilder
-}
 
 //generate-rest-params: enabled:bool, channel_id:Snowflake,
 //generate-rest-basic-execute: embed:*GuildEmbed,

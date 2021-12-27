@@ -30,6 +30,8 @@ var _ DeepCopier = (*Webhook)(nil)
 //
 //////////////////////////////////////////////////////
 
+var MissingWebhookIDErr = errors.New("webhook id was not set")
+
 type WebhookQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookQueryBuilder
 	WithFlags(flags ...Flag) WebhookQueryBuilder
@@ -37,8 +39,11 @@ type WebhookQueryBuilder interface {
 	// Get Returns the new webhook object for the given id.
 	Get() (*Webhook, error)
 
-	// UpdateBuilder Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+	// Update Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns the updated webhook object on success.
+	Update(*UpdateWebhook) (*Webhook, error)
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateWebhookBuilder
 
 	// Delete Deletes a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
@@ -66,6 +71,19 @@ type webhookQueryBuilder struct {
 	client    *Client
 	cid       Snowflake
 	webhookID Snowflake
+}
+
+func (w *webhookQueryBuilder) validate() error {
+	if w.client == nil {
+		return MissingClientInstanceErr
+	}
+	if w.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	if w.webhookID.IsZero() {
+		return MissingWebhookIDErr
+	}
+	return nil
 }
 
 func (w webhookQueryBuilder) WithContext(ctx context.Context) WebhookQueryBuilder {
@@ -96,28 +114,33 @@ func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateBuilder [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
+// Update [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
-	builder := &updateWebhookBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Webhook{}
+func (w webhookQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = w.flags
-	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.setup(w.client.req, &httd.Request{
+	if err := w.validate(); err != nil {
+		return nil, err
+	}
+
+	r := w.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.Webhook(w.webhookID),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+	}, w.flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
+	}
 
-	return builder
+	return getWebhook(r.Execute)
 }
 
 // Delete [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
@@ -176,6 +199,8 @@ func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhook, wait b
 	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, threadID, endpoint.GitHub())
 }
 
+var MissingWebhookTokenErr = errors.New("webhook token was not set")
+
 type WebhookWithTokenQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookWithTokenQueryBuilder
 	WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder
@@ -184,8 +209,11 @@ type WebhookWithTokenQueryBuilder interface {
 	// returns no user in the webhook object.
 	Get() (*Webhook, error)
 
-	// UpdateBuilder Same as UpdateWebhook, except this call does not require authentication,
+	// Update Same as UpdateWebhook, except this call does not require authentication,
 	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
+	Update(*UpdateWebhook) (*Webhook, error)
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateWebhookBuilder
 
 	// Delete Same as DeleteWebhook, except this call does not require authentication.
@@ -205,6 +233,22 @@ type webhookWithTokenQueryBuilder struct {
 	cid       Snowflake
 	webhookID Snowflake
 	token     string
+}
+
+func (w *webhookWithTokenQueryBuilder) validate() error {
+	if w.client == nil {
+		return MissingClientInstanceErr
+	}
+	if w.cid.IsZero() {
+		return MissingChannelIDErr
+	}
+	if w.webhookID.IsZero() {
+		return MissingWebhookIDErr
+	}
+	if w.token == "" {
+		return MissingWebhookTokenErr
+	}
+	return nil
 }
 
 func (w webhookWithTokenQueryBuilder) WithContext(ctx context.Context) WebhookWithTokenQueryBuilder {
@@ -236,29 +280,39 @@ func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 	return getWebhook(r.Execute)
 }
 
-// UpdateBuilder [REST] Same as UpdateWebhook, except this call does not require authentication,
+// Update [REST] Same as UpdateWebhook, except this call does not require authentication,
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
-func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
-	builder := &updateWebhookBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Webhook{}
+func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = w.flags
-	builder.r.addPrereq(w.webhookID.IsZero(), "given webhook ID was not set, there is nothing to modify")
-	builder.r.addPrereq(w.token == "", "given webhook token was not set")
-	builder.r.setup(w.client.req, &httd.Request{
+	if err := w.validate(); err != nil {
+		return nil, err
+	}
+
+	r := w.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         w.ctx,
 		Endpoint:    endpoint.WebhookToken(w.webhookID, w.token),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+	}, w.flags)
+	r.factory = func() interface{} {
+		return &Webhook{}
+	}
 
-	return builder
+	return getWebhook(r.Execute)
+}
+
+type UpdateWebhook struct {
+	Name      *string    `json:"name,omitempty"`
+	Avatar    *string    `json:"avatar,omitempty"`
+	ChannelID *Snowflake `json:"channel_id,omitempty"`
 }
 
 // Delete [REST] Same as DeleteWebhook, except this call does not require authentication.
@@ -335,26 +389,4 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait bool,
 	}
 	_, err = r.Execute()
 	return nil, err
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// UpdateWebhookParams str https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params
-// Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
-// avatar by providing a nil to SetAvatar.
-//
-//generate-rest-params: name:string, avatar:string, channel_id:Snowflake,
-//generate-rest-basic-execute: webhook:*Webhook,
-type updateWebhookBuilder struct {
-	r RESTBuilder
-}
-
-// SetDefaultAvatar will reset the webhook image
-func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
-	u.r.param("avatar", nil)
-	return u
 }

@@ -42,6 +42,24 @@ func (g *GetThreads) URLQueryString() string {
 	return params.URLQueryString()
 }
 
+func (g *GetAuditLogs) URLQueryString() string {
+	params := make(urlQuery)
+
+	params["user_id"] = g.UserID
+
+	params["action_type"] = g.ActionType
+
+	if !(g.Before == 0) {
+		params["before"] = g.Before
+	}
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	return params.URLQueryString()
+}
+
 func (g *getGuildMembers) URLQueryString() string {
 	params := make(urlQuery)
 

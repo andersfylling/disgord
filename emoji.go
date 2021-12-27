@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -68,13 +69,18 @@ func (e *Emoji) Mention() string {
 //
 //////////////////////////////////////////////////////
 
+var MissingEmojiIDErr = errors.New("emoji id was not set")
+
 type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder
 	WithFlags(flags ...Flag) GuildEmojiQueryBuilder
 
 	Get() (*Emoji, error)
-	UpdateBuilder() UpdateGuildEmojiBuilder
+	Update(*UpdateEmoji, string) (*Emoji, error)
 	Delete() error
+
+	// Deprecated: use Update
+	UpdateBuilder() UpdateGuildEmojiBuilder
 }
 
 func (g guildQueryBuilder) Emoji(emojiID Snowflake) GuildEmojiQueryBuilder {
@@ -87,6 +93,19 @@ type guildEmojiQueryBuilder struct {
 	client  *Client
 	gid     Snowflake
 	emojiID Snowflake
+}
+
+func (g *guildEmojiQueryBuilder) validate() error {
+	if g.client == nil {
+		return MissingClientInstanceErr
+	}
+	if g.gid.IsZero() {
+		return MissingGuildIDErr
+	}
+	if g.emojiID.IsZero() {
+		return MissingEmojiIDErr
+	}
+	return nil
 }
 
 func (g guildEmojiQueryBuilder) WithContext(ctx context.Context) GuildEmojiQueryBuilder {
@@ -118,22 +137,35 @@ func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
 	return getEmoji(r.Execute)
 }
 
-// UpdateBuilder Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
+// Update Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) UpdateBuilder() UpdateGuildEmojiBuilder {
-	builder := &updateGuildEmojiBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Emoji{}
+func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason string) (*Emoji, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = g.flags
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      auditLogReason,
+	}, g.flags)
+	r.pool = g.client.pool.emoji
+	r.factory = func() interface{} {
+		return &Emoji{}
+	}
 
-	return builder
+	return getEmoji(r.Execute)
+}
+
+type UpdateEmoji struct {
+	Name  *string      `json:"name,omitempty"`
+	Roles *[]Snowflake `json:"roles,omitempty"`
 }
 
 // Delete deletes the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
@@ -154,12 +186,6 @@ func (g guildEmojiQueryBuilder) Delete() (err error) {
 // REST Builders
 //
 //////////////////////////////////////////////////////
-
-//generate-rest-params: name:string, roles:[]Snowflake,
-//generate-rest-basic-execute: emoji:*Emoji,
-type updateGuildEmojiBuilder struct {
-	r RESTBuilder
-}
 
 //generate-rest-params: roles:[]Snowflake,
 //generate-rest-basic-execute: emoji:*Emoji,

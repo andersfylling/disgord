@@ -103,6 +103,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ResponseBodyThreads:
 		s = *t
+	case *[]*UpdateChannel:
+		s = *t
 	case *[]*UpdateChannelPermissions:
 		s = *t
 	case *[]*Client:
@@ -130,6 +132,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*EmbedVideo:
 		s = *t
 	case *[]*Emoji:
+		s = *t
+	case *[]*UpdateEmoji:
 		s = *t
 	case *[]*ChannelCreate:
 		s = *t
@@ -233,6 +237,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateGuildRole:
 		s = *t
+	case *[]*GetAuditLogs:
+		s = *t
 	case *[]*GetMembers:
 		s = *t
 	case *[]*Guild:
@@ -250,6 +256,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*PartialBan:
 		s = *t
 	case *[]*ResponseBodyGuildThreads:
+		s = *t
+	case *[]*UpdateGuild:
 		s = *t
 	case *[]*UpdateGuildChannelPositions:
 		s = *t
@@ -271,6 +279,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*InviteMetadata:
 		s = *t
+	case *[]*UpdateMember:
+		s = *t
 	case *[]*MentionChannel:
 		s = *t
 	case *[]*Message:
@@ -287,6 +297,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*StickerItem:
 		s = *t
+	case *[]*UpdateMessage:
+		s = *t
 	case *[]*GetReactionURL:
 		s = *t
 	case *[]*Reaction:
@@ -296,6 +308,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*RESTBuilder:
 		s = *t
 	case *[]*Role:
+		s = *t
+	case *[]*UpdateRole:
 		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
@@ -327,6 +341,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetCurrentUserGuilds:
 		s = *t
+	case *[]*UpdateUser:
+		s = *t
 	case *[]*User:
 		s = *t
 	case *[]*UserConnection:
@@ -338,6 +354,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*VoiceState:
 		s = *t
 	case *[]*ExecuteWebhook:
+		s = *t
+	case *[]*UpdateWebhook:
 		s = *t
 	case *[]*Webhook:
 		s = *t
