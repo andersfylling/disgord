@@ -790,12 +790,12 @@ func getThreadMembers(f func() (interface{}, error)) (threadMembers []*ThreadMem
 	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
-func getResponseBodyThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyThreads, err error) {
+func getArchivedThreads(f func() (interface{}, error)) (concreteBody *ArchivedThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyThreads), nil
+	return v.(*ArchivedThreads), nil
 }
 
 func getActiveGuildThreads(f func() (interface{}, error)) (concreteBody *ActiveGuildThreads, err error) {

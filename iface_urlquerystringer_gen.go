@@ -28,7 +28,7 @@ func (g *GetMessages) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetThreads) URLQueryString() string {
+func (g *GetArchivedThreads) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Before == Time{time.Unix(0, 0)}) {

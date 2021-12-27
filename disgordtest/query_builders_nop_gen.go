@@ -76,11 +76,7 @@ func (c *ChannelQueryBuilderNop) CreateMessage(_ *disgord.CreateMessage) (*disgo
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateThread(_ disgord.Snowflake, _ *disgord.CreateThread) (*disgord.Channel, error) {
-	return nil, nil
-}
-
-func (c *ChannelQueryBuilderNop) CreateThreadNoMessage(_ *disgord.CreateThreadNoMessage) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) CreateThread(_ *disgord.CreateThreadWithoutMessage) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -108,7 +104,7 @@ func (c *ChannelQueryBuilderNop) GetInvites() ([]*disgord.Invite, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *disgord.GetThreads) (*disgord.ResponseBodyThreads, error) {
+func (c *ChannelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *disgord.GetArchivedThreads) (*disgord.ArchivedThreads, error) {
 	return nil, nil
 }
 
@@ -120,11 +116,11 @@ func (c *ChannelQueryBuilderNop) GetPinnedMessages() ([]*disgord.Message, error)
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) GetPrivateArchivedThreads(_ *disgord.GetThreads) (*disgord.ResponseBodyThreads, error) {
+func (c *ChannelQueryBuilderNop) GetPrivateArchivedThreads(_ *disgord.GetArchivedThreads) (*disgord.ArchivedThreads, error) {
 	return nil, nil
 }
 
-func (c *ChannelQueryBuilderNop) GetPublicArchivedThreads(_ *disgord.GetThreads) (*disgord.ResponseBodyThreads, error) {
+func (c *ChannelQueryBuilderNop) GetPublicArchivedThreads(_ *disgord.GetArchivedThreads) (*disgord.ArchivedThreads, error) {
 	return nil, nil
 }
 
@@ -831,7 +827,7 @@ func (g *GuildQueryBuilderNop) Get() (*disgord.Guild, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) GetActiveThreads() (*disgord.ResponseBodyGuildThreads, error) {
+func (g *GuildQueryBuilderNop) GetActiveThreads() (*disgord.ActiveGuildThreads, error) {
 	return nil, nil
 }
 
@@ -1017,6 +1013,10 @@ func (m MessageQueryBuilderNop) WithContext(ctx context.Context) disgord.Message
 func (m MessageQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
+}
+
+func (m *MessageQueryBuilderNop) CreateThread(_ *disgord.CreateThread) (*disgord.Channel, error) {
+	return nil, nil
 }
 
 func (m *MessageQueryBuilderNop) CrossPost() (*disgord.Message, error) {
