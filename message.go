@@ -641,7 +641,7 @@ type CreateThread struct {
 	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
 	RateLimitPerUser    int                     `json:"rate_limit_per_user,omitempty"`
 
-	// Reason is an X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	// AuditLogReason is an X-Audit-Log-Reason header field that will show up on the audit log for this action.
 	AuditLogReason string `json:"-"`
 
 	// Deprecated: use AuditLogReason

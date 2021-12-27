@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// Deprecated: use CreateThreadWithoutMessage
+type CreateThreadNoMessage = CreateThreadWithoutMessage
+
 // Deprecated: use Update instead
 func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder := &updateMessageBuilder{}

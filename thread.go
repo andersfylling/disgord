@@ -27,17 +27,3 @@ const (
 	AutoArchiveThreadThreeDays AutoArchiveDurationTime = 4320
 	AutoArchiveThreadWeek      AutoArchiveDurationTime = 10080
 )
-
-// CreateThreadNoMessage https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params
-type CreateThreadNoMessage struct {
-	Name                string                  `json:"name"`
-	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
-	// In API v9, type defaults to PRIVATE_THREAD in order to match the behavior when
-	// thread documentation was first published. In API v10 this will be changed to be a required field, with no default.
-	Type             ChannelType `json:"type,omitempty"`
-	Invitable        bool        `json:"invitable,omitempty"`
-	RateLimitPerUser int         `json:"rate_limit_per_user,omitempty"`
-
-	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
-	Reason string `json:"-"`
-}
