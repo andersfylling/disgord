@@ -45,13 +45,17 @@ func (g *GetThreads) URLQueryString() string {
 func (g *GetAuditLogs) URLQueryString() string {
 	params := make(urlQuery)
 
-	params[""] = g.UserID
+	params["user_id"] = g.UserID
 
-	params[""] = g.ActionType
+	params["action_type"] = g.ActionType
 
-	params[""] = g.Before
+	if !(g.Before == 0) {
+		params["before"] = g.Before
+	}
 
-	params[""] = g.Limit
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
 
 	return params.URLQueryString()
 }
