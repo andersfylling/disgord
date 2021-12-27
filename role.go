@@ -82,7 +82,7 @@ type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
 
-	Update(params *UpdateRoleParams, auditLogReason string) (*Role, error)
+	Update(params *UpdateRole, auditLogReason string) (*Role, error)
 	Delete() error
 
 	// Deprecated: use Update
@@ -142,7 +142,7 @@ func (g guildRoleQueryBuilder) Delete() error {
 }
 
 // Update update a role
-func (g guildRoleQueryBuilder) Update(params *UpdateRoleParams, auditLogReason string) (*Role, error) {
+func (g guildRoleQueryBuilder) Update(params *UpdateRole, auditLogReason string) (*Role, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -162,7 +162,7 @@ func (g guildRoleQueryBuilder) Update(params *UpdateRoleParams, auditLogReason s
 	return getRole(r.Execute)
 }
 
-type UpdateRoleParams struct {
+type UpdateRole struct {
 	Name        *string        `json:"name,omitempty"`
 	Permissions *PermissionBit `json:"permissions,omitempty"`
 	Color       *int           `json:"color,omitempty"`

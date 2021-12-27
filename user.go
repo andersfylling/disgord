@@ -473,7 +473,7 @@ func (c currentUserQueryBuilder) Get() (user *User, err error) {
 }
 
 // Update update current user
-func (c currentUserQueryBuilder) Update(params *UpdateUserParams) (*User, error) {
+func (c currentUserQueryBuilder) Update(params *UpdateUser) (*User, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -494,7 +494,7 @@ func (c currentUserQueryBuilder) Update(params *UpdateUserParams) (*User, error)
 	return getUser(r.Execute)
 }
 
-type UpdateUserParams struct {
+type UpdateUser struct {
 	Username *string `json:"username,omitempty"`
 	Avatar   *string `json:"avatar,omitempty"`
 }

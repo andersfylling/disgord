@@ -85,7 +85,7 @@ func (g guildMemberQueryBuilder) Get() (*Member, error) {
 }
 
 // Update update a guild member
-func (g guildMemberQueryBuilder) Update(params *UpdateMemberParams, auditLogReason string) (*Member, error) {
+func (g guildMemberQueryBuilder) Update(params *UpdateMember, auditLogReason string) (*Member, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -114,7 +114,7 @@ func (g guildMemberQueryBuilder) Update(params *UpdateMemberParams, auditLogReas
 	return member, nil
 }
 
-type UpdateMemberParams struct {
+type UpdateMember struct {
 	Nick      *string      `json:"nick,omitempty"`
 	Roles     *[]Snowflake `json:"roles,omitempty"`
 	Mute      *bool        `json:"mute,omitempty"`

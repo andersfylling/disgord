@@ -103,9 +103,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ResponseBodyThreads:
 		s = *t
-	case *[]*UpdateChannelParams:
+	case *[]*UpdateChannel:
 		s = *t
-	case *[]*UpdateChannelPermissionsParams:
+	case *[]*UpdateChannelPermissions:
 		s = *t
 	case *[]*Client:
 		s = *t
@@ -133,7 +133,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Emoji:
 		s = *t
-	case *[]*UpdateEmojiParams:
+	case *[]*UpdateEmoji:
 		s = *t
 	case *[]*ChannelCreate:
 		s = *t
@@ -255,13 +255,13 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ResponseBodyGuildThreads:
 		s = *t
-	case *[]*UpdateGuildChannelPositionsParams:
+	case *[]*UpdateGuildChannelPositions:
 		s = *t
-	case *[]*UpdateGuildIntegrationParams:
+	case *[]*UpdateGuildIntegration:
 		s = *t
-	case *[]*UpdateGuildParams:
+	case *[]*UpdateGuild:
 		s = *t
-	case *[]*UpdateGuildRolePositionsParams:
+	case *[]*UpdateGuildRolePositions:
 		s = *t
 	case *[]*ApplicationCommandInteractionData:
 		s = *t
@@ -277,7 +277,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*InviteMetadata:
 		s = *t
-	case *[]*UpdateMemberParams:
+	case *[]*UpdateMember:
 		s = *t
 	case *[]*MentionChannel:
 		s = *t
@@ -295,7 +295,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*StickerItem:
 		s = *t
-	case *[]*UpdateMessageParams:
+	case *[]*UpdateMessage:
 		s = *t
 	case *[]*GetReactionURLParams:
 		s = *t
@@ -307,7 +307,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Role:
 		s = *t
-	case *[]*UpdateRoleParams:
+	case *[]*UpdateRole:
 		s = *t
 	case *[]*ErrorUnsupportedType:
 		s = *t
@@ -339,7 +339,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetCurrentUserGuildsParams:
 		s = *t
-	case *[]*UpdateUserParams:
+	case *[]*UpdateUser:
 		s = *t
 	case *[]*User:
 		s = *t
@@ -353,7 +353,7 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ExecuteWebhookParams:
 		s = *t
-	case *[]*UpdateWebhookParams:
+	case *[]*UpdateWebhook:
 		s = *t
 	case *[]*Webhook:
 		s = *t
@@ -475,13 +475,13 @@ func sortByID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*UpdateGuildChannelPositionsParams:
+	case []*UpdateGuildChannelPositions:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
-	case []*UpdateGuildRolePositionsParams:
+	case []*UpdateGuildRolePositions:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {

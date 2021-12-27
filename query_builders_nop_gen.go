@@ -155,7 +155,7 @@ func (c *channelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) Update(_ *UpdateChannelParams, _ string) (*Channel, error) {
+func (c *channelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
 	return nil, nil
 }
 
@@ -163,7 +163,7 @@ func (c *channelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
+func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -706,7 +706,7 @@ func (g *guildEmojiQueryBuilderNop) Get() (*Emoji, error) {
 	return nil, nil
 }
 
-func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmojiParams, _ string) (*Emoji, error) {
+func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmoji, _ string) (*Emoji, error) {
 	return nil, nil
 }
 
@@ -906,7 +906,7 @@ func (g *guildQueryBuilderNop) UnbanUser(_ Snowflake, _ string) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) Update(_ *UpdateGuildParams, _ string) (*Guild, error) {
+func (g *guildQueryBuilderNop) Update(_ *UpdateGuild, _ string) (*Guild, error) {
 	return nil, nil
 }
 
@@ -914,7 +914,7 @@ func (g *guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositionsParams) error {
+func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositions) error {
 	return nil
 }
 
@@ -922,11 +922,11 @@ func (g *guildQueryBuilderNop) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildIntegrationParams) error {
+func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildIntegration) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositionsParams) ([]*Role, error) {
+func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositions) ([]*Role, error) {
 	return nil, nil
 }
 
@@ -958,7 +958,7 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRoleParams, _ string) (*Role, error) {
+func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole, _ string) (*Role, error) {
 	return nil, nil
 }
 
@@ -1050,7 +1050,7 @@ func (m *messageQueryBuilderNop) Unpin() error {
 	return nil
 }
 
-func (m *messageQueryBuilderNop) Update(_ *UpdateMessageParams) (*Message, error) {
+func (m *messageQueryBuilderNop) Update(_ *UpdateMessage) (*Message, error) {
 	return nil, nil
 }
 
@@ -1170,7 +1170,7 @@ func (v *voiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*VoiceStateUpd
 	return nil, nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannelParams, _ string) (*Channel, error) {
+func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
 	return nil, nil
 }
 
@@ -1178,7 +1178,7 @@ func (v *voiceChannelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
+func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -1222,7 +1222,7 @@ func (w *webhookQueryBuilderNop) Get() (*Webhook, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) Update(_ *UpdateWebhookParams) (*Webhook, error) {
+func (w *webhookQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
 	return nil, nil
 }
 
@@ -1266,7 +1266,7 @@ func (w *webhookWithTokenQueryBuilderNop) Get() (*Webhook, error) {
 	return nil, nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Update(_ *UpdateWebhookParams) (*Webhook, error) {
+func (w *webhookWithTokenQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
 	return nil, nil
 }
 

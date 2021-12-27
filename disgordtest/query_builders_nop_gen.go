@@ -164,7 +164,7 @@ func (c *ChannelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannelParams, _ string) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -172,7 +172,7 @@ func (c *ChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuilder {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissionsParams) error {
+func (c *ChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -715,7 +715,7 @@ func (g *GuildEmojiQueryBuilderNop) Get() (*disgord.Emoji, error) {
 	return nil, nil
 }
 
-func (g *GuildEmojiQueryBuilderNop) Update(_ *disgord.UpdateEmojiParams, _ string) (*disgord.Emoji, error) {
+func (g *GuildEmojiQueryBuilderNop) Update(_ *disgord.UpdateEmoji, _ string) (*disgord.Emoji, error) {
 	return nil, nil
 }
 
@@ -915,7 +915,7 @@ func (g *GuildQueryBuilderNop) UnbanUser(_ disgord.Snowflake, _ string) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) Update(_ *disgord.UpdateGuildParams, _ string) (*disgord.Guild, error) {
+func (g *GuildQueryBuilderNop) Update(_ *disgord.UpdateGuild, _ string) (*disgord.Guild, error) {
 	return nil, nil
 }
 
@@ -923,7 +923,7 @@ func (g *GuildQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateChannelPositions(_ []disgord.UpdateGuildChannelPositionsParams) error {
+func (g *GuildQueryBuilderNop) UpdateChannelPositions(_ []disgord.UpdateGuildChannelPositions) error {
 	return nil
 }
 
@@ -931,11 +931,11 @@ func (g *GuildQueryBuilderNop) UpdateEmbedBuilder() disgord.UpdateGuildEmbedBuil
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateIntegration(_ disgord.Snowflake, _ *disgord.UpdateGuildIntegrationParams) error {
+func (g *GuildQueryBuilderNop) UpdateIntegration(_ disgord.Snowflake, _ *disgord.UpdateGuildIntegration) error {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) UpdateRolePositions(_ []disgord.UpdateGuildRolePositionsParams) ([]*disgord.Role, error) {
+func (g *GuildQueryBuilderNop) UpdateRolePositions(_ []disgord.UpdateGuildRolePositions) ([]*disgord.Role, error) {
 	return nil, nil
 }
 
@@ -967,7 +967,7 @@ func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRoleParams, _ string) (*disgord.Role, error) {
+func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole, _ string) (*disgord.Role, error) {
 	return nil, nil
 }
 
@@ -1059,7 +1059,7 @@ func (m *MessageQueryBuilderNop) Unpin() error {
 	return nil
 }
 
-func (m *MessageQueryBuilderNop) Update(_ *disgord.UpdateMessageParams) (*disgord.Message, error) {
+func (m *MessageQueryBuilderNop) Update(_ *disgord.UpdateMessage) (*disgord.Message, error) {
 	return nil, nil
 }
 
@@ -1179,7 +1179,7 @@ func (v *VoiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*disgord.Voice
 	return nil, nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannelParams, _ string) (*disgord.Channel, error) {
+func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -1187,7 +1187,7 @@ func (v *VoiceChannelQueryBuilderNop) UpdateBuilder() disgord.UpdateChannelBuild
 	return nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissionsParams) error {
+func (v *VoiceChannelQueryBuilderNop) UpdatePermissions(_ disgord.Snowflake, _ *disgord.UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -1231,7 +1231,7 @@ func (w *WebhookQueryBuilderNop) Get() (*disgord.Webhook, error) {
 	return nil, nil
 }
 
-func (w *WebhookQueryBuilderNop) Update(_ *disgord.UpdateWebhookParams) (*disgord.Webhook, error) {
+func (w *WebhookQueryBuilderNop) Update(_ *disgord.UpdateWebhook) (*disgord.Webhook, error) {
 	return nil, nil
 }
 
@@ -1275,7 +1275,7 @@ func (w *WebhookWithTokenQueryBuilderNop) Get() (*disgord.Webhook, error) {
 	return nil, nil
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) Update(_ *disgord.UpdateWebhookParams) (*disgord.Webhook, error) {
+func (w *WebhookWithTokenQueryBuilderNop) Update(_ *disgord.UpdateWebhook) (*disgord.Webhook, error) {
 	return nil, nil
 }
 

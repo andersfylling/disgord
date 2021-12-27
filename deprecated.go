@@ -6,6 +6,33 @@ import (
 	"net/http"
 )
 
+// Deprecated use UpdateChannel
+type UpdateChannelParams = UpdateChannel
+
+// Deprecated use UpdateChannelPermissions
+type UpdateChannelPermissionsParams = UpdateChannelPermissions
+
+// Deprecated use UpdateGuildRolePositions
+type UpdateGuildRolePositionsParams = UpdateGuildRolePositions
+
+// Deprecated use UpdateGuildIntegration
+type UpdateGuildIntegrationParams = UpdateGuildIntegration
+
+// Deprecated use UpdateMember
+type UpdateMemberParams = UpdateMember
+
+// Deprecated use UpdateMessage
+type UpdateMessageParams = UpdateMessage
+
+// Deprecated use UpdateRole
+type UpdateRoleParams = UpdateRoleParams
+
+// Deprecated use UpdateUser
+type UpdateUserParams = UpdateUser
+
+// Deprecated use UpdateWebhook
+type UpdateWebhookParams = UpdateWebhook
+
 // Deprecated: use Update instead
 func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder := &updateMessageBuilder{}
@@ -270,7 +297,7 @@ type updateCurrentUserBuilder struct {
 	r RESTBuilder
 }
 
-// UpdateWebhookParams https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params
+// UpdateWebhook https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params
 // Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
 // avatar by providing a nil to SetAvatar.
 //

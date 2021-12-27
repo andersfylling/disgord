@@ -41,7 +41,7 @@ type WebhookQueryBuilder interface {
 
 	// Update Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns the updated webhook object on success.
-	Update(*UpdateWebhookParams) (*Webhook, error)
+	Update(*UpdateWebhook) (*Webhook, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateWebhookBuilder
@@ -121,7 +121,7 @@ func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint.
-func (w webhookQueryBuilder) Update(params *UpdateWebhookParams) (*Webhook, error) {
+func (w webhookQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -211,7 +211,7 @@ type WebhookWithTokenQueryBuilder interface {
 
 	// Update Same as UpdateWebhook, except this call does not require authentication,
 	// does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-	Update(*UpdateWebhookParams) (*Webhook, error)
+	Update(*UpdateWebhook) (*Webhook, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateWebhookBuilder
@@ -287,7 +287,7 @@ func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
 //  Reviewed                2018-08-14
 //  Comment                 All parameters to this endpoint. are optional.
-func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhookParams) (*Webhook, error) {
+func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -309,7 +309,7 @@ func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhookParams) (*Webh
 	return getWebhook(r.Execute)
 }
 
-type UpdateWebhookParams struct {
+type UpdateWebhook struct {
 	Name      *string    `json:"name,omitempty"`
 	Avatar    *string    `json:"avatar,omitempty"`
 	ChannelID *Snowflake `json:"channel_id,omitempty"`

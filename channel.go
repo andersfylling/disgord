@@ -270,7 +270,7 @@ type ChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannelParams, reason string) (*Channel, error)
+	Update(params *UpdateChannel, reason string) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
@@ -284,7 +284,7 @@ type ChannelQueryBuilder interface {
 	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) error
 
 	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
@@ -442,7 +442,7 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2021-08-08
-func (c channelQueryBuilder) Update(params *UpdateChannelParams, auditLogReason string) (*Channel, error) {
+func (c channelQueryBuilder) Update(params *UpdateChannel, auditLogReason string) (*Channel, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -462,7 +462,7 @@ func (c channelQueryBuilder) Update(params *UpdateChannelParams, auditLogReason 
 	return getChannel(r.Execute)
 }
 
-type UpdateChannelParams struct {
+type UpdateChannel struct {
 	Name                       *string                    `json:"name,omitempty"`
 	Type                       *ChannelType               `json:"type,omitempty"`
 	Position                   *uint                      `json:"position,omitempty"`
@@ -528,8 +528,8 @@ func (c channelQueryBuilder) TriggerTypingIndicator() (err error) {
 	return err
 }
 
-// UpdateChannelPermissionsParams https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
-type UpdateChannelPermissionsParams struct {
+// UpdateChannelPermissions https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
+type UpdateChannelPermissions struct {
 	Allow PermissionBit `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  PermissionBit `json:"deny"`  // the bitwise value of all disallowed permissions
 	Type  uint          `json:"type"`  // 0=role, 1=member
@@ -543,7 +543,7 @@ type UpdateChannelPermissionsParams struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) (err error) {
+func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) (err error) {
 	if c.cid.IsZero() {
 		return errors.New("channelID must be set to target the correct channel")
 	}

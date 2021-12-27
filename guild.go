@@ -687,14 +687,14 @@ type GuildQueryBuilder interface {
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembersParams) ([]*Member, error)
-	Update(params *UpdateGuildParams, auditLogReason string) (*Guild, error)
+	Update(params *UpdateGuild, auditLogReason string) (*Guild, error)
 	Delete() error
 
 	// Deprecated: use Update
 	UpdateBuilder() UpdateGuildBuilder
 
 	CreateChannel(name string, params *CreateGuildChannelParams) (*Channel, error)
-	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error
+	UpdateChannelPositions(params []UpdateGuildChannelPositions) error
 	CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams) (*Member, error)
 	Member(userID Snowflake) GuildMemberQueryBuilder
 
@@ -709,7 +709,7 @@ type GuildQueryBuilder interface {
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	// TODO-3: Add GetRole.
 	GetRoles() ([]*Role, error)
-	UpdateRolePositions(params []UpdateGuildRolePositionsParams) ([]*Role, error)
+	UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error)
 	CreateRole(params *CreateGuildRoleParams) (*Role, error)
 	Role(roleID Snowflake) GuildRoleQueryBuilder
 
@@ -720,7 +720,7 @@ type GuildQueryBuilder interface {
 
 	GetIntegrations() ([]*Integration, error)
 	CreateIntegration(params *CreateGuildIntegrationParams) error
-	UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error
+	UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegration) error
 	DeleteIntegration(integrationID Snowflake) error
 	SyncIntegration(integrationID Snowflake) error
 
@@ -799,7 +799,7 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 }
 
 // Update update a guild
-func (g guildQueryBuilder) Update(params *UpdateGuildParams, auditLogReason string) (*Guild, error) {
+func (g guildQueryBuilder) Update(params *UpdateGuild, auditLogReason string) (*Guild, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -822,7 +822,7 @@ func (g guildQueryBuilder) Update(params *UpdateGuildParams, auditLogReason stri
 	return getGuild(r.Execute)
 }
 
-type UpdateGuildParams struct {
+type UpdateGuild struct {
 	Name                        *string                        `json:"name,omitempty"`
 	Region                      *string                        `json:"region,omitempty"`
 	VerificationLvl             *VerificationLvl               `json:"verification_lvl,omitempty"`
@@ -908,7 +908,7 @@ func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel
 // UpdateChannelPositions Modify the positions of a set of channel objects for the guild.
 // Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
 // Gateway events.
-func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error {
+func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPositions) error {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -1158,7 +1158,7 @@ func (g guildQueryBuilder) CreateRole(params *CreateGuildRoleParams) (*Role, err
 // UpdateRolePositions Modify the positions of a set of role objects for the guild.
 // Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
 // Fires multiple Guild Role Update Gateway events.
-func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositionsParams) ([]*Role, error) {
+func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error) {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -1298,7 +1298,7 @@ func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParam
 // UpdateIntegration Modify the behavior and settings of a integration object for the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error {
+func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegration) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
@@ -1508,9 +1508,9 @@ type CreateGuildChannelParams struct {
 	Reason string `json:"-"`
 }
 
-// UpdateGuildChannelPositionsParams ...
+// UpdateGuildChannelPositions ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
-type UpdateGuildChannelPositionsParams struct {
+type UpdateGuildChannelPositions struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 
@@ -1520,10 +1520,10 @@ type UpdateGuildChannelPositionsParams struct {
 	Reason string `json:"-"`
 }
 
-func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositionsParams) {
-	p = make([]UpdateGuildRolePositionsParams, 0, len(rs))
+func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions) {
+	p = make([]UpdateGuildRolePositions, 0, len(rs))
 	for i := range rs {
-		p = append(p, UpdateGuildRolePositionsParams{
+		p = append(p, UpdateGuildRolePositions{
 			ID:       rs[i].ID,
 			Position: rs[i].Position,
 		})
@@ -1532,9 +1532,9 @@ func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions
 	return p
 }
 
-// UpdateGuildRolePositionsParams ...
+// UpdateGuildRolePositions ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
-type UpdateGuildRolePositionsParams struct {
+type UpdateGuildRolePositions struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 
@@ -1661,10 +1661,10 @@ type CreateGuildIntegrationParams struct {
 	ID   Snowflake `json:"id"`
 }
 
-// UpdateGuildIntegrationParams ...
+// UpdateGuildIntegration ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-integration-json-params
 // TODO: currently unsure which are required/optional params
-type UpdateGuildIntegrationParams struct {
+type UpdateGuildIntegration struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
 	ExpireGracePeriod int  `json:"expire_grace_period"`
 	EnableEmoticons   bool `json:"enable_emoticons"`

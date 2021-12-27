@@ -141,7 +141,7 @@ type VoiceChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannelParams, reason string) (*Channel, error)
+	Update(params *UpdateChannel, reason string) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
@@ -155,7 +155,7 @@ type VoiceChannelQueryBuilder interface {
 	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) error
 
 	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.

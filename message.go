@@ -345,7 +345,7 @@ type MessageQueryBuilder interface {
 
 	// Update Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	Update(params *UpdateMessageParams) (*Message, error)
+	Update(params *UpdateMessage) (*Message, error)
 
 	// Deprecated: use Update(..) instead
 	UpdateBuilder() UpdateMessageBuilder
@@ -445,7 +445,7 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) Update(params *UpdateMessageParams) (*Message, error) {
+func (m messageQueryBuilder) Update(params *UpdateMessage) (*Message, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -473,7 +473,7 @@ func (m messageQueryBuilder) Update(params *UpdateMessageParams) (*Message, erro
 	return getMessage(r.Execute)
 }
 
-type UpdateMessageParams struct {
+type UpdateMessage struct {
 	Content *string                  `json:"content,omitempty"`
 	Embeds  *[]*Embed                `json:"embeds,omitempty"`
 	Flags   *MessageFlag             `json:"flags,omitempty"`
@@ -483,7 +483,7 @@ type UpdateMessageParams struct {
 	Components      *[]*MessageComponent `json:"components,omitempty"`
 }
 
-func (p *UpdateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+func (p *UpdateMessage) prepare() (postBody interface{}, contentType string, err error) {
 	if p.File == nil {
 		return p, httd.ContentTypeJSON, nil
 	}
