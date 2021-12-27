@@ -17,4 +17,4 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-replace github.com/andersfylling/disgord => ../../../
+replace github.com/andersfylling/disgord => ../../
