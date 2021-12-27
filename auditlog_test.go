@@ -72,7 +72,7 @@ func TestAuditLog_InterfaceImplementations(t *testing.T) {
 	})
 }
 
-func TestAuditLogParams(t *testing.T) {
+func TestAuditLog(t *testing.T) {
 	params := &guildAuditLogsBuilder{}
 	params.r.setup(nil, nil, nil)
 	var wants string

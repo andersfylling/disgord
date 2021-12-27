@@ -29,7 +29,7 @@ const (
 )
 
 // ref https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params
-type CreateThreadParams struct {
+type CreateThread struct {
 	Name                string                  `json:"name"`
 	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
 	RateLimitPerUser    int                     `json:"rate_limit_per_user,omitempty"`
@@ -39,7 +39,7 @@ type CreateThreadParams struct {
 }
 
 // ref https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params
-type CreateThreadParamsNoMessage struct {
+type CreateThreadNoMessage struct {
 	Name                string                  `json:"name"`
 	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
 	// In API v9, type defaults to PRIVATE_THREAD in order to match the behavior when

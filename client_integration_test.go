@@ -148,7 +148,7 @@ func TestClient(t *testing.T) {
 
 		var roleID Snowflake
 		t.Run("create", func(t *testing.T) {
-			createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
+			createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRole{
 				Name:   roleName,
 				Reason: "integration test",
 			})
@@ -385,7 +385,7 @@ func TestClient(t *testing.T) {
 		}
 
 		c.Gateway().WithMiddleware(filterChannel, filterTestPrefix).MessageCreateChan(gotMessage)
-		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessage{Content: content})
 		if err != nil {
 			panic(fmt.Errorf("unable to send message. %w", err))
 		}
@@ -627,7 +627,7 @@ func TestREST(t *testing.T) {
 			}
 
 			content := "hi"
-			msg, err := c.Channel(channel.ID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+			msg, err := c.Channel(channel.ID).WithContext(deadline).CreateMessage(&CreateMessage{Content: content})
 			if err != nil {
 				t.Error(fmt.Errorf("unable to create message in DM channel. %w", err))
 			}

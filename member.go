@@ -18,7 +18,7 @@ type GuildMemberQueryBuilder interface {
 	AddRole(roleID Snowflake) error
 	RemoveRole(roleID Snowflake) error
 	Kick(reason string) error
-	Ban(params *BanMemberParams) error
+	Ban(params *BanMember) error
 	GetPermissions() (PermissionBit, error)
 }
 
@@ -134,7 +134,7 @@ func (g guildMemberQueryBuilder) Kick(reason string) error {
 
 // Ban Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
-func (g guildMemberQueryBuilder) Ban(params *BanMemberParams) (err error) {
+func (g guildMemberQueryBuilder) Ban(params *BanMember) (err error) {
 	if params == nil {
 		return errors.New("params was nil")
 	}

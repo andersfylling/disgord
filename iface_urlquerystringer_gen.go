@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (g *GetMessagesParams) URLQueryString() string {
+func (g *GetMessages) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Around == 0) {
@@ -28,7 +28,7 @@ func (g *GetMessagesParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetThreadsParams) URLQueryString() string {
+func (g *GetThreads) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Before == Time{time.Unix(0, 0)}) {
@@ -42,7 +42,7 @@ func (g *GetThreadsParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *getGuildMembersParams) URLQueryString() string {
+func (g *getGuildMembers) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.After == 0) {
@@ -56,7 +56,7 @@ func (g *getGuildMembersParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (b *BanMemberParams) URLQueryString() string {
+func (b *BanMember) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(b.DeleteMessageDays == 0) {
@@ -70,7 +70,7 @@ func (b *BanMemberParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (p *pruneMembersParams) URLQueryString() string {
+func (p *pruneMembers) URLQueryString() string {
 	params := make(urlQuery)
 
 	params["days"] = p.Days
@@ -80,7 +80,7 @@ func (p *pruneMembersParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *getInviteParams) URLQueryString() string {
+func (g *getInviteQuery) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.WithMemberCount == false) {
@@ -90,7 +90,7 @@ func (g *getInviteParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetReactionURLParams) URLQueryString() string {
+func (g *GetReactionURL) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Before == 0) {
@@ -108,7 +108,7 @@ func (g *GetReactionURLParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetCurrentUserGuildsParams) URLQueryString() string {
+func (g *GetCurrentUserGuilds) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Before == 0) {
@@ -126,7 +126,7 @@ func (g *GetCurrentUserGuildsParams) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (e *execWebhookParams) URLQueryString() string {
+func (e *execWebhook) URLQueryString() string {
 	params := make(urlQuery)
 
 	params["wait"] = e.Wait

@@ -152,7 +152,7 @@ type VoiceChannelQueryBuilder interface {
 	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) error
 
 	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.

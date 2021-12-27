@@ -267,7 +267,7 @@ func (m *Message) Send(ctx context.Context, s Session) (msg *Message, err error)
 	}
 
 	// TODO: attachments
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content:          m.Content,
 		Tts:              m.Tts,
 		MessageReference: m.MessageReference,
