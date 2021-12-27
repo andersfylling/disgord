@@ -2,7 +2,7 @@ package disgord
 
 // ThreadMember https://discord.com/developers/docs/resources/channel#thread-member-object
 type ThreadMember struct {
-	ThreadID            Snowflake `json:"id,omitempty"`
+	ThreadID      Snowflake `json:"id,omitempty"`
 	UserID        Snowflake `json:"user_id,omitempty"`
 	JoinTimestamp Time      `json:"join_timestamp"`
 	Flags         Flag      `json:"flags"`
