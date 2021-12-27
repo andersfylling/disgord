@@ -1400,10 +1400,10 @@ func (g guildQueryBuilder) GetAuditLogs(params *GetAuditLogs) (*AuditLog, error)
 }
 
 type GetAuditLogs struct {
-	UserID     Snowflake `json:"user_id"`
-	ActionType int       `json:"action_type"`
-	Before     Snowflake `json:"before,omitempty"`
-	Limit      int       `json:"limit,omitempty"`
+	UserID     Snowflake `urlparam:"user_id"`
+	ActionType int       `urlparam:"action_type"`
+	Before     Snowflake `urlparam:"before,omitempty"`
+	Limit      int       `urlparam:"limit,omitempty"`
 }
 
 var _ URLQueryStringer = (*GetAuditLogs)(nil)
