@@ -51,7 +51,7 @@ func main() {
 	// -------------------
 	// AUDIT-LOGS
 	// -------------------
-	logs, err := c.Guild(keys.GuildAdmin).GetAuditLogs().Execute()
+	logs, err := c.Guild(keys.GuildAdmin).GetAuditLogs(&disgord.GetAuditLogs{})
 	if err != nil {
 		panic(err)
 	} else if logs == nil {

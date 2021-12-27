@@ -835,8 +835,8 @@ func (g *GuildQueryBuilderNop) GetActiveThreads() (*disgord.ResponseBodyGuildThr
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) GetAuditLogs() disgord.GuildAuditLogsBuilder {
-	return nil
+func (g *GuildQueryBuilderNop) GetAuditLogs(_ *disgord.GetAuditLogs) (*disgord.AuditLog, error) {
+	return nil, nil
 }
 
 func (g *GuildQueryBuilderNop) GetBan(_ disgord.Snowflake) (*disgord.Ban, error) {

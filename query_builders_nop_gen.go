@@ -826,8 +826,8 @@ func (g *guildQueryBuilderNop) GetActiveThreads() (*ResponseBodyGuildThreads, er
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetAuditLogs() GuildAuditLogsBuilder {
-	return nil
+func (g *guildQueryBuilderNop) GetAuditLogs(_ *GetAuditLogs) (*AuditLog, error) {
+	return nil, nil
 }
 
 func (g *guildQueryBuilderNop) GetBan(_ Snowflake) (*Ban, error) {

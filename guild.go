@@ -724,7 +724,7 @@ type GuildQueryBuilder interface {
 	GetEmbed() (*GuildEmbed, error)
 	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
 	GetVanityURL() (*PartialInvite, error)
-	GetAuditLogs() GuildAuditLogsBuilder
+	GetAuditLogs(logs *GetAuditLogs) (*AuditLog, error)
 
 	VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder
 
@@ -1383,18 +1383,30 @@ func (g guildQueryBuilder) GetVanityURL() (*PartialInvite, error) {
 
 // GetAuditLogs Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-func (g guildQueryBuilder) GetAuditLogs() GuildAuditLogsBuilder {
-	builder := &guildAuditLogsBuilder{}
-	builder.r.itemFactory = auditLogFactory
-	builder.r.flags = g.flags
-	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Ctx:      g.ctx,
+func (g guildQueryBuilder) GetAuditLogs(params *GetAuditLogs) (*AuditLog, error) {
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.GuildAuditLogs(g.gid) + params.URLQueryString(),
 		Method:   http.MethodGet,
-		Endpoint: endpoint.GuildAuditLogs(g.gid),
-	}, nil)
+		Ctx:      g.ctx,
+	}, g.flags)
+	r.factory = auditLogFactory
 
-	return builder
+	logs, err := r.Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	return logs.(*AuditLog), nil
 }
+
+type GetAuditLogs struct {
+	UserID     Snowflake `json:"user_id"`
+	ActionType int       `json:"action_type"`
+	Before     Snowflake `json:"before,omitempty"`
+	Limit      int       `json:"limit,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetAuditLogs)(nil)
 
 // GetEmojis Returns a list of emoji objects for the given guild.
 func (g guildQueryBuilder) GetEmojis() ([]*Emoji, error) {
