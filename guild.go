@@ -737,7 +737,7 @@ type GuildQueryBuilder interface {
 
 	GetWebhooks() (ret []*Webhook, err error)
 
-	// Returns all active threads in the guild, including public and private threads. Threads are ordered
+	// GetActiveThreads Returns all active threads in the guild, including public and private threads. Threads are ordered
 	// by their id, in descending order.
 	GetActiveThreads() (*ActiveGuildThreads, error)
 }
