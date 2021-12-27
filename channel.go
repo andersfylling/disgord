@@ -1299,10 +1299,9 @@ func (c channelQueryBuilder) JoinThread() error {
 
 func (c channelQueryBuilder) AddThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodPut,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodPut,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 
 	_, err := r.Execute()
@@ -1318,10 +1317,9 @@ func (c channelQueryBuilder) AddThreadMember(userID Snowflake) error {
 
 func (c channelQueryBuilder) LeaveThread() error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberCurrentUser(c.cid),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodDelete,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberCurrentUser(c.cid),
 	}, c.flags)
 
 	_, err := r.Execute()
@@ -1338,10 +1336,9 @@ func (c channelQueryBuilder) LeaveThread() error {
 
 func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodDelete,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 
 	_, err := r.Execute()
@@ -1357,10 +1354,9 @@ func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) error {
 
 func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodGet,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodGet,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 	r.factory = func() interface{} {
 		return &ThreadMember{}
@@ -1379,10 +1375,9 @@ func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, e
 
 func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodGet,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMembers(c.cid),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodGet,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMembers(c.cid),
 	}, c.flags)
 	r.factory = func() interface{} {
 		tmp := make([]*ThreadMember, 0)

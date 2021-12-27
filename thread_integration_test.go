@@ -13,7 +13,7 @@ import (
 )
 
 func TestThreadEndpoints(t *testing.T) {
-	const andersfylling = Snowflake(769640669135896586)
+	const andersfylling = Snowflake(228846961774559232)
 	validSnowflakes()
 
 	c := New(Config{
