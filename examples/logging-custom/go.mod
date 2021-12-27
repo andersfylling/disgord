@@ -8,4 +8,4 @@ require (
 	go.uber.org/zap v1.17.0
 )
 
-replace github.com/andersfylling/disgord => ../../../
+replace github.com/andersfylling/disgord => ../../
