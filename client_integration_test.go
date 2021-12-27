@@ -34,14 +34,19 @@ var guildTypical = struct {
 }
 
 var guildAdmin = struct {
-	ID Snowflake
+	ID                 Snowflake
+	TextChannelGeneral Snowflake
 }{
-	ID: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
+	ID:                 ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
+	TextChannelGeneral: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_TEXT_GENERAL")),
 }
 
 func validSnowflakes() {
 	if guildAdmin.ID.IsZero() {
 		panic("missing id for admin guild")
+	}
+	if guildAdmin.TextChannelGeneral.IsZero() {
+		panic("missing text channel for admin guild")
 	}
 	if guildTypical.ID.IsZero() {
 		panic("missing id for typical guild")
