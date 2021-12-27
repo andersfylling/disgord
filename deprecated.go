@@ -25,7 +25,7 @@ type UpdateMemberParams = UpdateMember
 type UpdateMessageParams = UpdateMessage
 
 // Deprecated use UpdateRole
-type UpdateRoleParams = UpdateRoleParams
+type UpdateRoleParams = UpdateRole
 
 // Deprecated use UpdateUser
 type UpdateUserParams = UpdateUser
