@@ -1210,34 +1210,9 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 	return getWebhooks(r.Execute)
 }
 
-// CreateThread [POST]      Creates a new thread from an existing message.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}/threads
-// Discord documentation    https://discord.com/developers/docs/resources/channel#start-thread-with-message
-// Reviewed                 2021-11-21 (self)
-// Comment                  This endpoint supports the X-Audit-Log-Reason header.
-
+// Deprecated: use Client.Channel(..).Message(..).CreateThread(..)
 func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThread) (*Channel, error) {
-	if params == nil || params.Name == "" {
-		return nil, errors.New("thread name is required")
-	}
-
-	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
-	}
-
-	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadWithMessage(c.cid, messageID),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-		Reason:      params.Reason,
-	}, c.flags)
-	r.factory = func() interface{} {
-		return &Channel{}
-	}
-
-	return getChannel(r.Execute)
+	return c.Message(messageID).CreateThread(params)
 }
 
 // CreateThreadNoMessage [POST]    Creates a new thread that is not connected to an existing message.

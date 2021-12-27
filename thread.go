@@ -1,14 +1,14 @@
 package disgord
 
-// ref https://discord.com/developers/docs/resources/channel#thread-member-object
+// ThreadMember https://discord.com/developers/docs/resources/channel#thread-member-object
 type ThreadMember struct {
-	ID            Snowflake `json:"id,omitempty"`
+	ThreadID            Snowflake `json:"id,omitempty"`
 	UserID        Snowflake `json:"user_id,omitempty"`
 	JoinTimestamp Time      `json:"join_timestamp"`
 	Flags         Flag      `json:"flags"`
 }
 
-// ref https://discord.com/developers/docs/resources/channel#thread-metadata-object
+// ThreadMetadata https://discord.com/developers/docs/resources/channel#thread-metadata-object
 type ThreadMetadata struct {
 	Archived            bool `json:"archived"`
 	AutoArchiveDuration int  `json:"auto_archive_duration"`
@@ -28,17 +28,7 @@ const (
 	AutoArchiveThreadWeek      AutoArchiveDurationTime = 10080
 )
 
-// ref https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params
-type CreateThread struct {
-	Name                string                  `json:"name"`
-	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
-	RateLimitPerUser    int                     `json:"rate_limit_per_user,omitempty"`
-
-	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
-	Reason string `json:"-"`
-}
-
-// ref https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params
+// CreateThreadNoMessage https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params
 type CreateThreadNoMessage struct {
 	Name                string                  `json:"name"`
 	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
