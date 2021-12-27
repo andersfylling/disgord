@@ -28,7 +28,7 @@ func TestThreadEndpoints(t *testing.T) {
 		threadName := "HELLO WORLD1"
 		msg, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateMessage(&CreateMessage{Content: threadName})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 
 		thread, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(msg.ID, &CreateThread{
@@ -36,9 +36,9 @@ func TestThreadEndpoints(t *testing.T) {
 			AutoArchiveDuration: AutoArchiveThreadDay,
 		})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		} else if thread == nil {
-			t.Error(fmt.Errorf("fetched thread is nil. %w", err))
+			t.Error("fetched thread is nil")
 		} else if thread.Name != threadName {
 			t.Errorf("incorrect thread name. Got %s, wants %s", thread.Name, threadName)
 		}
@@ -56,12 +56,11 @@ func TestThreadEndpoints(t *testing.T) {
 			Type:                ChannelTypeGuildPublicThread,
 		})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		} else if thread == nil {
 			t.Error(fmt.Errorf("fetched thread is nil: %w", err))
 		} else if thread.Name != threadName {
 			t.Errorf("incorrect thread name. Got %s, wants %s", thread.Name, threadName)
-			t.Error(err)
 		}
 	})
 
@@ -99,8 +98,8 @@ func TestThreadEndpoints(t *testing.T) {
 		members, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMembers()
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
-		} else if len(members) == 1 {
-			t.Error(fmt.Errorf("did not get correct number of thread members. Got %d got %d", len(members), 1))
+		} else if len(members) != 1 {
+			t.Error(fmt.Errorf("did not get correct number of thread members. Got %d, wants %d", len(members), 1))
 		} else if members[0].ID != andersfylling {
 			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", members[0].ID, andersfylling))
 		}
