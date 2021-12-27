@@ -1,3 +1,4 @@
+//go:build disgord_diagnosews
 // +build disgord_diagnosews
 
 package gateway

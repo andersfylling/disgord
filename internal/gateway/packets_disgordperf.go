@@ -1,3 +1,4 @@
+//go:build disgordperf
 // +build disgordperf
 
 package gateway

@@ -63,19 +63,19 @@ func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessageParams) (*Message, error) {
+func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessage) (*Message, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateThread(_ Snowflake, _ *CreateThreadParams) (*Channel, error) {
+func (c *channelQueryBuilderNop) CreateThread(_ Snowflake, _ *CreateThread) (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ *CreateThreadParamsNoMessage) (*Channel, error) {
+func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ *CreateThreadNoMessage) (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateWebhook(_ *CreateWebhookParams) (*Webhook, error) {
+func (c *channelQueryBuilderNop) CreateWebhook(_ *CreateWebhook) (*Webhook, error) {
 	return nil, nil
 }
 
@@ -83,7 +83,7 @@ func (c *channelQueryBuilderNop) Delete() (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) DeleteMessages(_ *DeleteMessagesParams) error {
+func (c *channelQueryBuilderNop) DeleteMessages(_ *DeleteMessages) error {
 	return nil
 }
 
@@ -99,11 +99,11 @@ func (c *channelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetMessages(_ *GetMessagesParams) ([]*Message, error) {
+func (c *channelQueryBuilderNop) GetMessages(_ *GetMessages) ([]*Message, error) {
 	return nil, nil
 }
 
@@ -111,11 +111,11 @@ func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
 	return nil, nil
 }
 
@@ -159,7 +159,7 @@ func (c *channelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
+func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -195,7 +195,7 @@ func (c *clientQueryBuilderNop) Channel(_ Snowflake) ChannelQueryBuilder {
 	return nil
 }
 
-func (c *clientQueryBuilderNop) CreateGuild(_ string, _ *CreateGuildParams) (*Guild, error) {
+func (c *clientQueryBuilderNop) CreateGuild(_ string, _ *CreateGuild) (*Guild, error) {
 	return nil, nil
 }
 
@@ -247,7 +247,7 @@ func (c currentUserQueryBuilderNop) WithFlags(flags ...Flag) CurrentUserQueryBui
 	return &c
 }
 
-func (c *currentUserQueryBuilderNop) CreateGroupDM(_ *CreateGroupDMParams) (*Channel, error) {
+func (c *currentUserQueryBuilderNop) CreateGroupDM(_ *CreateGroupDM) (*Channel, error) {
 	return nil, nil
 }
 
@@ -255,7 +255,7 @@ func (c *currentUserQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
 
-func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuildsParams) ([]*Guild, error) {
+func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuilds) ([]*Guild, error) {
 	return nil, nil
 }
 
@@ -730,7 +730,7 @@ func (g *guildMemberQueryBuilderNop) AddRole(_ Snowflake) error {
 	return nil
 }
 
-func (g *guildMemberQueryBuilderNop) Ban(_ *BanMemberParams) error {
+func (g *guildMemberQueryBuilderNop) Ban(_ *BanMember) error {
 	return nil
 }
 
@@ -774,23 +774,23 @@ func (g guildQueryBuilderNop) WithFlags(flags ...Flag) GuildQueryBuilder {
 	return &g
 }
 
-func (g *guildQueryBuilderNop) CreateChannel(_ string, _ *CreateGuildChannelParams) (*Channel, error) {
+func (g *guildQueryBuilderNop) CreateChannel(_ string, _ *CreateGuildChannel) (*Channel, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateEmoji(_ *CreateGuildEmojiParams) (*Emoji, error) {
+func (g *guildQueryBuilderNop) CreateEmoji(_ *CreateGuildEmoji) (*Emoji, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateIntegration(_ *CreateGuildIntegrationParams) error {
+func (g *guildQueryBuilderNop) CreateIntegration(_ *CreateGuildIntegration) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) CreateMember(_ Snowflake, _ string, _ *AddGuildMemberParams) (*Member, error) {
+func (g *guildQueryBuilderNop) CreateMember(_ Snowflake, _ string, _ *AddGuildMember) (*Member, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) CreateRole(_ *CreateGuildRoleParams) (*Role, error) {
+func (g *guildQueryBuilderNop) CreateRole(_ *CreateGuildRole) (*Role, error) {
 	return nil, nil
 }
 
@@ -850,7 +850,7 @@ func (g *guildQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetMembers(_ *GetMembersParams) ([]*Member, error) {
+func (g *guildQueryBuilderNop) GetMembers(_ *GetMembers) ([]*Member, error) {
 	return nil, nil
 }
 
@@ -902,7 +902,7 @@ func (g *guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositionsParams) error {
+func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositions) error {
 	return nil
 }
 
@@ -910,11 +910,11 @@ func (g *guildQueryBuilderNop) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildIntegrationParams) error {
+func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildIntegration) error {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositionsParams) ([]*Role, error) {
+func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositions) ([]*Role, error) {
 	return nil, nil
 }
 
@@ -1154,7 +1154,7 @@ func (v *voiceChannelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
 	return nil
 }
 
-func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissionsParams) error {
+func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
 
@@ -1182,15 +1182,15 @@ func (w *webhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ Snowflake, _ string) (*Message, error) {
+func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhookParams, _ bool, _ Snowflake) (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
 	return nil, nil
 }
 
-func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhookParams, _ bool, _ Snowflake) (*Message, error) {
+func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
 	return nil, nil
 }
 
@@ -1230,7 +1230,7 @@ func (w *webhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhookParams, _ bool, _ Snowflake, _ string) (*Message, error) {
+func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
 	return nil, nil
 }
 

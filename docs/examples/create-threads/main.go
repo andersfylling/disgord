@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 
@@ -18,7 +18,7 @@ var log = &logrus.Logger{
 }
 
 func threadNeedsName(session disgord.Session, channelID disgord.Snowflake, usageText string) {
-	_, err := session.Channel(channelID).CreateMessage(&disgord.CreateMessageParams{
+	_, err := session.Channel(channelID).CreateMessage(&disgord.CreateMessage{
 		Content: fmt.Sprintf("Thread name is a required input. Usage: `%s`", usageText),
 	})
 	if err != nil {
@@ -34,7 +34,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 			threadNeedsName(session, evt.Message.ChannelID, "$makethread my-awesome-thread-name")
 		} else {
 			threadName := strs[1]
-			thread, err := session.Channel(evt.Message.ChannelID).CreateThread(evt.Message.ID, &disgord.CreateThreadParams{
+			thread, err := session.Channel(evt.Message.ChannelID).CreateThread(evt.Message.ID, &disgord.CreateThread{
 				Name: threadName,
 				// any auto archive thread duration greater than AutoArchiveThreadDay requires premium
 				AutoArchiveDuration: disgord.AutoArchiveThreadDay,
@@ -43,7 +43,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 				log.Error(err)
 			}
 			// send a message in the newly created thread
-			_, err = session.Channel(thread.ID).CreateMessage(&disgord.CreateMessageParams{Content: "HELLO WORLD"})
+			_, err = session.Channel(thread.ID).CreateMessage(&disgord.CreateMessage{Content: "HELLO WORLD"})
 			if err != nil {
 				log.Error(err)
 			}
@@ -53,7 +53,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 			threadNeedsName(session, evt.Message.ChannelID, "$makethreadnomessage my-awesome-thread-name")
 		} else {
 			threadName := strs[1]
-			thread, err := session.Channel(evt.Message.ChannelID).CreateThreadNoMessage(&disgord.CreateThreadParamsNoMessage{
+			thread, err := session.Channel(evt.Message.ChannelID).CreateThreadNoMessage(&disgord.CreateThreadNoMessage{
 				Name: threadName,
 				// any auto archive thread duration greater than AutoArchiveThreadDay requires premium
 				AutoArchiveDuration: disgord.AutoArchiveThreadDay,
@@ -63,7 +63,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 				log.Error(err)
 			}
 			// send a message in the newly created thread
-			_, err = session.Channel(thread.ID).CreateMessage(&disgord.CreateMessageParams{Content: "HELLO WORLD"})
+			_, err = session.Channel(thread.ID).CreateMessage(&disgord.CreateMessage{Content: "HELLO WORLD"})
 			if err != nil {
 				log.Error(err)
 			}

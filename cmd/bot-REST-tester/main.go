@@ -148,7 +148,7 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmojiParams{
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmoji{
 				Name:  "testing4324",
 				Image: randomBase64Emoji,
 			})
@@ -184,7 +184,7 @@ func main() {
 
 		// create emoji
 		func() {
-			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmojiParams{Name: "test6547465", Image: randomBase64Emoji})
+			emoji, err = c.Guild(keys.GuildDefault).CreateEmoji(&disgord.CreateGuildEmoji{Name: "test6547465", Image: randomBase64Emoji})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {
@@ -229,7 +229,7 @@ func main() {
 		// create emoji
 		func() {
 
-			emoji, err = c.Guild(keys.GuildAdmin).CreateEmoji(&disgord.CreateGuildEmojiParams{
+			emoji, err = c.Guild(keys.GuildAdmin).CreateEmoji(&disgord.CreateGuildEmoji{
 				Name:  illegalNames[0],
 				Image: randomBase64Emoji,
 			})

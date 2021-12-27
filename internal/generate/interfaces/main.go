@@ -57,9 +57,9 @@ func (f *fieldInfo) Resetable() bool {
 }
 
 type structInfo struct {
-	Name      string
-	ShortName string
-	Fields    []fieldInfo
+	Name          string
+	ShortName     string
+	Fields        []fieldInfo
 	NeededImports []importInfo
 }
 

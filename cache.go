@@ -753,13 +753,13 @@ func (c *BasicCache) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err err
 // func (c *BasicCache) GetMessage(channelID, messageID Snowflake) (*Message, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
+// func (c *BasicCache) GetCurrentUserGuilds(p *GetCurrentUserGuilds) ([]*PartialGuild, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+// func (c *BasicCache) GetMessages(channel Snowflake, p *GetMessages) ([]*Message, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+// func (c *BasicCache) GetMembers(guildID Snowflake, p *GetMembers) ([]*Member, error) {
 // 	return nil, nil
 // }
 

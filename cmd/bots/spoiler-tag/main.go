@@ -14,7 +14,7 @@ package main
 // 	})
 //
 // 	chanID := disgord.Snowflake(540519296640614416)
-// 	_, err := c.Channel(chanID).CreateMessage(&disgord.CreateMessageParams{
+// 	_, err := c.Channel(chanID).CreateMessage(&disgord.CreateMessage{
 // 		Content:           "testing",
 // 		SpoilerTagContent: true,
 // 	})
@@ -30,9 +30,9 @@ package main
 // 	}
 // 	defer f2.Close()
 //
-// 	_, _ = c.Channel(chanID).CreateMessage(&disgord.CreateMessageParams{
+// 	_, _ = c.Channel(chanID).CreateMessage(&disgord.CreateMessage{
 // 		Content: "with embed",
-// 		Files: []disgord.CreateMessageFileParams{
+// 		Files: []disgord.CreateMessageFile{
 // 			{Reader: f1, FileName: "myfavouriteimage.jpg", SpoilerTag: true},
 // 			{Reader: f2, FileName: "another.jpg"},
 // 		},
@@ -44,9 +44,9 @@ package main
 // 		},
 // 	})
 //
-// 	_, _ = c.Channel(chanID).CreateMessage(&disgord.CreateMessageParams{
+// 	_, _ = c.Channel(chanID).CreateMessage(&disgord.CreateMessage{
 // 		Content: "This is my favourite image, and another in an embed!",
-// 		Files: []disgord.CreateMessageFileParams{
+// 		Files: []disgord.CreateMessageFile{
 // 			{Reader: f1, FileName: "myfavouriteimage.jpg"},
 // 			{Reader: f2, FileName: "another.jpg", SpoilerTag: true},
 // 		},

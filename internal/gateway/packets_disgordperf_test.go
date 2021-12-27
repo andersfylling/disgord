@@ -1,3 +1,4 @@
+//go:build disgordperf && !integration
 // +build disgordperf,!integration
 
 package gateway
