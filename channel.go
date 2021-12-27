@@ -1385,7 +1385,8 @@ func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {
-		return &ThreadMember{}
+		tmp := make([]*ThreadMember, 0)
+		return &tmp
 	}
 
 	return getThreadMembers(r.Execute)
