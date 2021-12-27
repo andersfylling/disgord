@@ -34,7 +34,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 			threadNeedsName(session, evt.Message.ChannelID, "$makethread my-awesome-thread-name")
 		} else {
 			threadName := strs[1]
-			thread, err := session.Channel(evt.Message.ChannelID).CreateThread(evt.Message.ID, &disgord.CreateThread{
+			thread, err := session.Channel(evt.Message.ChannelID).Message(evt.Message.ID).CreateThread(&disgord.CreateThread{
 				Name: threadName,
 				// any auto archive thread duration greater than AutoArchiveThreadDay requires premium
 				AutoArchiveDuration: disgord.AutoArchiveThreadDay,
@@ -53,7 +53,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 			threadNeedsName(session, evt.Message.ChannelID, "$makethreadnomessage my-awesome-thread-name")
 		} else {
 			threadName := strs[1]
-			thread, err := session.Channel(evt.Message.ChannelID).CreateThreadNoMessage(&disgord.CreateThreadNoMessage{
+			thread, err := session.Channel(evt.Message.ChannelID).CreateThread(&disgord.CreateThreadWithoutMessage{
 				Name: threadName,
 				// any auto archive thread duration greater than AutoArchiveThreadDay requires premium
 				AutoArchiveDuration: disgord.AutoArchiveThreadDay,
