@@ -6,6 +6,18 @@ import (
 	"net/http"
 )
 
+// Deprecated: use ActiveGuildThreads
+type ResponseBodyGuildThreads = ActiveGuildThreads
+
+// Deprecated: use GetArchivedThreads
+type GetThreads = GetArchivedThreads
+
+// Deprecated: use ArchivedThreads
+type ResponseBodyThreads = ArchivedThreads
+
+// Deprecated: use CreateThreadWithoutMessage
+type CreateThreadNoMessage = CreateThreadWithoutMessage
+
 // Deprecated: use Update instead
 func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder := &updateMessageBuilder{}

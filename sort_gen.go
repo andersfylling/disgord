@@ -79,6 +79,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*AllowedMentions:
 		s = *t
+	case *[]*ArchivedThreads:
+		s = *t
 	case *[]*Attachment:
 		s = *t
 	case *[]*Channel:
@@ -87,21 +89,21 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateMessageFile:
 		s = *t
+	case *[]*CreateThreadWithoutMessage:
+		s = *t
 	case *[]*CreateWebhook:
 		s = *t
 	case *[]*DeleteMessages:
 		s = *t
-	case *[]*GetMessages:
+	case *[]*GetArchivedThreads:
 		s = *t
-	case *[]*GetThreads:
+	case *[]*GetMessages:
 		s = *t
 	case *[]*GroupDMParticipant:
 		s = *t
 	case *[]*PartialChannel:
 		s = *t
 	case *[]*PermissionOverwrite:
-		s = *t
-	case *[]*ResponseBodyThreads:
 		s = *t
 	case *[]*UpdateChannel:
 		s = *t
@@ -221,6 +223,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*WebhooksUpdate:
 		s = *t
+	case *[]*ActiveGuildThreads:
+		s = *t
 	case *[]*AddGuildMember:
 		s = *t
 	case *[]*Ban:
@@ -255,8 +259,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*PartialBan:
 		s = *t
-	case *[]*ResponseBodyGuildThreads:
-		s = *t
 	case *[]*UpdateGuild:
 		s = *t
 	case *[]*UpdateGuildChannelPositions:
@@ -280,6 +282,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*InviteMetadata:
 		s = *t
 	case *[]*UpdateMember:
+		s = *t
+	case *[]*CreateThread:
 		s = *t
 	case *[]*MentionChannel:
 		s = *t
@@ -314,10 +318,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*ErrorUnsupportedType:
 		s = *t
 	case *[]*Time:
-		s = *t
-	case *[]*CreateThread:
-		s = *t
-	case *[]*CreateThreadNoMessage:
 		s = *t
 	case *[]*ThreadMember:
 		s = *t
@@ -532,12 +532,6 @@ func sortByID(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return s[i].ID < s[j].ID }
 		}
 	case []*Role:
-		if descending {
-			less = func(i, j int) bool { return s[i].ID > s[j].ID }
-		} else {
-			less = func(i, j int) bool { return s[i].ID < s[j].ID }
-		}
-	case []*ThreadMember:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
 		} else {
@@ -951,6 +945,12 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateThreadWithoutMessage:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*CreateWebhook:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -1041,6 +1041,12 @@ func sortByName(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
+	case []*CreateThread:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*MentionChannel:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
@@ -1066,18 +1072,6 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*Role:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*CreateThread:
-		if descending {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
-		} else {
-			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
-		}
-	case []*CreateThreadNoMessage:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

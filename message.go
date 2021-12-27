@@ -347,6 +347,10 @@ type MessageQueryBuilder interface {
 	// current user. Returns a message object. Fires a Message Update Gateway event.
 	Update(params *UpdateMessage) (*Message, error)
 
+	// Delete deletes a message. If operating on a guild channel and trying to delete a message that was not
+	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
+	Delete() error
+
 	// Deprecated: use Update(..) instead
 	UpdateBuilder() UpdateMessageBuilder
 	// Deprecated: use Update(..) instead
@@ -354,11 +358,9 @@ type MessageQueryBuilder interface {
 	// Deprecated: use Update(..) instead
 	SetEmbed(embed *Embed) (*Message, error)
 
-	CrossPost() (*Message, error)
+	CreateThread(params *CreateThread) (*Channel, error)
 
-	// Delete deletes a message. If operating on a guild channel and trying to delete a message that was not
-	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
-	Delete() error
+	CrossPost() (*Message, error)
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 	// permission to be present on the current user.
@@ -595,6 +597,55 @@ func (m messageQueryBuilder) Unpin() (err error) {
 
 	_, err = r.Execute()
 	return err
+}
+
+// CreateThread creates a new thread from an existing message.
+// https://discord.com/developers/docs/resources/channel#start-thread-with-message
+func (m messageQueryBuilder) CreateThread(params *CreateThread) (*Channel, error) {
+	if m.cid.IsZero() {
+		return nil, errors.New("channelID must be set to target the correct channel")
+	}
+	if m.mid.IsZero() {
+		return nil, errors.New("messageID must be set to target the specific channel message")
+	}
+	if params == nil || params.Name == "" {
+		return nil, errors.New("thread name is required")
+	}
+
+	if l := len(params.Name); !(2 <= l && l <= 100) {
+		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+	}
+
+	if params.Reason != "" && params.AuditLogReason == "" {
+		params.AuditLogReason = params.Reason
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         m.ctx,
+		Endpoint:    endpoint.ChannelThreadWithMessage(m.cid, m.mid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.AuditLogReason,
+	}, m.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
+
+	return getChannel(r.Execute)
+}
+
+// CreateThread https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params
+type CreateThread struct {
+	Name                string                  `json:"name"`
+	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
+	RateLimitPerUser    int                     `json:"rate_limit_per_user,omitempty"`
+
+	// AuditLogReason is an X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	AuditLogReason string `json:"-"`
+
+	// Deprecated: use AuditLogReason
+	Reason string `json:"-"`
 }
 
 // CrossPost crosspost a message in a News Channel to following channels.

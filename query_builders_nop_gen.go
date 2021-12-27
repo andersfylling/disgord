@@ -67,11 +67,7 @@ func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessage) (*Message, erro
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) CreateThread(_ Snowflake, _ *CreateThread) (*Channel, error) {
-	return nil, nil
-}
-
-func (c *channelQueryBuilderNop) CreateThreadNoMessage(_ *CreateThreadNoMessage) (*Channel, error) {
+func (c *channelQueryBuilderNop) CreateThread(_ *CreateThreadWithoutMessage) (*Channel, error) {
 	return nil, nil
 }
 
@@ -99,7 +95,7 @@ func (c *channelQueryBuilderNop) GetInvites() ([]*Invite, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetJoinedPrivateArchivedThreads(_ *GetArchivedThreads) (*ArchivedThreads, error) {
 	return nil, nil
 }
 
@@ -111,11 +107,11 @@ func (c *channelQueryBuilderNop) GetPinnedMessages() ([]*Message, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetPrivateArchivedThreads(_ *GetArchivedThreads) (*ArchivedThreads, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetThreads) (*ResponseBodyThreads, error) {
+func (c *channelQueryBuilderNop) GetPublicArchivedThreads(_ *GetArchivedThreads) (*ArchivedThreads, error) {
 	return nil, nil
 }
 
@@ -822,7 +818,7 @@ func (g *guildQueryBuilderNop) Get() (*Guild, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
+func (g *guildQueryBuilderNop) GetActiveThreads() (*ActiveGuildThreads, error) {
 	return nil, nil
 }
 
@@ -1008,6 +1004,10 @@ func (m messageQueryBuilderNop) WithContext(ctx context.Context) MessageQueryBui
 func (m messageQueryBuilderNop) WithFlags(flags ...Flag) MessageQueryBuilder {
 	m.Flags = mergeFlags(flags)
 	return &m
+}
+
+func (m *messageQueryBuilderNop) CreateThread(_ *CreateThread) (*Channel, error) {
+	return nil, nil
 }
 
 func (m *messageQueryBuilderNop) CrossPost() (*Message, error) {

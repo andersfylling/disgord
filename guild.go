@@ -737,9 +737,9 @@ type GuildQueryBuilder interface {
 
 	GetWebhooks() (ret []*Webhook, err error)
 
-	// Returns all active threads in the guild, including public and private threads. Threads are ordered
+	// GetActiveThreads Returns all active threads in the guild, including public and private threads. Threads are ordered
 	// by their id, in descending order.
-	GetActiveThreads() (*ResponseBodyGuildThreads, error)
+	GetActiveThreads() (*ActiveGuildThreads, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -1689,19 +1689,14 @@ type nickNameResponse struct {
 	Nickname string `json:"nickname"`
 }
 
-// https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
-type ResponseBodyGuildThreads struct {
+// ActiveGuildThreads https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
+type ActiveGuildThreads struct {
 	Threads []*Channel      `json:"threads"`
 	Members []*ThreadMember `json:"members"`
 }
 
-// GetActiveThreads [GET]    Returns all active threads in the guild, including public and private threads.
-//                           Threads are ordered by their id, in descending order.
-// Discord documentation     https://discord.com/developers/docs/resources/guild#list-active-threads
-// Reviewed                  2021-11-24 (self)
-// Comment
-
-func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
+// GetActiveThreads https://discord.com/developers/docs/resources/guild#list-active-threads
+func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodGet,
 		Ctx:         g.ctx,
@@ -1709,13 +1704,13 @@ func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error)
 		ContentType: httd.ContentTypeJSON,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &ResponseBodyGuildThreads{
+		return &ActiveGuildThreads{
 			Threads: make([]*Channel, 0),
 			Members: make([]*ThreadMember, 0),
 		}
 	}
 
-	return getResponseBodyGuildThreads(r.Execute)
+	return getActiveGuildThreads(r.Execute)
 }
 
 //////////////////////////////////////////////////////
