@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/andersfylling/disgord/json"
 	"mime/multipart"
-	"strings"
 	"net/http"
+	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -271,7 +271,7 @@ func (m *Message) Send(ctx context.Context, s Session) (msg *Message, err error)
 	}
 
 	// TODO: attachments
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content:          m.Content,
 		Tts:              m.Tts,
 		MessageReference: m.MessageReference,

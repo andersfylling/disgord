@@ -30,7 +30,7 @@ func TestUserPresence_InterfaceImplementations(t *testing.T) {
 	})
 }
 
-func TestGetCurrentUserGuildsParams(t *testing.T) {
+func TestGetCurrentUserGuilds(t *testing.T) {
 	params := &getCurrentUserGuildsBuilder{}
 	params.r.setup(nil, nil, nil)
 	var wants string

@@ -124,11 +124,11 @@ func (i inviteQueryBuilder) WithFlags(flags ...Flag) InviteQueryBuilder {
 	return &i
 }
 
-type getInviteParams struct {
+type getInviteQuery struct {
 	WithMemberCount bool `urlparam:"with_count,omitempty"`
 }
 
-var _ URLQueryStringer = (*getInviteParams)(nil)
+var _ URLQueryStringer = (*getInviteQuery)(nil)
 
 // Get [REST] Returns an invite object for the given code.
 //  Method                  GET
@@ -138,7 +138,7 @@ var _ URLQueryStringer = (*getInviteParams)(nil)
 //  Comment                 -
 //  withMemberCount: whether or not the invite should contain the approximate number of members
 func (i inviteQueryBuilder) Get(withMemberCount bool) (invite *Invite, err error) {
-	params := &getInviteParams{withMemberCount}
+	params := &getInviteQuery{withMemberCount}
 
 	r := i.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Invite(i.inviteCode) + params.URLQueryString(),

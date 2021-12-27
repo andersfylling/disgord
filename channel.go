@@ -205,7 +205,7 @@ func (c *Channel) SendMsgString(ctx context.Context, s Session, content string) 
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content: content,
 	}
 
@@ -224,7 +224,7 @@ func (c *Channel) SendMsg(ctx context.Context, s Session, message *Message) (msg
 		return nil, errors.New("nonce can not be longer than 25 characters")
 	}
 
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content:          message.Content,
 		Nonce:            nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 		Tts:              message.Tts,
@@ -317,24 +317,24 @@ type ChannelQueryBuilder interface {
 	// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 	// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 	// will only be counted once.
-	DeleteMessages(params *DeleteMessagesParams) error
+	DeleteMessages(params *DeleteMessages) error
 
 	// GetMessages Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(params *GetMessagesParams) ([]*Message, error)
+	GetMessages(params *GetMessages) ([]*Message, error)
 
 	// CreateMessage Post a message to a guild text or DM channel. If operating on a guild channel, this
 	// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 	// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 	// Message Create Gateway event. See message formatting for more information on how to properly format messages.
 	// The maximum request size when sending a message is 8MB.
-	CreateMessage(params *CreateMessageParams) (*Message, error)
+	CreateMessage(params *CreateMessage) (*Message, error)
 
 	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns a webhook object on success.
-	CreateWebhook(params *CreateWebhookParams) (ret *Webhook, err error)
+	CreateWebhook(params *CreateWebhook) (ret *Webhook, err error)
 
 	// GetWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 	GetWebhooks() (ret []*Webhook, err error)
@@ -342,9 +342,9 @@ type ChannelQueryBuilder interface {
 	Message(id Snowflake) MessageQueryBuilder
 
 	// CreateThread Create a thread in a channel from a message.
-	CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error)
+	CreateThread(messageID Snowflake, params *CreateThread) (*Channel, error)
 	// CreateThreadNoMessage Create a thread that is not connected to an existing message.
-	CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error)
+	CreateThreadNoMessage(params *CreateThreadNoMessage) (*Channel, error)
 	// Adds the current user to a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	JoinThread() error
@@ -369,13 +369,13 @@ type ChannelQueryBuilder interface {
 	// threads of type GUILD_PUBLIC_THREAD. When called on a GUILD_NEWS channel returns threads of type
 	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
 	// permission.
-	GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	GetPublicArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
 	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
 	// archive_timestamp, in descending order. Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
-	GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	GetPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
 	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
 	// Threads are ordered by their id, in descending order. Requires the READ_MESSAGE_HISTORY permission.
-	GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	GetJoinedPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
 }
 
 type channelQueryBuilder struct {
@@ -713,16 +713,16 @@ func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	return err
 }
 
-// GetMessagesParams https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// GetMessages https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
-type GetMessagesParams struct {
+type GetMessages struct {
 	Around Snowflake `urlparam:"around,omitempty"`
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  uint      `urlparam:"limit,omitempty"`
 }
 
-func (g *GetMessagesParams) Validate() error {
+func (g *GetMessages) Validate() error {
 	var mutuallyExclusives int
 	if !g.Around.IsZero() {
 		mutuallyExclusives++
@@ -740,7 +740,7 @@ func (g *GetMessagesParams) Validate() error {
 	return nil
 }
 
-var _ URLQueryStringer = (*GetMessagesParams)(nil)
+var _ URLQueryStringer = (*GetMessages)(nil)
 
 // getMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
@@ -776,7 +776,7 @@ func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Messag
 }
 
 // GetMessages bypasses discord limitations and iteratively fetches messages until the set filters are met.
-func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams) (messages []*Message, err error) {
+func (c channelQueryBuilder) GetMessages(filter *GetMessages) (messages []*Message, err error) {
 	// discord values
 	const filterLimit = 100
 	const filterDefault = 50
@@ -878,13 +878,13 @@ func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams) (messages []
 	return messages, nil
 }
 
-// DeleteMessagesParams https://discord.com/developers/docs/resources/channel#bulk-delete-messages-json-params
-type DeleteMessagesParams struct {
+// DeleteMessages https://discord.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+type DeleteMessages struct {
 	Messages []Snowflake `json:"messages"`
 	m        sync.RWMutex
 }
 
-func (p *DeleteMessagesParams) tooMany(messages int) (err error) {
+func (p *DeleteMessages) tooMany(messages int) (err error) {
 	if messages > 100 {
 		err = errors.New("must be 100 or less messages to delete")
 	}
@@ -892,7 +892,7 @@ func (p *DeleteMessagesParams) tooMany(messages int) (err error) {
 	return
 }
 
-func (p *DeleteMessagesParams) tooFew(messages int) (err error) {
+func (p *DeleteMessages) tooFew(messages int) (err error) {
 	if messages < 2 {
 		err = errors.New("must be at least two messages to delete")
 	}
@@ -900,8 +900,8 @@ func (p *DeleteMessagesParams) tooFew(messages int) (err error) {
 	return
 }
 
-// Valid validates the DeleteMessagesParams data
-func (p *DeleteMessagesParams) Valid() (err error) {
+// Valid validates the DeleteMessages data
+func (p *DeleteMessages) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
@@ -914,7 +914,7 @@ func (p *DeleteMessagesParams) Valid() (err error) {
 }
 
 // AddMessage Adds a message to be deleted
-func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
+func (p *DeleteMessages) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -939,7 +939,7 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
-func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams) (err error) {
+func (c channelQueryBuilder) DeleteMessages(params *DeleteMessages) (err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return err
@@ -970,9 +970,9 @@ type AllowedMentions struct {
 	RepliedUser bool        `json:"replied_user,omitempty"`
 }
 
-// CreateMessageFileParams contains the information needed to upload a file to Discord, it is part of the
-// CreateMessageParams struct.
-type CreateMessageFileParams struct {
+// CreateMessageFile contains the information needed to upload a file to Discord, it is part of the
+// CreateMessage struct.
+type CreateMessageFile struct {
 	Reader   io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
 	FileName string    `json:"-"`
 
@@ -983,7 +983,7 @@ type CreateMessageFileParams struct {
 }
 
 // write helper for file uploading in messages
-func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
+func (f *CreateMessageFile) write(i int, mp *multipart.Writer) error {
 	var filename string
 	if f.SpoilerTag {
 		filename = AttachmentSpoilerPrefix + f.FileName
@@ -1002,14 +1002,14 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 	return nil
 }
 
-// CreateMessageParams JSON params for CreateChannelMessage
-type CreateMessageParams struct {
-	Content    string                    `json:"content"`
-	Nonce      string                    `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
-	Tts        bool                      `json:"tts,omitempty"`
-	Embed      *Embed                    `json:"embed,omitempty"` // embedded rich content
-	Components []*MessageComponent       `json:"components"`
-	Files      []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+// CreateMessage JSON params for CreateChannelMessage
+type CreateMessage struct {
+	Content    string              `json:"content"`
+	Nonce      string              `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Tts        bool                `json:"tts,omitempty"`
+	Embed      *Embed              `json:"embed,omitempty"` // embedded rich content
+	Components []*MessageComponent `json:"components"`
+	Files      []CreateMessageFile `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
@@ -1018,7 +1018,7 @@ type CreateMessageParams struct {
 	MessageReference *MessageReference `json:"message_reference,omitempty"`
 }
 
-func (p *CreateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err error) {
 	// spoiler tag
 	if p.SpoilerTagContent && len(p.Content) > 0 {
 		p.Content = "|| " + p.Content + " ||"
@@ -1088,7 +1088,7 @@ func (p *CreateMessageParams) prepare() (postBody interface{}, contentType strin
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
-func (c channelQueryBuilder) CreateMessage(params *CreateMessageParams) (ret *Message, err error) {
+func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message, err error) {
 	if c.cid.IsZero() {
 		err = errors.New("channelID must be set to get channel messages")
 		return nil, err
@@ -1141,9 +1141,9 @@ func (c channelQueryBuilder) GetPinnedMessages() (ret []*Message, err error) {
 	return getMessages(r.Execute)
 }
 
-// CreateWebhookParams json params for the create webhook rest request avatar string
+// CreateWebhook json params for the create webhook rest request avatar string
 // https://discord.com/developers/docs/resources/user#avatar-data
-type CreateWebhookParams struct {
+type CreateWebhook struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 
@@ -1151,7 +1151,7 @@ type CreateWebhookParams struct {
 	Reason string `json:"-"`
 }
 
-func (c *CreateWebhookParams) FindErrors() error {
+func (c *CreateWebhook) FindErrors() error {
 	if c.Name == "" {
 		return errors.New("webhook must have a name")
 	}
@@ -1168,7 +1168,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c channelQueryBuilder) CreateWebhook(params *CreateWebhookParams) (ret *Webhook, err error) {
+func (c channelQueryBuilder) CreateWebhook(params *CreateWebhook) (ret *Webhook, err error) {
 	if params == nil {
 		return nil, errors.New("params was nil")
 	}
@@ -1216,7 +1216,7 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 // Reviewed                 2021-11-21 (self)
 // Comment                  This endpoint supports the X-Audit-Log-Reason header.
 
-func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error) {
+func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThread) (*Channel, error) {
 	if params == nil || params.Name == "" {
 		return nil, errors.New("thread name is required")
 	}
@@ -1246,7 +1246,7 @@ func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThr
 // Reviewed                        2021-11-22 (self)
 // Comment                         This endpoint supports the X-Audit-Log-Reason header.
 
-func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error) {
+func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadNoMessage) (*Channel, error) {
 	if params == nil || params.Name == "" {
 		return nil, errors.New("thread name is required")
 	}
@@ -1399,12 +1399,12 @@ type ResponseBodyThreads struct {
 }
 
 // https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params
-type GetThreadsParams struct {
+type GetThreads struct {
 	Before Time `urlparam:"before,omitempty"`
 	Limit  int  `urlparam:"limit,omitempty"`
 }
 
-var _ URLQueryStringer = (*GetThreadsParams)(nil)
+var _ URLQueryStringer = (*GetThreads)(nil)
 
 // GetPublicArchivedThreads [GET]    Returns archived threads in the channel that are public. When called
 //                                   on a GUILD_TEXT channel, returns threads of type GUILD_PUBLIC_THREAD.
@@ -1416,7 +1416,7 @@ var _ URLQueryStringer = (*GetThreadsParams)(nil)
 // Reviewed                          2021-11-22 (self)
 // Comment
 
-func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()
@@ -1446,7 +1446,7 @@ func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) 
 // Reviewed                           2021-11-24 (self)
 // Comment
 
-func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()
@@ -1475,7 +1475,7 @@ func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreadsParams)
 // Reviewed                                 2021-11-24 (self)
 // Comment
 
-func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()

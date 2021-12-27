@@ -21,7 +21,7 @@ type CacheGetter interface {
 	// REST API
 
 	// GetGuildAuditLogs(guildID Snowflake) *guildAuditLogsBuilder // TODO
-	GetMessages(channelID Snowflake, params *GetMessagesParams) ([]*Message, error)
+	GetMessages(channelID Snowflake, params *GetMessages) ([]*Message, error)
 	GetMessage(channelID, messageID Snowflake) (ret *Message, err error)
 	//GetUsersWhoReacted(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer) (reactors []*User, err error)
 	//GetPinnedMessages(channelID Snowflake) (ret []*Message, err error)
@@ -32,7 +32,7 @@ type CacheGetter interface {
 	GetGuild(id Snowflake) (*Guild, error)
 	GetGuildChannels(id Snowflake) ([]*Channel, error)
 	GetMember(guildID, userID Snowflake) (*Member, error)
-	GetMembers(guildID Snowflake, params *GetMembersParams) ([]*Member, error)
+	GetMembers(guildID Snowflake, params *GetMembers) ([]*Member, error)
 	//GetGuildBans(id Snowflake) ([]*Ban, error)
 	//GetGuildBan(guildID, userID Snowflake) (*Ban, error)
 	GetGuildRoles(guildID Snowflake) ([]*Role, error)
@@ -45,7 +45,7 @@ type CacheGetter interface {
 	//GetInvite(inviteCode string, params URLQueryStringer) (*Invite, error)
 	GetCurrentUser() (*User, error)
 	GetUser(id Snowflake) (*User, error)
-	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
+	GetCurrentUserGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error)
 	//GetUserDMs() (ret []*Channel, err error)
 	//GetUserConnections() (ret []*UserConnection, err error)
 	//GetVoiceRegions() ([]*VoiceRegion, error)
@@ -529,12 +529,12 @@ func (c *CacheNop) GetMember(guildID, userID Snowflake) (*Member, error) { retur
 func (c *CacheNop) GetGuildRoles(guildID Snowflake) ([]*Role, error)     { return nil, CacheMissErr }
 func (c *CacheNop) GetCurrentUser() (*User, error)                       { return nil, CacheMissErr }
 func (c *CacheNop) GetUser(id Snowflake) (*User, error)                  { return nil, CacheMissErr }
-func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*Guild, error) {
+func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuilds) ([]*Guild, error) {
 	return nil, CacheMissErr
 }
-func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessages) ([]*Message, error) {
 	return nil, CacheMissErr
 }
-func (c *CacheNop) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+func (c *CacheNop) GetMembers(guildID Snowflake, p *GetMembers) ([]*Member, error) {
 	return nil, CacheMissErr
 }

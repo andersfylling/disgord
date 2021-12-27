@@ -225,7 +225,7 @@ waiter:
 	// libSodium/NaCl and golang.org/x/crypto/nacl/secretbox use. If both Discord and Go both start supporting more
 	// modes "out of the box" we might want to consider implementing a "preferred mode selection" algorithm here.
 	var session *gateway.VoiceSessionDescription
-	session, err = voice.ws.SendUDPInfo(&gateway.VoiceSelectProtocolParams{
+	session, err = voice.ws.SendUDPInfo(&gateway.VoiceSelectProtocol{
 		Mode:    "xsalsa20_poly1305",
 		Address: ip,
 		Port:    port,

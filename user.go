@@ -399,7 +399,7 @@ type CurrentUserQueryBuilder interface {
 
 	// GetGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
-	GetGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
+	GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error)
 
 	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
 	LeaveGuild(id Snowflake) (err error)
@@ -407,7 +407,7 @@ type CurrentUserQueryBuilder interface {
 	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 	// endpoint will not be shown in the Discord Client
-	CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error)
+	CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error)
 
 	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
 	GetUserConnections() (ret []*UserConnection, err error)
@@ -499,14 +499,14 @@ type UpdateUser struct {
 	Avatar   *string `json:"avatar,omitempty"`
 }
 
-// GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
-type GetCurrentUserGuildsParams struct {
+// GetCurrentUserGuilds JSON params for func GetCurrentUserGuilds
+type GetCurrentUserGuilds struct {
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  int       `urlparam:"limit,omitempty"`
 }
 
-var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
+var _ URLQueryStringer = (*GetCurrentUserGuilds)(nil)
 
 // GetGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the Guilds OAuth2 scope.
@@ -517,7 +517,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
 //                          Guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of Users' Guilds.
-func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
 		Ctx:      c.ctx,
@@ -538,9 +538,9 @@ func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams) (
 	return nil, errors.New("unable to cast guild slice")
 }
 
-// CreateGroupDMParams required JSON params for func CreateGroupDM
+// CreateGroupDM required JSON params for func CreateGroupDM
 // https://discord.com/developers/docs/resources/user#create-group-dm
-type CreateGroupDMParams struct {
+type CreateGroupDM struct {
 	// AccessTokens access tokens of Users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
 
@@ -573,7 +573,7 @@ func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
+func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         c.ctx,

@@ -319,7 +319,7 @@ var MissingRESTParamsErr = errors.New("this method requires REST parameters, but
 
 type ClientQueryBuilderExecutables interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(guildName string, params *CreateGuildParams) (*Guild, error)
+	CreateGuild(guildName string, params *CreateGuild) (*Guild, error)
 
 	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
 	GetVoiceRegions() ([]*VoiceRegion, error)
@@ -370,9 +370,9 @@ func (c clientQueryBuilder) WithContextAndFlags(ctx context.Context, flags ...Fl
 // does not have an ID, the Message will populate a CreateMessage with it's fields.
 //
 // If you want to affect the actual message data besides .Content; provide a
-// MessageCreateParams. The reply message will be updated by the last one provided.
+// MessageCreate. The reply message will be updated by the last one provided.
 func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
-	params := &CreateMessageParams{}
+	params := &CreateMessage{}
 	addEmbed := func(e *Embed) error {
 		if params.Embed != nil {
 			return errors.New("can only send one embed")
@@ -407,13 +407,13 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 
 		var s string
 		switch t := data[i].(type) {
-		case *CreateMessageParams:
+		case *CreateMessage:
 			*params = *t
-		case CreateMessageParams:
+		case CreateMessage:
 			*params = t
-		case CreateMessageFileParams:
+		case CreateMessageFile:
 			params.Files = append(params.Files, t)
-		case *CreateMessageFileParams:
+		case *CreateMessageFile:
 			params.Files = append(params.Files, *t)
 		case Embed:
 			if err = addEmbed(&t); err != nil {
@@ -424,7 +424,7 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 				return nil, err
 			}
 		case *os.File:
-			return nil, errors.New("can not handle *os.File, use a CreateMessageFileParams instead")
+			return nil, errors.New("can not handle *os.File, use a CreateMessageFile instead")
 		case string:
 			s = t
 		case Message:

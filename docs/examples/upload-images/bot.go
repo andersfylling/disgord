@@ -29,9 +29,9 @@ func main() {
 	}
 	defer f2.Close()
 
-	_, errUpload := client.Channel(ChannelID).CreateMessage(&disgord.CreateMessageParams{
+	_, errUpload := client.Channel(ChannelID).CreateMessage(&disgord.CreateMessage{
 		Content: "This is my favourite image, and another in an embed!",
-		Files: []disgord.CreateMessageFileParams{
+		Files: []disgord.CreateMessageFile{
 			{f1, "myfavouriteimage.jpg", false},
 			{f2, "another.jpg", false},
 		},

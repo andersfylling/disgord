@@ -35,11 +35,11 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD1"
-			msg, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: threadName})
+			msg, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateMessage(&CreateMessage{Content: threadName})
 			if err != nil {
 				panic(err)
 			}
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThread(msg.ID, &CreateThreadParams{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThread(msg.ID, &CreateThread{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 			})
@@ -62,7 +62,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD2"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -87,7 +87,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD3"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -111,7 +111,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD4"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -139,7 +139,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD5"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -163,7 +163,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD6"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -191,7 +191,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD7"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
@@ -221,7 +221,7 @@ func TestThreadEndpoints(t *testing.T) {
 		func() {
 			defer wg.Done()
 			threadName := "HELLO WORLD8"
-			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadParamsNoMessage{
+			thread, err := c.Channel(guildTypical.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
 				Name:                threadName,
 				AutoArchiveDuration: AutoArchiveThreadDay,
 				Type:                ChannelTypeGuildPublicThread,
