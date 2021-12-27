@@ -798,10 +798,10 @@ func getResponseBodyThreads(f func() (interface{}, error)) (concreteBody *Respon
 	return v.(*ResponseBodyThreads), nil
 }
 
-func getResponseBodyGuildThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyGuildThreads, err error) {
+func getActiveGuildThreads(f func() (interface{}, error)) (concreteBody *ActiveGuildThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyGuildThreads), nil
+	return v.(*ActiveGuildThreads), nil
 }

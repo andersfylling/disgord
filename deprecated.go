@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// Deprecated: use ActiveGuildThreads
+type ResponseBodyGuildThreads = ActiveGuildThreads
+
 // Deprecated: use CreateThreadWithoutMessage
 type CreateThreadNoMessage = CreateThreadWithoutMessage
 
