@@ -261,12 +261,6 @@ func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	return builder
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
 // updateMessageBuilder, params here
 //  https://discord.com/developers/docs/resources/channel#edit-message-json-params
 //generate-rest-params: content:string, embed:*Embed,
