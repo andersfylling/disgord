@@ -1740,29 +1740,3 @@ func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 
 	return getActiveGuildThreads(r.Execute)
 }
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// updateGuildMemberBuilder ...
-// https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
-//generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: err:error,
-type updateGuildMemberBuilder struct {
-	r RESTBuilder
-}
-
-// KickFromVoice kicks member out of voice channel. Assuming they are in one.
-func (b *updateGuildMemberBuilder) KickFromVoice() UpdateGuildMemberBuilder {
-	b.r.param("channel_id", 0)
-	return b
-}
-
-// DeleteNick removes nickname for user. Requires permission MANAGE_NICKNAMES
-func (b *updateGuildMemberBuilder) DeleteNick() UpdateGuildMemberBuilder {
-	b.r.param("nick", "")
-	return b
-}

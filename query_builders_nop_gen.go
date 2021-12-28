@@ -754,6 +754,10 @@ func (g *guildMemberQueryBuilderNop) RemoveRole(_ Snowflake) error {
 	return nil
 }
 
+func (g *guildMemberQueryBuilderNop) Update(_ *UpdateMember) (*Member, error) {
+	return nil, nil
+}
+
 func (g *guildMemberQueryBuilderNop) UpdateBuilder() UpdateGuildMemberBuilder {
 	return nil
 }

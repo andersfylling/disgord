@@ -763,6 +763,10 @@ func (g *GuildMemberQueryBuilderNop) RemoveRole(_ disgord.Snowflake) error {
 	return nil
 }
 
+func (g *GuildMemberQueryBuilderNop) Update(_ *disgord.UpdateMember) (*disgord.Member, error) {
+	return nil, nil
+}
+
 func (g *GuildMemberQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildMemberBuilder {
 	return nil
 }

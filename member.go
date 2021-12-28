@@ -14,12 +14,15 @@ type GuildMemberQueryBuilder interface {
 	WithFlags(flags ...Flag) GuildMemberQueryBuilder
 
 	Get() (*Member, error)
-	UpdateBuilder() UpdateGuildMemberBuilder
+	Update(params *UpdateMember) (*Member, error)
 	AddRole(roleID Snowflake) error
 	RemoveRole(roleID Snowflake) error
 	Kick(reason string) error
 	Ban(params *BanMember) error
 	GetPermissions() (PermissionBit, error)
+
+	// Deprecated: use Update
+	UpdateBuilder() UpdateGuildMemberBuilder
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -85,7 +88,7 @@ func (g guildMemberQueryBuilder) Get() (*Member, error) {
 }
 
 // Update update a guild member
-func (g guildMemberQueryBuilder) Update(params *UpdateMember, auditLogReason string) (*Member, error) {
+func (g guildMemberQueryBuilder) Update(params *UpdateMember) (*Member, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -99,7 +102,7 @@ func (g guildMemberQueryBuilder) Update(params *UpdateMember, auditLogReason str
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, g.flags)
 	r.factory = func() interface{} {
 		return &Member{}
@@ -120,6 +123,8 @@ type UpdateMember struct {
 	Mute      *bool        `json:"mute,omitempty"`
 	Deaf      *bool        `json:"deaf,omitempty"`
 	ChannelID *Snowflake   `json:"channel_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // AddRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
