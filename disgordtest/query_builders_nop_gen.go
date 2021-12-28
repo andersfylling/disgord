@@ -851,7 +851,7 @@ func (g *GuildQueryBuilderNop) GetChannels() ([]*disgord.Channel, error) {
 	return nil, nil
 }
 
-func (g *GuildQueryBuilderNop) GetEmbed() (*disgord.GuildEmbed, error) {
+func (g *GuildQueryBuilderNop) GetEmbed() (*disgord.GuildWidget, error) {
 	return nil, nil
 }
 
@@ -887,6 +887,10 @@ func (g *GuildQueryBuilderNop) GetWebhooks() ([]*disgord.Webhook, error) {
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) GetWidget() (*disgord.GuildWidget, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) KickVoiceParticipant(_ disgord.Snowflake) error {
 	return nil
 }
@@ -915,6 +919,10 @@ func (g *GuildQueryBuilderNop) UnbanUser(_ disgord.Snowflake, _ string) error {
 	return nil
 }
 
+func (g *GuildQueryBuilderNop) Update(_ *disgord.UpdateGuild) (*disgord.Guild, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildBuilder {
 	return nil
 }
@@ -932,6 +940,10 @@ func (g *GuildQueryBuilderNop) UpdateIntegration(_ disgord.Snowflake, _ *disgord
 }
 
 func (g *GuildQueryBuilderNop) UpdateRolePositions(_ []disgord.UpdateGuildRolePositions) ([]*disgord.Role, error) {
+	return nil, nil
+}
+
+func (g *GuildQueryBuilderNop) UpdateWidget(_ *disgord.UpdateGuildWidget) (*disgord.GuildWidget, error) {
 	return nil, nil
 }
 

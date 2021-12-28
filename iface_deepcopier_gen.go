@@ -140,8 +140,8 @@ func (g *Guild) deepCopy() interface{} {
 	return cp
 }
 
-func (g *GuildEmbed) deepCopy() interface{} {
-	cp := &GuildEmbed{}
+func (g *GuildWidget) deepCopy() interface{} {
+	cp := &GuildWidget{}
 	_ = DeepCopyOver(cp, g)
 	return cp
 }

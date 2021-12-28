@@ -432,11 +432,11 @@ func (g *Guild) copyOverTo(other interface{}) error {
 	return nil
 }
 
-func (g *GuildEmbed) copyOverTo(other interface{}) error {
-	var dest *GuildEmbed
+func (g *GuildWidget) copyOverTo(other interface{}) error {
+	var dest *GuildWidget
 	var valid bool
-	if dest, valid = other.(*GuildEmbed); !valid {
-		return newErrorUnsupportedType("argument given is not a *GuildEmbed type")
+	if dest, valid = other.(*GuildWidget); !valid {
+		return newErrorUnsupportedType("argument given is not a *GuildWidget type")
 	}
 	dest.ChannelID = g.ChannelID
 	dest.Enabled = g.Enabled

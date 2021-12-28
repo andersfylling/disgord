@@ -340,6 +340,63 @@ func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
 	return v.(*Guild), nil
 }
 
+// UpdateGuildEmbedBuilder is the interface for the builder.
+type UpdateGuildEmbedBuilder interface {
+	Execute() (embed *GuildEmbed, err error)
+	IgnoreCache() UpdateGuildEmbedBuilder
+	CancelOnRatelimit() UpdateGuildEmbedBuilder
+	URLParam(name string, v interface{}) UpdateGuildEmbedBuilder
+	Set(name string, v interface{}) UpdateGuildEmbedBuilder
+	SetEnabled(enabled bool) UpdateGuildEmbedBuilder
+	SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder
+}
+
+// IgnoreCache will not fetch the data from the cache if available, and always execute a
+// a REST request. However, the response will always update the cache to keep it synced.
+func (b *updateGuildEmbedBuilder) IgnoreCache() UpdateGuildEmbedBuilder {
+	b.r.IgnoreCache()
+	return b
+}
+
+// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
+func (b *updateGuildEmbedBuilder) CancelOnRatelimit() UpdateGuildEmbedBuilder {
+	b.r.CancelOnRatelimit()
+	return b
+}
+
+// URLParam adds or updates an existing URL parameter.
+// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
+func (b *updateGuildEmbedBuilder) URLParam(name string, v interface{}) UpdateGuildEmbedBuilder {
+	b.r.queryParam(name, v)
+	return b
+}
+
+// Set adds or updates an existing a body parameter
+// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
+func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) UpdateGuildEmbedBuilder {
+	b.r.body[name] = v
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) UpdateGuildEmbedBuilder {
+	b.r.param("enabled", enabled)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder {
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) Execute() (embed *GuildEmbed, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*GuildEmbed), nil
+}
+
 // UpdateGuildEmojiBuilder is the interface for the builder.
 type UpdateGuildEmojiBuilder interface {
 	Execute() (emoji *Emoji, err error)
@@ -637,63 +694,6 @@ func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
 		return nil, err
 	}
 	return v.(*Emoji), nil
-}
-
-// UpdateGuildEmbedBuilder is the interface for the builder.
-type UpdateGuildEmbedBuilder interface {
-	Execute() (embed *GuildEmbed, err error)
-	IgnoreCache() UpdateGuildEmbedBuilder
-	CancelOnRatelimit() UpdateGuildEmbedBuilder
-	URLParam(name string, v interface{}) UpdateGuildEmbedBuilder
-	Set(name string, v interface{}) UpdateGuildEmbedBuilder
-	SetEnabled(enabled bool) UpdateGuildEmbedBuilder
-	SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder
-}
-
-// IgnoreCache will not fetch the data from the cache if available, and always execute a
-// a REST request. However, the response will always update the cache to keep it synced.
-func (b *updateGuildEmbedBuilder) IgnoreCache() UpdateGuildEmbedBuilder {
-	b.r.IgnoreCache()
-	return b
-}
-
-// CancelOnRatelimit will disable waiting if the request is rate limited by Discord.
-func (b *updateGuildEmbedBuilder) CancelOnRatelimit() UpdateGuildEmbedBuilder {
-	b.r.CancelOnRatelimit()
-	return b
-}
-
-// URLParam adds or updates an existing URL parameter.
-// eg. URLParam("age", 34) will cause the URL `/test` to become `/test?age=34`
-func (b *updateGuildEmbedBuilder) URLParam(name string, v interface{}) UpdateGuildEmbedBuilder {
-	b.r.queryParam(name, v)
-	return b
-}
-
-// Set adds or updates an existing a body parameter
-// eg. Set("age", 34) will cause the body `{}` to become `{"age":34}`
-func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) UpdateGuildEmbedBuilder {
-	b.r.body[name] = v
-	return b
-}
-
-func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) UpdateGuildEmbedBuilder {
-	b.r.param("enabled", enabled)
-	return b
-}
-
-func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder {
-	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
-	b.r.param("channel_id", channelID)
-	return b
-}
-
-func (b *updateGuildEmbedBuilder) Execute() (embed *GuildEmbed, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-	return v.(*GuildEmbed), nil
 }
 
 // UpdateGuildMemberBuilder is the interface for the builder.

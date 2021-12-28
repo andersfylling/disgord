@@ -759,12 +759,12 @@ func getPartialInvite(f func() (interface{}, error)) (invite *PartialInvite, err
 }
 
 // TODO: auto generate
-func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error) {
+func getGuildWidget(f func() (interface{}, error)) (embed *GuildWidget, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*GuildEmbed), nil
+	return v.(*GuildWidget), nil
 }
 
 // TODO: auto generate

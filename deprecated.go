@@ -18,6 +18,33 @@ type ResponseBodyThreads = ArchivedThreads
 // Deprecated: use CreateThreadWithoutMessage
 type CreateThreadNoMessage = CreateThreadWithoutMessage
 
+// Deprecated: use GuildWidget
+type GuildEmbed = GuildWidget
+
+//generate-rest-params: enabled:bool, channel_id:Snowflake,
+//generate-rest-basic-execute: embed:*GuildEmbed,
+type updateGuildEmbedBuilder struct {
+	r RESTBuilder
+}
+
+// UpdateEmbedBuilder Modify a guild embed object for the guild. All attributes may be passed in with JSON and
+// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
+func (g guildQueryBuilder) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
+	builder := &updateGuildEmbedBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &GuildEmbed{}
+	}
+	builder.r.flags = g.flags
+	builder.r.setup(g.client.req, &httd.Request{
+		Method:      http.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildEmbed(g.gid),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
+
 // Deprecated: use Update instead
 func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 	builder := &updateMessageBuilder{}

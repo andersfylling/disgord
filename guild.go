@@ -467,13 +467,13 @@ var _ DeepCopier = (*Ban)(nil)
 // ------------
 
 // GuildEmbed https://discord.com/developers/docs/resources/guild#guild-embed-object
-type GuildEmbed struct {
+type GuildWidget struct {
 	Enabled   bool      `json:"enabled"`
 	ChannelID Snowflake `json:"channel_id"`
 }
 
-var _ Copier = (*GuildEmbed)(nil)
-var _ DeepCopier = (*GuildEmbed)(nil)
+var _ Copier = (*GuildWidget)(nil)
+var _ DeepCopier = (*GuildWidget)(nil)
 
 // -------
 
@@ -723,8 +723,8 @@ type GuildQueryBuilder interface {
 	DeleteIntegration(integrationID Snowflake) error
 	SyncIntegration(integrationID Snowflake) error
 
-	GetEmbed() (*GuildEmbed, error)
-	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
+	GetWidget() (*GuildWidget, error)
+	UpdateWidget(params *UpdateGuildWidget) (*GuildWidget, error)
 	GetVanityURL() (*PartialInvite, error)
 	GetAuditLogs(logs *GetAuditLogs) (*AuditLog, error)
 
@@ -742,6 +742,11 @@ type GuildQueryBuilder interface {
 	// GetActiveThreads Returns all active threads in the guild, including public and private threads. Threads are ordered
 	// by their id, in descending order.
 	GetActiveThreads() (*ActiveGuildThreads, error)
+
+	// Deprecated: use UpdateEmbed
+	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
+	// Deprecated: use GetWidget
+	GetEmbed() (*GuildEmbed, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -1340,35 +1345,50 @@ func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake) error {
 	return err
 }
 
-// GetEmbed Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
 func (g guildQueryBuilder) GetEmbed() (*GuildEmbed, error) {
+	return g.GetWidget()
+}
+
+func (g guildQueryBuilder) GetWidget() (*GuildWidget, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmbed(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &GuildEmbed{}
+		return &GuildWidget{}
 	}
 
-	return getGuildEmbed(r.Execute)
+	return getGuildWidget(r.Execute)
 }
 
-// UpdateEmbedBuilder Modify a guild embed object for the guild. All attributes may be passed in with JSON and
-// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
-func (g guildQueryBuilder) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
-	builder := &updateGuildEmbedBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &GuildEmbed{}
+func (g guildQueryBuilder) UpdateWidget(params *UpdateGuildWidget) (*GuildWidget, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = g.flags
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
-		Endpoint:    endpoint.GuildEmbed(g.gid),
+		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &GuildWidget{}
+	}
 
-	return builder
+	return getGuildWidget(r.Execute)
+}
+
+type UpdateGuildWidget struct {
+	Enabled   *bool      `json:"enabled,omitempty"`
+	ChannelID *Snowflake `json:"channel_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // GetVanityURL Returns a partial invite object for Guilds with that feature enabled.
@@ -1726,12 +1746,6 @@ func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 // REST Builders
 //
 //////////////////////////////////////////////////////
-
-//generate-rest-params: enabled:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: embed:*GuildEmbed,
-type updateGuildEmbedBuilder struct {
-	r RESTBuilder
-}
 
 // updateGuildMemberBuilder ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params

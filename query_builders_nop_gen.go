@@ -842,7 +842,7 @@ func (g *guildQueryBuilderNop) GetChannels() ([]*Channel, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) GetEmbed() (*GuildEmbed, error) {
+func (g *guildQueryBuilderNop) GetEmbed() (*GuildWidget, error) {
 	return nil, nil
 }
 
@@ -878,6 +878,10 @@ func (g *guildQueryBuilderNop) GetWebhooks() ([]*Webhook, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) GetWidget() (*GuildWidget, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) KickVoiceParticipant(_ Snowflake) error {
 	return nil
 }
@@ -906,6 +910,10 @@ func (g *guildQueryBuilderNop) UnbanUser(_ Snowflake, _ string) error {
 	return nil
 }
 
+func (g *guildQueryBuilderNop) Update(_ *UpdateGuild) (*Guild, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
 	return nil
 }
@@ -923,6 +931,10 @@ func (g *guildQueryBuilderNop) UpdateIntegration(_ Snowflake, _ *UpdateGuildInte
 }
 
 func (g *guildQueryBuilderNop) UpdateRolePositions(_ []UpdateGuildRolePositions) ([]*Role, error) {
+	return nil, nil
+}
+
+func (g *guildQueryBuilderNop) UpdateWidget(_ *UpdateGuildWidget) (*GuildWidget, error) {
 	return nil, nil
 }
 

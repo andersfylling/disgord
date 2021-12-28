@@ -247,9 +247,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Guild:
 		s = *t
-	case *[]*GuildEmbed:
-		s = *t
 	case *[]*GuildUnavailable:
+		s = *t
+	case *[]*GuildWidget:
 		s = *t
 	case *[]*Integration:
 		s = *t
@@ -266,6 +266,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*UpdateGuildIntegration:
 		s = *t
 	case *[]*UpdateGuildRolePositions:
+		s = *t
+	case *[]*UpdateGuildWidget:
 		s = *t
 	case *[]*ApplicationCommandInteractionData:
 		s = *t
@@ -869,7 +871,7 @@ func sortByChannelID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
-	case []*GuildEmbed:
+	case []*GuildWidget:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
 		} else {
