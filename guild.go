@@ -675,6 +675,8 @@ type GuildQueryBuilder interface {
 	// Get
 	// TODO: Add more guild attribute things. Waiting for caching changes before then.
 	Get() (guild *Guild, err error)
+	Update(params *UpdateGuild) (*Guild, error)
+	Delete() error
 
 	// GetChannels
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
@@ -686,7 +688,6 @@ type GuildQueryBuilder interface {
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembers) ([]*Member, error)
 	UpdateBuilder() UpdateGuildBuilder
-	Delete() error
 
 	CreateChannel(name string, params *CreateGuildChannel) (*Channel, error)
 	UpdateChannelPositions(params []UpdateGuildChannelPositions) error
@@ -797,7 +798,7 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 }
 
 // Update update a guild
-func (g guildQueryBuilder) Update(params *UpdateGuild, auditLogReason string) (*Guild, error) {
+func (g guildQueryBuilder) Update(params *UpdateGuild) (*Guild, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -811,7 +812,7 @@ func (g guildQueryBuilder) Update(params *UpdateGuild, auditLogReason string) (*
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, g.flags)
 	r.factory = func() interface{} {
 		return &Guild{}
@@ -839,6 +840,8 @@ type UpdateGuild struct {
 	PreferredLocale             *string                        `json:"preferred_locale,omitempty"`
 	Features                    *[]string                      `json:"features,omitempty"`
 	Description                 *string                        `json:"description,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete is used to delete a guild.
