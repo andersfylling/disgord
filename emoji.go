@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -68,8 +67,6 @@ func (e *Emoji) Mention() string {
 // and you may encounter 429s.
 //
 //////////////////////////////////////////////////////
-
-var MissingEmojiIDErr = errors.New("emoji id was not set")
 
 type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder

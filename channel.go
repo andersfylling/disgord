@@ -250,8 +250,6 @@ func (c clientQueryBuilder) Channel(id Snowflake) ChannelQueryBuilder {
 	return &channelQueryBuilder{client: c.client, cid: id}
 }
 
-var MissingChannelIDErr = errors.New("missing channel id")
-
 // ChannelQueryBuilder REST interface for all Channel endpoints
 type ChannelQueryBuilder interface {
 	WithContext(ctx context.Context) ChannelQueryBuilder
@@ -422,7 +420,7 @@ func (c channelQueryBuilder) WithFlags(flags ...Flag) ChannelQueryBuilder {
 //  Comment                 -
 func (c channelQueryBuilder) Get() (*Channel, error) {
 	if c.cid.IsZero() {
-		return nil, errors.New("not a valid snowflake")
+		return nil, MissingChannelIDErr
 	}
 
 	if !ignoreCache(c.flags) {
@@ -499,8 +497,7 @@ type UpdateChannel struct {
 //                          action by opening a private message with the recipient again.
 func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("not a valid snowflake")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -552,10 +549,10 @@ type UpdateChannelPermissions struct {
 //  Comment                 -
 func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if overwriteID.IsZero() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
+		return MissingPermissionOverwriteIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -579,8 +576,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 //  Comment                 -
 func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -629,10 +625,10 @@ func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
 //  Comment                 -
 func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if overwriteID.IsZero() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
+		return MissingPermissionOverwriteIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -654,7 +650,7 @@ type GroupDMParticipant struct {
 
 func (g *GroupDMParticipant) FindErrors() error {
 	if g.UserID.IsZero() {
-		return errors.New("missing UserID")
+		return MissingUserIDErr
 	}
 	if g.AccessToken == "" {
 		return errors.New("missing access token")
@@ -675,7 +671,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Comment                 -
 func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) error {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if participant == nil {
 		return errors.New("params can not be nil")
@@ -704,10 +700,10 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) e
 //  Comment                 -
 func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if userID.IsZero() {
-		return errors.New("UserID must be set to target the specific recipient")
+		return MissingUserIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -761,8 +757,7 @@ var _ URLQueryStringer = (*GetMessages)(nil)
 //                          be passed at a time. see ReqGetChannelMessagesParams.
 func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Message, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	var query string
@@ -948,8 +943,7 @@ func (p *DeleteMessages) AddMessage(msg *Message) (err error) {
 //                          provided is older than that.
 func (c channelQueryBuilder) DeleteMessages(params *DeleteMessages) (err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return err
+		return MissingChannelIDErr
 	}
 	if err = params.Valid(); err != nil {
 		return err
@@ -1097,8 +1091,7 @@ func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return nil, err
+		return nil, MissingChannelIDErr
 	}
 	if params == nil {
 		err = errors.New("message must be set")
@@ -1160,10 +1153,10 @@ type CreateWebhook struct {
 
 func (c *CreateWebhook) FindErrors() error {
 	if c.Name == "" {
-		return errors.New("webhook must have a name")
+		return MissingWebhookNameErr
 	}
 	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
-		return errors.New("webhook name must be 2 to 32 characters long")
+		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", IllegalValueErr)
 	}
 	return nil
 }
@@ -1220,11 +1213,11 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 // CreateThread https://discord.com/developers/docs/resources/channel#start-thread-without-message
 func (c channelQueryBuilder) CreateThread(params *CreateThreadWithoutMessage) (*Channel, error) {
 	if params == nil || params.Name == "" {
-		return nil, errors.New("thread name is required")
+		return nil, MissingThreadNameErr
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {

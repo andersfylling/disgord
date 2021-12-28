@@ -217,13 +217,13 @@ func (m *Message) String() string {
 // Example: https://discord.com/channels/319567980491046913/644376487331495967/646925626523254795
 func (m *Message) DiscordURL() (string, error) {
 	if m.ID.IsZero() {
-		return "", errors.New("missing message ID")
+		return "", MissingMessageIDErr
 	}
 	if m.GuildID.IsZero() {
-		return "", errors.New("missing guild ID")
+		return "", MissingGuildIDErr
 	}
 	if m.ChannelID.IsZero() {
-		return "", errors.New("missing channel ID")
+		return "", MissingChannelIDErr
 	}
 
 	return fmt.Sprintf(
@@ -296,9 +296,9 @@ func (m *Message) Reply(ctx context.Context, s Session, data ...interface{}) (*M
 
 func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return errors.New("missing message ID")
+		return MissingMessageIDErr
 	} else if m.ChannelID.IsZero() {
-		return errors.New("missing channel ID")
+		return MissingChannelIDErr
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create()
@@ -306,9 +306,9 @@ func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error
 
 func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return errors.New("missing message ID")
+		return MissingMessageIDErr
 	} else if m.ChannelID.IsZero() {
-		return errors.New("missing channel ID")
+		return MissingChannelIDErr
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn()
@@ -325,8 +325,6 @@ func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}) err
 // REST Methods
 //
 //////////////////////////////////////////////////////
-
-var MissingMessageIDErr = errors.New("missing message id")
 
 type MessageQueryBuilder interface {
 	WithContext(ctx context.Context) MessageQueryBuilder
@@ -414,12 +412,10 @@ func (m messageQueryBuilder) WithFlags(flags ...Flag) MessageQueryBuilder {
 //  Comment                 -
 func (m messageQueryBuilder) Get() (*Message, error) {
 	if m.cid.IsZero() {
-		err := errors.New("channelID must be set to get channel messages")
-		return nil, err
+		return nil, MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		err := errors.New("messageID must be set to get a specific message from a channel")
-		return nil, err
+		return nil, MissingMessageIDErr
 	}
 
 	if !ignoreCache(m.flags) {
@@ -538,12 +534,10 @@ func (p *UpdateMessage) prepare() (postBody interface{}, contentType string, err
 //  Comment                 -
 func (m messageQueryBuilder) Delete() (err error) {
 	if m.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		return MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		err = errors.New("msgID must be set to delete the message")
-		return
+		return MissingMessageIDErr
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -583,10 +577,10 @@ func (m messageQueryBuilder) Pin() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) Unpin() (err error) {
 	if m.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return MissingMessageIDErr
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -603,17 +597,17 @@ func (m messageQueryBuilder) Unpin() (err error) {
 // https://discord.com/developers/docs/resources/channel#start-thread-with-message
 func (m messageQueryBuilder) CreateThread(params *CreateThread) (*Channel, error) {
 	if m.cid.IsZero() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		return nil, MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		return nil, MissingMessageIDErr
 	}
 	if params == nil || params.Name == "" {
-		return nil, errors.New("thread name is required")
+		return nil, MissingThreadNameErr
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {
@@ -656,10 +650,10 @@ type CreateThread struct {
 //  Comment                 -
 func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	if m.cid.IsZero() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		return nil, MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		return nil, MissingMessageIDErr
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -687,10 +681,10 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 //  Reviewed                2019-01-28
 func (m messageQueryBuilder) DeleteAllReactions() error {
 	if m.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return MissingMessageIDErr
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{

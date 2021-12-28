@@ -85,12 +85,10 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 
 func (r *voiceRepository) voiceConnectOptions(guildID, channelID Snowflake, selfDeaf, selfMute bool) (ret VoiceConnection, err error) {
 	if guildID.IsZero() {
-		err = errors.New("guildID must be set to connect to a voice channel")
-		return
+		return nil, MissingGuildIDErr
 	}
 	if channelID.IsZero() {
-		err = errors.New("channelID must be set to connect to a voice channel")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	// Set up some listeners for this connection attempt
@@ -335,7 +333,7 @@ func (v *voiceImpl) SendDCA(r io.Reader) error {
 
 func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	if channelID.IsZero() {
-		return errors.New("channelID must be set to move to a voice channel")
+		return MissingChannelIDErr
 	}
 
 	v.Lock()

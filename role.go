@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -75,8 +74,6 @@ func (r *Role) SetGuildID(id Snowflake) {
 // REST Methods
 //
 //////////////////////////////////////////////////////
-
-var MissingRoleIDErr = errors.New("role id was not set")
 
 type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
