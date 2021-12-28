@@ -711,7 +711,7 @@ func (g *GuildEmojiQueryBuilderNop) Get() (*disgord.Emoji, error) {
 	return nil, nil
 }
 
-func (g *GuildEmojiQueryBuilderNop) Update(_ *disgord.UpdateEmoji, _ string) (*disgord.Emoji, error) {
+func (g *GuildEmojiQueryBuilderNop) Update(_ *disgord.UpdateEmoji) (*disgord.Emoji, error) {
 	return nil, nil
 }
 

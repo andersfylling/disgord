@@ -21,6 +21,14 @@ type CreateThreadNoMessage = CreateThreadWithoutMessage
 // Deprecated: use GuildWidget
 type GuildEmbed = GuildWidget
 
+
+//generate-rest-params: roles:[]Snowflake,
+//generate-rest-basic-execute: emoji:*Emoji,
+type createGuildEmojiBuilder struct {
+	r RESTBuilder
+}
+
+
 // updateGuildMemberBuilder ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
 //generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,

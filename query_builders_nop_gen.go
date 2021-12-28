@@ -702,7 +702,7 @@ func (g *guildEmojiQueryBuilderNop) Get() (*Emoji, error) {
 	return nil, nil
 }
 
-func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmoji, _ string) (*Emoji, error) {
+func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmoji) (*Emoji, error) {
 	return nil, nil
 }
 

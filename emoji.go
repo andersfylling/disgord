@@ -73,7 +73,7 @@ type GuildEmojiQueryBuilder interface {
 	WithFlags(flags ...Flag) GuildEmojiQueryBuilder
 
 	Get() (*Emoji, error)
-	Update(*UpdateEmoji, string) (*Emoji, error)
+	Update(params *UpdateEmoji) (*Emoji, error)
 	Delete() error
 
 	// Deprecated: use Update
@@ -136,7 +136,7 @@ func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
 
 // Update Modify the given emoji. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason string) (*Emoji, error) {
+func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji) (*Emoji, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -150,7 +150,7 @@ func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason strin
 		Endpoint:    endpoint.GuildEmoji(g.gid, g.emojiID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, g.flags)
 	r.pool = g.client.pool.emoji
 	r.factory = func() interface{} {
@@ -163,6 +163,8 @@ func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji, auditLogReason strin
 type UpdateEmoji struct {
 	Name  *string      `json:"name,omitempty"`
 	Roles *[]Snowflake `json:"roles,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete deletes the given emoji. Requires the 'MANAGE_EMOJIS' permission. Returns 204 No Content on
@@ -176,16 +178,4 @@ func (g guildEmojiQueryBuilder) Delete() (err error) {
 
 	_, err = r.Execute()
 	return
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-//generate-rest-params: roles:[]Snowflake,
-//generate-rest-basic-execute: emoji:*Emoji,
-type createGuildEmojiBuilder struct {
-	r RESTBuilder
 }
