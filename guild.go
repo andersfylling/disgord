@@ -328,7 +328,7 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		// TODO: update g.Channels
 	}
 	if channelID.IsZero() {
-		return 0, errors.New("unable to decide which channel to create invite for")
+		return 0, MissingChannelIDErr
 	}
 
 	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite().
@@ -642,7 +642,7 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (
 	// TODO-2: is bot in less than 10 Guilds?
 
 	if guildName == "" {
-		return nil, errors.New("guild name is required")
+		return nil, MissingGuildNameErr
 	}
 	if l := len(guildName); !(2 <= l && l <= 100) {
 		return nil, errors.New("guild name must be 2 or more characters and no more than 100 characters")
@@ -666,8 +666,6 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (
 
 	return getGuild(r.Execute)
 }
-
-var MissingGuildIDErr = errors.New("guild id was not set")
 
 // GuildQueryBuilder defines the exposed functions from the guild query builder.
 type GuildQueryBuilder interface {
@@ -874,7 +872,7 @@ func (g guildQueryBuilder) GetChannels() ([]*Channel, error) {
 // Returns the new channel object on success. Fires a Channel Create Gateway event.
 func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel) (*Channel, error) {
 	if name == "" && (params == nil || params.Name == "") {
-		return nil, errors.New("channel name is required")
+		return nil, MissingChannelNameErr
 	}
 	if l := len(name); !(2 <= l && l <= 100) {
 		return nil, errors.New("channel name must be 2 or more characters and no more than 100 characters")
@@ -1184,7 +1182,7 @@ func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions
 // removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
 func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, err error) {
 	if g.gid.IsZero() {
-		return 0, errors.New("guildID can not be " + g.gid.String())
+		return 0, MissingGuildIDErr
 	}
 	params := pruneMembers{Days: days}
 	if err = params.FindErrors(); err != nil {
@@ -1449,7 +1447,7 @@ type CreateGuildEmoji struct {
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error) {
 	if g.gid.IsZero() {
-		return nil, errors.New("guildID must be set, was " + g.gid.String())
+		return nil, MissingGuildIDErr
 	}
 
 	if params == nil {

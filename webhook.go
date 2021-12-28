@@ -30,8 +30,6 @@ var _ DeepCopier = (*Webhook)(nil)
 //
 //////////////////////////////////////////////////////
 
-var MissingWebhookIDErr = errors.New("webhook id was not set")
-
 type WebhookQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookQueryBuilder
 	WithFlags(flags ...Flag) WebhookQueryBuilder
@@ -199,8 +197,6 @@ func (w webhookQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhook, wait b
 	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Execute(params, wait, threadID, endpoint.GitHub())
 }
 
-var MissingWebhookTokenErr = errors.New("webhook token was not set")
-
 type WebhookWithTokenQueryBuilder interface {
 	WithContext(ctx context.Context) WebhookWithTokenQueryBuilder
 	WithFlags(flags ...Flag) WebhookWithTokenQueryBuilder
@@ -358,10 +354,10 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait bool,
 	}
 
 	if w.webhookID.IsZero() {
-		return nil, errors.New("webhook id is required")
+		return nil, MissingWebhookIDErr
 	}
 	if w.token == "" {
-		return nil, errors.New("webhook token is required")
+		return nil, MissingWebhookTokenErr
 	}
 
 	var contentType string

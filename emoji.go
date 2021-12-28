@@ -69,8 +69,6 @@ func (e *Emoji) Mention() string {
 //
 //////////////////////////////////////////////////////
 
-var MissingEmojiIDErr = errors.New("emoji id was not set")
-
 type GuildEmojiQueryBuilder interface {
 	WithContext(ctx context.Context) GuildEmojiQueryBuilder
 	WithFlags(flags ...Flag) GuildEmojiQueryBuilder

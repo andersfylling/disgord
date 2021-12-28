@@ -76,8 +76,6 @@ func (r *Role) SetGuildID(id Snowflake) {
 //
 //////////////////////////////////////////////////////
 
-var MissingRoleIDErr = errors.New("role id was not set")
-
 type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
