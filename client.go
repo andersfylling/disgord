@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	evt "github.com/andersfylling/disgord/internal/event"
 	"net"
 	"net/http"
 	"sync"
@@ -92,24 +93,46 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		return nil, errors.New("Config.Intents can not be used in conjunction with neither Config.RejectEvents nor Config.DMIntents")
 	}
 
-	// remove extra/duplicates events
-	uniqueEventNames := make(map[string]bool)
-	for _, eventName := range conf.RejectEvents {
-		uniqueEventNames[eventName] = false
-	}
-	// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
-	// 	return nil, errors.New("you can not reject the event USER_UPDATE")
-	// }
-	if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
-		// https://github.com/discord/discord-api-docs/issues/683
-		uniqueEventNames["PRESENCES_REPLACE"] = false
-	}
-	if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
-		return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
-	}
-	conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
-	for eventName, _ := range uniqueEventNames {
-		conf.RejectEvents = append(conf.RejectEvents, eventName)
+	if conf.Intents == 0 {
+		if conf.RejectEvents != nil {
+			// remove extra/duplicates events
+			uniqueEventNames := make(map[string]bool)
+			for _, eventName := range conf.RejectEvents {
+				uniqueEventNames[eventName] = false
+			}
+			// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
+			// 	return nil, errors.New("you can not reject the event USER_UPDATE")
+			// }
+			if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
+				// https://github.com/discord/discord-api-docs/issues/683
+				uniqueEventNames["PRESENCES_REPLACE"] = false
+			}
+			if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
+				return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
+			}
+			conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
+			for eventName, _ := range uniqueEventNames {
+				conf.RejectEvents = append(conf.RejectEvents, eventName)
+			}
+
+			// figure out intents
+			for _, e := range evt.All() {
+				var exists bool
+				for _, e2 := range conf.RejectEvents {
+					if e == e2 {
+						exists = true
+						break
+					}
+				}
+				if exists {
+					continue
+				}
+
+				conf.Intents |= gateway.EventToIntent(e, false)
+			}
+		}
+
+		conf.Intents |= conf.DMIntents
 	}
 
 	httdClient, err := httd.NewClient(&httd.Config{
