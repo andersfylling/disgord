@@ -214,12 +214,9 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
-	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
-	// such optimizations can be handled in the background).
-	//
-	// You can see sent intents by enabling debug logging. Remember that derived from RejectIntents are appended.
-	DMIntents Intent
+	// Intents can be specified to reduce traffic sent from the discord gateway.
+	//  Intents = IntentDirectMessages | IntentGuildMessages
+	Intents Intent
 
 	// your project name, name of bot, or application
 	ProjectName string
@@ -261,7 +258,11 @@ type Config struct {
 	Cache        Cache
 	ShardConfig  ShardConfig
 
+	// Deprecated: use Intents
 	RejectEvents []string
+
+	// Deprecated: use Intents
+	DMIntents Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
