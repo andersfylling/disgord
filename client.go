@@ -88,6 +88,10 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
 	}
 
+	if conf.Intents > 0 && (len(conf.RejectEvents) > 0 || conf.DMIntents > 0) {
+		return nil, errors.New("Config.Intents can not be used in conjunction with neither Config.RejectEvents nor Config.DMIntents")
+	}
+
 	// remove extra/duplicates events
 	uniqueEventNames := make(map[string]bool)
 	for _, eventName := range conf.RejectEvents {
