@@ -693,7 +693,10 @@ type GuildQueryBuilder interface {
 	CreateMember(userID Snowflake, accessToken string, params *AddGuildMember) (*Member, error)
 	Member(userID Snowflake) GuildMemberQueryBuilder
 
+	// Deprecated: use DisconnectVoiceParticipant
 	KickVoiceParticipant(userID Snowflake) error
+
+	DisconnectVoiceParticipant(userID Snowflake) error
 	SetCurrentUserNick(nick string) (newNick string, err error)
 	GetBans() ([]*Ban, error)
 	GetBan(userID Snowflake) (*Ban, error)
@@ -1476,12 +1479,16 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error)
 	return getEmoji(r.Execute)
 }
 
-// KickVoiceParticipant is used to kick someone from voice.
-func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
+// DisconnectVoiceParticipant is used to kick someone from voice.
+func (g guildQueryBuilder) DisconnectVoiceParticipant(userID Snowflake) error {
 	builder := g.Member(userID).WithContext(g.ctx).UpdateBuilder()
 	return builder.
 		KickFromVoice().
 		Execute()
+}
+
+func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
+	return g.DisconnectVoiceParticipant(userID)
 }
 
 // GetWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.

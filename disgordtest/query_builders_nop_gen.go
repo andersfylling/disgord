@@ -815,6 +815,10 @@ func (g *GuildQueryBuilderNop) DeleteIntegration(_ disgord.Snowflake) error {
 	return nil
 }
 
+func (g *GuildQueryBuilderNop) DisconnectVoiceParticipant(_ disgord.Snowflake) error {
+	return nil
+}
+
 func (g *GuildQueryBuilderNop) Emoji(_ disgord.Snowflake) disgord.GuildEmojiQueryBuilder {
 	return nil
 }
