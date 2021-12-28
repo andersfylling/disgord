@@ -645,7 +645,7 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (
 		return nil, MissingGuildNameErr
 	}
 	if l := len(guildName); !(2 <= l && l <= 100) {
-		return nil, errors.New("guild name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("guild name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params == nil {
@@ -875,7 +875,7 @@ func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel
 		return nil, MissingChannelNameErr
 	}
 	if l := len(name); !(2 <= l && l <= 100) {
-		return nil, errors.New("channel name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("channel name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params == nil {
@@ -1454,7 +1454,7 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error)
 		return nil, errors.New("params object can not be nil")
 	}
 	if !validEmojiName(params.Name) {
-		return nil, errors.New("invalid emoji name")
+		return nil, fmt.Errorf("invalid emoji name: %w", IllegalValueErr)
 	}
 	if !validAvatarPrefix(params.Image) {
 		return nil, errors.New("image string must be base64 encoded with base64 prefix")

@@ -576,8 +576,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 //  Comment                 -
 func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -758,8 +757,7 @@ var _ URLQueryStringer = (*GetMessages)(nil)
 //                          be passed at a time. see ReqGetChannelMessagesParams.
 func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Message, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	var query string
@@ -1158,7 +1156,7 @@ func (c *CreateWebhook) FindErrors() error {
 		return MissingWebhookNameErr
 	}
 	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
-		return errors.New("webhook name must be 2 to 32 characters long")
+		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", IllegalValueErr)
 	}
 	return nil
 }
@@ -1219,7 +1217,7 @@ func (c channelQueryBuilder) CreateThread(params *CreateThreadWithoutMessage) (*
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {

@@ -607,7 +607,7 @@ func (m messageQueryBuilder) CreateThread(params *CreateThread) (*Channel, error
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {

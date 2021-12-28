@@ -37,3 +37,5 @@ var MissingWebhookNameErr = fmt.Errorf("webhook: %w", MissingNameErr)
 var MissingThreadNameErr = fmt.Errorf("thread: %w", MissingNameErr)
 
 var MissingWebhookTokenErr = errors.New("webhook token was not set")
+
+var IllegalValueErr = errors.New("illegal value")
