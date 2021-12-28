@@ -806,6 +806,10 @@ func (g *guildQueryBuilderNop) DeleteIntegration(_ Snowflake) error {
 	return nil
 }
 
+func (g *guildQueryBuilderNop) DisconnectVoiceParticipant(_ Snowflake) error {
+	return nil
+}
+
 func (g *guildQueryBuilderNop) Emoji(_ Snowflake) GuildEmojiQueryBuilder {
 	return nil
 }
