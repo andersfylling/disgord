@@ -292,7 +292,7 @@ type ChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() CreateChannelInviteBuilder
+	CreateInvite(params *CreateInvite) (*Invite, error)
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
@@ -591,28 +591,37 @@ func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	return getInvites(r.Execute)
 }
 
-// CreateInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
-// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
-// not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
-//  Reviewed                2018-06-07
-//  Comment                 -
-func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
-	builder := &createChannelInviteBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Invite{}
+// CreateInvite https://discord.com/developers/docs/resources/channel#create-channel-invite
+func (c channelQueryBuilder) CreateInvite(params *CreateInvite) (*Invite, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelInvites(c.cid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Invite{}
+	}
 
-	return builder
+	return getInvite(r.Execute)
+}
+
+type CreateInvite struct {
+	MaxAge              int       `json:"max_age"`
+	MaxUses             int       `json:"max_uses,omitempty"`
+	Temporary           bool      `json:"temporary,omitempty"`
+	Unique              bool      `json:"unique,omitempty"`
+	TargetType          int       `json:"target_type,omitempty"`
+	TargetUserID        Snowflake `json:"target_user_id,omitempty"`
+	TargetApplicationID Snowflake `json:"target_application_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // DeletePermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
@@ -1416,21 +1425,4 @@ func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetArchived
 	}
 
 	return getArchivedThreads(r.Execute)
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-//generate-rest-params: max_age:int, max_uses:int, temporary:bool, unique:bool,
-//generate-rest-basic-execute: invite:*Invite,
-type createChannelInviteBuilder struct {
-	r RESTBuilder
-}
-
-func (b *createChannelInviteBuilder) WithReason(reason string) *createChannelInviteBuilder {
-	b.r.headerReason = reason
-	return b
 }

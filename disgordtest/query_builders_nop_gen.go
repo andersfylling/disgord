@@ -68,8 +68,8 @@ func (c *ChannelQueryBuilderNop) AddThreadMember(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateInvite() disgord.CreateChannelInviteBuilder {
-	return nil
+func (c *ChannelQueryBuilderNop) CreateInvite(_ *disgord.CreateInvite) (*disgord.Invite, error) {
+	return nil, nil
 }
 
 func (c *ChannelQueryBuilderNop) CreateMessage(_ *disgord.CreateMessage) (*disgord.Message, error) {
@@ -1183,8 +1183,8 @@ func (v *VoiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (disgord.VoiceConn
 	return nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) CreateInvite() disgord.CreateChannelInviteBuilder {
-	return nil
+func (v *VoiceChannelQueryBuilderNop) CreateInvite(_ *disgord.CreateInvite) (*disgord.Invite, error) {
+	return nil, nil
 }
 
 func (v *VoiceChannelQueryBuilderNop) Delete() (*disgord.Channel, error) {

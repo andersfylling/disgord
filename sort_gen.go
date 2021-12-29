@@ -85,6 +85,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Channel:
 		s = *t
+	case *[]*CreateInvite:
+		s = *t
 	case *[]*CreateMessage:
 		s = *t
 	case *[]*CreateMessageFile:

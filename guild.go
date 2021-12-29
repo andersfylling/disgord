@@ -331,9 +331,9 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		return 0, MissingChannelIDErr
 	}
 
-	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite().
-		SetMaxAge(1).
-		Execute()
+	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite(&CreateInvite{
+		MaxAge: 1,
+	})
 	if err != nil {
 		return 0, err
 	}

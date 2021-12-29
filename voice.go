@@ -165,7 +165,7 @@ type VoiceChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() CreateChannelInviteBuilder
+	CreateInvite(params *CreateInvite) (*Invite, error)
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more

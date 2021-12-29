@@ -59,8 +59,8 @@ func (c *channelQueryBuilderNop) AddThreadMember(_ Snowflake) error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
-	return nil
+func (c *channelQueryBuilderNop) CreateInvite(_ *CreateInvite) (*Invite, error) {
+	return nil, nil
 }
 
 func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessage) (*Message, error) {
@@ -1174,8 +1174,8 @@ func (v *voiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (VoiceConnection, 
 	return nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
-	return nil
+func (v *voiceChannelQueryBuilderNop) CreateInvite(_ *CreateInvite) (*Invite, error) {
+	return nil, nil
 }
 
 func (v *voiceChannelQueryBuilderNop) Delete() (*Channel, error) {
