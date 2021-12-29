@@ -372,15 +372,15 @@ type ChannelQueryBuilder interface {
 	// threads of type GUILD_PUBLIC_THREAD. When called on a GUILD_NEWS channel returns threads of type
 	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
 	// permission.
-	GetPublicArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetPublicArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 
 	// GetPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
 	// archive_timestamp, in descending order. Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
-	GetPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 
 	// GetJoinedPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
 	// Threads are ordered by their id, in descending order. Requires the READ_MESSAGE_HISTORY permission.
-	GetJoinedPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetJoinedPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 }
 
 type channelQueryBuilder struct {
