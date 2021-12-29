@@ -874,6 +874,10 @@ func (g *guildQueryBuilderNop) GetMembers(_ *GetMembers) ([]*Member, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) GetPruneMembersCount(_ *GetPruneMembersCount) (int, error) {
+	return 0, nil
+}
+
 func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
@@ -906,8 +910,8 @@ func (g *guildQueryBuilderNop) Member(_ Snowflake) GuildMemberQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) PruneMembers(_ int, _ string) error {
-	return nil
+func (g *guildQueryBuilderNop) PruneMembers(_ *PruneMembers) (int, error) {
+	return 0, nil
 }
 
 func (g *guildQueryBuilderNop) Role(_ Snowflake) GuildRoleQueryBuilder {
@@ -982,7 +986,7 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole, _ string) (*Role, error) {
+func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {
 	return nil, nil
 }
 

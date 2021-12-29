@@ -883,6 +883,10 @@ func (g *GuildQueryBuilderNop) GetMembers(_ *disgord.GetMembers) ([]*disgord.Mem
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) GetPruneMembersCount(_ *disgord.GetPruneMembersCount) (int, error) {
+	return 0, nil
+}
+
 func (g *GuildQueryBuilderNop) GetRoles() ([]*disgord.Role, error) {
 	return nil, nil
 }
@@ -915,8 +919,8 @@ func (g *GuildQueryBuilderNop) Member(_ disgord.Snowflake) disgord.GuildMemberQu
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) PruneMembers(_ int, _ string) error {
-	return nil
+func (g *GuildQueryBuilderNop) PruneMembers(_ *disgord.PruneMembers) (int, error) {
+	return 0, nil
 }
 
 func (g *GuildQueryBuilderNop) Role(_ disgord.Snowflake) disgord.GuildRoleQueryBuilder {
@@ -991,7 +995,7 @@ func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole, _ string) (*disgord.Role, error) {
+func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole) (*disgord.Role, error) {
 	return nil, nil
 }
 

@@ -79,7 +79,7 @@ type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
 
-	Update(params *UpdateRole, auditLogReason string) (*Role, error)
+	Update(params *UpdateRole) (*Role, error)
 	Delete() error
 
 	// Deprecated: use Update
@@ -139,7 +139,7 @@ func (g guildRoleQueryBuilder) Delete() error {
 }
 
 // Update update a role
-func (g guildRoleQueryBuilder) Update(params *UpdateRole, auditLogReason string) (*Role, error) {
+func (g guildRoleQueryBuilder) Update(params *UpdateRole) (*Role, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -153,8 +153,11 @@ func (g guildRoleQueryBuilder) Update(params *UpdateRole, auditLogReason string)
 		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, g.flags)
+	r.factory = func() interface{} {
+		return &Role{}
+	}
 
 	return getRole(r.Execute)
 }
@@ -165,4 +168,6 @@ type UpdateRole struct {
 	Color       *int           `json:"color,omitempty"`
 	Hoist       *bool          `json:"hoist,omitempty"`
 	Mentionable *bool          `json:"mentionable,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }

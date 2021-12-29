@@ -551,10 +551,6 @@ type CreateGroupDM struct {
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
-func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
-	return c.client.Guild(id).Leave()
-}
-
 // CreateGroupDM [REST] Create a new group DM channel with multiple Users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
@@ -577,10 +573,6 @@ func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDM) (ret *Chan
 
 	// TODO: go generate casting func: return getChannel(r.Execute)
 	return getChannel(r.Execute)
-}
-
-func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
-	return c.GetConnections()
 }
 
 // GetConnections https://discord.com/developers/docs/resources/user#get-user-connections

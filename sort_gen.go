@@ -247,6 +247,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*GetMembers:
 		s = *t
+	case *[]*GetPruneMembersCount:
+		s = *t
 	case *[]*Guild:
 		s = *t
 	case *[]*GuildUnavailable:
@@ -260,6 +262,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*Member:
 		s = *t
 	case *[]*PartialBan:
+		s = *t
+	case *[]*PruneMembers:
 		s = *t
 	case *[]*UpdateGuild:
 		s = *t
