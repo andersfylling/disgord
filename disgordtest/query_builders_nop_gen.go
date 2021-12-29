@@ -68,8 +68,8 @@ func (c *ChannelQueryBuilderNop) AddThreadMember(_ disgord.Snowflake) error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) CreateInvite() disgord.CreateChannelInviteBuilder {
-	return nil
+func (c *ChannelQueryBuilderNop) CreateInvite(_ *disgord.CreateInvite) (*disgord.Invite, error) {
+	return nil, nil
 }
 
 func (c *ChannelQueryBuilderNop) CreateMessage(_ *disgord.CreateMessage) (*disgord.Message, error) {
@@ -160,7 +160,7 @@ func (c *ChannelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -264,6 +264,10 @@ func (c *CurrentUserQueryBuilderNop) Get() (*disgord.User, error) {
 	return nil, nil
 }
 
+func (c *CurrentUserQueryBuilderNop) GetConnections() ([]*disgord.UserConnection, error) {
+	return nil, nil
+}
+
 func (c *CurrentUserQueryBuilderNop) GetGuilds(_ *disgord.GetCurrentUserGuilds) ([]*disgord.Guild, error) {
 	return nil, nil
 }
@@ -274,6 +278,10 @@ func (c *CurrentUserQueryBuilderNop) GetUserConnections() ([]*disgord.UserConnec
 
 func (c *CurrentUserQueryBuilderNop) LeaveGuild(_ disgord.Snowflake) error {
 	return nil
+}
+
+func (c *CurrentUserQueryBuilderNop) Update(_ *disgord.UpdateUser) (*disgord.User, error) {
+	return nil, nil
 }
 
 func (c *CurrentUserQueryBuilderNop) UpdateBuilder() disgord.UpdateCurrentUserBuilder {
@@ -875,6 +883,10 @@ func (g *GuildQueryBuilderNop) GetMembers(_ *disgord.GetMembers) ([]*disgord.Mem
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) GetPruneMembersCount(_ *disgord.GetPruneMembersCount) (int, error) {
+	return 0, nil
+}
+
 func (g *GuildQueryBuilderNop) GetRoles() ([]*disgord.Role, error) {
 	return nil, nil
 }
@@ -899,12 +911,16 @@ func (g *GuildQueryBuilderNop) KickVoiceParticipant(_ disgord.Snowflake) error {
 	return nil
 }
 
+func (g *GuildQueryBuilderNop) Leave() error {
+	return nil
+}
+
 func (g *GuildQueryBuilderNop) Member(_ disgord.Snowflake) disgord.GuildMemberQueryBuilder {
 	return nil
 }
 
-func (g *GuildQueryBuilderNop) PruneMembers(_ int, _ string) error {
-	return nil
+func (g *GuildQueryBuilderNop) PruneMembers(_ *disgord.PruneMembers) (int, error) {
+	return 0, nil
 }
 
 func (g *GuildQueryBuilderNop) Role(_ disgord.Snowflake) disgord.GuildRoleQueryBuilder {
@@ -979,7 +995,7 @@ func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole, _ string) (*disgord.Role, error) {
+func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole) (*disgord.Role, error) {
 	return nil, nil
 }
 
@@ -1171,8 +1187,8 @@ func (v *VoiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (disgord.VoiceConn
 	return nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) CreateInvite() disgord.CreateChannelInviteBuilder {
-	return nil
+func (v *VoiceChannelQueryBuilderNop) CreateInvite(_ *disgord.CreateInvite) (*disgord.Invite, error) {
+	return nil, nil
 }
 
 func (v *VoiceChannelQueryBuilderNop) Delete() (*disgord.Channel, error) {
@@ -1195,7 +1211,7 @@ func (v *VoiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*disgord.Voice
 	return nil, nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel) (*disgord.Channel, error) {
 	return nil, nil
 }
 

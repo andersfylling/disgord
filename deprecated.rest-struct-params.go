@@ -66,9 +66,6 @@ type CreateGuildChannelParams = CreateGuildChannel
 // Deprecated: use UpdateGuildChannelPositions
 type UpdateGuildChannelPositionsParams = UpdateGuildChannelPositions
 
-// Deprecated: use getGuildMembers
-type getGuildMembersParams = getGuildMembers
-
 // Deprecated: use GetMembers
 type GetMembersParams = GetMembers
 
@@ -78,17 +75,11 @@ type AddGuildMemberParams = AddGuildMember
 // Deprecated: use BanMember
 type BanMemberParams = BanMember
 
-// Deprecated: use pruneMembers
-type pruneMembersParams = pruneMembers
-
 // Deprecated: use CreateGuildIntegration
 type CreateGuildIntegrationParams = CreateGuildIntegration
 
 // Deprecated: use ExecuteWebhook
 type ExecuteWebhookParams = ExecuteWebhook
-
-// Deprecated: use execWebhook
-type execWebhookParams = execWebhook
 
 // Deprecated: use CreateThread
 type CreateThreadParams = CreateThread
@@ -96,14 +87,8 @@ type CreateThreadParams = CreateThread
 // Deprecated: use CreateThreadNoMessage
 type CreateThreadParamsNoMessage = CreateThreadNoMessage
 
-// Deprecated: use updateCurrentUserNick
-type updateCurrentUserNickParams = updateCurrentUserNick
-
 // Deprecated: use NewUpdateGuildRolePositions
 var NewUpdateGuildRolePositionsParams = NewUpdateGuildRolePositions
-
-// Deprecated: use getInviteQuery
-type getInviteParams = getInviteQuery
 
 // Deprecated: use GetReactionURL
 type GetReactionURLParams = GetReactionURL

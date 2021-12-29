@@ -331,9 +331,9 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		return 0, MissingChannelIDErr
 	}
 
-	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite().
-		SetMaxAge(1).
-		Execute()
+	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite(&CreateInvite{
+		MaxAge: 1,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -678,6 +678,9 @@ type GuildQueryBuilder interface {
 	Update(params *UpdateGuild) (*Guild, error)
 	Delete() error
 
+	// Leave leaves the given guild
+	Leave() error
+
 	// GetChannels
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
@@ -712,8 +715,8 @@ type GuildQueryBuilder interface {
 	CreateRole(params *CreateGuildRole) (*Role, error)
 	Role(roleID Snowflake) GuildRoleQueryBuilder
 
-	EstimatePruneMembersCount(days int) (estimate int, err error)
-	PruneMembers(days int, reason string) error
+	GetPruneMembersCount(params *GetPruneMembersCount) (estimate int, err error)
+	PruneMembers(params *PruneMembers) (pruned int, err error)
 	GetVoiceRegions() ([]*VoiceRegion, error)
 	GetInvites() ([]*Invite, error)
 
@@ -747,6 +750,9 @@ type GuildQueryBuilder interface {
 	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
 	// Deprecated: use GetWidget
 	GetEmbed() (*GuildEmbed, error)
+
+	// Deprecated: use GetPruneMembersCount
+	EstimatePruneMembersCount(days int) (estimate int, err error)
 }
 
 // Guild is used to create a guild query builder.
@@ -854,6 +860,18 @@ func (g guildQueryBuilder) Delete() error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint.Guild(g.gid),
+		Ctx:      g.ctx,
+	}, g.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// Leave https://discord.com/developers/docs/resources/user#leave-guild
+func (g guildQueryBuilder) Leave() error {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:   http.MethodDelete,
+		Endpoint: endpoint.UserMeGuild(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 
@@ -1189,55 +1207,76 @@ func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions
 	return getRoles(r.Execute)
 }
 
-// EstimatePruneMembersCount Returns an object with one 'pruned' key indicating the number of members that would be
-// removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
-func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, err error) {
+func (g guildQueryBuilder) GetPruneMembersCount(params *GetPruneMembersCount) (estimate int, err error) {
 	if g.gid.IsZero() {
 		return 0, MissingGuildIDErr
 	}
-	params := pruneMembers{Days: days}
-	if err = params.FindErrors(); err != nil {
-		return 0, err
+	if params == nil {
+		return 0, MissingRESTParamsErr
+	}
+
+	type Pruned struct {
+		Pruned int `json:"pruned"`
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
+		Method:   http.MethodGet,
+		Endpoint: endpoint.GuildPrune(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &guildPruneCount{}
+		return &Pruned{}
 	}
 
-	var v interface{}
-	if v, err = r.Execute(); err != nil {
+	prunedResp, err := r.Execute()
+	if err != nil {
 		return 0, err
 	}
-
-	if v == nil {
-		return 0, nil
-	}
-
-	return v.(*guildPruneCount).Pruned, nil
+	return prunedResp.(*Pruned).Pruned, nil
 }
 
-// PruneMembers Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
-// The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
-// if you need it. Fires multiple Guild Member Remove Gateway events.
-func (g guildQueryBuilder) PruneMembers(days int, reason string) (err error) {
-	params := pruneMembers{Days: days}
-	if err = params.FindErrors(); err != nil {
-		return err
+type GetPruneMembersCount struct {
+	Days         *int        `json:"days,omitempty"`
+	IncludeRoles []Snowflake `json:"include_roles,omitempty"`
+}
+
+// PruneMembers https://discord.com/developers/docs/resources/guild#begin-guild-prune
+func (g guildQueryBuilder) PruneMembers(params *PruneMembers) (pruned int, err error) {
+	if g.gid.IsZero() {
+		return 0, MissingGuildIDErr
+	}
+	if params == nil {
+		return 0, MissingRESTParamsErr
+	}
+
+	type Pruned struct {
+		Pruned int `json:"pruned"`
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodPost,
-		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
+		Endpoint: endpoint.GuildPrune(g.gid),
 		Ctx:      g.ctx,
-		Reason:   reason,
+		Reason:   params.AuditLogReason,
 	}, g.flags)
+	r.factory = func() interface{} {
+		return &Pruned{}
+	}
 
-	_, err = r.Execute()
-	return err
+	prunedResp, err := r.Execute()
+	if err != nil {
+		return 0, err
+	}
+	return prunedResp.(*Pruned).Pruned, nil
+}
+
+// PruneMembers https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
+type PruneMembers struct {
+	Days              *int        `json:"days,omitempty"`
+	ComputePruneCount *bool       `json:"compute_prune_count,omitempty"`
+	IncludeRoles      []Snowflake `json:"include_roles,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // GetVoiceRegions Returns a list of voice region objects for the guild. Unlike the similar /voice route,
@@ -1343,10 +1382,6 @@ func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake) error {
 
 	_, err := r.Execute()
 	return err
-}
-
-func (g guildQueryBuilder) GetEmbed() (*GuildEmbed, error) {
-	return g.GetWidget()
 }
 
 func (g guildQueryBuilder) GetWidget() (*GuildWidget, error) {
@@ -1504,14 +1539,9 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error)
 
 // DisconnectVoiceParticipant is used to kick someone from voice.
 func (g guildQueryBuilder) DisconnectVoiceParticipant(userID Snowflake) error {
-	builder := g.Member(userID).WithContext(g.ctx).UpdateBuilder()
-	return builder.
-		KickFromVoice().
-		Execute()
-}
-
-func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
-	return g.DisconnectVoiceParticipant(userID)
+	disconnectChannelID := Snowflake(0)
+	_, err := g.Member(userID).WithContext(g.ctx).Update(&UpdateMember{ChannelID: &disconnectChannelID})
+	return err
 }
 
 // GetWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -1665,30 +1695,6 @@ func (b *BanMember) FindErrors() error {
 		return errors.New("DeleteMessageDays must be a value in the range of [0, 7], got " + strconv.Itoa(b.DeleteMessageDays))
 	}
 	return nil
-}
-
-// PruneMembers will delete members, this is the same as kicking.
-// https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
-type pruneMembers struct {
-	// Days number of days to count prune for (1 or more)
-	Days int `urlparam:"days"`
-
-	// ComputePruneCount whether 'pruned' is returned, discouraged for large Guilds
-	ComputePruneCount bool `urlparam:"compute_prune_count"`
-}
-
-var _ URLQueryStringer = (*pruneMembers)(nil)
-
-func (d *pruneMembers) FindErrors() (err error) {
-	if d.Days < 1 {
-		err = errors.New("days must be at least 1, got " + strconv.Itoa(d.Days))
-	}
-	return
-}
-
-// GuildPruneCount ...
-type guildPruneCount struct {
-	Pruned int `json:"pruned"`
 }
 
 // CreateGuildIntegration ...

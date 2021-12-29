@@ -88,16 +88,6 @@ func (b *BanMember) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (p *pruneMembers) URLQueryString() string {
-	params := make(urlQuery)
-
-	params["days"] = p.Days
-
-	params["compute_prune_count"] = p.ComputePruneCount
-
-	return params.URLQueryString()
-}
-
 func (g *getInviteQuery) URLQueryString() string {
 	params := make(urlQuery)
 

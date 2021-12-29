@@ -21,6 +21,10 @@ type CreateThreadNoMessage = CreateThreadWithoutMessage
 // Deprecated: use GuildWidget
 type GuildEmbed = GuildWidget
 
+func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
+	return g.DisconnectVoiceParticipant(userID)
+}
+
 //generate-rest-params: roles:[]Snowflake,
 //generate-rest-basic-execute: emoji:*Emoji,
 type createGuildEmojiBuilder struct {
@@ -33,6 +37,10 @@ type createGuildEmojiBuilder struct {
 //generate-rest-basic-execute: err:error,
 type updateGuildMemberBuilder struct {
 	r RESTBuilder
+}
+
+func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
+	return c.client.Guild(id).Leave()
 }
 
 // KickFromVoice kicks member out of voice channel. Assuming they are in one.
@@ -259,6 +267,16 @@ func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	return builder
 }
 
+func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, err error) {
+	return g.GetPruneMembersCount(&GetPruneMembersCount{
+		Days: &days,
+	})
+}
+
+func (g guildQueryBuilder) GetEmbed() (*GuildEmbed, error) {
+	return g.GetWidget()
+}
+
 // updateMessageBuilder, params here
 //  https://discord.com/developers/docs/resources/channel#edit-message-json-params
 //generate-rest-params: content:string, embed:*Embed,
@@ -345,11 +363,9 @@ func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
 	return u
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Wrappers
-//
-//////////////////////////////////////////////////////
+func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
+	return c.GetConnections()
+}
 
 // Deprecated: use Update instead
 func (m messageQueryBuilder) SetContent(content string) (*Message, error) {

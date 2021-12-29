@@ -268,7 +268,7 @@ type ChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannel, reason string) (*Channel, error)
+	Update(params *UpdateChannel) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
@@ -292,7 +292,7 @@ type ChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() CreateChannelInviteBuilder
+	CreateInvite(params *CreateInvite) (*Invite, error)
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
@@ -372,15 +372,15 @@ type ChannelQueryBuilder interface {
 	// threads of type GUILD_PUBLIC_THREAD. When called on a GUILD_NEWS channel returns threads of type
 	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
 	// permission.
-	GetPublicArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetPublicArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 
 	// GetPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
 	// archive_timestamp, in descending order. Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
-	GetPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 
 	// GetJoinedPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
 	// Threads are ordered by their id, in descending order. Requires the READ_MESSAGE_HISTORY permission.
-	GetJoinedPrivateArchivedThreads(params *GetThreads) (*ResponseBodyThreads, error)
+	GetJoinedPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 }
 
 type channelQueryBuilder struct {
@@ -447,7 +447,7 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2021-08-08
-func (c channelQueryBuilder) Update(params *UpdateChannel, auditLogReason string) (*Channel, error) {
+func (c channelQueryBuilder) Update(params *UpdateChannel) (*Channel, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -461,8 +461,11 @@ func (c channelQueryBuilder) Update(params *UpdateChannel, auditLogReason string
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, c.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
 	return getChannel(r.Execute)
 }
@@ -481,6 +484,8 @@ type UpdateChannel struct {
 	RTCRegion                  *string                    `json:"rtc_region,omitempty"`
 	VideoQualityMode           *VideoQualityMode          `json:"video_quality_mode,omitempty"`
 	DefaultAutoArchiveDuration *uint                      `json:"default_auto_archive_duration,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -591,28 +596,37 @@ func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	return getInvites(r.Execute)
 }
 
-// CreateInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
-// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
-// not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
-//  Reviewed                2018-06-07
-//  Comment                 -
-func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
-	builder := &createChannelInviteBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Invite{}
+// CreateInvite https://discord.com/developers/docs/resources/channel#create-channel-invite
+func (c channelQueryBuilder) CreateInvite(params *CreateInvite) (*Invite, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelInvites(c.cid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Invite{}
+	}
 
-	return builder
+	return getInvite(r.Execute)
+}
+
+type CreateInvite struct {
+	MaxAge              int       `json:"max_age"`
+	MaxUses             int       `json:"max_uses,omitempty"`
+	Temporary           bool      `json:"temporary,omitempty"`
+	Unique              bool      `json:"unique,omitempty"`
+	TargetType          int       `json:"target_type,omitempty"`
+	TargetUserID        Snowflake `json:"target_user_id,omitempty"`
+	TargetApplicationID Snowflake `json:"target_application_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // DeletePermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
@@ -1416,21 +1430,4 @@ func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetArchived
 	}
 
 	return getArchivedThreads(r.Execute)
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-//generate-rest-params: max_age:int, max_uses:int, temporary:bool, unique:bool,
-//generate-rest-basic-execute: invite:*Invite,
-type createChannelInviteBuilder struct {
-	r RESTBuilder
-}
-
-func (b *createChannelInviteBuilder) WithReason(reason string) *createChannelInviteBuilder {
-	b.r.headerReason = reason
-	return b
 }

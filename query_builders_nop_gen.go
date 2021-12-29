@@ -59,8 +59,8 @@ func (c *channelQueryBuilderNop) AddThreadMember(_ Snowflake) error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
-	return nil
+func (c *channelQueryBuilderNop) CreateInvite(_ *CreateInvite) (*Invite, error) {
+	return nil, nil
 }
 
 func (c *channelQueryBuilderNop) CreateMessage(_ *CreateMessage) (*Message, error) {
@@ -151,7 +151,7 @@ func (c *channelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+func (c *channelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error) {
 	return nil, nil
 }
 
@@ -255,6 +255,10 @@ func (c *currentUserQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
 
+func (c *currentUserQueryBuilderNop) GetConnections() ([]*UserConnection, error) {
+	return nil, nil
+}
+
 func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuilds) ([]*Guild, error) {
 	return nil, nil
 }
@@ -265,6 +269,10 @@ func (c *currentUserQueryBuilderNop) GetUserConnections() ([]*UserConnection, er
 
 func (c *currentUserQueryBuilderNop) LeaveGuild(_ Snowflake) error {
 	return nil
+}
+
+func (c *currentUserQueryBuilderNop) Update(_ *UpdateUser) (*User, error) {
+	return nil, nil
 }
 
 func (c *currentUserQueryBuilderNop) UpdateBuilder() UpdateCurrentUserBuilder {
@@ -866,6 +874,10 @@ func (g *guildQueryBuilderNop) GetMembers(_ *GetMembers) ([]*Member, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) GetPruneMembersCount(_ *GetPruneMembersCount) (int, error) {
+	return 0, nil
+}
+
 func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
@@ -890,12 +902,16 @@ func (g *guildQueryBuilderNop) KickVoiceParticipant(_ Snowflake) error {
 	return nil
 }
 
+func (g *guildQueryBuilderNop) Leave() error {
+	return nil
+}
+
 func (g *guildQueryBuilderNop) Member(_ Snowflake) GuildMemberQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) PruneMembers(_ int, _ string) error {
-	return nil
+func (g *guildQueryBuilderNop) PruneMembers(_ *PruneMembers) (int, error) {
+	return 0, nil
 }
 
 func (g *guildQueryBuilderNop) Role(_ Snowflake) GuildRoleQueryBuilder {
@@ -970,7 +986,7 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole, _ string) (*Role, error) {
+func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {
 	return nil, nil
 }
 
@@ -1162,8 +1178,8 @@ func (v *voiceChannelQueryBuilderNop) Connect(_ bool, _ bool) (VoiceConnection, 
 	return nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) CreateInvite() CreateChannelInviteBuilder {
-	return nil
+func (v *voiceChannelQueryBuilderNop) CreateInvite(_ *CreateInvite) (*Invite, error) {
+	return nil, nil
 }
 
 func (v *voiceChannelQueryBuilderNop) Delete() (*Channel, error) {
@@ -1186,7 +1202,7 @@ func (v *voiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*VoiceStateUpd
 	return nil, nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error) {
 	return nil, nil
 }
 
