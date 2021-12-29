@@ -32,10 +32,15 @@ If you want a more lightweight experience you can disable/reject events that you
  - Use disgord.Snowflake, not snowflake.Snowflake.
  - Use disgord.Time, not time.Time when dealing with Discord timestamps.
 
-By default DM capabilities are disabled. If you want to activate these, or some, specify their related intent.
+You must explicitly set intents if you want certain gateway events.
 ```go
 client := disgord.New(disgord.Config{
-    DMIntents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
+    Intents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions,
+})
+```
+```go
+client := disgord.New(disgord.Config{
+    Intents: disgord.AllIntents(),
 })
 ```
 
