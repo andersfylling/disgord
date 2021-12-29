@@ -141,7 +141,7 @@ type VoiceChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannel, reason string) (*Channel, error)
+	Update(params *UpdateChannel) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder

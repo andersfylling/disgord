@@ -268,7 +268,7 @@ type ChannelQueryBuilder interface {
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
-	Update(params *UpdateChannel, reason string) (*Channel, error)
+	Update(params *UpdateChannel) (*Channel, error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
@@ -447,7 +447,7 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
 //  Reviewed                2021-08-08
-func (c channelQueryBuilder) Update(params *UpdateChannel, auditLogReason string) (*Channel, error) {
+func (c channelQueryBuilder) Update(params *UpdateChannel) (*Channel, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -461,8 +461,11 @@ func (c channelQueryBuilder) Update(params *UpdateChannel, auditLogReason string
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, c.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
 	return getChannel(r.Execute)
 }
@@ -481,6 +484,8 @@ type UpdateChannel struct {
 	RTCRegion                  *string                    `json:"rtc_region,omitempty"`
 	VideoQualityMode           *VideoQualityMode          `json:"video_quality_mode,omitempty"`
 	DefaultAutoArchiveDuration *uint                      `json:"default_auto_archive_duration,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for

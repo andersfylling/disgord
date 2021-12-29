@@ -160,7 +160,7 @@ func (c *ChannelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+func (c *ChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel) (*disgord.Channel, error) {
 	return nil, nil
 }
 
@@ -1207,7 +1207,7 @@ func (v *VoiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*disgord.Voice
 	return nil, nil, nil
 }
 
-func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel, _ string) (*disgord.Channel, error) {
+func (v *VoiceChannelQueryBuilderNop) Update(_ *disgord.UpdateChannel) (*disgord.Channel, error) {
 	return nil, nil
 }
 

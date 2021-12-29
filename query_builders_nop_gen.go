@@ -151,7 +151,7 @@ func (c *channelQueryBuilderNop) TriggerTypingIndicator() error {
 	return nil
 }
 
-func (c *channelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+func (c *channelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error) {
 	return nil, nil
 }
 
@@ -1198,7 +1198,7 @@ func (v *voiceChannelQueryBuilderNop) JoinManual(_ bool, _ bool) (*VoiceStateUpd
 	return nil, nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel, _ string) (*Channel, error) {
+func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error) {
 	return nil, nil
 }
 
