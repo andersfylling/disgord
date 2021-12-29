@@ -363,9 +363,11 @@ func (g *Guild) Member(id Snowflake) (*Member, error) {
 }
 
 // MembersByName retrieve a slice of members with same username or nickname
+// Will skip checking username of members missing user data.
+// The user data might be missing due to cache misses.
 func (g *Guild) MembersByName(name string) (members []*Member) {
 	for _, member := range g.Members {
-		if member.Nick == name || member.User.Username == name {
+		if member.Nick == name || (member.User != nil && member.User.Username == name) {
 			members = append(members, member)
 		}
 	}
