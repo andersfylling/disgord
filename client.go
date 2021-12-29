@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	evt "github.com/andersfylling/disgord/internal/event"
 	"net"
 	"net/http"
 	"sync"
@@ -88,24 +89,50 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
 	}
 
-	// remove extra/duplicates events
-	uniqueEventNames := make(map[string]bool)
-	for _, eventName := range conf.RejectEvents {
-		uniqueEventNames[eventName] = false
+	if conf.Intents > 0 && (len(conf.RejectEvents) > 0 || conf.DMIntents > 0) {
+		return nil, errors.New("Config.Intents can not be used in conjunction with neither Config.RejectEvents nor Config.DMIntents")
 	}
-	// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
-	// 	return nil, errors.New("you can not reject the event USER_UPDATE")
-	// }
-	if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
-		// https://github.com/discord/discord-api-docs/issues/683
-		uniqueEventNames["PRESENCES_REPLACE"] = false
-	}
-	if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
-		return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
-	}
-	conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
-	for eventName, _ := range uniqueEventNames {
-		conf.RejectEvents = append(conf.RejectEvents, eventName)
+
+	if conf.Intents == 0 {
+		if conf.RejectEvents != nil {
+			// remove extra/duplicates events
+			uniqueEventNames := make(map[string]bool)
+			for _, eventName := range conf.RejectEvents {
+				uniqueEventNames[eventName] = false
+			}
+			// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
+			// 	return nil, errors.New("you can not reject the event USER_UPDATE")
+			// }
+			if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
+				// https://github.com/discord/discord-api-docs/issues/683
+				uniqueEventNames["PRESENCES_REPLACE"] = false
+			}
+			if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
+				return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
+			}
+			conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
+			for eventName, _ := range uniqueEventNames {
+				conf.RejectEvents = append(conf.RejectEvents, eventName)
+			}
+
+			// figure out intents
+			for _, e := range evt.All() {
+				var exists bool
+				for _, e2 := range conf.RejectEvents {
+					if e == e2 {
+						exists = true
+						break
+					}
+				}
+				if exists {
+					continue
+				}
+
+				conf.Intents |= gateway.EventToIntent(e, false)
+			}
+		}
+
+		conf.Intents |= conf.DMIntents
 	}
 
 	httdClient, err := httd.NewClient(&httd.Config{
@@ -214,12 +241,9 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
-	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
-	// such optimizations can be handled in the background).
-	//
-	// You can see sent intents by enabling debug logging. Remember that derived from RejectIntents are appended.
-	DMIntents Intent
+	// Intents can be specified to reduce traffic sent from the discord gateway.
+	//  Intents = IntentDirectMessages | IntentGuildMessages
+	Intents Intent
 
 	// your project name, name of bot, or application
 	ProjectName string
@@ -261,7 +285,11 @@ type Config struct {
 	Cache        Cache
 	ShardConfig  ShardConfig
 
+	// Deprecated: use Intents
 	RejectEvents []string
+
+	// Deprecated: use Intents
+	DMIntents Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
