@@ -2,6 +2,6 @@ module logging
 
 go 1.16
 
-require github.com/andersfylling/disgord v0.27.0
+require github.com/andersfylling/disgord v0.30.1
 
 replace github.com/andersfylling/disgord => ../../

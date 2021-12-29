@@ -57,7 +57,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 				Name: threadName,
 				// any auto archive thread duration greater than AutoArchiveThreadDay requires premium
 				AutoArchiveDuration: disgord.AutoArchiveThreadDay,
-				Type: disgord.ChannelTypeGuildPublicThread,
+				Type:                disgord.ChannelTypeGuildPublicThread,
 			})
 			if err != nil {
 				log.Error(err)
@@ -74,7 +74,7 @@ func msgHandler(session disgord.Session, evt *disgord.MessageCreate) {
 func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
-		Logger: log,
+		Logger:   log,
 	})
 	defer client.Gateway().StayConnectedUntilInterrupted()
 	client.Gateway().MessageCreate(msgHandler)

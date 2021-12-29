@@ -3,8 +3,8 @@ module logging
 go 1.16
 
 require (
-	github.com/andersfylling/disgord v0.27.0
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	github.com/andersfylling/disgord v0.30.1
+	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
 )
 
 replace github.com/andersfylling/disgord => ../../
