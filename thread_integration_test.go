@@ -31,7 +31,7 @@ func TestThreadEndpoints(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		thread, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(msg.ID, &CreateThread{
+		thread, err := c.Channel(guildAdmin.TextChannelGeneral).Message(msg.ID).WithContext(deadline).CreateThread(&CreateThread{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 		})
@@ -50,7 +50,7 @@ func TestThreadEndpoints(t *testing.T) {
 	t.Run("create-thread-no-message", func(t *testing.T) {
 		threadName := "Some Thread"
 		var err error
-		thread, err = c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
+		thread, err = c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(&CreateThreadWithoutMessage{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 			Type:                ChannelTypeGuildPublicThread,
@@ -90,8 +90,8 @@ func TestThreadEndpoints(t *testing.T) {
 		member, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMember(andersfylling)
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
-		} else if member.ID != andersfylling {
-			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", member.ID, andersfylling))
+		} else if member.UserID != andersfylling {
+			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", member.UserID, andersfylling))
 		}
 	})
 	t.Run("get-members", func(t *testing.T) {
@@ -100,8 +100,8 @@ func TestThreadEndpoints(t *testing.T) {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
 		} else if len(members) != 1 {
 			t.Error(fmt.Errorf("did not get correct number of thread members. Got %d, wants %d", len(members), 1))
-		} else if members[0].ID != andersfylling {
-			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", members[0].ID, andersfylling))
+		} else if members[0].UserID != andersfylling {
+			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", members[0].UserID, andersfylling))
 		}
 	})
 
