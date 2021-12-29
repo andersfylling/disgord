@@ -462,6 +462,54 @@ func (g *gatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *GuildRoleUpdate, _ 
 	return
 }
 
+func (g *gatewayQueryBuilderNop) GuildScheduledEventCreate(_ func(Session, *GuildScheduledEventCreate), _ ...func(Session, *GuildScheduledEventCreate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventCreateChan(_ chan *GuildScheduledEventCreate, _ ...chan *GuildScheduledEventCreate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventDelete(_ func(Session, *GuildScheduledEventDelete), _ ...func(Session, *GuildScheduledEventDelete)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventDeleteChan(_ chan *GuildScheduledEventDelete, _ ...chan *GuildScheduledEventDelete) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUpdate(_ func(Session, *GuildScheduledEventUpdate), _ ...func(Session, *GuildScheduledEventUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUpdateChan(_ chan *GuildScheduledEventUpdate, _ ...chan *GuildScheduledEventUpdate) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUserAdd(_ func(Session, *GuildScheduledEventUserAdd), _ ...func(Session, *GuildScheduledEventUserAdd)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUserAddChan(_ chan *GuildScheduledEventUserAdd, _ ...chan *GuildScheduledEventUserAdd) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUserRemove(_ func(Session, *GuildScheduledEventUserRemove), _ ...func(Session, *GuildScheduledEventUserRemove)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildScheduledEventUserRemoveChan(_ chan *GuildScheduledEventUserRemove, _ ...chan *GuildScheduledEventUserRemove) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildStickersUpdate(_ func(Session, *GuildStickersUpdate), _ ...func(Session, *GuildStickersUpdate)) {
+	return
+}
+
+func (g *gatewayQueryBuilderNop) GuildStickersUpdateChan(_ chan *GuildStickersUpdate, _ ...chan *GuildStickersUpdate) {
+	return
+}
+
 func (g *gatewayQueryBuilderNop) GuildUpdate(_ func(Session, *GuildUpdate), _ ...func(Session, *GuildUpdate)) {
 	return
 }

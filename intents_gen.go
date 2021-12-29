@@ -14,7 +14,7 @@ const (
 	IntentDirectMessageTyping    = gateway.IntentDirectMessageTyping
 	IntentDirectMessages         = gateway.IntentDirectMessages
 	IntentGuildBans              = gateway.IntentGuildBans
-	IntentGuildEmojis            = gateway.IntentGuildEmojis
+	IntentGuildEmojisAndStickers = gateway.IntentGuildEmojisAndStickers
 	IntentGuildIntegrations      = gateway.IntentGuildIntegrations
 	IntentGuildInvites           = gateway.IntentGuildInvites
 	IntentGuildMembers           = gateway.IntentGuildMembers
@@ -22,6 +22,7 @@ const (
 	IntentGuildMessageTyping     = gateway.IntentGuildMessageTyping
 	IntentGuildMessages          = gateway.IntentGuildMessages
 	IntentGuildPresences         = gateway.IntentGuildPresences
+	IntentGuildScheduledEvents   = gateway.IntentGuildScheduledEvents
 	IntentGuildVoiceStates       = gateway.IntentGuildVoiceStates
 	IntentGuildWebhooks          = gateway.IntentGuildWebhooks
 	IntentGuilds                 = gateway.IntentGuilds
@@ -37,7 +38,7 @@ func AllIntentsExcept(exceptions ...Intent) Intent {
 		IntentDirectMessageTyping:    0,
 		IntentDirectMessages:         0,
 		IntentGuildBans:              0,
-		IntentGuildEmojis:            0,
+		IntentGuildEmojisAndStickers: 0,
 		IntentGuildIntegrations:      0,
 		IntentGuildInvites:           0,
 		IntentGuildMembers:           0,
@@ -45,6 +46,7 @@ func AllIntentsExcept(exceptions ...Intent) Intent {
 		IntentGuildMessageTyping:     0,
 		IntentGuildMessages:          0,
 		IntentGuildPresences:         0,
+		IntentGuildScheduledEvents:   0,
 		IntentGuildVoiceStates:       0,
 		IntentGuildWebhooks:          0,
 		IntentGuilds:                 0,

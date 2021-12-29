@@ -471,6 +471,54 @@ func (g *GatewayQueryBuilderNop) GuildRoleUpdateChan(_ chan *disgord.GuildRoleUp
 	return
 }
 
+func (g *GatewayQueryBuilderNop) GuildScheduledEventCreate(_ func(disgord.Session, *disgord.GuildScheduledEventCreate), _ ...func(disgord.Session, *disgord.GuildScheduledEventCreate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventCreateChan(_ chan *disgord.GuildScheduledEventCreate, _ ...chan *disgord.GuildScheduledEventCreate) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventDelete(_ func(disgord.Session, *disgord.GuildScheduledEventDelete), _ ...func(disgord.Session, *disgord.GuildScheduledEventDelete)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventDeleteChan(_ chan *disgord.GuildScheduledEventDelete, _ ...chan *disgord.GuildScheduledEventDelete) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUpdate(_ func(disgord.Session, *disgord.GuildScheduledEventUpdate), _ ...func(disgord.Session, *disgord.GuildScheduledEventUpdate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUpdateChan(_ chan *disgord.GuildScheduledEventUpdate, _ ...chan *disgord.GuildScheduledEventUpdate) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUserAdd(_ func(disgord.Session, *disgord.GuildScheduledEventUserAdd), _ ...func(disgord.Session, *disgord.GuildScheduledEventUserAdd)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUserAddChan(_ chan *disgord.GuildScheduledEventUserAdd, _ ...chan *disgord.GuildScheduledEventUserAdd) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUserRemove(_ func(disgord.Session, *disgord.GuildScheduledEventUserRemove), _ ...func(disgord.Session, *disgord.GuildScheduledEventUserRemove)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildScheduledEventUserRemoveChan(_ chan *disgord.GuildScheduledEventUserRemove, _ ...chan *disgord.GuildScheduledEventUserRemove) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildStickersUpdate(_ func(disgord.Session, *disgord.GuildStickersUpdate), _ ...func(disgord.Session, *disgord.GuildStickersUpdate)) {
+	return
+}
+
+func (g *GatewayQueryBuilderNop) GuildStickersUpdateChan(_ chan *disgord.GuildStickersUpdate, _ ...chan *disgord.GuildStickersUpdate) {
+	return
+}
+
 func (g *GatewayQueryBuilderNop) GuildUpdate(_ func(disgord.Session, *disgord.GuildUpdate), _ ...func(disgord.Session, *disgord.GuildUpdate)) {
 	return
 }

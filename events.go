@@ -626,3 +626,42 @@ type InviteCreate struct {
 
 	ShardID uint `json:"-"`
 }
+
+type GuildStickersUpdate struct {
+	GuildID  Snowflake         `json:"guild_id"`
+	Stickers []*MessageSticker `json:"stickers"`
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventCreate struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+type GuildScheduledEventUpdate struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+type GuildScheduledEventDelete struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventUserAdd struct {
+	GuildScheduledEventID Snowflake `json:"guild_scheduled_event_id"`
+	UserID                Snowflake `json:"user_id"`
+	GuildID               Snowflake `json:"guild_id"`
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventUserRemove struct {
+	GuildScheduledEventID Snowflake `json:"guild_scheduled_event_id"`
+	UserID                Snowflake `json:"user_id"`
+	GuildID               Snowflake `json:"guild_id"`
+
+	ShardID uint `json:"-"`
+}
