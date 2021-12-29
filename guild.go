@@ -678,6 +678,9 @@ type GuildQueryBuilder interface {
 	Update(params *UpdateGuild) (*Guild, error)
 	Delete() error
 
+	// Leave leaves the given guild
+	Leave() error
+
 	// GetChannels
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
@@ -854,6 +857,18 @@ func (g guildQueryBuilder) Delete() error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint.Guild(g.gid),
+		Ctx:      g.ctx,
+	}, g.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// Leave https://discord.com/developers/docs/resources/user#leave-guild
+func (g guildQueryBuilder) Leave() error {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:   http.MethodDelete,
+		Endpoint: endpoint.UserMeGuild(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 

@@ -399,19 +399,24 @@ type CurrentUserQueryBuilder interface {
 	// Requires the Guilds OAuth2 scope.
 	GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error)
 
-	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
-	LeaveGuild(id Snowflake) (err error)
+	Update(params *UpdateUser) (*User, error)
 
 	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 	// endpoint will not be shown in the Discord Client
 	CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error)
 
-	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
-	GetUserConnections() (ret []*UserConnection, err error)
+	// GetConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
+	GetConnections() (ret []*UserConnection, err error)
 
 	// Deprecated: use Update instead
 	UpdateBuilder() UpdateCurrentUserBuilder
+
+	// Deprecated: use Client.Guild(..).Leave()
+	LeaveGuild(id Snowflake) (err error)
+
+	// Deprecated: use GetConnections
+	GetUserConnections() (ret []*UserConnection, err error)
 }
 
 // CurrentUser is used to create a guild query builder.
@@ -546,21 +551,8 @@ type CreateGroupDM struct {
 	Nicks map[Snowflake]string `json:"nicks"`
 }
 
-// LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /users/@me/guilds/{guild.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
-//  Reviewed                2019-02-18
-//  Comment                 -
 func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
-	r := c.client.newRESTRequest(&httd.Request{
-		Method:   http.MethodDelete,
-		Endpoint: endpoint.UserMeGuild(id),
-		Ctx:      c.ctx,
-	}, c.flags)
-
-	_, err = r.Execute()
-	return
+	return c.client.Guild(id).Leave()
 }
 
 // CreateGroupDM [REST] Create a new group DM channel with multiple Users. Returns a DM channel object.
@@ -587,13 +579,12 @@ func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDM) (ret *Chan
 	return getChannel(r.Execute)
 }
 
-// GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
-//  Method                  GET
-//  Endpoint                /users/@me/connections
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
-//  Reviewed                2019-02-19
-//  Comment                 -
 func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
+	return c.GetConnections()
+}
+
+// GetConnections https://discord.com/developers/docs/resources/user#get-user-connections
+func (c currentUserQueryBuilder) GetConnections() (connections []*UserConnection, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeConnections(),
 		Ctx:      c.ctx,
@@ -614,59 +605,6 @@ func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnec
 	return nil, errors.New("unable to cast guild slice")
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
 func userFactory() interface{} {
 	return &User{}
-}
-
-// getUserBuilder ...
-type getUserBuilder struct {
-	r RESTBuilder
-	c *Client
-}
-
-func (b *getUserBuilder) Execute() (user *User, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-
-	return v.(*User), nil
-}
-
-// TODO: params should be url-params. But it works since we're using GET.
-//generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
-//generate-rest-basic-execute: guilds:[]*Guild,
-type getCurrentUserGuildsBuilder struct {
-	r RESTBuilder
-}
-
-func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBuilder {
-	delete(b.r.urlParams, "limit")
-	return b
-}
-
-//generate-rest-basic-execute: cons:[]*UserConnection,
-type getUserConnectionsBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channel:*Channel,
-type createDMBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channels:[]*Channel,
-type getUserDMsBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channel:*Channel,
-type createGroupDMBuilder struct {
-	r RESTBuilder
 }

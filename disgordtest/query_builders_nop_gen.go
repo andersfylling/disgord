@@ -264,6 +264,10 @@ func (c *CurrentUserQueryBuilderNop) Get() (*disgord.User, error) {
 	return nil, nil
 }
 
+func (c *CurrentUserQueryBuilderNop) GetConnections() ([]*disgord.UserConnection, error) {
+	return nil, nil
+}
+
 func (c *CurrentUserQueryBuilderNop) GetGuilds(_ *disgord.GetCurrentUserGuilds) ([]*disgord.Guild, error) {
 	return nil, nil
 }
@@ -274,6 +278,10 @@ func (c *CurrentUserQueryBuilderNop) GetUserConnections() ([]*disgord.UserConnec
 
 func (c *CurrentUserQueryBuilderNop) LeaveGuild(_ disgord.Snowflake) error {
 	return nil
+}
+
+func (c *CurrentUserQueryBuilderNop) Update(_ *disgord.UpdateUser) (*disgord.User, error) {
+	return nil, nil
 }
 
 func (c *CurrentUserQueryBuilderNop) UpdateBuilder() disgord.UpdateCurrentUserBuilder {
@@ -896,6 +904,10 @@ func (g *GuildQueryBuilderNop) GetWidget() (*disgord.GuildWidget, error) {
 }
 
 func (g *GuildQueryBuilderNop) KickVoiceParticipant(_ disgord.Snowflake) error {
+	return nil
+}
+
+func (g *GuildQueryBuilderNop) Leave() error {
 	return nil
 }
 

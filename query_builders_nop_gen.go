@@ -255,6 +255,10 @@ func (c *currentUserQueryBuilderNop) Get() (*User, error) {
 	return nil, nil
 }
 
+func (c *currentUserQueryBuilderNop) GetConnections() ([]*UserConnection, error) {
+	return nil, nil
+}
+
 func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuilds) ([]*Guild, error) {
 	return nil, nil
 }
@@ -265,6 +269,10 @@ func (c *currentUserQueryBuilderNop) GetUserConnections() ([]*UserConnection, er
 
 func (c *currentUserQueryBuilderNop) LeaveGuild(_ Snowflake) error {
 	return nil
+}
+
+func (c *currentUserQueryBuilderNop) Update(_ *UpdateUser) (*User, error) {
+	return nil, nil
 }
 
 func (c *currentUserQueryBuilderNop) UpdateBuilder() UpdateCurrentUserBuilder {
@@ -887,6 +895,10 @@ func (g *guildQueryBuilderNop) GetWidget() (*GuildWidget, error) {
 }
 
 func (g *guildQueryBuilderNop) KickVoiceParticipant(_ Snowflake) error {
+	return nil
+}
+
+func (g *guildQueryBuilderNop) Leave() error {
 	return nil
 }
 
