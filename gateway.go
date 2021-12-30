@@ -69,7 +69,6 @@ func (g gatewayQueryBuilder) Connect() (err error) {
 		ShardConfig:  g.client.config.ShardConfig,
 		Logger:       g.client.config.Logger,
 		ShutdownChan: g.client.config.shutdownChan,
-		IgnoreEvents: nil,
 		Intents:      g.client.config.Intents,
 		EventChan:    g.client.eventChan,
 		DisgordInfo:  LibraryInfo(),
