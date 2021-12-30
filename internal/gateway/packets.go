@@ -106,7 +106,7 @@ type evtIdentity struct {
 	LargeThreshold uint            `json:"large_threshold"`
 	Shard          *[2]uint        `json:"shard,omitempty"`
 	Presence       json.RawMessage `json:"presence,omitempty"`
-	Intents        Intent          `json:"intents,omitempty"`
+	Intents        Intent          `json:"intents"`
 }
 
 type evtResume struct {
