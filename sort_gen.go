@@ -53,6 +53,8 @@ func Sort(v interface{}, fs ...Flag) {
 
 func derefSliceP(v interface{}) (s interface{}) {
 	switch t := v.(type) {
+	case *[]*Application:
+		s = *t
 	case *[]*ApplicationCommand:
 		s = *t
 	case *[]*ApplicationCommandDataOption:
@@ -399,6 +401,12 @@ func sortByID(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*Application:
+		if descending {
+			less = func(i, j int) bool { return s[i].ID > s[j].ID }
+		} else {
+			less = func(i, j int) bool { return s[i].ID < s[j].ID }
+		}
 	case []*ApplicationCommand:
 		if descending {
 			less = func(i, j int) bool { return s[i].ID > s[j].ID }
@@ -975,6 +983,12 @@ func sortByName(v interface{}, flags Flag) {
 
 	var less func(i, j int) bool
 	switch s := v.(type) {
+	case []*Application:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
 	case []*ApplicationCommand:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }

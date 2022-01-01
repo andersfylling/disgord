@@ -301,7 +301,8 @@ type Client struct {
 	mu sync.RWMutex
 
 	// current bot id
-	botID Snowflake
+	botID         Snowflake
+	applicationID Snowflake
 
 	clientQueryBuilder
 
@@ -432,6 +433,7 @@ func (c *Client) setupConnectEnv() {
 	if c.config.LoadMembersQuietly {
 		c.Gateway().Ready(c.handlers.loadMembers)
 	}
+	c.Gateway().Ready(c.handlers.saveApplicationID)
 	c.Gateway().GuildCreate(c.handlers.saveGuildID)
 	c.Gateway().GuildDelete(c.handlers.deleteGuildID)
 
@@ -504,6 +506,14 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 	_, _ = client.Gateway().Dispatch(RequestGuildMembers, &RequestGuildMembersPayload{
 		GuildIDs: guildIDs,
 	})
+}
+
+func (ih *internalHandlers) saveApplicationID(_ Session, evt *Ready) {
+	client := ih.c
+	client.connectedGuildsMutex.Lock()
+	defer client.connectedGuildsMutex.Unlock()
+
+	client.applicationID = evt.Application.ID
 }
 
 //////////////////////////////////////////////////////

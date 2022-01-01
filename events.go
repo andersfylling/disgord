@@ -32,6 +32,8 @@ type Ready struct {
 	User       *User               `json:"user"`
 	Guilds     []*GuildUnavailable `json:"guilds"`
 
+	Application Application `json:"application"`
+
 	// not really needed, as it is handled on the socket layer.
 	SessionID string `json:"session_id"`
 
