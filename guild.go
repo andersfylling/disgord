@@ -575,7 +575,7 @@ func (m *Member) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller) 
 	for _, roleInfo := range roles {
 		for _, roleId := range m.Roles {
 			if roleInfo.ID == roleId {
-				permissions |= (PermissionBit)(roleInfo.Permissions)
+				permissions |= roleInfo.Permissions
 				unprocessedRoles--
 				break
 			}
@@ -776,10 +776,10 @@ type guildQueryBuilder struct {
 
 func (g *guildQueryBuilder) validate() error {
 	if g.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if g.gid.IsZero() {
-		return MissingGuildIDErr
+		return ErrMissingGuildID
 	}
 	return nil
 }

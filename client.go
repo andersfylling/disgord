@@ -344,7 +344,7 @@ type Client struct {
 	pool *pools
 }
 
-var MissingClientInstanceErr = errors.New("client instance was not specified")
+var ErrMissingClientInstance = errors.New("client instance was not specified")
 
 //////////////////////////////////////////////////////
 //

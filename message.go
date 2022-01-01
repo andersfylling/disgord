@@ -229,13 +229,13 @@ func (m *Message) String() string {
 // Example: https://discord.com/channels/319567980491046913/644376487331495967/646925626523254795
 func (m *Message) DiscordURL() (string, error) {
 	if m.ID.IsZero() {
-		return "", MissingMessageIDErr
+		return "", ErrMissingMessageID
 	}
 	if m.GuildID.IsZero() {
-		return "", MissingGuildIDErr
+		return "", ErrMissingGuildID
 	}
 	if m.ChannelID.IsZero() {
-		return "", MissingChannelIDErr
+		return "", ErrMissingChannelID
 	}
 
 	return fmt.Sprintf(
@@ -308,9 +308,9 @@ func (m *Message) Reply(ctx context.Context, s Session, data ...interface{}) (*M
 
 func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	} else if m.ChannelID.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create()
@@ -318,9 +318,9 @@ func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error
 
 func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	} else if m.ChannelID.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn()
@@ -393,13 +393,13 @@ type messageQueryBuilder struct {
 
 func (m *messageQueryBuilder) validate() error {
 	if m.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if m.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 	return nil
 }
@@ -424,10 +424,10 @@ func (m messageQueryBuilder) WithFlags(flags ...Flag) MessageQueryBuilder {
 //  Comment                 -
 func (m messageQueryBuilder) Get() (*Message, error) {
 	if m.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return nil, MissingMessageIDErr
+		return nil, ErrMissingMessageID
 	}
 
 	if !ignoreCache(m.flags) {
@@ -457,7 +457,7 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 //  Comment                 All parameters to this endpoint are optional.
 func (m messageQueryBuilder) Update(params *UpdateMessage) (*Message, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := m.validate(); err != nil {
 		return nil, err
@@ -546,10 +546,10 @@ func (p *UpdateMessage) prepare() (postBody interface{}, contentType string, err
 //  Comment                 -
 func (m messageQueryBuilder) Delete() (err error) {
 	if m.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -589,10 +589,10 @@ func (m messageQueryBuilder) Pin() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) Unpin() (err error) {
 	if m.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -693,10 +693,10 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 //  Reviewed                2019-01-28
 func (m messageQueryBuilder) DeleteAllReactions() error {
 	if m.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{

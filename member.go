@@ -39,13 +39,13 @@ type guildMemberQueryBuilder struct {
 
 func (g *guildMemberQueryBuilder) validate() error {
 	if g.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if g.gid.IsZero() {
-		return MissingGuildIDErr
+		return ErrMissingGuildID
 	}
 	if g.uid.IsZero() {
-		return MissingUserIDErr
+		return ErrMissingUserID
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (g guildMemberQueryBuilder) Get() (*Member, error) {
 // Update update a guild member
 func (g guildMemberQueryBuilder) Update(params *UpdateMember) (*Member, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := g.validate(); err != nil {
 		return nil, err

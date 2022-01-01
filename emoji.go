@@ -94,13 +94,13 @@ type guildEmojiQueryBuilder struct {
 
 func (g *guildEmojiQueryBuilder) validate() error {
 	if g.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if g.gid.IsZero() {
-		return MissingGuildIDErr
+		return ErrMissingGuildID
 	}
 	if g.emojiID.IsZero() {
-		return MissingEmojiIDErr
+		return ErrMissingEmojiID
 	}
 	return nil
 }
@@ -138,7 +138,7 @@ func (g guildEmojiQueryBuilder) Get() (*Emoji, error) {
 // Returns the updated emoji object on success. Fires a Guild Emojis Update Gateway event.
 func (g guildEmojiQueryBuilder) Update(params *UpdateEmoji) (*Emoji, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := g.validate(); err != nil {
 		return nil, err

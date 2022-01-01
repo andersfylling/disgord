@@ -68,9 +68,9 @@ func ValidateUsername(name string) (err error) {
 
 	// Names must be between 2 and 32 characters long.
 	if length < 2 {
-		err = fmt.Errorf("name is too short: %w", IllegalValueErr)
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
 	} else if length > 32 {
-		err = fmt.Errorf("name is too long: %w", IllegalValueErr)
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
 	}
 	if err != nil {
 		return err
@@ -78,9 +78,9 @@ func ValidateUsername(name string) (err error) {
 
 	// Names are sanitized and trimmed of leading, trailing, and excessive internal whitespace.
 	if name[0] == ' ' {
-		err = fmt.Errorf("contains whitespace prefix: %w", IllegalValueErr)
+		err = fmt.Errorf("contains whitespace prefix: %w", ErrIllegalValue)
 	} else if name[length-1] == ' ' {
-		err = fmt.Errorf("contains whitespace suffix: %w", IllegalValueErr)
+		err = fmt.Errorf("contains whitespace suffix: %w", ErrIllegalValue)
 	} else {
 		last := name[1]
 		for i := 2; i < length-1; i++ {
@@ -112,7 +112,7 @@ func ValidateUsername(name string) (err error) {
 	}
 	for _, illegalName := range illegalNames {
 		if name == illegalName {
-			err = fmt.Errorf("the given username is illegal: %w", IllegalValueErr)
+			err = fmt.Errorf("the given username is illegal: %w", ErrIllegalValue)
 			return err
 		}
 	}
@@ -122,7 +122,7 @@ func ValidateUsername(name string) (err error) {
 
 func validateChannelName(name string) (err error) {
 	if name == "" {
-		return MissingChannelNameErr
+		return ErrMissingChannelName
 	}
 
 	// attributes
@@ -130,9 +130,9 @@ func validateChannelName(name string) (err error) {
 
 	// Names must be of length of minimum 2 and maximum 100 characters long.
 	if length < 2 {
-		err = fmt.Errorf("name is too short: %w", IllegalValueErr)
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
 	} else if length > 100 {
-		err = fmt.Errorf("name is too long: %w", IllegalValueErr)
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
 	}
 	if err != nil {
 		return err

@@ -1,6 +1,8 @@
 package disgord
 
 import (
+	"errors"
+	"fmt"
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
 	"net/http"
@@ -20,6 +22,57 @@ type CreateThreadNoMessage = CreateThreadWithoutMessage
 
 // Deprecated: use GuildWidget
 type GuildEmbed = GuildWidget
+
+// Deprecated: use ErrMissingRequiredField
+var MissingRequiredFieldErr = ErrMissingRequiredField
+
+// Deprecated: use ErrMissingGuildID
+var MissingGuildIDErr = fmt.Errorf("guild: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingID
+var MissingIDErr = fmt.Errorf("id: %w", MissingRequiredFieldErr)
+
+// Deprecated: use ErrMissingChannelID
+var MissingChannelIDErr = fmt.Errorf("channel: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingUserID
+var MissingUserIDErr = fmt.Errorf("user: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingMessageID
+var MissingMessageIDErr = fmt.Errorf("message: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingEmojiID
+var MissingEmojiIDErr = fmt.Errorf("emoji: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingRoleID
+var MissingRoleIDErr = fmt.Errorf("role: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingWebhookID
+var MissingWebhookIDErr = fmt.Errorf("webhook: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingPermissionOverwriteID
+var MissingPermissionOverwriteIDErr = fmt.Errorf("channel permission overwrite: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingName
+var MissingNameErr = fmt.Errorf("name: %w", MissingRequiredFieldErr)
+
+// Deprecated: use ErrMissingGuildName
+var MissingGuildNameErr = fmt.Errorf("guild: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingChannelName
+var MissingChannelNameErr = fmt.Errorf("channel: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingWebhookName
+var MissingWebhookNameErr = fmt.Errorf("webhook: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingThreadName
+var MissingThreadNameErr = fmt.Errorf("thread: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingWebhookToken
+var MissingWebhookTokenErr = errors.New("webhook token was not set")
+
+// Deprecated: use ErrIllegalValue
+var IllegalValueErr = errors.New("illegal value")
 
 func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
 	return g.DisconnectVoiceParticipant(userID)
@@ -273,9 +326,44 @@ func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, er
 	})
 }
 
-func (g guildQueryBuilder) GetEmbed() (*GuildEmbed, error) {
+func (g guildQueryBuilder) GetEmbed() (*GuildWidget, error) {
 	return g.GetWidget()
 }
+
+// Deprecated: use ErrCacheMiss
+var CacheMissErr = ErrCacheMiss
+
+// Deprecated: use ErrCacheEntryAlreadyExists
+var CacheEntryAlreadyExistsErr = ErrCacheEntryAlreadyExists
+
+// Deprecated: use ErrMissingClientInstance
+var MissingClientInstanceErr = ErrMissingClientInstance
+
+// Deprecated: use ErrMissingRESTParams
+var MissingRESTParamsErr = ErrMissingRESTParams
+
+const (
+	// Deprecated: ...
+	SUB_COMMAND = OptionTypeSubCommand
+	// Deprecated: ...
+	SUB_COMMAND_GROUP = OptionTypeSubCommandGroup
+	// Deprecated: ...
+	STRING = OptionTypeString
+	// Deprecated: ...
+	INTEGER = OptionTypeInteger
+	// Deprecated: ...
+	BOOLEAN = OptionTypeBoolean
+	// Deprecated: ...
+	USER = OptionTypeUser
+	// Deprecated: ...
+	CHANNEL = OptionTypeChannel
+	// Deprecated: ...
+	ROLE = OptionTypeRole
+	// Deprecated: ...
+	MENTIONABLE = OptionTypeMentionable
+	// Deprecated: ...
+	NUMBER = OptionTypeNumber
+)
 
 // updateMessageBuilder, params here
 //  https://discord.com/developers/docs/resources/channel#edit-message-json-params

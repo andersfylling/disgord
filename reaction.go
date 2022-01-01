@@ -103,10 +103,10 @@ func (r reactionQueryBuilder) WithFlags(flags ...Flag) ReactionQueryBuilder {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Create() error {
 	if r.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
@@ -136,10 +136,10 @@ func (r reactionQueryBuilder) Create() error {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteOwn() error {
 	if r.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
@@ -169,16 +169,16 @@ func (r reactionQueryBuilder) DeleteOwn() error {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteUser(userID Snowflake) error {
 	if r.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return MissingMessageIDErr
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
 	if userID.IsZero() {
-		return MissingUserIDErr
+		return ErrMissingUserID
 	}
 
 	emojiCode, err := emojiReference(r.emoji)
@@ -213,10 +213,10 @@ var _ URLQueryStringer = (*GetReactionURL)(nil)
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Get(params URLQueryStringer) (ret []*User, err error) {
 	if r.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return nil, MissingMessageIDErr
+		return nil, ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return nil, errors.New("emoji must be set in order to create a message reaction")

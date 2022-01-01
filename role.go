@@ -100,13 +100,13 @@ type guildRoleQueryBuilder struct {
 
 func (g *guildRoleQueryBuilder) validate() error {
 	if g.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if g.gid.IsZero() {
-		return MissingGuildIDErr
+		return ErrMissingGuildID
 	}
 	if g.roleID.IsZero() {
-		return MissingRoleIDErr
+		return ErrMissingRoleID
 	}
 	return nil
 }

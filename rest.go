@@ -317,7 +317,7 @@ type basicBuilder struct {
 	r RESTBuilder
 }
 
-var MissingRESTParamsErr = errors.New("this method requires REST parameters, but none were given")
+var ErrMissingRESTParams = errors.New("this method requires REST parameters, but none were given")
 
 type ClientQueryBuilderExecutables interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.

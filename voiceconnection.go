@@ -85,10 +85,10 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 
 func (r *voiceRepository) voiceConnectOptions(guildID, channelID Snowflake, selfDeaf, selfMute bool) (ret VoiceConnection, err error) {
 	if guildID.IsZero() {
-		return nil, MissingGuildIDErr
+		return nil, ErrMissingGuildID
 	}
 	if channelID.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 
 	// Set up some listeners for this connection attempt
@@ -333,7 +333,7 @@ func (v *voiceImpl) SendDCA(r io.Reader) error {
 
 func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	if channelID.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 
 	v.Lock()

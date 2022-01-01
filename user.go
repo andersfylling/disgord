@@ -433,7 +433,7 @@ type currentUserQueryBuilder struct {
 
 func (c *currentUserQueryBuilder) validate() error {
 	if c.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	return nil
 }

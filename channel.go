@@ -394,10 +394,10 @@ var _ ChannelQueryBuilder = (*channelQueryBuilder)(nil)
 
 func (c *channelQueryBuilder) validate() error {
 	if c.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	return nil
 }
@@ -420,7 +420,7 @@ func (c channelQueryBuilder) WithFlags(flags ...Flag) ChannelQueryBuilder {
 //  Comment                 -
 func (c channelQueryBuilder) Get() (*Channel, error) {
 	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 
 	if !ignoreCache(c.flags) {
@@ -449,7 +449,7 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 //  Reviewed                2021-08-08
 func (c channelQueryBuilder) Update(params *UpdateChannel) (*Channel, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := c.validate(); err != nil {
 		return nil, err
@@ -502,7 +502,7 @@ type UpdateChannel struct {
 //                          action by opening a private message with the recipient again.
 func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -554,10 +554,10 @@ type UpdateChannelPermissions struct {
 //  Comment                 -
 func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) (err error) {
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if overwriteID.IsZero() {
-		return MissingPermissionOverwriteIDErr
+		return ErrMissingPermissionOverwriteID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -639,10 +639,10 @@ type CreateInvite struct {
 //  Comment                 -
 func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if overwriteID.IsZero() {
-		return MissingPermissionOverwriteIDErr
+		return ErrMissingPermissionOverwriteID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -664,7 +664,7 @@ type GroupDMParticipant struct {
 
 func (g *GroupDMParticipant) FindErrors() error {
 	if g.UserID.IsZero() {
-		return MissingUserIDErr
+		return ErrMissingUserID
 	}
 	if g.AccessToken == "" {
 		return errors.New("missing access token")
@@ -685,7 +685,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Comment                 -
 func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) error {
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if participant == nil {
 		return errors.New("params can not be nil")
@@ -714,10 +714,10 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) e
 //  Comment                 -
 func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if userID.IsZero() {
-		return MissingUserIDErr
+		return ErrMissingUserID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -957,7 +957,7 @@ func (p *DeleteMessages) AddMessage(msg *Message) (err error) {
 //                          provided is older than that.
 func (c channelQueryBuilder) DeleteMessages(params *DeleteMessages) (err error) {
 	if c.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if err = params.Valid(); err != nil {
 		return err
@@ -1170,7 +1170,7 @@ type CreateWebhook struct {
 
 func (c *CreateWebhook) FindErrors() error {
 	if c.Name == "" {
-		return MissingWebhookNameErr
+		return ErrMissingWebhookName
 	}
 	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
 		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", IllegalValueErr)

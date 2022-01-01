@@ -79,7 +79,7 @@ func TestBasicCache_Channels(t *testing.T) {
 			if channel != nil {
 				t.Error("channel should be nil")
 			}
-			if !errors.Is(err, CacheMissErr) {
+			if !errors.Is(err, ErrCacheMiss) {
 				t.Error("expected error to be a cache miss err")
 			}
 		})
@@ -194,7 +194,7 @@ func TestBasicCache_Channels(t *testing.T) {
 		// if the channel does not exist, we should just create it
 		unknownID := id * 23
 		oldChannel, err := cache.GetChannel(unknownID)
-		if !errors.Is(err, CacheMissErr) {
+		if !errors.Is(err, ErrCacheMiss) {
 			t.Fatal("should have been a cache miss error")
 		}
 		if oldChannel != nil {
@@ -305,7 +305,7 @@ func TestBasicCache_Channels(t *testing.T) {
 		}
 
 		channel, err = cache.GetChannel(id)
-		if !errors.Is(err, CacheMissErr) {
+		if !errors.Is(err, ErrCacheMiss) {
 			t.Fatal("should have been a cache miss error")
 		}
 		if channel != nil {
@@ -428,7 +428,7 @@ func TestBasicCache_Message(t *testing.T) {
 		}
 
 		channel, err := cache.GetChannel(3)
-		if errors.Is(err, CacheMissErr) {
+		if errors.Is(err, ErrCacheMiss) {
 			t.Fatal("DM channel was not created for message")
 		}
 
@@ -488,7 +488,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 			if guild != nil {
 				t.Error("guild should be nil")
 			}
-			if !errors.Is(err, CacheMissErr) {
+			if !errors.Is(err, ErrCacheMiss) {
 				t.Error("expected error to be a cache miss err")
 			}
 		})

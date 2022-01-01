@@ -73,13 +73,13 @@ type webhookQueryBuilder struct {
 
 func (w *webhookQueryBuilder) validate() error {
 	if w.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if w.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if w.webhookID.IsZero() {
-		return MissingWebhookIDErr
+		return ErrMissingWebhookID
 	}
 	return nil
 }
@@ -121,7 +121,7 @@ func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 //  Comment                 All parameters to this endpoint.
 func (w webhookQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := w.validate(); err != nil {
 		return nil, err
@@ -233,16 +233,16 @@ type webhookWithTokenQueryBuilder struct {
 
 func (w *webhookWithTokenQueryBuilder) validate() error {
 	if w.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if w.cid.IsZero() {
-		return MissingChannelIDErr
+		return ErrMissingChannelID
 	}
 	if w.webhookID.IsZero() {
-		return MissingWebhookIDErr
+		return ErrMissingWebhookID
 	}
 	if w.token == "" {
-		return MissingWebhookTokenErr
+		return ErrMissingWebhookToken
 	}
 	return nil
 }
@@ -285,7 +285,7 @@ func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 //  Comment                 All parameters to this endpoint. are optional.
 func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := w.validate(); err != nil {
 		return nil, err

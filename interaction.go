@@ -13,16 +13,16 @@ type OptionType = int
 
 const (
 	_ OptionType = iota
-	SUB_COMMAND
-	SUB_COMMAND_GROUP
-	STRING
-	INTEGER
-	BOOLEAN
-	USER
-	CHANNEL
-	ROLE
-	MENTIONABLE
-	NUMBER
+	OptionTypeSubCommand
+	OptionTypeSubCommandGroup
+	OptionTypeString
+	OptionTypeInteger
+	OptionTypeBoolean
+	OptionTypeUser
+	OptionTypeChannel
+	OptionTypeRole
+	OptionTypeMentionable
+	OptionTypeNumber
 )
 
 type InteractionCallbackType = int
