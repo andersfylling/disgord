@@ -104,6 +104,17 @@ type applicationCommandFunctions struct {
 	ctx     context.Context
 }
 
+func (c *applicationCommandFunctions) applicationID() Snowflake {
+	appID := c.appID
+	if appID.IsZero() {
+		c.client.mu.Lock()
+		appID = c.client.applicationID
+		c.client.mu.Unlock()
+	}
+
+	return appID
+}
+
 func applicationCommandFactory() interface{} {
 	return &ApplicationCommand{}
 }
@@ -111,9 +122,9 @@ func applicationCommandFactory() interface{} {
 func (c *applicationCommandFunctions) Create(command *CreateApplicationCommand) error {
 	var endpoint string
 	if c.guildID == 0 {
-		endpoint = fmt.Sprintf("/applications/%d/commands", c.appID)
+		endpoint = fmt.Sprintf("/applications/%d/commands", c.applicationID())
 	} else {
-		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.appID, c.guildID)
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.applicationID(), c.guildID)
 	}
 	ctx := c.ctx
 	req := &httd.Request{
@@ -134,9 +145,9 @@ func (c *applicationCommandFunctions) Update(commandID Snowflake, command *Updat
 	ctx := c.ctx
 
 	if c.guildID == 0 {
-		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.appID, commandID)
+		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.applicationID(), commandID)
 	} else {
-		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.appID, c.guildID, commandID)
+		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
 	}
 	req := &httd.Request{
 		Endpoint:    endpoint,
@@ -156,9 +167,9 @@ func (c *applicationCommandFunctions) Delete(commandID Snowflake) error {
 	ctx := c.ctx
 
 	if c.guildID == 0 {
-		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.appID, commandID)
+		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.applicationID(), commandID)
 	} else {
-		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.appID, c.guildID, commandID)
+		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
 	}
 	req := &httd.Request{
 		Endpoint:    endpoint,
