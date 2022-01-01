@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/json"
@@ -484,8 +485,12 @@ func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit, scopes []
 		scopes = append(scopes, "bot")
 	}
 
-	format := "https://discord.com/oauth2/authorize?scope=%s&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, scopes, c.client.botID.String(), permissions)
+	scopesQueryParam := url.QueryEscape(strings.Join(scopes, " "))
+	botIDQueryParam := c.client.botID.String()
+	permissionsQueryParam := strconv.FormatUint(uint64(permissions), 10)
+
+	format := "https://discord.com/oauth2/authorize?scope=%s&client_id=%s&permissions=%s"
+	u := fmt.Sprintf(format, scopesQueryParam, botIDQueryParam, permissionsQueryParam)
 	return url.Parse(u)
 }
 

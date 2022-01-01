@@ -1022,7 +1022,7 @@ type CreateMessage struct {
 	Content    string              `json:"content"`
 	Nonce      string              `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 	Tts        bool                `json:"tts,omitempty"`
-	Embed      *Embed              `json:"embed,omitempty"` // embedded rich content
+	Embeds     []*Embed            `json:"embeds,omitempty"`
 	Components []*MessageComponent `json:"components"`
 	Files      []CreateMessageFile `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
@@ -1031,6 +1031,9 @@ type CreateMessage struct {
 
 	AllowedMentions  *AllowedMentions  `json:"allowed_mentions,omitempty"` // The allowed mentions object for the message.
 	MessageReference *MessageReference `json:"message_reference,omitempty"`
+
+	// Deprecated: use Embeds
+	Embed *Embed `json:"embed,omitempty"`
 }
 
 func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err error) {

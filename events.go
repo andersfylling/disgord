@@ -298,6 +298,15 @@ type InteractionCreate struct {
 	ShardID       uint                               `json:"-"`
 }
 
+var _ internalUpdater = (*InteractionCreate)(nil)
+
+func (obj *InteractionCreate) updateInternals() {
+	if obj.Member != nil {
+		obj.Member.GuildID = obj.GuildID
+		obj.Member.updateInternals()
+	}
+}
+
 // ---------------------------
 
 // MessageReactionRemove user removed a reaction from a message
