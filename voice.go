@@ -11,37 +11,20 @@ import (
 
 // VoiceState Voice State structure
 // https://discord.com/developers/docs/resources/voice#voice-state-object
-// reviewed 2018-09-29
 type VoiceState struct {
-	// GuildID the guild id this voice state is for
-	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
-
-	// ChannelID the channel id this user is connected to
-	ChannelID Snowflake `json:"channel_id"` // | ?
-
-	// UserID the user id this voice state is for
-	UserID Snowflake `json:"user_id"` // |
-
-	// the guild member this voice state is for
-	Member *Member `json:"member,omitempty"`
-
-	// SessionID the session id for this voice state
-	SessionID string `json:"session_id"` // |
-
-	// Deaf whether this user is deafened by the server
-	Deaf bool `json:"deaf"` // |
-
-	// Mute whether this user is muted by the server
-	Mute bool `json:"mute"` // |
-
-	// SelfDeaf whether this user is locally deafened
-	SelfDeaf bool `json:"self_deaf"` // |
-
-	// SelfMute whether this user is locally muted
-	SelfMute bool `json:"self_mute"` // |
-
-	// Suppress whether this user is muted by the current user
-	Suppress bool `json:"suppress"` // |
+	GuildID                 Snowflake `json:"guild_id,omitempty"`
+	ChannelID               Snowflake `json:"channel_id"`
+	UserID                  Snowflake `json:"user_id"`
+	Member                  *Member   `json:"member,omitempty"`
+	SessionID               string    `json:"session_id"`
+	Deaf                    bool      `json:"deaf"`
+	Mute                    bool      `json:"mute"`
+	SelfDeaf                bool      `json:"self_deaf"`
+	SelfMute                bool      `json:"self_mute"`
+	SelfStream              bool      `json:"self_stream"`
+	SelfVideo               bool      `json:"self_video"`
+	Suppress                bool      `json:"suppress"`
+	RequestToSpeakTimestamp Time      `json:"request_to_speak_timestamp"`
 }
 
 var _ Reseter = (*VoiceState)(nil)
