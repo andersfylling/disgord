@@ -136,6 +136,10 @@ const (
 		PermissionAdministrator
 )
 
+const (
+	PermissionUseSlashCommands PermissionBit = 2147483648
+)
+
 // GuildUnavailable is a partial Guild object.
 type GuildUnavailable struct {
 	ID          Snowflake `json:"id"`
