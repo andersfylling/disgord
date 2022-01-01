@@ -363,6 +363,21 @@ func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
 	return u
 }
 
+// Deprecated: specify permissions when using the Client.AuthorizeBotURL method
+func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
+	if permission < 0 {
+		permission = 0
+	}
+
+	c.permissions |= permission
+	return c.GetPermissions()
+}
+
+// Deprecated: ...
+func (c *Client) GetPermissions() (permissions PermissionBit) {
+	return c.permissions
+}
+
 func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
 	return c.GetConnections()
 }

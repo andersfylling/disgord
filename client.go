@@ -363,24 +363,6 @@ func (c *Client) Pool() *pools {
 	return c.pool
 }
 
-// AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
-// This is useful for creating the bot URL.
-//
-// At the moment, this holds no other effect than aesthetics.
-func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
-	if permission < 0 {
-		permission = 0
-	}
-
-	c.permissions |= permission
-	return c.GetPermissions()
-}
-
-// GetPermissions returns the minimum bot requirements.
-func (c *Client) GetPermissions() (permissions PermissionBit) {
-	return c.permissions
-}
-
 // AvgHeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
 // heartbeat packet was sent. Note that heartbeats are usually sent around once a minute and is not a accurate
 // way to measure delay between the Client and Discord server

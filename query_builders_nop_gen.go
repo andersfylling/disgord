@@ -187,7 +187,7 @@ func (c *clientQueryBuilderNop) ApplicationCommand(_ Snowflake) ApplicationComma
 	return nil
 }
 
-func (c *clientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
+func (c *clientQueryBuilderNop) BotAuthorizeURL(_ PermissionBit) (*url.URL, error) {
 	return nil, nil
 }
 

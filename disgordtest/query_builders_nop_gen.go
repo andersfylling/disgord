@@ -196,7 +196,7 @@ func (c *ClientQueryBuilderNop) ApplicationCommand(_ disgord.Snowflake) disgord.
 	return nil
 }
 
-func (c *ClientQueryBuilderNop) BotAuthorizeURL() (*url.URL, error) {
+func (c *ClientQueryBuilderNop) BotAuthorizeURL(_ disgord.PermissionBit) (*url.URL, error) {
 	return nil, nil
 }
 

@@ -324,7 +324,7 @@ type ClientQueryBuilderExecutables interface {
 	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
 	GetVoiceRegions() ([]*VoiceRegion, error)
 
-	BotAuthorizeURL() (*url.URL, error)
+	BotAuthorizeURL(permissions PermissionBit) (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 }
 
@@ -477,12 +477,10 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 // Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
 //
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
-func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
+// Use 0 if you do not want to specify any required permissions.
+func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit) (*url.URL, error) {
 	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.botID.String(), c.client.permissions)
+	u := fmt.Sprintf(format, c.client.botID.String(), permissions)
 	return url.Parse(u)
 }
 
