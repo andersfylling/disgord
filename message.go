@@ -118,11 +118,20 @@ type MessageComponent struct {
 	CustomID   string               `json:"custom_id"`
 	Url        string               `json:"url"`
 	Disabled   bool                 `json:"disabled"`
-	Components []*MessageComponent  `json:"components"`
+	Components []*MessageComponent  `json:"components,omitempty"`
+	Options    []*SelectMenuOption  `json:"options,omitempty"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
 var _ DeepCopier = (*MessageComponent)(nil)
+
+type SelectMenuOption struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description"`
+	Emoji       *Emoji `json:"emoji"`
+	Default     bool   `json:"default"`
+}
 
 // MessageApplication https://discord.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {

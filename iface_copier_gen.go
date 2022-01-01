@@ -628,6 +628,10 @@ func (m *MessageComponent) copyOverTo(other interface{}) error {
 	dest.Disabled = m.Disabled
 	dest.Emoji = m.Emoji
 	dest.Label = m.Label
+	dest.Options = make([]*SelectMenuOption, len(m.Options))
+	for i := 0; i < len(m.Options); i++ {
+		dest.Options[i] = DeepCopy(m.Options[i]).(*SelectMenuOption)
+	}
 	dest.Style = m.Style
 	dest.Type = m.Type
 	dest.Url = m.Url

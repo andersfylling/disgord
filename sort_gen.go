@@ -325,6 +325,8 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*MessageSticker:
 		s = *t
+	case *[]*SelectMenuOption:
+		s = *t
 	case *[]*StickerItem:
 		s = *t
 	case *[]*UpdateMessage:
