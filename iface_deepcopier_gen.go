@@ -212,6 +212,12 @@ func (r *Role) deepCopy() interface{} {
 	return cp
 }
 
+func (s *SelectMenuOption) deepCopy() interface{} {
+	cp := &SelectMenuOption{}
+	_ = DeepCopyOver(cp, s)
+	return cp
+}
+
 func (s *StickerItem) deepCopy() interface{} {
 	cp := &StickerItem{}
 	_ = DeepCopyOver(cp, s)

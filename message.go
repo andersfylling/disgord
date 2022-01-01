@@ -133,6 +133,9 @@ type SelectMenuOption struct {
 	Default     bool   `json:"default"`
 }
 
+var _ Copier = (*SelectMenuOption)(nil)
+var _ DeepCopier = (*SelectMenuOption)(nil)
+
 // MessageApplication https://discord.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {
 	ID          Snowflake `json:"id"`

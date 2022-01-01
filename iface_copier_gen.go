@@ -689,6 +689,21 @@ func (r *Role) copyOverTo(other interface{}) error {
 	return nil
 }
 
+func (s *SelectMenuOption) copyOverTo(other interface{}) error {
+	var dest *SelectMenuOption
+	var valid bool
+	if dest, valid = other.(*SelectMenuOption); !valid {
+		return newErrorUnsupportedType("argument given is not a *SelectMenuOption type")
+	}
+	dest.Default = s.Default
+	dest.Description = s.Description
+	dest.Emoji = s.Emoji
+	dest.Label = s.Label
+	dest.Value = s.Value
+
+	return nil
+}
+
 func (s *StickerItem) copyOverTo(other interface{}) error {
 	var dest *StickerItem
 	var valid bool
