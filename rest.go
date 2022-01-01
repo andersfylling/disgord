@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/internal/util/stringslice"
 	"net/http"
 	"net/url"
 	"os"
@@ -324,7 +325,7 @@ type ClientQueryBuilderExecutables interface {
 	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
 	GetVoiceRegions() ([]*VoiceRegion, error)
 
-	BotAuthorizeURL(permissions PermissionBit) (*url.URL, error)
+	BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 }
 
@@ -478,9 +479,13 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 // is the same as the Bot ID.
 //
 // Use 0 if you do not want to specify any required permissions.
-func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit) (*url.URL, error) {
-	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.botID.String(), permissions)
+func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error) {
+	if !stringslice.Contains(scopes, "bot") {
+		scopes = append(scopes, "bot")
+	}
+
+	format := "https://discord.com/oauth2/authorize?scope=%s&client_id=%s&permissions=%d"
+	u := fmt.Sprintf(format, scopes, c.client.botID.String(), permissions)
 	return url.Parse(u)
 }
 
