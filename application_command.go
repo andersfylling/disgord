@@ -69,6 +69,14 @@ type ApplicationCommand struct {
 	DefaultPermission bool                        `json:"default_permission,omitempty"`
 }
 
+type CreateApplicationCommand struct {
+	Name              string                      `json:"name"`
+	Description       string                      `json:"description"`
+	Type              ApplicationCommandType      `json:"type,omitempty"`
+	Options           []*ApplicationCommandOption `json:"options,omitempty"`
+	DefaultPermission bool                        `json:"default_permission,omitempty"`
+}
+
 type UpdateApplicationCommand struct {
 	Name              *string                      `json:"name,omitempty"`
 	DefaultPermission *bool                        `json:"default_permission,omitempty"`
@@ -84,7 +92,7 @@ type ApplicationCommandQueryBuilder interface {
 
 type ApplicationCommandFunctions interface {
 	Delete(commandId Snowflake) error
-	Create(command *ApplicationCommand) error
+	Create(command *CreateApplicationCommand) error
 	Update(commandId Snowflake, command *UpdateApplicationCommand) error
 }
 
@@ -100,7 +108,7 @@ func applicationCommandFactory() interface{} {
 	return &ApplicationCommand{}
 }
 
-func (c *applicationCommandFunctions) Create(command *ApplicationCommand) error {
+func (c *applicationCommandFunctions) Create(command *CreateApplicationCommand) error {
 	var endpoint string
 	if c.guildID == 0 {
 		endpoint = fmt.Sprintf("/applications/%d/commands", c.appID)
