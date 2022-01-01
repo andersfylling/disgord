@@ -52,7 +52,7 @@ func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   MyInjectableLogger(logConf),
-		Intents: disgord.IntentGuildMessages,
+		Intents:  disgord.IntentGuildMessages,
 	})
 	defer client.Gateway().StayConnectedUntilInterrupted()
 }

@@ -24,7 +24,7 @@ func main() {
 		BotToken: os.Getenv("DISGORD_TOKEN"),
 		Logger:   log, // optional logging
 		Cache:    &disgord.CacheNop{},
-		Intents: disgord.IntentGuildMessages,
+		Intents:  disgord.IntentGuildMessages,
 	})
 	run(client)
 }

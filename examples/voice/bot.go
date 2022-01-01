@@ -15,7 +15,7 @@ const (
 func main() {
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("DISCORD_TOKEN"),
-		Intents: disgord.IntentGuildMessages,
+		Intents:  disgord.IntentGuildMessages,
 	})
 	gateway := client.Gateway()
 	defer gateway.StayConnectedUntilInterrupted()
