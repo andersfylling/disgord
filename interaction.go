@@ -50,6 +50,7 @@ type ApplicationCommandInteractionData struct {
 	Options  []*ApplicationCommandDataOption              `json:"options"`
 	CustomID string                                       `json:"custom_id"`
 	Type     MessageComponentType                         `json:"component_type"`
+	Values   []*SelectMenuOption                          `json:"values"`
 }
 
 type MessageInteraction struct {
