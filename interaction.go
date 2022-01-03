@@ -38,9 +38,14 @@ const (
 	InteractionCallbackUpdateMessage
 )
 
-// ApplicationCommandInteractionDataResolved ..
-//TODO implement https://discord.com/developers/docs/interactions/slash-commands#interaction-applicationcommandinteractiondataresolved
+// ApplicationCommandInteractionDataResolved
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 type ApplicationCommandInteractionDataResolved struct {
+	Users    map[Snowflake]*User    `json:"users"`
+	Members  map[Snowflake]*Member  `json:"members"`
+	Roles    map[Snowflake]*Role    `json:"roles"`
+	Channels map[Snowflake]*Channel `json:"channels"`
+	Messages map[Snowflake]*Message `json:"messages"`
 }
 
 type ApplicationCommandInteractionData struct {
