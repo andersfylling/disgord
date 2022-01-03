@@ -111,15 +111,18 @@ const (
 )
 
 type MessageComponent struct {
-	Type       MessageComponentType `json:"type"`
-	Style      ButtonStyle          `json:"style"`
-	Label      string               `json:"label"`
-	Emoji      *Emoji               `json:"emoji"`
-	CustomID   string               `json:"custom_id"`
-	Url        string               `json:"url"`
-	Disabled   bool                 `json:"disabled"`
-	Components []*MessageComponent  `json:"components,omitempty"`
-	Options    []*SelectMenuOption  `json:"options,omitempty"`
+	Type        MessageComponentType `json:"type"`
+	Style       ButtonStyle          `json:"style"`
+	Label       string               `json:"label"`
+	Emoji       *Emoji               `json:"emoji"`
+	CustomID    string               `json:"custom_id"`
+	Url         string               `json:"url"`
+	Disabled    bool                 `json:"disabled"`
+	Components  []*MessageComponent  `json:"components,omitempty"`
+	Options     []*SelectMenuOption  `json:"options,omitempty"`
+	Placeholder string               `json:"placeholder"`
+	MinValues   int                  `json:"min_values"`
+	MaxValues   int                  `json:"max_values"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
