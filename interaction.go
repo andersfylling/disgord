@@ -49,13 +49,13 @@ type ApplicationCommandInteractionDataResolved struct {
 }
 
 type ApplicationCommandInteractionData struct {
-	ID       Snowflake                                    `json:"id"`
-	Name     string                                       `json:"name"`
-	Resolved []*ApplicationCommandInteractionDataResolved `json:"resolved"`
-	Options  []*ApplicationCommandDataOption              `json:"options"`
-	CustomID string                                       `json:"custom_id"`
-	Type     MessageComponentType                         `json:"component_type"`
-	Values   []*SelectMenuOption                          `json:"values"`
+	ID       Snowflake                                  `json:"id"`
+	Name     string                                     `json:"name"`
+	Resolved *ApplicationCommandInteractionDataResolved `json:"resolved"`
+	Options  []*ApplicationCommandDataOption            `json:"options"`
+	CustomID string                                     `json:"custom_id"`
+	Type     MessageComponentType                       `json:"component_type"`
+	Values   []*SelectMenuOption                        `json:"values"`
 }
 
 type MessageInteraction struct {
