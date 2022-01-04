@@ -17,7 +17,7 @@ var commands = []*disgord.CreateApplicationCommand{
 		Options: []*disgord.ApplicationCommandOption{
 			{
 				Name:        "test_option",
-				Type:        disgord.STRING,
+				Type:        disgord.OptionTypeString,
 				Description: "testing options",
 				Choices: []*disgord.ApplicationCommandOptionChoice{
 					{
@@ -62,10 +62,14 @@ func main() {
 
 	// Respond hello any related discord slash command
 	client.Gateway().InteractionCreate(func(s disgord.Session, h *disgord.InteractionCreate) {
+		fmt.Printf("%+v", *h)
 		err := s.SendInteractionResponse(context.Background(), h, &disgord.InteractionResponse{
 			Type: 4,
 			Data: &disgord.InteractionApplicationCommandCallbackData{
 				Content: "hello",
+				Components: []*disgord.MessageComponent{
+
+				},
 			},
 		})
 		if err != nil {

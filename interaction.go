@@ -55,7 +55,7 @@ type ApplicationCommandInteractionData struct {
 	Options       []*ApplicationCommandDataOption            `json:"options"`
 	CustomID      string                                     `json:"custom_id"`
 	Type          ApplicationCommandType                     `json:"type"`
-	Values        []*SelectMenuOption                        `json:"values"`
+	Values        []string                                   `json:"values"`
 	ComponentType MessageComponentType                       `json:"component_type"`
 	TargetID      Snowflake                                  `json:"target_id"`
 }
