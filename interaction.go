@@ -74,6 +74,7 @@ type InteractionApplicationCommandCallbackData struct {
 	Flags           int                 `json:"flags"`
 	AllowedMentions *AllowedMentions    `json:"allowed_mentions"`
 	Components      []*MessageComponent `json:"components"`
+	Attachments     []*Attachment       `json:"attachments"`
 }
 
 type InteractionResponse struct {
