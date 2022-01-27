@@ -23,12 +23,16 @@ type ApplicationCommandOptionChoice struct {
 }
 
 type ApplicationCommandOption struct {
-	Type        OptionType                        `json:"type"`
-	Name        string                            `json:"name"`
-	Description string                            `json:"description"`
-	Required    bool                              `json:"required"`
-	Choices     []*ApplicationCommandOptionChoice `json:"choices"`
-	Options     []*ApplicationCommandOption       `json:"options"`
+	Type         OptionType                        `json:"type"`
+	Name         string                            `json:"name"`
+	Description  string                            `json:"description"`
+	Required     bool                              `json:"required"`
+	Choices      []*ApplicationCommandOptionChoice `json:"choices"`
+	Options      []*ApplicationCommandOption       `json:"options"`
+	ChannelTypes []ChannelType                     `json:"channel_types"`
+	MinValue     float64                           `json:"min_value"`
+	MaxValue     float64                           `json:"max_value"`
+	Autocomplete bool                              `json:"autocomplete"`
 }
 
 type ApplicationCommandDataOption struct {
