@@ -295,6 +295,8 @@ type InteractionCreate struct {
 	Token         string                             `json:"token"`
 	Version       int                                `json:"version"`
 	Message       *Message                           `json:"message"`
+	Locale        string                             `json:"locale"`
+	GuildLocale   string                             `json:"guild_locale"`
 	ShardID       uint                               `json:"-"`
 }
 
