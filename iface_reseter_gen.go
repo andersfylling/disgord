@@ -216,8 +216,11 @@ func (v *VoiceState) reset() {
 		Reset(v.Member)
 	}
 	v.Mute = false
+	v.RequestToSpeakTimestamp = Time{}
 	v.SelfDeaf = false
 	v.SelfMute = false
+	v.SelfStream = false
+	v.SelfVideo = false
 	v.SessionID = ""
 	v.Suppress = false
 	v.UserID = 0

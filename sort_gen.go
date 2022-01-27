@@ -291,7 +291,21 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*UpdateGuildWidget:
 		s = *t
+	case *[]*CreateScheduledEvent:
+		s = *t
+	case *[]*GetScheduledEvent:
+		s = *t
+	case *[]*GetScheduledEventMembers:
+		s = *t
+	case *[]*GetScheduledEvents:
+		s = *t
 	case *[]*GuildScheduledEvent:
+		s = *t
+	case *[]*GuildScheduledEventUsers:
+		s = *t
+	case *[]*ScheduledEventEntityMetadata:
+		s = *t
+	case *[]*UpdateScheduledEvent:
 		s = *t
 	case *[]*ApplicationCommandInteractionData:
 		s = *t
@@ -939,6 +953,12 @@ func sortByChannelID(v interface{}, flags Flag) {
 		} else {
 			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
 		}
+	case []*CreateScheduledEvent:
+		if descending {
+			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
+		} else {
+			less = func(i, j int) bool { return s[i].ChannelID < s[j].ChannelID }
+		}
 	case []*GuildScheduledEvent:
 		if descending {
 			less = func(i, j int) bool { return s[i].ChannelID > s[j].ChannelID }
@@ -1106,6 +1126,12 @@ func sortByName(v interface{}, flags Flag) {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
 		}
 	case []*IntegrationAccount:
+		if descending {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
+		} else {
+			less = func(i, j int) bool { return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) }
+		}
+	case []*CreateScheduledEvent:
 		if descending {
 			less = func(i, j int) bool { return strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) }
 		} else {

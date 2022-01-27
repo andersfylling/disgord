@@ -1042,6 +1042,50 @@ func (g *guildRoleQueryBuilderNop) UpdateBuilder() UpdateGuildRoleBuilder {
 	return nil
 }
 
+type guildScheduledEventQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     Flag
+	ChannelID Snowflake
+	GuildID   Snowflake
+	UserID    Snowflake
+}
+
+var _ GuildScheduledEventQueryBuilder = &guildScheduledEventQueryBuilderNop{}
+
+func (g guildScheduledEventQueryBuilderNop) WithContext(ctx context.Context) GuildScheduledEventQueryBuilder {
+	g.Ctx = ctx
+	return &g
+}
+
+func (g guildScheduledEventQueryBuilderNop) WithFlags(flags ...Flag) GuildScheduledEventQueryBuilder {
+	g.Flags = mergeFlags(flags)
+	return &g
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Create(_ *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Delete(_ Snowflake) error {
+	return nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Get(_ Snowflake, _ *GetScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) GetMembers(_ Snowflake, _ *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Gets(_ *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Update(_ Snowflake, _ *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 type inviteQueryBuilderNop struct {
 	Ctx       context.Context
 	Flags     Flag

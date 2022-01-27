@@ -88,6 +88,26 @@ func (b *BanMember) URLQueryString() string {
 	return params.URLQueryString()
 }
 
+func (g *GetScheduledEvents) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.WithUserCount == false) {
+		params["with_user_count"] = g.WithUserCount
+	}
+
+	return params.URLQueryString()
+}
+
+func (g *GetScheduledEvent) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.WithUserCount == false) {
+		params["with_user_count"] = g.WithUserCount
+	}
+
+	return params.URLQueryString()
+}
+
 func (g *getInviteQuery) URLQueryString() string {
 	params := make(urlQuery)
 

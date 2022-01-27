@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/andersfylling/snowflake/v5 v5.0.1
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/stretchr/testify v1.4.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/mod v0.5.1 // indirect
