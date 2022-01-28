@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	evt "github.com/andersfylling/disgord/internal/event"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	evt "github.com/andersfylling/disgord/internal/event"
 
 	"golang.org/x/net/proxy"
 
@@ -536,16 +537,31 @@ func (c *Client) EditInteractionResponse(ctx context.Context, interaction *Inter
 	return err
 }
 
-func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *InteractionResponse) error {
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data interface{}) error {
+	var (
+		postBody    interface{}
+		contentType string
+		err         error
+	)
+	res, ok := data.(*CreateInteractionResponse)
+	if ok {
+		if postBody, contentType, err = res.prepare(); err != nil {
+			return err
+		}
+	} else {
+		postBody = data
+		contentType = httd.ContentTypeJSON
+	}
 	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
+
 	req := &httd.Request{
 		Endpoint:    endpoint,
-		Method:      "POST",
-		Body:        data,
+		Method:      http.MethodPost,
+		Body:        postBody,
 		Ctx:         ctx,
-		ContentType: httd.ContentTypeJSON,
+		ContentType: contentType,
 	}
-	_, _, err := c.req.Do(ctx, req)
+	_, _, err = c.req.Do(ctx, req)
 	return err
 }
 
