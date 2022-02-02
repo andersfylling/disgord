@@ -119,6 +119,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Config:
 		s = *t
+	case *[]*InteractionApplicationCommandCallbackData:
+		s = *t
+	case *[]*InteractionResponse:
+		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
 	case *[]*ErrorMissingSnowflake:
