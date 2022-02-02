@@ -537,21 +537,16 @@ func (c *Client) EditInteractionResponse(ctx context.Context, interaction *Inter
 	return err
 }
 
-func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data interface{}) error {
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *CreateInteractionResponse) error {
 	var (
 		postBody    interface{}
 		contentType string
 		err         error
 	)
-	res, ok := data.(*CreateInteractionResponse)
-	if ok {
-		if postBody, contentType, err = res.prepare(); err != nil {
-			return err
-		}
-	} else {
-		postBody = data
-		contentType = httd.ContentTypeJSON
+	if postBody, contentType, err = data.prepare(); err != nil {
+		return err
 	}
+
 	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
 
 	req := &httd.Request{
