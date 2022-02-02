@@ -301,10 +301,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*CreateInteractionResponseData:
 		s = *t
-	case *[]*InteractionApplicationCommandCallbackData:
-		s = *t
-	case *[]*InteractionResponse:
-		s = *t
 	case *[]*MessageInteraction:
 		s = *t
 	case *[]*Invite:
