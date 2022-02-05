@@ -838,3 +838,18 @@ func getScheduledEvent(f func() (interface{}, error)) (scheduledEvents *GuildSch
 
 	return v.(*GuildScheduledEvent), err
 }
+
+func getScheduledEventUsers(f func() (interface{}, error)) (scheduledEventUsers []*GuildScheduledEventUsers, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	if list, ok := v.(*[]*GuildScheduledEventUsers); ok {
+		return *list, nil
+	} else if list, ok := v.([]*GuildScheduledEventUsers); ok {
+		return list, nil
+	}
+
+	return nil, err
+}

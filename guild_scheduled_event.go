@@ -92,7 +92,7 @@ func (gse *GetScheduledEvents) FindErrors() error {
 	return nil
 }
 
-func (gse *guildScheduledEventQueryBuilder) Get(eventID Snowflake, params *GetScheduledEvent) (*GuildScheduledEvent, error) {
+func (gse guildScheduledEventQueryBuilder) Get(eventID Snowflake, params *GetScheduledEvent) (*GuildScheduledEvent, error) {
 	// TODO: add cache implementation
 	if params == nil {
 		params = &GetScheduledEvent{
@@ -122,7 +122,7 @@ func (gse *GetScheduledEvent) FindErrors() error {
 	return nil
 }
 
-func (gse *guildScheduledEventQueryBuilder) Delete(eventID Snowflake) error {
+func (gse guildScheduledEventQueryBuilder) Delete(eventID Snowflake) error {
 	r := gse.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint.ScheduledEvent(gse.gid, eventID),
@@ -187,7 +187,7 @@ func (cse *CreateScheduledEvent) validate() error {
 	return nil
 }
 
-func (gse *guildScheduledEventQueryBuilder) Create(params *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+func (gse guildScheduledEventQueryBuilder) Create(params *CreateScheduledEvent) (*GuildScheduledEvent, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
 	}
@@ -213,20 +213,20 @@ func (gse *guildScheduledEventQueryBuilder) Create(params *CreateScheduledEvent)
 
 type UpdateScheduledEvent struct {
 	ChannelID          *Snowflake                       `json:"channel_id"` // optional if EntityType is EXTERNAL
-	EntityMetadata     *ScheduledEventEntityMetadata    `json:"entity_metadata"`
+	EntityMetadata     *ScheduledEventEntityMetadata    `json:"entity_metadata,omitempty"`
 	Name               *string                          `json:"name,omitempty"`
-	PrivacyLevel       *GuildScheduledEventPrivacyLevel `json:"privacy_level"`
+	PrivacyLevel       *GuildScheduledEventPrivacyLevel `json:"privacy_level,omitempty"`
 	ScheduledStartTime *Time                            `json:"scheduled_start_time,omitempty"`
 	ScheduledEndTime   *Time                            `json:"scheduled_end_time,omitempty"`
 	Description        *string                          `json:"description,omitempty"`
-	EntityType         *GuildScheduledEventEntityTypes  `json:"entity_type"`
-	Status             *GuildScheduledEventStatus       `json:"status"`
+	EntityType         *GuildScheduledEventEntityTypes  `json:"entity_type,omitempty"`
+	Status             *GuildScheduledEventStatus       `json:"status,omitempty"`
 
 	AuditLogReason string `json:"-"`
 }
 
-func (cse *UpdateScheduledEvent) validate() error {
-	if *cse.EntityType == GuildScheduledEventEntityTypesExternal {
+func (cse UpdateScheduledEvent) validate() error {
+	if cse.EntityType != nil && *cse.EntityType == GuildScheduledEventEntityTypesExternal {
 		if cse.EntityMetadata != nil && cse.EntityMetadata.Location == "" {
 			return ErrMissingScheduledEventLocation
 		}
@@ -238,18 +238,20 @@ func (cse *UpdateScheduledEvent) validate() error {
 		cse.ChannelID = nil
 	}
 
-	if l := len(*cse.Name); !(2 <= l && l <= 100) {
-		return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+	if cse.Name != nil {
+		if l := len(*cse.Name); !(2 <= l && l <= 100) {
+			return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		}
 	}
 
-	if *cse.PrivacyLevel != GuildScheduledEventPrivacyLevelGuildOnly {
+	if cse.PrivacyLevel != nil && *cse.PrivacyLevel != GuildScheduledEventPrivacyLevelGuildOnly {
 		return ErrIllegalScheduledEventPrivacyLevelValue
 	}
 
 	return nil
 }
 
-func (gse *guildScheduledEventQueryBuilder) Update(ID Snowflake, params *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
+func (gse guildScheduledEventQueryBuilder) Update(ID Snowflake, params *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
 	}
@@ -280,14 +282,19 @@ type GetScheduledEventMembers struct {
 	After      Snowflake `urlparam:"after,omitempty"`
 }
 
+var _ URLQueryStringer = (*GetScheduledEventMembers)(nil)
+
+func (gse *GetScheduledEventMembers) FindErrors() error {
+	return nil
+}
+
 type GuildScheduledEventUsers struct {
 	GuildScheduledEventID Snowflake `json:"guild_scheduled_event_id"`
 	User                  `json:"user"`
 	Member                `json:"member"`
 }
 
-// Deprecated: use GetScheduledEventMembers instead
-func (gse *guildScheduledEventQueryBuilder) GetMembers(eventID Snowflake, params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
+func (gse guildScheduledEventQueryBuilder) GetMembers(eventID Snowflake, params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
 	const QueryLimit uint32 = 100
 
 	if params == nil {
@@ -298,9 +305,21 @@ func (gse *guildScheduledEventQueryBuilder) GetMembers(eventID Snowflake, params
 
 	if params.Limit == 0 || params.Limit > QueryLimit {
 		params.Limit = QueryLimit
-	} else {
-		params.Limit = params.Limit
 	}
 
-	panic("TODO: implement this")
+	if params.Before != 0 && params.After != 0 {
+		params.After = 0
+	}
+
+	r := gse.client.newRESTRequest(&httd.Request{
+		Endpoint:    endpoint.ScheduledEventUsers(gse.gid, eventID) + params.URLQueryString(),
+		Ctx:         gse.ctx,
+		ContentType: httd.ContentType,
+	}, gse.flags)
+	r.factory = func() interface{} {
+		gseusr := make([]*GuildScheduledEventUsers, 0)
+		return &gseusr
+	}
+
+	return getScheduledEventUsers(r.Execute)
 }

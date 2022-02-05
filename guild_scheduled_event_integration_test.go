@@ -2,7 +2,7 @@ package disgord
 
 import (
 	"os"
-	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,28 +11,15 @@ import (
 
 var token string
 var guildID Snowflake
-
-var maxName = `Light it creeping a herb evening seas you're stars. 
-	Lights let dry land let female is blessed also blessed
-	they're life were rule that subdue, third may. Greater without, 
-	given can't And bring she'd created fruitful third sea. 
-	Good, dominion whose i blessed and second a appear replenish shall great, 
-	void two sea which god. A place female abundantly, 
-	seas fruitful moveth us heaven. Forth beginning to and image own seasons land had dry. 
-	Given that they're the face without. Wherein he first also. 
-	Fill hath. Sea. Have waters. Deep over earth grass fill had was it the a of.`
+var client *Client
 
 func init() {
 	token = os.Getenv("DISCORD_BOT_TOKEN")
-	gID, _ := strconv.Atoi(os.Getenv("DISCORD_GUILD_ID"))
-	guildID = Snowflake(gID)
+	guildID = ParseSnowflakeString(os.Getenv("DISCORD_GUILD_ID"))
+	client = New(Config{BotToken: token})
 }
 
 func TestGetScheduledEvents(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
-
 	evts, err := client.GuildScheduledEvent(guildID).Gets(&GetScheduledEvents{
 		WithUserCount: true,
 	})
@@ -42,10 +29,6 @@ func TestGetScheduledEvents(t *testing.T) {
 }
 
 func TestGetScheduledEvent(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
-
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -74,11 +57,18 @@ func TestGetScheduledEvent(t *testing.T) {
 	assert.Equal(t, GuildScheduledEventPrivacyLevel(gEvt.PrivacyLevel), cEvt.PrivacyLevel)
 }
 
-func TestDeleteScheduledEvent(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
+func TestGetScheduledEventUsers(t *testing.T) {
+	params := &GetScheduledEventMembers{
+		Limit:      2,
+		WithMember: false,
+	}
 
+	gEvtUsr, err := client.GuildScheduledEvent(guildID).GetMembers(935710181805936730, params)
+	assert.Nil(t, err)
+	assert.GreaterOrEqual(t, len(gEvtUsr), 0)
+}
+
+func TestDeleteScheduledEvent(t *testing.T) {
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -108,130 +98,113 @@ func TestDeleteScheduledEvent(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
 
-	t.Run("Create event with empty entity type", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name: "Test event",
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingScheduledEventEntityType, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with empty channel ID and entity type is stage instance", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "Test event",
-			EntityType: GuildScheduledEventEntityTypesStageInstance,
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingChannelID, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with empty channel ID and entity type is voice", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "Test event",
-			EntityType: GuildScheduledEventEntityTypesVoice,
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingChannelID, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with empty location and entity type is external", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "Test event",
-			EntityType: GuildScheduledEventEntityTypesExternal,
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingScheduledEventLocation, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with empty event name", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			EntityType: GuildScheduledEventEntityTypesExternal,
-			EntityMetadata: ScheduledEventEntityMetadata{
-				Location: "Malang, Indonesia",
+	cTableTest := []struct {
+		name    string
+		evt     *CreateScheduledEvent
+		wantErr error
+	}{
+		{
+			name: "Create event with empty entity type",
+			evt: &CreateScheduledEvent{
+				Name: "Test event",
 			},
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingScheduledEventName, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with less than minimum length of name", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "M",
-			EntityType: GuildScheduledEventEntityTypesExternal,
-			EntityMetadata: ScheduledEventEntityMetadata{
-				Location: "Malang, Indonesia",
+			wantErr: ErrMissingScheduledEventEntityType,
+		},
+		{
+			name: "Create event with empty channel ID and entity type is stage instance",
+			evt: &CreateScheduledEvent{
+				Name:       "Test event",
+				EntityType: GuildScheduledEventEntityTypesStageInstance,
 			},
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with greater than max length of name", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       maxName,
-			EntityType: GuildScheduledEventEntityTypesExternal,
-			EntityMetadata: ScheduledEventEntityMetadata{
-				Location: "Malang, Indonesia",
+			wantErr: ErrMissingChannelID,
+		},
+		{
+			name: "Create event with empty channel ID and entity type is voice",
+			evt: &CreateScheduledEvent{
+				Name:       "Test event",
+				EntityType: GuildScheduledEventEntityTypesVoice,
 			},
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with privacy level is not guild", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "Name",
-			EntityType: GuildScheduledEventEntityTypesExternal,
-			EntityMetadata: ScheduledEventEntityMetadata{
-				Location: "Malang, Indonesia",
+			wantErr: ErrMissingChannelID,
+		},
+		{
+			name: "Create event with empty location and entity type is external",
+			evt: &CreateScheduledEvent{
+				Name:       "Test event",
+				EntityType: GuildScheduledEventEntityTypesExternal,
 			},
-			PrivacyLevel: 0,
-		}
-
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrIllegalScheduledEventPrivacyLevelValue, err)
-		assert.Nil(t, evt)
-	})
-
-	t.Run("Create event with empty start time", func(t *testing.T) {
-		cEvt := &CreateScheduledEvent{
-			Name:       "Name",
-			EntityType: GuildScheduledEventEntityTypesExternal,
-			EntityMetadata: ScheduledEventEntityMetadata{
-				Location: "Malang, Indonesia",
+			wantErr: ErrMissingScheduledEventLocation,
+		},
+		{
+			name: "Create event with empty event name",
+			evt: &CreateScheduledEvent{
+				EntityType: GuildScheduledEventEntityTypesExternal,
+				EntityMetadata: ScheduledEventEntityMetadata{
+					Location: "Malang, Indonesia",
+				},
 			},
-			PrivacyLevel: GuildScheduledEventPrivacyLevelGuildOnly,
-		}
+			wantErr: ErrMissingScheduledEventName,
+		},
+		{
+			name: "Create event with less than minimum length of name",
+			evt: &CreateScheduledEvent{
+				Name:       "M",
+				EntityType: GuildScheduledEventEntityTypesExternal,
+				EntityMetadata: ScheduledEventEntityMetadata{
+					Location: "Malang, Indonesia",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Create event with greater than max length of name",
+			evt: &CreateScheduledEvent{
+				Name:       strings.Repeat("AAA", 1000),
+				EntityType: GuildScheduledEventEntityTypesExternal,
+				EntityMetadata: ScheduledEventEntityMetadata{
+					Location: "Malang, Indonesia",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Create event with privacy level is not guild",
+			evt: &CreateScheduledEvent{
+				Name:       "Name",
+				EntityType: GuildScheduledEventEntityTypesExternal,
+				EntityMetadata: ScheduledEventEntityMetadata{
+					Location: "Malang, Indonesia",
+				},
+				PrivacyLevel: 0,
+			},
+			wantErr: ErrIllegalScheduledEventPrivacyLevelValue,
+		},
+		{
+			name: "Create event with empty start time",
+			evt: &CreateScheduledEvent{
+				Name:       "Name",
+				EntityType: GuildScheduledEventEntityTypesExternal,
+				EntityMetadata: ScheduledEventEntityMetadata{
+					Location: "Malang, Indonesia",
+				},
+				PrivacyLevel: GuildScheduledEventPrivacyLevelGuildOnly,
+			},
+			wantErr: ErrMissingScheduledEventStartTime,
+		},
+	}
 
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.NotNil(t, err)
-		assert.Equal(t, ErrMissingScheduledEventStartTime, err)
-		assert.Nil(t, evt)
-	})
+	for _, v := range cTableTest {
+		t.Run(v.name, func(t *testing.T) {
+			evt, err := client.GuildScheduledEvent(guildID).Create(v.evt)
+
+			if v.wantErr != nil {
+				assert.Equal(t, v.wantErr, err)
+			}
+
+			assert.NotNil(t, err)
+			assert.Nil(t, evt)
+		})
+	}
 
 	t.Run("Create event with valid value", func(t *testing.T) {
 		cEvt := &CreateScheduledEvent{
@@ -263,10 +236,6 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdateScheduledEvent(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
-
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Update Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -284,64 +253,56 @@ func TestUpdateScheduledEvent(t *testing.T) {
 		AuditLogReason: "integration test",
 	}
 
-	t.Run("Update event with empty struct", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.Nil(t, err)
+	etVoice := GuildScheduledEventEntityTypesVoice
+	etExt := GuildScheduledEventEntityTypesExternal
 
-		gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, nil)
-		assert.NotNil(t, err)
-		assert.Nil(t, gEvt)
-	})
+	plZero := GuildScheduledEventPrivacyLevel(0)
 
-	t.Run("Update event with minimum length of event name", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.Nil(t, err)
+	minName := "M"
+	maxName := strings.Repeat("AAA", 1000)
 
-		et := GuildScheduledEventEntityTypesVoice
-		name := "M"
-		uEvt := &UpdateScheduledEvent{
-			EntityType: &et,
-			Name:       &name,
-		}
+	uTableTest := []struct {
+		name string
+		evt  *UpdateScheduledEvent
+	}{
+		{
+			name: "Update event with empty struct",
+			evt:  nil,
+		},
+		{
+			name: "Update event with minimum length of event name",
+			evt: &UpdateScheduledEvent{
+				EntityType: &etVoice,
+				Name:       &minName,
+			},
+		},
+		{
+			name: "Update event with maximum length of event name",
+			evt: &UpdateScheduledEvent{
+				EntityType: &etVoice,
+				Name:       &maxName,
+			},
+		},
+		{
+			name: "Update event with non allowed permission guild",
+			evt: &UpdateScheduledEvent{
+				EntityType:   &etExt,
+				Name:         &maxName,
+				PrivacyLevel: &plZero,
+			},
+		},
+	}
 
-		gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, uEvt)
-		assert.NotNil(t, err)
-		assert.Nil(t, gEvt)
-	})
+	for _, v := range uTableTest {
+		t.Run(v.name, func(t *testing.T) {
+			evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+			assert.Nil(t, err)
 
-	t.Run("Update event with maximum length of event name", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.Nil(t, err)
-
-		et := GuildScheduledEventEntityTypesVoice
-		name := maxName
-		uEvt := &UpdateScheduledEvent{
-			EntityType: &et,
-			Name:       &name,
-		}
-
-		gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, uEvt)
-		assert.NotNil(t, err)
-		assert.Nil(t, gEvt)
-	})
-
-	t.Run("Update event with non allowed permission guild", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
-		assert.Nil(t, err)
-
-		et := GuildScheduledEventEntityTypesExternal
-		name := maxName
-		pl := GuildScheduledEventPrivacyLevel(0)
-		uEvt := &UpdateScheduledEvent{
-			EntityType:   &et,
-			Name:         &name,
-			PrivacyLevel: &pl,
-		}
-
-		gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, uEvt)
-		assert.NotNil(t, err)
-		assert.Nil(t, gEvt)
-	})
+			gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, v.evt)
+			assert.NotNil(t, err)
+			assert.Nil(t, gEvt)
+		})
+	}
 
 	t.Run("Update event with valid data", func(t *testing.T) {
 		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
@@ -369,15 +330,10 @@ func TestUpdateScheduledEvent(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, gEvt)
 	})
-
 }
 
 // Run this test only if you want to delete all scheduled events test
 func TestCleanUp(t *testing.T) {
-	client := New(Config{
-		BotToken: token,
-	})
-
 	evts, err := client.GuildScheduledEvent(guildID).Gets(&GetScheduledEvents{
 		WithUserCount: true,
 	})

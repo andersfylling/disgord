@@ -108,6 +108,28 @@ func (g *GetScheduledEvent) URLQueryString() string {
 	return params.URLQueryString()
 }
 
+func (g *GetScheduledEventMembers) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	if !(g.WithMember == false) {
+		params["with_member"] = g.WithMember
+	}
+
+	if !(g.Before == 0) {
+		params["before"] = g.Before
+	}
+
+	if !(g.After == 0) {
+		params["after"] = g.After
+	}
+
+	return params.URLQueryString()
+}
+
 func (g *getInviteQuery) URLQueryString() string {
 	params := make(urlQuery)
 
