@@ -1,7 +1,9 @@
+//go:build integration
+// +build integration
+
 package disgord
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -9,18 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var token string
-var guildID Snowflake
-var client *Client
-
-func init() {
-	token = os.Getenv("DISCORD_BOT_TOKEN")
-	guildID = ParseSnowflakeString(os.Getenv("DISCORD_GUILD_ID"))
-	client = New(Config{BotToken: token})
-}
-
 func TestGetScheduledEvents(t *testing.T) {
-	evts, err := client.GuildScheduledEvent(guildID).Gets(&GetScheduledEvents{
+	client := New(Config{BotToken: token})
+	evts, err := client.GuildScheduledEvent(guildAdmin.ID).Gets(&GetScheduledEvents{
 		WithUserCount: true,
 	})
 
@@ -29,6 +22,7 @@ func TestGetScheduledEvents(t *testing.T) {
 }
 
 func TestGetScheduledEvent(t *testing.T) {
+	client := New(Config{BotToken: token})
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -46,10 +40,10 @@ func TestGetScheduledEvent(t *testing.T) {
 		AuditLogReason: "integration test",
 	}
 
-	evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
 	assert.Nil(t, err)
 
-	gEvt, err := client.GuildScheduledEvent(guildID).Get(evt.ID, nil)
+	gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Get(evt.ID, nil)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, gEvt)
 	assert.Equal(t, gEvt.Name, cEvt.Name)
@@ -58,17 +52,19 @@ func TestGetScheduledEvent(t *testing.T) {
 }
 
 func TestGetScheduledEventUsers(t *testing.T) {
+	client := New(Config{BotToken: token})
 	params := &GetScheduledEventMembers{
 		Limit:      2,
 		WithMember: false,
 	}
 
-	gEvtUsr, err := client.GuildScheduledEvent(guildID).GetMembers(935710181805936730, params)
+	gEvtUsr, err := client.GuildScheduledEvent(guildAdmin.ID).GetMembers(935710181805936730, params)
 	assert.Nil(t, err)
 	assert.GreaterOrEqual(t, len(gEvtUsr), 0)
 }
 
 func TestDeleteScheduledEvent(t *testing.T) {
+	client := New(Config{BotToken: token})
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -86,19 +82,19 @@ func TestDeleteScheduledEvent(t *testing.T) {
 		AuditLogReason: "integration test",
 	}
 
-	evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, evt)
 	assert.Equal(t, evt.Name, cEvt.Name)
 	assert.Equal(t, evt.Description, cEvt.Description)
 	assert.Equal(t, GuildScheduledEventPrivacyLevel(evt.PrivacyLevel), cEvt.PrivacyLevel)
 
-	err = client.GuildScheduledEvent(guildID).Delete(evt.ID)
+	err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
 	assert.Nil(t, err)
 }
 
 func TestCreate(t *testing.T) {
-
+	client := New(Config{BotToken: token})
 	cTableTest := []struct {
 		name    string
 		evt     *CreateScheduledEvent
@@ -195,7 +191,7 @@ func TestCreate(t *testing.T) {
 
 	for _, v := range cTableTest {
 		t.Run(v.name, func(t *testing.T) {
-			evt, err := client.GuildScheduledEvent(guildID).Create(v.evt)
+			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(v.evt)
 
 			if v.wantErr != nil {
 				assert.Equal(t, v.wantErr, err)
@@ -224,18 +220,19 @@ func TestCreate(t *testing.T) {
 			AuditLogReason: "integration test",
 		}
 
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
 		assert.Nil(t, err)
 		assert.NotNil(t, evt)
 		assert.Equal(t, cEvt.Name, evt.Name)
 		assert.Equal(t, cEvt.Description, evt.Description)
 
-		err = client.GuildScheduledEvent(guildID).Delete(evt.ID)
+		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
 		assert.Nil(t, err)
 	})
 }
 
 func TestUpdateScheduledEvent(t *testing.T) {
+	client := New(Config{BotToken: token})
 	cEvt := &CreateScheduledEvent{
 		Name:       "Test Scheduled Update Event",
 		EntityType: GuildScheduledEventEntityTypesExternal,
@@ -295,17 +292,17 @@ func TestUpdateScheduledEvent(t *testing.T) {
 
 	for _, v := range uTableTest {
 		t.Run(v.name, func(t *testing.T) {
-			evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
 			assert.Nil(t, err)
 
-			gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, v.evt)
+			gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, v.evt)
 			assert.NotNil(t, err)
 			assert.Nil(t, gEvt)
 		})
 	}
 
 	t.Run("Update event with valid data", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildID).Create(cEvt)
+		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
 		assert.Nil(t, err)
 
 		et := GuildScheduledEventEntityTypesExternal
@@ -326,7 +323,7 @@ func TestUpdateScheduledEvent(t *testing.T) {
 			Status:       &st,
 		}
 
-		gEvt, err := client.GuildScheduledEvent(guildID).Update(evt.ID, uEvt)
+		gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, uEvt)
 		assert.Nil(t, err)
 		assert.NotNil(t, gEvt)
 	})
@@ -334,7 +331,8 @@ func TestUpdateScheduledEvent(t *testing.T) {
 
 // Run this test only if you want to delete all scheduled events test
 func TestCleanUp(t *testing.T) {
-	evts, err := client.GuildScheduledEvent(guildID).Gets(&GetScheduledEvents{
+	client := New(Config{BotToken: token})
+	evts, err := client.GuildScheduledEvent(guildAdmin.ID).Gets(&GetScheduledEvents{
 		WithUserCount: true,
 	})
 
@@ -342,7 +340,7 @@ func TestCleanUp(t *testing.T) {
 	assert.GreaterOrEqual(t, len(evts), 0)
 
 	for i, v := range evts {
-		err = client.GuildScheduledEvent(guildID).Delete(v.ID)
+		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(v.ID)
 		assert.Nil(t, err)
 
 		if (i%5 == 0) && (i != 0) {
