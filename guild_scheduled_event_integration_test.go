@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetScheduledEvents(t *testing.T) {
@@ -17,8 +15,13 @@ func TestGetScheduledEvents(t *testing.T) {
 		WithUserCount: true,
 	})
 
-	assert.Nil(t, err)
-	assert.GreaterOrEqual(t, len(evts), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(evts) == 0 {
+		t.Errorf("Expected at least 1 scheduled event, got %d", len(evts))
+	}
 }
 
 func TestGetScheduledEvent(t *testing.T) {
@@ -41,14 +44,27 @@ func TestGetScheduledEvent(t *testing.T) {
 	}
 
 	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Get(evt.ID, nil)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, gEvt)
-	assert.Equal(t, gEvt.Name, cEvt.Name)
-	assert.Equal(t, gEvt.Description, cEvt.Description)
-	assert.Equal(t, GuildScheduledEventPrivacyLevel(gEvt.PrivacyLevel), cEvt.PrivacyLevel)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if gEvt == nil {
+		t.Fatal("Expected scheduled event, got nil")
+	}
+	if gEvt.Name != cEvt.Name {
+		t.Errorf("Expected name %s, got %s", cEvt.Name, gEvt.Name)
+	}
+	if gEvt.Description != cEvt.Description {
+		t.Errorf("Expected description %s, got %s", cEvt.Description, gEvt.Description)
+	}
+	if GuildScheduledEventPrivacyLevel(gEvt.PrivacyLevel) != cEvt.PrivacyLevel {
+		t.Errorf("Expected privacy level %d, got %d", cEvt.PrivacyLevel, GuildScheduledEventPrivacyLevel(gEvt.PrivacyLevel))
+	}
 }
 
 func TestGetScheduledEventUsers(t *testing.T) {
@@ -59,8 +75,13 @@ func TestGetScheduledEventUsers(t *testing.T) {
 	}
 
 	gEvtUsr, err := client.GuildScheduledEvent(guildAdmin.ID).GetMembers(935710181805936730, params)
-	assert.Nil(t, err)
-	assert.GreaterOrEqual(t, len(gEvtUsr), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(gEvtUsr) == 0 {
+		t.Errorf("Expected at least 1 scheduled event user, got %d", len(gEvtUsr))
+	}
 }
 
 func TestDeleteScheduledEvent(t *testing.T) {
@@ -83,14 +104,27 @@ func TestDeleteScheduledEvent(t *testing.T) {
 	}
 
 	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, evt)
-	assert.Equal(t, evt.Name, cEvt.Name)
-	assert.Equal(t, evt.Description, cEvt.Description)
-	assert.Equal(t, GuildScheduledEventPrivacyLevel(evt.PrivacyLevel), cEvt.PrivacyLevel)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if evt == nil {
+		t.Fatal("Expected scheduled event, got nil")
+	}
+	if evt.Name != cEvt.Name {
+		t.Errorf("Expected name %s, got %s", cEvt.Name, evt.Name)
+	}
+	if evt.Description != cEvt.Description {
+		t.Errorf("Expected description %s, got %s", cEvt.Description, evt.Description)
+	}
+	if GuildScheduledEventPrivacyLevel(evt.PrivacyLevel) != cEvt.PrivacyLevel {
+		t.Errorf("Expected privacy level %d, got %d", cEvt.PrivacyLevel, GuildScheduledEventPrivacyLevel(evt.PrivacyLevel))
+	}
 
 	err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestCreate(t *testing.T) {
@@ -193,12 +227,16 @@ func TestCreate(t *testing.T) {
 		t.Run(v.name, func(t *testing.T) {
 			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(v.evt)
 
-			if v.wantErr != nil {
-				assert.Equal(t, v.wantErr, err)
+			if v.wantErr != nil && v.wantErr != err {
+				t.Error(err)
 			}
 
-			assert.NotNil(t, err)
-			assert.Nil(t, evt)
+			if err == nil {
+				t.Fatal("Expected error, got nil")
+			}
+			if evt != nil {
+				t.Fatal("Expected nil, got event")
+			}
 		})
 	}
 
@@ -221,13 +259,24 @@ func TestCreate(t *testing.T) {
 		}
 
 		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
-		assert.Nil(t, err)
-		assert.NotNil(t, evt)
-		assert.Equal(t, cEvt.Name, evt.Name)
-		assert.Equal(t, cEvt.Description, evt.Description)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if evt == nil {
+			t.Fatal("Expected event, got nil")
+		}
+		if evt.Name != cEvt.Name {
+			t.Errorf("Expected event name %s, got %s", cEvt.Name, evt.Name)
+		}
+		if evt.Description != cEvt.Description {
+			t.Errorf("Expected event description %s, got %s", cEvt.Description, evt.Description)
+		}
 
 		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -293,17 +342,25 @@ func TestUpdateScheduledEvent(t *testing.T) {
 	for _, v := range uTableTest {
 		t.Run(v.name, func(t *testing.T) {
 			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
-			assert.Nil(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, v.evt)
-			assert.NotNil(t, err)
-			assert.Nil(t, gEvt)
+			if err == nil {
+				t.Fatal("Expected error, got nil")
+			}
+			if gEvt != nil {
+				t.Fatal("Expected nil, got event")
+			}
 		})
 	}
 
 	t.Run("Update event with valid data", func(t *testing.T) {
 		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		et := GuildScheduledEventEntityTypesExternal
 		name := "Update Test Scheduled Event"
@@ -324,8 +381,12 @@ func TestUpdateScheduledEvent(t *testing.T) {
 		}
 
 		gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, uEvt)
-		assert.Nil(t, err)
-		assert.NotNil(t, gEvt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if gEvt == nil {
+			t.Fatal("Expected event, got nil")
+		}
 	})
 }
 
@@ -336,12 +397,18 @@ func TestCleanUp(t *testing.T) {
 		WithUserCount: true,
 	})
 
-	assert.Nil(t, err)
-	assert.GreaterOrEqual(t, len(evts), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(evts) == 0 {
+		t.Fatal("No scheduled event found")
+	}
 
 	for i, v := range evts {
 		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(v.ID)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if (i%5 == 0) && (i != 0) {
 			time.Sleep(time.Second * 2)
