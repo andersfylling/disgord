@@ -1286,18 +1286,6 @@ func (w *webhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
-	return nil, nil
-}
-
-func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
-	return nil, nil
-}
-
-func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
-	return nil, nil
-}
-
 func (w *webhookQueryBuilderNop) Get() (*Webhook, error) {
 	return nil, nil
 }
@@ -1338,11 +1326,31 @@ func (w *webhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
+func (w *webhookWithTokenQueryBuilderNop) DeleteMessage(_ Snowflake, _ *Snowflake) error {
+	return nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) EditMessage(_ *ExecuteWebhook, _ Snowflake, _ *Snowflake) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ *bool, _ *Snowflake, _ string) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhook, _ *bool, _ *Snowflake) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhook, _ *bool, _ *Snowflake) (*Message, error) {
 	return nil, nil
 }
 
 func (w *webhookWithTokenQueryBuilderNop) Get() (*Webhook, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) GetMessage(_ Snowflake, _ *Snowflake) (*Message, error) {
 	return nil, nil
 }
 
