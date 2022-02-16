@@ -462,7 +462,7 @@ func (w *webhookWithTokenQueryBuilder) EditMessage(params *ExecuteWebhook, messa
 //  Comment                 Deletes a message that was created by the webhook. Returns a 204 No Content response on success.
 func (w *webhookWithTokenQueryBuilder) DeleteMessage(messageId Snowflake, threadID *Snowflake) error {
 	if err := w.validate(); err != nil {
-		return nil, err
+		return nil
 	}
 
 	urlparams := &execWebhook{
