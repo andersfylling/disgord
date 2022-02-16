@@ -410,7 +410,7 @@ func (w *webhookWithTokenQueryBuilder) GetMessage(messageId Snowflake, threadID 
 }
 
 
-// EditMessage [REST] Edits a previously-sent webhook message from the same token. Returns a Message object on success.
+// EditMessage [REST] Edits a previously-sent Webhook Message from the same token. Returns a Message object on success.
 //  Method                  PATCH
 //  Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
