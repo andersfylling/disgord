@@ -401,14 +401,13 @@ func (w *webhookWithTokenQueryBuilder) GetMessage(messageId Snowflake, threadID 
 	}
 
 	r := w.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodGet,
-		Ctx:         w.ctx,
-		Endpoint:    endpoint.WebhookMessage(w.webhookID, w.token, messageId) + urlparams.URLQueryString(),
+		Method:   http.MethodGet,
+		Ctx:      w.ctx,
+		Endpoint: endpoint.WebhookMessage(w.webhookID, w.token, messageId) + urlparams.URLQueryString(),
 	}, w.flags)
 	r.pool = w.client.pool.message
 	return getMessage(r.Execute)
 }
-
 
 // EditMessage [REST] Edits a previously-sent Webhook Message from the same token. Returns a Message object on success.
 //  Method                  PATCH
@@ -469,9 +468,9 @@ func (w *webhookWithTokenQueryBuilder) DeleteMessage(messageId Snowflake, thread
 	}
 
 	r := w.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ctx:         w.ctx,
-		Endpoint:    endpoint.WebhookMessage(w.webhookID, w.token, messageId) + urlparams.URLQueryString(),
+		Method:   http.MethodDelete,
+		Ctx:      w.ctx,
+		Endpoint: endpoint.WebhookMessage(w.webhookID, w.token, messageId) + urlparams.URLQueryString(),
 	}, w.flags)
 	r.pool = w.client.pool.message
 	_, err := r.Execute()
