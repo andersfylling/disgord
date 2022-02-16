@@ -118,11 +118,12 @@ func (g guildMemberQueryBuilder) Update(params *UpdateMember) (*Member, error) {
 }
 
 type UpdateMember struct {
-	Nick      *string      `json:"nick,omitempty"`
-	Roles     *[]Snowflake `json:"roles,omitempty"`
-	Mute      *bool        `json:"mute,omitempty"`
-	Deaf      *bool        `json:"deaf,omitempty"`
-	ChannelID *Snowflake   `json:"channel_id,omitempty"`
+	Nick                       *string      `json:"nick,omitempty"`
+	Roles                      *[]Snowflake `json:"roles,omitempty"`
+	Mute                       *bool        `json:"mute,omitempty"`
+	Deaf                       *bool        `json:"deaf,omitempty"`
+	ChannelID                  *Snowflake   `json:"channel_id,omitempty"`
+	CommunicationDisabledUntil *Time        `json:"communication_disabled_until,omitempty"`
 
 	AuditLogReason string `json:"-"`
 }
