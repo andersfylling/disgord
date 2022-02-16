@@ -519,10 +519,10 @@ type Member struct {
 	Roles                      []Snowflake `json:"roles"`
 	JoinedAt                   Time        `json:"joined_at,omitempty"`
 	PremiumSince               Time        `json:"premium_since,omitempty"`
+	CommunicationDisabledUntil Time        `json:"communication_disabled_until"`
 	Deaf                       bool        `json:"deaf"`
 	Mute                       bool        `json:"mute"`
 	Pending                    bool        `json:"pending"`
-	CommunicationDisabledUntil Time        `json:"communication_disabled_until"`
 
 	// custom
 	UserID Snowflake `json:"-"`
