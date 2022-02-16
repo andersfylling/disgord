@@ -331,11 +331,8 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait *bool
 		return nil, errors.New("params can not be nil")
 	}
 
-	if w.webhookID.IsZero() {
-		return nil, ErrMissingWebhookID
-	}
-	if w.token == "" {
-		return nil, ErrMissingWebhookToken
+	if err := w.validate(); err != nil {
+		return nil, err
 	}
 
 	var contentType string
@@ -400,6 +397,10 @@ func (w *webhookWithTokenQueryBuilder) GetMessage(messageId Snowflake, threadID 
 		ThreadID: threadID,
 	}
 
+	if err := w.validate(); err != nil {
+		return nil, err
+	}
+
 	r := w.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodGet,
 		Ctx:      w.ctx,
@@ -426,11 +427,8 @@ func (w *webhookWithTokenQueryBuilder) EditMessage(params *ExecuteWebhook, messa
 		return nil, errors.New("params can not be nil")
 	}
 
-	if w.webhookID.IsZero() {
-		return nil, ErrMissingWebhookID
-	}
-	if w.token == "" {
-		return nil, ErrMissingWebhookToken
+	if err := w.validate(); err != nil {
+		return nil, err
 	}
 
 	var contentType string
@@ -463,6 +461,10 @@ func (w *webhookWithTokenQueryBuilder) EditMessage(params *ExecuteWebhook, messa
 //  Reviewed                2021-02-16
 //  Comment                 Deletes a message that was created by the webhook. Returns a 204 No Content response on success.
 func (w *webhookWithTokenQueryBuilder) DeleteMessage(messageId Snowflake, threadID *Snowflake) error {
+	if err := w.validate(); err != nil {
+		return nil, err
+	}
+
 	urlparams := &execWebhook{
 		ThreadID: threadID,
 	}
