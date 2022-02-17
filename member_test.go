@@ -33,14 +33,14 @@ func TestUpdateMemberParams(t *testing.T) {
 			},
 		},
 		"nil timeout value": {
-			encoded: `{"mute":true,"communication_disabled_until":"2022-01-01T00:00:00.000000+00:00"}`,
+			encoded: `{"mute":true}`,
 			body: &UpdateMember{
 				Mute:                       &trueBool,
 				CommunicationDisabledUntil: nil,
 			},
 		},
 		"remove timeout": {
-			encoded: `{"mute":true,"communication_disabled_until":"2022-01-01T00:00:00.000000+00:00"}`,
+			encoded: `{"mute":true,"communication_disabled_until":""}`,
 			body: &UpdateMember{
 				Mute:                       &trueBool,
 				CommunicationDisabledUntil: &Time{},
