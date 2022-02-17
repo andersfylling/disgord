@@ -97,6 +97,7 @@ func (g *Guild) reset() {
 }
 
 func (m *Member) reset() {
+	m.CommunicationDisabledUntil = Time{}
 	m.Deaf = false
 	m.GuildID = 0
 	m.JoinedAt = Time{}
