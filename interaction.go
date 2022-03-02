@@ -81,6 +81,7 @@ type CreateInteractionResponseData struct {
 	Tts             bool                `json:"tts,omitempty"`
 	Embeds          []*Embed            `json:"embeds,omitempty"`
 	Components      []*MessageComponent `json:"components"`
+	Attachments     []*Attachment       `json:"attachments"`
 	AllowedMentions *AllowedMentions    `json:"allowed_mentions,omitempty"`
 
 	Files []CreateMessageFile `json:"-"`
