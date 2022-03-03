@@ -5,6 +5,7 @@ package disgord
 // This file contains resource objects for the event reactor
 
 import (
+	"context"
 	"errors"
 
 	"github.com/andersfylling/disgord/json"
@@ -298,6 +299,14 @@ type InteractionCreate struct {
 	Locale        string                             `json:"locale"`
 	GuildLocale   string                             `json:"guild_locale"`
 	ShardID       uint                               `json:"-"`
+}
+
+func (itc *InteractionCreate) Edit(ctx context.Context, session Session, response *Message) error {
+	return session.EditInteractionResponse(ctx, itc, response)
+}
+
+func (itc *InteractionCreate) Reply(ctx context.Context, session Session, response *CreateInteractionResponse) error {
+	return session.SendInteractionResponse(ctx, itc, response)
 }
 
 var _ internalUpdater = (*InteractionCreate)(nil)

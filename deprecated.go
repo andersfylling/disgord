@@ -3,9 +3,10 @@ package disgord
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"net/http"
 )
 
 // Deprecated: use ActiveGuildThreads
@@ -484,4 +485,20 @@ func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
 	return builder.
 		SetEmbed(embed).
 		Execute()
+}
+
+type InteractionApplicationCommandCallbackData struct {
+	Tts             bool                `json:"tts"`
+	Content         string              `json:"content"`
+	Embeds          []*Embed            `json:"embeds"`
+	Flags           int                 `json:"flags"`
+	AllowedMentions *AllowedMentions    `json:"allowed_mentions"`
+	Components      []*MessageComponent `json:"components"`
+	Attachments     []*Attachment       `json:"attachments"`
+}
+
+// Deprecated: use CreateInteractionResponse instead
+type InteractionResponse struct {
+	Type InteractionCallbackType                    `json:"type"`
+	Data *InteractionApplicationCommandCallbackData `json:"data"`
 }

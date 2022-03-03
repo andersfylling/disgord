@@ -1,5 +1,14 @@
 package disgord
 
+import (
+	"bytes"
+	"mime/multipart"
+	"strings"
+
+	"github.com/andersfylling/disgord/internal/httd"
+	"github.com/andersfylling/disgord/json"
+)
+
 type InteractionType = int
 
 const (
@@ -67,17 +76,82 @@ type MessageInteraction struct {
 	User *User           `json:"user"`
 }
 
-type InteractionApplicationCommandCallbackData struct {
-	Tts             bool                `json:"tts"`
+type CreateInteractionResponseData struct {
 	Content         string              `json:"content"`
-	Embeds          []*Embed            `json:"embeds"`
-	Flags           int                 `json:"flags"`
-	AllowedMentions *AllowedMentions    `json:"allowed_mentions"`
+	Tts             bool                `json:"tts,omitempty"`
+	Embeds          []*Embed            `json:"embeds,omitempty"`
 	Components      []*MessageComponent `json:"components"`
 	Attachments     []*Attachment       `json:"attachments"`
+	AllowedMentions *AllowedMentions    `json:"allowed_mentions,omitempty"`
+
+	Files []CreateMessageFile `json:"-"`
+
+	SpoilerTagContent        bool `json:"-"`
+	SpoilerTagAllAttachments bool `json:"-"`
 }
 
-type InteractionResponse struct {
-	Type InteractionCallbackType                    `json:"type"`
-	Data *InteractionApplicationCommandCallbackData `json:"data"`
+type CreateInteractionResponse struct {
+	Type InteractionCallbackType        `json:"type"`
+	Data *CreateInteractionResponseData `json:"data"`
+}
+
+func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentType string, err error) {
+	p := res.Data
+	// spoiler tag
+	if p.SpoilerTagContent && len(p.Content) > 0 {
+		p.Content = "|| " + p.Content + " ||"
+	}
+
+	if len(p.Files) == 0 {
+		postBody = p
+		contentType = httd.ContentTypeJSON
+		return
+	}
+
+	if p.SpoilerTagAllAttachments {
+		for i := range p.Files {
+			p.Files[i].SpoilerTag = true
+		}
+	}
+
+	// check for spoilers
+	for _, embed := range p.Embeds {
+		for i := range p.Files {
+			if p.Files[i].SpoilerTag && strings.Contains(embed.Image.URL, p.Files[i].FileName) {
+				s := strings.Split(embed.Image.URL, p.Files[i].FileName)
+				if len(s) > 0 {
+					s[0] += AttachmentSpoilerPrefix + p.Files[i].FileName
+					embed.Image.URL = strings.Join(s, "")
+				}
+			}
+		}
+	}
+
+	// Set up a new multipart writer, as we'll be using this for the POST body instead
+	buf := new(bytes.Buffer)
+	mp := multipart.NewWriter(buf)
+
+	// Write the existing JSON payload
+	var payload []byte
+	payload, err = json.Marshal(res)
+	if err != nil {
+		return
+	}
+	if err = mp.WriteField("payload_json", string(payload)); err != nil {
+		return
+	}
+
+	// Iterate through all the files and write them to the multipart blob
+	for i, file := range p.Files {
+		if err = file.write(i, mp); err != nil {
+			return
+		}
+	}
+
+	mp.Close()
+
+	postBody = buf
+	contentType = mp.FormDataContentType()
+
+	return
 }
