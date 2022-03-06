@@ -103,7 +103,7 @@ func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentTy
 	}
 
 	if len(p.Files) == 0 {
-		postBody = p
+		postBody = res
 		contentType = httd.ContentTypeJSON
 		return
 	}
