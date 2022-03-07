@@ -58,16 +58,12 @@ type webhookQueryBuilder struct {
 	ctx       context.Context
 	flags     Flag
 	client    *Client
-	cid       Snowflake
 	webhookID Snowflake
 }
 
 func (w *webhookQueryBuilder) validate() error {
 	if w.client == nil {
 		return ErrMissingClientInstance
-	}
-	if w.cid.IsZero() {
-		return ErrMissingChannelID
 	}
 	if w.webhookID.IsZero() {
 		return ErrMissingWebhookID
@@ -204,7 +200,6 @@ type webhookWithTokenQueryBuilder struct {
 	ctx       context.Context
 	flags     Flag
 	client    *Client
-	cid       Snowflake
 	webhookID Snowflake
 	token     string
 }
@@ -212,9 +207,6 @@ type webhookWithTokenQueryBuilder struct {
 func (w *webhookWithTokenQueryBuilder) validate() error {
 	if w.client == nil {
 		return ErrMissingClientInstance
-	}
-	if w.cid.IsZero() {
-		return ErrMissingChannelID
 	}
 	if w.webhookID.IsZero() {
 		return ErrMissingWebhookID
