@@ -96,6 +96,10 @@ type CreateInteractionResponse struct {
 }
 
 func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentType string, err error) {
+	if res.Data == nil {
+		return res, httd.ContentTypeJSON, nil
+	}
+
 	p := res.Data
 	// spoiler tag
 	if p.SpoilerTagContent && len(p.Content) > 0 {
