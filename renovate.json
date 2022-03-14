@@ -1,5 +1,12 @@
 {
   "extends": [
     "config:base"
+  ],
+  "packageRules": [
+    {
+      "schedule": ["before 2am on monday"],
+      "automerge": true,
+      "automergeType": "branch"
+    }
   ]
 }
