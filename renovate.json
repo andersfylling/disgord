@@ -6,7 +6,8 @@
     {
       "schedule": ["before 2am on monday"],
       "automerge": true,
-      "automergeType": "branch"
+      "automergeType": "branch",
+      "commitMessagePrefix": "chore: "
     }
   ]
 }
