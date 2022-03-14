@@ -5,7 +5,10 @@
   "packageRules": [
     {
       "matchPackagePatterns": ["*"],
-      "schedule": ["before 2am on monday"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeType": "branch",
       "commitMessagePrefix": "chore: "
