@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: deepakputhraya/action-pr-title@master
         with:
-          allowed_prefixes: 'feat:,fix:,doc:,docs:,chore:,refactor:,test:,style:,revert:,perf:,chore!:,fix!:,feat!:'
+          allowed_prefixes: 'feat:,fix:,docs:,chore:,refactor:,test:,revert:,perf:,feat!:,fix(,feat(,chore(,test(,docs(,refactor(,revert(,perf('
           disallowed_prefixes: 'hotfix'
           min_length: 5
