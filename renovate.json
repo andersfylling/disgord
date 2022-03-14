@@ -9,7 +9,7 @@
       "automerge": true,
       "automergeType": "branch",
       "commitMessagePrefix": "chore: ",
-      "ignorePaths": ["examples/**"]
+      "ignorePaths": ["**/examples/**"]
     }
   ]
 }
