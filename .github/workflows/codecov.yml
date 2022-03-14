@@ -19,7 +19,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: Get dependencies
@@ -51,7 +51,7 @@ jobs:
           go-version: ${{ matrix.go }}
         id: go
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Get dependencies
