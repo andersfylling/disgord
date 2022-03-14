@@ -858,6 +858,10 @@ func (g *guildQueryBuilderNop) CreateRole(_ *CreateGuildRole) (*Role, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) CreateScheduledEvent(_ *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) Delete() error {
 	return nil
 }
@@ -930,6 +934,10 @@ func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) GetScheduledEvents(_ *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) GetVanityURL() (*Invite, error) {
 	return nil, nil
 }
@@ -963,6 +971,10 @@ func (g *guildQueryBuilderNop) PruneMembers(_ *PruneMembers) (int, error) {
 }
 
 func (g *guildQueryBuilderNop) Role(_ Snowflake) GuildRoleQueryBuilder {
+	return nil
+}
+
+func (g *guildQueryBuilderNop) ScheduledEvent(_ Snowflake) GuildScheduledEventQueryBuilder {
 	return nil
 }
 
@@ -1062,27 +1074,19 @@ func (g guildScheduledEventQueryBuilderNop) WithFlags(flags ...Flag) GuildSchedu
 	return &g
 }
 
-func (g *guildScheduledEventQueryBuilderNop) Create(_ *CreateScheduledEvent) (*GuildScheduledEvent, error) {
-	return nil, nil
-}
-
-func (g *guildScheduledEventQueryBuilderNop) Delete(_ Snowflake) error {
+func (g *guildScheduledEventQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildScheduledEventQueryBuilderNop) Get(_ Snowflake, _ *GetScheduledEvent) (*GuildScheduledEvent, error) {
+func (g *guildScheduledEventQueryBuilderNop) Get(_ *GetScheduledEvent) (*GuildScheduledEvent, error) {
 	return nil, nil
 }
 
-func (g *guildScheduledEventQueryBuilderNop) GetMembers(_ Snowflake, _ *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
+func (g *guildScheduledEventQueryBuilderNop) GetMembers(_ *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
 	return nil, nil
 }
 
-func (g *guildScheduledEventQueryBuilderNop) Gets(_ *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
-	return nil, nil
-}
-
-func (g *guildScheduledEventQueryBuilderNop) Update(_ Snowflake, _ *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
+func (g *guildScheduledEventQueryBuilderNop) Update(_ *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
 	return nil, nil
 }
 

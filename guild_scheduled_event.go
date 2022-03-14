@@ -30,25 +30,19 @@ type GuildScheduledEventQueryBuilder interface {
 	WithContext(ctx context.Context) GuildScheduledEventQueryBuilder
 	WithFlags(flags ...Flag) GuildScheduledEventQueryBuilder
 
-	Gets(params *GetScheduledEvents) ([]*GuildScheduledEvent, error)
-	Get(eventID Snowflake, params *GetScheduledEvent) (*GuildScheduledEvent, error)
-	Create(params *CreateScheduledEvent) (*GuildScheduledEvent, error)
-	Update(ID Snowflake, params *UpdateScheduledEvent) (*GuildScheduledEvent, error)
-	Delete(eventID Snowflake) error
+	Get(params *GetScheduledEvent) (*GuildScheduledEvent, error)
+	Update(params *UpdateScheduledEvent) (*GuildScheduledEvent, error)
+	Delete() error
 
-	GetMembers(eventID Snowflake, params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error)
+	GetMembers(params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error)
 }
 
 type guildScheduledEventQueryBuilder struct {
-	ctx    context.Context
-	flags  Flag
-	client *Client
-	gid    Snowflake
-}
-
-// GuildScheduledEvent is used to create a guild scheduled event query builder.
-func (c clientQueryBuilder) GuildScheduledEvent(id Snowflake) GuildScheduledEventQueryBuilder {
-	return &guildScheduledEventQueryBuilder{client: c.client, gid: id}
+	ctx     context.Context
+	flags   Flag
+	client  *Client
+	gid     Snowflake
+	eventID Snowflake
 }
 
 func (gse guildScheduledEventQueryBuilder) WithContext(ctx context.Context) GuildScheduledEventQueryBuilder {
@@ -61,27 +55,6 @@ func (gse guildScheduledEventQueryBuilder) WithFlags(flags ...Flag) GuildSchedul
 	return &gse
 }
 
-func (gse guildScheduledEventQueryBuilder) Gets(params *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
-	// TODO: add cache implementation
-	if params == nil {
-		params = &GetScheduledEvents{
-			WithUserCount: false,
-		}
-	}
-
-	r := gse.client.newRESTRequest(&httd.Request{
-		Endpoint:    endpoint.ScheduledEvents(gse.gid) + params.URLQueryString(),
-		Ctx:         gse.ctx,
-		ContentType: httd.ContentType,
-	}, gse.flags)
-	r.factory = func() interface{} {
-		gses := make([]*GuildScheduledEvent, 0)
-		return &gses
-	}
-
-	return getScheduledEvents(r.Execute)
-}
-
 type GetScheduledEvents struct {
 	WithUserCount bool `urlparam:"with_user_count,omitempty"`
 }
@@ -92,7 +65,7 @@ func (gse *GetScheduledEvents) FindErrors() error {
 	return nil
 }
 
-func (gse guildScheduledEventQueryBuilder) Get(eventID Snowflake, params *GetScheduledEvent) (*GuildScheduledEvent, error) {
+func (gse guildScheduledEventQueryBuilder) Get(params *GetScheduledEvent) (*GuildScheduledEvent, error) {
 	// TODO: add cache implementation
 	if params == nil {
 		params = &GetScheduledEvent{
@@ -101,7 +74,7 @@ func (gse guildScheduledEventQueryBuilder) Get(eventID Snowflake, params *GetSch
 	}
 
 	r := gse.client.newRESTRequest(&httd.Request{
-		Endpoint:    endpoint.ScheduledEvent(gse.gid, eventID) + params.URLQueryString(),
+		Endpoint:    endpoint.ScheduledEvent(gse.gid, gse.eventID) + params.URLQueryString(),
 		Ctx:         gse.ctx,
 		ContentType: httd.ContentType,
 	}, gse.flags)
@@ -122,10 +95,10 @@ func (gse *GetScheduledEvent) FindErrors() error {
 	return nil
 }
 
-func (gse guildScheduledEventQueryBuilder) Delete(eventID Snowflake) error {
+func (gse guildScheduledEventQueryBuilder) Delete() error {
 	r := gse.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
-		Endpoint: endpoint.ScheduledEvent(gse.gid, eventID),
+		Endpoint: endpoint.ScheduledEvent(gse.gid, gse.eventID),
 		Ctx:      gse.ctx,
 	}, gse.flags)
 
@@ -187,30 +160,6 @@ func (cse *CreateScheduledEvent) validate() error {
 	return nil
 }
 
-func (gse guildScheduledEventQueryBuilder) Create(params *CreateScheduledEvent) (*GuildScheduledEvent, error) {
-	if params == nil {
-		return nil, ErrMissingRESTParams
-	}
-
-	if err := params.validate(); err != nil {
-		return nil, err
-	}
-
-	r := gse.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ctx:         gse.ctx,
-		Endpoint:    endpoint.ScheduledEvents(gse.gid),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-		Reason:      params.AuditLogReason,
-	}, gse.flags)
-	r.factory = func() interface{} {
-		return &GuildScheduledEvent{}
-	}
-
-	return getScheduledEvent(r.Execute)
-}
-
 type UpdateScheduledEvent struct {
 	ChannelID          *Snowflake                       `json:"channel_id"` // optional if EntityType is EXTERNAL
 	EntityMetadata     *ScheduledEventEntityMetadata    `json:"entity_metadata,omitempty"`
@@ -251,7 +200,7 @@ func (cse UpdateScheduledEvent) validate() error {
 	return nil
 }
 
-func (gse guildScheduledEventQueryBuilder) Update(ID Snowflake, params *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
+func (gse guildScheduledEventQueryBuilder) Update(params *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
 	}
@@ -263,7 +212,7 @@ func (gse guildScheduledEventQueryBuilder) Update(ID Snowflake, params *UpdateSc
 	r := gse.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         gse.ctx,
-		Endpoint:    endpoint.ScheduledEvent(gse.gid, ID),
+		Endpoint:    endpoint.ScheduledEvent(gse.gid, gse.eventID),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
 		Reason:      params.AuditLogReason,
@@ -294,7 +243,7 @@ type GuildScheduledEventUsers struct {
 	Member                `json:"member"`
 }
 
-func (gse guildScheduledEventQueryBuilder) GetMembers(eventID Snowflake, params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
+func (gse guildScheduledEventQueryBuilder) GetMembers(params *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
 	const QueryLimit uint32 = 100
 
 	if params == nil {
@@ -312,7 +261,7 @@ func (gse guildScheduledEventQueryBuilder) GetMembers(eventID Snowflake, params 
 	}
 
 	r := gse.client.newRESTRequest(&httd.Request{
-		Endpoint:    endpoint.ScheduledEventUsers(gse.gid, eventID) + params.URLQueryString(),
+		Endpoint:    endpoint.ScheduledEventUsers(gse.gid, gse.eventID) + params.URLQueryString(),
 		Ctx:         gse.ctx,
 		ContentType: httd.ContentType,
 	}, gse.flags)

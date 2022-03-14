@@ -759,6 +759,11 @@ type GuildQueryBuilder interface {
 
 	// Deprecated: use GetPruneMembersCount
 	EstimatePruneMembersCount(days int) (estimate int, err error)
+
+	// Guild Scheduled Event
+	ScheduledEvent(eventID Snowflake) GuildScheduledEventQueryBuilder
+	GetScheduledEvents(params *GetScheduledEvents) ([]*GuildScheduledEvent, error)
+	CreateScheduledEvent(params *CreateScheduledEvent) (*GuildScheduledEvent, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -1751,4 +1756,58 @@ func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 	}
 
 	return getActiveGuildThreads(r.Execute)
+}
+
+func (g guildQueryBuilder) ScheduledEvent(eventID Snowflake) GuildScheduledEventQueryBuilder {
+	return &guildScheduledEventQueryBuilder{
+		client:  g.client,
+		gid:     g.gid,
+		eventID: eventID,
+		flags:   g.flags,
+	}
+}
+
+func (g guildQueryBuilder) GetScheduledEvents(params *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
+	// TODO: add cache implementation
+	if params == nil {
+		params = &GetScheduledEvents{
+			WithUserCount: false,
+		}
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint:    endpoint.ScheduledEvents(g.gid) + params.URLQueryString(),
+		Ctx:         g.ctx,
+		ContentType: httd.ContentType,
+	}, g.flags)
+	r.factory = func() interface{} {
+		gses := make([]*GuildScheduledEvent, 0)
+		return &gses
+	}
+
+	return getScheduledEvents(r.Execute)
+}
+
+func (g guildQueryBuilder) CreateScheduledEvent(params *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+	if params == nil {
+		return nil, ErrMissingRESTParams
+	}
+
+	if err := params.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.ScheduledEvents(g.gid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &GuildScheduledEvent{}
+	}
+
+	return getScheduledEvent(r.Execute)
 }

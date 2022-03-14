@@ -11,7 +11,7 @@ import (
 
 func TestGetScheduledEvents(t *testing.T) {
 	client := New(Config{BotToken: token})
-	evts, err := client.GuildScheduledEvent(guildAdmin.ID).Gets(&GetScheduledEvents{
+	evts, err := client.Guild(guildAdmin.ID).GetScheduledEvents(&GetScheduledEvents{
 		WithUserCount: true,
 	})
 
@@ -43,12 +43,12 @@ func TestGetScheduledEvent(t *testing.T) {
 		AuditLogReason: "integration test",
 	}
 
-	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
+	evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(cEvt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Get(evt.ID, nil)
+	gEvt, err := client.Guild(guildAdmin.ID).ScheduledEvent(evt.ID).Get(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestGetScheduledEventUsers(t *testing.T) {
 		WithMember: false,
 	}
 
-	gEvtUsr, err := client.GuildScheduledEvent(guildAdmin.ID).GetMembers(935710181805936730, params)
+	gEvtUsr, err := client.Guild(guildAdmin.ID).ScheduledEvent(935710181805936730).GetMembers(params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestDeleteScheduledEvent(t *testing.T) {
 		AuditLogReason: "integration test",
 	}
 
-	evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
+	evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(cEvt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestDeleteScheduledEvent(t *testing.T) {
 		t.Errorf("Expected privacy level %d, got %d", cEvt.PrivacyLevel, GuildScheduledEventPrivacyLevel(evt.PrivacyLevel))
 	}
 
-	err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
+	err = client.Guild(guildAdmin.ID).ScheduledEvent(evt.ID).Delete()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +225,7 @@ func TestCreate(t *testing.T) {
 
 	for _, v := range cTableTest {
 		t.Run(v.name, func(t *testing.T) {
-			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(v.evt)
+			evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(v.evt)
 
 			if v.wantErr != nil && v.wantErr != err {
 				t.Error(err)
@@ -258,7 +258,7 @@ func TestCreate(t *testing.T) {
 			AuditLogReason: "integration test",
 		}
 
-		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
+		evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(cEvt)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -273,7 +273,7 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected event description %s, got %s", cEvt.Description, evt.Description)
 		}
 
-		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(evt.ID)
+		err = client.Guild(guildAdmin.ID).ScheduledEvent(evt.ID).Delete()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -341,12 +341,12 @@ func TestUpdateScheduledEvent(t *testing.T) {
 
 	for _, v := range uTableTest {
 		t.Run(v.name, func(t *testing.T) {
-			evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
+			evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(cEvt)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, v.evt)
+			gEvt, err := client.Guild(guildAdmin.ID).ScheduledEvent(evt.ID).Update(v.evt)
 			if err == nil {
 				t.Fatal("Expected error, got nil")
 			}
@@ -357,7 +357,7 @@ func TestUpdateScheduledEvent(t *testing.T) {
 	}
 
 	t.Run("Update event with valid data", func(t *testing.T) {
-		evt, err := client.GuildScheduledEvent(guildAdmin.ID).Create(cEvt)
+		evt, err := client.Guild(guildAdmin.ID).CreateScheduledEvent(cEvt)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -380,7 +380,7 @@ func TestUpdateScheduledEvent(t *testing.T) {
 			Status:       &st,
 		}
 
-		gEvt, err := client.GuildScheduledEvent(guildAdmin.ID).Update(evt.ID, uEvt)
+		gEvt, err := client.Guild(guildAdmin.ID).ScheduledEvent(evt.ID).Update(uEvt)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -388,30 +388,4 @@ func TestUpdateScheduledEvent(t *testing.T) {
 			t.Fatal("Expected event, got nil")
 		}
 	})
-}
-
-// Run this test only if you want to delete all scheduled events test
-func TestCleanUp(t *testing.T) {
-	client := New(Config{BotToken: token})
-	evts, err := client.GuildScheduledEvent(guildAdmin.ID).Gets(&GetScheduledEvents{
-		WithUserCount: true,
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(evts) == 0 {
-		t.Fatal("No scheduled event found")
-	}
-
-	for i, v := range evts {
-		err = client.GuildScheduledEvent(guildAdmin.ID).Delete(v.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if (i%5 == 0) && (i != 0) {
-			time.Sleep(time.Second * 2)
-		}
-	}
 }

@@ -867,6 +867,10 @@ func (g *GuildQueryBuilderNop) CreateRole(_ *disgord.CreateGuildRole) (*disgord.
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) CreateScheduledEvent(_ *disgord.CreateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) Delete() error {
 	return nil
 }
@@ -939,6 +943,10 @@ func (g *GuildQueryBuilderNop) GetRoles() ([]*disgord.Role, error) {
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) GetScheduledEvents(_ *disgord.GetScheduledEvents) ([]*disgord.GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) GetVanityURL() (*disgord.Invite, error) {
 	return nil, nil
 }
@@ -972,6 +980,10 @@ func (g *GuildQueryBuilderNop) PruneMembers(_ *disgord.PruneMembers) (int, error
 }
 
 func (g *GuildQueryBuilderNop) Role(_ disgord.Snowflake) disgord.GuildRoleQueryBuilder {
+	return nil
+}
+
+func (g *GuildQueryBuilderNop) ScheduledEvent(_ disgord.Snowflake) disgord.GuildScheduledEventQueryBuilder {
 	return nil
 }
 
@@ -1071,27 +1083,19 @@ func (g GuildScheduledEventQueryBuilderNop) WithFlags(flags ...disgord.Flag) dis
 	return &g
 }
 
-func (g *GuildScheduledEventQueryBuilderNop) Create(_ *disgord.CreateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
-	return nil, nil
-}
-
-func (g *GuildScheduledEventQueryBuilderNop) Delete(_ disgord.Snowflake) error {
+func (g *GuildScheduledEventQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *GuildScheduledEventQueryBuilderNop) Get(_ disgord.Snowflake, _ *disgord.GetScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+func (g *GuildScheduledEventQueryBuilderNop) Get(_ *disgord.GetScheduledEvent) (*disgord.GuildScheduledEvent, error) {
 	return nil, nil
 }
 
-func (g *GuildScheduledEventQueryBuilderNop) GetMembers(_ disgord.Snowflake, _ *disgord.GetScheduledEventMembers) ([]*disgord.GuildScheduledEventUsers, error) {
+func (g *GuildScheduledEventQueryBuilderNop) GetMembers(_ *disgord.GetScheduledEventMembers) ([]*disgord.GuildScheduledEventUsers, error) {
 	return nil, nil
 }
 
-func (g *GuildScheduledEventQueryBuilderNop) Gets(_ *disgord.GetScheduledEvents) ([]*disgord.GuildScheduledEvent, error) {
-	return nil, nil
-}
-
-func (g *GuildScheduledEventQueryBuilderNop) Update(_ disgord.Snowflake, _ *disgord.UpdateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+func (g *GuildScheduledEventQueryBuilderNop) Update(_ *disgord.UpdateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
 	return nil, nil
 }
 
