@@ -1343,18 +1343,6 @@ func (w *WebhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
-	return nil, nil
-}
-
-func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
-	return nil, nil
-}
-
-func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
-	return nil, nil
-}
-
 func (w *WebhookQueryBuilderNop) Get() (*disgord.Webhook, error) {
 	return nil, nil
 }
@@ -1395,11 +1383,31 @@ func (w *WebhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
+func (w *WebhookWithTokenQueryBuilderNop) DeleteMessage(_ disgord.Snowflake, _ *disgord.Snowflake) error {
+	return nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) EditMessage(_ *disgord.ExecuteWebhook, _ disgord.Snowflake, _ *disgord.Snowflake) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake, _ string) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 
 func (w *WebhookWithTokenQueryBuilderNop) Get() (*disgord.Webhook, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) GetMessage(_ disgord.Snowflake, _ *disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 

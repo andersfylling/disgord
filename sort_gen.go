@@ -119,6 +119,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*Config:
 		s = *t
+	case *[]*InteractionApplicationCommandCallbackData:
+		s = *t
+	case *[]*InteractionResponse:
+		s = *t
 	case *[]*ErrorEmptyValue:
 		s = *t
 	case *[]*ErrorMissingSnowflake:
@@ -311,9 +315,9 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ApplicationCommandInteractionDataResolved:
 		s = *t
-	case *[]*InteractionApplicationCommandCallbackData:
+	case *[]*CreateInteractionResponse:
 		s = *t
-	case *[]*InteractionResponse:
+	case *[]*CreateInteractionResponseData:
 		s = *t
 	case *[]*MessageInteraction:
 		s = *t

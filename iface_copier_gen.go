@@ -522,6 +522,7 @@ func (m *Member) copyOverTo(other interface{}) error {
 	if dest, valid = other.(*Member); !valid {
 		return newErrorUnsupportedType("argument given is not a *Member type")
 	}
+	dest.CommunicationDisabledUntil = m.CommunicationDisabledUntil
 	dest.Deaf = m.Deaf
 	dest.GuildID = m.GuildID
 	dest.JoinedAt = m.JoinedAt

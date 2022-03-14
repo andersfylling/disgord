@@ -123,6 +123,8 @@ type UpdateMember struct {
 	Mute      *bool        `json:"mute,omitempty"`
 	Deaf      *bool        `json:"deaf,omitempty"`
 	ChannelID *Snowflake   `json:"channel_id,omitempty"`
+	// CommunicationDisabledUntil defines when the user's timeout will expire and the user will be able to communicate in the guild again (up to 28 days in the future)
+	CommunicationDisabledUntil *Time `json:"communication_disabled_until,omitempty"`
 
 	AuditLogReason string `json:"-"`
 }

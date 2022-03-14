@@ -513,15 +513,16 @@ var _ DeepCopier = (*IntegrationAccount)(nil)
 
 // Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID      Snowflake   `json:"guild_id,omitempty"`
-	User         *User       `json:"user"`
-	Nick         string      `json:"nick,omitempty"`
-	Roles        []Snowflake `json:"roles"`
-	JoinedAt     Time        `json:"joined_at,omitempty"`
-	PremiumSince Time        `json:"premium_since,omitempty"`
-	Deaf         bool        `json:"deaf"`
-	Mute         bool        `json:"mute"`
-	Pending      bool        `json:"pending"`
+	GuildID                    Snowflake   `json:"guild_id,omitempty"`
+	User                       *User       `json:"user"`
+	Nick                       string      `json:"nick,omitempty"`
+	Roles                      []Snowflake `json:"roles"`
+	JoinedAt                   Time        `json:"joined_at,omitempty"`
+	PremiumSince               Time        `json:"premium_since,omitempty"`
+	CommunicationDisabledUntil Time        `json:"communication_disabled_until"`
+	Deaf                       bool        `json:"deaf"`
+	Mute                       bool        `json:"mute"`
+	Pending                    bool        `json:"pending"`
 
 	// custom
 	UserID Snowflake `json:"-"`

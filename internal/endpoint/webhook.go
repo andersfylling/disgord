@@ -22,6 +22,11 @@ func WebhookToken(id fmt.Stringer, token string) string {
 	return Webhook(id) + "/" + token
 }
 
+// WebhookMessage /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
+func WebhookMessage(id fmt.Stringer, token string, messageId fmt.Stringer) string {
+	return WebhookToken(id, token) + "/messages/" + messageId.String()
+}
+
 // ChannelWebhooks /channels/{channel.id}/webhooks
 func ChannelWebhooks(id fmt.Stringer) string {
 	return Channel(id) + webhooks
