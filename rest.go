@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/internal/util/stringslice"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/json"
@@ -315,14 +317,16 @@ type basicBuilder struct {
 	r RESTBuilder
 }
 
+var ErrMissingRESTParams = errors.New("this method requires REST parameters, but none were given")
+
 type ClientQueryBuilderExecutables interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-	CreateGuild(guildName string, params *CreateGuildParams) (*Guild, error)
+	CreateGuild(guildName string, params *CreateGuild) (*Guild, error)
 
 	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
 	GetVoiceRegions() ([]*VoiceRegion, error)
 
-	BotAuthorizeURL() (*url.URL, error)
+	BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 }
 
@@ -368,9 +372,9 @@ func (c clientQueryBuilder) WithContextAndFlags(ctx context.Context, flags ...Fl
 // does not have an ID, the Message will populate a CreateMessage with it's fields.
 //
 // If you want to affect the actual message data besides .Content; provide a
-// MessageCreateParams. The reply message will be updated by the last one provided.
+// MessageCreate. The reply message will be updated by the last one provided.
 func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (msg *Message, err error) {
-	params := &CreateMessageParams{}
+	params := &CreateMessage{}
 	addEmbed := func(e *Embed) error {
 		if params.Embed != nil {
 			return errors.New("can only send one embed")
@@ -405,13 +409,13 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 
 		var s string
 		switch t := data[i].(type) {
-		case *CreateMessageParams:
+		case *CreateMessage:
 			*params = *t
-		case CreateMessageParams:
+		case CreateMessage:
 			*params = t
-		case CreateMessageFileParams:
+		case CreateMessageFile:
 			params.Files = append(params.Files, t)
-		case *CreateMessageFileParams:
+		case *CreateMessageFile:
 			params.Files = append(params.Files, *t)
 		case Embed:
 			if err = addEmbed(&t); err != nil {
@@ -422,7 +426,7 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 				return nil, err
 			}
 		case *os.File:
-			return nil, errors.New("can not handle *os.File, use a CreateMessageFileParams instead")
+			return nil, errors.New("can not handle *os.File, use a CreateMessageFile instead")
 		case string:
 			s = t
 		case Message:
@@ -475,12 +479,18 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 // Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
 //
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
-func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
-	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.botID.String(), c.client.permissions)
+// Use 0 if you do not want to specify any required permissions.
+func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error) {
+	if !stringslice.Contains(scopes, "bot") {
+		scopes = append(scopes, "bot")
+	}
+
+	scopesQueryParam := url.QueryEscape(strings.Join(scopes, " "))
+	botIDQueryParam := c.client.botID.String()
+	permissionsQueryParam := strconv.FormatUint(uint64(permissions), 10)
+
+	format := "https://discord.com/oauth2/authorize?scope=%s&client_id=%s&permissions=%s"
+	u := fmt.Sprintf(format, scopesQueryParam, botIDQueryParam, permissionsQueryParam)
 	return url.Parse(u)
 }
 
@@ -757,12 +767,12 @@ func getPartialInvite(f func() (interface{}, error)) (invite *PartialInvite, err
 }
 
 // TODO: auto generate
-func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error) {
+func getGuildWidget(f func() (interface{}, error)) (embed *GuildWidget, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*GuildEmbed), nil
+	return v.(*GuildWidget), nil
 }
 
 // TODO: auto generate
@@ -788,18 +798,18 @@ func getThreadMembers(f func() (interface{}, error)) (threadMembers []*ThreadMem
 	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
-func getResponseBodyThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyThreads, err error) {
+func getArchivedThreads(f func() (interface{}, error)) (concreteBody *ArchivedThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyThreads), nil
+	return v.(*ArchivedThreads), nil
 }
 
-func getResponseBodyGuildThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyGuildThreads, err error) {
+func getActiveGuildThreads(f func() (interface{}, error)) (concreteBody *ActiveGuildThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyGuildThreads), nil
+	return v.(*ActiveGuildThreads), nil
 }

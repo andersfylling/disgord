@@ -15,11 +15,11 @@ jobs:
         go: ['1.17']
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: Get dependencies
@@ -28,6 +28,7 @@ jobs:
         env:
           DISGORD_TOKEN_INTEGRATION_TEST: ${{ secrets.DISGORD_TOKEN_INTEGRATION_TEST }}
           TEST_GUILD_ADMIN_ID: ${{ secrets.TEST_GUILD_ADMIN_ID }}
+          TEST_GUILD_ADMIN_TEXT_GENERAL: ${{ secrets.TEST_GUILD_ADMIN_TEXT_GENERAL }}
           TEST_GUILD_TYPICAL_ID: ${{ secrets.TEST_GUILD_TYPICAL_ID }}
           TEST_GUILD_TYPICAL_TEXT_GENERAL: ${{ secrets.TEST_GUILD_TYPICAL_TEXT_GENERAL }}
           TEST_GUILD_TYPICAL_VOICE_1: ${{ secrets.TEST_GUILD_TYPICAL_VOICE_1 }}
@@ -45,12 +46,12 @@ jobs:
         go: ['1.17']
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
         id: go
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Get dependencies

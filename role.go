@@ -79,8 +79,11 @@ type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
 
-	UpdateBuilder() (builder UpdateGuildRoleBuilder)
+	Update(params *UpdateRole) (*Role, error)
 	Delete() error
+
+	// Deprecated: use Update
+	UpdateBuilder() (builder UpdateGuildRoleBuilder)
 }
 
 func (g guildQueryBuilder) Role(id Snowflake) GuildRoleQueryBuilder {
@@ -95,6 +98,19 @@ type guildRoleQueryBuilder struct {
 	roleID Snowflake
 }
 
+func (g *guildRoleQueryBuilder) validate() error {
+	if g.client == nil {
+		return ErrMissingClientInstance
+	}
+	if g.gid.IsZero() {
+		return ErrMissingGuildID
+	}
+	if g.roleID.IsZero() {
+		return ErrMissingRoleID
+	}
+	return nil
+}
+
 func (g guildRoleQueryBuilder) WithContext(ctx context.Context) GuildRoleQueryBuilder {
 	g.ctx = ctx
 	return &g
@@ -105,27 +121,13 @@ func (g guildRoleQueryBuilder) WithFlags(flags ...Flag) GuildRoleQueryBuilder {
 	return &g
 }
 
-// UpdateBuilder Modify a guild role. Requires the 'MANAGE_ROLES' permission.
-// Returns the updated role on success. Fires a Guild Role Update Gateway event.
-func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
-	builder := &updateGuildRoleBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Role{}
-	}
-	builder.r.flags = g.flags
-	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Method:      http.MethodPatch,
-		Ctx:         g.ctx,
-		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
-
-	return builder
-}
-
 // Delete Deletes a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 func (g guildRoleQueryBuilder) Delete() error {
+	if err := g.validate(); err != nil {
+		return err
+	}
+
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint.GuildRole(g.gid, g.roleID),
@@ -136,15 +138,36 @@ func (g guildRoleQueryBuilder) Delete() error {
 	return err
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
+// Update update a role
+func (g guildRoleQueryBuilder) Update(params *UpdateRole) (*Role, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
+	}
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
 
-// updateGuildRoleBuilder ...
-//generate-rest-basic-execute: role:*Role,
-//generate-rest-params: name:string, permissions:PermissionBit, color:uint, hoist:bool, mentionable:bool,
-type updateGuildRoleBuilder struct {
-	r RESTBuilder
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
+		ContentType: httd.ContentTypeJSON,
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Role{}
+	}
+
+	return getRole(r.Execute)
+}
+
+type UpdateRole struct {
+	Name        *string        `json:"name,omitempty"`
+	Permissions *PermissionBit `json:"permissions,omitempty"`
+	Color       *int           `json:"color,omitempty"`
+	Hoist       *bool          `json:"hoist,omitempty"`
+	Mentionable *bool          `json:"mentionable,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }

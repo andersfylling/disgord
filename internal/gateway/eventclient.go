@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	evt "github.com/andersfylling/disgord/internal/event"
 	"github.com/andersfylling/disgord/json"
 
 	"go.uber.org/atomic"
@@ -34,29 +33,11 @@ func NewEventClient(shardID uint, conf *EvtConfig) (client *EvtClient, err error
 		return nil, err
 	}
 
-	// figure out intents
-	for _, e := range evt.All() {
-		var exists bool
-		for _, e2 := range conf.IgnoreEvents {
-			if e == e2 {
-				exists = true
-				break
-			}
-		}
-		if exists {
-			continue
-		}
-
-		conf.Intents |= EventToIntent(e, false)
-	}
-
-	conf.Logger.Debug(fmt.Sprintf("shard %d intents: %s", shardID, conf.Intents.String()))
-	conf.Logger.Debug(fmt.Sprintf("shard %d rejects events: %s", shardID, conf.IgnoreEvents))
+	conf.Logger.Debug(fmt.Sprintf("shard{%d} intents(%d): %s", shardID, conf.Intents, conf.Intents.String()))
 
 	client = &EvtClient{
-		evtConf:      conf,
-		ignoreEvents: conf.IgnoreEvents,
-		eventChan:    eChan,
+		evtConf:   conf,
+		eventChan: eChan,
 	}
 	client.client, err = newClient(shardID, &config{
 		Logger:            conf.Logger,
@@ -108,9 +89,6 @@ type EvtConfig struct {
 
 	// for testing only
 	conn Conn
-
-	// IgnoreEvents holds a list of predetermined events that should be ignored.
-	IgnoreEvents []string
 
 	Intents Intent
 

@@ -140,8 +140,8 @@ func (g *Guild) deepCopy() interface{} {
 	return cp
 }
 
-func (g *GuildEmbed) deepCopy() interface{} {
-	cp := &GuildEmbed{}
+func (g *GuildWidget) deepCopy() interface{} {
+	cp := &GuildWidget{}
 	_ = DeepCopyOver(cp, g)
 	return cp
 }
@@ -209,6 +209,12 @@ func (r *Reaction) deepCopy() interface{} {
 func (r *Role) deepCopy() interface{} {
 	cp := &Role{}
 	_ = DeepCopyOver(cp, r)
+	return cp
+}
+
+func (s *SelectMenuOption) deepCopy() interface{} {
+	cp := &SelectMenuOption{}
+	_ = DeepCopyOver(cp, s)
 	return cp
 }
 

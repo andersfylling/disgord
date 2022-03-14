@@ -395,22 +395,27 @@ type CurrentUserQueryBuilder interface {
 	// with an email.
 	Get() (*User, error)
 
-	// UpdateBuilder Modify the requester's user account settings. Returns a user object on success.
-	UpdateBuilder() UpdateCurrentUserBuilder
-
 	// GetGuilds Returns a list of partial guild objects the current user is a member of.
 	// Requires the Guilds OAuth2 scope.
-	GetGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
+	GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error)
 
-	// LeaveGuild Leave a guild. Returns a 204 empty response on success.
-	LeaveGuild(id Snowflake) (err error)
+	Update(params *UpdateUser) (*User, error)
 
 	// CreateGroupDM Create a new group DM channel with multiple Users. Returns a DM channel object.
 	// This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 	// endpoint will not be shown in the Discord Client
-	CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error)
+	CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error)
 
-	// GetUserConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
+	// GetConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
+	GetConnections() (ret []*UserConnection, err error)
+
+	// Deprecated: use Update instead
+	UpdateBuilder() UpdateCurrentUserBuilder
+
+	// Deprecated: use Client.Guild(..).Leave()
+	LeaveGuild(id Snowflake) (err error)
+
+	// Deprecated: use GetConnections
 	GetUserConnections() (ret []*UserConnection, err error)
 }
 
@@ -424,6 +429,13 @@ type currentUserQueryBuilder struct {
 	ctx    context.Context
 	flags  Flag
 	client *Client
+}
+
+func (c *currentUserQueryBuilder) validate() error {
+	if c.client == nil {
+		return ErrMissingClientInstance
+	}
+	return nil
 }
 
 var _ CurrentUserQueryBuilder = (*currentUserQueryBuilder)(nil)
@@ -463,35 +475,41 @@ func (c currentUserQueryBuilder) Get() (user *User, err error) {
 	return getUser(r.Execute)
 }
 
-// UpdateBuilder [REST] Modify the requester's user account settings. Returns a user object on success.
-//  Method                  PATCH
-//  Endpoint                /users/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
-//  Reviewed                2019-02-18
-//  Comment                 -
-func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
-	builder := &updateCurrentUserBuilder{}
-	builder.r.itemFactory = userFactory // TODO: peak cached user
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+// Update update current user
+func (c currentUserQueryBuilder) Update(params *UpdateUser) (*User, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
+	}
+	if err := c.validate(); err != nil {
+		return nil, err
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.UserMe(),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+	}, c.flags)
+	r.pool = c.client.pool.user
+	r.factory = userFactory
 
-	// TODO: cache changes?
-	return builder
+	return getUser(r.Execute)
 }
 
-// GetCurrentUserGuildsParams JSON params for func GetCurrentUserGuilds
-type GetCurrentUserGuildsParams struct {
+type UpdateUser struct {
+	Username *string `json:"username,omitempty"`
+	Avatar   *string `json:"avatar,omitempty"`
+}
+
+// GetCurrentUserGuilds JSON params for func GetCurrentUserGuilds
+type GetCurrentUserGuilds struct {
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  int       `urlparam:"limit,omitempty"`
 }
 
-var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
+var _ URLQueryStringer = (*GetCurrentUserGuilds)(nil)
 
 // GetGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the Guilds OAuth2 scope.
@@ -502,7 +520,7 @@ var _ URLQueryStringer = (*GetCurrentUserGuildsParams)(nil)
 //  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
 //                          Guilds a non-bot user can join. Therefore, pagination is not needed for
 //                          integrations that need to get a list of Users' Guilds.
-func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error) {
+func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
 		Ctx:      c.ctx,
@@ -523,31 +541,14 @@ func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuildsParams) (
 	return nil, errors.New("unable to cast guild slice")
 }
 
-// CreateGroupDMParams required JSON params for func CreateGroupDM
+// CreateGroupDM required JSON params for func CreateGroupDM
 // https://discord.com/developers/docs/resources/user#create-group-dm
-type CreateGroupDMParams struct {
+type CreateGroupDM struct {
 	// AccessTokens access tokens of Users that have granted your app the gdm.join scope
 	AccessTokens []string `json:"access_tokens"`
 
 	// map[UserID] = nickname
 	Nicks map[Snowflake]string `json:"nicks"`
-}
-
-// LeaveGuild [REST] Leave a guild. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /users/@me/guilds/{guild.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/user#leave-guild
-//  Reviewed                2019-02-18
-//  Comment                 -
-func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
-	r := c.client.newRESTRequest(&httd.Request{
-		Method:   http.MethodDelete,
-		Endpoint: endpoint.UserMeGuild(id),
-		Ctx:      c.ctx,
-	}, c.flags)
-
-	_, err = r.Execute()
-	return
 }
 
 // CreateGroupDM [REST] Create a new group DM channel with multiple Users. Returns a DM channel object.
@@ -558,7 +559,7 @@ func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
 //  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
 //  Reviewed                2019-02-19
 //  Comment                 -
-func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDMParams) (ret *Channel, err error) {
+func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         c.ctx,
@@ -574,13 +575,8 @@ func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDMParams) (ret
 	return getChannel(r.Execute)
 }
 
-// GetUserConnections [REST] Returns a list of connection objects. Requires the connections OAuth2 scope.
-//  Method                  GET
-//  Endpoint                /users/@me/connections
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user-connections
-//  Reviewed                2019-02-19
-//  Comment                 -
-func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
+// GetConnections https://discord.com/developers/docs/resources/user#get-user-connections
+func (c currentUserQueryBuilder) GetConnections() (connections []*UserConnection, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeConnections(),
 		Ctx:      c.ctx,
@@ -601,66 +597,6 @@ func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnec
 	return nil, errors.New("unable to cast guild slice")
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
 func userFactory() interface{} {
 	return &User{}
-}
-
-// getUserBuilder ...
-type getUserBuilder struct {
-	r RESTBuilder
-	c *Client
-}
-
-func (b *getUserBuilder) Execute() (user *User, err error) {
-	var v interface{}
-	if v, err = b.r.execute(); err != nil {
-		return nil, err
-	}
-
-	return v.(*User), nil
-}
-
-// updateCurrentUserBuilder ...
-//generate-rest-params: username:string, avatar:string,
-//generate-rest-basic-execute: user:*User,
-type updateCurrentUserBuilder struct {
-	r RESTBuilder
-}
-
-// TODO: params should be url-params. But it works since we're using GET.
-//generate-rest-params: before:Snowflake, after:Snowflake, limit:int,
-//generate-rest-basic-execute: guilds:[]*Guild,
-type getCurrentUserGuildsBuilder struct {
-	r RESTBuilder
-}
-
-func (b *getCurrentUserGuildsBuilder) SetDefaultLimit() *getCurrentUserGuildsBuilder {
-	delete(b.r.urlParams, "limit")
-	return b
-}
-
-//generate-rest-basic-execute: cons:[]*UserConnection,
-type getUserConnectionsBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channel:*Channel,
-type createDMBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channels:[]*Channel,
-type getUserDMsBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-basic-execute: channel:*Channel,
-type createGroupDMBuilder struct {
-	r RESTBuilder
 }

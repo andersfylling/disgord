@@ -11,37 +11,20 @@ import (
 
 // VoiceState Voice State structure
 // https://discord.com/developers/docs/resources/voice#voice-state-object
-// reviewed 2018-09-29
 type VoiceState struct {
-	// GuildID the guild id this voice state is for
-	GuildID Snowflake `json:"guild_id,omitempty"` // ? |
-
-	// ChannelID the channel id this user is connected to
-	ChannelID Snowflake `json:"channel_id"` // | ?
-
-	// UserID the user id this voice state is for
-	UserID Snowflake `json:"user_id"` // |
-
-	// the guild member this voice state is for
-	Member *Member `json:"member,omitempty"`
-
-	// SessionID the session id for this voice state
-	SessionID string `json:"session_id"` // |
-
-	// Deaf whether this user is deafened by the server
-	Deaf bool `json:"deaf"` // |
-
-	// Mute whether this user is muted by the server
-	Mute bool `json:"mute"` // |
-
-	// SelfDeaf whether this user is locally deafened
-	SelfDeaf bool `json:"self_deaf"` // |
-
-	// SelfMute whether this user is locally muted
-	SelfMute bool `json:"self_mute"` // |
-
-	// Suppress whether this user is muted by the current user
-	Suppress bool `json:"suppress"` // |
+	GuildID                 Snowflake `json:"guild_id,omitempty"`
+	ChannelID               Snowflake `json:"channel_id"`
+	UserID                  Snowflake `json:"user_id"`
+	Member                  *Member   `json:"member,omitempty"`
+	SessionID               string    `json:"session_id"`
+	Deaf                    bool      `json:"deaf"`
+	Mute                    bool      `json:"mute"`
+	SelfDeaf                bool      `json:"self_deaf"`
+	SelfMute                bool      `json:"self_mute"`
+	SelfStream              bool      `json:"self_stream"`
+	SelfVideo               bool      `json:"self_video"`
+	Suppress                bool      `json:"suppress"`
+	RequestToSpeakTimestamp Time      `json:"request_to_speak_timestamp"`
 }
 
 var _ Reseter = (*VoiceState)(nil)
@@ -137,10 +120,13 @@ type VoiceChannelQueryBuilder interface {
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
 
-	// UpdateBuilder Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// Update update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
+	Update(params *UpdateChannel) (*Channel, error)
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
 
 	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -152,7 +138,7 @@ type VoiceChannelQueryBuilder interface {
 	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) error
 
 	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
@@ -162,7 +148,7 @@ type VoiceChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() CreateChannelInviteBuilder
+	CreateInvite(params *CreateInvite) (*Invite, error)
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more

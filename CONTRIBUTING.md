@@ -128,7 +128,7 @@ Compared to DiscordGo, Disgord does not focus on having a minimalistic implement
 Discord provide communication in different forms. Disgord tackles the main ones, events (ws), voice (udp + ws), and REST calls.
 
 You can think of Disgord as layered, in which case it will look something like:
-![Simple way to think about Disgord architecture from a layered perspective](docs/disgord-layered-version.png)
+![Simple way to think about Disgord architecture from a layered perspective](.github/disgord-layered-version.png)
 
 ### Design Decisions
 Disgord should handle events, REST, voice, caching; these can be split into separate logical parts. Because of this Disgord must have an event driven architecture to support events and voice. Caching should be done behind the scenes. 
@@ -253,7 +253,7 @@ For the local tests (the main tests) Disgord tries to decouple.. well.. everythi
 ## How Can I Contribute?
 
 ### Reporting Bugs
-Reporting a bug should help the community improving Disgord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](docs/TEMPLATE_BUG.md).
+Reporting a bug should help the community improving Disgord. We need you to be specific and give enough information such that it can be reproduced by others. You must use the Bug template which can be found here: [TEMPLATE_BUG.md](.github/TEMPLATE_BUG.md).
 
 ### Suggesting Enhancements
 We don't currently have a template for this. Provide benchmarks or demonstrations why your suggestion is an improvement or how it can help benefit this project is of great appreciation.

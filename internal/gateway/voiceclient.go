@@ -379,7 +379,7 @@ func sendVoiceIdentityPacket(m *VoiceClient) (err error) {
 	return
 }
 
-func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocolParams) (ret *VoiceSessionDescription, err error) {
+func (c *VoiceClient) SendUDPInfo(data *VoiceSelectProtocol) (ret *VoiceSessionDescription, err error) {
 	ch := make(chan interface{}, 1)
 	c.onceChannels.Add(opcode.VoiceSessionDescription, ch)
 

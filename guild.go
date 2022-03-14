@@ -136,6 +136,10 @@ const (
 		PermissionAdministrator
 )
 
+const (
+	PermissionUseSlashCommands PermissionBit = 2147483648
+)
+
 // GuildUnavailable is a partial Guild object.
 type GuildUnavailable struct {
 	ID          Snowflake `json:"id"`
@@ -328,12 +332,12 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		// TODO: update g.Channels
 	}
 	if channelID.IsZero() {
-		return 0, errors.New("unable to decide which channel to create invite for")
+		return 0, MissingChannelIDErr
 	}
 
-	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite().
-		SetMaxAge(1).
-		Execute()
+	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite(&CreateInvite{
+		MaxAge: 1,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -363,9 +367,11 @@ func (g *Guild) Member(id Snowflake) (*Member, error) {
 }
 
 // MembersByName retrieve a slice of members with same username or nickname
+// Will skip checking username of members missing user data.
+// The user data might be missing due to cache misses.
 func (g *Guild) MembersByName(name string) (members []*Member) {
 	for _, member := range g.Members {
-		if member.Nick == name || member.User.Username == name {
+		if member.Nick == name || (member.User != nil && member.User.Username == name) {
 			members = append(members, member)
 		}
 	}
@@ -467,13 +473,13 @@ var _ DeepCopier = (*Ban)(nil)
 // ------------
 
 // GuildEmbed https://discord.com/developers/docs/resources/guild#guild-embed-object
-type GuildEmbed struct {
+type GuildWidget struct {
 	Enabled   bool      `json:"enabled"`
 	ChannelID Snowflake `json:"channel_id"`
 }
 
-var _ Copier = (*GuildEmbed)(nil)
-var _ DeepCopier = (*GuildEmbed)(nil)
+var _ Copier = (*GuildWidget)(nil)
+var _ DeepCopier = (*GuildWidget)(nil)
 
 // -------
 
@@ -507,15 +513,16 @@ var _ DeepCopier = (*IntegrationAccount)(nil)
 
 // Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID      Snowflake   `json:"guild_id,omitempty"`
-	User         *User       `json:"user"`
-	Nick         string      `json:"nick,omitempty"`
-	Roles        []Snowflake `json:"roles"`
-	JoinedAt     Time        `json:"joined_at,omitempty"`
-	PremiumSince Time        `json:"premium_since,omitempty"`
-	Deaf         bool        `json:"deaf"`
-	Mute         bool        `json:"mute"`
-	Pending      bool        `json:"pending"`
+	GuildID                    Snowflake   `json:"guild_id,omitempty"`
+	User                       *User       `json:"user"`
+	Nick                       string      `json:"nick,omitempty"`
+	Roles                      []Snowflake `json:"roles"`
+	JoinedAt                   Time        `json:"joined_at,omitempty"`
+	PremiumSince               Time        `json:"premium_since,omitempty"`
+	CommunicationDisabledUntil Time        `json:"communication_disabled_until"`
+	Deaf                       bool        `json:"deaf"`
+	Mute                       bool        `json:"mute"`
+	Pending                    bool        `json:"pending"`
 
 	// custom
 	UserID Snowflake `json:"-"`
@@ -535,15 +542,15 @@ func (m *Member) updateInternals() {
 }
 
 func (m *Member) String() string {
-	usrname := m.Nick
+	username := m.Nick
 	if m.User != nil {
-		usrname = m.User.Username
+		username = m.User.Username
 	}
 	id := m.UserID
 	if m.UserID.IsZero() && m.User != nil {
 		id = m.User.ID
 	}
-	return "member{user:" + usrname + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
+	return "member{user:" + username + ", nick:" + m.Nick + ", ID:" + id.String() + "}"
 }
 
 type GuildQueryBuilderCaller interface {
@@ -569,7 +576,7 @@ func (m *Member) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller) 
 	for _, roleInfo := range roles {
 		for _, roleId := range m.Roles {
 			if roleInfo.ID == roleId {
-				permissions |= (PermissionBit)(roleInfo.Permissions)
+				permissions |= roleInfo.Permissions
 				unprocessedRoles--
 				break
 			}
@@ -611,14 +618,14 @@ func (m *Member) Mention() string {
 //
 //////////////////////////////////////////////////////
 
-// CreateGuildParams ...
+// CreateGuild ...
 // https://discord.com/developers/docs/resources/guild#create-guild-json-params
 // example partial channel object:
 // {
 //    "name": "naming-things-is-hard",
 //    "type": 0
 // }
-type CreateGuildParams struct {
+type CreateGuild struct {
 	Name                    string                        `json:"name"` // required
 	Region                  string                        `json:"region"`
 	Icon                    string                        `json:"icon"`
@@ -637,19 +644,19 @@ type CreateGuildParams struct {
 //  Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
 //                          categories from this endpoint. is not supported.
 //							The params argument is optional.
-func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuildParams) (ret *Guild, err error) {
+func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 Guilds?
 
 	if guildName == "" {
-		return nil, errors.New("guild name is required")
+		return nil, MissingGuildNameErr
 	}
 	if l := len(guildName); !(2 <= l && l <= 100) {
-		return nil, errors.New("guild name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("guild name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params == nil {
-		params = &CreateGuildParams{}
+		params = &CreateGuild{}
 	}
 	params.Name = guildName
 
@@ -675,6 +682,11 @@ type GuildQueryBuilder interface {
 	// Get
 	// TODO: Add more guild attribute things. Waiting for caching changes before then.
 	Get() (guild *Guild, err error)
+	Update(params *UpdateGuild) (*Guild, error)
+	Delete() error
+
+	// Leave leaves the given guild
+	Leave() error
 
 	// GetChannels
 	// TODO: For GetChannels, it might sense to have the option for a function to filter before each channel ends up deep copied.
@@ -684,16 +696,18 @@ type GuildQueryBuilder interface {
 	// GetMembers
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	GetMembers(params *GetMembersParams) ([]*Member, error)
+	GetMembers(params *GetMembers) ([]*Member, error)
 	UpdateBuilder() UpdateGuildBuilder
-	Delete() error
 
-	CreateChannel(name string, params *CreateGuildChannelParams) (*Channel, error)
-	UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error
-	CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams) (*Member, error)
+	CreateChannel(name string, params *CreateGuildChannel) (*Channel, error)
+	UpdateChannelPositions(params []UpdateGuildChannelPositions) error
+	CreateMember(userID Snowflake, accessToken string, params *AddGuildMember) (*Member, error)
 	Member(userID Snowflake) GuildMemberQueryBuilder
 
+	// Deprecated: use DisconnectVoiceParticipant
 	KickVoiceParticipant(userID Snowflake) error
+
+	DisconnectVoiceParticipant(userID Snowflake) error
 	SetCurrentUserNick(nick string) (newNick string, err error)
 	GetBans() ([]*Ban, error)
 	GetBan(userID Snowflake) (*Ban, error)
@@ -704,25 +718,25 @@ type GuildQueryBuilder interface {
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	// TODO-3: Add GetRole.
 	GetRoles() ([]*Role, error)
-	UpdateRolePositions(params []UpdateGuildRolePositionsParams) ([]*Role, error)
-	CreateRole(params *CreateGuildRoleParams) (*Role, error)
+	UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error)
+	CreateRole(params *CreateGuildRole) (*Role, error)
 	Role(roleID Snowflake) GuildRoleQueryBuilder
 
-	EstimatePruneMembersCount(days int) (estimate int, err error)
-	PruneMembers(days int, reason string) error
+	GetPruneMembersCount(params *GetPruneMembersCount) (estimate int, err error)
+	PruneMembers(params *PruneMembers) (pruned int, err error)
 	GetVoiceRegions() ([]*VoiceRegion, error)
 	GetInvites() ([]*Invite, error)
 
 	GetIntegrations() ([]*Integration, error)
-	CreateIntegration(params *CreateGuildIntegrationParams) error
-	UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error
+	CreateIntegration(params *CreateGuildIntegration) error
+	UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegration) error
 	DeleteIntegration(integrationID Snowflake) error
 	SyncIntegration(integrationID Snowflake) error
 
-	GetEmbed() (*GuildEmbed, error)
-	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
+	GetWidget() (*GuildWidget, error)
+	UpdateWidget(params *UpdateGuildWidget) (*GuildWidget, error)
 	GetVanityURL() (*PartialInvite, error)
-	GetAuditLogs() GuildAuditLogsBuilder
+	GetAuditLogs(logs *GetAuditLogs) (*AuditLog, error)
 
 	VoiceChannel(channelID Snowflake) VoiceChannelQueryBuilder
 
@@ -730,14 +744,22 @@ type GuildQueryBuilder interface {
 	// TODO: For GetEmojis, it might sense to have the option for a function to filter before each emoji ends up deep copied.
 	// TODO-2: This could be much more performant in guilds with a large number of channels.
 	GetEmojis() ([]*Emoji, error)
-	CreateEmoji(params *CreateGuildEmojiParams) (*Emoji, error)
+	CreateEmoji(params *CreateGuildEmoji) (*Emoji, error)
 	Emoji(emojiID Snowflake) GuildEmojiQueryBuilder
 
 	GetWebhooks() (ret []*Webhook, err error)
 
-	// Returns all active threads in the guild, including public and private threads. Threads are ordered
+	// GetActiveThreads Returns all active threads in the guild, including public and private threads. Threads are ordered
 	// by their id, in descending order.
-	GetActiveThreads() (*ResponseBodyGuildThreads, error)
+	GetActiveThreads() (*ActiveGuildThreads, error)
+
+	// Deprecated: use UpdateEmbed
+	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
+	// Deprecated: use GetWidget
+	GetEmbed() (*GuildEmbed, error)
+
+	// Deprecated: use GetPruneMembersCount
+	EstimatePruneMembersCount(days int) (estimate int, err error)
 }
 
 // Guild is used to create a guild query builder.
@@ -751,6 +773,16 @@ type guildQueryBuilder struct {
 	flags  Flag
 	client *Client
 	gid    Snowflake
+}
+
+func (g *guildQueryBuilder) validate() error {
+	if g.client == nil {
+		return ErrMissingClientInstance
+	}
+	if g.gid.IsZero() {
+		return ErrMissingGuildID
+	}
+	return nil
 }
 
 func (g guildQueryBuilder) WithContext(ctx context.Context) GuildQueryBuilder {
@@ -783,21 +815,51 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 	return getGuild(r.Execute)
 }
 
-// UpdateBuilder is used to create a guild update builder.
-func (g guildQueryBuilder) UpdateBuilder() UpdateGuildBuilder {
-	builder := &updateGuildBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Guild{}
+// Update update a guild
+func (g guildQueryBuilder) Update(params *UpdateGuild) (*Guild, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
-	builder.r.flags = g.flags
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Guild{}
+	}
 
-	return builder
+	return getGuild(r.Execute)
+}
+
+type UpdateGuild struct {
+	Name                        *string                        `json:"name,omitempty"`
+	Region                      *string                        `json:"region,omitempty"`
+	VerificationLvl             *VerificationLvl               `json:"verification_lvl,omitempty"`
+	DefaultMessageNotifications *DefaultMessageNotificationLvl `json:"default_message_notifications,omitempty"`
+	ExplicitContentFilter       *ExplicitContentFilterLvl      `json:"explicit_content_filter,omitempty"`
+	AFKChannelID                *Snowflake                     `json:"afk_channel_id,omitempty"`
+	Icon                        *string                        `json:"icon,omitempty"`
+	OwnerID                     *Snowflake                     `json:"owner_id,omitempty"`
+	Splash                      *string                        `json:"splash,omitempty"`
+	DiscoverySplash             *string                        `json:"discovery_splash,omitempty"`
+	Banner                      *string                        `json:"banner,omitempty"`
+	SystemChannelID             *Snowflake                     `json:"system_channel_id,omitempty"`
+	SystemChannelFlags          *uint                          `json:"system_channel_flags,omitempty"`
+	RulesChannelID              *Snowflake                     `json:"rules_channel_id,omitempty"`
+	PublicUpdatesChannelID      *Snowflake                     `json:"public_updates_channel_id,omitempty"`
+	PreferredLocale             *string                        `json:"preferred_locale,omitempty"`
+	Features                    *[]string                      `json:"features,omitempty"`
+	Description                 *string                        `json:"description,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete is used to delete a guild.
@@ -805,6 +867,18 @@ func (g guildQueryBuilder) Delete() error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint.Guild(g.gid),
+		Ctx:      g.ctx,
+	}, g.flags)
+
+	_, err := r.Execute()
+	return err
+}
+
+// Leave https://discord.com/developers/docs/resources/user#leave-guild
+func (g guildQueryBuilder) Leave() error {
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:   http.MethodDelete,
+		Endpoint: endpoint.UserMeGuild(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 
@@ -832,16 +906,16 @@ func (g guildQueryBuilder) GetChannels() ([]*Channel, error) {
 
 // CreateChannel Create a new channel object for the guild. Requires the 'MANAGE_CHANNELS' permission.
 // Returns the new channel object on success. Fires a Channel Create Gateway event.
-func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannelParams) (*Channel, error) {
+func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel) (*Channel, error) {
 	if name == "" && (params == nil || params.Name == "") {
-		return nil, errors.New("channel name is required")
+		return nil, MissingChannelNameErr
 	}
 	if l := len(name); !(2 <= l && l <= 100) {
-		return nil, errors.New("channel name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("channel name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
 	if params == nil {
-		params = &CreateGuildChannelParams{}
+		params = &CreateGuildChannel{}
 	}
 	if name != "" && params.Name == "" {
 		params.Name = name
@@ -865,7 +939,7 @@ func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel
 // UpdateChannelPositions Modify the positions of a set of channel objects for the guild.
 // Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple Channel Update
 // Gateway events.
-func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPositionsParams) error {
+func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPositions) error {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -887,11 +961,11 @@ func (g guildQueryBuilder) UpdateChannelPositions(params []UpdateGuildChannelPos
 }
 
 // GetMembers uses the GetGuildMembers endpoint iteratively until your query params are met.
-func (g guildQueryBuilder) GetMembers(params *GetMembersParams) ([]*Member, error) {
+func (g guildQueryBuilder) GetMembers(params *GetMembers) ([]*Member, error) {
 	const QueryLimit uint32 = 1000
 
 	if params == nil {
-		params = &GetMembersParams{
+		params = &GetMembers{
 			Limit: math.MaxUint32,
 		}
 	}
@@ -905,7 +979,7 @@ func (g guildQueryBuilder) GetMembers(params *GetMembersParams) ([]*Member, erro
 		return highest
 	}
 
-	p := getGuildMembersParams{
+	p := getGuildMembers{
 		After: params.After,
 	}
 	if params.Limit == 0 || params.Limit > QueryLimit {
@@ -953,13 +1027,13 @@ func (g guildQueryBuilder) GetMembers(params *GetMembersParams) ([]*Member, erro
 // the Guilds.join scope. Returns a 201 Created with the guild member as the body, or 204 No Content if the user is
 // already a member of the guild. Fires a Guild Member Add Gateway event. Requires the bot to have the
 // CREATE_INSTANT_INVITE permission.
-func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, params *AddGuildMemberParams) (*Member, error) {
+func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, params *AddGuildMember) (*Member, error) {
 	if accessToken == "" && (params == nil || params.AccessToken == "") {
 		return nil, errors.New("access token is required")
 	}
 
 	if params == nil {
-		params = &AddGuildMemberParams{}
+		params = &AddGuildMember{}
 	}
 	if accessToken != "" && params.AccessToken == "" {
 		params.AccessToken = accessToken
@@ -998,7 +1072,7 @@ func (g guildQueryBuilder) CreateMember(userID Snowflake, accessToken string, pa
 // SetCurrentUserNick Modifies the nickname of the current user in a guild. Returns a 200
 // with the nickname on success. Fires a Guild Member Update Gateway event.
 func (g guildQueryBuilder) SetCurrentUserNick(nick string) (newNick string, err error) {
-	params := &updateCurrentUserNickParams{
+	params := &updateCurrentUserNick{
 		Nick: nick,
 	}
 
@@ -1081,9 +1155,9 @@ func (g guildQueryBuilder) GetRoles() ([]*Role, error) {
 	return getRoles(r.Execute)
 }
 
-// CreateGuildRoleParams ...
+// CreateGuildRole ...
 // https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
-type CreateGuildRoleParams struct {
+type CreateGuildRole struct {
 	Name        string `json:"name,omitempty"`
 	Permissions uint64 `json:"permissions,omitempty"`
 	Color       uint   `json:"color,omitempty"`
@@ -1096,7 +1170,7 @@ type CreateGuildRoleParams struct {
 
 // CreateRole Create a new role for the guild. Requires the 'MANAGE_ROLES' permission.
 // Returns the new role object on success. Fires a Guild Role Create Gateway event.
-func (g guildQueryBuilder) CreateRole(params *CreateGuildRoleParams) (*Role, error) {
+func (g guildQueryBuilder) CreateRole(params *CreateGuildRole) (*Role, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         g.ctx,
@@ -1115,7 +1189,7 @@ func (g guildQueryBuilder) CreateRole(params *CreateGuildRoleParams) (*Role, err
 // UpdateRolePositions Modify the positions of a set of role objects for the guild.
 // Requires the 'MANAGE_ROLES' permission. Returns a list of all of the guild's role objects on success.
 // Fires multiple Guild Role Update Gateway events.
-func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositionsParams) ([]*Role, error) {
+func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error) {
 	var reason string
 	for i := range params {
 		if params[i].Reason != "" {
@@ -1140,55 +1214,76 @@ func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions
 	return getRoles(r.Execute)
 }
 
-// EstimatePruneMembersCount Returns an object with one 'pruned' key indicating the number of members that would be
-// removed in a prune operation. Requires the 'KICK_MEMBERS' permission.
-func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, err error) {
+func (g guildQueryBuilder) GetPruneMembersCount(params *GetPruneMembersCount) (estimate int, err error) {
 	if g.gid.IsZero() {
-		return 0, errors.New("guildID can not be " + g.gid.String())
+		return 0, MissingGuildIDErr
 	}
-	params := pruneMembersParams{Days: days}
-	if err = params.FindErrors(); err != nil {
-		return 0, err
+	if params == nil {
+		return 0, MissingRESTParamsErr
+	}
+
+	type Pruned struct {
+		Pruned int `json:"pruned"`
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
-		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
+		Method:   http.MethodGet,
+		Endpoint: endpoint.GuildPrune(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &guildPruneCount{}
+		return &Pruned{}
 	}
 
-	var v interface{}
-	if v, err = r.Execute(); err != nil {
+	prunedResp, err := r.Execute()
+	if err != nil {
 		return 0, err
 	}
-
-	if v == nil {
-		return 0, nil
-	}
-
-	return v.(*guildPruneCount).Pruned, nil
+	return prunedResp.(*Pruned).Pruned, nil
 }
 
-// PruneMembers Kicks members from N day back. Requires the 'KICK_MEMBERS' permission.
-// The estimate of kicked people is not returned. Use EstimatePruneMembersCount before calling PruneMembers
-// if you need it. Fires multiple Guild Member Remove Gateway events.
-func (g guildQueryBuilder) PruneMembers(days int, reason string) (err error) {
-	params := pruneMembersParams{Days: days}
-	if err = params.FindErrors(); err != nil {
-		return err
+type GetPruneMembersCount struct {
+	Days         *int        `json:"days,omitempty"`
+	IncludeRoles []Snowflake `json:"include_roles,omitempty"`
+}
+
+// PruneMembers https://discord.com/developers/docs/resources/guild#begin-guild-prune
+func (g guildQueryBuilder) PruneMembers(params *PruneMembers) (pruned int, err error) {
+	if g.gid.IsZero() {
+		return 0, MissingGuildIDErr
+	}
+	if params == nil {
+		return 0, MissingRESTParamsErr
+	}
+
+	type Pruned struct {
+		Pruned int `json:"pruned"`
 	}
 
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodPost,
-		Endpoint: endpoint.GuildPrune(g.gid) + params.URLQueryString(),
+		Endpoint: endpoint.GuildPrune(g.gid),
 		Ctx:      g.ctx,
-		Reason:   reason,
+		Reason:   params.AuditLogReason,
 	}, g.flags)
+	r.factory = func() interface{} {
+		return &Pruned{}
+	}
 
-	_, err = r.Execute()
-	return err
+	prunedResp, err := r.Execute()
+	if err != nil {
+		return 0, err
+	}
+	return prunedResp.(*Pruned).Pruned, nil
+}
+
+// PruneMembers https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
+type PruneMembers struct {
+	Days              *int        `json:"days,omitempty"`
+	ComputePruneCount *bool       `json:"compute_prune_count,omitempty"`
+	IncludeRoles      []Snowflake `json:"include_roles,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // GetVoiceRegions Returns a list of voice region objects for the guild. Unlike the similar /voice route,
@@ -1239,7 +1334,7 @@ func (g guildQueryBuilder) GetIntegrations() ([]*Integration, error) {
 // CreateIntegration attaches an integration object from the current user to the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParams) error {
+func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegration) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         g.ctx,
@@ -1255,7 +1350,7 @@ func (g guildQueryBuilder) CreateIntegration(params *CreateGuildIntegrationParam
 // UpdateIntegration Modify the behavior and settings of a integration object for the guild.
 // Requires the 'MANAGE_GUILD' permission. Returns a 204 empty response on success.
 // Fires a Guild Integrations Update Gateway event.
-func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegrationParams) error {
+func (g guildQueryBuilder) UpdateIntegration(integrationID Snowflake, params *UpdateGuildIntegration) error {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
@@ -1296,35 +1391,46 @@ func (g guildQueryBuilder) SyncIntegration(integrationID Snowflake) error {
 	return err
 }
 
-// GetEmbed Returns the guild embed object. Requires the 'MANAGE_GUILD' permission.
-func (g guildQueryBuilder) GetEmbed() (*GuildEmbed, error) {
+func (g guildQueryBuilder) GetWidget() (*GuildWidget, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.GuildEmbed(g.gid),
 		Ctx:      g.ctx,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &GuildEmbed{}
+		return &GuildWidget{}
 	}
 
-	return getGuildEmbed(r.Execute)
+	return getGuildWidget(r.Execute)
 }
 
-// UpdateEmbedBuilder Modify a guild embed object for the guild. All attributes may be passed in with JSON and
-// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
-func (g guildQueryBuilder) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
-	builder := &updateGuildEmbedBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &GuildEmbed{}
+func (g guildQueryBuilder) UpdateWidget(params *UpdateGuildWidget) (*GuildWidget, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = g.flags
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
-		Endpoint:    endpoint.GuildEmbed(g.gid),
+		Endpoint:    endpoint.Guild(g.gid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &GuildWidget{}
+	}
 
-	return builder
+	return getGuildWidget(r.Execute)
+}
+
+type UpdateGuildWidget struct {
+	Enabled   *bool      `json:"enabled,omitempty"`
+	ChannelID *Snowflake `json:"channel_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // GetVanityURL Returns a partial invite object for Guilds with that feature enabled.
@@ -1343,18 +1449,30 @@ func (g guildQueryBuilder) GetVanityURL() (*PartialInvite, error) {
 
 // GetAuditLogs Returns an audit log object for the guild. Requires the 'VIEW_AUDIT_LOG' permission.
 // Note that this request will _always_ send a REST request, regardless of you calling IgnoreCache or not.
-func (g guildQueryBuilder) GetAuditLogs() GuildAuditLogsBuilder {
-	builder := &guildAuditLogsBuilder{}
-	builder.r.itemFactory = auditLogFactory
-	builder.r.flags = g.flags
-	builder.r.IgnoreCache().setup(g.client.req, &httd.Request{
-		Ctx:      g.ctx,
+func (g guildQueryBuilder) GetAuditLogs(params *GetAuditLogs) (*AuditLog, error) {
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint: endpoint.GuildAuditLogs(g.gid) + params.URLQueryString(),
 		Method:   http.MethodGet,
-		Endpoint: endpoint.GuildAuditLogs(g.gid),
-	}, nil)
+		Ctx:      g.ctx,
+	}, g.flags)
+	r.factory = auditLogFactory
 
-	return builder
+	logs, err := r.Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	return logs.(*AuditLog), nil
 }
+
+type GetAuditLogs struct {
+	UserID     Snowflake `urlparam:"user_id"`
+	ActionType int       `urlparam:"action_type"`
+	Before     Snowflake `urlparam:"before,omitempty"`
+	Limit      int       `urlparam:"limit,omitempty"`
+}
+
+var _ URLQueryStringer = (*GetAuditLogs)(nil)
 
 // GetEmojis Returns a list of emoji objects for the given guild.
 func (g guildQueryBuilder) GetEmojis() ([]*Emoji, error) {
@@ -1383,8 +1501,8 @@ func (g guildQueryBuilder) GetEmojis() ([]*Emoji, error) {
 	return vs.([]*Emoji), nil
 }
 
-// CreateGuildEmojiParams JSON params for func CreateGuildEmoji
-type CreateGuildEmojiParams struct {
+// CreateGuildEmoji JSON params for func CreateGuildEmoji
+type CreateGuildEmoji struct {
 	Name  string      `json:"name"`  // required
 	Image string      `json:"image"` // required
 	Roles []Snowflake `json:"roles"` // optional
@@ -1395,16 +1513,16 @@ type CreateGuildEmojiParams struct {
 
 // CreateEmoji Create a new emoji for the guild. Requires the 'MANAGE_EMOJIS' permission.
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
-func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmojiParams) (*Emoji, error) {
+func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error) {
 	if g.gid.IsZero() {
-		return nil, errors.New("guildID must be set, was " + g.gid.String())
+		return nil, MissingGuildIDErr
 	}
 
 	if params == nil {
 		return nil, errors.New("params object can not be nil")
 	}
 	if !validEmojiName(params.Name) {
-		return nil, errors.New("invalid emoji name")
+		return nil, fmt.Errorf("invalid emoji name: %w", IllegalValueErr)
 	}
 	if !validAvatarPrefix(params.Image) {
 		return nil, errors.New("image string must be base64 encoded with base64 prefix")
@@ -1426,12 +1544,11 @@ func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmojiParams) (*Emoji, 
 	return getEmoji(r.Execute)
 }
 
-// KickVoiceParticipant is used to kick someone from voice.
-func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
-	builder := g.Member(userID).WithContext(g.ctx).UpdateBuilder()
-	return builder.
-		KickFromVoice().
-		Execute()
+// DisconnectVoiceParticipant is used to kick someone from voice.
+func (g guildQueryBuilder) DisconnectVoiceParticipant(userID Snowflake) error {
+	disconnectChannelID := Snowflake(0)
+	_, err := g.Member(userID).WithContext(g.ctx).Update(&UpdateMember{ChannelID: &disconnectChannelID})
+	return err
 }
 
 // GetWebhooks Returns a list of guild webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
@@ -1448,8 +1565,8 @@ func (g guildQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 	return getWebhooks(r.Execute)
 }
 
-// CreateGuildChannelParams https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params
-type CreateGuildChannelParams struct {
+// CreateGuildChannel https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params
+type CreateGuildChannel struct {
 	Name                 string                `json:"name"` // required
 	Type                 ChannelType           `json:"type,omitempty"`
 	Topic                string                `json:"topic,omitempty"`
@@ -1465,9 +1582,9 @@ type CreateGuildChannelParams struct {
 	Reason string `json:"-"`
 }
 
-// UpdateGuildChannelPositionsParams ...
+// UpdateGuildChannelPositions
 // https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions-json-params
-type UpdateGuildChannelPositionsParams struct {
+type UpdateGuildChannelPositions struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 
@@ -1477,10 +1594,10 @@ type UpdateGuildChannelPositionsParams struct {
 	Reason string `json:"-"`
 }
 
-func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositionsParams) {
-	p = make([]UpdateGuildRolePositionsParams, 0, len(rs))
+func NewUpdateGuildRolePositions(rs []*Role) (p []*UpdateGuildRolePositions) {
+	p = make([]*UpdateGuildRolePositions, 0, len(rs))
 	for i := range rs {
-		p = append(p, UpdateGuildRolePositionsParams{
+		p = append(p, &UpdateGuildRolePositions{
 			ID:       rs[i].ID,
 			Position: rs[i].Position,
 		})
@@ -1489,9 +1606,9 @@ func NewUpdateGuildRolePositionsParams(rs []*Role) (p []UpdateGuildRolePositions
 	return p
 }
 
-// UpdateGuildRolePositionsParams ...
+// UpdateGuildRolePositions
 // https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params
-type UpdateGuildRolePositionsParams struct {
+type UpdateGuildRolePositions struct {
 	ID       Snowflake `json:"id"`
 	Position int       `json:"position"`
 
@@ -1499,14 +1616,14 @@ type UpdateGuildRolePositionsParams struct {
 	Reason string `json:"-"`
 }
 
-type getGuildMembersParams struct {
+type getGuildMembers struct {
 	After Snowflake `urlparam:"after,omitempty"`
 	Limit int       `urlparam:"limit,omitempty"` // 1 is default. even if 0 is supplied.
 }
 
-var _ URLQueryStringer = (*getGuildMembersParams)(nil)
+var _ URLQueryStringer = (*getGuildMembers)(nil)
 
-func (g *getGuildMembersParams) FindErrors() error {
+func (g *getGuildMembers) FindErrors() error {
 	if g.Limit > 1000 || g.Limit < 1 {
 		return errors.New("limit value should be less than or equal to 1000, and 1 or more")
 	}
@@ -1522,16 +1639,16 @@ func (g *getGuildMembersParams) FindErrors() error {
 //  Comment                 All parameters to this endpoint. are optional
 //  Comment#2               "List Guild Members"
 //  Comment#3               https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params
-func (g guildQueryBuilder) getGuildMembers(params *getGuildMembersParams) (ret []*Member, err error) {
+func (g guildQueryBuilder) getGuildMembers(params *getGuildMembers) (ret []*Member, err error) {
 	if params == nil {
-		params = &getGuildMembersParams{}
+		params = &getGuildMembers{}
 	}
 	if err = params.FindErrors(); err != nil {
 		return nil, err
 	}
 
 	if !ignoreCache(g.flags) {
-		p := &GetMembersParams{After: params.After, Limit: uint32(params.Limit)}
+		p := &GetMembers{After: params.After, Limit: uint32(params.Limit)}
 		members, err := g.client.cache.GetMembers(g.gid, p)
 		if err == nil && len(members) > 0 {
 			return members, nil
@@ -1550,20 +1667,20 @@ func (g guildQueryBuilder) getGuildMembers(params *getGuildMembersParams) (ret [
 	return getMembers(r.Execute)
 }
 
-// GetMembersParams if Limit is 0, every member is fetched. This does not follow the Discord API where a 0
+// GetMembers if Limit is 0, every member is fetched. This does not follow the Discord API where a 0
 // is converted into a 1. 0 = every member. The rest is exactly the same, you should be able to do everything
 // the Discord docs says with the addition that you can bypass a limit of 1,000.
 //
 // If you specify a limit of +1,000 Disgord will run N requests until that amount is met, or until you run
 // out of members to fetch.
-type GetMembersParams struct {
+type GetMembers struct {
 	After Snowflake `urlparam:"after,omitempty"`
 	Limit uint32    `urlparam:"limit,omitempty"` // 0 will fetch everyone
 }
 
-// AddGuildMemberParams ...
+// AddGuildMember ...
 // https://discord.com/developers/docs/resources/guild#add-guild-member-json-params
-type AddGuildMemberParams struct {
+type AddGuildMember struct {
 	AccessToken string      `json:"access_token"` // required
 	Nick        string      `json:"nick,omitempty"`
 	Roles       []Snowflake `json:"roles,omitempty"`
@@ -1571,65 +1688,41 @@ type AddGuildMemberParams struct {
 	Deaf        bool        `json:"deaf,omitempty"`
 }
 
-// BanMemberParams ...
+// BanMember ...
 // https://discord.com/developers/docs/resources/guild#create-guild-ban-query-string-params
-type BanMemberParams struct {
+type BanMember struct {
 	DeleteMessageDays int    `urlparam:"delete_message_days,omitempty"` // number of days to delete messages for (0-7)
 	Reason            string `urlparam:"reason,omitempty"`              // reason for being banned
 }
 
-var _ URLQueryStringer = (*BanMemberParams)(nil)
+var _ URLQueryStringer = (*BanMember)(nil)
 
-func (b *BanMemberParams) FindErrors() error {
+func (b *BanMember) FindErrors() error {
 	if !(0 <= b.DeleteMessageDays && b.DeleteMessageDays <= 7) {
 		return errors.New("DeleteMessageDays must be a value in the range of [0, 7], got " + strconv.Itoa(b.DeleteMessageDays))
 	}
 	return nil
 }
 
-// PruneMembersParams will delete members, this is the same as kicking.
-// https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params
-type pruneMembersParams struct {
-	// Days number of days to count prune for (1 or more)
-	Days int `urlparam:"days"`
-
-	// ComputePruneCount whether 'pruned' is returned, discouraged for large Guilds
-	ComputePruneCount bool `urlparam:"compute_prune_count"`
-}
-
-var _ URLQueryStringer = (*pruneMembersParams)(nil)
-
-func (d *pruneMembersParams) FindErrors() (err error) {
-	if d.Days < 1 {
-		err = errors.New("days must be at least 1, got " + strconv.Itoa(d.Days))
-	}
-	return
-}
-
-// GuildPruneCount ...
-type guildPruneCount struct {
-	Pruned int `json:"pruned"`
-}
-
-// CreateGuildIntegrationParams ...
+// CreateGuildIntegration ...
 // https://discord.com/developers/docs/resources/guild#create-guild-integration-json-params
-type CreateGuildIntegrationParams struct {
+type CreateGuildIntegration struct {
 	Type string    `json:"type"`
 	ID   Snowflake `json:"id"`
 }
 
-// UpdateGuildIntegrationParams ...
+// UpdateGuildIntegration ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-integration-json-params
 // TODO: currently unsure which are required/optional params
-type UpdateGuildIntegrationParams struct {
+type UpdateGuildIntegration struct {
 	ExpireBehavior    int  `json:"expire_behavior"`
 	ExpireGracePeriod int  `json:"expire_grace_period"`
 	EnableEmoticons   bool `json:"enable_emoticons"`
 }
 
-// updateCurrentUserNickParams ...
+// updateCurrentUserNick ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
-type updateCurrentUserNickParams struct {
+type updateCurrentUserNick struct {
 	Nick string `json:"nick"` // :CHANGE_NICKNAME
 }
 
@@ -1637,19 +1730,14 @@ type nickNameResponse struct {
 	Nickname string `json:"nickname"`
 }
 
-// https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
-type ResponseBodyGuildThreads struct {
+// ActiveGuildThreads https://discord.com/developers/docs/resources/guild#list-active-threads-response-body
+type ActiveGuildThreads struct {
 	Threads []*Channel      `json:"threads"`
 	Members []*ThreadMember `json:"members"`
 }
 
-// GetActiveThreads [GET]    Returns all active threads in the guild, including public and private threads.
-//                           Threads are ordered by their id, in descending order.
-// Discord documentation     https://discord.com/developers/docs/resources/guild#list-active-threads
-// Reviewed                  2021-11-24 (self)
-// Comment
-
-func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error) {
+// GetActiveThreads https://discord.com/developers/docs/resources/guild#list-active-threads
+func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodGet,
 		Ctx:         g.ctx,
@@ -1657,50 +1745,11 @@ func (g guildQueryBuilder) GetActiveThreads() (*ResponseBodyGuildThreads, error)
 		ContentType: httd.ContentTypeJSON,
 	}, g.flags)
 	r.factory = func() interface{} {
-		return &ResponseBodyGuildThreads{
+		return &ActiveGuildThreads{
 			Threads: make([]*Channel, 0),
 			Members: make([]*ThreadMember, 0),
 		}
 	}
 
-	return getResponseBodyGuildThreads(r.Execute)
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
-//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
-//generate-rest-basic-execute: guild:*Guild,
-type updateGuildBuilder struct {
-	r RESTBuilder
-}
-
-//generate-rest-params: enabled:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: embed:*GuildEmbed,
-type updateGuildEmbedBuilder struct {
-	r RESTBuilder
-}
-
-// updateGuildMemberBuilder ...
-// https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
-//generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: err:error,
-type updateGuildMemberBuilder struct {
-	r RESTBuilder
-}
-
-// KickFromVoice kicks member out of voice channel. Assuming they are in one.
-func (b *updateGuildMemberBuilder) KickFromVoice() UpdateGuildMemberBuilder {
-	b.r.param("channel_id", 0)
-	return b
-}
-
-// DeleteNick removes nickname for user. Requires permission MANAGE_NICKNAMES
-func (b *updateGuildMemberBuilder) DeleteNick() UpdateGuildMemberBuilder {
-	b.r.param("nick", "")
-	return b
+	return getActiveGuildThreads(r.Execute)
 }

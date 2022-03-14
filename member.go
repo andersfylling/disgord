@@ -14,12 +14,15 @@ type GuildMemberQueryBuilder interface {
 	WithFlags(flags ...Flag) GuildMemberQueryBuilder
 
 	Get() (*Member, error)
-	UpdateBuilder() UpdateGuildMemberBuilder
+	Update(params *UpdateMember) (*Member, error)
 	AddRole(roleID Snowflake) error
 	RemoveRole(roleID Snowflake) error
 	Kick(reason string) error
-	Ban(params *BanMemberParams) error
+	Ban(params *BanMember) error
 	GetPermissions() (PermissionBit, error)
+
+	// Deprecated: use Update
+	UpdateBuilder() UpdateGuildMemberBuilder
 }
 
 func (g guildQueryBuilder) Member(userID Snowflake) GuildMemberQueryBuilder {
@@ -32,6 +35,19 @@ type guildMemberQueryBuilder struct {
 	client *Client
 	gid    Snowflake
 	uid    Snowflake
+}
+
+func (g *guildMemberQueryBuilder) validate() error {
+	if g.client == nil {
+		return ErrMissingClientInstance
+	}
+	if g.gid.IsZero() {
+		return ErrMissingGuildID
+	}
+	if g.uid.IsZero() {
+		return ErrMissingUserID
+	}
+	return nil
 }
 
 func (g guildMemberQueryBuilder) WithContext(ctx context.Context) GuildMemberQueryBuilder {
@@ -71,25 +87,46 @@ func (g guildMemberQueryBuilder) Get() (*Member, error) {
 	return member, nil
 }
 
-// UpdateBuilder is used to create a builder to update a guild member.
-func (g guildMemberQueryBuilder) UpdateBuilder() UpdateGuildMemberBuilder {
-	builder := &updateGuildMemberBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Member{
-			GuildID: g.gid,
-			UserID:  g.uid,
-		}
+// Update update a guild member
+func (g guildMemberQueryBuilder) Update(params *UpdateMember) (*Member, error) {
+	if params == nil {
+		return nil, ErrMissingRESTParams
 	}
-	builder.r.flags = g.flags
-	builder.r.setup(g.client.req, &httd.Request{
+	if err := g.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         g.ctx,
 		Endpoint:    endpoint.GuildMember(g.gid, g.uid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &Member{}
+	}
 
-	// TODO: cache member changes
-	return builder
+	member, err := getMember(r.Execute)
+	if err != nil {
+		return nil, err
+	}
+	member.GuildID = g.gid
+	member.UserID = g.uid
+	return member, nil
+}
+
+type UpdateMember struct {
+	Nick      *string      `json:"nick,omitempty"`
+	Roles     *[]Snowflake `json:"roles,omitempty"`
+	Mute      *bool        `json:"mute,omitempty"`
+	Deaf      *bool        `json:"deaf,omitempty"`
+	ChannelID *Snowflake   `json:"channel_id,omitempty"`
+	// CommunicationDisabledUntil defines when the user's timeout will expire and the user will be able to communicate in the guild again (up to 28 days in the future)
+	CommunicationDisabledUntil *Time `json:"communication_disabled_until,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // AddRole adds a role to a guild member. Requires the 'MANAGE_ROLES' permission.
@@ -134,7 +171,7 @@ func (g guildMemberQueryBuilder) Kick(reason string) error {
 
 // Ban Create a guild ban, and optionally delete previous messages sent by the banned user. Requires
 // the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a Guild Ban Add Gateway event.
-func (g guildMemberQueryBuilder) Ban(params *BanMemberParams) (err error) {
+func (g guildMemberQueryBuilder) Ban(params *BanMember) (err error) {
 	if params == nil {
 		return errors.New("params was nil")
 	}

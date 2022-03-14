@@ -67,11 +67,11 @@ type VoiceReady struct {
 }
 
 type voiceSelectProtocol struct {
-	Protocol string                     `json:"protocol"`
-	Data     *VoiceSelectProtocolParams `json:"data"`
+	Protocol string               `json:"protocol"`
+	Data     *VoiceSelectProtocol `json:"data"`
 }
 
-type VoiceSelectProtocolParams struct {
+type VoiceSelectProtocol struct {
 	Address string `json:"address"`
 	Port    uint16 `json:"port"`
 	Mode    string `json:"mode"`
@@ -106,7 +106,7 @@ type evtIdentity struct {
 	LargeThreshold uint            `json:"large_threshold"`
 	Shard          *[2]uint        `json:"shard,omitempty"`
 	Presence       json.RawMessage `json:"presence,omitempty"`
-	Intents        Intent          `json:"intents,omitempty"`
+	Intents        Intent          `json:"intents"`
 }
 
 type evtResume struct {

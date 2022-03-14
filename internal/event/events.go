@@ -142,3 +142,21 @@ const InviteCreate = "INVITE_CREATE"
 
 // InteractionCreate Sent when a user in a guild uses a Slash Command.
 const InteractionCreate = "INTERACTION_CREATE"
+
+// GuildStickersUpdate ...
+const GuildStickersUpdate = "GUILD_STICKERS_UPDATE"
+
+// GuildScheduledEventCreate ...
+const GuildScheduledEventCreate = "GUILD_SCHEDULED_EVENT_CREATE"
+
+// GuildScheduledEventUpdate ...
+const GuildScheduledEventUpdate = "GUILD_SCHEDULED_EVENT_UPDATE"
+
+// GuildScheduledEventDelete ...
+const GuildScheduledEventDelete = "GUILD_SCHEDULED_EVENT_DELETE"
+
+// GuildScheduledEventUserAdd ...
+const GuildScheduledEventUserAdd = "GUILD_SCHEDULED_EVENT_USER_ADD"
+
+// GuildScheduledEventUserRemove ...
+const GuildScheduledEventUserRemove = "GUILD_SCHEDULED_EVENT_USER_REMOVE"

@@ -34,14 +34,19 @@ var guildTypical = struct {
 }
 
 var guildAdmin = struct {
-	ID Snowflake
+	ID                 Snowflake
+	TextChannelGeneral Snowflake
 }{
-	ID: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
+	ID:                 ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
+	TextChannelGeneral: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_TEXT_GENERAL")),
 }
 
 func validSnowflakes() {
 	if guildAdmin.ID.IsZero() {
 		panic("missing id for admin guild")
+	}
+	if guildAdmin.TextChannelGeneral.IsZero() {
+		panic("missing text channel for admin guild")
 	}
 	if guildTypical.ID.IsZero() {
 		panic("missing id for typical guild")
@@ -81,6 +86,7 @@ func TestClient(t *testing.T) {
 			BotToken: token,
 			Logger:   &logger.FmtPrinter{},
 			Presence: status,
+			Intents:  IntentGuilds | IntentGuildVoiceStates | IntentGuildMessages,
 		})
 		if err != nil {
 			t.Fatal("failed to initiate a client")
@@ -148,7 +154,7 @@ func TestClient(t *testing.T) {
 
 		var roleID Snowflake
 		t.Run("create", func(t *testing.T) {
-			createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRoleParams{
+			createdRole, err := c.Guild(guildAdmin.ID).CreateRole(&CreateGuildRole{
 				Name:   roleName,
 				Reason: "integration test",
 			})
@@ -385,7 +391,7 @@ func TestClient(t *testing.T) {
 		}
 
 		c.Gateway().WithMiddleware(filterChannel, filterTestPrefix).MessageCreateChan(gotMessage)
-		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+		_, err := c.Channel(channelID).WithContext(deadline).CreateMessage(&CreateMessage{Content: content})
 		if err != nil {
 			panic(fmt.Errorf("unable to send message. %w", err))
 		}
@@ -627,7 +633,7 @@ func TestREST(t *testing.T) {
 			}
 
 			content := "hi"
-			msg, err := c.Channel(channel.ID).WithContext(deadline).CreateMessage(&CreateMessageParams{Content: content})
+			msg, err := c.Channel(channel.ID).WithContext(deadline).CreateMessage(&CreateMessage{Content: content})
 			if err != nil {
 				t.Error(fmt.Errorf("unable to create message in DM channel. %w", err))
 			}

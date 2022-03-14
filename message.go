@@ -1,10 +1,14 @@
 package disgord
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/json"
+	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -93,6 +97,7 @@ const (
 	_ MessageComponentType = iota
 	MessageComponentActionRow
 	MessageComponentButton
+	MessageComponentSelectMenu
 )
 
 type ButtonStyle = int
@@ -107,18 +112,33 @@ const (
 )
 
 type MessageComponent struct {
-	Type       MessageComponentType `json:"type"`
-	Style      ButtonStyle          `json:"style"`
-	Label      string               `json:"label"`
-	Emoji      *Emoji               `json:"emoji"`
-	CustomID   string               `json:"custom_id"`
-	Url        string               `json:"url"`
-	Disabled   bool                 `json:"disabled"`
-	Components []*MessageComponent  `json:"components"`
+	Type        MessageComponentType `json:"type"`
+	Style       ButtonStyle          `json:"style"`
+	Label       string               `json:"label"`
+	Emoji       *Emoji               `json:"emoji"`
+	CustomID    string               `json:"custom_id"`
+	Url         string               `json:"url"`
+	Disabled    bool                 `json:"disabled"`
+	Components  []*MessageComponent  `json:"components,omitempty"`
+	Options     []*SelectMenuOption  `json:"options,omitempty"`
+	Placeholder string               `json:"placeholder"`
+	MinValues   int                  `json:"min_values"`
+	MaxValues   int                  `json:"max_values"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
 var _ DeepCopier = (*MessageComponent)(nil)
+
+type SelectMenuOption struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description"`
+	Emoji       *Emoji `json:"emoji"`
+	Default     bool   `json:"default"`
+}
+
+var _ Copier = (*SelectMenuOption)(nil)
+var _ DeepCopier = (*SelectMenuOption)(nil)
 
 // MessageApplication https://discord.com/developers/docs/resources/channel#message-object-message-application-structure
 type MessageApplication struct {
@@ -213,13 +233,13 @@ func (m *Message) String() string {
 // Example: https://discord.com/channels/319567980491046913/644376487331495967/646925626523254795
 func (m *Message) DiscordURL() (string, error) {
 	if m.ID.IsZero() {
-		return "", errors.New("missing message ID")
+		return "", ErrMissingMessageID
 	}
 	if m.GuildID.IsZero() {
-		return "", errors.New("missing guild ID")
+		return "", ErrMissingGuildID
 	}
 	if m.ChannelID.IsZero() {
-		return "", errors.New("missing channel ID")
+		return "", ErrMissingChannelID
 	}
 
 	return fmt.Sprintf(
@@ -267,7 +287,7 @@ func (m *Message) Send(ctx context.Context, s Session) (msg *Message, err error)
 	}
 
 	// TODO: attachments
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content:          m.Content,
 		Tts:              m.Tts,
 		MessageReference: m.MessageReference,
@@ -292,9 +312,9 @@ func (m *Message) Reply(ctx context.Context, s Session, data ...interface{}) (*M
 
 func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return errors.New("missing message ID")
+		return ErrMissingMessageID
 	} else if m.ChannelID.IsZero() {
-		return errors.New("missing channel ID")
+		return ErrMissingChannelID
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).Create()
@@ -302,9 +322,9 @@ func (m *Message) React(ctx context.Context, s Session, emoji interface{}) error
 
 func (m *Message) Unreact(ctx context.Context, s Session, emoji interface{}) error {
 	if m.ID.IsZero() {
-		return errors.New("missing message ID")
+		return ErrMissingMessageID
 	} else if m.ChannelID.IsZero() {
-		return errors.New("missing channel ID")
+		return ErrMissingChannelID
 	}
 
 	return s.Channel(m.ChannelID).Message(m.ID).Reaction(emoji).WithContext(ctx).DeleteOwn()
@@ -337,17 +357,24 @@ type MessageQueryBuilder interface {
 	// Returns a message object on success.
 	Get() (*Message, error)
 
-	// UpdateBuilder Edit a previously sent message. You can only edit messages that have been sent by the
+	// Update Edit a previously sent message. You can only edit messages that have been sent by the
 	// current user. Returns a message object. Fires a Message Update Gateway event.
-	UpdateBuilder() UpdateMessageBuilder
-	SetContent(content string) (*Message, error)
-	SetEmbed(embed *Embed) (*Message, error)
+	Update(params *UpdateMessage) (*Message, error)
 
-	CrossPost() (*Message, error)
-
-	// Delete Delete a message. If operating on a guild channel and trying to delete a message that was not
+	// Delete deletes a message. If operating on a guild channel and trying to delete a message that was not
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
 	Delete() error
+
+	// Deprecated: use Update(..) instead
+	UpdateBuilder() UpdateMessageBuilder
+	// Deprecated: use Update(..) instead
+	SetContent(content string) (*Message, error)
+	// Deprecated: use Update(..) instead
+	SetEmbed(embed *Embed) (*Message, error)
+
+	CreateThread(params *CreateThread) (*Channel, error)
+
+	CrossPost() (*Message, error)
 
 	// DeleteAllReactions Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 	// permission to be present on the current user.
@@ -366,6 +393,19 @@ type messageQueryBuilder struct {
 	client *Client
 	cid    Snowflake
 	mid    Snowflake
+}
+
+func (m *messageQueryBuilder) validate() error {
+	if m.client == nil {
+		return ErrMissingClientInstance
+	}
+	if m.cid.IsZero() {
+		return ErrMissingChannelID
+	}
+	if m.mid.IsZero() {
+		return ErrMissingMessageID
+	}
+	return nil
 }
 
 func (m messageQueryBuilder) WithContext(ctx context.Context) MessageQueryBuilder {
@@ -388,12 +428,10 @@ func (m messageQueryBuilder) WithFlags(flags ...Flag) MessageQueryBuilder {
 //  Comment                 -
 func (m messageQueryBuilder) Get() (*Message, error) {
 	if m.cid.IsZero() {
-		err := errors.New("channelID must be set to get channel messages")
-		return nil, err
+		return nil, ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		err := errors.New("messageID must be set to get a specific message from a channel")
-		return nil, err
+		return nil, ErrMissingMessageID
 	}
 
 	if !ignoreCache(m.flags) {
@@ -414,29 +452,92 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 	return getMessage(r.Execute)
 }
 
-// UpdateBuilder Edit a previously sent message. You can only edit messages that have been sent by the
+// Update Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
 //  Method                  PATCH
 //  Endpoint                /channels/{channel.id}/messages/{message.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
 //  Reviewed                2018-06-10
 //  Comment                 All parameters to this endpoint are optional.
-func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
-	builder := &updateMessageBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Message{}
+func (m messageQueryBuilder) Update(params *UpdateMessage) (*Message, error) {
+	if params == nil {
+		return nil, ErrMissingRESTParams
 	}
-	builder.r.flags = m.flags
-	builder.r.addPrereq(m.cid.IsZero(), "channelID must be set to get channel messages")
-	builder.r.addPrereq(m.mid.IsZero(), "msgID must be set to edit the message")
-	builder.r.setup(m.client.req, &httd.Request{
+	if err := m.validate(); err != nil {
+		return nil, err
+	}
+
+	postBody, contentType, err := params.prepare()
+	if err != nil {
+		return nil, err
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         m.ctx,
 		Endpoint:    "/channels/" + m.cid.String() + "/messages/" + m.mid.String(),
-		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        postBody,
+		ContentType: contentType,
+	}, m.flags)
+	r.pool = m.client.pool.message
+	r.factory = func() interface{} {
+		return &Message{}
+	}
 
-	return builder
+	return getMessage(r.Execute)
+}
+
+type UpdateMessage struct {
+	Content *string                  `json:"content,omitempty"`
+	Embeds  *[]*Embed                `json:"embeds,omitempty"`
+	Flags   *MessageFlag             `json:"flags,omitempty"`
+	File    *CreateMessageFileParams `json:"-"`
+	// PayloadJSON *string `json:"payload_json,omitempty"`
+	AllowedMentions *AllowedMentions     `json:"allowed_mentions,omitempty"`
+	Components      *[]*MessageComponent `json:"components,omitempty"`
+}
+
+func (p *UpdateMessage) prepare() (postBody interface{}, contentType string, err error) {
+	if p.File == nil {
+		return p, httd.ContentTypeJSON, nil
+	}
+
+	if p.Embeds != nil {
+		for _, embed := range *p.Embeds {
+			// check for spoilers
+			if p.File.SpoilerTag && strings.Contains(embed.Image.URL, p.File.FileName) {
+				s := strings.Split(embed.Image.URL, p.File.FileName)
+				if len(s) > 0 {
+					s[0] += AttachmentSpoilerPrefix + p.File.FileName
+					embed.Image.URL = strings.Join(s, "")
+				}
+			}
+		}
+	}
+
+	// Set up a new multipart writer, as we'll be using this for the POST body instead
+	buf := new(bytes.Buffer)
+	mp := multipart.NewWriter(buf)
+
+	// Write the existing JSON payload
+	var payload []byte
+	payload, err = json.Marshal(p)
+	if err != nil {
+		return nil, "", err
+	}
+	if err = mp.WriteField("payload_json", string(payload)); err != nil {
+		return
+	}
+
+	if err = p.File.write(0, mp); err != nil {
+		return nil, "", err
+	}
+
+	if err = mp.Close(); err != nil {
+		return nil, "", err
+	}
+
+	return buf, mp.FormDataContentType(), nil
 }
 
 // Delete If operating on a guild channel and trying to delete a message that was not
@@ -449,12 +550,10 @@ func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 //  Comment                 -
 func (m messageQueryBuilder) Delete() (err error) {
 	if m.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		err = errors.New("msgID must be set to delete the message")
-		return
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -485,7 +584,7 @@ func (m messageQueryBuilder) Pin() (err error) {
 	return err
 }
 
-// Unpin [REST] Delete a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
+// Unpin deletes a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
 //  Method                  DELETE
 //  Endpoint                /channels/{channel.id}/pins/{message.id}
@@ -494,10 +593,10 @@ func (m messageQueryBuilder) Pin() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) Unpin() (err error) {
 	if m.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -510,7 +609,56 @@ func (m messageQueryBuilder) Unpin() (err error) {
 	return err
 }
 
-// CrossPost Crosspost a message in a News Channel to following channels.
+// CreateThread creates a new thread from an existing message.
+// https://discord.com/developers/docs/resources/channel#start-thread-with-message
+func (m messageQueryBuilder) CreateThread(params *CreateThread) (*Channel, error) {
+	if m.cid.IsZero() {
+		return nil, MissingChannelIDErr
+	}
+	if m.mid.IsZero() {
+		return nil, MissingMessageIDErr
+	}
+	if params == nil || params.Name == "" {
+		return nil, MissingThreadNameErr
+	}
+
+	if l := len(params.Name); !(2 <= l && l <= 100) {
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+	}
+
+	if params.Reason != "" && params.AuditLogReason == "" {
+		params.AuditLogReason = params.Reason
+	}
+
+	r := m.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         m.ctx,
+		Endpoint:    endpoint.ChannelThreadWithMessage(m.cid, m.mid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.AuditLogReason,
+	}, m.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
+
+	return getChannel(r.Execute)
+}
+
+// CreateThread https://discord.com/developers/docs/resources/channel#start-thread-with-message-json-params
+type CreateThread struct {
+	Name                string                  `json:"name"`
+	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
+	RateLimitPerUser    int                     `json:"rate_limit_per_user,omitempty"`
+
+	// AuditLogReason is an X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	AuditLogReason string `json:"-"`
+
+	// Deprecated: use AuditLogReason
+	Reason string `json:"-"`
+}
+
+// CrossPost crosspost a message in a News Channel to following channels.
 //  Method                  POST
 //  Endpoint                /channels/{channel.id}/messages/{message.id}/crosspost
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
@@ -518,10 +666,10 @@ func (m messageQueryBuilder) Unpin() (err error) {
 //  Comment                 -
 func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	if m.cid.IsZero() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		return nil, MissingChannelIDErr
 	}
 	if m.mid.IsZero() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		return nil, MissingMessageIDErr
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -549,10 +697,10 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 //  Reviewed                2019-01-28
 func (m messageQueryBuilder) DeleteAllReactions() error {
 	if m.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{
@@ -563,44 +711,4 @@ func (m messageQueryBuilder) DeleteAllReactions() error {
 
 	_, err := r.Execute()
 	return err
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Wrappers
-//
-//////////////////////////////////////////////////////
-
-func (m messageQueryBuilder) SetContent(content string) (*Message, error) {
-	builder := m.WithContext(m.ctx).UpdateBuilder()
-	return builder.
-		SetContent(content).
-		Execute()
-}
-
-func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
-	builder := m.WithContext(m.ctx).UpdateBuilder()
-	return builder.
-		SetEmbed(embed).
-		Execute()
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// updateMessageBuilder, params here
-//  https://discord.com/developers/docs/resources/channel#edit-message-json-params
-//generate-rest-params: content:string, embed:*Embed,
-//generate-rest-basic-execute: message:*Message,
-type updateMessageBuilder struct {
-	r RESTBuilder
-}
-
-// SetAllowedMentions sets the allowed mentions for the updateMessageBuilder then returns the builder to allow chaining.
-func (b *updateMessageBuilder) SetAllowedMentions(mentions *AllowedMentions) *updateMessageBuilder {
-	b.r.param("allowed_mentions", mentions)
-	return b
 }

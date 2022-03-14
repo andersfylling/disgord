@@ -21,7 +21,7 @@ type CacheGetter interface {
 	// REST API
 
 	// GetGuildAuditLogs(guildID Snowflake) *guildAuditLogsBuilder // TODO
-	GetMessages(channelID Snowflake, params *GetMessagesParams) ([]*Message, error)
+	GetMessages(channelID Snowflake, params *GetMessages) ([]*Message, error)
 	GetMessage(channelID, messageID Snowflake) (ret *Message, err error)
 	//GetUsersWhoReacted(channelID, messageID Snowflake, emoji interface{}, params URLQueryStringer) (reactors []*User, err error)
 	//GetPinnedMessages(channelID Snowflake) (ret []*Message, err error)
@@ -32,7 +32,7 @@ type CacheGetter interface {
 	GetGuild(id Snowflake) (*Guild, error)
 	GetGuildChannels(id Snowflake) ([]*Channel, error)
 	GetMember(guildID, userID Snowflake) (*Member, error)
-	GetMembers(guildID Snowflake, params *GetMembersParams) ([]*Member, error)
+	GetMembers(guildID Snowflake, params *GetMembers) ([]*Member, error)
 	//GetGuildBans(id Snowflake) ([]*Ban, error)
 	//GetGuildBan(guildID, userID Snowflake) (*Ban, error)
 	GetGuildRoles(guildID Snowflake) ([]*Role, error)
@@ -45,7 +45,7 @@ type CacheGetter interface {
 	//GetInvite(inviteCode string, params URLQueryStringer) (*Invite, error)
 	GetCurrentUser() (*User, error)
 	GetUser(id Snowflake) (*User, error)
-	GetCurrentUserGuilds(params *GetCurrentUserGuildsParams) (ret []*Guild, err error)
+	GetCurrentUserGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error)
 	//GetUserDMs() (ret []*Channel, err error)
 	//GetUserConnections() (ret []*UserConnection, err error)
 	//GetVoiceRegions() ([]*VoiceRegion, error)
@@ -73,6 +73,12 @@ type CacheUpdater interface {
 	GuildRoleCreate(data []byte) (*GuildRoleCreate, error)
 	GuildRoleDelete(data []byte) (*GuildRoleDelete, error)
 	GuildRoleUpdate(data []byte) (*GuildRoleUpdate, error)
+	GuildScheduledEventCreate(data []byte) (*GuildScheduledEventCreate, error)
+	GuildScheduledEventDelete(data []byte) (*GuildScheduledEventDelete, error)
+	GuildScheduledEventUpdate(data []byte) (*GuildScheduledEventUpdate, error)
+	GuildScheduledEventUserAdd(data []byte) (*GuildScheduledEventUserAdd, error)
+	GuildScheduledEventUserRemove(data []byte) (*GuildScheduledEventUserRemove, error)
+	GuildStickersUpdate(data []byte) (*GuildStickersUpdate, error)
 	GuildUpdate(data []byte) (*GuildUpdate, error)
 	InteractionCreate(data []byte) (*InteractionCreate, error)
 	InviteCreate(data []byte) (*InviteCreate, error)
@@ -137,6 +143,18 @@ func cacheDispatcher(c Cache, event string, data []byte) (evt EventType, err err
 		evt, err = c.GuildRoleDelete(data)
 	case EvtGuildRoleUpdate:
 		evt, err = c.GuildRoleUpdate(data)
+	case EvtGuildScheduledEventCreate:
+		evt, err = c.GuildScheduledEventCreate(data)
+	case EvtGuildScheduledEventDelete:
+		evt, err = c.GuildScheduledEventDelete(data)
+	case EvtGuildScheduledEventUpdate:
+		evt, err = c.GuildScheduledEventUpdate(data)
+	case EvtGuildScheduledEventUserAdd:
+		evt, err = c.GuildScheduledEventUserAdd(data)
+	case EvtGuildScheduledEventUserRemove:
+		evt, err = c.GuildScheduledEventUserRemove(data)
+	case EvtGuildStickersUpdate:
+		evt, err = c.GuildStickersUpdate(data)
 	case EvtGuildUpdate:
 		evt, err = c.GuildUpdate(data)
 	case EvtInteractionCreate:
@@ -325,6 +343,48 @@ func (c *CacheNop) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error
 	return evt, nil
 }
 func (c *CacheNop) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventCreate(data []byte) (evt *GuildScheduledEventCreate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventDelete(data []byte) (evt *GuildScheduledEventDelete, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUpdate(data []byte) (evt *GuildScheduledEventUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUserAdd(data []byte) (evt *GuildScheduledEventUserAdd, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUserRemove(data []byte) (evt *GuildScheduledEventUserRemove, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildStickersUpdate(data []byte) (evt *GuildStickersUpdate, err error) {
 	if err = json.Unmarshal(data, &evt); err != nil {
 		return nil, err
 	}
@@ -529,12 +589,12 @@ func (c *CacheNop) GetMember(guildID, userID Snowflake) (*Member, error) { retur
 func (c *CacheNop) GetGuildRoles(guildID Snowflake) ([]*Role, error)     { return nil, CacheMissErr }
 func (c *CacheNop) GetCurrentUser() (*User, error)                       { return nil, CacheMissErr }
 func (c *CacheNop) GetUser(id Snowflake) (*User, error)                  { return nil, CacheMissErr }
-func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*Guild, error) {
+func (c *CacheNop) GetCurrentUserGuilds(p *GetCurrentUserGuilds) ([]*Guild, error) {
 	return nil, CacheMissErr
 }
-func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+func (c *CacheNop) GetMessages(channel Snowflake, p *GetMessages) ([]*Message, error) {
 	return nil, CacheMissErr
 }
-func (c *CacheNop) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+func (c *CacheNop) GetMembers(guildID Snowflake, p *GetMembers) ([]*Member, error) {
 	return nil, CacheMissErr
 }

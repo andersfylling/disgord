@@ -31,18 +31,19 @@ type Session interface {
 
 	RESTRatelimitBuckets() (group map[string][]string)
 
-	// AddPermission is to store the permissions required by the bot to function as intended.
-	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
-	GetPermissions() (permissions PermissionBit)
-
 	Pool() *pools
 
 	ClientQueryBuilder
 	EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error
-	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *InteractionResponse) error
+	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *CreateInteractionResponse) error
 
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error
 
 	GetConnectedGuilds() []Snowflake
+
+	// Deprecated: ...
+	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
+	// Deprecated: ...
+	GetPermissions() (permissions PermissionBit)
 }

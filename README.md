@@ -1,5 +1,5 @@
 <div align='center'>
-  <img src="/docs/disgord-draft-8.jpeg" alt='Build Status' />
+  <img src="/.github/disgord-draft-8.jpeg" alt='Build Status' />
   <p>
     <a href="https://codecov.io/gh/andersfylling/disgord">
       <img src="https://codecov.io/gh/andersfylling/disgord/branch/develop/graph/badge.svg" />
@@ -32,17 +32,22 @@ If you want a more lightweight experience you can disable/reject events that you
  - Use disgord.Snowflake, not snowflake.Snowflake.
  - Use disgord.Time, not time.Time when dealing with Discord timestamps.
 
-By default DM capabilities are disabled. If you want to activate these, or some, specify their related intent.
+You must explicitly set intents if you want certain gateway events.
 ```go
 client := disgord.New(disgord.Config{
-    DMIntents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions | disgord.IntentDirectMessageTyping,
+    Intents: disgord.IntentDirectMessages | disgord.IntentDirectMessageReactions,
+})
+```
+```go
+client := disgord.New(disgord.Config{
+    Intents: disgord.AllIntents(),
 })
 ```
 
 ## Starter guide
 > This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dealing with dependencies, remember to activate module support in your IDE
 
-> Examples can be found in [docs/examples](docs/examples) and some open source projects Disgord projects in the [wiki](https://pkg.go.dev/github.com/andersfylling/disgord?tab=importedby)
+> Examples can be found in [examples](examples) and some open source projects Disgord projects in the [wiki](https://pkg.go.dev/github.com/andersfylling/disgord?tab=importedby)
 
 I highly suggest reading the [Discord API documentation](https://discord.com/developers/docs/intro) and the [Disgord go doc](https://pkg.go.dev/github.com/andersfylling/disgord?tab=doc).
 
@@ -106,7 +111,7 @@ A Special thanks to the following companies for sponsoring this project!
 
 <div align='left'>
   <a href="https://www.jetbrains.com/?from=github.com/andersfylling/disgord">
-    <img src="/docs/jetbrains-variant-4.svg" alt="JetBrains" width="200px" />
+    <img src="/.github/jetbrains-variant-4.svg" alt="JetBrains" width="200px" />
   </a>
 </div>
 
@@ -114,12 +119,12 @@ A Special thanks to the following companies for sponsoring this project!
 
 <div align='left'>
   <a href="https://www.jetbrains.com/go/?from=github.com/andersfylling/disgord">
-    <img src="/docs/icon-goland.svg" alt="GoLand" width="150px" />
+    <img src="/.github/icon-goland.svg" alt="GoLand" width="150px" />
   </a>
 </div>
 
 ## Q&A
-> **NOTE:** To see more examples go to the [docs/examples folder](docs/examples). See the GoDoc for a in-depth introduction on the various topics.
+> **NOTE:** To see more examples go to the [examples folder](examples). See the GoDoc for a in-depth introduction on the various topics.
 
 ```Markdown
 1. How do I find my bot token and/or add my bot to a server?

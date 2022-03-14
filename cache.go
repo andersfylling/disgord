@@ -9,8 +9,9 @@ import (
 	"github.com/andersfylling/disgord/json"
 )
 
-var CacheMissErr = errors.New("no matching entry found in cache")
-var CacheEntryAlreadyExistsErr = errors.New("cache entry already exists")
+var ErrCacheMiss = errors.New("no matching entry found in cache")
+
+var ErrCacheEntryAlreadyExists = errors.New("cache entry already exists")
 
 type idHolder struct {
 	ID      Snowflake `json:"id"`
@@ -288,7 +289,7 @@ func (c *BasicCache) ChannelCreate(data []byte) (*ChannelCreate, error) {
 
 func (c *BasicCache) saveChannel(channel *Channel) error {
 	if _, exists := c.Channels.Store[channel.ID]; exists {
-		return CacheEntryAlreadyExistsErr
+		return ErrCacheEntryAlreadyExists
 	}
 
 	c.Channels.Store[channel.ID] = channel
@@ -753,13 +754,13 @@ func (c *BasicCache) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err err
 // func (c *BasicCache) GetMessage(channelID, messageID Snowflake) (*Message, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetCurrentUserGuilds(p *GetCurrentUserGuildsParams) ([]*PartialGuild, error) {
+// func (c *BasicCache) GetCurrentUserGuilds(p *GetCurrentUserGuilds) ([]*PartialGuild, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetMessages(channel Snowflake, p *GetMessagesParams) ([]*Message, error) {
+// func (c *BasicCache) GetMessages(channel Snowflake, p *GetMessages) ([]*Message, error) {
 // 	return nil, nil
 // }
-// func (c *BasicCache) GetMembers(guildID Snowflake, p *GetMembersParams) ([]*Member, error) {
+// func (c *BasicCache) GetMembers(guildID Snowflake, p *GetMembers) ([]*Member, error) {
 // 	return nil, nil
 // }
 

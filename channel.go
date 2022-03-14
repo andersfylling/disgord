@@ -38,6 +38,14 @@ const (
 	ChannelTypeGuildPrivateThread
 )
 
+// VideoQualityMode https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes
+type VideoQualityMode uint
+
+const (
+	VideoQualityModeAuto VideoQualityMode = 1
+	VideoQualityModeFull VideoQualityMode = 2
+)
+
 // Attachment https://discord.com/developers/docs/resources/channel#attachment-object
 type Attachment struct {
 	ID       Snowflake `json:"id"`
@@ -197,7 +205,7 @@ func (c *Channel) SendMsgString(ctx context.Context, s Session, content string) 
 		err = newErrorMissingSnowflake("snowflake ID not set for channel")
 		return
 	}
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content: content,
 	}
 
@@ -216,7 +224,7 @@ func (c *Channel) SendMsg(ctx context.Context, s Session, message *Message) (msg
 		return nil, errors.New("nonce can not be longer than 25 characters")
 	}
 
-	params := &CreateMessageParams{
+	params := &CreateMessage{
 		Content:          message.Content,
 		Nonce:            nonce, // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
 		Tts:              message.Tts,
@@ -256,10 +264,13 @@ type ChannelQueryBuilder interface {
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
 
-	// UpdateBuilder Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// Update Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
+	Update(params *UpdateChannel) (*Channel, error)
+
+	// Deprecated: use Update instead
 	UpdateBuilder() UpdateChannelBuilder
 
 	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -271,7 +282,7 @@ type ChannelQueryBuilder interface {
 	// UpdatePermissions Edit the channel permission overwrites for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 	// For more information about permissions, see permissions.
-	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) error
+	UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) error
 
 	// GetInvites Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 	// guild Channels. Requires the 'MANAGE_CHANNELS' permission.
@@ -281,7 +292,7 @@ type ChannelQueryBuilder interface {
 	// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request
 	// body is not. If you are not sending any fields, you still have to send an empty JSON object ({}).
 	// Returns an invite object.
-	CreateInvite() CreateChannelInviteBuilder
+	CreateInvite(params *CreateInvite) (*Invite, error)
 
 	// DeletePermission Delete a channel permission overwrite for a user or role in a channel. Only usable
 	// for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
@@ -304,65 +315,72 @@ type ChannelQueryBuilder interface {
 	// Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 	// the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 	// will only be counted once.
-	DeleteMessages(params *DeleteMessagesParams) error
+	DeleteMessages(params *DeleteMessages) error
 
 	// GetMessages Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 	// the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 	// the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 	// (since they cannot read the message history). Returns an array of message objects on success.
-	GetMessages(params *GetMessagesParams) ([]*Message, error)
+	GetMessages(params *GetMessages) ([]*Message, error)
 
 	// CreateMessage Post a message to a guild text or DM channel. If operating on a guild channel, this
 	// endpoint requires the 'SEND_MESSAGES' permission to be present on the current user. If the tts field is set to true,
 	// the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 	// Message Create Gateway event. See message formatting for more information on how to properly format messages.
 	// The maximum request size when sending a message is 8MB.
-	CreateMessage(params *CreateMessageParams) (*Message, error)
+	CreateMessage(params *CreateMessage) (*Message, error)
 
 	// CreateWebhook Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 	// Returns a webhook object on success.
-	CreateWebhook(params *CreateWebhookParams) (ret *Webhook, err error)
+	CreateWebhook(params *CreateWebhook) (ret *Webhook, err error)
 
 	// GetWebhooks Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
 	GetWebhooks() (ret []*Webhook, err error)
 
 	Message(id Snowflake) MessageQueryBuilder
 
-	// CreateThread Create a thread in a channel from a message.
-	CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error)
-	// CreateThreadNoMessage Create a thread that is not connected to an existing message.
-	CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error)
-	// Adds the current user to a thread. Also requires the thread is not archived.
+	// CreateThread Create a thread that is not connected to an existing message.
+	CreateThread(params *CreateThreadWithoutMessage) (*Channel, error)
+
+	// JoinThread Adds the current user to a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	JoinThread() error
-	// Adds another member to a thread. Requires the ability to send messages in the thread.
+
+	// AddThreadMember Adds another member to a thread. Requires the ability to send messages in the thread.
 	// Also requires the thread is not archived. Returns a 204 empty response if the member
 	// is successfully added or was already a member of the thread.
 	AddThreadMember(userID Snowflake) error
-	// Removes the current user from a thread. Also requires the thread is not archived.
+
+	// LeaveThread Removes the current user from a thread. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	LeaveThread() error
-	// Removes another member from a thread. Requires the MANAGE_THREADS permission, or the
+
+	// RemoveThreadMember Removes another member from a thread. Requires the MANAGE_THREADS permission, or the
 	// creator of the thread if it is a GUILD_PRIVATE_THREAD. Also requires the thread is not archived.
 	// Returns a 204 empty response on success.
 	RemoveThreadMember(userID Snowflake) error
-	// Returns a thread member object for the specified user if
+
+	// GetThreadMember Returns a thread member object for the specified user if
 	// they are a member of the thread, returns a 404 response otherwise.
 	GetThreadMember(userID Snowflake) (*ThreadMember, error)
-	// Returns array of thread members objects that are members of the thread.
+
+	// GetThreadMembers Returns array of thread members objects that are members of the thread.
 	// This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent is enabled for your application.
 	GetThreadMembers() ([]*ThreadMember, error)
-	// Returns archived threads in the channel that are public. When called on a GUILD_TEXT channel, returns
+
+	// GetPublicArchivedThreads Returns archived threads in the channel that are public. When called on a GUILD_TEXT channel, returns
 	// threads of type GUILD_PUBLIC_THREAD. When called on a GUILD_NEWS channel returns threads of type
 	// GUILD_NEWS_THREAD. Threads are ordered by archive_timestamp, in descending order. Requires the READ_MESSAGE_HISTORY
 	// permission.
-	GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
-	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
+	GetPublicArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
+
+	// GetPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD. Threads are ordered by
 	// archive_timestamp, in descending order. Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
-	GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
-	// Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
+	GetPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
+
+	// GetJoinedPrivateArchivedThreads Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD, and the user has joined.
 	// Threads are ordered by their id, in descending order. Requires the READ_MESSAGE_HISTORY permission.
-	GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error)
+	GetJoinedPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error)
 }
 
 type channelQueryBuilder struct {
@@ -373,6 +391,16 @@ type channelQueryBuilder struct {
 }
 
 var _ ChannelQueryBuilder = (*channelQueryBuilder)(nil)
+
+func (c *channelQueryBuilder) validate() error {
+	if c.client == nil {
+		return ErrMissingClientInstance
+	}
+	if c.cid.IsZero() {
+		return ErrMissingChannelID
+	}
+	return nil
+}
 
 func (c channelQueryBuilder) WithContext(ctx context.Context) ChannelQueryBuilder {
 	c.ctx = ctx
@@ -392,7 +420,7 @@ func (c channelQueryBuilder) WithFlags(flags ...Flag) ChannelQueryBuilder {
 //  Comment                 -
 func (c channelQueryBuilder) Get() (*Channel, error) {
 	if c.cid.IsZero() {
-		return nil, errors.New("not a valid snowflake")
+		return nil, ErrMissingChannelID
 	}
 
 	if !ignoreCache(c.flags) {
@@ -413,29 +441,51 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 	return getChannel(r.Execute)
 }
 
-// UpdateBuilder [REST] Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
-// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
-// modifying a category, individual Channel Update events will fire for each child channel that also changes.
-// For the PATCH method, all the JSON Params are optional.
-//  Method                  PUT/PATCH
+// Update [REST] Update a channel's settings. Returns a channel on success, and a 400 BAD REQUEST
+// on invalid parameters. All JSON parameters are optional.
+//  Method                  PATCH
 //  Endpoint                /channels/{channel.id}
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
-//  Reviewed                2018-06-07
-//  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
-func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
-	builder := &updateChannelBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return c.client.pool.channel.Get()
+//  Reviewed                2021-08-08
+func (c channelQueryBuilder) Update(params *UpdateChannel) (*Channel, error) {
+	if params == nil {
+		return nil, ErrMissingRESTParams
 	}
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+	if err := c.validate(); err != nil {
+		return nil, err
+	}
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPatch,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.Channel(c.cid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Channel{}
+	}
 
-	return builder
+	return getChannel(r.Execute)
+}
+
+type UpdateChannel struct {
+	Name                       *string                    `json:"name,omitempty"`
+	Type                       *ChannelType               `json:"type,omitempty"`
+	Position                   *uint                      `json:"position,omitempty"`
+	Topic                      *string                    `json:"topic,omitempty"`
+	NSFW                       *bool                      `json:"nsfw,omitempty"`
+	RateLimitPerUser           *uint                      `json:"rate_limit_per_user,omitempty"`
+	Bitrate                    *uint                      `json:"bitrate,omitempty"`
+	UserLimit                  *uint                      `json:"user_limit,omitempty"`
+	PermissionOverwrites       *[]PermissionOverwriteType `json:"permission_overwrites,omitempty"`
+	ParentID                   *Snowflake                 `json:"parent_id,omitempty"`
+	RTCRegion                  *string                    `json:"rtc_region,omitempty"`
+	VideoQualityMode           *VideoQualityMode          `json:"video_quality_mode,omitempty"`
+	DefaultAutoArchiveDuration *uint                      `json:"default_auto_archive_duration,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // Delete [REST] Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
@@ -452,8 +502,7 @@ func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
 //                          action by opening a private message with the recipient again.
 func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("not a valid snowflake")
-		return
+		return nil, ErrMissingChannelID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -488,8 +537,8 @@ func (c channelQueryBuilder) TriggerTypingIndicator() (err error) {
 	return err
 }
 
-// UpdateChannelPermissionsParams https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
-type UpdateChannelPermissionsParams struct {
+// UpdateChannelPermissions https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params
+type UpdateChannelPermissions struct {
 	Allow PermissionBit `json:"allow"` // the bitwise value of all allowed permissions
 	Deny  PermissionBit `json:"deny"`  // the bitwise value of all disallowed permissions
 	Type  uint          `json:"type"`  // 0=role, 1=member
@@ -503,12 +552,12 @@ type UpdateChannelPermissionsParams struct {
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
 //  Reviewed                2018-06-07
 //  Comment                 -
-func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissionsParams) (err error) {
+func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if overwriteID.IsZero() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
+		return ErrMissingPermissionOverwriteID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -532,8 +581,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 //  Comment                 -
 func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to target the correct channel")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -548,28 +596,37 @@ func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	return getInvites(r.Execute)
 }
 
-// CreateInvite [REST] Create a new invite object for the channel. Only usable for guild Channels. Requires
-// the CREATE_INSTANT_INVITE permission. All JSON parameters for this route are optional, however the request body is
-// not. If you are not sending any fields, you still have to send an empty JSON object ({}). Returns an invite object.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-channel-invite
-//  Reviewed                2018-06-07
-//  Comment                 -
-func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
-	builder := &createChannelInviteBuilder{}
-	builder.r.itemFactory = func() interface{} {
-		return &Invite{}
+// CreateInvite https://discord.com/developers/docs/resources/channel#create-channel-invite
+func (c channelQueryBuilder) CreateInvite(params *CreateInvite) (*Invite, error) {
+	if params == nil {
+		return nil, MissingRESTParamsErr
 	}
-	builder.r.flags = c.flags
-	builder.r.setup(c.client.req, &httd.Request{
+
+	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,
 		Ctx:         c.ctx,
 		Endpoint:    endpoint.ChannelInvites(c.cid),
 		ContentType: httd.ContentTypeJSON,
-	}, nil)
+		Body:        params,
+		Reason:      params.AuditLogReason,
+	}, c.flags)
+	r.factory = func() interface{} {
+		return &Invite{}
+	}
 
-	return builder
+	return getInvite(r.Execute)
+}
+
+type CreateInvite struct {
+	MaxAge              int       `json:"max_age"`
+	MaxUses             int       `json:"max_uses,omitempty"`
+	Temporary           bool      `json:"temporary,omitempty"`
+	Unique              bool      `json:"unique,omitempty"`
+	TargetType          int       `json:"target_type,omitempty"`
+	TargetUserID        Snowflake `json:"target_user_id,omitempty"`
+	TargetApplicationID Snowflake `json:"target_application_id,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }
 
 // DeletePermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
@@ -582,10 +639,10 @@ func (c channelQueryBuilder) CreateInvite() CreateChannelInviteBuilder {
 //  Comment                 -
 func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if overwriteID.IsZero() {
-		return errors.New("overwriteID must be set to target the specific channel permissions")
+		return ErrMissingPermissionOverwriteID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -607,7 +664,7 @@ type GroupDMParticipant struct {
 
 func (g *GroupDMParticipant) FindErrors() error {
 	if g.UserID.IsZero() {
-		return errors.New("missing UserID")
+		return ErrMissingUserID
 	}
 	if g.AccessToken == "" {
 		return errors.New("missing access token")
@@ -628,7 +685,7 @@ func (g *GroupDMParticipant) FindErrors() error {
 //  Comment                 -
 func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) error {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if participant == nil {
 		return errors.New("params can not be nil")
@@ -657,10 +714,10 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) e
 //  Comment                 -
 func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	if c.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if userID.IsZero() {
-		return errors.New("UserID must be set to target the specific recipient")
+		return ErrMissingUserID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -673,16 +730,16 @@ func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	return err
 }
 
-// GetMessagesParams https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
+// GetMessages https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params
 // TODO: ensure limits
-type GetMessagesParams struct {
+type GetMessages struct {
 	Around Snowflake `urlparam:"around,omitempty"`
 	Before Snowflake `urlparam:"before,omitempty"`
 	After  Snowflake `urlparam:"after,omitempty"`
 	Limit  uint      `urlparam:"limit,omitempty"`
 }
 
-func (g *GetMessagesParams) Validate() error {
+func (g *GetMessages) Validate() error {
 	var mutuallyExclusives int
 	if !g.Around.IsZero() {
 		mutuallyExclusives++
@@ -700,7 +757,7 @@ func (g *GetMessagesParams) Validate() error {
 	return nil
 }
 
-var _ URLQueryStringer = (*GetMessagesParams)(nil)
+var _ URLQueryStringer = (*GetMessages)(nil)
 
 // getMessages [REST] Returns the messages for a channel. If operating on a guild channel, this endpoint requires
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
@@ -714,8 +771,7 @@ var _ URLQueryStringer = (*GetMessagesParams)(nil)
 //                          be passed at a time. see ReqGetChannelMessagesParams.
 func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Message, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return
+		return nil, MissingChannelIDErr
 	}
 
 	var query string
@@ -736,7 +792,7 @@ func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Messag
 }
 
 // GetMessages bypasses discord limitations and iteratively fetches messages until the set filters are met.
-func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams) (messages []*Message, err error) {
+func (c channelQueryBuilder) GetMessages(filter *GetMessages) (messages []*Message, err error) {
 	// discord values
 	const filterLimit = 100
 	const filterDefault = 50
@@ -838,13 +894,13 @@ func (c channelQueryBuilder) GetMessages(filter *GetMessagesParams) (messages []
 	return messages, nil
 }
 
-// DeleteMessagesParams https://discord.com/developers/docs/resources/channel#bulk-delete-messages-json-params
-type DeleteMessagesParams struct {
+// DeleteMessages https://discord.com/developers/docs/resources/channel#bulk-delete-messages-json-params
+type DeleteMessages struct {
 	Messages []Snowflake `json:"messages"`
 	m        sync.RWMutex
 }
 
-func (p *DeleteMessagesParams) tooMany(messages int) (err error) {
+func (p *DeleteMessages) tooMany(messages int) (err error) {
 	if messages > 100 {
 		err = errors.New("must be 100 or less messages to delete")
 	}
@@ -852,7 +908,7 @@ func (p *DeleteMessagesParams) tooMany(messages int) (err error) {
 	return
 }
 
-func (p *DeleteMessagesParams) tooFew(messages int) (err error) {
+func (p *DeleteMessages) tooFew(messages int) (err error) {
 	if messages < 2 {
 		err = errors.New("must be at least two messages to delete")
 	}
@@ -860,8 +916,8 @@ func (p *DeleteMessagesParams) tooFew(messages int) (err error) {
 	return
 }
 
-// Valid validates the DeleteMessagesParams data
-func (p *DeleteMessagesParams) Valid() (err error) {
+// Valid validates the DeleteMessages data
+func (p *DeleteMessages) Valid() (err error) {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
@@ -874,7 +930,7 @@ func (p *DeleteMessagesParams) Valid() (err error) {
 }
 
 // AddMessage Adds a message to be deleted
-func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
+func (p *DeleteMessages) AddMessage(msg *Message) (err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -899,10 +955,9 @@ func (p *DeleteMessagesParams) AddMessage(msg *Message) (err error) {
 //  Reviewed                2018-06-10
 //  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
 //                          provided is older than that.
-func (c channelQueryBuilder) DeleteMessages(params *DeleteMessagesParams) (err error) {
+func (c channelQueryBuilder) DeleteMessages(params *DeleteMessages) (err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return err
+		return ErrMissingChannelID
 	}
 	if err = params.Valid(); err != nil {
 		return err
@@ -930,9 +985,9 @@ type AllowedMentions struct {
 	RepliedUser bool        `json:"replied_user,omitempty"`
 }
 
-// CreateMessageFileParams contains the information needed to upload a file to Discord, it is part of the
-// CreateMessageParams struct.
-type CreateMessageFileParams struct {
+// CreateMessageFile contains the information needed to upload a file to Discord, it is part of the
+// CreateMessage struct.
+type CreateMessageFile struct {
 	Reader   io.Reader `json:"-"` // always omit as we don't want this as part of the JSON payload
 	FileName string    `json:"-"`
 
@@ -943,7 +998,7 @@ type CreateMessageFileParams struct {
 }
 
 // write helper for file uploading in messages
-func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
+func (f *CreateMessageFile) write(i int, mp *multipart.Writer) error {
 	var filename string
 	if f.SpoilerTag {
 		filename = AttachmentSpoilerPrefix + f.FileName
@@ -962,23 +1017,26 @@ func (f *CreateMessageFileParams) write(i int, mp *multipart.Writer) error {
 	return nil
 }
 
-// CreateMessageParams JSON params for CreateChannelMessage
-type CreateMessageParams struct {
-	Content    string                    `json:"content"`
-	Nonce      string                    `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
-	Tts        bool                      `json:"tts,omitempty"`
-	Embed      *Embed                    `json:"embed,omitempty"` // embedded rich content
-	Components []*MessageComponent       `json:"components"`
-	Files      []CreateMessageFileParams `json:"-"` // Always omit as this is included in multipart, not JSON payload
+// CreateMessage JSON params for CreateChannelMessage
+type CreateMessage struct {
+	Content    string              `json:"content"`
+	Nonce      string              `json:"nonce,omitempty"` // THIS IS A STRING. NOT A SNOWFLAKE! DONT TOUCH!
+	Tts        bool                `json:"tts,omitempty"`
+	Embeds     []*Embed            `json:"embeds,omitempty"`
+	Components []*MessageComponent `json:"components"`
+	Files      []CreateMessageFile `json:"-"` // Always omit as this is included in multipart, not JSON payload
 
 	SpoilerTagContent        bool `json:"-"`
 	SpoilerTagAllAttachments bool `json:"-"`
 
 	AllowedMentions  *AllowedMentions  `json:"allowed_mentions,omitempty"` // The allowed mentions object for the message.
 	MessageReference *MessageReference `json:"message_reference,omitempty"`
+
+	// Deprecated: use Embeds
+	Embed *Embed `json:"embed,omitempty"`
 }
 
-func (p *CreateMessageParams) prepare() (postBody interface{}, contentType string, err error) {
+func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err error) {
 	// spoiler tag
 	if p.SpoilerTagContent && len(p.Content) > 0 {
 		p.Content = "|| " + p.Content + " ||"
@@ -1048,10 +1106,9 @@ func (p *CreateMessageParams) prepare() (postBody interface{}, contentType strin
 //  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
 //  Reviewed                2018-06-10
 //  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
-func (c channelQueryBuilder) CreateMessage(params *CreateMessageParams) (ret *Message, err error) {
+func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message, err error) {
 	if c.cid.IsZero() {
-		err = errors.New("channelID must be set to get channel messages")
-		return nil, err
+		return nil, MissingChannelIDErr
 	}
 	if params == nil {
 		err = errors.New("message must be set")
@@ -1101,9 +1158,9 @@ func (c channelQueryBuilder) GetPinnedMessages() (ret []*Message, err error) {
 	return getMessages(r.Execute)
 }
 
-// CreateWebhookParams json params for the create webhook rest request avatar string
+// CreateWebhook json params for the create webhook rest request avatar string
 // https://discord.com/developers/docs/resources/user#avatar-data
-type CreateWebhookParams struct {
+type CreateWebhook struct {
 	Name   string `json:"name"`   // name of the webhook (2-32 characters)
 	Avatar string `json:"avatar"` // avatar data uri scheme, image for the default webhook avatar
 
@@ -1111,12 +1168,12 @@ type CreateWebhookParams struct {
 	Reason string `json:"-"`
 }
 
-func (c *CreateWebhookParams) FindErrors() error {
+func (c *CreateWebhook) FindErrors() error {
 	if c.Name == "" {
-		return errors.New("webhook must have a name")
+		return ErrMissingWebhookName
 	}
 	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
-		return errors.New("webhook name must be 2 to 32 characters long")
+		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", IllegalValueErr)
 	}
 	return nil
 }
@@ -1128,7 +1185,7 @@ func (c *CreateWebhookParams) FindErrors() error {
 //  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
 //  Reviewed                2018-08-14
 //  Comment                 -
-func (c channelQueryBuilder) CreateWebhook(params *CreateWebhookParams) (ret *Webhook, err error) {
+func (c channelQueryBuilder) CreateWebhook(params *CreateWebhook) (ret *Webhook, err error) {
 	if params == nil {
 		return nil, errors.New("params was nil")
 	}
@@ -1170,49 +1227,18 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 	return getWebhooks(r.Execute)
 }
 
-// CreateThread [POST]      Creates a new thread from an existing message.
-// Endpoint                 /channels/{channel.id}/messages/{message.id}/threads
-// Discord documentation    https://discord.com/developers/docs/resources/channel#start-thread-with-message
-// Reviewed                 2021-11-21 (self)
-// Comment                  This endpoint supports the X-Audit-Log-Reason header.
-
-func (c channelQueryBuilder) CreateThread(messageID Snowflake, params *CreateThreadParams) (*Channel, error) {
+// CreateThread https://discord.com/developers/docs/resources/channel#start-thread-without-message
+func (c channelQueryBuilder) CreateThread(params *CreateThreadWithoutMessage) (*Channel, error) {
 	if params == nil || params.Name == "" {
-		return nil, errors.New("thread name is required")
+		return nil, MissingThreadNameErr
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
 	}
 
-	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodPost,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadWithMessage(c.cid, messageID),
-		Body:        params,
-		ContentType: httd.ContentTypeJSON,
-		Reason:      params.Reason,
-	}, c.flags)
-	r.factory = func() interface{} {
-		return &Channel{}
-	}
-
-	return getChannel(r.Execute)
-}
-
-// CreateThreadNoMessage [POST]    Creates a new thread that is not connected to an existing message.
-// Endpoint                        /channels/{channel.id}/threads
-// Discord documentation           https://discord.com/developers/docs/resources/channel#start-thread-without-message
-// Reviewed                        2021-11-22 (self)
-// Comment                         This endpoint supports the X-Audit-Log-Reason header.
-
-func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadParamsNoMessage) (*Channel, error) {
-	if params == nil || params.Name == "" {
-		return nil, errors.New("thread name is required")
-	}
-
-	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, errors.New("thread name must be 2 or more characters and no more than 100 characters")
+	if params.Reason != "" && params.AuditLogReason == "" {
+		params.AuditLogReason = params.Reason
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -1221,7 +1247,7 @@ func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadParamsNoM
 		Endpoint:    endpoint.ChannelThreads(c.cid),
 		Body:        params,
 		ContentType: httd.ContentTypeJSON,
-		Reason:      params.Reason,
+		Reason:      params.AuditLogReason,
 	}, c.flags)
 	r.factory = func() interface{} {
 		return &Channel{}
@@ -1230,13 +1256,24 @@ func (c channelQueryBuilder) CreateThreadNoMessage(params *CreateThreadParamsNoM
 	return getChannel(r.Execute)
 }
 
-// JoinThread [PUT]         Adds the current user to a thread. Also requires the thread is not archived.
-//                          Returns a 204 empty response on success.
-// Endpoint                 /channels/{channel.id}/thread-members/@me
-// Discord documentation    https://discord.com/developers/docs/resources/channel#join-thread
-// Reviewed                 2021-11-22 (self)
-// Comment
+// CreateThreadWithoutMessage https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params
+type CreateThreadWithoutMessage struct {
+	Name                string                  `json:"name"`
+	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
+	// In API v9, type defaults to PRIVATE_THREAD in order to match the behavior when
+	// thread documentation was first published. In API v10 this will be changed to be a required field, with no default.
+	Type             ChannelType `json:"type,omitempty"`
+	Invitable        bool        `json:"invitable,omitempty"`
+	RateLimitPerUser int         `json:"rate_limit_per_user,omitempty"`
 
+	// AuditLogReason is an X-Audit-Log-Reason header field that will show up on the audit log for this action.
+	AuditLogReason string `json:"-"`
+
+	// Deprecated: use AuditLogReason
+	Reason string `json:"-"`
+}
+
+// JoinThread https://discord.com/developers/docs/resources/channel#join-thread
 func (c channelQueryBuilder) JoinThread() error {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPut,
@@ -1249,78 +1286,48 @@ func (c channelQueryBuilder) JoinThread() error {
 	return err
 }
 
-// AddThreadMember [PUT]    Adds another member to a thread. Requires the ability to send messages in the thread.
-//                          Also requires the thread is not archived. Returns a 204 empty response if the member
-//                          is successfully added or was already a member of the thread.
-// Endpoint                 /channels/{channel.id}/thread-members/{user.id}
-// Discord documentation    https://discord.com/developers/docs/resources/channel#add-thread-member
-// Reviewed                 2021-11-22 (self)
-// Comment
-
+// AddThreadMember https://discord.com/developers/docs/resources/channel#add-thread-member
 func (c channelQueryBuilder) AddThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodPut,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodPut,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// LeaveThread [DELETE]     Removes the current user from a thread. Also requires the thread is not archived.
-//                          Returns a 204 empty response on success.
-// Endpoint                 /channels/{channel.id}/thread-members/@me
-// Discord documentation    https://discord.com/developers/docs/resources/channel#leave-thread
-// Reviewed                 2021-11-22 (self)
-// Comment
-
+// LeaveThread https://discord.com/developers/docs/resources/channel#leave-thread
 func (c channelQueryBuilder) LeaveThread() error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberCurrentUser(c.cid),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodDelete,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberCurrentUser(c.cid),
 	}, c.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// RemoveThreadMember [DELETE]    Removes another member from a thread. Requires the MANAGE_THREADS permission, or
-//                                the creator of the thread if it is a GUILD_PRIVATE_THREAD. Also requires the thread
-//                                is not archived. Returns a 204 empty response on success.
-// Endpoint                       /channels/{channel.id}/thread-members/{user.id}
-// Discord documentation          https://discord.com/developers/docs/resources/channel#remove-thread-member
-// Reviewed                       2021-11-22 (self)
-// Comment
-
+// RemoveThreadMember https://discord.com/developers/docs/resources/channel#remove-thread-member
 func (c channelQueryBuilder) RemoveThreadMember(userID Snowflake) error {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodDelete,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodDelete,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 
 	_, err := r.Execute()
 	return err
 }
 
-// GetThreadMember [GET]    Returns a thread member object for the specified user if they are a
-//                          member of the thread, returns a 404 response otherwise.
-// Endpoint                 /channels/{channel.id}/thread-members/{user.id}
-// Discord documentation    https://discord.com/developers/docs/resources/channel#get-thread-member
-// Reviewed                 2021-11-22 (self)
-// Comment
-
+// GetThreadMember https://discord.com/developers/docs/resources/channel#get-thread-member
 func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodGet,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMemberUser(c.cid, userID),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodGet,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMemberUser(c.cid, userID),
 	}, c.flags)
 	r.factory = func() interface{} {
 		return &ThreadMember{}
@@ -1329,54 +1336,38 @@ func (c channelQueryBuilder) GetThreadMember(userID Snowflake) (*ThreadMember, e
 	return getThreadMember(r.Execute)
 }
 
-// GetThreadMembers [GET]    Returns array of thread members objects that are members of the thread.
-//                           This endpoint is restricted according to whether the GUILD_MEMBERS Privileged Intent
-//                           is enabled for your application.
-// Endpoint                  /channels/{channel.id}/thread-members
-// Discord documentation     https://discord.com/developers/docs/resources/channel#list-thread-members
-// Reviewed                  2021-11-22 (self)
-// Comment
-
+// GetThreadMembers https://discord.com/developers/docs/resources/channel#list-thread-members
 func (c channelQueryBuilder) GetThreadMembers() ([]*ThreadMember, error) {
 	r := c.client.newRESTRequest(&httd.Request{
-		Method:      http.MethodGet,
-		Ctx:         c.ctx,
-		Endpoint:    endpoint.ChannelThreadMembers(c.cid),
-		ContentType: httd.ContentTypeJSON,
+		Method:   http.MethodGet,
+		Ctx:      c.ctx,
+		Endpoint: endpoint.ChannelThreadMembers(c.cid),
 	}, c.flags)
 	r.factory = func() interface{} {
-		return &ThreadMember{}
+		tmp := make([]*ThreadMember, 0)
+		return &tmp
 	}
 
 	return getThreadMembers(r.Execute)
 }
 
-// https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body
-type ResponseBodyThreads struct {
+// ArchivedThreads https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body
+type ArchivedThreads struct {
 	Threads []*Channel      `json:"threads"`
 	Members []*ThreadMember `json:"members"`
 	HasMore bool            `json:"has_more"`
 }
 
-// https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params
-type GetThreadsParams struct {
+// GetArchivedThreads https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params
+type GetArchivedThreads struct {
 	Before Time `urlparam:"before,omitempty"`
 	Limit  int  `urlparam:"limit,omitempty"`
 }
 
-var _ URLQueryStringer = (*GetThreadsParams)(nil)
+var _ URLQueryStringer = (*GetArchivedThreads)(nil)
 
-// GetPublicArchivedThreads [GET]    Returns archived threads in the channel that are public. When called
-//                                   on a GUILD_TEXT channel, returns threads of type GUILD_PUBLIC_THREAD.
-//                                   When called on a GUILD_NEWS channel returns threads of type GUILD_NEWS_THREAD.
-//                                   Threads are ordered by archive_timestamp, in descending order. Requires the
-//                                   READ_MESSAGE_HISTORY permission.
-// Endpoint                          /channels/{channel.id}/threads/archived/public
-// Discord documentation             https://discord.com/developers/docs/resources/channel#list-public-archived-threads
-// Reviewed                          2021-11-22 (self)
-// Comment
-
-func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+// GetPublicArchivedThreads https://discord.com/developers/docs/resources/channel#list-public-archived-threads
+func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()
@@ -1389,24 +1380,17 @@ func (c channelQueryBuilder) GetPublicArchivedThreads(params *GetThreadsParams) 
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {
-		return &ResponseBodyThreads{
+		return &ArchivedThreads{
 			Threads: make([]*Channel, 0),
 			Members: make([]*ThreadMember, 0),
 		}
 	}
 
-	return getResponseBodyThreads(r.Execute)
+	return getArchivedThreads(r.Execute)
 }
 
-// GetPrivateArchivedThreads [GET]    Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD.
-//                                    Threads are ordered by archive_timestamp, in descending order. Requires both
-//                                    the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
-// Endpoint                           /channels/{channel.id}/threads/archived/private
-// Discord documentation              https://discord.com/developers/docs/resources/channel#list-private-archived-threads
-// Reviewed                           2021-11-24 (self)
-// Comment
-
-func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+// GetPrivateArchivedThreads https://discord.com/developers/docs/resources/channel#list-private-archived-threads
+func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()
@@ -1419,23 +1403,17 @@ func (c channelQueryBuilder) GetPrivateArchivedThreads(params *GetThreadsParams)
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {
-		return &ResponseBodyThreads{
+		return &ArchivedThreads{
 			Threads: make([]*Channel, 0),
 			Members: make([]*ThreadMember, 0),
 		}
 	}
 
-	return getResponseBodyThreads(r.Execute)
+	return getArchivedThreads(r.Execute)
 }
 
-// GetJoinedPrivateArchivedThreads [GET]    Returns archived threads in the channel that are of type GUILD_PRIVATE_THREAD,
-//                                          and the user has joined. Threads are ordered by their id, in descending order.
-//                                          Requires the READ_MESSAGE_HISTORY permission.
-// Discord documentation                    https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads
-// Reviewed                                 2021-11-24 (self)
-// Comment
-
-func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetThreadsParams) (*ResponseBodyThreads, error) {
+// GetJoinedPrivateArchivedThreads https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads
+func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetArchivedThreads) (*ArchivedThreads, error) {
 	var query string
 	if params != nil {
 		query += params.URLQueryString()
@@ -1448,57 +1426,11 @@ func (c channelQueryBuilder) GetJoinedPrivateArchivedThreads(params *GetThreadsP
 		ContentType: httd.ContentTypeJSON,
 	}, c.flags)
 	r.factory = func() interface{} {
-		return &ResponseBodyThreads{
+		return &ArchivedThreads{
 			Threads: make([]*Channel, 0),
 			Members: make([]*ThreadMember, 0),
 		}
 	}
 
-	return getResponseBodyThreads(r.Execute)
-}
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-//generate-rest-params: max_age:int, max_uses:int, temporary:bool, unique:bool,
-//generate-rest-basic-execute: invite:*Invite,
-type createChannelInviteBuilder struct {
-	r RESTBuilder
-}
-
-func (b *createChannelInviteBuilder) WithReason(reason string) *createChannelInviteBuilder {
-	b.r.headerReason = reason
-	return b
-}
-
-// updateChannelBuilder https://discord.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
-//generate-rest-basic-execute: channel:*Channel,
-type updateChannelBuilder struct {
-	r RESTBuilder
-}
-
-func (b *updateChannelBuilder) AddPermissionOverwrite(permission PermissionOverwrite) *updateChannelBuilder {
-	if _, exists := b.r.body["permission_overwrites"]; !exists {
-		b.SetPermissionOverwrites([]PermissionOverwrite{permission})
-	} else {
-		s := b.r.body["permission_overwrites"].([]PermissionOverwrite)
-		s = append(s, permission)
-		b.SetPermissionOverwrites(s)
-	}
-	return b
-}
-func (b *updateChannelBuilder) AddPermissionOverwrites(permissions []PermissionOverwrite) *updateChannelBuilder {
-	for i := range permissions {
-		b.AddPermissionOverwrite(permissions[i])
-	}
-	return b
-}
-
-func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
-	b.r.param("parent_id", nil)
-	return b
+	return getArchivedThreads(r.Execute)
 }

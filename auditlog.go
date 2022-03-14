@@ -163,17 +163,3 @@ var _ DeepCopier = (*AuditLogChanges)(nil)
 func auditLogFactory() interface{} {
 	return &AuditLog{}
 }
-
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
-
-// guildAuditLogsBuilder for building the GetGuildAuditLogs request.
-// TODO: support caching of audit log entries. So we only fetch those we don't have.
-//generate-rest-params: user_id:Snowflake, action_type:uint, before:Snowflake, limit:int,
-//generate-rest-basic-execute: log:*AuditLog,
-type guildAuditLogsBuilder struct {
-	r RESTBuilder
-}

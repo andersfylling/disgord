@@ -46,6 +46,18 @@ func defineResource(evt string) (resource evtResource) {
 		resource = &GuildRoleDelete{}
 	case EvtGuildRoleUpdate:
 		resource = &GuildRoleUpdate{}
+	case EvtGuildScheduledEventCreate:
+		resource = &GuildScheduledEventCreate{}
+	case EvtGuildScheduledEventDelete:
+		resource = &GuildScheduledEventDelete{}
+	case EvtGuildScheduledEventUpdate:
+		resource = &GuildScheduledEventUpdate{}
+	case EvtGuildScheduledEventUserAdd:
+		resource = &GuildScheduledEventUserAdd{}
+	case EvtGuildScheduledEventUserRemove:
+		resource = &GuildScheduledEventUserRemove{}
+	case EvtGuildStickersUpdate:
+		resource = &GuildStickersUpdate{}
 	case EvtGuildUpdate:
 		resource = &GuildUpdate{}
 	case EvtInteractionCreate:
@@ -178,6 +190,30 @@ func isHandler(h Handler) (ok bool) {
 	case HandlerGuildRoleUpdate:
 		ok = true
 	case chan *GuildRoleUpdate:
+		ok = true
+	case HandlerGuildScheduledEventCreate:
+		ok = true
+	case chan *GuildScheduledEventCreate:
+		ok = true
+	case HandlerGuildScheduledEventDelete:
+		ok = true
+	case chan *GuildScheduledEventDelete:
+		ok = true
+	case HandlerGuildScheduledEventUpdate:
+		ok = true
+	case chan *GuildScheduledEventUpdate:
+		ok = true
+	case HandlerGuildScheduledEventUserAdd:
+		ok = true
+	case chan *GuildScheduledEventUserAdd:
+		ok = true
+	case HandlerGuildScheduledEventUserRemove:
+		ok = true
+	case chan *GuildScheduledEventUserRemove:
+		ok = true
+	case HandlerGuildStickersUpdate:
+		ok = true
+	case chan *GuildStickersUpdate:
 		ok = true
 	case HandlerGuildUpdate:
 		ok = true
@@ -324,6 +360,18 @@ func closeChannel(channel interface{}) {
 	case chan *GuildRoleDelete:
 		close(t)
 	case chan *GuildRoleUpdate:
+		close(t)
+	case chan *GuildScheduledEventCreate:
+		close(t)
+	case chan *GuildScheduledEventDelete:
+		close(t)
+	case chan *GuildScheduledEventUpdate:
+		close(t)
+	case chan *GuildScheduledEventUserAdd:
+		close(t)
+	case chan *GuildScheduledEventUserRemove:
+		close(t)
+	case chan *GuildStickersUpdate:
 		close(t)
 	case chan *GuildUpdate:
 		close(t)
@@ -509,6 +557,42 @@ func (d *dispatcher) trigger(h Handler, evt resource) {
 		t <- evt.(*GuildRoleUpdate)
 	case chan<- *GuildRoleUpdate:
 		t <- evt.(*GuildRoleUpdate)
+	case HandlerGuildScheduledEventCreate:
+		t(d.session, evt.(*GuildScheduledEventCreate))
+	case chan *GuildScheduledEventCreate:
+		t <- evt.(*GuildScheduledEventCreate)
+	case chan<- *GuildScheduledEventCreate:
+		t <- evt.(*GuildScheduledEventCreate)
+	case HandlerGuildScheduledEventDelete:
+		t(d.session, evt.(*GuildScheduledEventDelete))
+	case chan *GuildScheduledEventDelete:
+		t <- evt.(*GuildScheduledEventDelete)
+	case chan<- *GuildScheduledEventDelete:
+		t <- evt.(*GuildScheduledEventDelete)
+	case HandlerGuildScheduledEventUpdate:
+		t(d.session, evt.(*GuildScheduledEventUpdate))
+	case chan *GuildScheduledEventUpdate:
+		t <- evt.(*GuildScheduledEventUpdate)
+	case chan<- *GuildScheduledEventUpdate:
+		t <- evt.(*GuildScheduledEventUpdate)
+	case HandlerGuildScheduledEventUserAdd:
+		t(d.session, evt.(*GuildScheduledEventUserAdd))
+	case chan *GuildScheduledEventUserAdd:
+		t <- evt.(*GuildScheduledEventUserAdd)
+	case chan<- *GuildScheduledEventUserAdd:
+		t <- evt.(*GuildScheduledEventUserAdd)
+	case HandlerGuildScheduledEventUserRemove:
+		t(d.session, evt.(*GuildScheduledEventUserRemove))
+	case chan *GuildScheduledEventUserRemove:
+		t <- evt.(*GuildScheduledEventUserRemove)
+	case chan<- *GuildScheduledEventUserRemove:
+		t <- evt.(*GuildScheduledEventUserRemove)
+	case HandlerGuildStickersUpdate:
+		t(d.session, evt.(*GuildStickersUpdate))
+	case chan *GuildStickersUpdate:
+		t <- evt.(*GuildStickersUpdate)
+	case chan<- *GuildStickersUpdate:
+		t <- evt.(*GuildStickersUpdate)
 	case HandlerGuildUpdate:
 		t(d.session, evt.(*GuildUpdate))
 	case chan *GuildUpdate:
@@ -728,6 +812,24 @@ type HandlerGuildRoleDelete = func(s Session, h *GuildRoleDelete)
 
 // HandlerGuildRoleUpdate is triggered by GuildRoleUpdate events
 type HandlerGuildRoleUpdate = func(s Session, h *GuildRoleUpdate)
+
+// HandlerGuildScheduledEventCreate is triggered by GuildScheduledEventCreate events
+type HandlerGuildScheduledEventCreate = func(s Session, h *GuildScheduledEventCreate)
+
+// HandlerGuildScheduledEventDelete is triggered by GuildScheduledEventDelete events
+type HandlerGuildScheduledEventDelete = func(s Session, h *GuildScheduledEventDelete)
+
+// HandlerGuildScheduledEventUpdate is triggered by GuildScheduledEventUpdate events
+type HandlerGuildScheduledEventUpdate = func(s Session, h *GuildScheduledEventUpdate)
+
+// HandlerGuildScheduledEventUserAdd is triggered by GuildScheduledEventUserAdd events
+type HandlerGuildScheduledEventUserAdd = func(s Session, h *GuildScheduledEventUserAdd)
+
+// HandlerGuildScheduledEventUserRemove is triggered by GuildScheduledEventUserRemove events
+type HandlerGuildScheduledEventUserRemove = func(s Session, h *GuildScheduledEventUserRemove)
+
+// HandlerGuildStickersUpdate is triggered by GuildStickersUpdate events
+type HandlerGuildStickersUpdate = func(s Session, h *GuildStickersUpdate)
 
 // HandlerGuildUpdate is triggered by GuildUpdate events
 type HandlerGuildUpdate = func(s Session, h *GuildUpdate)

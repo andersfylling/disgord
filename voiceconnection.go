@@ -85,12 +85,10 @@ func newVoiceRepository(c *Client) (voice *voiceRepository) {
 
 func (r *voiceRepository) voiceConnectOptions(guildID, channelID Snowflake, selfDeaf, selfMute bool) (ret VoiceConnection, err error) {
 	if guildID.IsZero() {
-		err = errors.New("guildID must be set to connect to a voice channel")
-		return
+		return nil, ErrMissingGuildID
 	}
 	if channelID.IsZero() {
-		err = errors.New("channelID must be set to connect to a voice channel")
-		return
+		return nil, ErrMissingChannelID
 	}
 
 	// Set up some listeners for this connection attempt
@@ -225,7 +223,7 @@ waiter:
 	// libSodium/NaCl and golang.org/x/crypto/nacl/secretbox use. If both Discord and Go both start supporting more
 	// modes "out of the box" we might want to consider implementing a "preferred mode selection" algorithm here.
 	var session *gateway.VoiceSessionDescription
-	session, err = voice.ws.SendUDPInfo(&gateway.VoiceSelectProtocolParams{
+	session, err = voice.ws.SendUDPInfo(&gateway.VoiceSelectProtocol{
 		Mode:    "xsalsa20_poly1305",
 		Address: ip,
 		Port:    port,
@@ -335,7 +333,7 @@ func (v *voiceImpl) SendDCA(r io.Reader) error {
 
 func (v *voiceImpl) MoveTo(channelID Snowflake) error {
 	if channelID.IsZero() {
-		return errors.New("channelID must be set to move to a voice channel")
+		return ErrMissingChannelID
 	}
 
 	v.Lock()
