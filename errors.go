@@ -47,8 +47,7 @@ var ErrMissingTime = fmt.Errorf("time: %w", ErrMissingRequiredField)
 var ErrMissingScheduledEventStartTime = fmt.Errorf("scheduled event start: %w", ErrMissingTime)
 var ErrMissingScheduledEventEndTime = fmt.Errorf("scheduled event end: %w", ErrMissingTime)
 
-var ErrMissingLocation = fmt.Errorf("location: %w", ErrMissingRequiredField)
-var ErrMissingScheduledEventLocation = fmt.Errorf("scheduled event: %w", ErrMissingLocation)
+var ErrMissingScheduledEventLocation = fmt.Errorf("scheduled event: %w", ErrMissingRequiredField)
 
 var ErrMissingType = fmt.Errorf("type: %w", ErrMissingRequiredField)
 var ErrMissingScheduledEventEntityType = fmt.Errorf("scheduled event entity: %w", ErrMissingType)
