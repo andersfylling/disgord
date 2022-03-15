@@ -8,30 +8,27 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	"github.com/andersfylling/disgord/internal/logger"
 )
 
 func TestThreadEndpoints(t *testing.T) {
 	const andersfylling = Snowflake(228846961774559232)
-	validSnowflakes()
-
-	c := New(Config{
-		BotToken:     token,
-		DisableCache: true,
-		Logger:       &logger.FmtPrinter{},
-	})
+	c := sharedTestSession.session
+	server := sharedTestSession.CreateNewServer()
+	textChannel := server.Channels[0]
+	if textChannel.Type != ChannelTypeGuildText {
+		t.Fatal("wrong channel type") // TODO: improve using lookup
+	}
 
 	deadline, _ := context.WithDeadline(context.Background(), time.Now().Add(25*time.Second))
 
 	t.Run("create", func(t *testing.T) {
 		threadName := "HELLO WORLD1"
-		msg, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateMessage(&CreateMessage{Content: threadName})
+		msg, err := c.Channel(textChannel.ID).WithContext(deadline).CreateMessage(&CreateMessage{Content: threadName})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		thread, err := c.Channel(guildAdmin.TextChannelGeneral).Message(msg.ID).WithContext(deadline).CreateThread(&CreateThread{
+		thread, err := c.Channel(textChannel.ID).Message(msg.ID).WithContext(deadline).CreateThread(&CreateThread{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 		})
@@ -50,7 +47,7 @@ func TestThreadEndpoints(t *testing.T) {
 	t.Run("create-thread-no-message", func(t *testing.T) {
 		threadName := "Some Thread"
 		var err error
-		thread, err = c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(&CreateThreadWithoutMessage{
+		thread, err = c.Channel(textChannel.ID).WithContext(deadline).CreateThread(&CreateThreadWithoutMessage{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 			Type:                ChannelTypeGuildPublicThread,

@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,57 +16,7 @@ import (
 	"github.com/andersfylling/disgord/internal/logger"
 )
 
-var token = os.Getenv("DISGORD_TOKEN_INTEGRATION_TEST")
-
-var guildTypical = struct {
-	ID                  Snowflake
-	TextChannelGeneral  Snowflake
-	VoiceChannelGeneral Snowflake
-	VoiceChannelOther1  Snowflake
-	VoiceChannelOther2  Snowflake
-}{
-	ID:                  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_ID")),
-	TextChannelGeneral:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_TEXT_GENERAL")),
-	VoiceChannelGeneral: ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_GENERAL")),
-	VoiceChannelOther1:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_1")),
-	VoiceChannelOther2:  ParseSnowflakeString(os.Getenv("TEST_GUILD_TYPICAL_VOICE_2")),
-}
-
-var guildAdmin = struct {
-	ID                 Snowflake
-	TextChannelGeneral Snowflake
-}{
-	ID:                 ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_ID")),
-	TextChannelGeneral: ParseSnowflakeString(os.Getenv("TEST_GUILD_ADMIN_TEXT_GENERAL")),
-}
-
-func validSnowflakes() {
-	if guildAdmin.ID.IsZero() {
-		panic("missing id for admin guild")
-	}
-	if guildAdmin.TextChannelGeneral.IsZero() {
-		panic("missing text channel for admin guild")
-	}
-	if guildTypical.ID.IsZero() {
-		panic("missing id for typical guild")
-	}
-	if guildTypical.TextChannelGeneral.IsZero() {
-		panic("missing id for typical guild TextChannelGeneral")
-	}
-	if guildTypical.VoiceChannelGeneral.IsZero() {
-		panic("missing id for typical guild VoiceChannelGeneral")
-	}
-	if guildTypical.VoiceChannelOther1.IsZero() {
-		panic("missing id for typical guild VoiceChannelOther1")
-	}
-	if guildTypical.VoiceChannelOther2.IsZero() {
-		panic("missing id for typical guild VoiceChannelOther2")
-	}
-}
-
 func TestClient(t *testing.T) {
-	validSnowflakes()
-
 	wg := &sync.WaitGroup{}
 
 	status := &UpdateStatusPayload{
