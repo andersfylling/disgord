@@ -1,4 +1,7 @@
 {
+  "extends": [
+    "config:base"
+  ],
   "packageRules": [
     {
       "matchPackagePatterns": ["*"],
@@ -8,8 +11,7 @@
       ],
       "automerge": true,
       "automergeType": "branch",
-      "commitMessagePrefix": "chore: ",
-      "ignorePaths": ["**/examples/**"]
+      "commitMessagePrefix": "chore: "
     }
   ]
 }
