@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/util/stringslice"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/andersfylling/disgord/internal/util/stringslice"
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/json"
@@ -812,4 +813,43 @@ func getActiveGuildThreads(f func() (interface{}, error)) (concreteBody *ActiveG
 		return nil, err
 	}
 	return v.(*ActiveGuildThreads), nil
+}
+
+func getScheduledEvents(f func() (interface{}, error)) (scheduledEvents []*GuildScheduledEvent, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	if list, ok := v.(*[]*GuildScheduledEvent); ok {
+		return *list, nil
+	} else if list, ok := v.([]*GuildScheduledEvent); ok {
+		return list, nil
+	}
+
+	return nil, err
+}
+
+func getScheduledEvent(f func() (interface{}, error)) (scheduledEvents *GuildScheduledEvent, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	return v.(*GuildScheduledEvent), err
+}
+
+func getScheduledEventUsers(f func() (interface{}, error)) (scheduledEventUsers []*GuildScheduledEventUsers, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	if list, ok := v.(*[]*GuildScheduledEventUsers); ok {
+		return *list, nil
+	} else if list, ok := v.([]*GuildScheduledEventUsers); ok {
+		return list, nil
+	}
+
+	return nil, err
 }

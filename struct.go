@@ -200,6 +200,35 @@ func (vl *VerificationLvl) VeryHigh() bool {
 	return *vl == VerificationLvlVeryHigh
 }
 
+// GuildScheduledEventPrivacyLevel ...
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level
+type GuildScheduledEventPrivacyLevel uint
+
+// the different scheduled event privacy level
+const (
+	GuildScheduledEventPrivacyLevelGuildOnly GuildScheduledEventPrivacyLevel = iota + 2
+)
+
+// GuildScheduledEventEntityTypes ...
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types
+type GuildScheduledEventEntityTypes uint
+
+// the different scheduled event entity types
+const (
+	GuildScheduledEventEntityTypesStageInstance GuildScheduledEventEntityTypes = iota + 1
+	GuildScheduledEventEntityTypesVoice
+	GuildScheduledEventEntityTypesExternal
+)
+
+type GuildScheduledEventStatus uint
+
+const (
+	GuildScheduledEventStatusScheduled GuildScheduledEventStatus = iota + 1
+	GuildScheduledEventStatusActive
+	GuildScheduledEventStatusCompleted
+	GuildScheduledEventStatusCancelled
+)
+
 // PremiumTier ...
 // https://discord.com/developers/docs/resources/guild#guild-object-premium-tier
 type PremiumTier uint

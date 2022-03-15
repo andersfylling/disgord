@@ -3,6 +3,7 @@ package disgord
 import (
 	"errors"
 	"fmt"
+
 	"github.com/andersfylling/disgord/internal/disgorderr"
 )
 
@@ -35,7 +36,18 @@ var ErrMissingGuildName = fmt.Errorf("guild: %w", ErrMissingName)
 var ErrMissingChannelName = fmt.Errorf("channel: %w", ErrMissingName)
 var ErrMissingWebhookName = fmt.Errorf("webhook: %w", ErrMissingName)
 var ErrMissingThreadName = fmt.Errorf("thread: %w", ErrMissingName)
+var ErrMissingScheduledEventName = fmt.Errorf("scheduled event name: %w", ErrMissingName)
 
 var ErrMissingWebhookToken = errors.New("webhook token was not set")
 
 var ErrIllegalValue = errors.New("illegal value")
+var ErrIllegalScheduledEventPrivacyLevelValue = fmt.Errorf("scheduled event privacy level: %w", ErrIllegalValue)
+
+var ErrMissingTime = fmt.Errorf("time: %w", ErrMissingRequiredField)
+var ErrMissingScheduledEventStartTime = fmt.Errorf("scheduled event start: %w", ErrMissingTime)
+var ErrMissingScheduledEventEndTime = fmt.Errorf("scheduled event end: %w", ErrMissingTime)
+
+var ErrMissingScheduledEventLocation = fmt.Errorf("scheduled event: %w", ErrMissingRequiredField)
+
+var ErrMissingType = fmt.Errorf("type: %w", ErrMissingRequiredField)
+var ErrMissingScheduledEventEntityType = fmt.Errorf("scheduled event entity: %w", ErrMissingType)
