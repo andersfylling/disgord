@@ -513,15 +513,16 @@ var _ DeepCopier = (*IntegrationAccount)(nil)
 
 // Member https://discord.com/developers/docs/resources/guild#guild-member-object
 type Member struct {
-	GuildID      Snowflake   `json:"guild_id,omitempty"`
-	User         *User       `json:"user"`
-	Nick         string      `json:"nick,omitempty"`
-	Roles        []Snowflake `json:"roles"`
-	JoinedAt     Time        `json:"joined_at,omitempty"`
-	PremiumSince Time        `json:"premium_since,omitempty"`
-	Deaf         bool        `json:"deaf"`
-	Mute         bool        `json:"mute"`
-	Pending      bool        `json:"pending"`
+	GuildID                    Snowflake   `json:"guild_id,omitempty"`
+	User                       *User       `json:"user"`
+	Nick                       string      `json:"nick,omitempty"`
+	Roles                      []Snowflake `json:"roles"`
+	JoinedAt                   Time        `json:"joined_at,omitempty"`
+	PremiumSince               Time        `json:"premium_since,omitempty"`
+	CommunicationDisabledUntil Time        `json:"communication_disabled_until"`
+	Deaf                       bool        `json:"deaf"`
+	Mute                       bool        `json:"mute"`
+	Pending                    bool        `json:"pending"`
 
 	// custom
 	UserID Snowflake `json:"-"`
@@ -759,6 +760,11 @@ type GuildQueryBuilder interface {
 
 	// Deprecated: use GetPruneMembersCount
 	EstimatePruneMembersCount(days int) (estimate int, err error)
+
+	// Guild Scheduled Event
+	ScheduledEvent(eventID Snowflake) GuildScheduledEventQueryBuilder
+	GetScheduledEvents(params *GetScheduledEvents) ([]*GuildScheduledEvent, error)
+	CreateScheduledEvent(params *CreateScheduledEvent) (*GuildScheduledEvent, error)
 }
 
 // Guild is used to create a guild query builder.
@@ -1751,4 +1757,58 @@ func (g guildQueryBuilder) GetActiveThreads() (*ActiveGuildThreads, error) {
 	}
 
 	return getActiveGuildThreads(r.Execute)
+}
+
+func (g guildQueryBuilder) ScheduledEvent(eventID Snowflake) GuildScheduledEventQueryBuilder {
+	return &guildScheduledEventQueryBuilder{
+		client:  g.client,
+		gid:     g.gid,
+		eventID: eventID,
+		flags:   g.flags,
+	}
+}
+
+func (g guildQueryBuilder) GetScheduledEvents(params *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
+	// TODO: add cache implementation
+	if params == nil {
+		params = &GetScheduledEvents{
+			WithUserCount: false,
+		}
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
+		Endpoint:    endpoint.ScheduledEvents(g.gid) + params.URLQueryString(),
+		Ctx:         g.ctx,
+		ContentType: httd.ContentType,
+	}, g.flags)
+	r.factory = func() interface{} {
+		gses := make([]*GuildScheduledEvent, 0)
+		return &gses
+	}
+
+	return getScheduledEvents(r.Execute)
+}
+
+func (g guildQueryBuilder) CreateScheduledEvent(params *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+	if params == nil {
+		return nil, ErrMissingRESTParams
+	}
+
+	if err := params.validate(); err != nil {
+		return nil, err
+	}
+
+	r := g.client.newRESTRequest(&httd.Request{
+		Method:      http.MethodPost,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.ScheduledEvents(g.gid),
+		Body:        params,
+		ContentType: httd.ContentTypeJSON,
+		Reason:      params.AuditLogReason,
+	}, g.flags)
+	r.factory = func() interface{} {
+		return &GuildScheduledEvent{}
+	}
+
+	return getScheduledEvent(r.Execute)
 }

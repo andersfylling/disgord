@@ -522,6 +522,7 @@ func (m *Member) copyOverTo(other interface{}) error {
 	if dest, valid = other.(*Member); !valid {
 		return newErrorUnsupportedType("argument given is not a *Member type")
 	}
+	dest.CommunicationDisabledUntil = m.CommunicationDisabledUntil
 	dest.Deaf = m.Deaf
 	dest.GuildID = m.GuildID
 	dest.JoinedAt = m.JoinedAt
@@ -628,10 +629,13 @@ func (m *MessageComponent) copyOverTo(other interface{}) error {
 	dest.Disabled = m.Disabled
 	dest.Emoji = m.Emoji
 	dest.Label = m.Label
+	dest.MaxValues = m.MaxValues
+	dest.MinValues = m.MinValues
 	dest.Options = make([]*SelectMenuOption, len(m.Options))
 	for i := 0; i < len(m.Options); i++ {
 		dest.Options[i] = DeepCopy(m.Options[i]).(*SelectMenuOption)
 	}
+	dest.Placeholder = m.Placeholder
 	dest.Style = m.Style
 	dest.Type = m.Type
 	dest.Url = m.Url
@@ -805,8 +809,11 @@ func (v *VoiceState) copyOverTo(other interface{}) error {
 	dest.GuildID = v.GuildID
 	dest.Member = v.Member
 	dest.Mute = v.Mute
+	dest.RequestToSpeakTimestamp = v.RequestToSpeakTimestamp
 	dest.SelfDeaf = v.SelfDeaf
 	dest.SelfMute = v.SelfMute
+	dest.SelfStream = v.SelfStream
+	dest.SelfVideo = v.SelfVideo
 	dest.SessionID = v.SessionID
 	dest.Suppress = v.Suppress
 	dest.UserID = v.UserID

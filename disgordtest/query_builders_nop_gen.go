@@ -867,6 +867,10 @@ func (g *GuildQueryBuilderNop) CreateRole(_ *disgord.CreateGuildRole) (*disgord.
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) CreateScheduledEvent(_ *disgord.CreateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) Delete() error {
 	return nil
 }
@@ -939,6 +943,10 @@ func (g *GuildQueryBuilderNop) GetRoles() ([]*disgord.Role, error) {
 	return nil, nil
 }
 
+func (g *GuildQueryBuilderNop) GetScheduledEvents(_ *disgord.GetScheduledEvents) ([]*disgord.GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *GuildQueryBuilderNop) GetVanityURL() (*disgord.Invite, error) {
 	return nil, nil
 }
@@ -972,6 +980,10 @@ func (g *GuildQueryBuilderNop) PruneMembers(_ *disgord.PruneMembers) (int, error
 }
 
 func (g *GuildQueryBuilderNop) Role(_ disgord.Snowflake) disgord.GuildRoleQueryBuilder {
+	return nil
+}
+
+func (g *GuildQueryBuilderNop) ScheduledEvent(_ disgord.Snowflake) disgord.GuildScheduledEventQueryBuilder {
 	return nil
 }
 
@@ -1049,6 +1061,42 @@ func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole) (*disgord.Role,
 
 func (g *GuildRoleQueryBuilderNop) UpdateBuilder() disgord.UpdateGuildRoleBuilder {
 	return nil
+}
+
+type GuildScheduledEventQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     disgord.Flag
+	ChannelID disgord.Snowflake
+	GuildID   disgord.Snowflake
+	UserID    disgord.Snowflake
+}
+
+var _ disgord.GuildScheduledEventQueryBuilder = &GuildScheduledEventQueryBuilderNop{}
+
+func (g GuildScheduledEventQueryBuilderNop) WithContext(ctx context.Context) disgord.GuildScheduledEventQueryBuilder {
+	g.Ctx = ctx
+	return &g
+}
+
+func (g GuildScheduledEventQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.GuildScheduledEventQueryBuilder {
+	g.Flags = mergeFlags(flags)
+	return &g
+}
+
+func (g *GuildScheduledEventQueryBuilderNop) Delete() error {
+	return nil
+}
+
+func (g *GuildScheduledEventQueryBuilderNop) Get(_ *disgord.GetScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+	return nil, nil
+}
+
+func (g *GuildScheduledEventQueryBuilderNop) GetMembers(_ *disgord.GetScheduledEventMembers) ([]*disgord.GuildScheduledEventUsers, error) {
+	return nil, nil
+}
+
+func (g *GuildScheduledEventQueryBuilderNop) Update(_ *disgord.UpdateScheduledEvent) (*disgord.GuildScheduledEvent, error) {
+	return nil, nil
 }
 
 type InviteQueryBuilderNop struct {
@@ -1295,18 +1343,6 @@ func (w *WebhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
-	return nil, nil
-}
-
-func (w *WebhookQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
-	return nil, nil
-}
-
-func (w *WebhookQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake) (*disgord.Message, error) {
-	return nil, nil
-}
-
 func (w *WebhookQueryBuilderNop) Get() (*disgord.Webhook, error) {
 	return nil, nil
 }
@@ -1347,11 +1383,31 @@ func (w *WebhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ bool, _ disgord.Snowflake, _ string) (*disgord.Message, error) {
+func (w *WebhookWithTokenQueryBuilderNop) DeleteMessage(_ disgord.Snowflake, _ *disgord.Snowflake) error {
+	return nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) EditMessage(_ *disgord.ExecuteWebhook, _ disgord.Snowflake, _ *disgord.Snowflake) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) Execute(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake, _ string) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) ExecuteGitHubWebhook(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake) (*disgord.Message, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) ExecuteSlackWebhook(_ *disgord.ExecuteWebhook, _ *bool, _ *disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 
 func (w *WebhookWithTokenQueryBuilderNop) Get() (*disgord.Webhook, error) {
+	return nil, nil
+}
+
+func (w *WebhookWithTokenQueryBuilderNop) GetMessage(_ disgord.Snowflake, _ *disgord.Snowflake) (*disgord.Message, error) {
 	return nil, nil
 }
 

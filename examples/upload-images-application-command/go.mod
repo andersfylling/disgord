@@ -1,4 +1,4 @@
-module logging
+module upload-images-application-command
 
 go 1.16
 

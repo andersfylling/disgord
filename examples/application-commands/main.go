@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/andersfylling/disgord"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 var log = logrus.New()
@@ -63,13 +64,11 @@ func main() {
 	// Respond hello any related discord slash command
 	client.Gateway().InteractionCreate(func(s disgord.Session, h *disgord.InteractionCreate) {
 		fmt.Printf("%+v", *h)
-		err := s.SendInteractionResponse(context.Background(), h, &disgord.InteractionResponse{
+		err := s.SendInteractionResponse(context.Background(), h, &disgord.CreateInteractionResponse{
 			Type: 4,
-			Data: &disgord.InteractionApplicationCommandCallbackData{
-				Content: "hello",
-				Components: []*disgord.MessageComponent{
-
-				},
+			Data: &disgord.CreateInteractionResponseData{
+				Content:    "hello",
+				Components: []*disgord.MessageComponent{},
 			},
 		})
 		if err != nil {

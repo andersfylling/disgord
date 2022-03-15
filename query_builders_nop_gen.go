@@ -858,6 +858,10 @@ func (g *guildQueryBuilderNop) CreateRole(_ *CreateGuildRole) (*Role, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) CreateScheduledEvent(_ *CreateScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) Delete() error {
 	return nil
 }
@@ -930,6 +934,10 @@ func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
 
+func (g *guildQueryBuilderNop) GetScheduledEvents(_ *GetScheduledEvents) ([]*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) GetVanityURL() (*Invite, error) {
 	return nil, nil
 }
@@ -963,6 +971,10 @@ func (g *guildQueryBuilderNop) PruneMembers(_ *PruneMembers) (int, error) {
 }
 
 func (g *guildQueryBuilderNop) Role(_ Snowflake) GuildRoleQueryBuilder {
+	return nil
+}
+
+func (g *guildQueryBuilderNop) ScheduledEvent(_ Snowflake) GuildScheduledEventQueryBuilder {
 	return nil
 }
 
@@ -1040,6 +1052,42 @@ func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {
 
 func (g *guildRoleQueryBuilderNop) UpdateBuilder() UpdateGuildRoleBuilder {
 	return nil
+}
+
+type guildScheduledEventQueryBuilderNop struct {
+	Ctx       context.Context
+	Flags     Flag
+	ChannelID Snowflake
+	GuildID   Snowflake
+	UserID    Snowflake
+}
+
+var _ GuildScheduledEventQueryBuilder = &guildScheduledEventQueryBuilderNop{}
+
+func (g guildScheduledEventQueryBuilderNop) WithContext(ctx context.Context) GuildScheduledEventQueryBuilder {
+	g.Ctx = ctx
+	return &g
+}
+
+func (g guildScheduledEventQueryBuilderNop) WithFlags(flags ...Flag) GuildScheduledEventQueryBuilder {
+	g.Flags = mergeFlags(flags)
+	return &g
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Delete() error {
+	return nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Get(_ *GetScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) GetMembers(_ *GetScheduledEventMembers) ([]*GuildScheduledEventUsers, error) {
+	return nil, nil
+}
+
+func (g *guildScheduledEventQueryBuilderNop) Update(_ *UpdateScheduledEvent) (*GuildScheduledEvent, error) {
+	return nil, nil
 }
 
 type inviteQueryBuilderNop struct {
@@ -1286,18 +1334,6 @@ func (w *webhookQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
-	return nil, nil
-}
-
-func (w *webhookQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
-	return nil, nil
-}
-
-func (w *webhookQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhook, _ bool, _ Snowflake) (*Message, error) {
-	return nil, nil
-}
-
 func (w *webhookQueryBuilderNop) Get() (*Webhook, error) {
 	return nil, nil
 }
@@ -1338,11 +1374,31 @@ func (w *webhookWithTokenQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ bool, _ Snowflake, _ string) (*Message, error) {
+func (w *webhookWithTokenQueryBuilderNop) DeleteMessage(_ Snowflake, _ *Snowflake) error {
+	return nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) EditMessage(_ *ExecuteWebhook, _ Snowflake, _ *Snowflake) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) Execute(_ *ExecuteWebhook, _ *bool, _ *Snowflake, _ string) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) ExecuteGitHubWebhook(_ *ExecuteWebhook, _ *bool, _ *Snowflake) (*Message, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) ExecuteSlackWebhook(_ *ExecuteWebhook, _ *bool, _ *Snowflake) (*Message, error) {
 	return nil, nil
 }
 
 func (w *webhookWithTokenQueryBuilderNop) Get() (*Webhook, error) {
+	return nil, nil
+}
+
+func (w *webhookWithTokenQueryBuilderNop) GetMessage(_ Snowflake, _ *Snowflake) (*Message, error) {
 	return nil, nil
 }
 

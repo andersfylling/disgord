@@ -97,6 +97,7 @@ const (
 	_ MessageComponentType = iota
 	MessageComponentActionRow
 	MessageComponentButton
+	MessageComponentSelectMenu
 )
 
 type ButtonStyle = int
