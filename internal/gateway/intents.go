@@ -59,9 +59,9 @@ const (
 	// - GUILD_BAN_REMOVE
 	IntentGuildBans
 
-	// IntentGuildEmojis
+	// IntentGuildEmojisAndStickers
 	// - GUILD_EMOJIS_UPDATE
-	IntentGuildEmojis
+	IntentGuildEmojisAndStickers
 
 	// IntentGuildIntegrations
 	// - GUILD_INTEGRATIONS_UPDATE
@@ -77,6 +77,8 @@ const (
 	IntentDirectMessages
 	IntentDirectMessageReactions
 	IntentDirectMessageTyping
+	_
+	IntentGuildScheduledEvents
 )
 
 func intentName(intent Intent) string {
@@ -87,7 +89,7 @@ func intentName(intent Intent) string {
 		return "GuildMembers"
 	case IntentGuildBans:
 		return "GuildBans"
-	case IntentGuildEmojis:
+	case IntentGuildEmojisAndStickers:
 		return "GuildEmojis"
 	case IntentGuildIntegrations:
 		return "GuildIntegrations"
@@ -184,8 +186,8 @@ func EventToIntent(evt string, direct bool) Intent {
 			intent = IntentGuildBans
 		case event.GuildBanRemove:
 			intent = IntentGuildBans
-		case event.GuildEmojisUpdate:
-			intent = IntentGuildEmojis
+		case event.GuildEmojisUpdate, event.GuildStickersUpdate:
+			intent = IntentGuildEmojisAndStickers
 		case event.GuildIntegrationsUpdate:
 			intent = IntentGuildIntegrations
 		case event.WebhooksUpdate:
@@ -216,6 +218,8 @@ func EventToIntent(evt string, direct bool) Intent {
 			intent = IntentGuildMessageReactions
 		case event.TypingStart:
 			intent = IntentGuildMessageTyping
+		case event.GuildScheduledEventCreate, event.GuildScheduledEventUpdate, event.GuildScheduledEventDelete, event.GuildScheduledEventUserAdd, event.GuildScheduledEventUserRemove:
+			intent = IntentGuildScheduledEvents
 		}
 	}
 

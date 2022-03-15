@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -67,9 +68,9 @@ func ValidateUsername(name string) (err error) {
 
 	// Names must be between 2 and 32 characters long.
 	if length < 2 {
-		err = errors.New("name is too short")
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
 	} else if length > 32 {
-		err = errors.New("name is too long")
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
 	}
 	if err != nil {
 		return err
@@ -77,9 +78,9 @@ func ValidateUsername(name string) (err error) {
 
 	// Names are sanitized and trimmed of leading, trailing, and excessive internal whitespace.
 	if name[0] == ' ' {
-		err = errors.New("contains whitespace prefix")
+		err = fmt.Errorf("contains whitespace prefix: %w", ErrIllegalValue)
 	} else if name[length-1] == ' ' {
-		err = errors.New("contains whitespace suffix")
+		err = fmt.Errorf("contains whitespace suffix: %w", ErrIllegalValue)
 	} else {
 		last := name[1]
 		for i := 2; i < length-1; i++ {
@@ -111,7 +112,7 @@ func ValidateUsername(name string) (err error) {
 	}
 	for _, illegalName := range illegalNames {
 		if name == illegalName {
-			err = errors.New("the given username is illegal")
+			err = fmt.Errorf("the given username is illegal: %w", ErrIllegalValue)
 			return err
 		}
 	}
@@ -121,7 +122,7 @@ func ValidateUsername(name string) (err error) {
 
 func validateChannelName(name string) (err error) {
 	if name == "" {
-		return errors.New("empty")
+		return ErrMissingChannelName
 	}
 
 	// attributes
@@ -129,9 +130,9 @@ func validateChannelName(name string) (err error) {
 
 	// Names must be of length of minimum 2 and maximum 100 characters long.
 	if length < 2 {
-		err = errors.New("name is too short")
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
 	} else if length > 100 {
-		err = errors.New("name is too long")
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
 	}
 	if err != nil {
 		return err

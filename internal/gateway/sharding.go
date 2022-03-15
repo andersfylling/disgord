@@ -214,7 +214,6 @@ func (s *shardMngr) initShards() error {
 		Encoding:       constant.JSONEncoding,
 		Endpoint:       s.conf.URL,
 		Logger:         s.conf.Logger,
-		IgnoreEvents:   s.conf.IgnoreEvents,
 		Intents:        s.conf.Intents,
 		DiscordPktPool: s.DiscordPktPool,
 

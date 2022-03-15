@@ -162,6 +162,54 @@ func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
 
 // ---------------------------
 
+// EvtGuildScheduledEventCreate ...
+//
+const EvtGuildScheduledEventCreate = event.GuildScheduledEventCreate
+
+func (h *GuildScheduledEventCreate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtGuildScheduledEventDelete ...
+//
+const EvtGuildScheduledEventDelete = event.GuildScheduledEventDelete
+
+func (h *GuildScheduledEventDelete) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtGuildScheduledEventUpdate ...
+//
+const EvtGuildScheduledEventUpdate = event.GuildScheduledEventUpdate
+
+func (h *GuildScheduledEventUpdate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtGuildScheduledEventUserAdd ...
+//
+const EvtGuildScheduledEventUserAdd = event.GuildScheduledEventUserAdd
+
+func (h *GuildScheduledEventUserAdd) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtGuildScheduledEventUserRemove ...
+//
+const EvtGuildScheduledEventUserRemove = event.GuildScheduledEventUserRemove
+
+func (h *GuildScheduledEventUserRemove) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
+// EvtGuildStickersUpdate ...
+//
+const EvtGuildStickersUpdate = event.GuildStickersUpdate
+
+func (h *GuildStickersUpdate) setShardID(id uint) { h.ShardID = id }
+
+// ---------------------------
+
 // EvtGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
 //
 const EvtGuildUpdate = event.GuildUpdate
@@ -767,6 +815,126 @@ func (shr socketHandlerRegister) GuildRoleUpdateChan(handler chan *GuildRoleUpda
 	shr.build()
 }
 
+// GuildScheduledEventCreate ...
+//
+func (shr socketHandlerRegister) GuildScheduledEventCreate(handler HandlerGuildScheduledEventCreate, moreHandlers ...HandlerGuildScheduledEventCreate) {
+	shr.evtName = EvtGuildScheduledEventCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildScheduledEventCreateChan(handler chan *GuildScheduledEventCreate, moreHandlers ...chan *GuildScheduledEventCreate) {
+	shr.evtName = EvtGuildScheduledEventCreate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// GuildScheduledEventDelete ...
+//
+func (shr socketHandlerRegister) GuildScheduledEventDelete(handler HandlerGuildScheduledEventDelete, moreHandlers ...HandlerGuildScheduledEventDelete) {
+	shr.evtName = EvtGuildScheduledEventDelete
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildScheduledEventDeleteChan(handler chan *GuildScheduledEventDelete, moreHandlers ...chan *GuildScheduledEventDelete) {
+	shr.evtName = EvtGuildScheduledEventDelete
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// GuildScheduledEventUpdate ...
+//
+func (shr socketHandlerRegister) GuildScheduledEventUpdate(handler HandlerGuildScheduledEventUpdate, moreHandlers ...HandlerGuildScheduledEventUpdate) {
+	shr.evtName = EvtGuildScheduledEventUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildScheduledEventUpdateChan(handler chan *GuildScheduledEventUpdate, moreHandlers ...chan *GuildScheduledEventUpdate) {
+	shr.evtName = EvtGuildScheduledEventUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// GuildScheduledEventUserAdd ...
+//
+func (shr socketHandlerRegister) GuildScheduledEventUserAdd(handler HandlerGuildScheduledEventUserAdd, moreHandlers ...HandlerGuildScheduledEventUserAdd) {
+	shr.evtName = EvtGuildScheduledEventUserAdd
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildScheduledEventUserAddChan(handler chan *GuildScheduledEventUserAdd, moreHandlers ...chan *GuildScheduledEventUserAdd) {
+	shr.evtName = EvtGuildScheduledEventUserAdd
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// GuildScheduledEventUserRemove ...
+//
+func (shr socketHandlerRegister) GuildScheduledEventUserRemove(handler HandlerGuildScheduledEventUserRemove, moreHandlers ...HandlerGuildScheduledEventUserRemove) {
+	shr.evtName = EvtGuildScheduledEventUserRemove
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildScheduledEventUserRemoveChan(handler chan *GuildScheduledEventUserRemove, moreHandlers ...chan *GuildScheduledEventUserRemove) {
+	shr.evtName = EvtGuildScheduledEventUserRemove
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+// GuildStickersUpdate ...
+//
+func (shr socketHandlerRegister) GuildStickersUpdate(handler HandlerGuildStickersUpdate, moreHandlers ...HandlerGuildStickersUpdate) {
+	shr.evtName = EvtGuildStickersUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
+func (shr socketHandlerRegister) GuildStickersUpdateChan(handler chan *GuildStickersUpdate, moreHandlers ...chan *GuildStickersUpdate) {
+	shr.evtName = EvtGuildStickersUpdate
+	shr.handlers = append(shr.handlers, handler)
+	for _, h := range moreHandlers {
+		shr.handlers = append(shr.handlers, h)
+	}
+	shr.build()
+}
+
 // GuildUpdate Sent when a guild is updated. The inner payload is a guild object.
 //
 func (shr socketHandlerRegister) GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate) {
@@ -1328,6 +1496,18 @@ type SocketHandlerRegistrator interface {
 	GuildRoleDeleteChan(handler chan *GuildRoleDelete, moreHandlers ...chan *GuildRoleDelete)
 	GuildRoleUpdate(handler HandlerGuildRoleUpdate, moreHandlers ...HandlerGuildRoleUpdate)
 	GuildRoleUpdateChan(handler chan *GuildRoleUpdate, moreHandlers ...chan *GuildRoleUpdate)
+	GuildScheduledEventCreate(handler HandlerGuildScheduledEventCreate, moreHandlers ...HandlerGuildScheduledEventCreate)
+	GuildScheduledEventCreateChan(handler chan *GuildScheduledEventCreate, moreHandlers ...chan *GuildScheduledEventCreate)
+	GuildScheduledEventDelete(handler HandlerGuildScheduledEventDelete, moreHandlers ...HandlerGuildScheduledEventDelete)
+	GuildScheduledEventDeleteChan(handler chan *GuildScheduledEventDelete, moreHandlers ...chan *GuildScheduledEventDelete)
+	GuildScheduledEventUpdate(handler HandlerGuildScheduledEventUpdate, moreHandlers ...HandlerGuildScheduledEventUpdate)
+	GuildScheduledEventUpdateChan(handler chan *GuildScheduledEventUpdate, moreHandlers ...chan *GuildScheduledEventUpdate)
+	GuildScheduledEventUserAdd(handler HandlerGuildScheduledEventUserAdd, moreHandlers ...HandlerGuildScheduledEventUserAdd)
+	GuildScheduledEventUserAddChan(handler chan *GuildScheduledEventUserAdd, moreHandlers ...chan *GuildScheduledEventUserAdd)
+	GuildScheduledEventUserRemove(handler HandlerGuildScheduledEventUserRemove, moreHandlers ...HandlerGuildScheduledEventUserRemove)
+	GuildScheduledEventUserRemoveChan(handler chan *GuildScheduledEventUserRemove, moreHandlers ...chan *GuildScheduledEventUserRemove)
+	GuildStickersUpdate(handler HandlerGuildStickersUpdate, moreHandlers ...HandlerGuildStickersUpdate)
+	GuildStickersUpdateChan(handler chan *GuildStickersUpdate, moreHandlers ...chan *GuildStickersUpdate)
 	GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate)
 	GuildUpdateChan(handler chan *GuildUpdate, moreHandlers ...chan *GuildUpdate)
 	InteractionCreate(handler HandlerInteractionCreate, moreHandlers ...HandlerInteractionCreate)

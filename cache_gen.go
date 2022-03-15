@@ -73,6 +73,12 @@ type CacheUpdater interface {
 	GuildRoleCreate(data []byte) (*GuildRoleCreate, error)
 	GuildRoleDelete(data []byte) (*GuildRoleDelete, error)
 	GuildRoleUpdate(data []byte) (*GuildRoleUpdate, error)
+	GuildScheduledEventCreate(data []byte) (*GuildScheduledEventCreate, error)
+	GuildScheduledEventDelete(data []byte) (*GuildScheduledEventDelete, error)
+	GuildScheduledEventUpdate(data []byte) (*GuildScheduledEventUpdate, error)
+	GuildScheduledEventUserAdd(data []byte) (*GuildScheduledEventUserAdd, error)
+	GuildScheduledEventUserRemove(data []byte) (*GuildScheduledEventUserRemove, error)
+	GuildStickersUpdate(data []byte) (*GuildStickersUpdate, error)
 	GuildUpdate(data []byte) (*GuildUpdate, error)
 	InteractionCreate(data []byte) (*InteractionCreate, error)
 	InviteCreate(data []byte) (*InviteCreate, error)
@@ -137,6 +143,18 @@ func cacheDispatcher(c Cache, event string, data []byte) (evt EventType, err err
 		evt, err = c.GuildRoleDelete(data)
 	case EvtGuildRoleUpdate:
 		evt, err = c.GuildRoleUpdate(data)
+	case EvtGuildScheduledEventCreate:
+		evt, err = c.GuildScheduledEventCreate(data)
+	case EvtGuildScheduledEventDelete:
+		evt, err = c.GuildScheduledEventDelete(data)
+	case EvtGuildScheduledEventUpdate:
+		evt, err = c.GuildScheduledEventUpdate(data)
+	case EvtGuildScheduledEventUserAdd:
+		evt, err = c.GuildScheduledEventUserAdd(data)
+	case EvtGuildScheduledEventUserRemove:
+		evt, err = c.GuildScheduledEventUserRemove(data)
+	case EvtGuildStickersUpdate:
+		evt, err = c.GuildStickersUpdate(data)
 	case EvtGuildUpdate:
 		evt, err = c.GuildUpdate(data)
 	case EvtInteractionCreate:
@@ -325,6 +343,48 @@ func (c *CacheNop) GuildRoleDelete(data []byte) (evt *GuildRoleDelete, err error
 	return evt, nil
 }
 func (c *CacheNop) GuildRoleUpdate(data []byte) (evt *GuildRoleUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventCreate(data []byte) (evt *GuildScheduledEventCreate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventDelete(data []byte) (evt *GuildScheduledEventDelete, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUpdate(data []byte) (evt *GuildScheduledEventUpdate, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUserAdd(data []byte) (evt *GuildScheduledEventUserAdd, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildScheduledEventUserRemove(data []byte) (evt *GuildScheduledEventUserRemove, err error) {
+	if err = json.Unmarshal(data, &evt); err != nil {
+		return nil, err
+	}
+	c.Patch(evt)
+	return evt, nil
+}
+func (c *CacheNop) GuildStickersUpdate(data []byte) (evt *GuildStickersUpdate, err error) {
 	if err = json.Unmarshal(data, &evt); err != nil {
 		return nil, err
 	}

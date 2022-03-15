@@ -29,24 +29,3 @@ func TestUserPresence_InterfaceImplementations(t *testing.T) {
 		}
 	})
 }
-
-func TestGetCurrentUserGuilds(t *testing.T) {
-	params := &getCurrentUserGuildsBuilder{}
-	params.r.setup(nil, nil, nil)
-	var wants string
-
-	wants = ""
-	verifyQueryString(t, params.r.urlParams, wants)
-
-	wants = "?before=438543957"
-	params.SetBefore(438543957)
-	verifyQueryString(t, params.r.urlParams, wants)
-
-	wants += "&limit=6"
-	params.SetLimit(6)
-	verifyQueryString(t, params.r.urlParams, wants)
-
-	wants = "?before=438543957"
-	params.SetDefaultLimit()
-	verifyQueryString(t, params.r.urlParams, wants)
-}

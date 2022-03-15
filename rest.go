@@ -8,6 +8,9 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
+
+	"github.com/andersfylling/disgord/internal/util/stringslice"
 
 	"github.com/andersfylling/disgord/internal/constant"
 	"github.com/andersfylling/disgord/json"
@@ -315,7 +318,7 @@ type basicBuilder struct {
 	r RESTBuilder
 }
 
-var MissingRESTParamsErr = errors.New("this method requires REST parameters, but none were given")
+var ErrMissingRESTParams = errors.New("this method requires REST parameters, but none were given")
 
 type ClientQueryBuilderExecutables interface {
 	// CreateGuild Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
@@ -324,7 +327,7 @@ type ClientQueryBuilderExecutables interface {
 	// GetVoiceRegions Returns an array of voice region objects that can be used when creating servers.
 	GetVoiceRegions() ([]*VoiceRegion, error)
 
-	BotAuthorizeURL() (*url.URL, error)
+	BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error)
 	SendMsg(channelID Snowflake, data ...interface{}) (*Message, error)
 }
 
@@ -477,12 +480,18 @@ func (c clientQueryBuilder) SendMsg(channelID Snowflake, data ...interface{}) (m
 // Note that it depends on the bot ID to be after the Discord update where the Client ID
 // is the same as the Bot ID.
 //
-// By default the permissions will be 0, as in none. If you want to add/set the minimum required permissions
-// for your bot to run successfully, you should utilise
-//  Client.
-func (c clientQueryBuilder) BotAuthorizeURL() (*url.URL, error) {
-	format := "https://discord.com/oauth2/authorize?scope=bot&client_id=%s&permissions=%d"
-	u := fmt.Sprintf(format, c.client.botID.String(), c.client.permissions)
+// Use 0 if you do not want to specify any required permissions.
+func (c clientQueryBuilder) BotAuthorizeURL(permissions PermissionBit, scopes []string) (*url.URL, error) {
+	if !stringslice.Contains(scopes, "bot") {
+		scopes = append(scopes, "bot")
+	}
+
+	scopesQueryParam := url.QueryEscape(strings.Join(scopes, " "))
+	botIDQueryParam := c.client.botID.String()
+	permissionsQueryParam := strconv.FormatUint(uint64(permissions), 10)
+
+	format := "https://discord.com/oauth2/authorize?scope=%s&client_id=%s&permissions=%s"
+	u := fmt.Sprintf(format, scopesQueryParam, botIDQueryParam, permissionsQueryParam)
 	return url.Parse(u)
 }
 
@@ -759,12 +768,12 @@ func getPartialInvite(f func() (interface{}, error)) (invite *PartialInvite, err
 }
 
 // TODO: auto generate
-func getGuildEmbed(f func() (interface{}, error)) (embed *GuildEmbed, err error) {
+func getGuildWidget(f func() (interface{}, error)) (embed *GuildWidget, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*GuildEmbed), nil
+	return v.(*GuildWidget), nil
 }
 
 // TODO: auto generate
@@ -790,18 +799,57 @@ func getThreadMembers(f func() (interface{}, error)) (threadMembers []*ThreadMem
 	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }
 
-func getResponseBodyThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyThreads, err error) {
+func getArchivedThreads(f func() (interface{}, error)) (concreteBody *ArchivedThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyThreads), nil
+	return v.(*ArchivedThreads), nil
 }
 
-func getResponseBodyGuildThreads(f func() (interface{}, error)) (concreteBody *ResponseBodyGuildThreads, err error) {
+func getActiveGuildThreads(f func() (interface{}, error)) (concreteBody *ActiveGuildThreads, err error) {
 	var v interface{}
 	if v, err = exec(f); err != nil {
 		return nil, err
 	}
-	return v.(*ResponseBodyGuildThreads), nil
+	return v.(*ActiveGuildThreads), nil
+}
+
+func getScheduledEvents(f func() (interface{}, error)) (scheduledEvents []*GuildScheduledEvent, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	if list, ok := v.(*[]*GuildScheduledEvent); ok {
+		return *list, nil
+	} else if list, ok := v.([]*GuildScheduledEvent); ok {
+		return list, nil
+	}
+
+	return nil, err
+}
+
+func getScheduledEvent(f func() (interface{}, error)) (scheduledEvents *GuildScheduledEvent, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	return v.(*GuildScheduledEvent), err
+}
+
+func getScheduledEventUsers(f func() (interface{}, error)) (scheduledEventUsers []*GuildScheduledEventUsers, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+
+	if list, ok := v.(*[]*GuildScheduledEventUsers); ok {
+		return *list, nil
+	} else if list, ok := v.([]*GuildScheduledEventUsers); ok {
+		return list, nil
+	}
+
+	return nil, err
 }

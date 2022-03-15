@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true,
+      "automergeType": "branch",
+      "commitMessagePrefix": "chore: "
+    }
+  ]
+}

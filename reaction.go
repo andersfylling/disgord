@@ -103,10 +103,10 @@ func (r reactionQueryBuilder) WithFlags(flags ...Flag) ReactionQueryBuilder {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Create() error {
 	if r.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
@@ -136,10 +136,10 @@ func (r reactionQueryBuilder) Create() error {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteOwn() error {
 	if r.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
@@ -169,16 +169,16 @@ func (r reactionQueryBuilder) DeleteOwn() error {
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteUser(userID Snowflake) error {
 	if r.cid.IsZero() {
-		return errors.New("channelID must be set to target the correct channel")
+		return ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return errors.New("messageID must be set to target the specific channel message")
+		return ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return errors.New("emoji must be set in order to create a message reaction")
 	}
 	if userID.IsZero() {
-		return errors.New("UserID must be set to target the specific user reaction")
+		return ErrMissingUserID
 	}
 
 	emojiCode, err := emojiReference(r.emoji)
@@ -213,10 +213,10 @@ var _ URLQueryStringer = (*GetReactionURL)(nil)
 //  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Get(params URLQueryStringer) (ret []*User, err error) {
 	if r.cid.IsZero() {
-		return nil, errors.New("channelID must be set to target the correct channel")
+		return nil, ErrMissingChannelID
 	}
 	if r.mid.IsZero() {
-		return nil, errors.New("messageID must be set to target the specific channel message")
+		return nil, ErrMissingMessageID
 	}
 	if r.emoji == nil {
 		return nil, errors.New("emoji must be set in order to create a message reaction")

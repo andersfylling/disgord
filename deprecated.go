@@ -1,10 +1,137 @@
 package disgord
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
+
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
-	"net/http"
 )
+
+// Deprecated: use ActiveGuildThreads
+type ResponseBodyGuildThreads = ActiveGuildThreads
+
+// Deprecated: use GetArchivedThreads
+type GetThreads = GetArchivedThreads
+
+// Deprecated: use ArchivedThreads
+type ResponseBodyThreads = ArchivedThreads
+
+// Deprecated: use CreateThreadWithoutMessage
+type CreateThreadNoMessage = CreateThreadWithoutMessage
+
+// Deprecated: use GuildWidget
+type GuildEmbed = GuildWidget
+
+// Deprecated: use ErrMissingRequiredField
+var MissingRequiredFieldErr = ErrMissingRequiredField
+
+// Deprecated: use ErrMissingGuildID
+var MissingGuildIDErr = fmt.Errorf("guild: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingID
+var MissingIDErr = fmt.Errorf("id: %w", MissingRequiredFieldErr)
+
+// Deprecated: use ErrMissingChannelID
+var MissingChannelIDErr = fmt.Errorf("channel: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingUserID
+var MissingUserIDErr = fmt.Errorf("user: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingMessageID
+var MissingMessageIDErr = fmt.Errorf("message: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingEmojiID
+var MissingEmojiIDErr = fmt.Errorf("emoji: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingRoleID
+var MissingRoleIDErr = fmt.Errorf("role: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingWebhookID
+var MissingWebhookIDErr = fmt.Errorf("webhook: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingPermissionOverwriteID
+var MissingPermissionOverwriteIDErr = fmt.Errorf("channel permission overwrite: %w", MissingIDErr)
+
+// Deprecated: use ErrMissingName
+var MissingNameErr = fmt.Errorf("name: %w", MissingRequiredFieldErr)
+
+// Deprecated: use ErrMissingGuildName
+var MissingGuildNameErr = fmt.Errorf("guild: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingChannelName
+var MissingChannelNameErr = fmt.Errorf("channel: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingWebhookName
+var MissingWebhookNameErr = fmt.Errorf("webhook: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingThreadName
+var MissingThreadNameErr = fmt.Errorf("thread: %w", MissingNameErr)
+
+// Deprecated: use ErrMissingWebhookToken
+var MissingWebhookTokenErr = errors.New("webhook token was not set")
+
+// Deprecated: use ErrIllegalValue
+var IllegalValueErr = errors.New("illegal value")
+
+func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
+	return g.DisconnectVoiceParticipant(userID)
+}
+
+//generate-rest-params: roles:[]Snowflake,
+//generate-rest-basic-execute: emoji:*Emoji,
+type createGuildEmojiBuilder struct {
+	r RESTBuilder
+}
+
+// updateGuildMemberBuilder ...
+// https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
+//generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
+//generate-rest-basic-execute: err:error,
+type updateGuildMemberBuilder struct {
+	r RESTBuilder
+}
+
+func (c currentUserQueryBuilder) LeaveGuild(id Snowflake) (err error) {
+	return c.client.Guild(id).Leave()
+}
+
+// KickFromVoice kicks member out of voice channel. Assuming they are in one.
+func (b *updateGuildMemberBuilder) KickFromVoice() UpdateGuildMemberBuilder {
+	b.r.param("channel_id", 0)
+	return b
+}
+
+// DeleteNick removes nickname for user. Requires permission MANAGE_NICKNAMES
+func (b *updateGuildMemberBuilder) DeleteNick() UpdateGuildMemberBuilder {
+	b.r.param("nick", "")
+	return b
+}
+
+//generate-rest-params: enabled:bool, channel_id:Snowflake,
+//generate-rest-basic-execute: embed:*GuildEmbed,
+type updateGuildEmbedBuilder struct {
+	r RESTBuilder
+}
+
+// UpdateEmbedBuilder Modify a guild embed object for the guild. All attributes may be passed in with JSON and
+// modified. Requires the 'MANAGE_GUILD' permission. Returns the updated guild embed object.
+func (g guildQueryBuilder) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
+	builder := &updateGuildEmbedBuilder{}
+	builder.r.itemFactory = func() interface{} {
+		return &GuildEmbed{}
+	}
+	builder.r.flags = g.flags
+	builder.r.setup(g.client.req, &httd.Request{
+		Method:      http.MethodPatch,
+		Ctx:         g.ctx,
+		Endpoint:    endpoint.GuildEmbed(g.gid),
+		ContentType: httd.ContentTypeJSON,
+	}, nil)
+
+	return builder
+}
 
 // Deprecated: use Update instead
 func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
@@ -194,11 +321,50 @@ func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	return builder
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Builders
-//
-//////////////////////////////////////////////////////
+func (g guildQueryBuilder) EstimatePruneMembersCount(days int) (estimate int, err error) {
+	return g.GetPruneMembersCount(&GetPruneMembersCount{
+		Days: &days,
+	})
+}
+
+func (g guildQueryBuilder) GetEmbed() (*GuildWidget, error) {
+	return g.GetWidget()
+}
+
+// Deprecated: use ErrCacheMiss
+var CacheMissErr = ErrCacheMiss
+
+// Deprecated: use ErrCacheEntryAlreadyExists
+var CacheEntryAlreadyExistsErr = ErrCacheEntryAlreadyExists
+
+// Deprecated: use ErrMissingClientInstance
+var MissingClientInstanceErr = ErrMissingClientInstance
+
+// Deprecated: use ErrMissingRESTParams
+var MissingRESTParamsErr = ErrMissingRESTParams
+
+const (
+	// Deprecated: ...
+	SUB_COMMAND = OptionTypeSubCommand
+	// Deprecated: ...
+	SUB_COMMAND_GROUP = OptionTypeSubCommandGroup
+	// Deprecated: ...
+	STRING = OptionTypeString
+	// Deprecated: ...
+	INTEGER = OptionTypeInteger
+	// Deprecated: ...
+	BOOLEAN = OptionTypeBoolean
+	// Deprecated: ...
+	USER = OptionTypeUser
+	// Deprecated: ...
+	CHANNEL = OptionTypeChannel
+	// Deprecated: ...
+	ROLE = OptionTypeRole
+	// Deprecated: ...
+	MENTIONABLE = OptionTypeMentionable
+	// Deprecated: ...
+	NUMBER = OptionTypeNumber
+)
 
 // updateMessageBuilder, params here
 //  https://discord.com/developers/docs/resources/channel#edit-message-json-params
@@ -286,11 +452,24 @@ func (u *updateWebhookBuilder) SetDefaultAvatar() *updateWebhookBuilder {
 	return u
 }
 
-//////////////////////////////////////////////////////
-//
-// REST Wrappers
-//
-//////////////////////////////////////////////////////
+// Deprecated: specify permissions when using the Client.AuthorizeBotURL method
+func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
+	if permission < 0 {
+		permission = 0
+	}
+
+	c.permissions |= permission
+	return c.GetPermissions()
+}
+
+// Deprecated: ...
+func (c *Client) GetPermissions() (permissions PermissionBit) {
+	return c.permissions
+}
+
+func (c currentUserQueryBuilder) GetUserConnections() (connections []*UserConnection, err error) {
+	return c.GetConnections()
+}
 
 // Deprecated: use Update instead
 func (m messageQueryBuilder) SetContent(content string) (*Message, error) {
@@ -306,4 +485,20 @@ func (m messageQueryBuilder) SetEmbed(embed *Embed) (*Message, error) {
 	return builder.
 		SetEmbed(embed).
 		Execute()
+}
+
+type InteractionApplicationCommandCallbackData struct {
+	Tts             bool                `json:"tts"`
+	Content         string              `json:"content"`
+	Embeds          []*Embed            `json:"embeds"`
+	Flags           int                 `json:"flags"`
+	AllowedMentions *AllowedMentions    `json:"allowed_mentions"`
+	Components      []*MessageComponent `json:"components"`
+	Attachments     []*Attachment       `json:"attachments"`
+}
+
+// Deprecated: use CreateInteractionResponse instead
+type InteractionResponse struct {
+	Type InteractionCallbackType                    `json:"type"`
+	Data *InteractionApplicationCommandCallbackData `json:"data"`
 }

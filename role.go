@@ -2,7 +2,6 @@ package disgord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -76,13 +75,11 @@ func (r *Role) SetGuildID(id Snowflake) {
 //
 //////////////////////////////////////////////////////
 
-var MissingRoleIDErr = errors.New("role id was not set")
-
 type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
 
-	Update(params *UpdateRole, auditLogReason string) (*Role, error)
+	Update(params *UpdateRole) (*Role, error)
 	Delete() error
 
 	// Deprecated: use Update
@@ -103,13 +100,13 @@ type guildRoleQueryBuilder struct {
 
 func (g *guildRoleQueryBuilder) validate() error {
 	if g.client == nil {
-		return MissingClientInstanceErr
+		return ErrMissingClientInstance
 	}
 	if g.gid.IsZero() {
-		return MissingGuildIDErr
+		return ErrMissingGuildID
 	}
 	if g.roleID.IsZero() {
-		return MissingRoleIDErr
+		return ErrMissingRoleID
 	}
 	return nil
 }
@@ -142,7 +139,7 @@ func (g guildRoleQueryBuilder) Delete() error {
 }
 
 // Update update a role
-func (g guildRoleQueryBuilder) Update(params *UpdateRole, auditLogReason string) (*Role, error) {
+func (g guildRoleQueryBuilder) Update(params *UpdateRole) (*Role, error) {
 	if params == nil {
 		return nil, MissingRESTParamsErr
 	}
@@ -156,8 +153,11 @@ func (g guildRoleQueryBuilder) Update(params *UpdateRole, auditLogReason string)
 		Endpoint:    endpoint.GuildRole(g.gid, g.roleID),
 		ContentType: httd.ContentTypeJSON,
 		Body:        params,
-		Reason:      auditLogReason,
+		Reason:      params.AuditLogReason,
 	}, g.flags)
+	r.factory = func() interface{} {
+		return &Role{}
+	}
 
 	return getRole(r.Execute)
 }
@@ -168,4 +168,6 @@ type UpdateRole struct {
 	Color       *int           `json:"color,omitempty"`
 	Hoist       *bool          `json:"hoist,omitempty"`
 	Mentionable *bool          `json:"mentionable,omitempty"`
+
+	AuditLogReason string `json:"-"`
 }

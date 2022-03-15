@@ -28,7 +28,7 @@ func (g *GetMessages) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (g *GetThreads) URLQueryString() string {
+func (g *GetArchivedThreads) URLQueryString() string {
 	params := make(urlQuery)
 
 	if !(g.Before == Time{time.Unix(0, 0)}) {
@@ -88,12 +88,44 @@ func (b *BanMember) URLQueryString() string {
 	return params.URLQueryString()
 }
 
-func (p *pruneMembers) URLQueryString() string {
+func (g *GetScheduledEvents) URLQueryString() string {
 	params := make(urlQuery)
 
-	params["days"] = p.Days
+	if !(g.WithUserCount == false) {
+		params["with_user_count"] = g.WithUserCount
+	}
 
-	params["compute_prune_count"] = p.ComputePruneCount
+	return params.URLQueryString()
+}
+
+func (g *GetScheduledEvent) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.WithUserCount == false) {
+		params["with_user_count"] = g.WithUserCount
+	}
+
+	return params.URLQueryString()
+}
+
+func (g *GetScheduledEventMembers) URLQueryString() string {
+	params := make(urlQuery)
+
+	if !(g.Limit == 0) {
+		params["limit"] = g.Limit
+	}
+
+	if !(g.WithMember == false) {
+		params["with_member"] = g.WithMember
+	}
+
+	if !(g.Before == 0) {
+		params["before"] = g.Before
+	}
+
+	if !(g.After == 0) {
+		params["after"] = g.After
+	}
 
 	return params.URLQueryString()
 }

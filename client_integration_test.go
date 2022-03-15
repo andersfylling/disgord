@@ -86,6 +86,7 @@ func TestClient(t *testing.T) {
 			BotToken: token,
 			Logger:   &logger.FmtPrinter{},
 			Presence: status,
+			Intents:  IntentGuilds | IntentGuildVoiceStates | IntentGuildMessages,
 		})
 		if err != nil {
 			t.Fatal("failed to initiate a client")

@@ -13,7 +13,7 @@ import (
 )
 
 func TestThreadEndpoints(t *testing.T) {
-	const andersfylling = Snowflake(769640669135896586)
+	const andersfylling = Snowflake(228846961774559232)
 	validSnowflakes()
 
 	c := New(Config{
@@ -28,17 +28,17 @@ func TestThreadEndpoints(t *testing.T) {
 		threadName := "HELLO WORLD1"
 		msg, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateMessage(&CreateMessage{Content: threadName})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 
-		thread, err := c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(msg.ID, &CreateThread{
+		thread, err := c.Channel(guildAdmin.TextChannelGeneral).Message(msg.ID).WithContext(deadline).CreateThread(&CreateThread{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 		})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		} else if thread == nil {
-			t.Error(fmt.Errorf("fetched thread is nil. %w", err))
+			t.Error("fetched thread is nil")
 		} else if thread.Name != threadName {
 			t.Errorf("incorrect thread name. Got %s, wants %s", thread.Name, threadName)
 		}
@@ -50,18 +50,17 @@ func TestThreadEndpoints(t *testing.T) {
 	t.Run("create-thread-no-message", func(t *testing.T) {
 		threadName := "Some Thread"
 		var err error
-		thread, err = c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThreadNoMessage(&CreateThreadNoMessage{
+		thread, err = c.Channel(guildAdmin.TextChannelGeneral).WithContext(deadline).CreateThread(&CreateThreadWithoutMessage{
 			Name:                threadName,
 			AutoArchiveDuration: AutoArchiveThreadDay,
 			Type:                ChannelTypeGuildPublicThread,
 		})
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		} else if thread == nil {
 			t.Error(fmt.Errorf("fetched thread is nil: %w", err))
 		} else if thread.Name != threadName {
 			t.Errorf("incorrect thread name. Got %s, wants %s", thread.Name, threadName)
-			t.Error(err)
 		}
 	})
 
@@ -91,18 +90,18 @@ func TestThreadEndpoints(t *testing.T) {
 		member, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMember(andersfylling)
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
-		} else if member.ID != andersfylling {
-			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", member.ID, andersfylling))
+		} else if member.UserID != andersfylling {
+			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", member.UserID, andersfylling))
 		}
 	})
 	t.Run("get-members", func(t *testing.T) {
 		members, err := c.Channel(thread.ID).WithContext(deadline).GetThreadMembers()
 		if err != nil {
 			t.Error(fmt.Errorf("unable to get thread member: %w", err))
-		} else if len(members) == 1 {
-			t.Error(fmt.Errorf("did not get correct number of thread members. Got %d got %d", len(members), 1))
-		} else if members[0].ID != andersfylling {
-			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", members[0].ID, andersfylling))
+		} else if len(members) != 1 {
+			t.Error(fmt.Errorf("did not get correct number of thread members. Got %d, wants %d", len(members), 1))
+		} else if members[0].UserID != andersfylling {
+			t.Error(fmt.Errorf("did not get correct thread member. Got %s, wants %s", members[0].UserID, andersfylling))
 		}
 	})
 

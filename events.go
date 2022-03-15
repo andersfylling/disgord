@@ -5,6 +5,7 @@ package disgord
 // This file contains resource objects for the event reactor
 
 import (
+	"context"
 	"errors"
 
 	"github.com/andersfylling/disgord/json"
@@ -31,6 +32,8 @@ type Ready struct {
 	APIVersion int                 `json:"v"`
 	User       *User               `json:"user"`
 	Guilds     []*GuildUnavailable `json:"guilds"`
+
+	Application Application `json:"application"`
 
 	// not really needed, as it is handled on the socket layer.
 	SessionID string `json:"session_id"`
@@ -293,7 +296,26 @@ type InteractionCreate struct {
 	Token         string                             `json:"token"`
 	Version       int                                `json:"version"`
 	Message       *Message                           `json:"message"`
+	Locale        string                             `json:"locale"`
+	GuildLocale   string                             `json:"guild_locale"`
 	ShardID       uint                               `json:"-"`
+}
+
+func (itc *InteractionCreate) Edit(ctx context.Context, session Session, response *Message) error {
+	return session.EditInteractionResponse(ctx, itc, response)
+}
+
+func (itc *InteractionCreate) Reply(ctx context.Context, session Session, response *CreateInteractionResponse) error {
+	return session.SendInteractionResponse(ctx, itc, response)
+}
+
+var _ internalUpdater = (*InteractionCreate)(nil)
+
+func (obj *InteractionCreate) updateInternals() {
+	if obj.Member != nil {
+		obj.Member.GuildID = obj.GuildID
+		obj.Member.updateInternals()
+	}
 }
 
 // ---------------------------
@@ -623,6 +645,45 @@ type InviteCreate struct {
 	TargetType int       `json:"target_user_type"`
 	Temporary  bool      `json:"temporary"`
 	Uses       int       `json:"uses"`
+
+	ShardID uint `json:"-"`
+}
+
+type GuildStickersUpdate struct {
+	GuildID  Snowflake         `json:"guild_id"`
+	Stickers []*MessageSticker `json:"stickers"`
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventCreate struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+type GuildScheduledEventUpdate struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+type GuildScheduledEventDelete struct {
+	GuildScheduledEvent
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventUserAdd struct {
+	GuildScheduledEventID Snowflake `json:"guild_scheduled_event_id"`
+	UserID                Snowflake `json:"user_id"`
+	GuildID               Snowflake `json:"guild_id"`
+
+	ShardID uint `json:"-"`
+}
+
+type GuildScheduledEventUserRemove struct {
+	GuildScheduledEventID Snowflake `json:"guild_scheduled_event_id"`
+	UserID                Snowflake `json:"user_id"`
+	GuildID               Snowflake `json:"guild_id"`
 
 	ShardID uint `json:"-"`
 }

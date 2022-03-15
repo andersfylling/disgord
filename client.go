@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	evt "github.com/andersfylling/disgord/internal/event"
+
 	"golang.org/x/net/proxy"
 
 	"github.com/andersfylling/disgord/internal/gateway"
@@ -88,24 +90,50 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 		return nil, errors.New("you have specified intents that are not for DM usage. See documentation")
 	}
 
-	// remove extra/duplicates events
-	uniqueEventNames := make(map[string]bool)
-	for _, eventName := range conf.RejectEvents {
-		uniqueEventNames[eventName] = false
+	if conf.Intents > 0 && (len(conf.RejectEvents) > 0 || conf.DMIntents > 0) {
+		return nil, errors.New("Config.Intents can not be used in conjunction with neither Config.RejectEvents nor Config.DMIntents")
 	}
-	// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
-	// 	return nil, errors.New("you can not reject the event USER_UPDATE")
-	// }
-	if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
-		// https://github.com/discord/discord-api-docs/issues/683
-		uniqueEventNames["PRESENCES_REPLACE"] = false
-	}
-	if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
-		return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
-	}
-	conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
-	for eventName, _ := range uniqueEventNames {
-		conf.RejectEvents = append(conf.RejectEvents, eventName)
+
+	if conf.Intents == 0 {
+		if conf.RejectEvents != nil {
+			// remove extra/duplicates events
+			uniqueEventNames := make(map[string]bool)
+			for _, eventName := range conf.RejectEvents {
+				uniqueEventNames[eventName] = false
+			}
+			// if _, ok := uniqueEventNames[EvtUserUpdate]; ok {
+			// 	return nil, errors.New("you can not reject the event USER_UPDATE")
+			// }
+			if _, ok := uniqueEventNames["PRESENCES_REPLACE"]; !ok {
+				// https://github.com/discord/discord-api-docs/issues/683
+				uniqueEventNames["PRESENCES_REPLACE"] = false
+			}
+			if _, ok := uniqueEventNames[EvtReady]; ok && conf.LoadMembersQuietly {
+				return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
+			}
+			conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
+			for eventName, _ := range uniqueEventNames {
+				conf.RejectEvents = append(conf.RejectEvents, eventName)
+			}
+
+			// figure out intents
+			for _, e := range evt.All() {
+				var exists bool
+				for _, e2 := range conf.RejectEvents {
+					if e == e2 {
+						exists = true
+						break
+					}
+				}
+				if exists {
+					continue
+				}
+
+				conf.Intents |= gateway.EventToIntent(e, false)
+			}
+		}
+
+		conf.Intents |= conf.DMIntents
 	}
 
 	httdClient, err := httd.NewClient(&httd.Config{
@@ -214,12 +242,9 @@ type Config struct {
 	// Deprecated: use WebsocketHttpClient and HttpClient
 	Proxy proxy.Dialer
 
-	// DMIntents specify intents related to direct message capabilities. Guild related intents are derived
-	// from the RejectEvents config option (I hope that one day Intents can be removed all together, and
-	// such optimizations can be handled in the background).
-	//
-	// You can see sent intents by enabling debug logging. Remember that derived from RejectIntents are appended.
-	DMIntents Intent
+	// Intents can be specified to reduce traffic sent from the discord gateway.
+	//  Intents = IntentDirectMessages | IntentGuildMessages
+	Intents Intent
 
 	// your project name, name of bot, or application
 	ProjectName string
@@ -261,7 +286,11 @@ type Config struct {
 	Cache        Cache
 	ShardConfig  ShardConfig
 
+	// Deprecated: use Intents
 	RejectEvents []string
+
+	// Deprecated: use Intents
+	DMIntents Intent
 }
 
 // Client is the main disgord Client to hold your state and data. You must always initiate it using the constructor
@@ -273,7 +302,8 @@ type Client struct {
 	mu sync.RWMutex
 
 	// current bot id
-	botID Snowflake
+	botID         Snowflake
+	applicationID Snowflake
 
 	clientQueryBuilder
 
@@ -315,7 +345,7 @@ type Client struct {
 	pool *pools
 }
 
-var MissingClientInstanceErr = errors.New("client instance was not specified")
+var ErrMissingClientInstance = errors.New("client instance was not specified")
 
 //////////////////////////////////////////////////////
 //
@@ -333,24 +363,6 @@ var _ Session = (*Client)(nil)
 
 func (c *Client) Pool() *pools {
 	return c.pool
-}
-
-// AddPermission adds a minimum required permission to the bot. If the permission is negative, it is overwritten to 0.
-// This is useful for creating the bot URL.
-//
-// At the moment, this holds no other effect than aesthetics.
-func (c *Client) AddPermission(permission PermissionBit) (updatedPermissions PermissionBit) {
-	if permission < 0 {
-		permission = 0
-	}
-
-	c.permissions |= permission
-	return c.GetPermissions()
-}
-
-// GetPermissions returns the minimum bot requirements.
-func (c *Client) GetPermissions() (permissions PermissionBit) {
-	return c.permissions
 }
 
 // AvgHeartbeatLatency checks the duration of waiting before receiving a response from Discord when a
@@ -422,6 +434,7 @@ func (c *Client) setupConnectEnv() {
 	if c.config.LoadMembersQuietly {
 		c.Gateway().Ready(c.handlers.loadMembers)
 	}
+	c.Gateway().Ready(c.handlers.saveApplicationID)
 	c.Gateway().GuildCreate(c.handlers.saveGuildID)
 	c.Gateway().GuildDelete(c.handlers.deleteGuildID)
 
@@ -496,6 +509,14 @@ func (ih *internalHandlers) loadMembers(_ Session, evt *Ready) {
 	})
 }
 
+func (ih *internalHandlers) saveApplicationID(_ Session, evt *Ready) {
+	client := ih.c
+	client.connectedGuildsMutex.Lock()
+	defer client.connectedGuildsMutex.Unlock()
+
+	client.applicationID = evt.Application.ID
+}
+
 //////////////////////////////////////////////////////
 //
 // REST Methods
@@ -516,16 +537,26 @@ func (c *Client) EditInteractionResponse(ctx context.Context, interaction *Inter
 	return err
 }
 
-func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *InteractionResponse) error {
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *CreateInteractionResponse) error {
+	var (
+		postBody    interface{}
+		contentType string
+		err         error
+	)
+	if postBody, contentType, err = data.prepare(); err != nil {
+		return err
+	}
+
 	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
+
 	req := &httd.Request{
 		Endpoint:    endpoint,
-		Method:      "POST",
-		Body:        data,
+		Method:      http.MethodPost,
+		Body:        postBody,
 		Ctx:         ctx,
-		ContentType: httd.ContentTypeJSON,
+		ContentType: contentType,
 	}
-	_, _, err := c.req.Do(ctx, req)
+	_, _, err = c.req.Do(ctx, req)
 	return err
 }
 
