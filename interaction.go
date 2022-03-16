@@ -47,6 +47,13 @@ const (
 	InteractionCallbackUpdateMessage
 )
 
+type InteractionMessageFlag uint
+
+const (
+	InteractionMessageFlagSuppressEmbeds InteractionMessageFlag = 1 << 2
+	InteractionMessageFlagEphemeral      InteractionMessageFlag = 1 << 6
+)
+
 // ApplicationCommandInteractionDataResolved
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 type ApplicationCommandInteractionDataResolved struct {
@@ -77,12 +84,13 @@ type MessageInteraction struct {
 }
 
 type CreateInteractionResponseData struct {
-	Content         string              `json:"content"`
-	Tts             bool                `json:"tts,omitempty"`
-	Embeds          []*Embed            `json:"embeds,omitempty"`
-	Components      []*MessageComponent `json:"components"`
-	Attachments     []*Attachment       `json:"attachments"`
-	AllowedMentions *AllowedMentions    `json:"allowed_mentions,omitempty"`
+	Content         string                 `json:"content"`
+	Tts             bool                   `json:"tts,omitempty"`
+	Embeds          []*Embed               `json:"embeds,omitempty"`
+	Components      []*MessageComponent    `json:"components"`
+	Attachments     []*Attachment          `json:"attachments"`
+	AllowedMentions *AllowedMentions       `json:"allowed_mentions,omitempty"`
+	Flags           InteractionMessageFlag `json:"flags,omitempty"`
 
 	Files []CreateMessageFile `json:"-"`
 
