@@ -83,6 +83,7 @@ type CreateInteractionResponseData struct {
 	Components      []*MessageComponent `json:"components"`
 	Attachments     []*Attachment       `json:"attachments"`
 	AllowedMentions *AllowedMentions    `json:"allowed_mentions,omitempty"`
+	Flags           MessageFlag         `json:"flags,omitempty"` // Only SUPPRESS_EMBEDS and EPHEMERAL flags allowed.
 
 	Files []CreateMessageFile `json:"-"`
 
