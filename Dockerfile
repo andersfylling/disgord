@@ -1,4 +1,4 @@
-FROM golang:1.17
+FROM golang:1.18
 MAINTAINER https://github.com/andersfylling
 WORKDIR /build
 COPY cmd/dockermain.go /build
