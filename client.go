@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -540,7 +539,6 @@ func (c *Client) EditInteractionResponse(ctx context.Context, interaction *Inter
 		ContentType: contentType,
 	}
 	_, _, err = c.req.Do(ctx, req)
-	log.Printf("Error: %v", err)
 	return err
 }
 
