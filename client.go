@@ -524,7 +524,7 @@ func (ih *internalHandlers) saveApplicationID(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error {
+func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *UpdateMessage) error {
 	endpoint := fmt.Sprintf("/webhooks/%d/%s/messages/@original", interaction.ApplicationID, interaction.Token)
 	req := &httd.Request{
 		Endpoint:    endpoint,

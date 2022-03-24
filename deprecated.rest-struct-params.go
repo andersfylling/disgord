@@ -33,9 +33,6 @@ type GetMessagesParams = GetMessages
 // Deprecated: use DeleteMessages
 type DeleteMessagesParams = DeleteMessages
 
-// Deprecated: use CreateMessageFile
-type CreateMessageFileParams = CreateMessageFile
-
 // Deprecated: use CreateMessage
 type CreateMessageParams = CreateMessage
 
