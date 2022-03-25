@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"mime/multipart"
 	"net/http"
 	"strings"
+
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/endpoint"
 	"github.com/andersfylling/disgord/internal/httd"
@@ -488,10 +489,10 @@ func (m messageQueryBuilder) Update(params *UpdateMessage) (*Message, error) {
 }
 
 type UpdateMessage struct {
-	Content *string                  `json:"content,omitempty"`
-	Embeds  *[]*Embed                `json:"embeds,omitempty"`
-	Flags   *MessageFlag             `json:"flags,omitempty"`
-	File    *CreateMessageFileParams `json:"-"`
+	Content *string            `json:"content,omitempty"`
+	Embeds  *[]*Embed          `json:"embeds,omitempty"`
+	Flags   *MessageFlag       `json:"flags,omitempty"`
+	File    *CreateMessageFile `json:"-"`
 	// PayloadJSON *string `json:"payload_json,omitempty"`
 	AllowedMentions *AllowedMentions     `json:"allowed_mentions,omitempty"`
 	Components      *[]*MessageComponent `json:"components,omitempty"`

@@ -301,7 +301,7 @@ type InteractionCreate struct {
 	ShardID       uint                               `json:"-"`
 }
 
-func (itc *InteractionCreate) Edit(ctx context.Context, session Session, response *Message) error {
+func (itc *InteractionCreate) Edit(ctx context.Context, session Session, response *UpdateMessage) error {
 	return session.EditInteractionResponse(ctx, itc, response)
 }
 

@@ -524,16 +524,21 @@ func (ih *internalHandlers) saveApplicationID(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *Message) error {
+func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *UpdateMessage) error {
+	postBody, contentType, err := message.prepare()
+	if err != nil {
+		return err
+	}
+
 	endpoint := fmt.Sprintf("/webhooks/%d/%s/messages/@original", interaction.ApplicationID, interaction.Token)
 	req := &httd.Request{
 		Endpoint:    endpoint,
 		Method:      "PATCH",
-		Body:        message,
+		Body:        postBody,
 		Ctx:         ctx,
-		ContentType: httd.ContentTypeJSON,
+		ContentType: contentType,
 	}
-	_, _, err := c.req.Do(ctx, req)
+	_, _, err = c.req.Do(ctx, req)
 	return err
 }
 
