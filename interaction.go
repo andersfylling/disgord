@@ -45,6 +45,8 @@ const (
 	InteractionCallbackDeferredChannelMessageWithSource
 	InteractionCallbackDeferredUpdateMessage
 	InteractionCallbackUpdateMessage
+	InteractionCallbackApplicationCommandAutocompleteResult
+	InteractionCallbackModal
 )
 
 // ApplicationCommandInteractionDataResolved

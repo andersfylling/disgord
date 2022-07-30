@@ -99,6 +99,15 @@ const (
 	MessageComponentActionRow
 	MessageComponentButton
 	MessageComponentSelectMenu
+	MessageComponentTextInput
+)
+
+type TextInputStyle = int
+
+const (
+	_ TextInputStyle = iota
+	Short
+	Paragraph
 )
 
 type ButtonStyle = int
@@ -113,8 +122,9 @@ const (
 )
 
 type MessageComponent struct {
+	Title       string               `json:"title"`
 	Type        MessageComponentType `json:"type"`
-	Style       ButtonStyle          `json:"style"`
+	Style       int                  `json:"style"`
 	Label       string               `json:"label"`
 	Emoji       *Emoji               `json:"emoji"`
 	CustomID    string               `json:"custom_id"`
