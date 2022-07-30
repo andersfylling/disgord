@@ -106,8 +106,8 @@ type TextInputStyle = int
 
 const (
 	_ TextInputStyle = iota
-	Short
-	Paragraph
+	TextInputStyleShort
+	TextInputStyleParagraph
 )
 
 type ButtonStyle = int
@@ -135,6 +135,7 @@ type MessageComponent struct {
 	Placeholder string               `json:"placeholder"`
 	MinValues   int                  `json:"min_values"`
 	MaxValues   int                  `json:"max_values"`
+	Required    bool                 `json:"required"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
