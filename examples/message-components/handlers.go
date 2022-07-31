@@ -224,7 +224,7 @@ func exampleModalSubmitHandler() {
 				Embeds: []*disgord.Embed{
 					{
 						Title:       "Modal Submit Message",
-						Description: fmt.Sprintf("Submitted Answer: %s", intCreate.Data.Components[0].Components[0].),
+						Description: fmt.Sprintf("Submitted Answer: %s", intCreate.Data.Components[0].Components[0].Value),
 					},
 				},
 			},
