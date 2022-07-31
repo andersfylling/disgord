@@ -1262,7 +1262,7 @@ type CreateThreadWithoutMessage struct {
 	AutoArchiveDuration AutoArchiveDurationTime `json:"auto_archive_duration,omitempty"`
 	// In API v9, type defaults to PRIVATE_THREAD in order to match the behavior when
 	// thread documentation was first published. In API v10 this will be changed to be a required field, with no default.
-	Type             ChannelType `json:"type,omitempty"`
+	Type             ChannelType `json:"type"`
 	Invitable        bool        `json:"invitable,omitempty"`
 	RateLimitPerUser int         `json:"rate_limit_per_user,omitempty"`
 
