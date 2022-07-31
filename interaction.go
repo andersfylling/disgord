@@ -16,6 +16,8 @@ const (
 	InteractionPing
 	InteractionApplicationCommand
 	InteractionMessageComponent
+	InteractionApplicationCommandAutocomplete
+	InteractionModalSubmit
 )
 
 type OptionType = int
