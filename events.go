@@ -284,34 +284,50 @@ type MessageReactionAdd struct {
 
 // ---------------------------
 
-type InteractionCreate struct {
-	ID            Snowflake                          `json:"id"`
-	ApplicationID Snowflake                          `json:"application_id"`
-	Type          InteractionType                    `json:"type"`
-	Data          *ApplicationCommandInteractionData `json:"data"`
-	GuildID       Snowflake                          `json:"guild_id"`
-	ChannelID     Snowflake                          `json:"channel_id"`
-	Member        *Member                            `json:"member"`
-	User          *User                              `json:"user"`
-	Token         string                             `json:"token"`
-	Version       int                                `json:"version"`
-	Message       *Message                           `json:"message"`
-	Locale        string                             `json:"locale"`
-	GuildLocale   string                             `json:"guild_locale"`
-	ShardID       uint                               `json:"-"`
+// InteractionCreate[T]
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-structure
+type InteractionCreate[
+	T ApplicationCommandInteractionData |
+		MessageComponentInteractionData |
+		ModalSubmitInteractionData,
+] struct {
+	ID            Snowflake       `json:"id"`
+	ApplicationID Snowflake       `json:"application_id"`
+	Type          InteractionType `json:"type"`
+	Data          *T              `json:"data"`
+	GuildID       Snowflake       `json:"guild_id"`
+	ChannelID     Snowflake       `json:"channel_id"`
+	Member        *Member         `json:"member"`
+	User          *User           `json:"user"`
+	Token         string          `json:"token"`
+	Version       int             `json:"version"`
+	Message       *Message        `json:"message"`
+	Locale        string          `json:"locale"`
+	GuildLocale   string          `json:"guild_locale"`
+	ShardID       uint            `json:"-"`
 }
 
-func (itc *InteractionCreate) Edit(ctx context.Context, session Session, response *UpdateMessage) error {
+func (itc *InteractionCreate[T]) GetID() Snowflake {
+	return itc.ID
+}
+
+func (itc *InteractionCreate[T]) GetToken() string {
+	return itc.Token
+}
+
+func (itc *InteractionCreate[T]) Edit(ctx context.Context, session Session, response *UpdateMessage) error {
 	return session.EditInteractionResponse(ctx, itc, response)
 }
 
-func (itc *InteractionCreate) Reply(ctx context.Context, session Session, response *CreateInteractionResponse) error {
+func (itc *InteractionCreate[T]) Reply(ctx context.Context, session Session, response *CreateInteractionResponse) error {
 	return session.SendInteractionResponse(ctx, itc, response)
 }
 
-var _ internalUpdater = (*InteractionCreate)(nil)
+var _ internalUpdater = (*InteractionCreate[ApplicationCommandInteractionData])(nil)
+var _ internalUpdater = (*InteractionCreate[MessageComponentInteractionData])(nil)
+var _ internalUpdater = (*InteractionCreate[ModalSubmitInteractionData])(nil)
 
-func (obj *InteractionCreate) updateInternals() {
+func (obj *InteractionCreate[T]) updateInternals() {
 	if obj.Member != nil {
 		obj.Member.GuildID = obj.GuildID
 		obj.Member.updateInternals()

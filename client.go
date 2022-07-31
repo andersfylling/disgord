@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"reflect"
 	"sync"
 	"time"
 
@@ -524,25 +525,35 @@ func (ih *internalHandlers) saveApplicationID(_ Session, evt *Ready) {
 //
 //////////////////////////////////////////////////////
 
-func (c *Client) EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *UpdateMessage) error {
-	postBody, contentType, err := message.prepare()
-	if err != nil {
-		return err
-	}
+func (c *Client) EditInteractionResponse(ctx context.Context, interaction Interactable, message *UpdateMessage) error {
+	switch interaction.(type) {
+	case *InteractionCreate[MessageComponentInteractionData]:
+		{
+			postBody, contentType, err := message.prepare()
+			if err != nil {
+				return err
+			}
 
-	endpoint := fmt.Sprintf("/webhooks/%d/%s/messages/@original", interaction.ApplicationID, interaction.Token)
-	req := &httd.Request{
-		Endpoint:    endpoint,
-		Method:      "PATCH",
-		Body:        postBody,
-		Ctx:         ctx,
-		ContentType: contentType,
+			msgInteraction := interaction.(*InteractionCreate[MessageComponentInteractionData])
+			endpoint := fmt.Sprintf("/webhooks/%d/%s/messages/@original", msgInteraction.ApplicationID, msgInteraction.Token)
+			req := &httd.Request{
+				Endpoint:    endpoint,
+				Method:      "PATCH",
+				Body:        postBody,
+				Ctx:         ctx,
+				ContentType: contentType,
+			}
+			_, _, err = c.req.Do(ctx, req)
+			return err
+		}
+	default:
+		{
+			return fmt.Errorf("cannot edit interaction response of type %s", reflect.TypeOf(interaction).String())
+		}
 	}
-	_, _, err = c.req.Do(ctx, req)
-	return err
 }
 
-func (c *Client) SendInteractionResponse(ctx context.Context, interaction *InteractionCreate, data *CreateInteractionResponse) error {
+func (c *Client) SendInteractionResponse(ctx context.Context, interaction Interactable, data *CreateInteractionResponse) error {
 	var (
 		postBody    interface{}
 		contentType string
@@ -552,7 +563,7 @@ func (c *Client) SendInteractionResponse(ctx context.Context, interaction *Inter
 		return err
 	}
 
-	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.ID, interaction.Token)
+	endpoint := fmt.Sprintf("/interactions/%d/%s/callback", interaction.GetID(), interaction.GetToken())
 
 	req := &httd.Request{
 		Endpoint:    endpoint,

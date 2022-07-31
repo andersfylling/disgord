@@ -34,8 +34,8 @@ type Session interface {
 	Pool() *pools
 
 	ClientQueryBuilder
-	EditInteractionResponse(ctx context.Context, interaction *InteractionCreate, message *UpdateMessage) error
-	SendInteractionResponse(context context.Context, interaction *InteractionCreate, data *CreateInteractionResponse) error
+	EditInteractionResponse(ctx context.Context, interaction Interactable, message *UpdateMessage) error
+	SendInteractionResponse(context context.Context, interaction Interactable, data *CreateInteractionResponse) error
 
 	UpdateStatus(s *UpdateStatusPayload) error
 	UpdateStatusString(s string) error

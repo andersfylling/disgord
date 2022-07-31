@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"bytes"
+	"context"
 	"mime/multipart"
 	"strings"
 
@@ -47,6 +48,13 @@ const (
 	InteractionCallbackUpdateMessage
 )
 
+type Interactable interface {
+	GetID() Snowflake
+	GetToken() string
+	Edit(context.Context, Session, *UpdateMessage) error
+	Reply(context.Context, Session, *CreateInteractionResponse) error
+}
+
 // ApplicationCommandInteractionDataResolved
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 type ApplicationCommandInteractionDataResolved struct {
@@ -57,6 +65,8 @@ type ApplicationCommandInteractionDataResolved struct {
 	Messages map[Snowflake]*Message `json:"messages"`
 }
 
+// ApplicationCommandInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure
 type ApplicationCommandInteractionData struct {
 	ID            Snowflake                                  `json:"id"`
 	Name          string                                     `json:"name"`
@@ -68,6 +78,18 @@ type ApplicationCommandInteractionData struct {
 	ComponentType MessageComponentType                       `json:"component_type"`
 	TargetID      Snowflake                                  `json:"target_id"`
 }
+
+// MessageComponentInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-message-component-data-structure
+type MessageComponentInteractionData struct {
+	CustomID string               `json:"custom_id"`
+	Type     MessageComponentType `json:"type"`
+	Values   []*SelectMenuOption  `json:"values,omitempty"`
+}
+
+// ModalSubmitInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-modal-submit-data-structure
+type ModalSubmitInteractionData struct{}
 
 type MessageInteraction struct {
 	ID   Snowflake       `json:"id"`
