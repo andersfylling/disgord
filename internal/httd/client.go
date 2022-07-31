@@ -101,7 +101,7 @@ func (c *Client) BucketGrouping() (group map[string][]string) {
 // SupportsDiscordAPIVersion check if a given discord api version is supported by this package.
 func SupportsDiscordAPIVersion(version int) bool {
 	supports := []int{
-		9,
+		10,
 	}
 
 	var supported bool
