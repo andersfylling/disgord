@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/andersfylling/disgord"
 )
 
 var (
-	exampleButtonsIntCreateHandler    chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
-	exampleSelectMenuIntCreateHandler chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
-	exampleModalIntCreateHandler      chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
+	exampleButtonsIntCreateHandler     chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
+	exampleSelectMenuIntCreateHandler  chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
+	exampleModalIntCreateHandler       chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
+	exampleModalSubmitIntCreateHandler chan *disgord.InteractionCreate = make(chan *disgord.InteractionCreate)
 )
 
 func exampleButtonsHandler() {
@@ -155,7 +157,7 @@ func exampleSelectMenuHandler() {
 	}
 }
 
-func exampleModal() {
+func exampleModalHandler() {
 	for {
 		intCreate, active := <-exampleModalIntCreateHandler
 		if !active {
@@ -194,6 +196,37 @@ func exampleModal() {
 				Title:      "My Modal",
 				CustomID:   "my_modal",
 				Components: modal,
+			},
+		}
+		err := client.SendInteractionResponse(context.Background(), intCreate, resp)
+		if err != nil {
+			log.Debug(err)
+		}
+	}
+}
+
+func exampleModalSubmitHandler() {
+	for {
+		intCreate, active := <-exampleModalSubmitIntCreateHandler
+		if !active {
+			log.Debug("exampleModalSubmitIntCreateHandler no longer active")
+		}
+		if intCreate.ApplicationID != appID {
+			continue
+		}
+		if intCreate.Type != disgord.InteractionModalSubmit {
+			continue
+		}
+
+		resp := &disgord.CreateInteractionResponse{
+			Type: disgord.InteractionCallbackChannelMessageWithSource,
+			Data: &disgord.CreateInteractionResponseData{
+				Embeds: []*disgord.Embed{
+					{
+						Title:       "Modal Submit Message",
+						Description: fmt.Sprintf("Submitted Answer: %s", intCreate.Data.Com),
+					},
+				},
 			},
 		}
 		err := client.SendInteractionResponse(context.Background(), intCreate, resp)

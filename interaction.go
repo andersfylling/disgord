@@ -71,6 +71,7 @@ type ApplicationCommandInteractionData struct {
 	Values        []string                                   `json:"values"`
 	ComponentType MessageComponentType                       `json:"component_type"`
 	TargetID      Snowflake                                  `json:"target_id"`
+	Components    []*MessageComponent                        `json:"components"`
 }
 
 type MessageInteraction struct {

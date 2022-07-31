@@ -56,8 +56,10 @@ func main() {
 		exampleButtonsIntCreateHandler,
 		exampleSelectMenuIntCreateHandler,
 		exampleModalIntCreateHandler,
+		exampleModalSubmitIntCreateHandler,
 	)
 	go exampleButtonsHandler()
 	go exampleSelectMenuHandler()
-	go exampleModal()
+	go exampleModalHandler()
+	go exampleModalSubmitHandler()
 }
