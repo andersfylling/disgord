@@ -80,6 +80,8 @@ type MessageInteraction struct {
 
 type CreateInteractionResponseData struct {
 	Content         string              `json:"content"`
+	Title           string              `json:"title"`
+	CustomID        string              `json:"custom_id"`
 	Tts             bool                `json:"tts,omitempty"`
 	Embeds          []*Embed            `json:"embeds,omitempty"`
 	Components      []*MessageComponent `json:"components"`

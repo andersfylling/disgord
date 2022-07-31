@@ -122,7 +122,6 @@ const (
 )
 
 type MessageComponent struct {
-	Title       string               `json:"title"`
 	Type        MessageComponentType `json:"type"`
 	Style       int                  `json:"style"`
 	Label       string               `json:"label"`

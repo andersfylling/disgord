@@ -638,7 +638,6 @@ func (m *MessageComponent) copyOverTo(other interface{}) error {
 	dest.Placeholder = m.Placeholder
 	dest.Required = m.Required
 	dest.Style = m.Style
-	dest.Title = m.Title
 	dest.Type = m.Type
 	dest.Url = m.Url
 
