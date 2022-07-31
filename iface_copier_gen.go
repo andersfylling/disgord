@@ -640,6 +640,7 @@ func (m *MessageComponent) copyOverTo(other interface{}) error {
 	dest.Style = m.Style
 	dest.Type = m.Type
 	dest.Url = m.Url
+	dest.Value = m.Value
 
 	return nil
 }
