@@ -135,6 +135,7 @@ type MessageComponent struct {
 	MinValues   int                  `json:"min_values"`
 	MaxValues   int                  `json:"max_values"`
 	Required    bool                 `json:"required"`
+	Value       string               `json:"value,omitempty"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
