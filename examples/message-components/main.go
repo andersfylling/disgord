@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	appID  disgord.Snowflake = disgord.Snowflake(911501394555580426)
+	appID  disgord.Snowflake = disgord.Snowflake(0)
 	client disgord.Session
 )
 
@@ -24,29 +24,29 @@ func main() {
 	slashCmds := []*disgord.CreateApplicationCommand{
 		{
 			Name:        "example_buttons",
-			Description: "makes example button components",
+			Description: "makes example button components. these components don't do anything.",
 			Type:        disgord.ApplicationCommandChatInput,
 		},
 		{
 			Name:        "example_select_menu",
-			Description: "makes example select menu",
+			Description: "makes example select menu. these components don't do anything.",
 			Type:        disgord.ApplicationCommandChatInput,
 		},
 		{
 			Name:        "example_modal",
-			Description: "makes example modal",
+			Description: "makes example modal. these components don't do anything.",
 			Type:        disgord.ApplicationCommandChatInput,
 		},
 	}
 	client = disgord.New(disgord.Config{
-		BotToken: "OTExNTAxMzk0NTU1NTgwNDI2.GFmWvd.3MOZwHpXeMsAf5VcBgIbXq5EfDEwYPjCIr0LjU",
+		BotToken: os.Getenv("DISCORD_BOT_TOKEN"),
 		Logger:   log,
 		Intents:  disgord.IntentGuildMessages,
 	})
 	defer client.Gateway().StayConnectedUntilInterrupted()
 	client.Gateway().BotReady(func() {
 		for i := 0; i < len(slashCmds); i++ {
-			err := client.ApplicationCommand(appID).Guild(950278170190434315).Create(slashCmds[i])
+			err := client.ApplicationCommand(appID).Guild(486833611564253184).Create(slashCmds[i])
 			if err != nil {
 				log.Error(err)
 			}
