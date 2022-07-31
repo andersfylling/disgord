@@ -1,6 +1,6 @@
 module example
 
-go 1.18
+go 1.17
 
 require (
 	github.com/andersfylling/disgord v0.35.1
