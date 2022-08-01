@@ -2,6 +2,7 @@ package disgord
 
 import (
 	"bytes"
+	"context"
 	"mime/multipart"
 	"strings"
 
@@ -51,6 +52,13 @@ const (
 	InteractionCallbackModal
 )
 
+type Interactable interface {
+	GetID() Snowflake
+	GetToken() string
+	Edit(context.Context, Session, *UpdateMessage) error
+	Reply(context.Context, Session, *CreateInteractionResponse) error
+}
+
 // ApplicationCommandInteractionDataResolved
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 type ApplicationCommandInteractionDataResolved struct {
@@ -61,6 +69,8 @@ type ApplicationCommandInteractionDataResolved struct {
 	Messages map[Snowflake]*Message `json:"messages"`
 }
 
+// ApplicationCommandInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure
 type ApplicationCommandInteractionData struct {
 	ID            Snowflake                                  `json:"id"`
 	Name          string                                     `json:"name"`
@@ -74,6 +84,18 @@ type ApplicationCommandInteractionData struct {
 	Components    []*MessageComponent                        `json:"components"`
 }
 
+// MessageComponentInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-message-component-data-structure
+type MessageComponentInteractionData struct {
+	CustomID string               `json:"custom_id"`
+	Type     MessageComponentType `json:"type"`
+	Values   []*SelectMenuOption  `json:"values,omitempty"`
+}
+
+// ModalSubmitInteractionData
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-modal-submit-data-structure
+type ModalSubmitInteractionData struct{}
+
 type MessageInteraction struct {
 	ID   Snowflake       `json:"id"`
 	Type InteractionType `json:"type"`
@@ -81,7 +103,21 @@ type MessageInteraction struct {
 	User *User           `json:"user"`
 }
 
-type CreateInteractionResponseData struct {
+type InteractionResponseData interface {
+	prepareData(*CreateInteractionResponse) (interface{}, string, error)
+}
+
+type ModalInteractionResponseData struct {
+	CustomID   string              `json:"custom_id"`
+	Title      string              `json:"title"`
+	Components []*MessageComponent `json:"components"`
+}
+
+func (d *ModalInteractionResponseData) prepareData(res *CreateInteractionResponse) (interface{}, string, error) {
+	return res, httd.ContentTypeJSON, nil
+}
+
+type MessageInteractionResponseData struct {
 	Content         string              `json:"content"`
 	Title           string              `json:"title"`
 	CustomID        string              `json:"custom_id"`
@@ -98,41 +134,31 @@ type CreateInteractionResponseData struct {
 	SpoilerTagAllAttachments bool `json:"-"`
 }
 
-type CreateInteractionResponse struct {
-	Type InteractionCallbackType        `json:"type"`
-	Data *CreateInteractionResponseData `json:"data"`
-}
-
-func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentType string, err error) {
-	if res.Data == nil {
-		return res, httd.ContentTypeJSON, nil
-	}
-
-	p := res.Data
+func (d *MessageInteractionResponseData) prepareData(res *CreateInteractionResponse) (postBody interface{}, contentType string, err error) {
 	// spoiler tag
-	if p.SpoilerTagContent && len(p.Content) > 0 {
-		p.Content = "|| " + p.Content + " ||"
+	if d.SpoilerTagContent && len(d.Content) > 0 {
+		d.Content = "|| " + d.Content + " ||"
 	}
 
-	if len(p.Files) == 0 {
+	if len(d.Files) == 0 {
 		postBody = res
 		contentType = httd.ContentTypeJSON
 		return
 	}
 
-	if p.SpoilerTagAllAttachments {
-		for i := range p.Files {
-			p.Files[i].SpoilerTag = true
+	if d.SpoilerTagAllAttachments {
+		for i := range d.Files {
+			d.Files[i].SpoilerTag = true
 		}
 	}
 
 	// check for spoilers
-	for _, embed := range p.Embeds {
-		for i := range p.Files {
-			if p.Files[i].SpoilerTag && strings.Contains(embed.Image.URL, p.Files[i].FileName) {
-				s := strings.Split(embed.Image.URL, p.Files[i].FileName)
+	for _, embed := range d.Embeds {
+		for i := range d.Files {
+			if d.Files[i].SpoilerTag && strings.Contains(embed.Image.URL, d.Files[i].FileName) {
+				s := strings.Split(embed.Image.URL, d.Files[i].FileName)
 				if len(s) > 0 {
-					s[0] += AttachmentSpoilerPrefix + p.Files[i].FileName
+					s[0] += AttachmentSpoilerPrefix + d.Files[i].FileName
 					embed.Image.URL = strings.Join(s, "")
 				}
 			}
@@ -154,7 +180,7 @@ func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentTy
 	}
 
 	// Iterate through all the files and write them to the multipart blob
-	for i, file := range p.Files {
+	for i, file := range d.Files {
 		if err = file.write(i, mp); err != nil {
 			return
 		}
@@ -164,6 +190,18 @@ func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentTy
 
 	postBody = buf
 	contentType = mp.FormDataContentType()
-
 	return
+}
+
+type CreateInteractionResponse struct {
+	Type InteractionCallbackType `json:"type"`
+	Data InteractionResponseData `json:"data"`
+}
+
+func (res *CreateInteractionResponse) prepare() (postBody interface{}, contentType string, err error) {
+	if res.Data == nil {
+		return res, httd.ContentTypeJSON, nil
+	}
+
+	return res.Data.prepareData(res)
 }

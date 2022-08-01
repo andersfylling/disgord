@@ -66,7 +66,7 @@ func main() {
 		fmt.Printf("%+v", *h)
 		err := s.SendInteractionResponse(context.Background(), h, &disgord.CreateInteractionResponse{
 			Type: 4,
-			Data: &disgord.CreateInteractionResponseData{
+			Data: &disgord.MessageInteractionResponseData{
 				Content:    "hello",
 				Components: []*disgord.MessageComponent{},
 			},

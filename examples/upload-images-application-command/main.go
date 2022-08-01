@@ -16,7 +16,7 @@ func interaction(session disgord.Session, evt *disgord.InteractionCreate) {
 		defer f1.Close()
 		session.SendInteractionResponse(context.Background(), evt, &disgord.CreateInteractionResponse{
 			Type: disgord.InteractionCallbackChannelMessageWithSource,
-			Data: &disgord.CreateInteractionResponseData{
+			Data: &disgord.MessageInteractionResponseData{
 				Content: "This is my favourite image",
 				Files: []disgord.CreateMessageFile{
 					{f1, "myfavouriteimage.jpg", false},
