@@ -636,9 +636,11 @@ func (m *MessageComponent) copyOverTo(other interface{}) error {
 		dest.Options[i] = DeepCopy(m.Options[i]).(*SelectMenuOption)
 	}
 	dest.Placeholder = m.Placeholder
+	dest.Required = m.Required
 	dest.Style = m.Style
 	dest.Type = m.Type
 	dest.Url = m.Url
+	dest.Value = m.Value
 
 	return nil
 }

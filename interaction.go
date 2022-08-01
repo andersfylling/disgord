@@ -16,6 +16,8 @@ const (
 	InteractionPing
 	InteractionApplicationCommand
 	InteractionMessageComponent
+	InteractionApplicationCommandAutocomplete
+	InteractionModalSubmit
 )
 
 type OptionType = int
@@ -45,6 +47,8 @@ const (
 	InteractionCallbackDeferredChannelMessageWithSource
 	InteractionCallbackDeferredUpdateMessage
 	InteractionCallbackUpdateMessage
+	InteractionCallbackApplicationCommandAutocompleteResult
+	InteractionCallbackModal
 )
 
 // ApplicationCommandInteractionDataResolved
@@ -67,6 +71,7 @@ type ApplicationCommandInteractionData struct {
 	Values        []string                                   `json:"values"`
 	ComponentType MessageComponentType                       `json:"component_type"`
 	TargetID      Snowflake                                  `json:"target_id"`
+	Components    []*MessageComponent                        `json:"components"`
 }
 
 type MessageInteraction struct {
@@ -78,6 +83,8 @@ type MessageInteraction struct {
 
 type CreateInteractionResponseData struct {
 	Content         string              `json:"content"`
+	Title           string              `json:"title"`
+	CustomID        string              `json:"custom_id"`
 	Tts             bool                `json:"tts,omitempty"`
 	Embeds          []*Embed            `json:"embeds,omitempty"`
 	Components      []*MessageComponent `json:"components"`

@@ -99,6 +99,15 @@ const (
 	MessageComponentActionRow
 	MessageComponentButton
 	MessageComponentSelectMenu
+	MessageComponentTextInput
+)
+
+type TextInputStyle = int
+
+const (
+	_ TextInputStyle = iota
+	TextInputStyleShort
+	TextInputStyleParagraph
 )
 
 type ButtonStyle = int
@@ -114,7 +123,7 @@ const (
 
 type MessageComponent struct {
 	Type        MessageComponentType `json:"type"`
-	Style       ButtonStyle          `json:"style"`
+	Style       int                  `json:"style"`
 	Label       string               `json:"label"`
 	Emoji       *Emoji               `json:"emoji"`
 	CustomID    string               `json:"custom_id"`
@@ -125,6 +134,8 @@ type MessageComponent struct {
 	Placeholder string               `json:"placeholder"`
 	MinValues   int                  `json:"min_values"`
 	MaxValues   int                  `json:"max_values"`
+	Required    bool                 `json:"required"`
+	Value       string               `json:"value,omitempty"`
 }
 
 var _ Copier = (*MessageComponent)(nil)
