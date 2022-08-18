@@ -3,6 +3,7 @@ module github.com/andersfylling/disgord
 go 1.13
 
 require (
+	github.com/andersfylling/discordgateway v0.5.0
 	github.com/andersfylling/snowflake/v5 v5.0.1
 	github.com/klauspost/compress v1.15.1 // indirect
 	go.uber.org/atomic v1.9.0
