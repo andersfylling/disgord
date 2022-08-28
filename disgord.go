@@ -119,6 +119,7 @@
 package disgord
 
 //go:generate go run internal/generate/intents/main.go
+//go:generate go run internal/generate/type-naming-convention/main.go
 
 import (
 	"fmt"
