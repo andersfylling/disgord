@@ -77,7 +77,7 @@ const (
 	PermissionVoiceMoveMembers
 	PermissionVoiceUseVAD
 	PermissionVoicePrioritySpeaker PermissionBit = 1 << (iota + 2)
-	PermissionStream
+	PermissionVoiceStream
 )
 
 // Constants for general management.
@@ -89,12 +89,16 @@ const (
 	PermissionManageEmojis
 	_
 	_
-	_
+	PermissionManageEvents
 	PermissionManageThreads
 	PermissionCreatePublicThreads
 	PermissionCreatePrivateThreads
-	_
+	PermissionUseExternalStickers
 	PermissionSendMessagesInThreads
+	PermissionUseEmbeddedActivites
+	// This is technically called MODERATE_MEMBERS in the docs, but I think that would make it confusing, as managing roles
+	// and banning and stuff could also be moderating
+	PermissionTimeoutMembers
 )
 
 // Constants for the different bit offsets of general permissions
@@ -107,6 +111,8 @@ const (
 	PermissionManageServer
 	PermissionAddReactions
 	PermissionViewAuditLogs
+	_
+	PermissionViewChannel
 
 	PermissionTextAll = PermissionReadMessages |
 		PermissionSendMessages |
@@ -115,29 +121,52 @@ const (
 		PermissionEmbedLinks |
 		PermissionAttachFiles |
 		PermissionReadMessageHistory |
-		PermissionMentionEveryone
-	PermissionAllVoice = PermissionVoiceConnect |
+		PermissionMentionEveryone |
+		PermissionUseExternalEmojis |
+		PermissionViewGuildInsights |
+		PermissionUseExternalStickers
+	PermissionVoiceAll = PermissionVoiceConnect |
 		PermissionVoiceSpeak |
 		PermissionVoiceMuteMembers |
 		PermissionVoiceDeafenMembers |
 		PermissionVoiceMoveMembers |
-		PermissionVoiceUseVAD
+		PermissionVoiceUseVAD |
+		PermissionVoicePrioritySpeaker |
+		PermissionVoiceStream |
+		PermissionUseEmbeddedActivites
 	PermissionChannelAll = PermissionTextAll |
-		PermissionAllVoice |
 		PermissionCreateInstantInvite |
-		PermissionManageRoles |
-		PermissionManageChannels |
 		PermissionAddReactions |
-		PermissionViewAuditLogs
-	PermissionAll = PermissionChannelAll |
-		PermissionKickMembers |
+		PermissionViewAuditLogs |
+		PermissionViewChannel |
+		PermissionSendMessagesInThreads |
+		PermissionCreatePublicThreads |
+		PermissionCreatePrivateThreads
+		// I don't really think changing your own nickname counts as management but I don't want to create a whole new catergory.
+		// Also idk if some sort of system was being followed when doing this or if it's just based on opinion
+	PermissionManagementAll = PermissionManageRoles |
+		PermissionManageChannels | PermissionKickMembers |
 		PermissionBanMembers |
 		PermissionManageServer |
-		PermissionAdministrator
+		PermissionAdministrator |
+		PermissionChangeNickname |
+		PermissionManageNicknames |
+		PermissionManageWebhooks |
+		PermissionManageEmojis |
+		PermissionManageEvents |
+		PermissionManageThreads |
+		PermissionTimeoutMembers
+
+	PermissionAll = PermissionTextAll |
+		PermissionVoiceAll |
+		PermissionChannelAll |
+		PermissionManagementAll
 )
 
 const (
 	PermissionUseSlashCommands PermissionBit = 2147483648
+	// Down here cause according to discord docs: "(This permission is under active development and may be changed or removed.)"
+	PermissionRequestToSpeak PermissionBit = 1 << 32
 )
 
 // GuildUnavailable is a partial Guild object.
@@ -147,7 +176,9 @@ type GuildUnavailable struct {
 }
 
 // Guild Guilds in Discord represent an isolated collection of Users and Channels,
-//  and are often referred to as "servers" in the UI.
+//
+//	and are often referred to as "servers" in the UI.
+//
 // https://discord.com/developers/docs/resources/guild#guild-object
 // Fields with `*` are only sent within the GUILD_CREATE event
 // reviewed: 2018-08-25
@@ -621,10 +652,11 @@ func (m *Member) Mention() string {
 // CreateGuild ...
 // https://discord.com/developers/docs/resources/guild#create-guild-json-params
 // example partial channel object:
-// {
-//    "name": "naming-things-is-hard",
-//    "type": 0
-// }
+//
+//	{
+//	   "name": "naming-things-is-hard",
+//	   "type": 0
+//	}
 type CreateGuild struct {
 	Name                    string                        `json:"name"` // required
 	Region                  string                        `json:"region"`
@@ -637,13 +669,14 @@ type CreateGuild struct {
 }
 
 // CreateGuild [REST] Create a new guild. Returns a guild object on success. Fires a Guild Create Gateway event.
-//  Method                  POST
-//  Endpoint                /guilds
-//  Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild
-//  Reviewed                2018-08-16
-//  Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
-//                          categories from this endpoint. is not supported.
-//							The params argument is optional.
+//
+//	 Method                  POST
+//	 Endpoint                /guilds
+//	 Discord documentation   https://discord.com/developers/docs/resources/guild#create-guild
+//	 Reviewed                2018-08-16
+//	 Comment                 This endpoint. can be used only by bots in less than 10 Guilds. Creating channel
+//	                         categories from this endpoint. is not supported.
+//								The params argument is optional.
 func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (ret *Guild, err error) {
 	// TODO: check if bot
 	// TODO-2: is bot in less than 10 Guilds?
@@ -1637,13 +1670,14 @@ func (g *getGuildMembers) FindErrors() error {
 
 // GetGuildMembers [REST] Returns a list of guild member objects that are members of the guild. The `after` param
 // refers to the highest snowflake.
-//  Method                  GET
-//  Endpoint                /guilds/{guild.id}/members
-//  Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-members
-//  Reviewed                2018-08-17
-//  Comment                 All parameters to this endpoint. are optional
-//  Comment#2               "List Guild Members"
-//  Comment#3               https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params
+//
+//	Method                  GET
+//	Endpoint                /guilds/{guild.id}/members
+//	Discord documentation   https://discord.com/developers/docs/resources/guild#get-guild-members
+//	Reviewed                2018-08-17
+//	Comment                 All parameters to this endpoint. are optional
+//	Comment#2               "List Guild Members"
+//	Comment#3               https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params
 func (g guildQueryBuilder) getGuildMembers(params *getGuildMembers) (ret []*Member, err error) {
 	if params == nil {
 		params = &getGuildMembers{}
