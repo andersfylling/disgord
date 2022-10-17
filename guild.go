@@ -124,7 +124,7 @@ const (
 		PermissionMentionEveryone |
 		PermissionUseExternalEmojis |
 		PermissionViewGuildInsights |
-		PermissionUseExternalStickers
+		PermissionUseExternalStickers | PermissionUseSlashCommands
 	PermissionVoiceAll = PermissionVoiceConnect |
 		PermissionVoiceSpeak |
 		PermissionVoiceMuteMembers |
