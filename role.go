@@ -78,10 +78,9 @@ func (r *Role) SetGuildID(id Snowflake) {
 type GuildRoleQueryBuilder interface {
 	WithContext(ctx context.Context) GuildRoleQueryBuilder
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
-
 	Update(params *UpdateRole) (*Role, error)
 	Delete() error
-
+	Get(ID Snowflake) (*Role, error)
 	// Deprecated: use Update
 	UpdateBuilder() (builder UpdateGuildRoleBuilder)
 }
