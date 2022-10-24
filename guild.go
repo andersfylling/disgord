@@ -1208,11 +1208,11 @@ func (g guildRoleQueryBuilder) Get() (*Role, error) {
 // CreateGuildRole ...
 // https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRole struct {
-	Name        string `json:"name,omitempty"`
-	Permissions uint64 `json:"permissions,omitempty"`
-	Color       uint   `json:"color,omitempty"`
-	Hoist       bool   `json:"hoist,omitempty"`
-	Mentionable bool   `json:"mentionable,omitempty"`
+	Name        string        `json:"name,omitempty"`
+	Permissions PermissionBit `json:"permissions,omitempty"`
+	Color       uint          `json:"color,omitempty"`
+	Hoist       bool          `json:"hoist,omitempty"`
+	Mentionable bool          `json:"mentionable,omitempty"`
 
 	// Reason is a X-Audit-Log-Reason header field that will show up on the audit log for this action.
 	Reason string `json:"-"`
