@@ -930,10 +930,6 @@ func (g *guildQueryBuilderNop) GetPruneMembersCount(_ *GetPruneMembersCount) (in
 	return 0, nil
 }
 
-func (g *guildQueryBuilderNop) GetRole(_ Snowflake) (*Role, error) {
-	return nil, nil
-}
-
 func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
@@ -1048,6 +1044,10 @@ func (g guildRoleQueryBuilderNop) WithFlags(flags ...Flag) GuildRoleQueryBuilder
 
 func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
+}
+
+func (g *guildRoleQueryBuilderNop) Get(_ Snowflake) (*Role, error) {
+	return nil, nil
 }
 
 func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {

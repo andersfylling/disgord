@@ -939,10 +939,6 @@ func (g *GuildQueryBuilderNop) GetPruneMembersCount(_ *disgord.GetPruneMembersCo
 	return 0, nil
 }
 
-func (g *GuildQueryBuilderNop) GetRole(_ disgord.Snowflake) (*disgord.Role, error) {
-	return nil, nil
-}
-
 func (g *GuildQueryBuilderNop) GetRoles() ([]*disgord.Role, error) {
 	return nil, nil
 }
@@ -1057,6 +1053,10 @@ func (g GuildRoleQueryBuilderNop) WithFlags(flags ...disgord.Flag) disgord.Guild
 
 func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
+}
+
+func (g *GuildRoleQueryBuilderNop) Get(_ disgord.Snowflake) (*disgord.Role, error) {
+	return nil, nil
 }
 
 func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole) (*disgord.Role, error) {
