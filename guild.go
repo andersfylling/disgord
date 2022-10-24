@@ -142,8 +142,8 @@ const (
 		PermissionSendMessagesInThreads |
 		PermissionCreatePublicThreads |
 		PermissionCreatePrivateThreads
-		// I don't really think changing your own nickname counts as management but I don't want to create a whole new catergory.
-		// Also idk if some sort of system was being followed when doing this or if it's just based on opinion
+	// I don't really think changing your own nickname counts as management but I don't want to create a whole new catergory.
+	// Also idk if some sort of system was being followed when doing this or if it's just based on opinion
 	PermissionManagementAll = PermissionManageRoles |
 		PermissionManageChannels | PermissionKickMembers |
 		PermissionBanMembers |
@@ -589,10 +589,8 @@ type GuildQueryBuilderCaller interface {
 }
 
 func (m *Member) UpdateNick(ctx context.Context, client GuildQueryBuilderCaller, nickname string) error {
-	builder := client.Guild(m.GuildID).Member(m.UserID).WithContext(ctx).UpdateBuilder()
-	return builder.
-		SetNick(nickname).
-		Execute()
+	_, err := client.Guild(m.GuildID).Member(m.UserID).WithContext(ctx).Update(&UpdateMember{Nick: &nickname})
+	return err
 }
 
 // GetPermissions populates a uint64 with all the permission flags

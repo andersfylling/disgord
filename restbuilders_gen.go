@@ -6,10 +6,12 @@ package disgord
 
 // CreateGuildEmojiBuilder is the interface for the builder.
 type CreateGuildEmojiBuilder interface {
+	Execute() (emoji *Emoji, err error)
 	IgnoreCache() CreateGuildEmojiBuilder
 	CancelOnRatelimit() CreateGuildEmojiBuilder
 	URLParam(name string, v interface{}) CreateGuildEmojiBuilder
 	Set(name string, v interface{}) CreateGuildEmojiBuilder
+	SetRoles(roles []Snowflake) CreateGuildEmojiBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -39,12 +41,35 @@ func (b *createGuildEmojiBuilder) Set(name string, v interface{}) CreateGuildEmo
 	return b
 }
 
+func (b *createGuildEmojiBuilder) SetRoles(roles []Snowflake) CreateGuildEmojiBuilder {
+	b.r.param("roles", roles)
+	return b
+}
+
+func (b *createGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Emoji), nil
+}
+
 // UpdateChannelBuilder is the interface for the builder.
 type UpdateChannelBuilder interface {
+	Execute() (channel *Channel, err error)
 	IgnoreCache() UpdateChannelBuilder
 	CancelOnRatelimit() UpdateChannelBuilder
 	URLParam(name string, v interface{}) UpdateChannelBuilder
 	Set(name string, v interface{}) UpdateChannelBuilder
+	SetParentID(parentID Snowflake) UpdateChannelBuilder
+	SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) UpdateChannelBuilder
+	SetUserLimit(userLimit uint) UpdateChannelBuilder
+	SetBitrate(bitrate uint) UpdateChannelBuilder
+	SetRateLimitPerUser(rateLimitPerUser uint) UpdateChannelBuilder
+	SetNsfw(nsfw bool) UpdateChannelBuilder
+	SetTopic(topic string) UpdateChannelBuilder
+	SetPosition(position int) UpdateChannelBuilder
+	SetName(name string) UpdateChannelBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -74,12 +99,69 @@ func (b *updateChannelBuilder) Set(name string, v interface{}) UpdateChannelBuil
 	return b
 }
 
+func (b *updateChannelBuilder) SetParentID(parentID Snowflake) UpdateChannelBuilder {
+	b.r.addPrereq(parentID.IsZero(), "parentID can not be 0")
+	b.r.param("parent_id", parentID)
+	return b
+}
+
+func (b *updateChannelBuilder) SetPermissionOverwrites(permissionOverwrites []PermissionOverwrite) UpdateChannelBuilder {
+	b.r.param("permission_overwrites", permissionOverwrites)
+	return b
+}
+
+func (b *updateChannelBuilder) SetUserLimit(userLimit uint) UpdateChannelBuilder {
+	b.r.param("user_limit", userLimit)
+	return b
+}
+
+func (b *updateChannelBuilder) SetBitrate(bitrate uint) UpdateChannelBuilder {
+	b.r.param("bitrate", bitrate)
+	return b
+}
+
+func (b *updateChannelBuilder) SetRateLimitPerUser(rateLimitPerUser uint) UpdateChannelBuilder {
+	b.r.param("rate_limit_per_user", rateLimitPerUser)
+	return b
+}
+
+func (b *updateChannelBuilder) SetNsfw(nsfw bool) UpdateChannelBuilder {
+	b.r.param("nsfw", nsfw)
+	return b
+}
+
+func (b *updateChannelBuilder) SetTopic(topic string) UpdateChannelBuilder {
+	b.r.param("topic", topic)
+	return b
+}
+
+func (b *updateChannelBuilder) SetPosition(position int) UpdateChannelBuilder {
+	b.r.param("position", position)
+	return b
+}
+
+func (b *updateChannelBuilder) SetName(name string) UpdateChannelBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateChannelBuilder) Execute() (channel *Channel, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Channel), nil
+}
+
 // UpdateCurrentUserBuilder is the interface for the builder.
 type UpdateCurrentUserBuilder interface {
+	Execute() (user *User, err error)
 	IgnoreCache() UpdateCurrentUserBuilder
 	CancelOnRatelimit() UpdateCurrentUserBuilder
 	URLParam(name string, v interface{}) UpdateCurrentUserBuilder
 	Set(name string, v interface{}) UpdateCurrentUserBuilder
+	SetUsername(username string) UpdateCurrentUserBuilder
+	SetAvatar(avatar string) UpdateCurrentUserBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -109,12 +191,42 @@ func (b *updateCurrentUserBuilder) Set(name string, v interface{}) UpdateCurrent
 	return b
 }
 
+func (b *updateCurrentUserBuilder) SetUsername(username string) UpdateCurrentUserBuilder {
+	b.r.param("username", username)
+	return b
+}
+
+func (b *updateCurrentUserBuilder) SetAvatar(avatar string) UpdateCurrentUserBuilder {
+	b.r.param("avatar", avatar)
+	return b
+}
+
+func (b *updateCurrentUserBuilder) Execute() (user *User, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*User), nil
+}
+
 // UpdateGuildBuilder is the interface for the builder.
 type UpdateGuildBuilder interface {
+	Execute() (guild *Guild, err error)
 	IgnoreCache() UpdateGuildBuilder
 	CancelOnRatelimit() UpdateGuildBuilder
 	URLParam(name string, v interface{}) UpdateGuildBuilder
 	Set(name string, v interface{}) UpdateGuildBuilder
+	SetName(name string) UpdateGuildBuilder
+	SetRegion(region string) UpdateGuildBuilder
+	SetVerificationLevel(verificationLevel int) UpdateGuildBuilder
+	SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder
+	SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder
+	SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder
+	SetAfkTimeout(afkTimeout int) UpdateGuildBuilder
+	SetIcon(icon string) UpdateGuildBuilder
+	SetOwnerID(ownerID Snowflake) UpdateGuildBuilder
+	SetSplash(splash string) UpdateGuildBuilder
+	SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -144,12 +256,81 @@ func (b *updateGuildBuilder) Set(name string, v interface{}) UpdateGuildBuilder 
 	return b
 }
 
+func (b *updateGuildBuilder) SetName(name string) UpdateGuildBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildBuilder) SetRegion(region string) UpdateGuildBuilder {
+	b.r.param("region", region)
+	return b
+}
+
+func (b *updateGuildBuilder) SetVerificationLevel(verificationLevel int) UpdateGuildBuilder {
+	b.r.param("verification_level", verificationLevel)
+	return b
+}
+
+func (b *updateGuildBuilder) SetDefaultMessageNotifications(defaultMessageNotifications DefaultMessageNotificationLvl) UpdateGuildBuilder {
+	b.r.param("default_message_notifications", defaultMessageNotifications)
+	return b
+}
+
+func (b *updateGuildBuilder) SetExplicitContentFilter(explicitContentFilter ExplicitContentFilterLvl) UpdateGuildBuilder {
+	b.r.param("explicit_content_filter", explicitContentFilter)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkChannelID(afkChannelID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(afkChannelID.IsZero(), "afkChannelID can not be 0")
+	b.r.param("afk_channel_id", afkChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetAfkTimeout(afkTimeout int) UpdateGuildBuilder {
+	b.r.param("afk_timeout", afkTimeout)
+	return b
+}
+
+func (b *updateGuildBuilder) SetIcon(icon string) UpdateGuildBuilder {
+	b.r.param("icon", icon)
+	return b
+}
+
+func (b *updateGuildBuilder) SetOwnerID(ownerID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(ownerID.IsZero(), "ownerID can not be 0")
+	b.r.param("owner_id", ownerID)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSplash(splash string) UpdateGuildBuilder {
+	b.r.param("splash", splash)
+	return b
+}
+
+func (b *updateGuildBuilder) SetSystemChannelID(systemChannelID Snowflake) UpdateGuildBuilder {
+	b.r.addPrereq(systemChannelID.IsZero(), "systemChannelID can not be 0")
+	b.r.param("system_channel_id", systemChannelID)
+	return b
+}
+
+func (b *updateGuildBuilder) Execute() (guild *Guild, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Guild), nil
+}
+
 // UpdateGuildEmbedBuilder is the interface for the builder.
 type UpdateGuildEmbedBuilder interface {
+	Execute() (embed *GuildEmbed, err error)
 	IgnoreCache() UpdateGuildEmbedBuilder
 	CancelOnRatelimit() UpdateGuildEmbedBuilder
 	URLParam(name string, v interface{}) UpdateGuildEmbedBuilder
 	Set(name string, v interface{}) UpdateGuildEmbedBuilder
+	SetEnabled(enabled bool) UpdateGuildEmbedBuilder
+	SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -179,12 +360,34 @@ func (b *updateGuildEmbedBuilder) Set(name string, v interface{}) UpdateGuildEmb
 	return b
 }
 
+func (b *updateGuildEmbedBuilder) SetEnabled(enabled bool) UpdateGuildEmbedBuilder {
+	b.r.param("enabled", enabled)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) SetChannelID(channelID Snowflake) UpdateGuildEmbedBuilder {
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateGuildEmbedBuilder) Execute() (embed *GuildEmbed, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*GuildEmbed), nil
+}
+
 // UpdateGuildEmojiBuilder is the interface for the builder.
 type UpdateGuildEmojiBuilder interface {
+	Execute() (emoji *Emoji, err error)
 	IgnoreCache() UpdateGuildEmojiBuilder
 	CancelOnRatelimit() UpdateGuildEmojiBuilder
 	URLParam(name string, v interface{}) UpdateGuildEmojiBuilder
 	Set(name string, v interface{}) UpdateGuildEmojiBuilder
+	SetName(name string) UpdateGuildEmojiBuilder
+	SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -214,12 +417,36 @@ func (b *updateGuildEmojiBuilder) Set(name string, v interface{}) UpdateGuildEmo
 	return b
 }
 
+func (b *updateGuildEmojiBuilder) SetName(name string) UpdateGuildEmojiBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildEmojiBuilder) SetRoles(roles []Snowflake) UpdateGuildEmojiBuilder {
+	b.r.param("roles", roles)
+	return b
+}
+
+func (b *updateGuildEmojiBuilder) Execute() (emoji *Emoji, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Emoji), nil
+}
+
 // UpdateGuildMemberBuilder is the interface for the builder.
 type UpdateGuildMemberBuilder interface {
+	Execute() (err error)
 	IgnoreCache() UpdateGuildMemberBuilder
 	CancelOnRatelimit() UpdateGuildMemberBuilder
 	URLParam(name string, v interface{}) UpdateGuildMemberBuilder
 	Set(name string, v interface{}) UpdateGuildMemberBuilder
+	SetNick(nick string) UpdateGuildMemberBuilder
+	SetRoles(roles []Snowflake) UpdateGuildMemberBuilder
+	SetMute(mute bool) UpdateGuildMemberBuilder
+	SetDeaf(deaf bool) UpdateGuildMemberBuilder
+	SetChannelID(channelID Snowflake) UpdateGuildMemberBuilder
 
 	KickFromVoice() UpdateGuildMemberBuilder
 	DeleteNick() UpdateGuildMemberBuilder
@@ -252,12 +479,49 @@ func (b *updateGuildMemberBuilder) Set(name string, v interface{}) UpdateGuildMe
 	return b
 }
 
+func (b *updateGuildMemberBuilder) SetNick(nick string) UpdateGuildMemberBuilder {
+	b.r.param("nick", nick)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetRoles(roles []Snowflake) UpdateGuildMemberBuilder {
+	b.r.param("roles", roles)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetMute(mute bool) UpdateGuildMemberBuilder {
+	b.r.param("mute", mute)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetDeaf(deaf bool) UpdateGuildMemberBuilder {
+	b.r.param("deaf", deaf)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) SetChannelID(channelID Snowflake) UpdateGuildMemberBuilder {
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateGuildMemberBuilder) Execute() (err error) {
+	_, err = b.r.execute()
+	return
+}
+
 // UpdateGuildRoleBuilder is the interface for the builder.
 type UpdateGuildRoleBuilder interface {
+	Execute() (role *Role, err error)
 	IgnoreCache() UpdateGuildRoleBuilder
 	CancelOnRatelimit() UpdateGuildRoleBuilder
 	URLParam(name string, v interface{}) UpdateGuildRoleBuilder
 	Set(name string, v interface{}) UpdateGuildRoleBuilder
+	SetName(name string) UpdateGuildRoleBuilder
+	SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder
+	SetColor(color uint) UpdateGuildRoleBuilder
+	SetHoist(hoist bool) UpdateGuildRoleBuilder
+	SetMentionable(mentionable bool) UpdateGuildRoleBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -287,12 +551,48 @@ func (b *updateGuildRoleBuilder) Set(name string, v interface{}) UpdateGuildRole
 	return b
 }
 
+func (b *updateGuildRoleBuilder) SetName(name string) UpdateGuildRoleBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetPermissions(permissions PermissionBit) UpdateGuildRoleBuilder {
+	b.r.param("permissions", permissions)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetColor(color uint) UpdateGuildRoleBuilder {
+	b.r.param("color", color)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetHoist(hoist bool) UpdateGuildRoleBuilder {
+	b.r.param("hoist", hoist)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) SetMentionable(mentionable bool) UpdateGuildRoleBuilder {
+	b.r.param("mentionable", mentionable)
+	return b
+}
+
+func (b *updateGuildRoleBuilder) Execute() (role *Role, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Role), nil
+}
+
 // UpdateMessageBuilder is the interface for the builder.
 type UpdateMessageBuilder interface {
+	Execute() (message *Message, err error)
 	IgnoreCache() UpdateMessageBuilder
 	CancelOnRatelimit() UpdateMessageBuilder
 	URLParam(name string, v interface{}) UpdateMessageBuilder
 	Set(name string, v interface{}) UpdateMessageBuilder
+	SetContent(content string) UpdateMessageBuilder
+	SetEmbed(embed *Embed) UpdateMessageBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -322,12 +622,34 @@ func (b *updateMessageBuilder) Set(name string, v interface{}) UpdateMessageBuil
 	return b
 }
 
+func (b *updateMessageBuilder) SetContent(content string) UpdateMessageBuilder {
+	b.r.param("content", content)
+	return b
+}
+
+func (b *updateMessageBuilder) SetEmbed(embed *Embed) UpdateMessageBuilder {
+	b.r.param("embed", embed)
+	return b
+}
+
+func (b *updateMessageBuilder) Execute() (message *Message, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Message), nil
+}
+
 // UpdateWebhookBuilder is the interface for the builder.
 type UpdateWebhookBuilder interface {
+	Execute() (webhook *Webhook, err error)
 	IgnoreCache() UpdateWebhookBuilder
 	CancelOnRatelimit() UpdateWebhookBuilder
 	URLParam(name string, v interface{}) UpdateWebhookBuilder
 	Set(name string, v interface{}) UpdateWebhookBuilder
+	SetName(name string) UpdateWebhookBuilder
+	SetAvatar(avatar string) UpdateWebhookBuilder
+	SetChannelID(channelID Snowflake) UpdateWebhookBuilder
 }
 
 // IgnoreCache will not fetch the data from the cache if available, and always execute a
@@ -357,8 +679,33 @@ func (b *updateWebhookBuilder) Set(name string, v interface{}) UpdateWebhookBuil
 	return b
 }
 
+func (b *updateWebhookBuilder) SetName(name string) UpdateWebhookBuilder {
+	b.r.param("name", name)
+	return b
+}
+
+func (b *updateWebhookBuilder) SetAvatar(avatar string) UpdateWebhookBuilder {
+	b.r.param("avatar", avatar)
+	return b
+}
+
+func (b *updateWebhookBuilder) SetChannelID(channelID Snowflake) UpdateWebhookBuilder {
+	b.r.addPrereq(channelID.IsZero(), "channelID can not be 0")
+	b.r.param("channel_id", channelID)
+	return b
+}
+
+func (b *updateWebhookBuilder) Execute() (webhook *Webhook, err error) {
+	var v interface{}
+	if v, err = b.r.execute(); err != nil {
+		return nil, err
+	}
+	return v.(*Webhook), nil
+}
+
 // BasicBuilder is the interface for the builder.
 type BasicBuilder interface {
+	Execute() (err error)
 	IgnoreCache() BasicBuilder
 	CancelOnRatelimit() BasicBuilder
 	URLParam(name string, v interface{}) BasicBuilder
@@ -390,4 +737,9 @@ func (b *basicBuilder) URLParam(name string, v interface{}) BasicBuilder {
 func (b *basicBuilder) Set(name string, v interface{}) BasicBuilder {
 	b.r.body[name] = v
 	return b
+}
+
+func (b *basicBuilder) Execute() (err error) {
+	_, err = b.r.execute()
+	return
 }

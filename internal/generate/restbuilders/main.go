@@ -192,8 +192,10 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 		panic(err)
 	}
 
-	const genPrefix = "//generate-rest-params: "
-	const genPrefix2 = "//generate-rest-basic-execute: "
+	const genPrefix1a = "//generate-rest-params: "
+	const genPrefix1b = "// generate-rest-params: "
+	const genPrefix2a = "//generate-rest-basic-execute: "
+	const genPrefix2b = "// generate-rest-basic-execute: "
 	var ok bool
 	var genDecl *ast.GenDecl
 	for _, item := range fileComments.Decls {
@@ -231,12 +233,12 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 
 		for i := range genDecl.Doc.List {
 			comment := genDecl.Doc.List[i].Text
-			if !strings.HasPrefix(comment, genPrefix) && !strings.HasPrefix(comment, genPrefix2) {
-				continue
-			}
 
-			if strings.HasPrefix(comment, genPrefix) {
-				var start = len(genPrefix)
+			if strings.HasPrefix(comment, genPrefix1a) || strings.HasPrefix(comment, genPrefix1b) {
+				var start = len(genPrefix1a)
+				if strings.HasPrefix(comment, genPrefix1b) {
+					start = len(genPrefix1b)
+				}
 				var end int
 				if strings.HasSuffix(comment, ",") {
 					end = len(comment) - 1
@@ -260,8 +262,11 @@ func getAllRESTBuilders(filename string) (builders []*builder) {
 					})
 				}
 				builders[index].Params = tuples
-			} else if strings.HasPrefix(comment, genPrefix2) {
-				var start = len(genPrefix2)
+			} else if strings.HasPrefix(comment, genPrefix2a) || strings.HasPrefix(comment, genPrefix2b) {
+				var start = len(genPrefix2a)
+				if strings.HasPrefix(comment, genPrefix2b) {
+					start = len(genPrefix2b)
+				}
 				var end int
 				if strings.HasSuffix(comment, ",") {
 					end = len(comment) - 1
