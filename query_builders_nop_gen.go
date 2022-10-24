@@ -930,6 +930,10 @@ func (g *guildQueryBuilderNop) GetPruneMembersCount(_ *GetPruneMembersCount) (in
 	return 0, nil
 }
 
+func (g *guildQueryBuilderNop) GetRole(_ Snowflake) (*Role, error) {
+	return nil, nil
+}
+
 func (g *guildQueryBuilderNop) GetRoles() ([]*Role, error) {
 	return nil, nil
 }
