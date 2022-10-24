@@ -747,7 +747,7 @@ type GuildQueryBuilder interface {
 	// GetRoles
 	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	// TODO-3: Add GetRole.
+	GetRole(ID Snowflake) (*Role, error)
 	GetRoles() ([]*Role, error)
 	UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error)
 	CreateRole(params *CreateGuildRole) (*Role, error)
