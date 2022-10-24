@@ -77,11 +77,12 @@ var _ Copier = (*VoiceRegion)(nil)
 var _ DeepCopier = (*VoiceRegion)(nil)
 
 // GetVoiceRegions [REST] Returns an array of voice region objects that can be used when creating servers.
-//  Method                  GET
-//  Endpoint                /voice/regions
-//  Discord documentation   https://discord.com/developers/docs/resources/voice#list-voice-regions
-//  Reviewed                2018-08-21
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /voice/regions
+//	Discord documentation   https://discord.com/developers/docs/resources/voice#list-voice-regions
+//	Reviewed                2018-08-21
+//	Comment                 -
 func (c clientQueryBuilder) GetVoiceRegions() (regions []*VoiceRegion, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.VoiceRegions(),

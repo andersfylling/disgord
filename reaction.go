@@ -96,11 +96,12 @@ func (r reactionQueryBuilder) WithFlags(flags ...Flag) ReactionQueryBuilder {
 // permission to be present on the current user. Additionally, if nobody else has reacted to the message using this
 // emoji, this endpoint requires the 'ADD_REACTIONS' permission to be present on the current user. Returns a 204 empty
 // response on success. The maximum request size when sending a message is 8MB.
-//  Method                  PUT
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-reaction
-//  Reviewed                2019-01-30
-//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+//
+//	Method                  PUT
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#create-reaction
+//	Reviewed                2019-01-30
+//	Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Create() error {
 	if r.cid.IsZero() {
 		return ErrMissingChannelID
@@ -129,11 +130,12 @@ func (r reactionQueryBuilder) Create() error {
 
 // DeleteOwn [REST] Delete a reaction the current user has made for the message.
 // Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-own-reaction
-//  Reviewed                2019-01-28
-//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-own-reaction
+//	Reviewed                2019-01-28
+//	Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteOwn() error {
 	if r.cid.IsZero() {
 		return ErrMissingChannelID
@@ -162,11 +164,12 @@ func (r reactionQueryBuilder) DeleteOwn() error {
 
 // DeleteUser [REST] Deletes another user's reaction. This endpoint requires the 'MANAGE_MESSAGES' permission
 // to be present on the current user. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-user-reaction
-//  Reviewed                2019-01-28
-//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-user-reaction
+//	Reviewed                2019-01-28
+//	Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) DeleteUser(userID Snowflake) error {
 	if r.cid.IsZero() {
 		return ErrMissingChannelID
@@ -206,11 +209,12 @@ type GetReactionURL struct {
 var _ URLQueryStringer = (*GetReactionURL)(nil)
 
 // Get [REST] Get a list of Users that reacted with this emoji. Returns an array of user objects on success.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-reactions
-//  Reviewed                2019-01-28
-//  Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/reactions/{emoji}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-reactions
+//	Reviewed                2019-01-28
+//	Comment                 emoji either unicode (string) or *Emoji with an snowflake Snowflake if it's custom
 func (r reactionQueryBuilder) Get(params URLQueryStringer) (ret []*User, err error) {
 	if r.cid.IsZero() {
 		return nil, ErrMissingChannelID

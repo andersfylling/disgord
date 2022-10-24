@@ -34,6 +34,9 @@ var (
 	_Flag_index_0 = [...]uint8{0, 11, 28}
 )
 
+// String
+//
+// Deprecated: schedule for removal
 func (i Flag) String() string {
 	switch {
 	case 1 <= i && i <= 2:

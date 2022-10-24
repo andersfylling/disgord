@@ -9,9 +9,10 @@ import (
 )
 
 // PartialInvite ...
-// {
-//    "code": "abc"
-// }
+//
+//	{
+//	   "code": "abc"
+//	}
 type PartialInvite = Invite
 
 // Invite Represents a code that when used, adds a user to a guild.
@@ -131,12 +132,13 @@ type getInviteQuery struct {
 var _ URLQueryStringer = (*getInviteQuery)(nil)
 
 // Get [REST] Returns an invite object for the given code.
-//  Method                  GET
-//  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discord.com/developers/docs/resources/invite#get-invite
-//  Reviewed                2018-06-10
-//  Comment                 -
-//  withMemberCount: whether or not the invite should contain the approximate number of members
+//
+//	Method                  GET
+//	Endpoint                /invites/{invite.code}
+//	Discord documentation   https://discord.com/developers/docs/resources/invite#get-invite
+//	Reviewed                2018-06-10
+//	Comment                 -
+//	withMemberCount: whether or not the invite should contain the approximate number of members
 func (i inviteQueryBuilder) Get(withMemberCount bool) (invite *Invite, err error) {
 	params := &getInviteQuery{withMemberCount}
 
@@ -150,11 +152,12 @@ func (i inviteQueryBuilder) Get(withMemberCount bool) (invite *Invite, err error
 }
 
 // Delete [REST] Delete an invite. Requires the MANAGE_CHANNELS permission. Returns an invite object on success.
-//  Method                  DELETE
-//  Endpoint                /invites/{invite.code}
-//  Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /invites/{invite.code}
+//	Discord documentation   https://discord.com/developers/docs/resources/invite#delete-invite
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (i inviteQueryBuilder) Delete() (deleted *Invite, err error) {
 	r := i.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodDelete,

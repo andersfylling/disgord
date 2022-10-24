@@ -341,11 +341,12 @@ func (c userQueryBuilder) WithFlags(flags ...Flag) UserQueryBuilder {
 }
 
 // Get [REST] Returns a user object for a given user Snowflake.
-//  Method                  GET
-//  Endpoint                /users/{user.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-user
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /users/{user.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/user#get-user
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (c userQueryBuilder) Get() (*User, error) {
 	if !ignoreCache(c.flags) {
 		if usr, _ := c.client.cache.GetUser(c.uid); usr != nil {
@@ -364,11 +365,12 @@ func (c userQueryBuilder) Get() (*User, error) {
 }
 
 // CreateDM [REST] Create a new DM channel with a user. Returns a DM channel object.
-//  Method                  POST
-//  Endpoint                /users/@me/channels
-//  Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
-//  Reviewed                2019-02-23
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /users/@me/channels
+//	Discord documentation   https://discord.com/developers/docs/resources/user#create-dm
+//	Reviewed                2019-02-23
+//	Comment                 -
 func (c userQueryBuilder) CreateDM() (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodPost,
@@ -453,11 +455,12 @@ func (c currentUserQueryBuilder) WithFlags(flags ...Flag) CurrentUserQueryBuilde
 // Get [REST] Returns the user object of the requester's account. For OAuth2, this requires the identify
 // scope, which will return the object without an email, and optionally the email scope, which returns the object
 // with an email.
-//  Method                  GET
-//  Endpoint                /users/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
-//  Reviewed                2019-02-23
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /users/@me
+//	Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user
+//	Reviewed                2019-02-23
+//	Comment                 -
 func (c currentUserQueryBuilder) Get() (user *User, err error) {
 	if !ignoreCache(c.flags) {
 		if usr, err := c.client.cache.GetCurrentUser(); err != nil && usr != nil {
@@ -513,13 +516,14 @@ var _ URLQueryStringer = (*GetCurrentUserGuilds)(nil)
 
 // GetGuilds [REST] Returns a list of partial guild objects the current user is a member of.
 // Requires the Guilds OAuth2 scope.
-//  Method                  GET
-//  Endpoint                /users/@me/guilds
-//  Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
-//  Reviewed                2019-02-18
-//  Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
-//                          Guilds a non-bot user can join. Therefore, pagination is not needed for
-//                          integrations that need to get a list of Users' Guilds.
+//
+//	Method                  GET
+//	Endpoint                /users/@me/guilds
+//	Discord documentation   https://discord.com/developers/docs/resources/user#get-current-user-guilds
+//	Reviewed                2019-02-18
+//	Comment                 This endpoint. returns 100 Guilds by default, which is the maximum number of
+//	                        Guilds a non-bot user can join. Therefore, pagination is not needed for
+//	                        integrations that need to get a list of Users' Guilds.
 func (c currentUserQueryBuilder) GetGuilds(params *GetCurrentUserGuilds) (ret []*Guild, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.UserMeGuilds(),
@@ -554,11 +558,12 @@ type CreateGroupDM struct {
 // CreateGroupDM [REST] Create a new group DM channel with multiple Users. Returns a DM channel object.
 // This endpoint was intended to be used with the now-deprecated GameBridge SDK. DMs created with this
 // endpoint will not be shown in the Discord Client
-//  Method                  POST
-//  Endpoint                /users/@me/channels
-//  Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
-//  Reviewed                2019-02-19
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /users/@me/channels
+//	Discord documentation   https://discord.com/developers/docs/resources/user#create-group-dm
+//	Reviewed                2019-02-19
+//	Comment                 -
 func (c currentUserQueryBuilder) CreateGroupDM(params *CreateGroupDM) (ret *Channel, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:      http.MethodPost,

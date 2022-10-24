@@ -303,14 +303,15 @@ func (hs *handlerSpec) runMdlws(evt interface{}) interface{} {
 //////////////////////////////////////////////////////
 
 // Ctrl is a handler controller that supports lifetime and max number of execution for one or several handlers.
-//  // register only the first 6 votes
-//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Runs: 6})
 //
-//  // Allow voting for only 10 minutes
-//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Duration: 10*time.Second})
+//	// register only the first 6 votes
+//	Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Runs: 6})
 //
-//  // Allow voting until the month is over
-//  Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Until: time.Now().AddDate(0, 1, 0)})
+//	// Allow voting for only 10 minutes
+//	Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Duration: 10*time.Second})
+//
+//	// Allow voting until the month is over
+//	Client.On("MESSAGE_CREATE", filter.NonVotes, registerVoteHandler, &disgord.Ctrl{Until: time.Now().AddDate(0, 1, 0)})
 type Ctrl struct {
 	Runs     int
 	Until    time.Time

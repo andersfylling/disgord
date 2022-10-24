@@ -55,9 +55,10 @@ func validAvatarPrefix(avatar string) (valid bool) {
 // https://discord.com/developers/docs/resources/user#usernames-and-nicknames
 //
 // Note that not all the rules are listed in the docs:
-//  There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the
-//  majority of Users won't encounter them. It's important to properly handle all error messages returned by
-//  Discord when editing or updating names.
+//
+//	There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the
+//	majority of Users won't encounter them. It's important to properly handle all error messages returned by
+//	Discord when editing or updating names.
 func ValidateUsername(name string) (err error) {
 	if name == "" {
 		return errors.New("empty")

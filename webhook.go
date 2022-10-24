@@ -82,11 +82,12 @@ func (w webhookQueryBuilder) WithFlags(flags ...Flag) WebhookQueryBuilder {
 }
 
 // Get [REST] Returns the new webhook object for the given id.
-//  Method                  GET
-//  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /webhooks/{webhook.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 	r := w.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.Webhook(w.webhookID),
@@ -101,11 +102,12 @@ func (w webhookQueryBuilder) Get() (ret *Webhook, err error) {
 
 // Update [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
-//  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint.
+//
+//	Method                  PATCH
+//	Endpoint                /webhooks/{webhook.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
+//	Reviewed                2018-08-14
+//	Comment                 All parameters to this endpoint.
 func (w webhookQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
@@ -129,11 +131,12 @@ func (w webhookQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 }
 
 // Delete [REST] Delete a webhook permanently. User must be owner. Returns a 204 NO CONTENT response on success.
-//  Method                  DELETE
-//  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /webhooks/{webhook.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (w webhookQueryBuilder) Delete() (err error) {
 	return w.WithToken("").WithFlags(w.flags).WithContext(w.ctx).Delete()
 }
@@ -229,11 +232,12 @@ func (w webhookWithTokenQueryBuilder) WithFlags(flags ...Flag) WebhookWithTokenQ
 
 // Get [REST] Same as GetWebhook, except this call does not require authentication and
 // returns no user in the webhook object.
-//  Method                  GET
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-with-token
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 	r := w.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.WebhookToken(w.webhookID, w.token),
@@ -248,11 +252,12 @@ func (w webhookWithTokenQueryBuilder) Get() (*Webhook, error) {
 
 // Update [REST] Same as UpdateWebhook, except this call does not require authentication,
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint. are optional.
+//
+//	Method                  PATCH
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
+//	Reviewed                2018-08-14
+//	Comment                 All parameters to this endpoint. are optional.
 func (w webhookWithTokenQueryBuilder) Update(params *UpdateWebhook) (*Webhook, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
@@ -282,11 +287,12 @@ type UpdateWebhook struct {
 }
 
 // Delete [REST] Same as DeleteWebhook, except this call does not require authentication.
-//  Method                  DELETE
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (w webhookWithTokenQueryBuilder) Delete() error {
 	var e string
 	if w.token != "" {
@@ -306,18 +312,19 @@ func (w webhookWithTokenQueryBuilder) Delete() error {
 }
 
 // Execute [REST] Trigger a webhook in Discord.
-//  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
-//  Reviewed                2020-05-21
-//  Comment                 This endpoint. supports both JSON and form data bodies. It does require
-//                          multipart/form-data requests instead of the normal JSON request type when
-//                          uploading files. Make sure you set your Content-Type to multipart/form-data if
-//                          you're doing that. Note that in that case, the embeds field cannot be used, but
-//                          you can pass an url-encoded JSON body as a form value for payload_json.
-//  Comment#2               For the webhook embed objects, you can set every field except type (it will be
-//                          rich regardless of if you try to set it), provider, video, and any height, width,
-//                          or proxy_url values for images.
+//
+//	Method                  POST
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
+//	Reviewed                2020-05-21
+//	Comment                 This endpoint. supports both JSON and form data bodies. It does require
+//	                        multipart/form-data requests instead of the normal JSON request type when
+//	                        uploading files. Make sure you set your Content-Type to multipart/form-data if
+//	                        you're doing that. Note that in that case, the embeds field cannot be used, but
+//	                        you can pass an url-encoded JSON body as a form value for payload_json.
+//	Comment#2               For the webhook embed objects, you can set every field except type (it will be
+//	                        rich regardless of if you try to set it), provider, video, and any height, width,
+//	                        or proxy_url values for images.
 func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait *bool, threadID *Snowflake, URLSuffix string) (message *Message, err error) {
 	if params == nil {
 		return nil, errors.New("params can not be nil")
@@ -355,35 +362,38 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait *bool
 }
 
 // ExecuteSlackWebhook [REST] Trigger a webhook in Discord from the Slack app.
-//  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
-//  Reviewed                2020-05-21
-//  Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
-//                          icon_emoji, mrkdwn, or mrkdwn_in properties.
+//
+//	Method                  POST
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook
+//	Reviewed                2020-05-21
+//	Comment                 Refer to Slack's documentation for more information. We do not support Slack's channel,
+//	                        icon_emoji, mrkdwn, or mrkdwn_in properties.
 func (w *webhookWithTokenQueryBuilder) ExecuteSlackWebhook(params *ExecuteWebhook, wait *bool, threadID *Snowflake) (*Message, error) {
 	return w.Execute(params, wait, threadID, endpoint.Slack())
 }
 
 // ExecuteGitHubWebhook [REST] Trigger a webhook in Discord from the GitHub app.
-//  Method                  POST
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
-//  Reviewed                2020-05-21
-//  Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
-//                          as the "Payload URL." You can choose what events your Discord channel receives by
-//                          choosing the "Let me select individual events" option and selecting individual
-//                          events for the new webhook you're configuring.
+//
+//	Method                  POST
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook
+//	Reviewed                2020-05-21
+//	Comment                 Add a new webhook to your GitHub repo (in the repo's settings), and use this endpoint.
+//	                        as the "Payload URL." You can choose what events your Discord channel receives by
+//	                        choosing the "Let me select individual events" option and selecting individual
+//	                        events for the new webhook you're configuring.
 func (w *webhookWithTokenQueryBuilder) ExecuteGitHubWebhook(params *ExecuteWebhook, wait *bool, threadID *Snowflake) (*Message, error) {
 	return w.Execute(params, wait, threadID, endpoint.GitHub())
 }
 
 // GetMessage [REST] Gets a Message sent from this Webhook.
-//  Method                  GET
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-message
-//  Reviewed                2021-02-16
-//  Comment                 Returns a previously-sent webhook message from the same token. Returns a message object on success.
+//
+//	Method                  GET
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#get-webhook-message
+//	Reviewed                2021-02-16
+//	Comment                 Returns a previously-sent webhook message from the same token. Returns a message object on success.
 func (w *webhookWithTokenQueryBuilder) GetMessage(messageId Snowflake, threadID *Snowflake) (*Message, error) {
 	urlparams := &execWebhook{
 		ThreadID: threadID,
@@ -403,16 +413,18 @@ func (w *webhookWithTokenQueryBuilder) GetMessage(messageId Snowflake, threadID 
 }
 
 // EditMessage [REST] Edits a previously-sent Webhook Message from the same token. Returns a Message object on success.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
-//  Reviewed                2020-05-21
-//  Comment                 When the content field is edited, the mentions array in the message object will be reconstructed from scratch based on the new content.
-// 							The allowed_mentions field of the edit request controls how this happens.
-//							If there is no explicit allowed_mentions in the edit request, the content will be parsed with default allowances, that is, without regard to whether or not an allowed_mentions was present in the request that originally created the message.
-// 							Refer to Uploading Files for details on attachments and multipart/form-data requests.
-// 							Any provided files will be appended to the message.
-//							To remove or replace files you will have to supply the attachments field which specifies the files to retain on the message after edit.
+//
+//	 Method                  PATCH
+//	 Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
+//	 Discord documentation   https://discord.com/developers/docs/resources/webhook#execute-webhook
+//	 Reviewed                2020-05-21
+//	 Comment                 When the content field is edited, the mentions array in the message object will be reconstructed from scratch based on the new content.
+//								The allowed_mentions field of the edit request controls how this happens.
+//								If there is no explicit allowed_mentions in the edit request, the content will be parsed with default allowances, that is, without regard to whether or not an allowed_mentions was present in the request that originally created the message.
+//								Refer to Uploading Files for details on attachments and multipart/form-data requests.
+//								Any provided files will be appended to the message.
+//								To remove or replace files you will have to supply the attachments field which specifies the files to retain on the message after edit.
+//
 // Comment #2				All parameters to this endpoint are optional and nullable.
 func (w *webhookWithTokenQueryBuilder) EditMessage(params *ExecuteWebhook, messageId Snowflake, threadID *Snowflake) (*Message, error) {
 	if params == nil {
@@ -447,11 +459,12 @@ func (w *webhookWithTokenQueryBuilder) EditMessage(params *ExecuteWebhook, messa
 }
 
 // DeleteMessage [REST] Deletes a Message sent from this Webhook.
-//  Method                  DELETE
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-message
-//  Reviewed                2021-02-16
-//  Comment                 Deletes a message that was created by the webhook. Returns a 204 No Content response on success.
+//
+//	Method                  DELETE
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#delete-webhook-message
+//	Reviewed                2021-02-16
+//	Comment                 Deletes a message that was created by the webhook. Returns a 204 No Content response on success.
 func (w *webhookWithTokenQueryBuilder) DeleteMessage(messageId Snowflake, threadID *Snowflake) error {
 	if err := w.validate(); err != nil {
 		return nil

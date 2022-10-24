@@ -1,6 +1,5 @@
 package disgord
 
-//go:generate stringer -type=Flag
 type Flag uint32
 
 func (f Flag) Ignorecache() bool {

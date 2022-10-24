@@ -433,11 +433,12 @@ func (m messageQueryBuilder) WithFlags(flags ...Flag) MessageQueryBuilder {
 // Get Returns a specific message in the channel. If operating on a guild channel, this endpoints
 // requires the 'READ_MESSAGE_HISTORY' permission to be present on the current user.
 // Returns a message object on success.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}/messages/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-message
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (m messageQueryBuilder) Get() (*Message, error) {
 	if m.cid.IsZero() {
 		return nil, ErrMissingChannelID
@@ -466,11 +467,12 @@ func (m messageQueryBuilder) Get() (*Message, error) {
 
 // Update Edit a previously sent message. You can only edit messages that have been sent by the
 // current user. Returns a message object. Fires a Message Update Gateway event.
-//  Method                  PATCH
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
-//  Reviewed                2018-06-10
-//  Comment                 All parameters to this endpoint are optional.
+//
+//	Method                  PATCH
+//	Endpoint                /channels/{channel.id}/messages/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#edit-message
+//	Reviewed                2018-06-10
+//	Comment                 All parameters to this endpoint are optional.
 func (m messageQueryBuilder) Update(params *UpdateMessage) (*Message, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
@@ -555,11 +557,12 @@ func (p *UpdateMessage) prepare() (postBody interface{}, contentType string, err
 // Delete If operating on a guild channel and trying to delete a message that was not
 // sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Returns a 204 empty response
 // on success. Fires a Message Delete Gateway event.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/messages/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/messages/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (m messageQueryBuilder) Delete() (err error) {
 	if m.cid.IsZero() {
 		return ErrMissingChannelID
@@ -580,11 +583,12 @@ func (m messageQueryBuilder) Delete() (err error) {
 
 // Pin a message by its ID and channel ID. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success.
-//  Method                  PUT
-//  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  PUT
+//	Endpoint                /channels/{channel.id}/pins/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#add-pinned-channel-message
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (m messageQueryBuilder) Pin() (err error) {
 	r := m.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodPut,
@@ -598,11 +602,12 @@ func (m messageQueryBuilder) Pin() (err error) {
 
 // Unpin deletes a pinned message in a channel. Requires the 'MANAGE_MESSAGES' permission.
 // Returns a 204 empty response on success. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/pins/{message.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/pins/{message.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-pinned-channel-message
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (m messageQueryBuilder) Unpin() (err error) {
 	if m.cid.IsZero() {
 		return ErrMissingChannelID
@@ -671,11 +676,12 @@ type CreateThread struct {
 }
 
 // CrossPost crosspost a message in a News Channel to following channels.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/crosspost
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
-//  Reviewed                2021-04-07
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/crosspost
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#crosspost-message
+//	Reviewed                2021-04-07
+//	Comment                 -
 func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	if m.cid.IsZero() {
 		return nil, MissingChannelIDErr
@@ -703,10 +709,11 @@ func (m messageQueryBuilder) CrossPost() (*Message, error) {
 
 // DeleteAllReactions [REST] Deletes all reactions on a message. This endpoint requires the 'MANAGE_MESSAGES'
 // permission to be present on the current user.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
-//  Reviewed                2019-01-28
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/messages/{message.id}/reactions
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-all-reactions
+//	Reviewed                2019-01-28
 func (m messageQueryBuilder) DeleteAllReactions() error {
 	if m.cid.IsZero() {
 		return ErrMissingChannelID

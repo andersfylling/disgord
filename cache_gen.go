@@ -11,7 +11,8 @@ import "github.com/andersfylling/disgord/json"
 // Note that on events you are expected to return a unmarshalled object. For delete methods
 // you should return nil, and a nil error if the objected to be deleted was not found (nop!).
 // Note that the error might change to a "CacheMiss" or something similar such that we can
-//  get more metrics!
+//
+//	get more metrics!
 type Cache interface {
 	CacheUpdater
 	CacheGetter

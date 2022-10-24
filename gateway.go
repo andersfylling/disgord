@@ -213,11 +213,12 @@ func (g gatewayQueryBuilder) Dispatch(name GatewayCmdName, payload gateway.CmdPa
 // Get Returns an object with a single valid WSS URL, which the Client can use for Connecting.
 // Clients should cacheLink this value and only call this endpoint to retrieve a new URL if they are unable to
 // properly establish a connection using the cached version of the URL.
-//  Method                  GET
-//  Endpoint                /gateway
-//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway
-//  Reviewed                2018-10-12
-//  Comment                 This endpoint does not require authentication.
+//
+//	Method                  GET
+//	Endpoint                /gateway
+//	Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway
+//	Reviewed                2018-10-12
+//	Comment                 This endpoint does not require authentication.
 func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{
@@ -241,11 +242,12 @@ func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 // that can help during the operation of large or sharded bots. Unlike the Get Gateway, this route should not
 // be cached for extended periods of time as the value is not guaranteed to be the same per-call, and
 // changes as the bot joins/leaves Guilds.
-//  Method                  GET
-//  Endpoint                /gateway/bot
-//  Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
-//  Reviewed                2018-10-12
-//  Comment                 This endpoint requires authentication using a valid bot token.
+//
+//	Method                  GET
+//	Endpoint                /gateway/bot
+//	Discord documentation   https://discord.com/developers/docs/topics/gateway#get-gateway-bot
+//	Reviewed                2018-10-12
+//	Comment                 This endpoint requires authentication using a valid bot token.
 func (g gatewayQueryBuilder) GetBot() (gateway *gateway.GatewayBot, err error) {
 	var body []byte
 	_, body, err = g.client.req.Do(g.ctx, &httd.Request{

@@ -79,16 +79,16 @@ func (g guildQueryBuilder) KickVoiceParticipant(userID Snowflake) error {
 	return g.DisconnectVoiceParticipant(userID)
 }
 
-//generate-rest-params: roles:[]Snowflake,
-//generate-rest-basic-execute: emoji:*Emoji,
+// generate-rest-params: roles:[]Snowflake,
+// generate-rest-basic-execute: emoji:*Emoji,
 type createGuildEmojiBuilder struct {
 	r RESTBuilder
 }
 
 // updateGuildMemberBuilder ...
 // https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params
-//generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: err:error,
+// generate-rest-params: nick:string, roles:[]Snowflake, mute:bool, deaf:bool, channel_id:Snowflake,
+// generate-rest-basic-execute: err:error,
 type updateGuildMemberBuilder struct {
 	r RESTBuilder
 }
@@ -109,8 +109,8 @@ func (b *updateGuildMemberBuilder) DeleteNick() UpdateGuildMemberBuilder {
 	return b
 }
 
-//generate-rest-params: enabled:bool, channel_id:Snowflake,
-//generate-rest-basic-execute: embed:*GuildEmbed,
+// generate-rest-params: enabled:bool, channel_id:Snowflake,
+// generate-rest-basic-execute: embed:*GuildEmbed,
 type updateGuildEmbedBuilder struct {
 	r RESTBuilder
 }
@@ -156,11 +156,12 @@ func (m messageQueryBuilder) UpdateBuilder() UpdateMessageBuilder {
 // a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 // modifying a category, individual Channel Update events will fire for each child channel that also changes.
 // For the PATCH method, all the JSON Params are optional.
-//  Method                  PUT/PATCH
-//  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
-//  Reviewed                2018-06-07
-//  Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
+//
+//	Method                  PUT/PATCH
+//	Endpoint                /channels/{channel.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
+//	Reviewed                2018-06-07
+//	Comment                 andersfylling: only implemented the patch method, as its parameters are optional.
 func (c channelQueryBuilder) UpdateBuilder() UpdateChannelBuilder {
 	builder := &updateChannelBuilder{}
 	builder.r.itemFactory = func() interface{} {
@@ -252,11 +253,12 @@ func (g guildRoleQueryBuilder) UpdateBuilder() UpdateGuildRoleBuilder {
 }
 
 // UpdateBuilder [REST] Modify the requester's user account settings. Returns a user object on success.
-//  Method                  PATCH
-//  Endpoint                /users/@me
-//  Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
-//  Reviewed                2019-02-18
-//  Comment                 -
+//
+//	Method                  PATCH
+//	Endpoint                /users/@me
+//	Discord documentation   https://discord.com/developers/docs/resources/user#modify-current-user
+//	Reviewed                2019-02-18
+//	Comment                 -
 func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
 	builder := &updateCurrentUserBuilder{}
 	builder.r.itemFactory = userFactory // TODO: peak cached user
@@ -274,11 +276,12 @@ func (c currentUserQueryBuilder) UpdateBuilder() UpdateCurrentUserBuilder {
 
 // UpdateBuilder [REST] Same as UpdateWebhook, except this call does not require authentication,
 // does _not_ accept a channel_id parameter in the body, and does not return a user in the webhook object.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}/{webhook.token}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
-//  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint. are optional.
+//
+//	Method                  PATCH
+//	Endpoint                /webhooks/{webhook.id}/{webhook.token}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token
+//	Reviewed                2018-08-14
+//	Comment                 All parameters to this endpoint. are optional.
 func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder := &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
@@ -299,11 +302,12 @@ func (w webhookWithTokenQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 
 // UpdateBuilder [REST] Modify a webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns the updated webhook object on success.
-//  Method                  PATCH
-//  Endpoint                /webhooks/{webhook.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
-//  Reviewed                2018-08-14
-//  Comment                 All parameters to this endpoint.
+//
+//	Method                  PATCH
+//	Endpoint                /webhooks/{webhook.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#modify-webhook
+//	Reviewed                2018-08-14
+//	Comment                 All parameters to this endpoint.
 func (w webhookQueryBuilder) UpdateBuilder() UpdateWebhookBuilder {
 	builder := &updateWebhookBuilder{}
 	builder.r.itemFactory = func() interface{} {
@@ -367,9 +371,11 @@ const (
 )
 
 // updateMessageBuilder, params here
-//  https://discord.com/developers/docs/resources/channel#edit-message-json-params
-//generate-rest-params: content:string, embed:*Embed,
-//generate-rest-basic-execute: message:*Message,
+//
+//	https://discord.com/developers/docs/resources/channel#edit-message-json-params
+//
+// generate-rest-params: content:string, embed:*Embed,
+// generate-rest-basic-execute: message:*Message,
 type updateMessageBuilder struct {
 	r RESTBuilder
 }
@@ -381,8 +387,8 @@ func (b *updateMessageBuilder) SetAllowedMentions(mentions *AllowedMentions) *up
 }
 
 // updateChannelBuilder https://discord.com/developers/docs/resources/channel#modify-channel-json-params
-//generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
-//generate-rest-basic-execute: channel:*Channel,
+// generate-rest-params: parent_id:Snowflake, permission_overwrites:[]PermissionOverwrite, user_limit:uint, bitrate:uint, rate_limit_per_user:uint, nsfw:bool, topic:string, position:int, name:string,
+// generate-rest-basic-execute: channel:*Channel,
 type updateChannelBuilder struct {
 	r RESTBuilder
 }
@@ -409,29 +415,29 @@ func (b *updateChannelBuilder) RemoveParentID() *updateChannelBuilder {
 	return b
 }
 
-//generate-rest-params: name:string, roles:[]Snowflake,
-//generate-rest-basic-execute: emoji:*Emoji,
+// generate-rest-params: name:string, roles:[]Snowflake,
+// generate-rest-basic-execute: emoji:*Emoji,
 type updateGuildEmojiBuilder struct {
 	r RESTBuilder
 }
 
 // updateGuildBuilder https://discord.com/developers/docs/resources/guild#modify-guild-json-params
-//generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
-//generate-rest-basic-execute: guild:*Guild,
+// generate-rest-params: name:string, region:string, verification_level:int, default_message_notifications:DefaultMessageNotificationLvl, explicit_content_filter:ExplicitContentFilterLvl, afk_channel_id:Snowflake, afk_timeout:int, icon:string, owner_id:Snowflake, splash:string, system_channel_id:Snowflake,
+// generate-rest-basic-execute: guild:*Guild,
 type updateGuildBuilder struct {
 	r RESTBuilder
 }
 
 // updateGuildRoleBuilder ...
-//generate-rest-basic-execute: role:*Role,
-//generate-rest-params: name:string, permissions:PermissionBit, color:uint, hoist:bool, mentionable:bool,
+// generate-rest-basic-execute: role:*Role,
+// generate-rest-params: name:string, permissions:PermissionBit, color:uint, hoist:bool, mentionable:bool,
 type updateGuildRoleBuilder struct {
 	r RESTBuilder
 }
 
 // updateCurrentUserBuilder ...
-//generate-rest-params: username:string, avatar:string,
-//generate-rest-basic-execute: user:*User,
+// generate-rest-params: username:string, avatar:string,
+// generate-rest-basic-execute: user:*User,
 type updateCurrentUserBuilder struct {
 	r RESTBuilder
 }
@@ -440,8 +446,8 @@ type updateCurrentUserBuilder struct {
 // Allows changing the name of the webhook, avatar and moving it to another channel. It also allows to resetting the
 // avatar by providing a nil to SetAvatar.
 //
-//generate-rest-params: name:string, avatar:string, channel_id:Snowflake,
-//generate-rest-basic-execute: webhook:*Webhook,
+// generate-rest-params: name:string, avatar:string, channel_id:Snowflake,
+// generate-rest-basic-execute: webhook:*Webhook,
 type updateWebhookBuilder struct {
 	r RESTBuilder
 }

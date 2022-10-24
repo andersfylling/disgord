@@ -21,7 +21,6 @@ func AllEventsExcept(except ...string) []string {
 
 // EvtChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
 // guild channel object.
-//
 const EvtChannelCreate = event.ChannelCreate
 
 func (h *ChannelCreate) setShardID(id uint) { h.ShardID = id }
@@ -29,7 +28,6 @@ func (h *ChannelCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
-//
 const EvtChannelDelete = event.ChannelDelete
 
 func (h *ChannelDelete) setShardID(id uint) { h.ShardID = id }
@@ -37,7 +35,6 @@ func (h *ChannelDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
-//
 const EvtChannelPinsUpdate = event.ChannelPinsUpdate
 
 func (h *ChannelPinsUpdate) setShardID(id uint) { h.ShardID = id }
@@ -45,7 +42,6 @@ func (h *ChannelPinsUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
-//
 const EvtChannelUpdate = event.ChannelUpdate
 
 func (h *ChannelUpdate) setShardID(id uint) { h.ShardID = id }
@@ -53,7 +49,6 @@ func (h *ChannelUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildBanAdd Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
-//
 const EvtGuildBanAdd = event.GuildBanAdd
 
 func (h *GuildBanAdd) setShardID(id uint) { h.ShardID = id }
@@ -61,7 +56,6 @@ func (h *GuildBanAdd) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
-//
 const EvtGuildBanRemove = event.GuildBanRemove
 
 func (h *GuildBanRemove) setShardID(id uint) { h.ShardID = id }
@@ -71,9 +65,8 @@ func (h *GuildBanRemove) setShardID(id uint) { h.ShardID = id }
 // EvtGuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
-// 	2. When a Guild becomes available again to the client.
-// 	3. When the current user joins a new Guild.
-//
+//  2. When a Guild becomes available again to the client.
+//  3. When the current user joins a new Guild.
 const EvtGuildCreate = event.GuildCreate
 
 func (h *GuildCreate) setShardID(id uint) { h.ShardID = id }
@@ -83,7 +76,6 @@ func (h *GuildCreate) setShardID(id uint) { h.ShardID = id }
 // EvtGuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
 // The inner payload is an unavailable guild object. If the unavailable field is not set, the user was removed
 // from the guild.
-//
 const EvtGuildDelete = event.GuildDelete
 
 func (h *GuildDelete) setShardID(id uint) { h.ShardID = id }
@@ -91,7 +83,6 @@ func (h *GuildDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildEmojisUpdate Sent when a guild's emojis have been updated.
-//
 const EvtGuildEmojisUpdate = event.GuildEmojisUpdate
 
 func (h *GuildEmojisUpdate) setShardID(id uint) { h.ShardID = id }
@@ -99,7 +90,6 @@ func (h *GuildEmojisUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildIntegrationsUpdate Sent when a guild integration is updated.
-//
 const EvtGuildIntegrationsUpdate = event.GuildIntegrationsUpdate
 
 func (h *GuildIntegrationsUpdate) setShardID(id uint) { h.ShardID = id }
@@ -107,7 +97,6 @@ func (h *GuildIntegrationsUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildMemberAdd Sent when a new user joins a guild.
-//
 const EvtGuildMemberAdd = event.GuildMemberAdd
 
 func (h *GuildMemberAdd) setShardID(id uint) { h.ShardID = id }
@@ -115,7 +104,6 @@ func (h *GuildMemberAdd) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
-//
 const EvtGuildMemberRemove = event.GuildMemberRemove
 
 func (h *GuildMemberRemove) setShardID(id uint) { h.ShardID = id }
@@ -123,7 +111,6 @@ func (h *GuildMemberRemove) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildMemberUpdate Sent when a guild member is updated.
-//
 const EvtGuildMemberUpdate = event.GuildMemberUpdate
 
 func (h *GuildMemberUpdate) setShardID(id uint) { h.ShardID = id }
@@ -131,7 +118,6 @@ func (h *GuildMemberUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildMembersChunk Sent in response to Gateway Request Guild Members.
-//
 const EvtGuildMembersChunk = event.GuildMembersChunk
 
 func (h *GuildMembersChunk) setShardID(id uint) { h.ShardID = id }
@@ -139,7 +125,6 @@ func (h *GuildMembersChunk) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildRoleCreate Sent when a guild role is created.
-//
 const EvtGuildRoleCreate = event.GuildRoleCreate
 
 func (h *GuildRoleCreate) setShardID(id uint) { h.ShardID = id }
@@ -147,7 +132,6 @@ func (h *GuildRoleCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildRoleDelete Sent when a guild role is created.
-//
 const EvtGuildRoleDelete = event.GuildRoleDelete
 
 func (h *GuildRoleDelete) setShardID(id uint) { h.ShardID = id }
@@ -155,7 +139,6 @@ func (h *GuildRoleDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildRoleUpdate Sent when a guild role is created.
-//
 const EvtGuildRoleUpdate = event.GuildRoleUpdate
 
 func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
@@ -163,7 +146,6 @@ func (h *GuildRoleUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildScheduledEventCreate ...
-//
 const EvtGuildScheduledEventCreate = event.GuildScheduledEventCreate
 
 func (h *GuildScheduledEventCreate) setShardID(id uint) { h.ShardID = id }
@@ -171,7 +153,6 @@ func (h *GuildScheduledEventCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildScheduledEventDelete ...
-//
 const EvtGuildScheduledEventDelete = event.GuildScheduledEventDelete
 
 func (h *GuildScheduledEventDelete) setShardID(id uint) { h.ShardID = id }
@@ -179,7 +160,6 @@ func (h *GuildScheduledEventDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildScheduledEventUpdate ...
-//
 const EvtGuildScheduledEventUpdate = event.GuildScheduledEventUpdate
 
 func (h *GuildScheduledEventUpdate) setShardID(id uint) { h.ShardID = id }
@@ -187,7 +167,6 @@ func (h *GuildScheduledEventUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildScheduledEventUserAdd ...
-//
 const EvtGuildScheduledEventUserAdd = event.GuildScheduledEventUserAdd
 
 func (h *GuildScheduledEventUserAdd) setShardID(id uint) { h.ShardID = id }
@@ -195,7 +174,6 @@ func (h *GuildScheduledEventUserAdd) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildScheduledEventUserRemove ...
-//
 const EvtGuildScheduledEventUserRemove = event.GuildScheduledEventUserRemove
 
 func (h *GuildScheduledEventUserRemove) setShardID(id uint) { h.ShardID = id }
@@ -203,7 +181,6 @@ func (h *GuildScheduledEventUserRemove) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildStickersUpdate ...
-//
 const EvtGuildStickersUpdate = event.GuildStickersUpdate
 
 func (h *GuildStickersUpdate) setShardID(id uint) { h.ShardID = id }
@@ -211,7 +188,6 @@ func (h *GuildStickersUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtGuildUpdate Sent when a guild is updated. The inner payload is a guild object.
-//
 const EvtGuildUpdate = event.GuildUpdate
 
 func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
@@ -219,7 +195,6 @@ func (h *GuildUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtInteractionCreate Sent when a user in a guild uses a Slash Command.
-//
 const EvtInteractionCreate = event.InteractionCreate
 
 func (h *InteractionCreate) setShardID(id uint) { h.ShardID = id }
@@ -227,7 +202,6 @@ func (h *InteractionCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtInviteCreate Sent when a guild's invite is created.
-//
 const EvtInviteCreate = event.InviteCreate
 
 func (h *InviteCreate) setShardID(id uint) { h.ShardID = id }
@@ -235,7 +209,6 @@ func (h *InviteCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtInviteDelete Sent when an invite is deleted.
-//
 const EvtInviteDelete = event.InviteDelete
 
 func (h *InviteDelete) setShardID(id uint) { h.ShardID = id }
@@ -243,7 +216,6 @@ func (h *InviteDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageCreate Sent when a message is created. The inner payload is a message object.
-//
 const EvtMessageCreate = event.MessageCreate
 
 func (h *MessageCreate) setShardID(id uint) { h.ShardID = id }
@@ -251,7 +223,6 @@ func (h *MessageCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageDelete Sent when a message is deleted.
-//
 const EvtMessageDelete = event.MessageDelete
 
 func (h *MessageDelete) setShardID(id uint) { h.ShardID = id }
@@ -259,7 +230,6 @@ func (h *MessageDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageDeleteBulk Sent when multiple messages are deleted at once.
-//
 const EvtMessageDeleteBulk = event.MessageDeleteBulk
 
 func (h *MessageDeleteBulk) setShardID(id uint) { h.ShardID = id }
@@ -267,7 +237,6 @@ func (h *MessageDeleteBulk) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageReactionAdd Sent when a user adds a reaction to a message.
-//
 const EvtMessageReactionAdd = event.MessageReactionAdd
 
 func (h *MessageReactionAdd) setShardID(id uint) { h.ShardID = id }
@@ -275,7 +244,6 @@ func (h *MessageReactionAdd) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageReactionRemove Sent when a user removes a reaction from a message.
-//
 const EvtMessageReactionRemove = event.MessageReactionRemove
 
 func (h *MessageReactionRemove) setShardID(id uint) { h.ShardID = id }
@@ -283,7 +251,6 @@ func (h *MessageReactionRemove) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
-//
 const EvtMessageReactionRemoveAll = event.MessageReactionRemoveAll
 
 func (h *MessageReactionRemoveAll) setShardID(id uint) { h.ShardID = id }
@@ -291,7 +258,6 @@ func (h *MessageReactionRemoveAll) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtMessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
-//
 const EvtMessageReactionRemoveEmoji = event.MessageReactionRemoveEmoji
 
 func (h *MessageReactionRemoveEmoji) setShardID(id uint) { h.ShardID = id }
@@ -301,7 +267,6 @@ func (h *MessageReactionRemoveEmoji) setShardID(id uint) { h.ShardID = id }
 // EvtMessageUpdate Sent when a message is updated. The inner payload is a message object.
 //
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
-//
 const EvtMessageUpdate = event.MessageUpdate
 
 func (h *MessageUpdate) setShardID(id uint) { h.ShardID = id }
@@ -309,7 +274,6 @@ func (h *MessageUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtPresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
-//
 const EvtPresenceUpdate = event.PresenceUpdate
 
 func (h *PresenceUpdate) setShardID(id uint) { h.ShardID = id }
@@ -319,7 +283,6 @@ func (h *PresenceUpdate) setShardID(id uint) { h.ShardID = id }
 // EvtReady The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // required for a client to begin interacting with the rest of the platform.
-//
 const EvtReady = event.Ready
 
 func (h *Ready) setShardID(id uint) { h.ShardID = id }
@@ -328,7 +291,6 @@ func (h *Ready) setShardID(id uint) { h.ShardID = id }
 
 // EvtResumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
-//
 const EvtResumed = event.Resumed
 
 func (h *Resumed) setShardID(id uint) { h.ShardID = id }
@@ -336,7 +298,6 @@ func (h *Resumed) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadCreate Sent when a thread is created, relevant to the current user, or when the current user is added to a thread.
-//
 const EvtThreadCreate = event.ThreadCreate
 
 func (h *ThreadCreate) setShardID(id uint) { h.ShardID = id }
@@ -344,7 +305,6 @@ func (h *ThreadCreate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadDelete Sent when a thread relevant to the current user is deleted.
-//
 const EvtThreadDelete = event.ThreadDelete
 
 func (h *ThreadDelete) setShardID(id uint) { h.ShardID = id }
@@ -352,7 +312,6 @@ func (h *ThreadDelete) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadListSync Sent when the current user gains access to a channel.
-//
 const EvtThreadListSync = event.ThreadListSync
 
 func (h *ThreadListSync) setShardID(id uint) { h.ShardID = id }
@@ -360,7 +319,6 @@ func (h *ThreadListSync) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadMemberUpdate Sent when the thread member object for the current user is updated.
-//
 const EvtThreadMemberUpdate = event.ThreadMemberUpdate
 
 func (h *ThreadMemberUpdate) setShardID(id uint) { h.ShardID = id }
@@ -368,7 +326,6 @@ func (h *ThreadMemberUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadMembersUpdate Sent when anyone is added to or removed from a thread.
-//
 const EvtThreadMembersUpdate = event.ThreadMembersUpdate
 
 func (h *ThreadMembersUpdate) setShardID(id uint) { h.ShardID = id }
@@ -376,7 +333,6 @@ func (h *ThreadMembersUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtThreadUpdate Sent when a thread is updated.
-//
 const EvtThreadUpdate = event.ThreadUpdate
 
 func (h *ThreadUpdate) setShardID(id uint) { h.ShardID = id }
@@ -384,7 +340,6 @@ func (h *ThreadUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtTypingStart Sent when a user starts typing in a channel.
-//
 const EvtTypingStart = event.TypingStart
 
 func (h *TypingStart) setShardID(id uint) { h.ShardID = id }
@@ -392,7 +347,6 @@ func (h *TypingStart) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtUserUpdate Sent when properties about the user change. Inner payload is a user object.
-//
 const EvtUserUpdate = event.UserUpdate
 
 func (h *UserUpdate) setShardID(id uint) { h.ShardID = id }
@@ -401,7 +355,6 @@ func (h *UserUpdate) setShardID(id uint) { h.ShardID = id }
 
 // EvtVoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
-//
 const EvtVoiceServerUpdate = event.VoiceServerUpdate
 
 func (h *VoiceServerUpdate) setShardID(id uint) { h.ShardID = id }
@@ -409,7 +362,6 @@ func (h *VoiceServerUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtVoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
-//
 const EvtVoiceStateUpdate = event.VoiceStateUpdate
 
 func (h *VoiceStateUpdate) setShardID(id uint) { h.ShardID = id }
@@ -417,7 +369,6 @@ func (h *VoiceStateUpdate) setShardID(id uint) { h.ShardID = id }
 // ---------------------------
 
 // EvtWebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
-//
 const EvtWebhooksUpdate = event.WebhooksUpdate
 
 func (h *WebhooksUpdate) setShardID(id uint) { h.ShardID = id }
@@ -470,7 +421,6 @@ func (shr socketHandlerRegister) WithMiddleware(first Middleware, extra ...Middl
 
 // ChannelCreate Sent when a new channel is created, relevant to the current user. The inner payload is a DM channel or
 // guild channel object.
-//
 func (shr socketHandlerRegister) ChannelCreate(handler HandlerChannelCreate, moreHandlers ...HandlerChannelCreate) {
 	shr.evtName = EvtChannelCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -490,7 +440,6 @@ func (shr socketHandlerRegister) ChannelCreateChan(handler chan *ChannelCreate, 
 }
 
 // ChannelDelete Sent when a channel relevant to the current user is deleted. The inner payload is a DM or Guild channel object.
-//
 func (shr socketHandlerRegister) ChannelDelete(handler HandlerChannelDelete, moreHandlers ...HandlerChannelDelete) {
 	shr.evtName = EvtChannelDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -510,7 +459,6 @@ func (shr socketHandlerRegister) ChannelDeleteChan(handler chan *ChannelDelete, 
 }
 
 // ChannelPinsUpdate Sent when a message is pinned or unpinned in a text channel. This is not sent when a pinned message is deleted.
-//
 func (shr socketHandlerRegister) ChannelPinsUpdate(handler HandlerChannelPinsUpdate, moreHandlers ...HandlerChannelPinsUpdate) {
 	shr.evtName = EvtChannelPinsUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -530,7 +478,6 @@ func (shr socketHandlerRegister) ChannelPinsUpdateChan(handler chan *ChannelPins
 }
 
 // ChannelUpdate Sent when a channel is updated. The inner payload is a guild channel object.
-//
 func (shr socketHandlerRegister) ChannelUpdate(handler HandlerChannelUpdate, moreHandlers ...HandlerChannelUpdate) {
 	shr.evtName = EvtChannelUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -550,7 +497,6 @@ func (shr socketHandlerRegister) ChannelUpdateChan(handler chan *ChannelUpdate, 
 }
 
 // GuildBanAdd Sent when a user is banned from a guild. The inner payload is a user object, with an extra guild_id key.
-//
 func (shr socketHandlerRegister) GuildBanAdd(handler HandlerGuildBanAdd, moreHandlers ...HandlerGuildBanAdd) {
 	shr.evtName = EvtGuildBanAdd
 	shr.handlers = append(shr.handlers, handler)
@@ -570,7 +516,6 @@ func (shr socketHandlerRegister) GuildBanAddChan(handler chan *GuildBanAdd, more
 }
 
 // GuildBanRemove Sent when a user is unbanned from a guild. The inner payload is a user object, with an extra guild_id key.
-//
 func (shr socketHandlerRegister) GuildBanRemove(handler HandlerGuildBanRemove, moreHandlers ...HandlerGuildBanRemove) {
 	shr.evtName = EvtGuildBanRemove
 	shr.handlers = append(shr.handlers, handler)
@@ -592,9 +537,8 @@ func (shr socketHandlerRegister) GuildBanRemoveChan(handler chan *GuildBanRemove
 // GuildCreate This event can be sent in three different scenarios:
 //  1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds
 //     sent in the Ready event.
-// 	2. When a Guild becomes available again to the client.
-// 	3. When the current user joins a new Guild.
-//
+//  2. When a Guild becomes available again to the client.
+//  3. When the current user joins a new Guild.
 func (shr socketHandlerRegister) GuildCreate(handler HandlerGuildCreate, moreHandlers ...HandlerGuildCreate) {
 	shr.evtName = EvtGuildCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -616,7 +560,6 @@ func (shr socketHandlerRegister) GuildCreateChan(handler chan *GuildCreate, more
 // GuildDelete Sent when a guild becomes unavailable during a guild outage, or when the user leaves or is removed from a guild.
 // The inner payload is an unavailable guild object. If the unavailable field is not set, the user was removed
 // from the guild.
-//
 func (shr socketHandlerRegister) GuildDelete(handler HandlerGuildDelete, moreHandlers ...HandlerGuildDelete) {
 	shr.evtName = EvtGuildDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -636,7 +579,6 @@ func (shr socketHandlerRegister) GuildDeleteChan(handler chan *GuildDelete, more
 }
 
 // GuildEmojisUpdate Sent when a guild's emojis have been updated.
-//
 func (shr socketHandlerRegister) GuildEmojisUpdate(handler HandlerGuildEmojisUpdate, moreHandlers ...HandlerGuildEmojisUpdate) {
 	shr.evtName = EvtGuildEmojisUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -656,7 +598,6 @@ func (shr socketHandlerRegister) GuildEmojisUpdateChan(handler chan *GuildEmojis
 }
 
 // GuildIntegrationsUpdate Sent when a guild integration is updated.
-//
 func (shr socketHandlerRegister) GuildIntegrationsUpdate(handler HandlerGuildIntegrationsUpdate, moreHandlers ...HandlerGuildIntegrationsUpdate) {
 	shr.evtName = EvtGuildIntegrationsUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -676,7 +617,6 @@ func (shr socketHandlerRegister) GuildIntegrationsUpdateChan(handler chan *Guild
 }
 
 // GuildMemberAdd Sent when a new user joins a guild.
-//
 func (shr socketHandlerRegister) GuildMemberAdd(handler HandlerGuildMemberAdd, moreHandlers ...HandlerGuildMemberAdd) {
 	shr.evtName = EvtGuildMemberAdd
 	shr.handlers = append(shr.handlers, handler)
@@ -696,7 +636,6 @@ func (shr socketHandlerRegister) GuildMemberAddChan(handler chan *GuildMemberAdd
 }
 
 // GuildMemberRemove Sent when a user is removed from a guild (leave/kick/ban).
-//
 func (shr socketHandlerRegister) GuildMemberRemove(handler HandlerGuildMemberRemove, moreHandlers ...HandlerGuildMemberRemove) {
 	shr.evtName = EvtGuildMemberRemove
 	shr.handlers = append(shr.handlers, handler)
@@ -716,7 +655,6 @@ func (shr socketHandlerRegister) GuildMemberRemoveChan(handler chan *GuildMember
 }
 
 // GuildMemberUpdate Sent when a guild member is updated.
-//
 func (shr socketHandlerRegister) GuildMemberUpdate(handler HandlerGuildMemberUpdate, moreHandlers ...HandlerGuildMemberUpdate) {
 	shr.evtName = EvtGuildMemberUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -736,7 +674,6 @@ func (shr socketHandlerRegister) GuildMemberUpdateChan(handler chan *GuildMember
 }
 
 // GuildMembersChunk Sent in response to Gateway Request Guild Members.
-//
 func (shr socketHandlerRegister) GuildMembersChunk(handler HandlerGuildMembersChunk, moreHandlers ...HandlerGuildMembersChunk) {
 	shr.evtName = EvtGuildMembersChunk
 	shr.handlers = append(shr.handlers, handler)
@@ -756,7 +693,6 @@ func (shr socketHandlerRegister) GuildMembersChunkChan(handler chan *GuildMember
 }
 
 // GuildRoleCreate Sent when a guild role is created.
-//
 func (shr socketHandlerRegister) GuildRoleCreate(handler HandlerGuildRoleCreate, moreHandlers ...HandlerGuildRoleCreate) {
 	shr.evtName = EvtGuildRoleCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -776,7 +712,6 @@ func (shr socketHandlerRegister) GuildRoleCreateChan(handler chan *GuildRoleCrea
 }
 
 // GuildRoleDelete Sent when a guild role is created.
-//
 func (shr socketHandlerRegister) GuildRoleDelete(handler HandlerGuildRoleDelete, moreHandlers ...HandlerGuildRoleDelete) {
 	shr.evtName = EvtGuildRoleDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -796,7 +731,6 @@ func (shr socketHandlerRegister) GuildRoleDeleteChan(handler chan *GuildRoleDele
 }
 
 // GuildRoleUpdate Sent when a guild role is created.
-//
 func (shr socketHandlerRegister) GuildRoleUpdate(handler HandlerGuildRoleUpdate, moreHandlers ...HandlerGuildRoleUpdate) {
 	shr.evtName = EvtGuildRoleUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -816,7 +750,6 @@ func (shr socketHandlerRegister) GuildRoleUpdateChan(handler chan *GuildRoleUpda
 }
 
 // GuildScheduledEventCreate ...
-//
 func (shr socketHandlerRegister) GuildScheduledEventCreate(handler HandlerGuildScheduledEventCreate, moreHandlers ...HandlerGuildScheduledEventCreate) {
 	shr.evtName = EvtGuildScheduledEventCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -836,7 +769,6 @@ func (shr socketHandlerRegister) GuildScheduledEventCreateChan(handler chan *Gui
 }
 
 // GuildScheduledEventDelete ...
-//
 func (shr socketHandlerRegister) GuildScheduledEventDelete(handler HandlerGuildScheduledEventDelete, moreHandlers ...HandlerGuildScheduledEventDelete) {
 	shr.evtName = EvtGuildScheduledEventDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -856,7 +788,6 @@ func (shr socketHandlerRegister) GuildScheduledEventDeleteChan(handler chan *Gui
 }
 
 // GuildScheduledEventUpdate ...
-//
 func (shr socketHandlerRegister) GuildScheduledEventUpdate(handler HandlerGuildScheduledEventUpdate, moreHandlers ...HandlerGuildScheduledEventUpdate) {
 	shr.evtName = EvtGuildScheduledEventUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -876,7 +807,6 @@ func (shr socketHandlerRegister) GuildScheduledEventUpdateChan(handler chan *Gui
 }
 
 // GuildScheduledEventUserAdd ...
-//
 func (shr socketHandlerRegister) GuildScheduledEventUserAdd(handler HandlerGuildScheduledEventUserAdd, moreHandlers ...HandlerGuildScheduledEventUserAdd) {
 	shr.evtName = EvtGuildScheduledEventUserAdd
 	shr.handlers = append(shr.handlers, handler)
@@ -896,7 +826,6 @@ func (shr socketHandlerRegister) GuildScheduledEventUserAddChan(handler chan *Gu
 }
 
 // GuildScheduledEventUserRemove ...
-//
 func (shr socketHandlerRegister) GuildScheduledEventUserRemove(handler HandlerGuildScheduledEventUserRemove, moreHandlers ...HandlerGuildScheduledEventUserRemove) {
 	shr.evtName = EvtGuildScheduledEventUserRemove
 	shr.handlers = append(shr.handlers, handler)
@@ -916,7 +845,6 @@ func (shr socketHandlerRegister) GuildScheduledEventUserRemoveChan(handler chan 
 }
 
 // GuildStickersUpdate ...
-//
 func (shr socketHandlerRegister) GuildStickersUpdate(handler HandlerGuildStickersUpdate, moreHandlers ...HandlerGuildStickersUpdate) {
 	shr.evtName = EvtGuildStickersUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -936,7 +864,6 @@ func (shr socketHandlerRegister) GuildStickersUpdateChan(handler chan *GuildStic
 }
 
 // GuildUpdate Sent when a guild is updated. The inner payload is a guild object.
-//
 func (shr socketHandlerRegister) GuildUpdate(handler HandlerGuildUpdate, moreHandlers ...HandlerGuildUpdate) {
 	shr.evtName = EvtGuildUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -956,7 +883,6 @@ func (shr socketHandlerRegister) GuildUpdateChan(handler chan *GuildUpdate, more
 }
 
 // InteractionCreate Sent when a user in a guild uses a Slash Command.
-//
 func (shr socketHandlerRegister) InteractionCreate(handler HandlerInteractionCreate, moreHandlers ...HandlerInteractionCreate) {
 	shr.evtName = EvtInteractionCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -976,7 +902,6 @@ func (shr socketHandlerRegister) InteractionCreateChan(handler chan *Interaction
 }
 
 // InviteCreate Sent when a guild's invite is created.
-//
 func (shr socketHandlerRegister) InviteCreate(handler HandlerInviteCreate, moreHandlers ...HandlerInviteCreate) {
 	shr.evtName = EvtInviteCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -996,7 +921,6 @@ func (shr socketHandlerRegister) InviteCreateChan(handler chan *InviteCreate, mo
 }
 
 // InviteDelete Sent when an invite is deleted.
-//
 func (shr socketHandlerRegister) InviteDelete(handler HandlerInviteDelete, moreHandlers ...HandlerInviteDelete) {
 	shr.evtName = EvtInviteDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -1016,7 +940,6 @@ func (shr socketHandlerRegister) InviteDeleteChan(handler chan *InviteDelete, mo
 }
 
 // MessageCreate Sent when a message is created. The inner payload is a message object.
-//
 func (shr socketHandlerRegister) MessageCreate(handler HandlerMessageCreate, moreHandlers ...HandlerMessageCreate) {
 	shr.evtName = EvtMessageCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -1036,7 +959,6 @@ func (shr socketHandlerRegister) MessageCreateChan(handler chan *MessageCreate, 
 }
 
 // MessageDelete Sent when a message is deleted.
-//
 func (shr socketHandlerRegister) MessageDelete(handler HandlerMessageDelete, moreHandlers ...HandlerMessageDelete) {
 	shr.evtName = EvtMessageDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -1056,7 +978,6 @@ func (shr socketHandlerRegister) MessageDeleteChan(handler chan *MessageDelete, 
 }
 
 // MessageDeleteBulk Sent when multiple messages are deleted at once.
-//
 func (shr socketHandlerRegister) MessageDeleteBulk(handler HandlerMessageDeleteBulk, moreHandlers ...HandlerMessageDeleteBulk) {
 	shr.evtName = EvtMessageDeleteBulk
 	shr.handlers = append(shr.handlers, handler)
@@ -1076,7 +997,6 @@ func (shr socketHandlerRegister) MessageDeleteBulkChan(handler chan *MessageDele
 }
 
 // MessageReactionAdd Sent when a user adds a reaction to a message.
-//
 func (shr socketHandlerRegister) MessageReactionAdd(handler HandlerMessageReactionAdd, moreHandlers ...HandlerMessageReactionAdd) {
 	shr.evtName = EvtMessageReactionAdd
 	shr.handlers = append(shr.handlers, handler)
@@ -1096,7 +1016,6 @@ func (shr socketHandlerRegister) MessageReactionAddChan(handler chan *MessageRea
 }
 
 // MessageReactionRemove Sent when a user removes a reaction from a message.
-//
 func (shr socketHandlerRegister) MessageReactionRemove(handler HandlerMessageReactionRemove, moreHandlers ...HandlerMessageReactionRemove) {
 	shr.evtName = EvtMessageReactionRemove
 	shr.handlers = append(shr.handlers, handler)
@@ -1116,7 +1035,6 @@ func (shr socketHandlerRegister) MessageReactionRemoveChan(handler chan *Message
 }
 
 // MessageReactionRemoveAll Sent when a user explicitly removes all reactions from a message.
-//
 func (shr socketHandlerRegister) MessageReactionRemoveAll(handler HandlerMessageReactionRemoveAll, moreHandlers ...HandlerMessageReactionRemoveAll) {
 	shr.evtName = EvtMessageReactionRemoveAll
 	shr.handlers = append(shr.handlers, handler)
@@ -1136,7 +1054,6 @@ func (shr socketHandlerRegister) MessageReactionRemoveAllChan(handler chan *Mess
 }
 
 // MessageReactionRemoveEmoji Sent when a bot removes all instances of a given emoji from the reactions of a message.
-//
 func (shr socketHandlerRegister) MessageReactionRemoveEmoji(handler HandlerMessageReactionRemoveEmoji, moreHandlers ...HandlerMessageReactionRemoveEmoji) {
 	shr.evtName = EvtMessageReactionRemoveEmoji
 	shr.handlers = append(shr.handlers, handler)
@@ -1158,7 +1075,6 @@ func (shr socketHandlerRegister) MessageReactionRemoveEmojiChan(handler chan *Me
 // MessageUpdate Sent when a message is updated. The inner payload is a message object.
 //
 // NOTE! Has _at_least_ the GuildID and ChannelID fields.
-//
 func (shr socketHandlerRegister) MessageUpdate(handler HandlerMessageUpdate, moreHandlers ...HandlerMessageUpdate) {
 	shr.evtName = EvtMessageUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1178,7 +1094,6 @@ func (shr socketHandlerRegister) MessageUpdateChan(handler chan *MessageUpdate, 
 }
 
 // PresenceUpdate A user's presence is their current state on a guild. This event is sent when a user's presence is updated for a guild.
-//
 func (shr socketHandlerRegister) PresenceUpdate(handler HandlerPresenceUpdate, moreHandlers ...HandlerPresenceUpdate) {
 	shr.evtName = EvtPresenceUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1200,7 +1115,6 @@ func (shr socketHandlerRegister) PresenceUpdateChan(handler chan *PresenceUpdate
 // Ready The ready event is dispatched when a client has completed the initial handshake with the gateway (for new sessions).
 // The ready event can be the largest and most complex event the gateway will send, as it contains all the state
 // required for a client to begin interacting with the rest of the platform.
-//
 func (shr socketHandlerRegister) Ready(handler HandlerReady, moreHandlers ...HandlerReady) {
 	shr.evtName = EvtReady
 	shr.handlers = append(shr.handlers, handler)
@@ -1221,7 +1135,6 @@ func (shr socketHandlerRegister) ReadyChan(handler chan *Ready, moreHandlers ...
 
 // Resumed The resumed event is dispatched when a client has sent a resume payload to the gateway
 // (for resuming existing sessions).
-//
 func (shr socketHandlerRegister) Resumed(handler HandlerResumed, moreHandlers ...HandlerResumed) {
 	shr.evtName = EvtResumed
 	shr.handlers = append(shr.handlers, handler)
@@ -1241,7 +1154,6 @@ func (shr socketHandlerRegister) ResumedChan(handler chan *Resumed, moreHandlers
 }
 
 // ThreadCreate Sent when a thread is created, relevant to the current user, or when the current user is added to a thread.
-//
 func (shr socketHandlerRegister) ThreadCreate(handler HandlerThreadCreate, moreHandlers ...HandlerThreadCreate) {
 	shr.evtName = EvtThreadCreate
 	shr.handlers = append(shr.handlers, handler)
@@ -1261,7 +1173,6 @@ func (shr socketHandlerRegister) ThreadCreateChan(handler chan *ThreadCreate, mo
 }
 
 // ThreadDelete Sent when a thread relevant to the current user is deleted.
-//
 func (shr socketHandlerRegister) ThreadDelete(handler HandlerThreadDelete, moreHandlers ...HandlerThreadDelete) {
 	shr.evtName = EvtThreadDelete
 	shr.handlers = append(shr.handlers, handler)
@@ -1281,7 +1192,6 @@ func (shr socketHandlerRegister) ThreadDeleteChan(handler chan *ThreadDelete, mo
 }
 
 // ThreadListSync Sent when the current user gains access to a channel.
-//
 func (shr socketHandlerRegister) ThreadListSync(handler HandlerThreadListSync, moreHandlers ...HandlerThreadListSync) {
 	shr.evtName = EvtThreadListSync
 	shr.handlers = append(shr.handlers, handler)
@@ -1301,7 +1211,6 @@ func (shr socketHandlerRegister) ThreadListSyncChan(handler chan *ThreadListSync
 }
 
 // ThreadMemberUpdate Sent when the thread member object for the current user is updated.
-//
 func (shr socketHandlerRegister) ThreadMemberUpdate(handler HandlerThreadMemberUpdate, moreHandlers ...HandlerThreadMemberUpdate) {
 	shr.evtName = EvtThreadMemberUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1321,7 +1230,6 @@ func (shr socketHandlerRegister) ThreadMemberUpdateChan(handler chan *ThreadMemb
 }
 
 // ThreadMembersUpdate Sent when anyone is added to or removed from a thread.
-//
 func (shr socketHandlerRegister) ThreadMembersUpdate(handler HandlerThreadMembersUpdate, moreHandlers ...HandlerThreadMembersUpdate) {
 	shr.evtName = EvtThreadMembersUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1341,7 +1249,6 @@ func (shr socketHandlerRegister) ThreadMembersUpdateChan(handler chan *ThreadMem
 }
 
 // ThreadUpdate Sent when a thread is updated.
-//
 func (shr socketHandlerRegister) ThreadUpdate(handler HandlerThreadUpdate, moreHandlers ...HandlerThreadUpdate) {
 	shr.evtName = EvtThreadUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1361,7 +1268,6 @@ func (shr socketHandlerRegister) ThreadUpdateChan(handler chan *ThreadUpdate, mo
 }
 
 // TypingStart Sent when a user starts typing in a channel.
-//
 func (shr socketHandlerRegister) TypingStart(handler HandlerTypingStart, moreHandlers ...HandlerTypingStart) {
 	shr.evtName = EvtTypingStart
 	shr.handlers = append(shr.handlers, handler)
@@ -1381,7 +1287,6 @@ func (shr socketHandlerRegister) TypingStartChan(handler chan *TypingStart, more
 }
 
 // UserUpdate Sent when properties about the user change. Inner payload is a user object.
-//
 func (shr socketHandlerRegister) UserUpdate(handler HandlerUserUpdate, moreHandlers ...HandlerUserUpdate) {
 	shr.evtName = EvtUserUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1402,7 +1307,6 @@ func (shr socketHandlerRegister) UserUpdateChan(handler chan *UserUpdate, moreHa
 
 // VoiceServerUpdate Sent when a guild's voice server is updated. This is sent when initially connecting to voice, and when the current
 // voice instance fails over to a new server.
-//
 func (shr socketHandlerRegister) VoiceServerUpdate(handler HandlerVoiceServerUpdate, moreHandlers ...HandlerVoiceServerUpdate) {
 	shr.evtName = EvtVoiceServerUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1422,7 +1326,6 @@ func (shr socketHandlerRegister) VoiceServerUpdateChan(handler chan *VoiceServer
 }
 
 // VoiceStateUpdate Sent when someone joins/leaves/moves voice channels. Inner payload is a voice state object.
-//
 func (shr socketHandlerRegister) VoiceStateUpdate(handler HandlerVoiceStateUpdate, moreHandlers ...HandlerVoiceStateUpdate) {
 	shr.evtName = EvtVoiceStateUpdate
 	shr.handlers = append(shr.handlers, handler)
@@ -1442,7 +1345,6 @@ func (shr socketHandlerRegister) VoiceStateUpdateChan(handler chan *VoiceStateUp
 }
 
 // WebhooksUpdate Sent when a guild channel's WebHook is created, updated, or deleted.
-//
 func (shr socketHandlerRegister) WebhooksUpdate(handler HandlerWebhooksUpdate, moreHandlers ...HandlerWebhooksUpdate) {
 	shr.evtName = EvtWebhooksUpdate
 	shr.handlers = append(shr.handlers, handler)

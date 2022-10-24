@@ -413,11 +413,12 @@ func (c channelQueryBuilder) WithFlags(flags ...Flag) ChannelQueryBuilder {
 }
 
 // Get [REST] Get a channel by Snowflake. Returns a channel object.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
-//  Reviewed                2018-06-07
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel
+//	Reviewed                2018-06-07
+//	Comment                 -
 func (c channelQueryBuilder) Get() (*Channel, error) {
 	if c.cid.IsZero() {
 		return nil, ErrMissingChannelID
@@ -443,10 +444,11 @@ func (c channelQueryBuilder) Get() (*Channel, error) {
 
 // Update [REST] Update a channel's settings. Returns a channel on success, and a 400 BAD REQUEST
 // on invalid parameters. All JSON parameters are optional.
-//  Method                  PATCH
-//  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
-//  Reviewed                2021-08-08
+//
+//	Method                  PATCH
+//	Endpoint                /channels/{channel.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#modify-channel
+//	Reviewed                2021-08-08
 func (c channelQueryBuilder) Update(params *UpdateChannel) (*Channel, error) {
 	if params == nil {
 		return nil, ErrMissingRESTParams
@@ -492,14 +494,15 @@ type UpdateChannel struct {
 // the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 // Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 // Fires a Channel Delete Gateway event.
-//  Method                  Delete
-//  Endpoint                /channels/{channel.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#deleteclose-channel
-//  Reviewed                2018-10-09
-//  Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
-//                          is impossible to undo this action when performed on a guild channel. In
-//                          contrast, when used with a private message, it is possible to undo the
-//                          action by opening a private message with the recipient again.
+//
+//	Method                  Delete
+//	Endpoint                /channels/{channel.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#deleteclose-channel
+//	Reviewed                2018-10-09
+//	Comment                 Deleting a guild channel cannot be undone. Use this with caution, as it
+//	                        is impossible to undo this action when performed on a guild channel. In
+//	                        contrast, when used with a private message, it is possible to undo the
+//	                        action by opening a private message with the recipient again.
 func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 	if c.cid.IsZero() {
 		return nil, ErrMissingChannelID
@@ -521,11 +524,12 @@ func (c channelQueryBuilder) Delete() (channel *Channel, err error) {
 // this route. However, if a bot is responding to a command and expects the computation to take a few seconds, this
 // endpoint may be called to let the user know that the bot is processing their message. Returns a 204 empty response
 // on success. Fires a Typing Start Gateway event.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/typing
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/typing
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#trigger-typing-indicator
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (c channelQueryBuilder) TriggerTypingIndicator() (err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Method:   http.MethodPost,
@@ -547,11 +551,12 @@ type UpdateChannelPermissions struct {
 // UpdatePermissions [REST] Edit the channel permission overwrites for a user or role in a channel. Only usable
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success.
 // For more information about permissions, see permissions.
-//  Method                  PUT
-//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
-//  Reviewed                2018-06-07
-//  Comment                 -
+//
+//	Method                  PUT
+//	Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#edit-channel-permissions
+//	Reviewed                2018-06-07
+//	Comment                 -
 func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *UpdateChannelPermissions) (err error) {
 	if c.cid.IsZero() {
 		return ErrMissingChannelID
@@ -574,11 +579,12 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 
 // GetInvites [REST] Returns a list of invite objects (with invite metadata) for the channel. Only usable for
 // guild Channels. Requires the 'MANAGE_CHANNELS' permission.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}/invites
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
-//  Reviewed                2018-06-07
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}/invites
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-invites
+//	Reviewed                2018-06-07
+//	Comment                 -
 func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	if c.cid.IsZero() {
 		return nil, MissingChannelIDErr
@@ -632,11 +638,12 @@ type CreateInvite struct {
 // DeletePermission [REST] Delete a channel permission overwrite for a user or role in a channel. Only usable
 // for guild Channels. Requires the 'MANAGE_ROLES' permission. Returns a 204 empty response on success. For more
 // information about permissions, see permissions: https://discord.com/developers/docs/topics/permissions#permissions
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-channel-permission
-//  Reviewed                2018-06-07
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/permissions/{overwrite.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-channel-permission
+//	Reviewed                2018-06-07
+//	Comment                 -
 func (c channelQueryBuilder) DeletePermission(overwriteID Snowflake) (err error) {
 	if c.cid.IsZero() {
 		return ErrMissingChannelID
@@ -678,11 +685,12 @@ func (g *GroupDMParticipant) FindErrors() error {
 
 // AddDMParticipant [REST] Adds a recipient to a Group DM using their access token. Returns a 204 empty response
 // on success.
-//  Method                  PUT
-//  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  PUT
+//	Endpoint                /channels/{channel.id}/recipients/{user.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) error {
 	if c.cid.IsZero() {
 		return ErrMissingChannelID
@@ -707,11 +715,12 @@ func (c channelQueryBuilder) AddDMParticipant(participant *GroupDMParticipant) e
 }
 
 // KickParticipant [REST] Removes a recipient from a Group DM. Returns a 204 empty response on success.
-//  Method                  DELETE
-//  Endpoint                /channels/{channel.id}/recipients/{user.id}
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  DELETE
+//	Endpoint                /channels/{channel.id}/recipients/{user.id}
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (c channelQueryBuilder) KickParticipant(userID Snowflake) (err error) {
 	if c.cid.IsZero() {
 		return ErrMissingChannelID
@@ -763,12 +772,13 @@ var _ URLQueryStringer = (*GetMessages)(nil)
 // the 'VIEW_CHANNEL' permission to be present on the current user. If the current user is missing
 // the 'READ_MESSAGE_HISTORY' permission in the channel then this will return no messages
 // (since they cannot read the message history). Returns an array of message objects on success.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}/messages
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-messages
-//  Reviewed                2018-06-10
-//  Comment                 The before, after, and around keys are mutually exclusive, only one may
-//                          be passed at a time. see ReqGetChannelMessagesParams.
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}/messages
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-channel-messages
+//	Reviewed                2018-06-10
+//	Comment                 The before, after, and around keys are mutually exclusive, only one may
+//	                        be passed at a time. see ReqGetChannelMessagesParams.
 func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Message, err error) {
 	if c.cid.IsZero() {
 		return nil, MissingChannelIDErr
@@ -949,12 +959,13 @@ func (p *DeleteMessages) AddMessage(msg *Message) (err error) {
 // Message Delete Gateway events.Any message IDs given that do not exist or are invalid will count towards
 // the minimum and maximum message count (currently 2 and 100 respectively). Additionally, duplicated IDs
 // will only be counted once.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages/bulk_delete
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
-//  Reviewed                2018-06-10
-//  Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
-//                          provided is older than that.
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/messages/bulk_delete
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#delete-message
+//	Reviewed                2018-06-10
+//	Comment                 This endpoint will not delete messages older than 2 weeks, and will fail if any message
+//	                        provided is older than that.
 func (c channelQueryBuilder) DeleteMessages(params *DeleteMessages) (err error) {
 	if c.cid.IsZero() {
 		return ErrMissingChannelID
@@ -1101,11 +1112,12 @@ func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err
 // the SEND_TTS_MESSAGES permission is required for the message to be spoken. Returns a message object. Fires a
 // Message Create Gateway event. See message formatting for more information on how to properly format messages.
 // The maximum request size when sending a message is 8MB.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/messages
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
-//  Reviewed                2018-06-10
-//  Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/messages
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#create-message
+//	Reviewed                2018-06-10
+//	Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message, err error) {
 	if c.cid.IsZero() {
 		return nil, MissingChannelIDErr
@@ -1140,11 +1152,12 @@ func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message,
 }
 
 // GetPinnedMessages [REST] Returns all pinned messages in the channel as an array of message objects.
-//  Method                  GET
-//  Endpoint                /channels/{channel.id}/pins
-//  Discord documentation   https://discord.com/developers/docs/resources/channel#get-pinned-messages
-//  Reviewed                2018-06-10
-//  Comment                 -
+//
+//	Method                  GET
+//	Endpoint                /channels/{channel.id}/pins
+//	Discord documentation   https://discord.com/developers/docs/resources/channel#get-pinned-messages
+//	Reviewed                2018-06-10
+//	Comment                 -
 func (c channelQueryBuilder) GetPinnedMessages() (ret []*Message, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelPins(c.cid),
@@ -1180,11 +1193,12 @@ func (c *CreateWebhook) FindErrors() error {
 
 // CreateWebhook [REST] Create a new webhook. Requires the 'MANAGE_WEBHOOKS' permission.
 // Returns a webhook object on success.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/webhooks
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#create-webhook
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (c channelQueryBuilder) CreateWebhook(params *CreateWebhook) (ret *Webhook, err error) {
 	if params == nil {
 		return nil, errors.New("params was nil")
@@ -1209,11 +1223,12 @@ func (c channelQueryBuilder) CreateWebhook(params *CreateWebhook) (ret *Webhook,
 }
 
 // GetWebhooks [REST] Returns a list of channel webhook objects. Requires the 'MANAGE_WEBHOOKS' permission.
-//  Method                  POST
-//  Endpoint                /channels/{channel.id}/webhooks
-//  Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
-//  Reviewed                2018-08-14
-//  Comment                 -
+//
+//	Method                  POST
+//	Endpoint                /channels/{channel.id}/webhooks
+//	Discord documentation   https://discord.com/developers/docs/resources/webhook#get-channel-webhooks
+//	Reviewed                2018-08-14
+//	Comment                 -
 func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 	r := c.client.newRESTRequest(&httd.Request{
 		Endpoint: endpoint.ChannelWebhooks(c.cid),

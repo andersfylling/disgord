@@ -313,7 +313,7 @@ func (b *RESTBuilder) CancelOnRatelimit() *RESTBuilder {
 	return b
 }
 
-//generate-rest-basic-execute: err:error,
+// generate-rest-basic-execute: err:error,
 type basicBuilder struct {
 	r RESTBuilder
 }
