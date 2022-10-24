@@ -1191,6 +1191,20 @@ func (g guildQueryBuilder) GetRoles() ([]*Role, error) {
 	return getRoles(r.Execute)
 }
 
+// Search through GetRoles to find a role
+func (g guildQueryBuilder) GetRole(ID Snowflake) (*Role, error) {
+	roles, err := g.GetRoles()
+	if err != nil {
+		return &Role{}, err
+	}
+	for _, role := range roles {
+		if role.ID == ID {
+			return role, nil
+		}
+	}
+	return &Role{}, nil
+}
+
 // CreateGuildRole ...
 // https://discord.com/developers/docs/resources/guild#create-guild-role-json-params
 type CreateGuildRole struct {
