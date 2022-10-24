@@ -1055,6 +1055,10 @@ func (g *GuildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
+func (g *GuildRoleQueryBuilderNop) Get() (*disgord.Role, error) {
+	return nil, nil
+}
+
 func (g *GuildRoleQueryBuilderNop) Update(_ *disgord.UpdateRole) (*disgord.Role, error) {
 	return nil, nil
 }

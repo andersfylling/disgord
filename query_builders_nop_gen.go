@@ -1046,6 +1046,10 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
+func (g *guildRoleQueryBuilderNop) Get() (*Role, error) {
+	return nil, nil
+}
+
 func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {
 	return nil, nil
 }

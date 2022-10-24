@@ -747,7 +747,6 @@ type GuildQueryBuilder interface {
 	// GetRoles
 	// TODO: For GetRoles, it might sense to have the option for a function to filter before each role ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
-	// TODO-3: Add GetRole.
 	GetRoles() ([]*Role, error)
 	UpdateRolePositions(params []UpdateGuildRolePositions) ([]*Role, error)
 	CreateRole(params *CreateGuildRole) (*Role, error)
@@ -1189,6 +1188,21 @@ func (g guildQueryBuilder) GetRoles() ([]*Role, error) {
 	}
 
 	return getRoles(r.Execute)
+}
+
+// Search through GetRoles to find a role
+func (g guildRoleQueryBuilder) Get() (*Role, error) {
+	guild := g.client.Guild(g.gid)
+	roles, err := guild.GetRoles()
+	if err != nil {
+		return nil, err
+	}
+	for _, role := range roles {
+		if role.ID == g.roleID {
+			return role, nil
+		}
+	}
+	return nil, errors.New("role not found")
 }
 
 // CreateGuildRole ...
