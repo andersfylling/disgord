@@ -1195,14 +1195,14 @@ func (g guildRoleQueryBuilder) Get() (*Role, error) {
 	guild := g.client.Guild(g.gid)
 	roles, err := guild.GetRoles()
 	if err != nil {
-		return &Role{}, err
+		return nil, err
 	}
 	for _, role := range roles {
 		if role.ID == g.roleID {
 			return role, nil
 		}
 	}
-	return &Role{}, nil
+	return nil, errors.New("role not found")
 }
 
 // CreateGuildRole ...
