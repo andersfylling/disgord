@@ -1046,7 +1046,7 @@ func (g *guildRoleQueryBuilderNop) Delete() error {
 	return nil
 }
 
-func (g *guildRoleQueryBuilderNop) Get(_ Snowflake) (*Role, error) {
+func (g *guildRoleQueryBuilderNop) Get() (*Role, error) {
 	return nil, nil
 }
 

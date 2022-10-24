@@ -80,7 +80,7 @@ type GuildRoleQueryBuilder interface {
 	WithFlags(flags ...Flag) GuildRoleQueryBuilder
 	Update(params *UpdateRole) (*Role, error)
 	Delete() error
-	Get(ID Snowflake) (*Role, error)
+	Get() (*Role, error)
 	// Deprecated: use Update
 	UpdateBuilder() (builder UpdateGuildRoleBuilder)
 }

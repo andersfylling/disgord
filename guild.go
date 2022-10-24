@@ -1191,14 +1191,14 @@ func (g guildQueryBuilder) GetRoles() ([]*Role, error) {
 }
 
 // Search through GetRoles to find a role
-func (g guildRoleQueryBuilder) Get(ID Snowflake) (*Role, error) {
+func (g guildRoleQueryBuilder) Get() (*Role, error) {
 	guild := g.client.Guild(g.gid)
 	roles, err := guild.GetRoles()
 	if err != nil {
 		return &Role{}, err
 	}
 	for _, role := range roles {
-		if role.ID == ID {
+		if role.ID == g.roleID {
 			return role, nil
 		}
 	}
