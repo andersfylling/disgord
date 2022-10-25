@@ -126,14 +126,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/internal/gateway"
-	"github.com/andersfylling/disgord/json"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/json"
 
 	"github.com/andersfylling/disgord/internal/util"
 

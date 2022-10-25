@@ -172,8 +172,6 @@ type fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) er
 type fRESTCacheMiddleware func(resp *http.Response, v interface{}, err error) error
 type fRESTItemFactory func() interface{}
 
-//go:generate go run internal/generate/restbuilders/main.go
-
 type RESTBuilder struct {
 	middleware fRESTRequestMiddleware
 	config     *httd.Request

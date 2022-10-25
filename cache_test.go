@@ -3,10 +3,11 @@ package disgord
 import (
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord/json"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/andersfylling/disgord/json"
 )
 
 func jsonbytes(format string, args ...interface{}) []byte {
