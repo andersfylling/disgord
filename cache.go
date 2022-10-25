@@ -29,10 +29,11 @@ type idHolder struct {
 	ChannelID Snowflake `json:"channel_id"`
 }
 
-type userHolder struct {
-	User *User `json:"user"`
-}
-
+/*
+	type userHolder struct {
+		User *User `json:"user"`
+	}
+*/
 func NewBasicCache() *BasicCache {
 	cache := &BasicCache{
 		CurrentUser: &User{},
@@ -859,7 +860,7 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 	defer c.Guilds.Unlock()
 
 	if container, ok := c.Guilds.Store[guildID]; ok {
-		if member, _ = container.Members[userID]; member != nil {
+		if member = container.Members[userID]; member != nil {
 			member = DeepCopy(member).(*Member)
 		}
 	}

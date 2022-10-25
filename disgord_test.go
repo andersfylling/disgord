@@ -157,8 +157,6 @@ func (g *mockerWSReceiveOnly) Disconnected() bool {
 
 var _ gateway.Conn = (*mockerWSReceiveOnly)(nil)
 
-var sink1 int = 1
-
 // TODO
 // BenchmarkDiscordEventToHandler from the time Disgord gets the raw byte event data, to the event handler is triggered
 //func Benchmark1000DiscordEventToHandler_cacheDisabled(b *testing.B) {

@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -279,7 +278,7 @@ func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 
 	if len(inputs) != i {
 		format := "unable to add all handlers/middlewares (%d/%d). Are they in correct order? middlewares, then handlers"
-		err = errors.New(fmt.Sprintf(format, i, len(inputs)))
+		err = fmt.Errorf(format, i, len(inputs))
 	}
 
 	return err
