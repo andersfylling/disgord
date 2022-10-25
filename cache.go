@@ -771,7 +771,7 @@ func (c *BasicCache) GetChannel(id Snowflake) (*Channel, error) {
 	if channel, ok := c.Channels.Store[id]; ok {
 		return DeepCopy(channel).(*Channel), nil
 	}
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }
 
 func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
@@ -783,7 +783,7 @@ func (c *BasicCache) GetGuildEmoji(guildID, emojiID Snowflake) (*Emoji, error) {
 			return DeepCopy(emoji).(*Emoji), nil
 		}
 	}
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }
 
 func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
@@ -800,7 +800,7 @@ func (c *BasicCache) GetGuildEmojis(id Snowflake) ([]*Emoji, error) {
 		}
 		return emojis, nil
 	}
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }
 
 func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
@@ -818,7 +818,7 @@ func (c *BasicCache) GetGuild(id Snowflake) (*Guild, error) {
 	c.Guilds.Unlock()
 
 	if guildCopy == nil {
-		return nil, CacheMissErr
+		return nil, ErrCacheMiss
 	}
 
 	return buildGuildFromCacheContainer(guildCopy, channelIDs, members, &c.Users, &c.Channels), nil
@@ -837,7 +837,7 @@ func (c *BasicCache) GetGuildChannels(id Snowflake) ([]*Channel, error) {
 	c.Guilds.Unlock()
 
 	if !guildFound {
-		return nil, CacheMissErr
+		return nil, ErrCacheMiss
 	}
 	return retrieveChannels(channelIDs, &c.Channels), nil
 }
@@ -870,7 +870,7 @@ func (c *BasicCache) GetMember(guildID, userID Snowflake) (*Member, error) {
 		return member, nil
 	}
 
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }
 func (c *BasicCache) GetGuildRoles(id Snowflake) ([]*Role, error) {
 	c.Guilds.Lock()
@@ -886,13 +886,13 @@ func (c *BasicCache) GetGuildRoles(id Snowflake) ([]*Role, error) {
 		}
 		return roles, nil
 	}
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }
 func (c *BasicCache) GetCurrentUser() (*User, error) {
 	c.CurrentUserMu.Lock()
 	defer c.CurrentUserMu.Unlock()
 	if c.CurrentUser == nil {
-		return nil, CacheMissErr
+		return nil, ErrCacheMiss
 	}
 
 	return DeepCopy(c.CurrentUser).(*User), nil
@@ -907,5 +907,5 @@ func (c *BasicCache) GetUser(id Snowflake) (*User, error) {
 	if user, ok := c.Users.Store[id]; ok {
 		return DeepCopy(user).(*User), nil
 	}
-	return nil, CacheMissErr
+	return nil, ErrCacheMiss
 }

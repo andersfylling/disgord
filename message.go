@@ -377,13 +377,6 @@ type MessageQueryBuilder interface {
 	// sent by the current user, this endpoint requires the 'MANAGE_MESSAGES' permission. Fires a Message Delete Gateway event.
 	Delete() error
 
-	// Deprecated: use Update(..) instead
-	UpdateBuilder() UpdateMessageBuilder
-	// Deprecated: use Update(..) instead
-	SetContent(content string) (*Message, error)
-	// Deprecated: use Update(..) instead
-	SetEmbed(embed *Embed) (*Message, error)
-
 	CreateThread(params *CreateThread) (*Channel, error)
 
 	CrossPost() (*Message, error)
@@ -630,17 +623,17 @@ func (m messageQueryBuilder) Unpin() (err error) {
 // https://discord.com/developers/docs/resources/channel#start-thread-with-message
 func (m messageQueryBuilder) CreateThread(params *CreateThread) (*Channel, error) {
 	if m.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return nil, MissingMessageIDErr
+		return nil, ErrMissingMessageID
 	}
 	if params == nil || params.Name == "" {
-		return nil, MissingThreadNameErr
+		return nil, ErrMissingThreadName
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {
@@ -684,10 +677,10 @@ type CreateThread struct {
 //	Comment                 -
 func (m messageQueryBuilder) CrossPost() (*Message, error) {
 	if m.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 	if m.mid.IsZero() {
-		return nil, MissingMessageIDErr
+		return nil, ErrMissingMessageID
 	}
 
 	r := m.client.newRESTRequest(&httd.Request{

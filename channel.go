@@ -264,16 +264,13 @@ type ChannelQueryBuilder interface {
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
 
-	// Update Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
 	Update(params *UpdateChannel) (*Channel, error)
 
-	// Deprecated: use Update instead
-	UpdateBuilder() UpdateChannelBuilder
-
-	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
+	// Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 	// Fires a Channel Delete Gateway event.
@@ -587,7 +584,7 @@ func (c channelQueryBuilder) UpdatePermissions(overwriteID Snowflake, params *Up
 //	Comment                 -
 func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -605,7 +602,7 @@ func (c channelQueryBuilder) GetInvites() (invites []*Invite, err error) {
 // CreateInvite https://discord.com/developers/docs/resources/channel#create-channel-invite
 func (c channelQueryBuilder) CreateInvite(params *CreateInvite) (*Invite, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 
 	r := c.client.newRESTRequest(&httd.Request{
@@ -781,7 +778,7 @@ var _ URLQueryStringer = (*GetMessages)(nil)
 //	                        be passed at a time. see ReqGetChannelMessagesParams.
 func (c channelQueryBuilder) getMessages(params URLQueryStringer) (ret []*Message, err error) {
 	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 
 	var query string
@@ -1120,7 +1117,7 @@ func (p *CreateMessage) prepare() (postBody interface{}, contentType string, err
 //	Comment                 Before using this endpoint, you must connect to and identify with a gateway at least once.
 func (c channelQueryBuilder) CreateMessage(params *CreateMessage) (ret *Message, err error) {
 	if c.cid.IsZero() {
-		return nil, MissingChannelIDErr
+		return nil, ErrMissingChannelID
 	}
 	if params == nil {
 		err = errors.New("message must be set")
@@ -1186,7 +1183,7 @@ func (c *CreateWebhook) FindErrors() error {
 		return ErrMissingWebhookName
 	}
 	if !(2 <= len(c.Name) && len(c.Name) <= 32) {
-		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", IllegalValueErr)
+		return fmt.Errorf("webhook name must be 2 to 32 characters long: %w", ErrIllegalValue)
 	}
 	return nil
 }
@@ -1245,11 +1242,11 @@ func (c channelQueryBuilder) GetWebhooks() (ret []*Webhook, err error) {
 // CreateThread https://discord.com/developers/docs/resources/channel#start-thread-without-message
 func (c channelQueryBuilder) CreateThread(params *CreateThreadWithoutMessage) (*Channel, error) {
 	if params == nil || params.Name == "" {
-		return nil, MissingThreadNameErr
+		return nil, ErrMissingThreadName
 	}
 
 	if l := len(params.Name); !(2 <= l && l <= 100) {
-		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		return nil, fmt.Errorf("thread name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 	}
 
 	if params.Reason != "" && params.AuditLogReason == "" {

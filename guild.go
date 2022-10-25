@@ -363,7 +363,7 @@ func (g *Guild) GetMembersCountEstimate(ctx context.Context, s Session) (estimat
 		// TODO: update g.Channels
 	}
 	if channelID.IsZero() {
-		return 0, MissingChannelIDErr
+		return 0, ErrMissingChannelID
 	}
 
 	invite, err := s.Channel(channelID).WithContext(ctx).CreateInvite(&CreateInvite{
@@ -680,10 +680,10 @@ func (c clientQueryBuilder) CreateGuild(guildName string, params *CreateGuild) (
 	// TODO-2: is bot in less than 10 Guilds?
 
 	if guildName == "" {
-		return nil, MissingGuildNameErr
+		return nil, ErrMissingGuildName
 	}
 	if l := len(guildName); !(2 <= l && l <= 100) {
-		return nil, fmt.Errorf("guild name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		return nil, fmt.Errorf("guild name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 	}
 
 	if params == nil {
@@ -728,15 +728,11 @@ type GuildQueryBuilder interface {
 	// TODO: For GetMembers, it might sense to have the option for a function to filter before each member ends up deep copied.
 	// TODO-2: This could be much more performant in larger guilds where this is needed.
 	GetMembers(params *GetMembers) ([]*Member, error)
-	UpdateBuilder() UpdateGuildBuilder
 
 	CreateChannel(name string, params *CreateGuildChannel) (*Channel, error)
 	UpdateChannelPositions(params []UpdateGuildChannelPositions) error
 	CreateMember(userID Snowflake, accessToken string, params *AddGuildMember) (*Member, error)
 	Member(userID Snowflake) GuildMemberQueryBuilder
-
-	// Deprecated: use DisconnectVoiceParticipant
-	KickVoiceParticipant(userID Snowflake) error
 
 	DisconnectVoiceParticipant(userID Snowflake) error
 	SetCurrentUserNick(nick string) (newNick string, err error)
@@ -782,14 +778,6 @@ type GuildQueryBuilder interface {
 	// GetActiveThreads Returns all active threads in the guild, including public and private threads. Threads are ordered
 	// by their id, in descending order.
 	GetActiveThreads() (*ActiveGuildThreads, error)
-
-	// Deprecated: use UpdateEmbed
-	UpdateEmbedBuilder() UpdateGuildEmbedBuilder
-	// Deprecated: use GetWidget
-	GetEmbed() (*GuildEmbed, error)
-
-	// Deprecated: use GetPruneMembersCount
-	EstimatePruneMembersCount(days int) (estimate int, err error)
 
 	// Guild Scheduled Event
 	ScheduledEvent(eventID Snowflake) GuildScheduledEventQueryBuilder
@@ -853,7 +841,7 @@ func (g guildQueryBuilder) Get() (guild *Guild, err error) {
 // Update update a guild
 func (g guildQueryBuilder) Update(params *UpdateGuild) (*Guild, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := g.validate(); err != nil {
 		return nil, err
@@ -943,10 +931,10 @@ func (g guildQueryBuilder) GetChannels() ([]*Channel, error) {
 // Returns the new channel object on success. Fires a Channel Create Gateway event.
 func (g guildQueryBuilder) CreateChannel(name string, params *CreateGuildChannel) (*Channel, error) {
 	if name == "" && (params == nil || params.Name == "") {
-		return nil, MissingChannelNameErr
+		return nil, ErrMissingChannelName
 	}
 	if l := len(name); !(2 <= l && l <= 100) {
-		return nil, fmt.Errorf("channel name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		return nil, fmt.Errorf("channel name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 	}
 
 	if params == nil {
@@ -1266,10 +1254,10 @@ func (g guildQueryBuilder) UpdateRolePositions(params []UpdateGuildRolePositions
 
 func (g guildQueryBuilder) GetPruneMembersCount(params *GetPruneMembersCount) (estimate int, err error) {
 	if g.gid.IsZero() {
-		return 0, MissingGuildIDErr
+		return 0, ErrMissingGuildID
 	}
 	if params == nil {
-		return 0, MissingRESTParamsErr
+		return 0, ErrMissingRESTParams
 	}
 
 	type Pruned struct {
@@ -1300,10 +1288,10 @@ type GetPruneMembersCount struct {
 // PruneMembers https://discord.com/developers/docs/resources/guild#begin-guild-prune
 func (g guildQueryBuilder) PruneMembers(params *PruneMembers) (pruned int, err error) {
 	if g.gid.IsZero() {
-		return 0, MissingGuildIDErr
+		return 0, ErrMissingGuildID
 	}
 	if params == nil {
-		return 0, MissingRESTParamsErr
+		return 0, ErrMissingRESTParams
 	}
 
 	type Pruned struct {
@@ -1455,7 +1443,7 @@ func (g guildQueryBuilder) GetWidget() (*GuildWidget, error) {
 
 func (g guildQueryBuilder) UpdateWidget(params *UpdateGuildWidget) (*GuildWidget, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := g.validate(); err != nil {
 		return nil, err
@@ -1565,14 +1553,14 @@ type CreateGuildEmoji struct {
 // Returns the new emoji object on success. Fires a Guild Emojis Update Gateway event.
 func (g guildQueryBuilder) CreateEmoji(params *CreateGuildEmoji) (*Emoji, error) {
 	if g.gid.IsZero() {
-		return nil, MissingGuildIDErr
+		return nil, ErrMissingGuildID
 	}
 
 	if params == nil {
 		return nil, errors.New("params object can not be nil")
 	}
 	if !validEmojiName(params.Name) {
-		return nil, fmt.Errorf("invalid emoji name: %w", IllegalValueErr)
+		return nil, fmt.Errorf("invalid emoji name: %w", ErrIllegalValue)
 	}
 	if !validAvatarPrefix(params.Image) {
 		return nil, errors.New("image string must be base64 encoded with base64 prefix")

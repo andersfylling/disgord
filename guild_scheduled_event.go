@@ -146,7 +146,7 @@ func (cse *CreateScheduledEvent) validate() error {
 		return ErrMissingScheduledEventName
 	}
 	if l := len(cse.Name); !(2 <= l && l <= 100) {
-		return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+		return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 	}
 
 	if cse.PrivacyLevel != GuildScheduledEventPrivacyLevelGuildOnly {
@@ -189,7 +189,7 @@ func (cse UpdateScheduledEvent) validate() error {
 
 	if cse.Name != nil {
 		if l := len(*cse.Name); !(2 <= l && l <= 100) {
-			return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", IllegalValueErr)
+			return fmt.Errorf("scheduled event name must be 2 or more characters and no more than 100 characters: %w", ErrIllegalValue)
 		}
 	}
 
