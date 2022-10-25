@@ -410,15 +410,6 @@ type CurrentUserQueryBuilder interface {
 
 	// GetConnections Returns a list of connection objects. Requires the connections OAuth2 scope.
 	GetConnections() (ret []*UserConnection, err error)
-
-	// Deprecated: use Update instead
-	UpdateBuilder() UpdateCurrentUserBuilder
-
-	// Deprecated: use Client.Guild(..).Leave()
-	LeaveGuild(id Snowflake) (err error)
-
-	// Deprecated: use GetConnections
-	GetUserConnections() (ret []*UserConnection, err error)
 }
 
 // CurrentUser is used to create a guild query builder.
@@ -481,7 +472,7 @@ func (c currentUserQueryBuilder) Get() (user *User, err error) {
 // Update update current user
 func (c currentUserQueryBuilder) Update(params *UpdateUser) (*User, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := c.validate(); err != nil {
 		return nil, err

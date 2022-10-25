@@ -81,8 +81,6 @@ type GuildRoleQueryBuilder interface {
 	Update(params *UpdateRole) (*Role, error)
 	Delete() error
 	Get() (*Role, error)
-	// Deprecated: use Update
-	UpdateBuilder() (builder UpdateGuildRoleBuilder)
 }
 
 func (g guildQueryBuilder) Role(id Snowflake) GuildRoleQueryBuilder {
@@ -120,7 +118,7 @@ func (g guildRoleQueryBuilder) WithFlags(flags ...Flag) GuildRoleQueryBuilder {
 	return &g
 }
 
-// Delete Deletes a guild role. Requires the 'MANAGE_ROLES' permission.
+// Delete a guild role. Requires the 'MANAGE_ROLES' permission.
 // Returns a 204 empty response on success. Fires a Guild Role Delete Gateway event.
 func (g guildRoleQueryBuilder) Delete() error {
 	if err := g.validate(); err != nil {
@@ -140,7 +138,7 @@ func (g guildRoleQueryBuilder) Delete() error {
 // Update update a role
 func (g guildRoleQueryBuilder) Update(params *UpdateRole) (*Role, error) {
 	if params == nil {
-		return nil, MissingRESTParamsErr
+		return nil, ErrMissingRESTParams
 	}
 	if err := g.validate(); err != nil {
 		return nil, err

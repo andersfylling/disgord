@@ -41,9 +41,4 @@ type Session interface {
 	UpdateStatusString(s string) error
 
 	GetConnectedGuilds() []Snowflake
-
-	// Deprecated: ...
-	AddPermission(permission PermissionBit) (updatedPermissions PermissionBit)
-	// Deprecated: ...
-	GetPermissions() (permissions PermissionBit)
 }

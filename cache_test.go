@@ -546,7 +546,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 			}
 
 			guild, err := cache.GetGuild(1)
-			if !errors.Is(err, CacheMissErr) {
+			if !errors.Is(err, ErrCacheMiss) {
 				t.Error("expected cache miss err")
 			}
 			if guild != nil {
@@ -571,7 +571,7 @@ func TestBasicCache_Guilds(t *testing.T) {
 			}
 
 			guild, err := cache.GetGuild(1)
-			if !errors.Is(err, CacheMissErr) {
+			if !errors.Is(err, ErrCacheMiss) {
 				t.Error("expected cache miss err")
 			}
 			if guild != nil {
@@ -1482,7 +1482,7 @@ func TestBasicCache_GetGuildEmoji(t *testing.T) {
 		if emoji != nil {
 			t.Error("emoji should be nil")
 		}
-		if !errors.Is(err, CacheMissErr) {
+		if !errors.Is(err, ErrCacheMiss) {
 			t.Error("errpr type should have been CacheMissErr")
 		}
 
@@ -1506,7 +1506,7 @@ func TestBasicCache_GetGuildEmoji(t *testing.T) {
 		if emoji != nil {
 			t.Error("emoji should be nil")
 		}
-		if !errors.Is(err, CacheMissErr) {
+		if !errors.Is(err, ErrCacheMiss) {
 			t.Error("errpr type should have been CacheMissErr")
 		}
 
@@ -1564,7 +1564,7 @@ func TestBasicCache_GetGuildEmojis(t *testing.T) {
 		if emoji != nil {
 			t.Error("emoji should be nil")
 		}
-		if !errors.Is(err, CacheMissErr) {
+		if !errors.Is(err, ErrCacheMiss) {
 			t.Error("errpr type should have been CacheMissErr")
 		}
 

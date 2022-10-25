@@ -42,18 +42,18 @@ func TestGuild_ChannelSorting(t *testing.T) {
 }
 
 // --------
-func TestGuildEmbed(t *testing.T) {
+func TestGuildWidget(t *testing.T) {
 	res := []byte(`{"enabled":true,"channel_id":"41771983444115456"}`)
 	expects := []byte(`{"enabled":true,"channel_id":"41771983444115456"}`)
 
 	// convert to struct
-	guildEmbed := GuildEmbed{}
-	if err := json.Unmarshal(res, &guildEmbed); err != nil {
+	guildWidget := GuildWidget{}
+	if err := json.Unmarshal(res, &guildWidget); err != nil {
 		t.Error(err)
 	}
 
 	// back to json
-	data, err := json.Marshal(&guildEmbed)
+	data, err := json.Marshal(&guildWidget)
 	if err != nil {
 		t.Error(err)
 	}

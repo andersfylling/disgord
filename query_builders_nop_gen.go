@@ -155,10 +155,6 @@ func (c *channelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error) {
 	return nil, nil
 }
 
-func (c *channelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
-	return nil
-}
-
 func (c *channelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
@@ -263,20 +259,8 @@ func (c *currentUserQueryBuilderNop) GetGuilds(_ *GetCurrentUserGuilds) ([]*Guil
 	return nil, nil
 }
 
-func (c *currentUserQueryBuilderNop) GetUserConnections() ([]*UserConnection, error) {
-	return nil, nil
-}
-
-func (c *currentUserQueryBuilderNop) LeaveGuild(_ Snowflake) error {
-	return nil
-}
-
 func (c *currentUserQueryBuilderNop) Update(_ *UpdateUser) (*User, error) {
 	return nil, nil
-}
-
-func (c *currentUserQueryBuilderNop) UpdateBuilder() UpdateCurrentUserBuilder {
-	return nil
 }
 
 type gatewayQueryBuilderNop struct {
@@ -762,10 +746,6 @@ func (g *guildEmojiQueryBuilderNop) Update(_ *UpdateEmoji) (*Emoji, error) {
 	return nil, nil
 }
 
-func (g *guildEmojiQueryBuilderNop) UpdateBuilder() UpdateGuildEmojiBuilder {
-	return nil
-}
-
 type guildMemberQueryBuilderNop struct {
 	Ctx       context.Context
 	Flags     Flag
@@ -812,10 +792,6 @@ func (g *guildMemberQueryBuilderNop) RemoveRole(_ Snowflake) error {
 
 func (g *guildMemberQueryBuilderNop) Update(_ *UpdateMember) (*Member, error) {
 	return nil, nil
-}
-
-func (g *guildMemberQueryBuilderNop) UpdateBuilder() UpdateGuildMemberBuilder {
-	return nil
 }
 
 type guildQueryBuilderNop struct {
@@ -878,10 +854,6 @@ func (g *guildQueryBuilderNop) Emoji(_ Snowflake) GuildEmojiQueryBuilder {
 	return nil
 }
 
-func (g *guildQueryBuilderNop) EstimatePruneMembersCount(_ int) (int, error) {
-	return 0, nil
-}
-
 func (g *guildQueryBuilderNop) Get() (*Guild, error) {
 	return nil, nil
 }
@@ -903,10 +875,6 @@ func (g *guildQueryBuilderNop) GetBans() ([]*Ban, error) {
 }
 
 func (g *guildQueryBuilderNop) GetChannels() ([]*Channel, error) {
-	return nil, nil
-}
-
-func (g *guildQueryBuilderNop) GetEmbed() (*GuildWidget, error) {
 	return nil, nil
 }
 
@@ -954,10 +922,6 @@ func (g *guildQueryBuilderNop) GetWidget() (*GuildWidget, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) KickVoiceParticipant(_ Snowflake) error {
-	return nil
-}
-
 func (g *guildQueryBuilderNop) Leave() error {
 	return nil
 }
@@ -994,15 +958,7 @@ func (g *guildQueryBuilderNop) Update(_ *UpdateGuild) (*Guild, error) {
 	return nil, nil
 }
 
-func (g *guildQueryBuilderNop) UpdateBuilder() UpdateGuildBuilder {
-	return nil
-}
-
 func (g *guildQueryBuilderNop) UpdateChannelPositions(_ []UpdateGuildChannelPositions) error {
-	return nil
-}
-
-func (g *guildQueryBuilderNop) UpdateEmbedBuilder() UpdateGuildEmbedBuilder {
 	return nil
 }
 
@@ -1052,10 +1008,6 @@ func (g *guildRoleQueryBuilderNop) Get() (*Role, error) {
 
 func (g *guildRoleQueryBuilderNop) Update(_ *UpdateRole) (*Role, error) {
 	return nil, nil
-}
-
-func (g *guildRoleQueryBuilderNop) UpdateBuilder() UpdateGuildRoleBuilder {
-	return nil
 }
 
 type guildScheduledEventQueryBuilderNop struct {
@@ -1170,24 +1122,12 @@ func (m *messageQueryBuilderNop) Reaction(_ interface{}) ReactionQueryBuilder {
 	return nil
 }
 
-func (m *messageQueryBuilderNop) SetContent(_ string) (*Message, error) {
-	return nil, nil
-}
-
-func (m *messageQueryBuilderNop) SetEmbed(_ *Embed) (*Message, error) {
-	return nil, nil
-}
-
 func (m *messageQueryBuilderNop) Unpin() error {
 	return nil
 }
 
 func (m *messageQueryBuilderNop) Update(_ *UpdateMessage) (*Message, error) {
 	return nil, nil
-}
-
-func (m *messageQueryBuilderNop) UpdateBuilder() UpdateMessageBuilder {
-	return nil
 }
 
 type reactionQueryBuilderNop struct {
@@ -1306,10 +1246,6 @@ func (v *voiceChannelQueryBuilderNop) Update(_ *UpdateChannel) (*Channel, error)
 	return nil, nil
 }
 
-func (v *voiceChannelQueryBuilderNop) UpdateBuilder() UpdateChannelBuilder {
-	return nil
-}
-
 func (v *voiceChannelQueryBuilderNop) UpdatePermissions(_ Snowflake, _ *UpdateChannelPermissions) error {
 	return nil
 }
@@ -1344,10 +1280,6 @@ func (w *webhookQueryBuilderNop) Get() (*Webhook, error) {
 
 func (w *webhookQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
 	return nil, nil
-}
-
-func (w *webhookQueryBuilderNop) UpdateBuilder() UpdateWebhookBuilder {
-	return nil
 }
 
 func (w *webhookQueryBuilderNop) WithToken(_ string) WebhookWithTokenQueryBuilder {
@@ -1408,8 +1340,4 @@ func (w *webhookWithTokenQueryBuilderNop) GetMessage(_ Snowflake, _ *Snowflake) 
 
 func (w *webhookWithTokenQueryBuilderNop) Update(_ *UpdateWebhook) (*Webhook, error) {
 	return nil, nil
-}
-
-func (w *webhookWithTokenQueryBuilderNop) UpdateBuilder() UpdateWebhookBuilder {
-	return nil
 }

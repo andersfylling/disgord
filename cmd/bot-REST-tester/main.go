@@ -77,7 +77,8 @@ func main() {
 
 	// modify
 	func() {
-		channel, err := c.Channel(channelID).UpdateBuilder().SetName("hello").Execute()
+		newName := "hello"
+		channel, err := c.Channel(channelID).Update(&disgord.UpdateChannel{Name: &newName})
 		if err != nil {
 			panic(err)
 		} else if channel == nil {
@@ -196,7 +197,7 @@ func main() {
 
 		// modify emoji
 		func() {
-			_, err = c.Guild(keys.GuildDefault).Emoji(emoji.ID).UpdateBuilder().SetName(newName).Execute()
+			_, err = c.Guild(keys.GuildDefault).Emoji(emoji.ID).Update(&disgord.UpdateEmoji{Name: &newName})
 			if err != nil && !notARateLimitIssue(err) {
 				panic("rate limited")
 			} else if err != nil && notARateLimitIssue(err) {

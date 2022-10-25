@@ -75,9 +75,6 @@ type GuildEmojiQueryBuilder interface {
 	Get() (*Emoji, error)
 	Update(params *UpdateEmoji) (*Emoji, error)
 	Delete() error
-
-	// Deprecated: use Update
-	UpdateBuilder() UpdateGuildEmojiBuilder
 }
 
 func (g guildQueryBuilder) Emoji(emojiID Snowflake) GuildEmojiQueryBuilder {

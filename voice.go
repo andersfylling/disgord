@@ -121,16 +121,13 @@ type VoiceChannelQueryBuilder interface {
 	// Get Get a channel by Snowflake. Returns a channel object.
 	Get() (*Channel, error)
 
-	// Update update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
+	// Update a Channels settings. Requires the 'MANAGE_CHANNELS' permission for the guild. Returns
 	// a channel on success, and a 400 BAD REQUEST on invalid parameters. Fires a Channel Update Gateway event. If
 	// modifying a category, individual Channel Update events will fire for each child channel that also changes.
 	// For the PATCH method, all the JSON Params are optional.
 	Update(params *UpdateChannel) (*Channel, error)
 
-	// Deprecated: use Update instead
-	UpdateBuilder() UpdateChannelBuilder
-
-	// Delete Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
+	// Delete a channel, or close a private message. Requires the 'MANAGE_CHANNELS' permission for
 	// the guild. Deleting a category does not delete its child Channels; they will have their parent_id removed and a
 	// Channel Update Gateway event will fire for each of them. Returns a channel object on success.
 	// Fires a Channel Delete Gateway event.
