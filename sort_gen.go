@@ -123,6 +123,10 @@ func derefSliceP(v interface{}) (s interface{}) {
 		s = *t
 	case *[]*ErrorMissingSnowflake:
 		s = *t
+	case *[]*ErrorUnsupportedType:
+		s = *t
+	case *[]*Time:
+		s = *t
 	case *[]*Embed:
 		s = *t
 	case *[]*EmbedAuthor:
@@ -356,10 +360,6 @@ func derefSliceP(v interface{}) (s interface{}) {
 	case *[]*Role:
 		s = *t
 	case *[]*UpdateRole:
-		s = *t
-	case *[]*ErrorUnsupportedType:
-		s = *t
-	case *[]*Time:
 		s = *t
 	case *[]*ThreadMember:
 		s = *t

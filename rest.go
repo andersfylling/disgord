@@ -313,11 +313,6 @@ func (b *RESTBuilder) CancelOnRatelimit() *RESTBuilder {
 	return b
 }
 
-// generate-rest-basic-execute: err:error,
-type basicBuilder struct {
-	r RESTBuilder
-}
-
 var ErrMissingRESTParams = errors.New("this method requires REST parameters, but none were given")
 
 type ClientQueryBuilderExecutables interface {

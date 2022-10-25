@@ -117,9 +117,23 @@
 package disgord
 
 //go:generate go run internal/generate/intents/main.go
+//go:generate go run internal/generate/interfaces/main.go
+//go:generate go run internal/generate/inter/main.go
+//go:generate go run internal/generate/sorters/main.go
+//go:generate go run internal/generate/querybuilders/main.go
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"github.com/andersfylling/disgord/internal/gateway"
+	"github.com/andersfylling/disgord/json"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
 
 	"github.com/andersfylling/disgord/internal/util"
 
@@ -210,4 +224,446 @@ type ErrorEmptyValue struct {
 
 func (e *ErrorEmptyValue) Error() string {
 	return e.info
+}
+
+func newErrorUnsupportedType(message string) *ErrorUnsupportedType {
+	return &ErrorUnsupportedType{
+		info: message,
+	}
+}
+
+// ErrorUnsupportedType used when the given param type is not supported
+type ErrorUnsupportedType struct {
+	info string
+}
+
+func (e *ErrorUnsupportedType) Error() string {
+	return e.info
+}
+
+// hasher creates a hash for comparing objects. This excludes the identifier and object type as those are expected
+// to be the same during a comparison.
+type hasher interface {
+	hash() string
+}
+
+type guilder interface {
+	getGuildIDs() []Snowflake
+}
+
+// Mentioner can be implemented by any type that is mentionable.
+// https://discord.com/developers/docs/reference#message-formatting-formats
+type Mentioner interface {
+	Mention() string
+}
+
+// zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
+// Used in the flyweight pattern.
+type zeroInitialiser interface {
+	zeroInitialize()
+}
+
+// internalUpdater is called whenever a socket event or a REST response is created.
+type internalUpdater interface {
+	updateInternals()
+}
+
+type internalClientUpdater interface {
+	updateInternalsWithClient(*Client)
+}
+
+// Discord types
+
+// helperTypes: timestamp, levels, etc.
+
+// discordTimeFormat to be able to correctly convert timestamps back into json,
+// we need the micro timestamp with an addition at the ending.
+// time.RFC3331 does not yield an output similar to the discord timestamp input, the date is however correct.
+const timestampFormat = "2006-01-02T15:04:05.000000+00:00"
+
+// Time handles Discord timestamps
+type Time struct {
+	time.Time
+}
+
+var _ json.Marshaler = (*Time)(nil)
+var _ json.Unmarshaler = (*Time)(nil)
+
+// MarshalJSON implements json.Marshaler.
+// error: https://stackoverflow.com/questions/28464711/go-strange-json-hyphen-unmarshall-error
+func (t Time) MarshalJSON() ([]byte, error) {
+	var ts string
+	if !t.IsZero() {
+		ts = t.String()
+	}
+
+	// wrap in double quotes for valid json parsing
+	return []byte(`"` + ts + `"`), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (t *Time) UnmarshalJSON(data []byte) error {
+	var ts time.Time
+
+	// Don't try to unmarshal empty strings.
+	if bytes.Equal([]byte("\"\""), data) {
+		return nil
+	}
+
+	if err := json.Unmarshal(data, &ts); err != nil {
+		return err
+	}
+
+	t.Time = ts
+	return nil
+}
+
+// String returns the timestamp as a Discord formatted timestamp. Formatting
+// with time.RFC3331 does not suffice.
+func (t Time) String() string {
+	return t.Format(timestampFormat)
+}
+
+// -----------
+// levels
+
+// ExplicitContentFilterLvl ...
+// https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
+type ExplicitContentFilterLvl uint
+
+// Explicit content filter levels
+const (
+	ExplicitContentFilterLvlDisabled ExplicitContentFilterLvl = iota
+	ExplicitContentFilterLvlMembersWithoutRoles
+	ExplicitContentFilterLvlAllMembers
+)
+
+// Disabled if the content filter is disabled
+func (ecfl *ExplicitContentFilterLvl) Disabled() bool {
+	return *ecfl == ExplicitContentFilterLvlDisabled
+}
+
+// MembersWithoutRoles if the filter only applies for members without a role
+func (ecfl *ExplicitContentFilterLvl) MembersWithoutRoles() bool {
+	return *ecfl == ExplicitContentFilterLvlMembersWithoutRoles
+}
+
+// AllMembers if the filter applies for all members regardles of them having a role or not
+func (ecfl *ExplicitContentFilterLvl) AllMembers() bool {
+	return *ecfl == ExplicitContentFilterLvlAllMembers
+}
+
+// MFALvl ...
+// https://discord.com/developers/docs/resources/guild#guild-object-mfa-level
+type MFALvl uint
+
+// Different MFA levels
+const (
+	MFALvlNone MFALvl = iota
+	MFALvlElevated
+)
+
+// None ...
+func (mfal *MFALvl) None() bool {
+	return *mfal == MFALvlNone
+}
+
+// Elevated ...
+func (mfal *MFALvl) Elevated() bool {
+	return *mfal == MFALvlElevated
+}
+
+// VerificationLvl ...
+// https://discord.com/developers/docs/resources/guild#guild-object-verification-level
+type VerificationLvl uint
+
+// the different verification levels
+const (
+	VerificationLvlNone VerificationLvl = iota
+	VerificationLvlLow
+	VerificationLvlMedium
+	VerificationLvlHigh
+	VerificationLvlVeryHigh
+)
+
+// None unrestricted
+func (vl *VerificationLvl) None() bool {
+	return *vl == VerificationLvlNone
+}
+
+// Low must have verified email on account
+func (vl *VerificationLvl) Low() bool {
+	return *vl == VerificationLvlLow
+}
+
+// Medium must be registered on Discord for longer than 5 minutes
+func (vl *VerificationLvl) Medium() bool {
+	return *vl == VerificationLvlMedium
+}
+
+// High (╯°□°）╯︵ ┻━┻ - must be a member of the server for longer than 10 minutes
+func (vl *VerificationLvl) High() bool {
+	return *vl == VerificationLvlHigh
+}
+
+// VeryHigh ┻━┻ミヽ(ಠ益ಠ)ﾉ彡┻━┻ - must have a verified phone number
+func (vl *VerificationLvl) VeryHigh() bool {
+	return *vl == VerificationLvlVeryHigh
+}
+
+// GuildScheduledEventPrivacyLevel ...
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level
+type GuildScheduledEventPrivacyLevel uint
+
+// the different scheduled event privacy level
+const (
+	GuildScheduledEventPrivacyLevelGuildOnly GuildScheduledEventPrivacyLevel = iota + 2
+)
+
+// GuildScheduledEventEntityTypes ...
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types
+type GuildScheduledEventEntityTypes uint
+
+// the different scheduled event entity types
+const (
+	GuildScheduledEventEntityTypesStageInstance GuildScheduledEventEntityTypes = iota + 1
+	GuildScheduledEventEntityTypesVoice
+	GuildScheduledEventEntityTypesExternal
+)
+
+type GuildScheduledEventStatus uint
+
+const (
+	GuildScheduledEventStatusScheduled GuildScheduledEventStatus = iota + 1
+	GuildScheduledEventStatusActive
+	GuildScheduledEventStatusCompleted
+	GuildScheduledEventStatusCancelled
+)
+
+// PremiumTier ...
+// https://discord.com/developers/docs/resources/guild#guild-object-premium-tier
+type PremiumTier uint
+
+// the different premium tier levels
+const (
+	PremiumTierNone PremiumTier = iota
+	PremiumTier1
+	PremiumTier2
+	PremiumTier3
+)
+
+// DefaultMessageNotificationLvl ...
+// https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level
+type DefaultMessageNotificationLvl uint
+
+// different notification levels on new messages
+const (
+	DefaultMessageNotificationLvlAllMessages DefaultMessageNotificationLvl = iota
+	DefaultMessageNotificationLvlOnlyMentions
+)
+
+// AllMessages ...
+func (dmnl *DefaultMessageNotificationLvl) AllMessages() bool {
+	return *dmnl == DefaultMessageNotificationLvlAllMessages
+}
+
+// OnlyMentions ...
+func (dmnl *DefaultMessageNotificationLvl) OnlyMentions() bool {
+	return *dmnl == DefaultMessageNotificationLvlOnlyMentions
+}
+
+// NewDiscriminator Discord user discriminator hashtag
+func NewDiscriminator(d string) (discriminator Discriminator, err error) {
+	var tmp uint64
+	tmp, err = strconv.ParseUint(d, 10, 16)
+	if err == nil {
+		discriminator = Discriminator(tmp)
+	}
+
+	return
+}
+
+// Discriminator value
+type Discriminator uint16
+
+var _ json.Unmarshaler = (*Discriminator)(nil)
+var _ json.Marshaler = (*Discriminator)(nil)
+
+func (d Discriminator) String() (str string) {
+	if d == 0 {
+		str = ""
+		return
+	}
+	if d == 1 {
+		str = "0001"
+		return
+	}
+
+	str = strconv.Itoa(int(d))
+	if d < 1000 {
+		shift := 4 - len(str)
+		for i := 0; i < shift; i++ {
+			str = "0" + str
+		}
+	}
+
+	return
+}
+
+// NotSet checks if the discriminator is not set
+func (d Discriminator) NotSet() bool {
+	return d == 0
+}
+
+// UnmarshalJSON see interface json.Unmarshaler
+func (d *Discriminator) UnmarshalJSON(data []byte) error {
+	*d = 0
+	length := len(data) - 1
+	for i := 1; i < length; i++ {
+		*d = *d*10 + Discriminator(data[i]-'0')
+	}
+	return nil
+}
+
+// MarshalJSON see interface json.Marshaler
+func (d Discriminator) MarshalJSON() (data []byte, err error) {
+	return []byte("\"" + d.String() + "\""), nil
+}
+
+// ShardID calculate the shard id for a given guild.
+// https://discord.com/developers/docs/topics/gateway#sharding-sharding-formula
+func ShardID(guildID Snowflake, nrOfShards uint) uint {
+	return gateway.GetShardForGuildID(guildID, nrOfShards)
+}
+
+//////////////////////////////////////////////////////
+//
+// Validators
+//
+//////////////////////////////////////////////////////
+
+// https://discord.com/developers/docs/resources/user#avatar-data
+func validAvatarPrefix(avatar string) (valid bool) {
+	if avatar == "" {
+		return false
+	}
+
+	construct := func(encoding string) string {
+		return "data:image/" + encoding + ";base64,"
+	}
+
+	if len(avatar) < len(construct("X")) {
+		return false // missing base64 declaration
+	}
+
+	encodings := []string{
+		"jpeg", "png", "gif",
+	}
+	for _, encoding := range encodings {
+		prefix := construct(encoding)
+		if strings.HasPrefix(avatar, prefix) {
+			valid = len(avatar)-len(prefix) > 0 // it has content
+			break
+		}
+	}
+
+	return true
+}
+
+// ValidateUsername uses Discords rule-set to verify user-names and nicknames
+// https://discord.com/developers/docs/resources/user#usernames-and-nicknames
+//
+// Note that not all the rules are listed in the docs:
+//
+//	There are other rules and restrictions not shared here for the sake of spam and abuse mitigation, but the
+//	majority of Users won't encounter them. It's important to properly handle all error messages returned by
+//	Discord when editing or updating names.
+func ValidateUsername(name string) (err error) {
+	if name == "" {
+		return errors.New("empty")
+	}
+
+	// attributes
+	length := len(name)
+
+	// Names must be between 2 and 32 characters long.
+	if length < 2 {
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
+	} else if length > 32 {
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
+	}
+	if err != nil {
+		return err
+	}
+
+	// Names are sanitized and trimmed of leading, trailing, and excessive internal whitespace.
+	if name[0] == ' ' {
+		err = fmt.Errorf("contains whitespace prefix: %w", ErrIllegalValue)
+	} else if name[length-1] == ' ' {
+		err = fmt.Errorf("contains whitespace suffix: %w", ErrIllegalValue)
+	} else {
+		last := name[1]
+		for i := 2; i < length-1; i++ {
+			if name[i] == ' ' && last == name[i] {
+				err = errors.New("contains excessive internal whitespace")
+				break
+			}
+			last = name[i]
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// Names cannot contain the following substrings: '@', '#', ':', '```'
+	illegalChars := []string{
+		"@", "#", ":", "```",
+	}
+	for _, illegalChar := range illegalChars {
+		if strings.Contains(name, illegalChar) {
+			err = errors.New("can not contain the character " + illegalChar)
+			return err
+		}
+	}
+
+	// Names cannot be: 'discordtag', 'everyone', 'here'
+	illegalNames := []string{
+		"discordtag", "everyone", "here",
+	}
+	for _, illegalName := range illegalNames {
+		if name == illegalName {
+			err = fmt.Errorf("the given username is illegal: %w", ErrIllegalValue)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateChannelName(name string) (err error) {
+	if name == "" {
+		return ErrMissingChannelName
+	}
+
+	// attributes
+	length := len(name)
+
+	// Names must be of length of minimum 2 and maximum 100 characters long.
+	if length < 2 {
+		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
+	} else if length > 100 {
+		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateTermSigListener create a channel to listen for termination signals (graceful shutdown)
+func CreateTermSigListener() <-chan os.Signal {
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	return termSignal
 }
