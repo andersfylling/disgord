@@ -230,18 +230,6 @@ type handlerSpec struct {
 	ctrl        HandlerCtrl
 }
 
-func (hs *handlerSpec) next() bool {
-	hs.Lock()
-	defer hs.Unlock()
-
-	if hs.ctrl.IsDead() {
-		return false
-	}
-
-	hs.ctrl.Update()
-	return true
-}
-
 // populate is essentially the constructor for a handlerSpec
 func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 	var i int

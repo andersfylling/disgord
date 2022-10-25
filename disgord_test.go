@@ -157,7 +157,7 @@ func (g *mockerWSReceiveOnly) Disconnected() bool {
 
 var _ gateway.Conn = (*mockerWSReceiveOnly)(nil)
 
-// TODO
+// TODO:
 // BenchmarkDiscordEventToHandler from the time Disgord gets the raw byte event data, to the event handler is triggered
 //func Benchmark1000DiscordEventToHandler_cacheDisabled(b *testing.B) {
 //	mocker := mockerWSReceiveOnly{
@@ -263,15 +263,6 @@ func TestCtrl(t *testing.T) {
 		}
 	})
 
-}
-
-func check(err error, t *testing.T) {
-	// Hide function from stacktrace, PR#3
-	t.Helper()
-
-	if err != nil {
-		t.Error(err)
-	}
 }
 
 func TestError_InterfaceImplementations(t *testing.T) {

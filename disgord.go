@@ -212,12 +212,13 @@ func (e *ErrorMissingSnowflake) Error() string {
 	return e.info
 }
 
+/*
 func newErrorEmptyValue(message string) *ErrorEmptyValue {
 	return &ErrorEmptyValue{
 		info: message,
 	}
 }
-
+*/
 // ErrorEmptyValue when a required value was set as empty
 type ErrorEmptyValue struct {
 	info string
@@ -242,35 +243,15 @@ func (e *ErrorUnsupportedType) Error() string {
 	return e.info
 }
 
-// hasher creates a hash for comparing objects. This excludes the identifier and object type as those are expected
-// to be the same during a comparison.
-type hasher interface {
-	hash() string
-}
-
-type guilder interface {
-	getGuildIDs() []Snowflake
-}
-
 // Mentioner can be implemented by any type that is mentionable.
 // https://discord.com/developers/docs/reference#message-formatting-formats
 type Mentioner interface {
 	Mention() string
 }
 
-// zeroInitialiser zero initializes a struct by setting all the values to the default initialization values.
-// Used in the flyweight pattern.
-type zeroInitialiser interface {
-	zeroInitialize()
-}
-
 // internalUpdater is called whenever a socket event or a REST response is created.
 type internalUpdater interface {
 	updateInternals()
-}
-
-type internalClientUpdater interface {
-	updateInternalsWithClient(*Client)
 }
 
 // Discord types
@@ -545,6 +526,7 @@ func ShardID(guildID Snowflake, nrOfShards uint) uint {
 
 // https://discord.com/developers/docs/resources/user#avatar-data
 func validAvatarPrefix(avatar string) (valid bool) {
+	valid = true
 	if avatar == "" {
 		return false
 	}
@@ -560,6 +542,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 	encodings := []string{
 		"jpeg", "png", "gif",
 	}
+
 	for _, encoding := range encodings {
 		prefix := construct(encoding)
 		if strings.HasPrefix(avatar, prefix) {
@@ -568,7 +551,7 @@ func validAvatarPrefix(avatar string) (valid bool) {
 		}
 	}
 
-	return true
+	return
 }
 
 // ValidateUsername uses Discords rule-set to verify user-names and nicknames
@@ -641,30 +624,9 @@ func ValidateUsername(name string) (err error) {
 	return nil
 }
 
-func validateChannelName(name string) (err error) {
-	if name == "" {
-		return ErrMissingChannelName
-	}
-
-	// attributes
-	length := len(name)
-
-	// Names must be of length of minimum 2 and maximum 100 characters long.
-	if length < 2 {
-		err = fmt.Errorf("name is too short: %w", ErrIllegalValue)
-	} else if length > 100 {
-		err = fmt.Errorf("name is too long: %w", ErrIllegalValue)
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // CreateTermSigListener create a channel to listen for termination signals (graceful shutdown)
 func CreateTermSigListener() <-chan os.Signal {
 	termSignal := make(chan os.Signal, 1)
-	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(termSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	return termSignal
 }
