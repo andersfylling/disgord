@@ -191,33 +191,37 @@ waiter:
 		return
 	}
 
-	// SendOpusFrame our SSRC with no further data for the IP discovery process.
-	ssrcBuffer := make([]byte, 70)
-	binary.BigEndian.PutUint32(ssrcBuffer, ready.SSRC)
+	// SendOpusFrame our SSRC for the IP discovery process.
+	ssrcBuffer := make([]byte, 74)
+	// Packet type (0x1 is request, 0x2 is response)
+	binary.BigEndian.PutUint16(ssrcBuffer, 0x1)
+	// Packet length (excluding type and length fields)
+	binary.BigEndian.PutUint16(ssrcBuffer[2:], 70)
+	binary.BigEndian.PutUint32(ssrcBuffer[4:], ready.SSRC)
 	_, err = voice.udp.Write(ssrcBuffer)
 	if err != nil {
 		return
 	}
 
-	ipBuffer := make([]byte, 70)
+	ipBuffer := make([]byte, 74)
 	var n int
 	n, err = voice.udp.Read(ipBuffer)
 	if err != nil {
 		return
 	}
-	if n < 70 {
-		err = errors.New("udp packet received from discord is not the required 70 bytes")
+	if n < 74 {
+		err = errors.New("udp packet received from discord is not the required 74 bytes")
 		return
 	}
 
-	ipb := string(ipBuffer[4:68])
+	ipb := string(ipBuffer[8:72])
 	nullPos := strings.Index(ipb, "\x00")
 	if nullPos < 0 {
 		err = errors.New("udp ip discovery did not contain a null terminator")
 		return
 	}
 	ip := ipb[:nullPos]
-	port := binary.LittleEndian.Uint16(ipBuffer[68:70])
+	port := binary.LittleEndian.Uint16(ipBuffer[72:74])
 
 	// Tell the websocket which encryption mode we want to use. We'll go with XSalsa20 and Poly1305 since that's what
 	// libSodium/NaCl and golang.org/x/crypto/nacl/secretbox use. If both Discord and Go both start supporting more
