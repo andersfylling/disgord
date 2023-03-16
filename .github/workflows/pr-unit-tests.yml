@@ -10,7 +10,7 @@ jobs:
         go: ['1.17', '1.18']
     steps:
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
       - name: Check out code into the Go module directory
@@ -31,7 +31,7 @@ jobs:
         go: [ '1.19' ]
     steps:
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
       - name: Check out code into the Go module directory
