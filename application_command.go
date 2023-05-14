@@ -23,16 +23,20 @@ type ApplicationCommandOptionChoice struct {
 }
 
 type ApplicationCommandOption struct {
-	Type         OptionType                        `json:"type"`
-	Name         string                            `json:"name"`
-	Description  string                            `json:"description"`
-	Required     bool                              `json:"required"`
-	Choices      []*ApplicationCommandOptionChoice `json:"choices"`
-	Options      []*ApplicationCommandOption       `json:"options"`
-	ChannelTypes []ChannelType                     `json:"channel_types"`
-	MinValue     float64                           `json:"min_value"`
-	MaxValue     float64                           `json:"max_value"`
-	Autocomplete bool                              `json:"autocomplete"`
+	Type                     OptionType                        `json:"type"`
+	Name                     string                            `json:"name"`
+	NameLocalizations        map[string]string                 `json:"name_localizations,omitempty"`
+	Description              string                            `json:"description"`
+	DescriptionLocalizations map[string]string                 `json:"description_localizations,omitempty"`
+	Required                 bool                              `json:"required,omitempty"`
+	Choices                  []*ApplicationCommandOptionChoice `json:"choices,omitempty"`
+	Options                  []*ApplicationCommandOption       `json:"options,omitempty"`
+	ChannelTypes             []ChannelType                     `json:"channel_types,omitempty"`
+	MinValue                 float64                           `json:"min_value,omitempty"`
+	MaxValue                 float64                           `json:"max_value,omitempty"`
+	MinLength                int                               `json:"min_length,omitempty"`
+	MaxLength                int                               `json:"max_length,omitempty"`
+	Autocomplete             bool                              `json:"autocomplete,omitempty"`
 }
 
 type ApplicationCommandDataOption struct {
