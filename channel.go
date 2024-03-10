@@ -36,6 +36,10 @@ const (
 	// a temporary sub-channel within a GUILD_TEXT channel that is only viewable by those
 	// invited and those with the MANAGE_THREADS permission
 	ChannelTypeGuildPrivateThread
+	ChannelTypeGuildStageVoice
+	ChannelTypeGuildDirectory
+	ChannelTypeGuildForum
+	ChannelTypeGuildMedia
 )
 
 // VideoQualityMode https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes
