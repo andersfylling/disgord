@@ -3,7 +3,7 @@ on: [pull_request]
 jobs:
   formatting:
     name: go fmt
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -19,7 +19,7 @@ jobs:
         run: diff <(gofmt -d ./...) <(echo -n)
   generate:
     name: go generate
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
