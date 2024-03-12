@@ -26,6 +26,7 @@ const (
 	IntentGuildVoiceStates       = gateway.IntentGuildVoiceStates
 	IntentGuildWebhooks          = gateway.IntentGuildWebhooks
 	IntentGuilds                 = gateway.IntentGuilds
+	IntentMessageContent         = gateway.IntentMessageContent
 )
 
 func AllIntents() Intent {
@@ -50,6 +51,7 @@ func AllIntentsExcept(exceptions ...Intent) Intent {
 		IntentGuildVoiceStates:       0,
 		IntentGuildWebhooks:          0,
 		IntentGuilds:                 0,
+		IntentMessageContent:         0,
 	}
 
 	for i := range exceptions {

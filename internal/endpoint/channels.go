@@ -116,11 +116,6 @@ func ChannelThreadMemberUser(channelID, userID fmt.Stringer) string {
 	return ChannelThreadMembers(channelID) + "/" + userID.String()
 }
 
-// ChannelThreadsActive ...
-func ChannelThreadsActive(channelID fmt.Stringer) string {
-	return ChannelThreads(channelID) + active
-}
-
 // ChannelThreadsArchivedPublic ...
 func ChannelThreadsArchivedPublic(channelID fmt.Stringer) string {
 	return ChannelThreads(channelID) + archived + public

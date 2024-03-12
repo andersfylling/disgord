@@ -77,7 +77,7 @@ const (
 	IntentDirectMessages
 	IntentDirectMessageReactions
 	IntentDirectMessageTyping
-	_
+	IntentMessageContent
 	IntentGuildScheduledEvents
 )
 
@@ -113,6 +113,8 @@ func intentName(intent Intent) string {
 		return "DirectMessageReactions"
 	case IntentDirectMessageTyping:
 		return "DirectMessageTyping"
+	case IntentMessageContent:
+		return "MessageContent"
 	default:
 		return ""
 	}
