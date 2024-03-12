@@ -1,7 +1,6 @@
 package disgord
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -231,18 +230,6 @@ type handlerSpec struct {
 	ctrl        HandlerCtrl
 }
 
-func (hs *handlerSpec) next() bool {
-	hs.Lock()
-	defer hs.Unlock()
-
-	if hs.ctrl.IsDead() {
-		return false
-	}
-
-	hs.ctrl.Update()
-	return true
-}
-
 // populate is essentially the constructor for a handlerSpec
 func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 	var i int
@@ -279,7 +266,7 @@ func (hs *handlerSpec) populate(inputs ...interface{}) (err error) {
 
 	if len(inputs) != i {
 		format := "unable to add all handlers/middlewares (%d/%d). Are they in correct order? middlewares, then handlers"
-		err = errors.New(fmt.Sprintf(format, i, len(inputs)))
+		err = fmt.Errorf(format, i, len(inputs))
 	}
 
 	return err

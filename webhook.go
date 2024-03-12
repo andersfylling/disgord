@@ -347,7 +347,7 @@ func (w webhookWithTokenQueryBuilder) Execute(params *ExecuteWebhook, wait *bool
 		ContentType: contentType,
 	}, w.flags)
 	// Discord only returns the message when wait=true.
-	if wait != nil && *wait == true {
+	if wait != nil && *wait {
 		r.pool = w.client.pool.message
 		return getMessage(r.Execute)
 	}

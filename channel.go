@@ -141,22 +141,6 @@ func (c *Channel) String() string {
 	return "channel{name:'" + c.Name + "', id:" + c.ID.String() + "}"
 }
 
-func (c *Channel) valid() bool {
-	if c.RateLimitPerUser > 120 {
-		return false
-	}
-
-	if len(c.Topic) > 1024 {
-		return false
-	}
-
-	if c.Name != "" && (len(c.Name) > 100 || len(c.Name) < 2) {
-		return false
-	}
-
-	return true
-}
-
 // GetPermissions is used to get a members permissions in a channel.
 func (c *Channel) GetPermissions(ctx context.Context, s GuildQueryBuilderCaller, member *Member) (permissions PermissionBit, err error) {
 	// Get the guild permissions.

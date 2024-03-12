@@ -51,14 +51,6 @@ func (d *dispatcher) nrOfAliveHandlers() (counter int) {
 	return
 }
 
-func ensure(inputs ...interface{}) {
-	for i := range inputs {
-		if err, ok := inputs[i].(error); ok && err != nil {
-			panic(err)
-		}
-	}
-}
-
 //////////////////////////////////////////////////////
 //
 // Tests

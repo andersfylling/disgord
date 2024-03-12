@@ -101,12 +101,6 @@ func (r *rest) init() {
 	r.doRequest = r.stepDoRequest
 }
 
-func (r *rest) bindParams(params interface{}) {
-	if params == nil {
-		return
-	}
-}
-
 func (r *rest) stepDoRequest() (resp *http.Response, body []byte, err error) {
 	if r.conf == nil {
 		err = errors.New("missing httd.Request configuration")

@@ -427,7 +427,7 @@ type GuildDelete struct {
 
 // UserWasRemoved ... TODO
 func (obj *GuildDelete) UserWasRemoved() bool {
-	return obj.UnavailableGuild.Unavailable == false
+	return !obj.UnavailableGuild.Unavailable
 }
 
 // UnmarshalJSON ...

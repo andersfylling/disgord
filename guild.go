@@ -201,9 +201,9 @@ type Guild struct {
 	Emojis                      []*Emoji                      `json:"emojis"`
 	Features                    []string                      `json:"features"`
 	MFALevel                    MFALvl                        `json:"mfa_level"`
-	WidgetEnabled               bool                          `json:"widget_enabled,omit_empty"`    //   |
-	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omit_empty"` //   |?
-	SystemChannelID             Snowflake                     `json:"system_channel_id,omitempty"`  //   |?
+	WidgetEnabled               bool                          `json:"widget_enabled,omitempty"`    //   |
+	WidgetChannelID             Snowflake                     `json:"widget_channel_id,omitempty"` //   |?
+	SystemChannelID             Snowflake                     `json:"system_channel_id,omitempty"` //   |?
 	DiscoverySplash             string                        `json:"discovery_splash,omitempty"`
 	VanityUrl                   string                        `json:"vanity_url_code,omitempty"`
 	Description                 string                        `json:"description,omitempty"`

@@ -112,7 +112,7 @@ func createClient(ctx context.Context, conf *Config) (c *Client, err error) {
 				return nil, fmt.Errorf("you can not reject the READY event when LoadMembersQuietly is set to true")
 			}
 			conf.RejectEvents = make([]string, 0, len(uniqueEventNames))
-			for eventName, _ := range uniqueEventNames {
+			for eventName := range uniqueEventNames {
 				conf.RejectEvents = append(conf.RejectEvents, eventName)
 			}
 
@@ -311,8 +311,6 @@ type Client struct {
 	config       *Config
 	botToken     string
 
-	permissions PermissionBit
-
 	handlers internalHandlers
 
 	// reactor demultiplexer for events
@@ -321,7 +319,8 @@ type Client struct {
 	// cancelRequestWhenRateLimited by default the Client waits until either the HTTPClient.timeout or
 	// the rate limit ends before closing a request channel. If activated, in stead, requests will
 	// instantly be denied, and the process ended with a rate limited error.
-	cancelRequestWhenRateLimited bool
+	// TODO: Implement cancelRequestWhenRateLimited into request logic
+	// cancelRequestWhenRateLimited bool
 
 	// req holds the rate limiting logic and error parsing unique for Discord
 	req *httd.Client

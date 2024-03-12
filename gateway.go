@@ -230,7 +230,9 @@ func (g gatewayQueryBuilder) Get() (gateway *gateway.Gateway, err error) {
 	}
 
 	err = json.Unmarshal(body, &gateway)
-
+	if err != nil {
+		return nil, errors.New("error unmarshaling json response: " + err.Error())
+	}
 	if gateway.URL, err = ensureDiscordGatewayURLHasQueryParams(gateway.URL); err != nil {
 		return gateway, err
 	}
