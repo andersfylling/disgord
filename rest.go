@@ -37,8 +37,10 @@ type AvatarParamHolder interface {
 
 type urlQuery map[string]interface{}
 
-var _ URLQueryStringer = (*urlQuery)(nil)
-var _ fmt.Stringer = (*urlQuery)(nil)
+var (
+	_ URLQueryStringer = (*urlQuery)(nil)
+	_ fmt.Stringer     = (*urlQuery)(nil)
+)
 
 func (p urlQuery) String() string {
 	return p.URLQueryString()
@@ -60,22 +62,24 @@ func (p urlQuery) URLQueryString() string {
 	return ""
 }
 
-type restStepDoRequest func() (resp *http.Response, body []byte, err error)
-type rest struct {
-	c          *Client
-	flags      Flag // merge flags
-	httpMethod string
+type (
+	restStepDoRequest func() (resp *http.Response, body []byte, err error)
+	rest              struct {
+		c          *Client
+		flags      Flag // merge flags
+		httpMethod string
 
-	// item creation
-	// pool is prioritized over factory
-	pool    Pool
-	factory func() interface{}
+		// item creation
+		// pool is prioritized over factory
+		pool    Pool
+		factory func() interface{}
 
-	conf *httd.Request
+		conf *httd.Request
 
-	// steps
-	doRequest restStepDoRequest
-}
+		// steps
+		doRequest restStepDoRequest
+	}
+)
 
 func (r *rest) Put(x interface{}) {
 	if r.pool != nil {
@@ -168,9 +172,11 @@ func (r *rest) Execute() (v interface{}, err error) {
 	return obj, nil
 }
 
-type fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
-type fRESTCacheMiddleware func(resp *http.Response, v interface{}, err error) error
-type fRESTItemFactory func() interface{}
+type (
+	fRESTRequestMiddleware func(resp *http.Response, body []byte, err error) error
+	fRESTCacheMiddleware   func(resp *http.Response, v interface{}, err error) error
+	fRESTItemFactory       func() interface{}
+)
 
 type RESTBuilder struct {
 	middleware fRESTRequestMiddleware
@@ -845,4 +851,25 @@ func getScheduledEventUsers(f func() (interface{}, error)) (scheduledEventUsers 
 	}
 
 	return nil, err
+}
+
+func getApplicationCommand(f func() (interface{}, error)) (command *ApplicationCommand, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	return v.(*ApplicationCommand), nil
+}
+
+func getApplicationCommands(f func() (interface{}, error)) (command []*ApplicationCommand, err error) {
+	var v interface{}
+	if v, err = exec(f); err != nil {
+		return nil, err
+	}
+	if list, ok := v.(*[]*ApplicationCommand); ok {
+		return *list, nil
+	} else if list, ok := v.([]*ApplicationCommand); ok {
+		return list, nil
+	}
+	panic("v was not assumed type. Got " + fmt.Sprint(v))
 }

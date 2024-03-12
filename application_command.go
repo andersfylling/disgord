@@ -23,16 +23,20 @@ type ApplicationCommandOptionChoice struct {
 }
 
 type ApplicationCommandOption struct {
-	Type         OptionType                        `json:"type"`
-	Name         string                            `json:"name"`
-	Description  string                            `json:"description"`
-	Required     bool                              `json:"required"`
-	Choices      []*ApplicationCommandOptionChoice `json:"choices"`
-	Options      []*ApplicationCommandOption       `json:"options"`
-	ChannelTypes []ChannelType                     `json:"channel_types"`
-	MinValue     float64                           `json:"min_value"`
-	MaxValue     float64                           `json:"max_value"`
-	Autocomplete bool                              `json:"autocomplete"`
+	Type                     OptionType                        `json:"type"`
+	Name                     string                            `json:"name"`
+	NameLocalizations        map[string]string                 `json:"name_localizations,omitempty"`
+	Description              string                            `json:"description"`
+	DescriptionLocalizations map[string]string                 `json:"description_localizations,omitempty"`
+	Required                 bool                              `json:"required,omitempty"`
+	Choices                  []*ApplicationCommandOptionChoice `json:"choices,omitempty"`
+	Options                  []*ApplicationCommandOption       `json:"options,omitempty"`
+	ChannelTypes             []ChannelType                     `json:"channel_types,omitempty"`
+	MinValue                 float64                           `json:"min_value,omitempty"`
+	MaxValue                 float64                           `json:"max_value,omitempty"`
+	MinLength                int                               `json:"min_length,omitempty"`
+	MaxLength                int                               `json:"max_length,omitempty"`
+	Autocomplete             bool                              `json:"autocomplete,omitempty"`
 }
 
 type ApplicationCommandDataOption struct {
@@ -63,29 +67,46 @@ type GuildApplicationCommandPermissions struct {
 }
 
 type ApplicationCommand struct {
-	ID                Snowflake                   `json:"id"`
-	Type              ApplicationCommandType      `json:"type"`
-	ApplicationID     Snowflake                   `json:"application_id"`
-	GuildID           Snowflake                   `json:"guild_id"`
-	Name              string                      `json:"name"`
-	Description       string                      `json:"description"`
-	Options           []*ApplicationCommandOption `json:"options"`
-	DefaultPermission bool                        `json:"default_permission,omitempty"`
+	ID                       Snowflake                   `json:"id"`
+	Type                     ApplicationCommandType      `json:"type,omitempty"`
+	ApplicationID            Snowflake                   `json:"application_id"`
+	GuildID                  Snowflake                   `json:"guild_id,omitempty"`
+	Name                     string                      `json:"name"`
+	NameLocalizations        map[string]string           `json:"name_localization,omitempty"`
+	Description              string                      `json:"description"`
+	DescriptionLocalizations map[string]string           `json:"description_localization,omitempty"`
+	Options                  []*ApplicationCommandOption `json:"options,omitempty"`
+	DefaultMemberPermissions *PermissionBit              `json:"default_member_permissions,omitempty"`
+	DMPermission             *bool                       `json:"dm_permission,omitempty"` // Global only.
+	DefaultPermission        bool                        `json:"default_permission,omitempty"`
+	NSFW                     bool                        `json:"nsfw,omitempty"`
+	Version                  Snowflake                   `json:"version,omitempty"`
 }
 
 type CreateApplicationCommand struct {
-	Name              string                      `json:"name"`
-	Description       string                      `json:"description"`
-	Type              ApplicationCommandType      `json:"type,omitempty"`
-	Options           []*ApplicationCommandOption `json:"options,omitempty"`
-	DefaultPermission bool                        `json:"default_permission,omitempty"`
+	Name                     string                      `json:"name"`
+	NameLocalizations        map[string]string           `json:"name_localization,omitempty"`
+	Description              string                      `json:"description,omitempty"`
+	DescriptionLocalizations map[string]string           `json:"description_localization,omitempty"`
+	Type                     ApplicationCommandType      `json:"type,omitempty"`
+	Options                  []*ApplicationCommandOption `json:"options,omitempty"`
+	DMPermission             *bool                       `json:"dm_permission,omitempty"`
+	DefaultMemberPermissions *PermissionBit              `json:"default_member_permissions,omitempty"`
+	DefaultPermission        bool                        `json:"default_permission,omitempty"`
+	NSFW                     *bool                       `json:"nsfw,omitempty"`
 }
 
 type UpdateApplicationCommand struct {
-	Name              *string                      `json:"name,omitempty"`
-	DefaultPermission *bool                        `json:"default_permission,omitempty"`
-	Description       *string                      `json:"description,omitempty"`
-	Options           *[]*ApplicationCommandOption `json:"options,omitempty"`
+	Name                     *string                      `json:"name,omitempty"`
+	NameLocalizations        *map[string]string           `json:"name_localization,omitempty"`
+	Description              *string                      `json:"description,omitempty"`
+	DescriptionLocalizations *map[string]string           `json:"description_localization,omitempty"`
+	Type                     *ApplicationCommandType      `json:"type,omitempty"`
+	Options                  *[]*ApplicationCommandOption `json:"options,omitempty"`
+	DMPermission             *bool                        `json:"dm_permission,omitempty"` // Global only.
+	DefaultMemberPermissions *PermissionBit               `json:"default_member_permissions,omitempty"`
+	DefaultPermission        *bool                        `json:"default_permission,omitempty"`
+	NSFW                     *bool                        `json:"nsfw,omitempty"`
 }
 
 type ApplicationCommandQueryBuilder interface {
@@ -95,9 +116,12 @@ type ApplicationCommandQueryBuilder interface {
 }
 
 type ApplicationCommandFunctions interface {
+	Get(commandId Snowflake) (*ApplicationCommand, error)
+	Commands() ([]*ApplicationCommand, error)
 	Delete(commandId Snowflake) error
 	Create(command *CreateApplicationCommand) error
 	Update(commandId Snowflake, command *UpdateApplicationCommand) error
+	BulkOverwrite(commands []*CreateApplicationCommand) error
 }
 
 type applicationCommandFunctions struct {
@@ -123,6 +147,51 @@ func applicationCommandFactory() interface{} {
 	return &ApplicationCommand{}
 }
 
+func (c *applicationCommandFunctions) Get(commandID Snowflake) (*ApplicationCommand, error) {
+	var endpoint string
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("/applications/%d/commands/%d", c.applicationID(), commandID)
+	} else {
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
+	}
+
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+
+	r := c.client.newRESTRequest(req, c.flags)
+	r.factory = applicationCommandFactory
+
+	return getApplicationCommand(r.Execute)
+}
+
+func (c *applicationCommandFunctions) Commands() ([]*ApplicationCommand, error) {
+	var endpoint string
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("/applications/%d/commands", c.applicationID())
+	} else {
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.applicationID(), c.guildID)
+	}
+
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodGet,
+		Ctx:         c.ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+
+	r := c.client.newRESTRequest(req, c.flags)
+	r.factory = func() interface{} {
+		tmp := make([]*ApplicationCommand, 0)
+		return &tmp
+	}
+
+	return getApplicationCommands(r.Execute)
+}
+
 func (c *applicationCommandFunctions) Create(command *CreateApplicationCommand) error {
 	var endpoint string
 	if c.guildID == 0 {
@@ -130,14 +199,15 @@ func (c *applicationCommandFunctions) Create(command *CreateApplicationCommand) 
 	} else {
 		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.applicationID(), c.guildID)
 	}
-	ctx := c.ctx
+
 	req := &httd.Request{
 		Endpoint:    endpoint,
 		Method:      http.MethodPost,
 		Body:        command,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
+
 	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
 	_, err := r.Execute()
@@ -146,20 +216,21 @@ func (c *applicationCommandFunctions) Create(command *CreateApplicationCommand) 
 
 func (c *applicationCommandFunctions) Update(commandID Snowflake, command *UpdateApplicationCommand) error {
 	var endpoint string
-	ctx := c.ctx
 
 	if c.guildID == 0 {
-		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.applicationID(), commandID)
+		endpoint = fmt.Sprintf("/applications/%d/commands/%d", c.applicationID(), commandID)
 	} else {
-		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
 	}
+
 	req := &httd.Request{
 		Endpoint:    endpoint,
 		Method:      http.MethodPatch,
 		Body:        command,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
+
 	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
 	_, err := r.Execute()
@@ -168,21 +239,47 @@ func (c *applicationCommandFunctions) Update(commandID Snowflake, command *Updat
 
 func (c *applicationCommandFunctions) Delete(commandID Snowflake) error {
 	var endpoint string
-	ctx := c.ctx
 
 	if c.guildID == 0 {
-		endpoint = fmt.Sprintf("applications/%d/commands/%d", c.applicationID(), commandID)
+		endpoint = fmt.Sprintf("/applications/%d/commands/%d", c.applicationID(), commandID)
 	} else {
-		endpoint = fmt.Sprintf("applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands/%d", c.applicationID(), c.guildID, commandID)
 	}
+
 	req := &httd.Request{
 		Endpoint:    endpoint,
 		Method:      http.MethodDelete,
-		Ctx:         ctx,
+		Ctx:         c.ctx,
 		ContentType: httd.ContentTypeJSON,
 	}
+
 	r := c.client.newRESTRequest(req, c.flags)
 	r.factory = applicationCommandFactory
+	_, err := r.Execute()
+	return err
+}
+
+func (c *applicationCommandFunctions) BulkOverwrite(commands []*CreateApplicationCommand) error {
+	var endpoint string
+	if c.guildID == 0 {
+		endpoint = fmt.Sprintf("/applications/%d/commands", c.applicationID())
+	} else {
+		endpoint = fmt.Sprintf("/applications/%d/guilds/%d/commands", c.applicationID(), c.guildID)
+	}
+
+	req := &httd.Request{
+		Endpoint:    endpoint,
+		Method:      http.MethodPut,
+		Body:        commands,
+		Ctx:         c.ctx,
+		ContentType: httd.ContentTypeJSON,
+	}
+
+	r := c.client.newRESTRequest(req, c.flags)
+	r.factory = func() interface{} {
+		tmp := make([]*ApplicationCommand, 0)
+		return &tmp
+	}
 	_, err := r.Execute()
 	return err
 }
@@ -197,6 +294,7 @@ type applicationCommandQueryBuilder struct {
 func (q applicationCommandQueryBuilder) Guild(guildId Snowflake) ApplicationCommandFunctions {
 	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, guildID: guildId, client: q.client, flags: q.flags}
 }
+
 func (q applicationCommandQueryBuilder) Global() ApplicationCommandFunctions {
 	return &applicationCommandFunctions{appID: q.appID, ctx: q.ctx, client: q.client, flags: q.flags}
 }
